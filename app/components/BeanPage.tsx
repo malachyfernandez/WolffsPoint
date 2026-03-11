@@ -9,6 +9,7 @@ import { Text, TouchableOpacity, View } from 'react-native';
 import PoppinsText from './PoppinsText';
 import { useUserVariableGet } from 'hooks/useUserVariableGet';
 import { useUserVariablePrivacy } from 'hooks/useUserVariablePrivacy';
+import ContainerRow from './ContainerRow';
 
 type FontWeight = 'regular' | 'medium' | 'bold';
 
@@ -85,8 +86,8 @@ const BeanPage = ({
         //     </TouchableOpacity>
         // </ContainerCol>
 
-        <View className='justify-between w-full h-full p-10'>
-            
+        <View className='justify-between w-full h-full'>
+
             <ContainerCol>
                 {/* remove freind button */}
                 <TouchableOpacity className='border-slate-700 border p-3 rounded w-48 items-center hover:bg-slate-600' onPress={() =>
@@ -147,9 +148,15 @@ const BeanPage = ({
             </ContainerCol>
 
             <View className='w-full items-center'>
-                <TouchableOpacity className='bg-slate-700 p-3 w-32 items-center' onPress={() => signOut()}>
-                    <PoppinsText>Sign Out</PoppinsText>
-                </TouchableOpacity>
+                <ContainerRow className='w-full justify-between'>
+                    <TouchableOpacity className='bg-slate-700 p-3 w-40 items-center' onPress={() => signOut()}>
+                        <PoppinsText>New Wolffs Point</PoppinsText>
+                    </TouchableOpacity>
+                    
+                    <TouchableOpacity className='bg-slate-700 p-3 w-40 items-center' onPress={() => signOut()}>
+                        <PoppinsText>Sign Out</PoppinsText>
+                    </TouchableOpacity>
+                </ContainerRow>
             </View>
         </View>
     );
