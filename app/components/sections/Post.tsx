@@ -8,6 +8,7 @@ import ContainerRow from '../layout/ContainerRow';
 import AppButton from '../ui/AppButton';
 import UpArrow from '../ui/UpArrow';
 import NameFromUserID from '../ui/NameFromUserID';
+import Comment from './Comment';
 import { useUserListSet } from 'hooks/useUserListSet';
 import { useUserListGet } from 'hooks/useUserListGet';
 import prettyLog from '../../../utils/prettyLog';
@@ -86,16 +87,18 @@ const Post = ({ title, description, postId, posterID }: PostProps) => {
                         <UpArrow size={20} />
                     </AppButton>
                 </ContainerRow>
+                
                 {/* comments list */}
-                {commentsOnActivePost?.map((comment) => {
+                {commentsOnActivePost?.map((comment, index) => {
                     const text = comment.value.text ?? '';
                     const userId = comment.userToken ?? '';
 
                     return (
-                        <ContainerCol key={comment.itemId} gap={0}>
-                            <NameFromUserID userid={userId} />
-                            <PoppinsText>{text}</PoppinsText>
-                        </ContainerCol>
+                        <Comment 
+                            key={index}
+                            text={text}
+                            userId={userId}
+                        />
                     )
                 })}
             </ContainerCol>
