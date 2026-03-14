@@ -1,15 +1,15 @@
 import React from 'react';
-import { View } from 'react-native';
 import PoppinsText from '../ui/PoppinsText';
 import { useUserListSet } from 'hooks/useUserListSet';
 import { useUserListGet } from 'hooks/useUserListGet';
+import Post from './Post';
+import ContainerCol from '../layout/ContainerCol';
 
 interface MyProfileProps {
-    addPost: (title: string, description: string) => void;
     currentUserID: string;
 }
 
-const MyProfile = ({ currentUserID, addPost }: MyProfileProps) => {
+const MyProfile = ({ currentUserID }: MyProfileProps) => {
     const setPost = useUserListSet();
 
     const posts = useUserListGet({
@@ -18,16 +18,15 @@ const MyProfile = ({ currentUserID, addPost }: MyProfileProps) => {
     });
 
     return (
-        <>
+        <ContainerCol gap={2}>
             <PoppinsText>My Profile</PoppinsText>
 
             {posts?.map((post, index) => (
-                <View key={index}>
-                    <PoppinsText weight='bold'>{post?.value.title}</PoppinsText>
-                    <PoppinsText>{post?.value.description}</PoppinsText>
-                </View>
+
+                <Post key={index} title={post?.value.title} description={post?.value.description} />
+
             ))}
-        </>
+        </ContainerCol>
     );
 };
 

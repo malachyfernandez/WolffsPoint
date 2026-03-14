@@ -25,7 +25,7 @@ const AppButton = ({
 
     const getButtonStyles = (): string => {
         
-        const baseStyles = 'h-10 flex items-center justify-center rounded flex-row gap-2 overflow-hidden hover:brightness-75';
+        const baseStyles = 'h-10 flex items-center justify-center rounded flex-row gap-2 overflow-hidden hover:brightness-75 px-4';
         
         if (variant === 'outline') {
             const bg = isPressed ? 'bg-[#0a0d1a]' : 'bg-[#0f1627bf]';
