@@ -1,5 +1,6 @@
 import React from 'react';
 import PoppinsText from '../ui/PoppinsText';
+import FriendListItem from '../ui/FriendListItem';
 
 interface MyFriendsProps {
     friendsList: string[];
@@ -11,7 +12,8 @@ const MyFriends = ({ friendsList }: MyFriendsProps) => {
         <>
             <PoppinsText>My Friends</PoppinsText>
             {friendsList?.map((friend, index) => (
-                <PoppinsText key={index}>{friend}</PoppinsText>
+                
+                <FriendListItem key={index} friend={friend} />
             ))}
         </>
     );
