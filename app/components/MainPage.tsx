@@ -23,13 +23,13 @@ import NavButton from './ui/NavButton';
 
 type FontWeight = 'regular' | 'medium' | 'bold';
 
-interface BeanPageProps extends PropsWithChildren {
+interface MainPageProps extends PropsWithChildren {
     className?: string;
 }
 
-const BeanPage = ({
+const MainPage = ({
     className = '',
-}: BeanPageProps) => {
+}: MainPageProps) => {
 
 
     interface UserData {
@@ -108,4 +108,4 @@ const BeanPage = ({
     );
 };
 
-export default BeanPage;
+export default MainPage;

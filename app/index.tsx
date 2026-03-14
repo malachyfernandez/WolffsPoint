@@ -9,7 +9,7 @@ import AuthButton from "./components/ui/AuthButton";
 
 import ContainerCol from "./components/layout/ContainerCol";
 
-import BeanPage from "./components/BeanPage";
+import MainPage from "./components/MainPage";
 
 // Warm up the browser (required for Android reliability)
 export const useWarmUpBrowser = () => {
@@ -115,7 +115,7 @@ export default function HomeScreen() {
 
         {/* <BeanContainer numberOfBeans={0} beanText={beanText.value} setBeanText={setBeanText} /> */}
 
-        <BeanPage />
+        <MainPage />
 
       </SignedIn>
 

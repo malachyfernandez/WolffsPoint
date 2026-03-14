@@ -16,6 +16,9 @@ const AddPost = () => {
 
     const handleAddPost = () => {
         const postId = Math.floor(Math.random() * 1000000000);
+        setPostTitle('');
+        setPostDescription('');
+
 
         setPost({
             key: 'posts',
