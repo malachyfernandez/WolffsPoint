@@ -52,12 +52,6 @@ const BeanPage = ({
 
     const { signOut } = useClerk();
 
-    // const setPosts = useUserListSet({
-    //     key: "posts",
-    //     itemId: "postId",
-    //     defaultValue: {},
-    // })
-
     const [friendsList, setFriendsList] = useUserVariable<string[]>({
         key: "friendsList",
         defaultValue: [],
@@ -75,7 +69,7 @@ const BeanPage = ({
     const currentUserID = (userData?.value.userId || "LOADING...")
     const currentUserEmail = (userData?.value.email || "LOADING...")
 
-    // state for page state
+    
     const [pageState, setPageState] = useState("Profile")
 
     return (
