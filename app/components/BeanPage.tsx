@@ -1,4 +1,4 @@
-import React, { PropsWithChildren, useEffect, useState } from 'react';
+import React, { PropsWithChildren, useState } from 'react';
 
 import { useUserVariable } from 'hooks/useUserVariable';
 import { useSyncUserData } from 'hooks/useSyncUserData';
@@ -80,29 +80,69 @@ const BeanPage = ({
     })
 
     const addFriend = (friend: any) => {
-        setFriendsList([...(friendsList.value), friend.userId])
+        if (!friend?.userId) {
+            return;
+        }
+
+        setFriendsList([...(friendsList.value || []), friend.userId])
     }
 
-    
+
     const [postDescription, setPostDescription] = useState("")
     const [postTitle, setPostTitle] = useState("")
 
+    const currentUserID = (userData?.value.userId || "LOADING...")
+    const currentUserEmail = (userData?.value.email || "LOADING...")
+
+    // state for page state
+    const [pageState, setPageState] = useState("my profile")
 
     return (
         <View className='justify-between w-full h-full'>
 
             <ContainerCol>
-                <AppButton variant="grey" className="w-40" onPress={() => signOut()}>
-                    <PoppinsText>Sign Out</PoppinsText>
+
+                <AppButton variant="grey" className="w-full" onPress={() => signOut()}>
+                    <ContainerRow>
+                        <PoppinsText>Sign Out</PoppinsText>
+                        <PoppinsText>{currentUserEmail}</PoppinsText>
+                    </ContainerRow>
                 </AppButton>
 
-                <MyProfile addPost={addPost} />
+                <ContainerRow className='w-full justify-between'>
+                    <AppButton variant="grey" className="w-20%" onPress={() => setPageState("my profile")}>
 
-                <FindFriends currentUserId={userData?.value.userId} addFriend={addFriend} />
+                        <PoppinsText>my profile</PoppinsText>
 
-                <MyFriends friendsList={friendsList.value || []} />
+                    </AppButton>
+                    <AppButton variant="grey" className="w-20%" onPress={() => setPageState("find friends")}>
 
-                <FriendsPosts friendsList={friendsList.value || []} />
+                        <PoppinsText>Find friends</PoppinsText>
+
+                    </AppButton>
+
+                    <AppButton variant="grey" className="w-20%" onPress={() => setPageState("my friends")}>
+
+                        <PoppinsText>my friends</PoppinsText>
+
+                    </AppButton>
+
+                    <AppButton variant="grey" className="w-20%" onPress={() => setPageState("feed")}>
+
+                        <PoppinsText>feed</PoppinsText>
+
+                    </AppButton>
+                </ContainerRow>
+
+
+
+                {pageState === "my profile" && <MyProfile currentUserID={currentUserID} addPost={addPost} />}
+
+                {pageState === "find friends" && <FindFriends currentUserId={currentUserID} addFriend={addFriend} />}
+
+                {pageState === "my friends" && <MyFriends friendsList={friendsList.value || []} />}
+
+                {pageState === "feed" && <FriendsPosts friendsList={friendsList.value || []} />}
 
             </ContainerCol>
 

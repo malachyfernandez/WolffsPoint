@@ -133,19 +133,16 @@ export const search = query({
       return false;
     };
 
-    const requestedUserIds = args.userIds?.length
-      ? Array.from(new Set(args.userIds))
+    const hasUserIdsFilter = args.userIds !== undefined;
+    const requestedUserIds = hasUserIdsFilter
+      ? Array.from(new Set(args.userIds ?? []))
       : undefined;
 
-    if (
-      requestedUserIds &&
-      viewerUserId &&
-      !requestedUserIds.includes(viewerUserId)
-    ) {
-      requestedUserIds.push(viewerUserId);
+    if (hasUserIdsFilter && requestedUserIds && requestedUserIds.length === 0) {
+      return [];
     }
 
-    if (requestedUserIds && requestedUserIds.length > 0) {
+    if (hasUserIdsFilter && requestedUserIds && requestedUserIds.length > 0) {
       for (const userId of requestedUserIds) {
         const doc = await ctx.db
           .query("user_vars")

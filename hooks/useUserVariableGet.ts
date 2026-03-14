@@ -63,7 +63,7 @@ interface UseUserVariableGetOptions {
  *
  * `userIds` 
  * - restricts the result set to those users
- * - your own variable is still included automatically if accessible
+ * - only requested users are queried (subject to access checks)
  *
  * `returnTop` 
  * - maximum number of records returned

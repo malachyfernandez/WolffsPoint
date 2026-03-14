@@ -9,8 +9,7 @@ const FriendsPosts = ({ friendsList }: { friendsList: string[] }) => {
         key: "posts",
         userIds: friendsList,
     });
-    console.log("posts", posts);
-    console.log("friendsList", friendsList);
+    
     return (
 
         <View>

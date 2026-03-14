@@ -6,7 +6,7 @@ import PoppinsTextInput from '../ui/PoppinsTextInput';
 import SearchResults from '../SearchResults';
 
 interface FindFriendsProps {
-    currentUserId?: string;
+    currentUserId: string;
     addFriend: (friend: any) => void;
 }
 

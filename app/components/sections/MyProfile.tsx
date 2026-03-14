@@ -6,13 +6,15 @@ import { useUserListGet } from 'hooks/useUserListGet';
 
 interface MyProfileProps {
     addPost: (title: string, description: string) => void;
+    currentUserID: string;
 }
 
-const MyProfile = ({ addPost }: MyProfileProps) => {
+const MyProfile = ({ currentUserID, addPost }: MyProfileProps) => {
     const setPost = useUserListSet();
 
     const posts = useUserListGet({
         key: "posts",
+        userIds: [currentUserID],
     });
 
     return (

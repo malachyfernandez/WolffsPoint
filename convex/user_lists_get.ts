@@ -364,19 +364,16 @@ export const search = query({
       }
     };
 
-    const requestedUserIds = args.userIds?.length
-      ? Array.from(new Set(args.userIds))
+    const hasUserIdsFilter = args.userIds !== undefined;
+    const requestedUserIds = hasUserIdsFilter
+      ? Array.from(new Set(args.userIds ?? []))
       : undefined;
 
-    if (
-      requestedUserIds &&
-      viewerUserId &&
-      !requestedUserIds.includes(viewerUserId)
-    ) {
-      requestedUserIds.push(viewerUserId);
+    if (hasUserIdsFilter && requestedUserIds && requestedUserIds.length === 0) {
+      return [];
     }
 
-    if (requestedUserIds && requestedUserIds.length > 0) {
+    if (hasUserIdsFilter && requestedUserIds && requestedUserIds.length > 0) {
       for (const userId of requestedUserIds) {
         const definition = await ctx.db
           .query("user_list_definitions")

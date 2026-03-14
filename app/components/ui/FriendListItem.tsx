@@ -2,6 +2,7 @@ import React from 'react';
 import PoppinsText from './PoppinsText';
 import { useUserVariableGet } from 'hooks/useUserVariableGet';
 import ContainerCol from '../layout/ContainerCol';
+import ContainerRow from '../layout/ContainerRow';
 
 interface FriendListItemProps {
     friend: string;
@@ -14,9 +15,18 @@ const FriendListItem = ({ friend }: FriendListItemProps) => {
     });
     return (
         <ContainerCol gap={1}>
-            <PoppinsText>{friendData?.[0]?.value.email}</PoppinsText>
-            <PoppinsText>{friendData?.[0]?.value.userId}</PoppinsText>
-            <PoppinsText>{friend}</PoppinsText>
+            <ContainerRow>
+                <PoppinsText weight='bold'>from hook:</PoppinsText>
+                <PoppinsText>{friendData?.[0]?.value.email}</PoppinsText>
+            </ContainerRow>
+            <ContainerRow>
+                <PoppinsText weight='bold'>from hook:</PoppinsText>
+                <PoppinsText>{friendData?.[0]?.value.userId}</PoppinsText>
+            </ContainerRow>
+            <ContainerRow>
+                <PoppinsText weight='bold'>from props:</PoppinsText>
+                <PoppinsText>{friend}</PoppinsText>
+            </ContainerRow>
         </ContainerCol>
     );
 };
