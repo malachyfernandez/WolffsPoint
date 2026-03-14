@@ -11,7 +11,6 @@ import NameFromUserID from '../ui/NameFromUserID';
 import Comment from './Comment';
 import { useUserListSet } from 'hooks/useUserListSet';
 import { useUserListGet } from 'hooks/useUserListGet';
-import prettyLog from '../../../utils/prettyLog';
 import { useUserVariableGet } from 'hooks/useUserVariableGet';
 
 interface PostProps {
@@ -56,7 +55,6 @@ const Post = ({ title, description, postId, posterID }: PostProps) => {
         filterFor: postId,
     });
 
-    prettyLog(commentsOnActivePost, 'Comments on Active Post');
 
     const safePosterId = posterID || '';
     

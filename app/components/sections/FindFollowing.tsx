@@ -25,7 +25,7 @@ const FindFollowing = ({ currentUserId, addFollowing, followingList }: FindFollo
                     className='flex-shrink w-full h-10 border border-slate-700 rounded-lg p-2'
                     value={searchQuery}
                     onChangeText={setSearchQuery}
-                    placeholder='Search for following'
+                    placeholder='Search for people to follow'
                 />
                 <AppButton variant="grey" className="w-20" onPress={() => {}}>
                     <PoppinsText>Search</PoppinsText>
