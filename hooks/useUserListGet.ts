@@ -22,6 +22,8 @@ interface UseUserListGetOptions {
  *   key: "posts", // REQUIRED: list key
  *   userIds: followingList, // owner ids only
  *   filterFor: "published", // exact filter value
+ *   searchFor: "searchValue", // search Query
+ *   itemId: "item123", // exact item lookup
  *   returnTop: 20, // page size
  * });
  * ```

@@ -12,6 +12,7 @@ module.exports = {
       colors: {
         'l': '#ef4444', // red-500
         'background': 'rgb(246, 238, 219)',
+        'inner-background': 'rgb(253, 251, 246)',
         'text': '#1a1a1a',
         'muted-text': '#888888',
         'primary-accent': '#2d5a2d', // deep forest green

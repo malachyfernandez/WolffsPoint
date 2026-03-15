@@ -8,6 +8,7 @@ import { View } from 'react-native';
 import TopSiteBar from './TopSiteBar';
 import ChooseGamePicker from './ChooseGamePicker';
 import JoinGameModal from './ui/JoinGameModal';
+import GamePage from './GamePage';
 import { GameInfo } from 'types/games';
 import PoppinsText from './ui/PoppinsText';
 
@@ -109,9 +110,10 @@ const MainPage = ({
                     addNewGame={addNewGame}
                 />
             ) : (
-                <Column className='p-6 bg-l h-full'>
-                    <PoppinsText>{`Game ${activeGameId.value}`}</PoppinsText>
-                </Column>
+                <GamePage 
+                    gameId={activeGameId.value} 
+                    currentUserId={userId}
+                />
             )}
             <JoinGameModal
                 isVisible={isModalShowing}
