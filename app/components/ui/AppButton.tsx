@@ -51,6 +51,7 @@ const AppButton = ({
             activeOpacity={1}
         >
             {children}
+            
         </TouchableOpacity>
 
     );

@@ -4,7 +4,6 @@ import JoinedGames from './JoinedGames';
 import MyGames from './MyGames';
 
 import { UserListRecord } from 'hooks/useUserList';
-import prettyLog from 'utils/prettyLog';
 import { GameInfo } from 'types/games';
 
 
@@ -15,22 +14,26 @@ interface GameListProps {
     myGames: UserListRecord<GameInfo>[] | undefined;
     hasJoinedAGame: boolean;
     hasMadeAGame: boolean;
+    setActiveGameId: (gameId: string) => void;
 }
 
-const GameList = ({ gamesTheyJoined, setGamesTheyJoined, myGames, hasJoinedAGame, hasMadeAGame }: GameListProps) => {
+const GameList = ({ gamesTheyJoined, setGamesTheyJoined, myGames, hasJoinedAGame, hasMadeAGame, setActiveGameId }: GameListProps) => {
 
-    prettyLog(myGames);
     return (
         <Column className='p-6'>
             {hasJoinedAGame && (
-                <JoinedGames 
-                    gamesTheyJoined={gamesTheyJoined} 
-                    setGamesTheyJoined={setGamesTheyJoined} 
+                <JoinedGames
+                    gamesTheyJoined={gamesTheyJoined}
+                    setGamesTheyJoined={setGamesTheyJoined}
+                    setActiveGameId={setActiveGameId}
                 />
             )}
 
             {hasMadeAGame && (
-                <MyGames myGames={myGames} />
+                <MyGames
+                    myGames={myGames}
+                    setActiveGameId={setActiveGameId}
+                />
             )}
         </Column>
     );
