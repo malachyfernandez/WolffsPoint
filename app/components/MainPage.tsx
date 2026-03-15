@@ -2,19 +2,21 @@ import React, { PropsWithChildren, useState } from 'react';
 
 import { useUserVariable } from 'hooks/useUserVariable';
 import { useSyncUserData } from 'hooks/useSyncUserData';
-import ContainerCol from './layout/ContainerCol';
+import Column from './layout/Column';
 import { useClerk } from '@clerk/clerk-expo';
 import { Text, TextInput, TouchableOpacity, View, ScrollView } from 'react-native';
 import Animated, { FadeIn, FadeInDown, FadeInUp, FadeOut, FadeOutDown } from 'react-native-reanimated';
 import AppButton from './ui/AppButton';
 import JoinGameButton from './ui/JoinGameButton';
-import ContainerRow from './layout/ContainerRow';
+import Row from './layout/Row';
 import PoppinsText from './ui/PoppinsText';
 import { UserIcon } from './icons/UserIcon';
 import { SadEmoji } from './icons/SadEmoji';
 import PoppinsTextInput from './ui/PoppinsTextInput';
 import JoinGameModal from './ui/JoinGameModal';
 import GameList from './GameList';
+import TopSiteBar from './TopSiteBar';
+import NoGames from './NoGames';
 // import { AnimatedView } from 'react-native-reanimated/lib/typescript/component/View';
 
 
@@ -77,21 +79,9 @@ const MainPage = ({
     return (
         <View className='justify-between w-full h-full'>
 
-            <ContainerCol>
-
-
-
-                <ContainerRow className='justify-between items-center p-6'>
-                    <PoppinsText weight='bold' className='text-lg'>WolffsPoint</PoppinsText>
-                    <AppButton variant="outline" className="h-14 w-14" onPress={() => signOut()}>
-                        <UserIcon size={24} className='group-hover:text-white' />
-                    </AppButton>
-                </ContainerRow>
-
-
-            </ContainerCol>
-            <ContainerCol className='flex-1 h-full'>
-                <ContainerCol className='flex-1 h-full'>
+            <TopSiteBar />
+            <Column className='flex-1 h-full'>
+                <Column className='flex-1 h-full'>
                     {hasJoinedAGame ? (
                         <ScrollView>
                             <GameList 
@@ -100,20 +90,12 @@ const MainPage = ({
                             />
                         </ScrollView>
                     ) : (
-                        <ContainerCol className='w-full items-center h-full justify-center'>
-                            <SadEmoji size={100} lineWidth={1} />
-                            <PoppinsText >You dont have any games right now</PoppinsText>
-                            <JoinGameButton onPress={showModal} />
-                        </ContainerCol>
+                        <NoGames showModal={showModal} />
                     )}
 
-
-
-
-
-                </ContainerCol>
-                <ContainerCol>
-                    <ContainerRow className='p-6 border-t border-subtle-border justify-between'>
+                </Column>
+                <Column>
+                    <Row className='p-6 border-t border-subtle-border justify-between'>
                         <AppButton variant="outline" className="h-12 w-40" onPress={signOut}>
                             <PoppinsText weight='medium' className='group-hover:text-white'>New WolffsPoint</PoppinsText>
                         </AppButton>
@@ -121,9 +103,9 @@ const MainPage = ({
                         {hasJoinedAGame && (
                             <JoinGameButton onPress={showModal} />
                         )}
-                    </ContainerRow>
-                </ContainerCol>
-            </ContainerCol>
+                    </Row>
+                </Column>
+            </Column>
             <JoinGameModal
                 isVisible={isModalShowing}
                 onHide={hideModal}

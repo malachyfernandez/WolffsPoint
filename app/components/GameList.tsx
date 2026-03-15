@@ -1,5 +1,5 @@
 import React from 'react';
-import ContainerCol from './layout/ContainerCol';
+import Column from './layout/Column';
 import AppButton from './ui/AppButton';
 import PoppinsText from './ui/PoppinsText';
 
@@ -10,13 +10,13 @@ interface GameListProps {
 
 const GameList = ({ gamesTheyJoined, setGamesTheyJoined }: GameListProps) => {
     return (
-        <ContainerCol className='p-6'>
-            <ContainerCol>
+        <Column className='p-6'>
+            <Column>
                 <PoppinsText weight='bold'>Joined Games</PoppinsText>
-            </ContainerCol>
-            <ContainerCol>
+            </Column>
+            <Column>
                 {gamesTheyJoined.map((game) => (
-                    <ContainerCol key={game}>
+                    <Column key={game}>
                         <PoppinsText>{game}</PoppinsText>
                         <AppButton 
                             variant="green" 
@@ -25,14 +25,14 @@ const GameList = ({ gamesTheyJoined, setGamesTheyJoined }: GameListProps) => {
                         >
                             <PoppinsText weight='medium' color="white">Leave</PoppinsText>
                         </AppButton>
-                    </ContainerCol>
+                    </Column>
                 ))}
-            </ContainerCol>
+            </Column>
 
-            <ContainerCol>
+            <Column>
                 <PoppinsText weight='bold'>My Games</PoppinsText>
-            </ContainerCol>
-        </ContainerCol>
+            </Column>
+        </Column>
     );
 };
 

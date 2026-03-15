@@ -1,12 +1,12 @@
 import React, { PropsWithChildren } from 'react';
 import { View } from 'react-native';
 
-interface ContainerRowProps extends PropsWithChildren {
+interface RowProps extends PropsWithChildren {
     className?: string;
     gap?: number;
 }
 
-const ContainerRow = ({ children, className, gap = 4 }: ContainerRowProps) => {
+const Row = ({ children, className, gap = 4 }: RowProps) => {
     return (
         <View className={`flex-row ${className}`} style={{ gap: gap * 4 }}>
             {children}
@@ -14,4 +14,4 @@ const ContainerRow = ({ children, className, gap = 4 }: ContainerRowProps) => {
     );
 };
 
-export default ContainerRow;
+export default Row;

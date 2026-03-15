@@ -5,7 +5,7 @@ import { SignedIn, SignedOut, useOAuth, useUser } from "@clerk/clerk-expo";
 import * as WebBrowser from "expo-web-browser";
 
 import AuthButton from "./components/ui/AuthButton";
-import ContainerCol from "./components/layout/ContainerCol";
+import Column from "./components/layout/Column";
 import MainPage from "./components/MainPage";
 import PoppinsText from "./components/ui/PoppinsText";
 
@@ -37,7 +37,7 @@ export default function HomeScreen() {
       </SignedIn>
 
       <SignedOut>
-        <ContainerCol className="p-20 bg-text items-center" gap={16}>
+        <Column className="p-20 bg-text items-center" gap={16}>
           <PoppinsText className="text-2xl font-bold text-center" color="white">Welcome to WolffsPoint</PoppinsText>
           {/* <AuthButton
             authFlow={startAppleFlow}
@@ -47,7 +47,7 @@ export default function HomeScreen() {
             authFlow={startGoogleFlow}
             buttonText="Sign in with Google"
           />
-        </ContainerCol>
+        </Column>
       </SignedOut>
     </SafeAreaView>
   );
