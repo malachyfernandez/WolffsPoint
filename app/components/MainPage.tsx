@@ -5,21 +5,10 @@ import { useSyncUserData } from 'hooks/useSyncUserData';
 import ContainerCol from './layout/ContainerCol';
 import { useClerk } from '@clerk/clerk-expo';
 import { Text, TextInput, TouchableOpacity, View } from 'react-native';
-import PoppinsText from './ui/PoppinsText';
-import { useUserVariableGet } from 'hooks/useUserVariableGet';
-import { useUserVariablePrivacy } from 'hooks/useUserVariablePrivacy';
-import ContainerRow from './layout/ContainerRow';
 import AppButton from './ui/AppButton';
-import { useUserList } from 'hooks/useUserList';
-import { useUserListSet } from 'hooks/useUserListSet';
-import { useUserListGet } from 'hooks/useUserListGet';
-import PoppinsTextInput from './ui/PoppinsTextInput';
-import MyProfile from './sections/MyProfile';
-import FindFollowing from './sections/FindFollowing';
-import Following from './sections/Following';
-import Feed from './sections/Feed';
-import AddPost from './sections/AddPost';
-import NavButton from './ui/NavButton';
+import ContainerRow from './layout/ContainerRow';
+import PoppinsText from './ui/PoppinsText';
+
 
 type FontWeight = 'regular' | 'medium' | 'bold';
 
@@ -78,31 +67,25 @@ const MainPage = ({
 
             <ContainerCol>
 
-                <AppButton variant="grey" className="w-full" onPress={() => signOut()}>
-                    <ContainerRow>
-                        <PoppinsText>Sign Out</PoppinsText>
-                        <PoppinsText>{currentUserEmail}</PoppinsText>
-                    </ContainerRow>
-                </AppButton>
 
-                <ContainerRow className='w-full justify-between'>
-                    <NavButton buttonID="Profile" pageState={pageState} setPageState={setPageState} />
-                    <NavButton buttonID="Following" pageState={pageState} setPageState={setPageState} />
-                    <NavButton buttonID="Feed" pageState={pageState} setPageState={setPageState} />
+
+                <ContainerRow className='justify-between items-center px-6'>
+                    <PoppinsText weight='bold'>WolffsPoint</PoppinsText>
+                    <AppButton variant="grey" className="h-14 px-6" onPress={() => signOut()}>
+                        <ContainerCol gap={0}>
+                            <PoppinsText>Sign Out</PoppinsText>
+                            <PoppinsText varient="subtext">{currentUserEmail}</PoppinsText>
+                        </ContainerCol>
+                    </AppButton>
                 </ContainerRow>
-
-
-
-                {pageState === "Profile" && <MyProfile currentUserID={currentUserID} />}
-
-                {pageState === "Following" && <Following followingList={followingList.value || []} currentUserId={currentUserID} addFollowing={addFollowing} />}
-
-                {pageState === "Feed" && <Feed followingList={followingList.value || []} />}
-
             </ContainerCol>
 
-            <AddPost />
-        </View>
+
+
+
+
+
+        </View >
     );
 };
 
