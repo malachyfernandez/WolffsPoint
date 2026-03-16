@@ -27,13 +27,16 @@ const AppButton = ({
     const baseStyles = 'h-10 flex-row items-center justify-center rounded gap-2 overflow-hidden';
     let extraStyles = '';
 
+    let pressedStyles = 'brightness-50';
+
     if (variant === 'outline') {
         const bg = 'bg-none';
         extraStyles = `border-2 border-border ${bg} group hover:bg-border`;
         
     } else if (variant === 'grey') {
-        const bg = isPressed ? 'bg-[#47556950]' : 'bg-[#475569ae]';
+        const bg = 'bg-[#374559ae]';
         extraStyles = bg;
+        pressedStyles = 'brightness-80';
     } else if (variant === 'green') {
         const bg = 'bg-primary-accent';
         extraStyles = `${bg} group hover:brightness-125 active:brightness-50`;
@@ -42,7 +45,7 @@ const AppButton = ({
         extraStyles = `${bg} group hover:brightness-150 active:brightness-50`;
     }
 
-    const pressedStyles = 'brightness-50';
+    
 
     return (
 
@@ -51,7 +54,7 @@ const AppButton = ({
             onPressIn={() => setIsPressed(true)}
             onPressOut={() => setIsPressed(false)}
             onPress={onPress}
-            activeOpacity={0.9}
+            activeOpacity={0.8}
         >
             <Row className="items-center justify-center w-full h-full" pointerEvents='none'>
                 {children}

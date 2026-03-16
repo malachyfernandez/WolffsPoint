@@ -51,7 +51,7 @@ const JoinHandler = ({
                     <PoppinsText weight='medium' color='white'>{'Join'}</PoppinsText>
                 </AppButton>
                 : 
-                <AppButton variant="black" className="h-10 w-20 opacity-50" onPress={setInvalid} >
+                <AppButton variant="grey" className="h-10 w-20" onPress={setInvalid} >
                     <PoppinsText weight='medium' color='white'>{innerText}</PoppinsText>
                 </AppButton>
                 }

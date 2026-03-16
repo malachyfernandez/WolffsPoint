@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import PoppinsText from '../ui/text/PoppinsText';
 import PoppinsTextInput from '../ui/forms/PoppinsTextInput';
 import JoinHandler from '../ui/forms/JoinHandler';
+import ModalHeader from './ModalHeader';
 
 interface SimpleJoinGameModalProps {
   closeModal: () => void;
@@ -10,15 +11,19 @@ interface SimpleJoinGameModalProps {
 
 const SimpleJoinGameModal: React.FC<SimpleJoinGameModalProps> = ({ closeModal, onJoin }) => {
   const [gameCode, setGameCode] = useState('');
-  
+
   const handleJoin = (code: string) => {
     onJoin(code);
     closeModal();
   };
-  
+
   return (
     <>
-      <PoppinsText>Code:</PoppinsText>
+      <ModalHeader
+        text="Join a Game"
+        subtext="Enter a game code to join."
+      />
+      {/* <PoppinsText>Code:</PoppinsText> */}
       <PoppinsTextInput
         placeholder="Enter game code"
         className="w-full border border-subtle-border p-2"
