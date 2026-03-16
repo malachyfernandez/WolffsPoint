@@ -9,9 +9,10 @@ interface JoinedGameListItemProps {
     onLeave: () => void;
     className?: string;
     setActiveGameId: (gameId: string) => void;
+    index: number;
 }
 
-const JoinedGameListItem = ({ game, onLeave, className, setActiveGameId }: JoinedGameListItemProps) => {
+const JoinedGameListItem = ({ game, onLeave, className, setActiveGameId, index }: JoinedGameListItemProps) => {
     const gameInfo = useUserListGet({
         key: "games",
         filterFor: game,
@@ -24,10 +25,13 @@ const JoinedGameListItem = ({ game, onLeave, className, setActiveGameId }: Joine
         setActiveGameId(game)
     }
 
+    // if index = 0 add border-top
+    const borderClass = index === 0 ? 'border-t' : '';
+
 
     return (
         <>
-            <ListRow className={`justify-between items-center ${className || ''}`} onPress={handleSetActiveGameId}>
+            <ListRow className={`justify-between items-center ${className || ''} ${borderClass}`} onPress={handleSetActiveGameId}>
                 <PoppinsText>{`${GameName} (${GameID})`}</PoppinsText>
 
             </ListRow>

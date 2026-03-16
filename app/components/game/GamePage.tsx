@@ -45,7 +45,7 @@ const GamePage = ({ gameId, currentUserId }: GamePageProps) => {
 
     type navBarType = "players" | "config" | "stats" | "history" | "settings";
 
-    const [navBar, setNavBar] = useState<navBarType>("config");
+    const [navBar, setNavBar] = useState<navBarType>("players");
 
     return (
 

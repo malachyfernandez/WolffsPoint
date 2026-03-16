@@ -20,7 +20,7 @@ interface GameListProps {
 const GameList = ({ gamesTheyJoined, setGamesTheyJoined, myGames, hasJoinedAGame, hasMadeAGame, setActiveGameId }: GameListProps) => {
 
     return (
-        <Column className='p-6'>
+        <Column className='p-6' gap={6}>
             {hasJoinedAGame && (
                 <JoinedGames
                     gamesTheyJoined={gamesTheyJoined}

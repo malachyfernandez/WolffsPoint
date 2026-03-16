@@ -14,10 +14,11 @@ const JoinedGames = ({ gamesTheyJoined, setGamesTheyJoined, setActiveGameId }: J
         <Column>
             <PoppinsText weight='bold'>Joined Games</PoppinsText>
 
-            {gamesTheyJoined.map((game) => (
+            {gamesTheyJoined.map((game, index) => (
                 <JoinedGameListItem
                     key={game}
                     game={game}
+                    index={index}
                     onLeave={() => setGamesTheyJoined(gamesTheyJoined.filter((g) => g !== game))}
                     setActiveGameId={setActiveGameId}
                 />

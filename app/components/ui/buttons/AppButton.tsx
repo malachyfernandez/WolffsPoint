@@ -24,7 +24,7 @@ const AppButton = ({
 }: AppButtonProps) => {
     const [isPressed, setIsPressed] = useState(false);
 
-    const baseStyles = 'h-10 flex-row items-center justify-center rounded gap-2 overflow-hidden px-4';
+    const baseStyles = 'h-10 flex-row items-center justify-center rounded gap-2 overflow-hidden';
     let extraStyles = '';
 
     if (variant === 'outline') {

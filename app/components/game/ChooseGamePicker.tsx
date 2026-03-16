@@ -15,7 +15,7 @@ import GameList from './GameList';
 import NoGames from './NoGames';
 import { GameInfo, MyGames } from 'types/games';
 import { useSimpleModal } from '../modal/useSimpleModal';
-import SimpleJoinGameModal from '../ui/SimpleJoinGameModal';
+import SimpleJoinGameModal from '../modals/SimpleJoinGameModal';
 
 interface ChooseGamePickerProps {
     activeGameId: string;
@@ -30,7 +30,7 @@ const ChooseGamePicker = ({
     myGames,
     addNewGame,
 }: ChooseGamePickerProps) => {
-    const { showModal } = useSimpleModal();
+
 
     const [gamesTheyJoined, setGamesTheyJoined] = useUserVariable<string[]>({
         key: "gamesTheyJoined",
@@ -41,6 +41,7 @@ const ChooseGamePicker = ({
         setGamesTheyJoined([...gamesTheyJoined.value, gameId]);
     };
 
+    const { showModal } = useSimpleModal();
     const openJoinGameModal = () => {
         showModal(SimpleJoinGameModal, { onJoin: joinGame });
     };

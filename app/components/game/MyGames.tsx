@@ -15,14 +15,16 @@ const MyGames = ({ myGames, setActiveGameId }: MyGamesProps) => {
     return (
         <Column>
             <PoppinsText weight='bold'>My Games</PoppinsText>
-
-            {myGames?.map((game, index) => (
-                <MyGameListItem
-                    key={index}
-                    game={game}
-                    setActiveGameId={setActiveGameId}
-                />
-            ))}
+            <Column gap={0}>
+                {myGames?.map((game, index) => (
+                    <MyGameListItem
+                        index={index}
+                        key={index}
+                        game={game}
+                        setActiveGameId={setActiveGameId}
+                    />
+                ))}
+            </Column>
         </Column>
     );
 };

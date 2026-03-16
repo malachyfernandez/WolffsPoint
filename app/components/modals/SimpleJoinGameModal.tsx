@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import PoppinsText from './text/PoppinsText';
-import PoppinsTextInput from './forms/PoppinsTextInput';
-import JoinHandler from './forms/JoinHandler';
+import PoppinsText from '../ui/text/PoppinsText';
+import PoppinsTextInput from '../ui/forms/PoppinsTextInput';
+import JoinHandler from '../ui/forms/JoinHandler';
 
 interface SimpleJoinGameModalProps {
   closeModal: () => void;
