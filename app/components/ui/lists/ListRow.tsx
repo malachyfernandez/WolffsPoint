@@ -1,5 +1,5 @@
 import React from 'react';
-import Row from '../layout/Row';
+import Row from '../../layout/Row';
 import { TouchableOpacity } from 'react-native';
 
 interface ListRowProps {

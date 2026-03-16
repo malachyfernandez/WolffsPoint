@@ -1,10 +1,10 @@
 import React from 'react';
 import { useClerk } from '@clerk/clerk-expo';
-import Column from './layout/Column';
-import Row from './layout/Row';
-import AppButton from './ui/AppButton';
-import PoppinsText from './ui/PoppinsText';
-import { UserIcon } from './icons/UserIcon';
+import Column from './Column';
+import Row from './Row';
+import AppButton from '../ui/buttons/AppButton';
+import PoppinsText from '../ui/text/PoppinsText';
+import { UserIcon } from '../ui/icons/UserIcon';
 import { TouchableOpacity } from 'react-native';
 
 interface TopSiteBarProps {

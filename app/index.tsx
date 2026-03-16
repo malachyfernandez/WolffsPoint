@@ -4,10 +4,10 @@ import React, { useEffect, useState } from "react";
 import { SignedIn, SignedOut, useOAuth, useUser } from "@clerk/clerk-expo";
 import * as WebBrowser from "expo-web-browser";
 
-import AuthButton from "./components/ui/AuthButton";
+import AuthButton from "./components/ui/buttons/AuthButton";
 import Column from "./components/layout/Column";
 import MainPage from "./components/MainPage";
-import PoppinsText from "./components/ui/PoppinsText";
+import PoppinsText from "./components/ui/text/PoppinsText";
 
 const useWarmUpBrowser = () => {
   useEffect(() => {

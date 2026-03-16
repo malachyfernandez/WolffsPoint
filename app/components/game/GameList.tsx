@@ -1,5 +1,5 @@
 import React from 'react';
-import Column from './layout/Column';
+import Column from '../layout/Column';
 import JoinedGames from './JoinedGames';
 import MyGames from './MyGames';
 

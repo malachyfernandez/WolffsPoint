@@ -1,6 +1,6 @@
 import React from 'react';
-import PoppinsText from './ui/PoppinsText';
-import ListRow from './ui/ListRow';
+import PoppinsText from '../ui/text/PoppinsText';
+import ListRow from '../ui/lists/ListRow';
 
 import { UserListRecord } from 'hooks/useUserList';
 import { GameInfo } from 'types/games';

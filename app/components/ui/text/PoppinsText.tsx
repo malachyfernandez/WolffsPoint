@@ -23,9 +23,9 @@ const PoppinsText = ({
     style
 }: PoppinsTextProps) => {
     const [fontsLoaded] = useFonts({
-        'Poppins-Regular': require('../../../assets/fonts/Poppins/Poppins-Regular.ttf'),
-        'Poppins-Medium': require('../../../assets/fonts/Poppins/Poppins-Medium.ttf'),
-        'Poppins-Bold': require('../../../assets/fonts/Poppins/Poppins-Bold.ttf'),
+        'Poppins-Regular': require('../../../../assets/fonts/Poppins/Poppins-Regular.ttf'),
+        'Poppins-Medium': require('../../../../assets/fonts/Poppins/Poppins-Medium.ttf'),
+        'Poppins-Bold': require('../../../../assets/fonts/Poppins/Poppins-Bold.ttf'),
     });
 
 

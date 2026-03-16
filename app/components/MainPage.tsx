@@ -1,16 +1,17 @@
-import React, { PropsWithChildren, useState } from 'react';
-
+import React, { PropsWithChildren } from 'react';
+import { View } from 'react-native';
+import Column from './layout/Column';
+import PoppinsText from './ui/text/PoppinsText';
 import { useUserVariable } from 'hooks/useUserVariable';
 import { useUserListGet } from 'hooks/useUserListGet';
 import { useUserListSet } from 'hooks/useUserListSet';
-import Column from './layout/Column';
-import { View } from 'react-native';
-import TopSiteBar from './TopSiteBar';
-import ChooseGamePicker from './ChooseGamePicker';
-import JoinGameModal from './ui/JoinGameModal';
-import GamePage from './GamePage';
 import { GameInfo } from 'types/games';
-import PoppinsText from './ui/PoppinsText';
+import TopSiteBar from './layout/TopSiteBar';
+import ChooseGamePicker from './game/ChooseGamePicker';
+import GamePage from './game/GamePage';
+import { ModalProvider } from './modal/ModalContext';
+import GenericModal from './modal/GenericModal';
+import ModalRegistry from './modal/ModalRegistry';
 
 
 
@@ -20,9 +21,9 @@ interface MainPageProps extends PropsWithChildren {
     className?: string;
 }
 
-const MainPage = ({
+const MainPageContent: React.FC<MainPageProps> = ({
     className = '',
-}: MainPageProps) => {
+}) => {
 
     interface UserData {
         email?: string;
@@ -48,26 +49,6 @@ const MainPage = ({
         key: "activeGameId",
         defaultValue: "",
     });
-
-    const [isModalShowing, setIsModalShowing] = useState(false);
-
-    const [gamesTheyJoined, setGamesTheyJoined] = useUserVariable<string[]>({
-        key: "gamesTheyJoined",
-        defaultValue: [],
-    });
-
-    const showModal = () => {
-        setIsModalShowing(true);
-    }
-
-    const hideModal = () => {
-        setIsModalShowing(false);
-    }
-
-    const joinGame = (gameId: string) => {
-        setGamesTheyJoined([...gamesTheyJoined.value, gameId]);
-        hideModal();
-    }
 
     const generateGameId = () => {
         const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -100,13 +81,14 @@ const MainPage = ({
     return (
 
         <View className='justify-between w-full h-full'>
+            <ModalRegistry />
+            
             <TopSiteBar isInAGame={isInAGame} setActiveGameId={setActiveGameId} />
             {!isInAGame ? (
                 <ChooseGamePicker
                     activeGameId={activeGameId.value}
                     setActiveGameId={setActiveGameId}
                     myGames={myGames}
-                    showModal={showModal}
                     addNewGame={addNewGame}
                 />
             ) : (
@@ -115,12 +97,16 @@ const MainPage = ({
                     currentUserId={userId}
                 />
             )}
-            <JoinGameModal
-                isVisible={isModalShowing}
-                onHide={hideModal}
-                handleJoinGame={joinGame}
-            />
+            <GenericModal />
         </View>
+    );
+};
+
+const MainPage: React.FC<MainPageProps> = (props) => {
+    return (
+        <ModalProvider>
+            <MainPageContent {...props} />
+        </ModalProvider>
     );
 };
 

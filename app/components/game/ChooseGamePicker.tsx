@@ -2,22 +2,25 @@ import React from 'react';
 
 import { useUserVariable } from 'hooks/useUserVariable';
 import { useSyncUserData } from 'hooks/useSyncUserData';
-import Column from './layout/Column';
+import Column from '../layout/Column';
 import { ScrollView } from 'react-native';
 import Animated, { FadeInDown, FadeInRight, FadeOutDown, FadeOutRight } from 'react-native-reanimated';
-import AppButton from './ui/AppButton';
-import JoinGameButton from './ui/JoinGameButton';
-import Row from './layout/Row';
-import PoppinsText from './ui/PoppinsText';
+import AppButton from '../ui/buttons/AppButton';
+import JoinGameButton from '../ui/buttons/JoinGameButton';
+import Row from '../layout/Row';
+import PoppinsText from '../ui/text/PoppinsText';
+import PoppinsTextInput from '../ui/forms/PoppinsTextInput';
+import JoinHandler from '../ui/forms/JoinHandler';
 import GameList from './GameList';
 import NoGames from './NoGames';
 import { GameInfo, MyGames } from 'types/games';
+import { useSimpleModal } from '../modal/useSimpleModal';
+import SimpleJoinGameModal from '../ui/SimpleJoinGameModal';
 
 interface ChooseGamePickerProps {
     activeGameId: string;
     setActiveGameId: (id: string) => void;
     myGames: MyGames;
-    showModal: () => void;
     addNewGame: () => void;
 }
 
@@ -25,9 +28,22 @@ const ChooseGamePicker = ({
     activeGameId,
     setActiveGameId,
     myGames,
-    showModal,
     addNewGame,
 }: ChooseGamePickerProps) => {
+    const { showModal } = useSimpleModal();
+
+    const [gamesTheyJoined, setGamesTheyJoined] = useUserVariable<string[]>({
+        key: "gamesTheyJoined",
+        defaultValue: [],
+    });
+
+    const joinGame = (gameId: string) => {
+        setGamesTheyJoined([...gamesTheyJoined.value, gameId]);
+    };
+
+    const openJoinGameModal = () => {
+        showModal(SimpleJoinGameModal, { onJoin: joinGame });
+    };
 
     interface UserData {
         email?: string;
@@ -45,12 +61,6 @@ const ChooseGamePicker = ({
     const userId = userData.value.userId || "";
 
     useSyncUserData(userData.value, setUserData);
-
-    const [gamesTheyJoined, setGamesTheyJoined] = useUserVariable<string[]>({
-        key: "gamesTheyJoined",
-        defaultValue: [],
-    });
-
 
     const hasJoinedAGame = (gamesTheyJoined?.value.length ? true : false);
     const hasMadeAGame = (myGames?.length ? true : false);
@@ -85,7 +95,7 @@ const ChooseGamePicker = ({
                                 entering={FadeInDown.duration(600)}
                                 exiting={FadeOutDown.duration(600)}
                             >
-                                <NoGames showModal={showModal} />
+                                <NoGames showModal={openJoinGameModal} />
                             </Animated.View>
                         </Column>
 
@@ -106,7 +116,7 @@ const ChooseGamePicker = ({
                             entering={FadeInRight.duration(100)}
                             exiting={FadeOutRight.duration(100)}
                         >
-                            <JoinGameButton onPress={showModal} />
+                            <JoinGameButton onPress={openJoinGameModal} />
                         </Animated.View>
                     )}
                 </Row>

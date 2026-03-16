@@ -1,15 +1,16 @@
 import React, { useState } from 'react';
-import Column from './layout/Column';
-import PoppinsText from './ui/PoppinsText';
+import Column from '../layout/Column';
+import PoppinsText from '../ui/text/PoppinsText';
 import { ScrollView, TouchableOpacity, View, Platform } from 'react-native';
-import Row from './layout/Row';
+import Row from '../layout/Row';
 import { useUserListGet } from 'hooks/useUserListGet';
-import prettyLog from '../../utils/prettyLog';
+import prettyLog from '../../../utils/prettyLog';
 import { useUserListSet } from 'hooks/useUserListSet';
-import UserIcon from './icons/UserIcon';
-import NavTab from './NavTab';
+import UserIcon from '../ui/icons/UserIcon';
+import NavTab from '../layout/NavTab';
 import { transform } from '@babel/core';
 import OperatorsPlayerPage from './operators-player-page';
+import AppButton from '../ui/buttons/AppButton';
 
 interface GamePageProps {
     gameId: string;
@@ -17,7 +18,6 @@ interface GamePageProps {
 }
 
 const GamePage = ({ gameId, currentUserId }: GamePageProps) => {
-
     // CHECK IF WE ARE OPORATOR
     const gameDatas = useUserListGet({
         key: "games",
@@ -46,13 +46,6 @@ const GamePage = ({ gameId, currentUserId }: GamePageProps) => {
     type navBarType = "players" | "config" | "stats" | "history" | "settings";
 
     const [navBar, setNavBar] = useState<navBarType>("config");
-
-
-
-
-
-
-
 
     return (
 

@@ -1,6 +1,6 @@
 import React from 'react';
-import Column from './layout/Column';
-import PoppinsText from './ui/PoppinsText';
+import Column from '../layout/Column';
+import PoppinsText from '../ui/text/PoppinsText';
 import JoinedGameListItem from './JoinedGameListItem';
 
 interface JoinedGamesProps {

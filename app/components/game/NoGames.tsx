@@ -1,8 +1,8 @@
 import React from 'react';
-import Column from './layout/Column';
-import { SadEmoji } from './icons/SadEmoji';
-import PoppinsText from './ui/PoppinsText';
-import JoinGameButton from './ui/JoinGameButton';
+import Column from '../layout/Column';
+import { SadEmoji } from '../ui/icons/SadEmoji';
+import PoppinsText from '../ui/text/PoppinsText';
+import JoinGameButton from '../ui/buttons/JoinGameButton';
 
 interface NoGamesProps {
     showModal: () => void;

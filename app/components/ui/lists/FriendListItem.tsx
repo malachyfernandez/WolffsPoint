@@ -1,8 +1,8 @@
 import React from 'react';
-import PoppinsText from './PoppinsText';
+import PoppinsText from '../text/PoppinsText';
 import { useUserVariableGet } from 'hooks/useUserVariableGet';
-import Column from '../layout/Column';
-import Row from '../layout/Row';
+import Column from '../../layout/Column';
+import Row from '../../layout/Row';
 
 interface FriendListItemProps {
     friend: string;

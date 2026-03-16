@@ -1,6 +1,6 @@
 import React from 'react';
 import { TouchableOpacity, View } from 'react-native';
-import PoppinsText from './ui/PoppinsText';
+import PoppinsText from '../ui/text/PoppinsText';
 
 interface NavTabProps {
   text: string;

@@ -1,7 +1,7 @@
 import React from 'react';
-import AppButton from './ui/AppButton';
-import PoppinsText from './ui/PoppinsText';
-import ListRow from './ui/ListRow';
+import AppButton from '../ui/buttons/AppButton';
+import PoppinsText from '../ui/text/PoppinsText';
+import ListRow from '../ui/lists/ListRow';
 import { useUserListGet } from 'hooks/useUserListGet';
 
 interface JoinedGameListItemProps {

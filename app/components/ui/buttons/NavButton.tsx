@@ -1,7 +1,7 @@
 import React from 'react';
 
 import AppButton from './AppButton';
-import PoppinsText from './PoppinsText';
+import PoppinsText from '../text/PoppinsText';
 
 type PageState = "Profile" | "Following" | "Feed";
 

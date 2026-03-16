@@ -1,15 +1,15 @@
 import { useEffect, useState } from 'react';
-import AppButton from './AppButton';
-import PoppinsText from './PoppinsText';
+import AppButton from '../buttons/AppButton';
+import PoppinsText from '../text/PoppinsText';
 import { useUserListGet } from 'hooks/useUserListGet';
 
 interface JoinHandlerProps {
-    handleJoinGame: (gameCode: string) => void;
+    onJoin: (gameCode: string) => void;
     gameCode: string;
 }
 
 const JoinHandler = ({
-    handleJoinGame,
+    onJoin,
     gameCode,
 }: JoinHandlerProps) => {
     const gameIdChecker = useUserListGet({
@@ -47,7 +47,7 @@ const JoinHandler = ({
     return (
         <>
             {doesGameExist ?
-                <AppButton variant="black" className="h-10 w-20" onPress={() => handleJoinGame(gameCode)}>
+                <AppButton variant="black" className="h-10 w-20" onPress={() => onJoin(gameCode)}>
                     <PoppinsText weight='medium' color='white'>{'Join'}</PoppinsText>
                 </AppButton>
                 : 
