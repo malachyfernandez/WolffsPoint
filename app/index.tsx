@@ -8,6 +8,7 @@ import AuthButton from "./components/ui/buttons/AuthButton";
 import Column from "./components/layout/Column";
 import MainPage from "./components/MainPage";
 import PoppinsText from "./components/ui/text/PoppinsText";
+import ModalHeader from "./components/modals/ModalHeader";
 
 const useWarmUpBrowser = () => {
   useEffect(() => {
@@ -16,7 +17,7 @@ const useWarmUpBrowser = () => {
     return () => { void WebBrowser.coolDownAsync(); };
   }, []);
 };
- 
+
 WebBrowser.maybeCompleteAuthSession();
 
 // ============================================================================
@@ -37,16 +38,24 @@ export default function HomeScreen() {
       </SignedIn>
 
       <SignedOut>
-        <Column className="py-20 w-[80%] max-w-96 bg-text items-center" gap={16}>
-          <PoppinsText className="text-2xl font-bold text-center" color="white">Welcome to WolffsPoint</PoppinsText>
-          {/* <AuthButton
+
+        <Column className="w-[80vw] p-6 max-w-96 bg-text border-4 border-primary-accent items-center" gap={6}>
+          <ModalHeader
+            text="Welcome to WolffsPoint"
+            subtext="Sign in to get started."
+            className="w-[80vw] max-w-96"
+          />
+          <Column gap={8} className="items-center">
+            {/* <PoppinsText className="text-2xl font-bold text-center" color="white">Welcome to WolffsPoint</PoppinsText> */}
+            {/* <AuthButton
             authFlow={startAppleFlow}
             buttonText="Continue with Apple"
           /> */}
-          <AuthButton
-            authFlow={startGoogleFlow}
-            buttonText="Sign in with Google"
-          />
+            <AuthButton
+              authFlow={startGoogleFlow}
+              buttonText="Sign in with Google"
+            />
+          </Column>
         </Column>
       </SignedOut>
     </SafeAreaView>
@@ -74,4 +83,3 @@ export default function HomeScreen() {
 //     </SafeAreaView>
 //   );
 // }
- 
