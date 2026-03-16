@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import PoppinsText from '../ui/text/PoppinsText';
 import { useUserList } from 'hooks/useUserList';
 import Column from '../layout/Column';
@@ -39,7 +39,7 @@ type PlayerTableItem = {
 };
 
 const OperatorsPlayerPage = ({ currentUserId, gameId }: OperatorsPlayerPageProps) => {
-    
+
     const [playerTable, setPlayerTable] = useUserList<PlayerTableItem[]>({
         key: "playerTable",
         itemId: gameId,
@@ -66,29 +66,66 @@ const OperatorsPlayerPage = ({ currentUserId, gameId }: OperatorsPlayerPageProps
         defaultValue: "Unset",
     });
 
+    const [realDaysPerInGameDay, setRealDaysPerInGameDay] = useUserList({
+        key: "realDaysPerInGameDay",
+        itemId: gameId,
+        privacy: "PUBLIC",
+        defaultValue: "2",
+    });
+
     const { showModal } = useSimpleModal();
     const openDayConfigModal = () => {
-        showModal(DayConfigModal, { onSave: setStartingDate });
+        showModal(DayConfigModal, { setStartingDate, setRealDaysPerInGameDay });
     };
 
+    let isNoStartingDate = false;
+
+    if (!startingDate.state.isSyncing) {
+        isNoStartingDate = (startingDate.value === "Unset");
+    }
+
+
     // open modal when no date is set
+    useEffect(() => {
+        if (isNoStartingDate) {
+            openDayConfigModal();
+        }
+    }, [isNoStartingDate]);
 
 
 
-    
+
+
+
+
     // prettyLog(users);
 
 
     return (
         <Column>
-            {users.map((user, index) => (
-                <PoppinsText key={index}>{user.userId || 'Unnamed player'}</PoppinsText>
-            ))}
-            <AppButton variant="black" className='w-12 h-12' 
-            onPress={openDayConfigModal}
-            >
-                <PoppinsText weight='bold' className='text-white text-2xl'>+</PoppinsText>
-            </AppButton>
+            {/* if startingDate.value === "Unset" show modal */}
+            {isNoStartingDate ? (
+                <>
+                    <PoppinsText>Set starting date</PoppinsText>
+                    <AppButton variant="green" className='w-52 h-12'
+                        onPress={openDayConfigModal}
+                    >
+                        <PoppinsText weight='bold' className='text-white'>Set Starting Date</PoppinsText>
+                    </AppButton>
+                </>
+            ) : (
+                <>
+                
+                    {users.map((user, index) => (
+                        <PoppinsText key={index}>{user.userId || 'Unnamed player'}</PoppinsText>
+                    ))}
+                    <AppButton variant="black" className='w-12 h-12'
+                        onPress={openDayConfigModal}
+                    >
+                        <PoppinsText weight='bold' className='text-white text-2xl'>+</PoppinsText>
+                    </AppButton>
+                </>
+            )}
         </Column>
     );
 };

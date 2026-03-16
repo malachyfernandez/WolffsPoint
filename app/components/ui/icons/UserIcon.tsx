@@ -7,25 +7,15 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import Svg, { Path, G } from 'react-native-svg';
-import { cssInterop } from 'nativewind';
-
-cssInterop(Svg, {
-  className: {
-    target: 'style',
-    nativeStyleToProp: {
-      color: true,
-    },
-  },
-});
 
 interface UserIconProps {
   size?: number;
-  className?: string;
+  color?: string;
 }
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 
-export function UserIcon({ size = 24, className }: UserIconProps) {
+export function UserIcon({ size = 24, color = '#1a1a1a' }: UserIconProps) {
   const bodyDashOffset = useSharedValue(28);
   const headDashOffset = useSharedValue(28);
 
@@ -55,11 +45,11 @@ export function UserIcon({ size = 24, className }: UserIconProps) {
   }));
 
   return (
-    <Svg className={className} width={size} height={size} viewBox="0 0 24 24">
+    <Svg width={size} height={size} viewBox="0 0 24 24">
       {/* Icon from Material Line Icons by Vjacheslav Trushkin - https://github.com/cyberalien/line-md/blob/master/license.txt */}
       <G
         fill="none"
-        stroke="currentColor"
+        stroke={color}
         strokeDasharray="28"
         strokeDashoffset="28"
         strokeLinecap="round"

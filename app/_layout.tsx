@@ -5,6 +5,8 @@ import { ClerkProvider, ClerkLoaded, useAuth } from "@clerk/clerk-expo";
 import { ConvexProviderWithClerk } from "convex/react-clerk";
 import { ConvexReactClient } from "convex/react";
 import { Slot } from "expo-router";
+import { HeroUINativeProvider } from "heroui-native/provider";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { tokenCache } from '../utils/tokenCache';
 import "../global.css";
 
@@ -13,13 +15,22 @@ const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!;
 
 export default function RootLayout() {
   return (
-    <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
-      <ClerkLoaded>
-        <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
-          {/* Slot renders the current screen (Home or Auth) */}
-          <Slot />
-        </ConvexProviderWithClerk>
-      </ClerkLoaded>
-    </ClerkProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <HeroUINativeProvider
+        config={{
+          devInfo: {
+            stylingPrinciples: false,
+          },
+        }}
+      >
+        <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
+          <ClerkLoaded>
+            <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
+              <Slot />
+            </ConvexProviderWithClerk>
+          </ClerkLoaded>
+        </ClerkProvider>
+      </HeroUINativeProvider>
+    </GestureHandlerRootView>
   );
 }

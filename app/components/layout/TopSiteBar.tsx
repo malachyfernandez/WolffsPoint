@@ -23,7 +23,7 @@ const TopSiteBar = ({ className = '', isInAGame, setActiveGameId }: TopSiteBarPr
                     <PoppinsText weight='bold' className='text-lg'>{isInAGame ? "< WolffsPoint" : "WolffsPoint"}</PoppinsText>
                 </TouchableOpacity>
                 <AppButton variant="outline" className="h-14 w-14" onPress={() => signOut()}>
-                    <UserIcon size={24} className='group-hover:text-white' />
+                    <UserIcon size={24} />
                 </AppButton>
             </Row>
         </Column>

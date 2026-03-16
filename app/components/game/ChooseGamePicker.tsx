@@ -108,7 +108,7 @@ const ChooseGamePicker = ({
             {/* bottom bar */}
             <Column>
                 <Row className='p-6 border-t border-subtle-border justify-between'>
-                    <AppButton variant="outline" className="h-12 w-48" onPress={addNewGame}>
+                    <AppButton variant="outline" className="h-12 w-40 shrink" onPress={addNewGame}>
                         <PoppinsText weight='medium' className='group-hover:text-white'>New WolffsPoint</PoppinsText>
                     </AppButton>
 

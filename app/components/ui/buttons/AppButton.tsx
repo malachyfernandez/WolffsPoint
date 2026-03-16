@@ -1,11 +1,6 @@
 import React, { useState } from 'react';
-import { TouchableOpacity, ViewStyle, View } from 'react-native';
-import { BlurView } from 'expo-blur';
-import { cssInterop } from "nativewind";
+import { TouchableOpacity } from 'react-native';
 import Row from '../../layout/Row';
-
-// Enable NativeWind for BlurView
-cssInterop(BlurView, { className: "style" });
 
 interface AppButtonProps {
     children: React.ReactNode;

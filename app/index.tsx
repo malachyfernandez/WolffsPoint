@@ -32,33 +32,37 @@ export default function HomeScreen() {
   const [searchText, setSearchText] = useState("");
 
   return (
-    <SafeAreaView className="flex-1 bg-background items-center justify-center">
-      <SignedIn>
-        <MainPage />
-      </SignedIn>
+    <View className="flex-1 bg-background">
+      <SafeAreaView className="flex-1">
+        <View className="w-full h-full items-center justify-center">
+          <SignedIn>
+            <MainPage />
+          </SignedIn>
 
-      <SignedOut>
+          <SignedOut>
 
-        <Column className="w-[80vw] p-6 max-w-96 bg-text border-4 border-primary-accent items-center" gap={6}>
-          <ModalHeader
-            text="Welcome to WolffsPoint"
-            subtext="Sign in to get started."
-            className="w-[80vw] max-w-96"
-          />
-          <Column gap={8} className="items-center">
-            {/* <PoppinsText className="text-2xl font-bold text-center" color="white">Welcome to WolffsPoint</PoppinsText> */}
-            {/* <AuthButton
+            <Column className="w-[80vw] p-6 max-w-96 bg-text border-4 border-primary-accent items-center" gap={6}>
+              <ModalHeader
+                text="Welcome to WolffsPoint"
+                subtext="Sign in to get started."
+                className="w-[80vw] max-w-96"
+              />
+              <Column gap={8} className="items-center">
+                {/* <PoppinsText className="text-2xl font-bold text-center" color="white">Welcome to WolffsPoint</PoppinsText> */}
+                {/* <AuthButton
             authFlow={startAppleFlow}
             buttonText="Continue with Apple"
           /> */}
-            <AuthButton
-              authFlow={startGoogleFlow}
-              buttonText="Sign in with Google"
-            />
-          </Column>
-        </Column>
-      </SignedOut>
-    </SafeAreaView>
+                <AuthButton
+                  authFlow={startGoogleFlow}
+                  buttonText="Sign in with Google"
+                />
+              </Column>
+            </Column>
+          </SignedOut>
+        </View>
+      </SafeAreaView>
+    </View>
   );
 }
 

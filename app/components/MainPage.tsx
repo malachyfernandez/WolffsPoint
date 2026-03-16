@@ -1,4 +1,6 @@
-import React, { PropsWithChildren } from 'react';
+import React, { PropsWithChildren, useState } from 'react';
+import { Button } from 'heroui-native/button';
+import { Dialog } from 'heroui-native/dialog';
 import { View } from 'react-native';
 import Column from './layout/Column';
 import PoppinsText from './ui/text/PoppinsText';
@@ -24,6 +26,7 @@ interface MainPageProps extends PropsWithChildren {
 const MainPageContent: React.FC<MainPageProps> = ({
     className = '',
 }) => {
+    const [isHeroDialogOpen, setIsHeroDialogOpen] = useState(false);
 
     interface UserData {
         email?: string;
@@ -80,8 +83,28 @@ const MainPageContent: React.FC<MainPageProps> = ({
 
     return (
 
-        <View className='justify-between w-full h-full'>
+        <View className=' justify-between w-full h-full'>
             <ModalRegistry />
+            <View className='absolute right-4 top-20 z-10'>
+                <Dialog isOpen={isHeroDialogOpen} onOpenChange={setIsHeroDialogOpen}>
+                    <Dialog.Trigger asChild>
+                        <Button>Open HeroUI Dialog</Button>
+                    </Dialog.Trigger>
+                    <Dialog.Portal>
+                        <Dialog.Overlay />
+                        <Dialog.Content className='bg-background rounded border-2 border-border'>
+                            <Dialog.Close className='w-10 h-10 bg-accent-hover'/>
+                            <Dialog.Title>HeroUI is working</Dialog.Title>
+                            <Dialog.Description>
+                                
+                            </Dialog.Description>
+                            <PoppinsText varient='subtext'>
+                                    This dialog was opened from a HeroUI Native button inside `MainPage.tsx`.
+                                </PoppinsText>
+                        </Dialog.Content>
+                    </Dialog.Portal>
+                </Dialog>
+            </View>
             
             <TopSiteBar isInAGame={isInAGame} setActiveGameId={setActiveGameId} />
             {!isInAGame ? (

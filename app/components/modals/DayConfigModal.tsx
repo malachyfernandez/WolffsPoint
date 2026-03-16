@@ -8,19 +8,21 @@ import ModalHeader from './ModalHeader';
 
 interface DayConfigModalProps {
   closeModal: () => void;
-  onSave: (newValue: string) => void;
+  setStartingDate: (newValue: string) => void;
+  setRealDaysPerInGameDay: (newValue: string) => void;
 }
 
-const DayConfigModal: React.FC<DayConfigModalProps> = ({ closeModal, onSave }) => {
+const DayConfigModal: React.FC<DayConfigModalProps> = ({ closeModal, setStartingDate, setRealDaysPerInGameDay }) => {
   const [displayDate, setDisplayDate] = useState('');
   const [canonicalDate, setCanonicalDate] = useState<string | null>(null);
   const [isDateValid, setIsDateValid] = useState(false);
 
-  const [realDaysPerInGameDay, setRealDaysPerInGameDay] = useState('');
+  const [realDaysPerInGameDaySTATE, setRealDaysPerInGameDaySTATE] = useState('2');
 
   const handleSave = () => {
     if (isDateValid && canonicalDate) {
-      onSave(canonicalDate);
+      setStartingDate(canonicalDate);
+      setRealDaysPerInGameDay(realDaysPerInGameDaySTATE)
       closeModal();
     }
   };
@@ -32,7 +34,7 @@ const DayConfigModal: React.FC<DayConfigModalProps> = ({ closeModal, onSave }) =
   };
 
   const handleRealDaysChange = (displayValue: string, _isValid: boolean, _numericValue: number | null) => {
-    setRealDaysPerInGameDay(displayValue);
+    setRealDaysPerInGameDaySTATE(displayValue);
   };
 
   const todaysDate = new Date()
@@ -61,7 +63,7 @@ const DayConfigModal: React.FC<DayConfigModalProps> = ({ closeModal, onSave }) =
         <PoppinsNumberInput
           placeholder="Enter number"
           className="w-full border border-subtle-border p-2"
-          value={realDaysPerInGameDay}
+          value={realDaysPerInGameDaySTATE}
           onChangeText={handleRealDaysChange}
           minValue={1}
         />
