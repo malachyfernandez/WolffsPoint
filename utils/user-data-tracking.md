@@ -1,81 +1,100 @@
 # User Data Variables Tracking
 
-## UserVariable Definitions
+**userData** -- User profile data
+```ts
+const [userData, setUserData] = useUserVariable<UserData>({
+    key: "userData",
+    defaultValue: {},
+    privacy: "PUBLIC",
+    searchKeys: ["name"],
+});
 
-### Key: userData
-- **Tracks**: User email, name, userId
-- **Origin**: app/components/MainPage.tsx
-- **Properties**: email, name, userId
-- **Privacy**: PUBLIC
-- **SearchKeys**: name
+// MainPage.tsx
+// AllGamesPage.tsx
+```
 
-### Key: activeGameId
-- **Tracks**: Currently active game ID
-- **Origin**: app/components/MainPage.tsx
-- **Properties**: string (game ID)
-- **Privacy**: (not specified)
+**activeGameId** -- Current game ID
+```ts
+const [activeGameId, setActiveGameId] = useUserVariable<string>({
+    key: "activeGameId",
+    defaultValue: "",
+});
 
-### Key: gamesTheyJoined
-- **Tracks**: Array of game IDs user joined
-- **Origin**: app/components/game/AllGamesPage.tsx
-- **Properties**: string[] (game IDs)
-- **Privacy**: (not specified)
+// MainPage.tsx
+```
 
-## UserList Definitions
+**gamesTheyJoined** -- Joined game IDs
+```ts
+const [gamesTheyJoined, setGamesTheyJoined] = useUserVariable<string[]>({
+    key: "gamesTheyJoined",
+    defaultValue: [],
+});
 
-### Key: games
-- **Tracks**: Game information per user
-- **Origin**: app/components/MainPage.tsx (usage)
-- **Properties**: id, name, description
-- **Privacy**: PUBLIC
-- **FilterKey**: id
+// AllGamesPage.tsx
+```
 
-### Key: playerTable
-- **Tracks**: Player table data per game
-- **Origin**: app/components/game/PlayerPageOPERATOR.tsx
-- **Properties**: PlayerTableItem[] (email, role)
-- **Privacy**: PUBLIC
-- **ItemId**: gameId
+**games** -- Game info per user
+```ts
+const setUserListItem = useUserListSet();
 
-### Key: userTable
-- **Tracks**: User table data per game
-- **Origin**: app/components/game/PlayerPageOPERATOR.tsx
-- **Properties**: UserTableItem[] (userId, role, playerData, days)
-- **Privacy**: PUBLIC
-- **ItemId**: gameId
+setUserListItem({
+    key: "games",
+    itemId: newGameId,
+    value: { id: newGameId, name: "Game 1", description: "Description 1" },
+    filterKey: "id",
+    privacy: "PUBLIC",
+});
 
-### Key: startingDate
-- **Tracks**: Game start date per game
-- **Origin**: app/components/game/PlayerPageOPERATOR.tsx
-- **Properties**: string (date or "Unset")
-- **Privacy**: PUBLIC
-- **ItemId**: gameId
+// MainPage.tsx
+```
 
-### Key: realDaysPerInGameDay
-- **Tracks**: Real days per in-game day
-- **Origin**: app/components/game/PlayerPageOPERATOR.tsx
-- **Properties**: string (number as string)
-- **Privacy**: PUBLIC
-- **ItemId**: gameId
+**playerTable** -- Player data per game
+```ts
+const [playerTable, setPlayerTable] = useUserList<PlayerTableItem[]>({
+    key: "playerTable",
+    itemId: gameId,
+    defaultValue: [],
+    privacy: "PUBLIC",
+});
 
-## Property Inconsistencies
+// PlayerPageOPERATOR.tsx
+```
 
-### userData - Duplicate Definitions
-- **MainPage.tsx**: email, name, userId, PUBLIC privacy, searchKeys: ["name"]
-- **AllGamesPage.tsx**: email, name, userId, PUBLIC privacy, searchKeys: ["name"]
-- **Status**: Identical properties - no inconsistency detected
+**userTable** -- User data per game
+```ts
+const [userTable, setUserTable] = useUserList<UserTableItem[]>({
+    key: "userTable",
+    itemId: gameId,
+    defaultValue: [],
+    privacy: "PUBLIC",
+});
 
-### startingDate - Duplicate Definitions
-- **PlayerPageOPERATOR.tsx**: string, PUBLIC privacy, defaultValue: "Unset"
-- **ChangeDateInfo.tsx**: string, (privacy not specified), no defaultValue
-- **GetStartedButton.tsx**: string, (privacy not specified), no defaultValue
-- **Status**: Inconsistent privacy and defaultValue across files
+// PlayerPageOPERATOR.tsx
+```
 
-### realDaysPerInGameDay - Duplicate Definitions
-- **PlayerPageOPERATOR.tsx**: string, PUBLIC privacy, defaultValue: "2"
-- **ChangeDateInfo.tsx**: string, (privacy not specified), defaultValue: "2"
-- **GetStartedButton.tsx**: string, (privacy not specified), no defaultValue
-- **Status**: Inconsistent privacy and defaultValue across files
+**startingDate** -- Game start date
+```ts
+const [startingDate, setStartingDate] = useUserList({
+    key: "startingDate",
+    itemId: gameId,
+    privacy: "PUBLIC",
+    defaultValue: "Unset",
+});
 
-## Notes
-- MAX 10 tokens per definition as requested
+// PlayerPageOPERATOR.tsx
+// ChangeDateInfo.tsx - MISSING: privacy, defaultValue
+```
+
+**realDaysPerInGameDay** -- Days per game day
+```ts
+const [realDaysPerInGameDay, setRealDaysPerInGameDay] = useUserList({
+    key: "realDaysPerInGameDay",
+    itemId: gameId,
+    privacy: "PUBLIC",
+    defaultValue: "2",
+});
+
+// PlayerPageOPERATOR.tsx
+// ChangeDateInfo.tsx - MISSING: privacy
+// GetStartedButton.tsx - MISSING: privacy, defaultValue
+```
