@@ -9,7 +9,7 @@ import { useUserListGet } from 'hooks/useUserListGet';
 import { useUserListSet } from 'hooks/useUserListSet';
 import { GameInfo } from 'types/games';
 import TopSiteBar from './layout/TopSiteBar';
-import ChooseGamePicker from './game/ChooseGamePicker';
+import AllGamesPage from './game/AllGamesPage';
 import GamePage from './game/GamePage';
 import PoppinsTextInput from './ui/forms/PoppinsTextInput';
 import JoinHandler from './ui/forms/JoinHandler';
@@ -89,7 +89,7 @@ const MainPage: React.FC<MainPageProps> = ({
 
             <TopSiteBar isInAGame={isInAGame} setActiveGameId={setActiveGameId} />
             {!isInAGame ? (
-                <ChooseGamePicker
+                <AllGamesPage
                     activeGameId={activeGameId.value}
                     setActiveGameId={setActiveGameId}
                     myGames={myGames}

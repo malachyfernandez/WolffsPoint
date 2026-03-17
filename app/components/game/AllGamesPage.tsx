@@ -13,19 +13,19 @@ import GameList from './GameList';
 import NoGames from './NoGames';
 import { GameInfo, MyGames } from 'types/games';
 
-interface ChooseGamePickerProps {
+interface AllGamesPageProps {
     activeGameId: string;
     setActiveGameId: (id: string) => void;
     myGames: MyGames;
     addNewGame: () => void;
 }
 
-const ChooseGamePicker = ({
+const AllGamesPage = ({
     activeGameId,
     setActiveGameId,
     myGames,
     addNewGame,
-}: ChooseGamePickerProps) => {
+}: AllGamesPageProps) => {
 
 
     const [gamesTheyJoined, setGamesTheyJoined] = useUserVariable<string[]>({
@@ -116,4 +116,4 @@ const ChooseGamePicker = ({
     );
 };
 
-export default ChooseGamePicker;
+export default AllGamesPage;
