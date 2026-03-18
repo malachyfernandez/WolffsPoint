@@ -56,11 +56,13 @@ const DayUserRow = ({ user, index, isLast, dayNumber, setVoteValue, setActionVal
     const handleVoteEditStart = () => {
         setEditingVote(true);
         onEditStart?.();
+        setIsEditingVote(true);
     };
 
     const handleVoteEditEnd = () => {
         setEditingVote(false);
         onEditEnd?.();
+        setIsEditingVote(false);
     };
 
     const handleActionEditStart = () => {
@@ -73,9 +75,13 @@ const DayUserRow = ({ user, index, isLast, dayNumber, setVoteValue, setActionVal
         onEditEnd?.();
     };
 
+    const [isEditingVote, setIsEditingVote] = useState(false);
+
+
+
     return (
         <Row gap={0} className={` h-12 w-min ${isEditing ? 'z-50' : ''}`}>
-            <Column className={`w-28 h-full border border-subtle-border items-center justify-center ${isLast ? 'rounded-bl-lg' : ''}`}>
+            <Column className={`w-28 h-full border border-subtle-border items-center justify-center z-10 ${isLast ? 'rounded-bl-lg' : ''}`}>
                 <InlineEditableText
                     value={dayData.vote || ''}
                     onChange={(newValue) => setVoteValue?.(index, newValue)}
@@ -86,7 +92,7 @@ const DayUserRow = ({ user, index, isLast, dayNumber, setVoteValue, setActionVal
                     onEditEnd={handleVoteEditEnd}
                 />
             </Column>
-            <Column gap={0} className='w-28 h-full border border-subtle-border items-center justify-center'>
+            <Column gap={0} className={`w-28 h-full border border-subtle-border items-center justify-center ${isEditingVote ? 'z-0' : 'z-20'}`}>
                 <InlineEditableText
                     value={dayData.action || ''}
                     onChange={(newValue) => setActionValue?.(index, newValue)}
