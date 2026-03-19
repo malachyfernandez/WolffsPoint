@@ -233,8 +233,7 @@ const PlayerPageOPERATOR = ({ currentUserId, gameId }: PlayerPageOPERATORProps) 
                     <PoppinsText weight='bold' className='text-white'>Set Day 1 to Today</PoppinsText>
                 </AppButton> */}
 
-                <PoppinsText>isPlayerTableBeingEdited: {isPlayerTableBeingEdited.toString()}</PoppinsText>
-                <PoppinsText>isDaysTableBeingEdited: {isDaysTableBeingEdited.toString()}</PoppinsText>
+                
             </>
 
             
