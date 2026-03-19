@@ -15,10 +15,11 @@ interface DaySelectionDialogProps {
     dayDate: Date;
     onPress: () => void;
     previousDate: Date;
+    followingDate?: Date;
     replaceDayDate: (index: number, replacementDate: Date) => void;
 }
 
-const DaySelectionDialog = ({ isOpen, onOpenChange, index, dayDate, onPress, previousDate, replaceDayDate }: DaySelectionDialogProps) => {
+const DaySelectionDialog = ({ isOpen, onOpenChange, index, dayDate, onPress, previousDate, followingDate, replaceDayDate }: DaySelectionDialogProps) => {
     const [input, setInput] = useState('');
     const [isDateValid, setIsDateValid] = useState(false);
 
@@ -66,7 +67,16 @@ const DaySelectionDialog = ({ isOpen, onOpenChange, index, dayDate, onPress, pre
     };
 
     const previousDatePlusOne = new Date(previousDate);
-    previousDatePlusOne.setDate(previousDate.getDate() + 1); 
+    if (index === 0) {
+        previousDatePlusOne.setDate(previousDate.getDate());
+    } else {
+        previousDatePlusOne.setDate(previousDate.getDate() + 1);
+    } 
+
+    const followingDateMinusOne = followingDate ? new Date(followingDate) : undefined;
+    if (followingDateMinusOne) {
+        followingDateMinusOne.setDate(followingDateMinusOne.getDate() - 1);
+    } 
 
     const submitForum = () => {
         console.log('DaySelectionDialog: submitForum called', { date, isDateValid });
@@ -98,8 +108,8 @@ const DaySelectionDialog = ({ isOpen, onOpenChange, index, dayDate, onPress, pre
 
                     <Column>
                         <DialogHeader
-                            text="Let's get some basics setup"
-                            subtext="You can change this later."
+                            text="SELECT DATE"
+                            subtext={followingDateMinusOne ? `Between ${previousDatePlusOne.getMonth() + 1}/${previousDatePlusOne.getDate()} and ${followingDateMinusOne.getMonth() + 1}/${followingDateMinusOne.getDate()}` : `After ${previousDatePlusOne.getMonth() + 1}/${previousDatePlusOne.getDate()}`}
                         />
                         <Column gap={2}>
                             {/* <PoppinsText>Day 1 of Your Game</PoppinsText> */}
@@ -110,6 +120,7 @@ const DaySelectionDialog = ({ isOpen, onOpenChange, index, dayDate, onPress, pre
                                 onChangeText={setDate}
                                 onIsValid={setIsDateValid}
                                 earliestDate={previousDatePlusOne}
+                                latestDate={followingDateMinusOne}
                             />
                         </Column>
 
@@ -117,13 +128,13 @@ const DaySelectionDialog = ({ isOpen, onOpenChange, index, dayDate, onPress, pre
                             <>
                                 {(() => { console.log('DaySelectionDialog: Rendering AppButton (valid)'); return null; })()}
                                 <AppButton className='w-34 h-10' variant='black' onPress={submitForum}>
-                                    <PoppinsText color='white' weight='medium'>Create</PoppinsText>
+                                    <PoppinsText color='white' weight='medium'>Change</PoppinsText>
                                 </AppButton>
                             </>
                         ) : (
                             <>
                                 {(() => { console.log('DaySelectionDialog: Rendering StatusButton (invalid)'); return null; })()}
-                                <StatusButton buttonText="Create" buttonAltText="Invalid Date" />
+                                <StatusButton buttonText="Change" buttonAltText="Invalid Date" />
                             </>
                         )}
                     </Column>

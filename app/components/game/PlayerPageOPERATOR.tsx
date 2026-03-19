@@ -173,6 +173,7 @@ const PlayerPageOPERATOR = ({ currentUserId, gameId }: PlayerPageOPERATORProps) 
                                                         index={index}
                                                         dayDate={date}
                                                         previousDate={index > 0 ? fixedDayDatesArray[index - 1] : new Date()}
+                                                        followingDate={index < fixedDayDatesArray.length - 1 ? fixedDayDatesArray[index + 1] : undefined}
                                                         onPress={() => setSelectedDayIndex(index)}
                                                         replaceDayDate={replaceDayDate}
                                                     />
