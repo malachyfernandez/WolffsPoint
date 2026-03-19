@@ -53,9 +53,9 @@ const NewWolffspointButtonAndDialogue = ({ onPress }: NewWolffspointButtonAndDia
         });
 
         setUserListItem({
-            key: "startingDate",
+            key: "dayDatesArray",
             itemId: newGameId,
-            value: date,
+            value: [date],
             privacy: "PUBLIC",
         });
 

@@ -7,9 +7,7 @@ import { v } from "convex/values";
  * WARNING: This will permanently delete ALL data!
  */
 export const nukeAllTables = mutation({
-  args: {
-    confirm: v.literal("NUKE_ALL_DATA"),
-  },
+  args: {},
   handler: async (ctx, args) => {
     const tables = [
       "globals",
@@ -27,13 +25,28 @@ export const nukeAllTables = mutation({
     ] as const;
 
     const deletedCounts: Record<string, number> = {};
+    const batchSize = 50; // Process in smaller batches to avoid read limits
 
     for (const table of tables) {
-      const allDocs = await ctx.db.query(table).collect();
-      for (const doc of allDocs) {
-        await ctx.db.delete(doc._id);
+      let deletedCount = 0;
+      let hasMore = true;
+      
+      while (hasMore) {
+        // Get a batch of documents
+        const docs = await ctx.db.query(table).take(batchSize);
+        
+        if (docs.length === 0) {
+          hasMore = false;
+        } else {
+          // Delete this batch
+          for (const doc of docs) {
+            await ctx.db.delete(doc._id);
+            deletedCount++;
+          }
+        }
       }
-      deletedCounts[table] = allDocs.length;
+      
+      deletedCounts[table] = deletedCount;
     }
 
     return {
@@ -65,10 +78,23 @@ export const getTableCounts = mutation({
     ] as const;
 
     const counts: Record<string, number> = {};
+    const batchSize = 100; // Count in smaller batches to avoid read limits
 
     for (const table of tables) {
-      const allDocs = await ctx.db.query(table).collect();
-      counts[table] = allDocs.length;
+      let totalCount = 0;
+      let hasMore = true;
+      
+      while (hasMore) {
+        const docs = await ctx.db.query(table).take(batchSize);
+        
+        if (docs.length === 0) {
+          hasMore = false;
+        } else {
+          totalCount += docs.length;
+        }
+      }
+      
+      counts[table] = totalCount;
     }
 
     return counts;

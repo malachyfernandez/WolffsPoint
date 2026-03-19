@@ -26,7 +26,7 @@ export const useNukeDatabase = () => {
   const nukeMutation = useMutation(api.devUtils.nukeAllTables);
 
   const nukeAll = async () => {
-    return await nukeMutation({ confirm: "NUKE_ALL_DATA" });
+    return await nukeMutation({});
   };
 
   return {

@@ -28,43 +28,27 @@ export default function DatabaseNukeButton() {
   };
 
   const handleNuke = async () => {
-    Alert.alert(
-      "⚠️ DANGER: Nuke Database?",
-      "This will PERMANENTLY delete ALL data from EVERY table.\n\nThis action cannot be undone!\n\nAre you absolutely sure?",
-      [
-        {
-          text: "Cancel",
-          style: "cancel",
-        },
-        {
-          text: "NUKE ALL DATA",
-          style: "destructive",
-          onPress: async () => {
-            setIsLoading(true);
-            try {
-              const result = await nukeAll();
-              const remainingCounts = await getCounts();
-              const remainingTotal = Object.values(remainingCounts).reduce(
-                (sum, count) => sum + count,
-                0
-              );
+    setIsLoading(true);
+    try {
+      const result = await nukeAll();
+      const remainingCounts = await getCounts();
+      const remainingTotal = Object.values(remainingCounts).reduce(
+        (sum, count) => sum + count,
+        0
+      );
 
-              setCounts(remainingCounts);
+      setCounts(remainingCounts);
 
-              Alert.alert(
-                "Database Nuked",
-                `Deleted rows:\n${JSON.stringify(result.deletedCounts, null, 2)}\n\nRemaining rows:\n${JSON.stringify(remainingCounts, null, 2)}\n\nRemaining total: ${remainingTotal}`
-              );
-            } catch (error: any) {
-              console.error("Failed to nuke database:", error);
-              Alert.alert("Error", `Failed to nuke database: ${error?.message || String(error)}`);
-            } finally {
-              setIsLoading(false);
-            }
-          },
-        },
-      ]
-    );
+      Alert.alert(
+        "Database Nuked",
+        `Deleted rows:\n${JSON.stringify(result.deletedCounts, null, 2)}\n\nRemaining rows:\n${JSON.stringify(remainingCounts, null, 2)}\n\nRemaining total: ${remainingTotal}`
+      );
+    } catch (error: any) {
+      console.error("Failed to nuke database:", error);
+      Alert.alert("Error", `Failed to nuke database: ${error?.message || String(error)}`);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

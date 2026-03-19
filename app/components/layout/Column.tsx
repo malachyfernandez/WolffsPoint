@@ -1,18 +1,19 @@
-import React, { PropsWithChildren } from 'react';
+import React, { PropsWithChildren, forwardRef } from 'react';
 import { View } from 'react-native';
 
 interface ColumnProps extends PropsWithChildren {
     className?: string;
     style?: any;
     gap?: number;
+    onLayout?: (event: any) => void;
 }
 
-const Column = ({ children, className, style, gap = 4 }: ColumnProps) => {
+const Column = forwardRef<any, ColumnProps>(({ children, className, style, gap = 4, onLayout }, ref) => {
     return (
-        <View className={`flex-col ${className}`} style={{ gap: gap * 4, ...style }}>
+        <View ref={ref} className={`flex-col ${className}`} style={{ gap: gap * 4, ...style }} onLayout={onLayout}>
             {children}
         </View>
     );
-};
+});
 
 export default Column;

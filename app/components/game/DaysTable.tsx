@@ -15,11 +15,14 @@ interface DaysTableProps {
     isBeingEdited: boolean;
     setIsBeingEdited: (value: boolean) => void;
     className?: string;
+    onLayout?: (event: any) => void;
+    onWidthChange?: (width: number) => void;
 }
 
-const DaysTable = ({ gameId, dayNumber, isBeingEdited, setIsBeingEdited, className }: DaysTableProps) => {
+const DaysTable = ({ gameId, dayNumber, isBeingEdited, setIsBeingEdited, className, onLayout, onWidthChange }: DaysTableProps) => {
     const { executeCommand } = useUndoRedo();
     const [editingRow, setEditingRow] = useState<'title' | number | null>(null);
+    const tableRef = React.useRef<any>(null);
 
     const handleRowEditStart = (rowType: 'title' | number) => {
         setEditingRow(rowType);
@@ -29,6 +32,17 @@ const DaysTable = ({ gameId, dayNumber, isBeingEdited, setIsBeingEdited, classNa
     const handleRowEditEnd = () => {
         setEditingRow(null);
         setIsBeingEdited(false);
+    };
+
+    const measureTableWidth = () => {
+        if (tableRef.current && onWidthChange) {
+            // Use setTimeout to ensure layout is updated after state changes
+            setTimeout(() => {
+                tableRef.current.measure((x: number, y: number, width: number, height: number) => {
+                    onWidthChange(width);
+                });
+            }, 0);
+        }
     };
 
     const [userTable, setUserTable] = useUserList<UserTableItem[]>({
@@ -50,6 +64,11 @@ const DaysTable = ({ gameId, dayNumber, isBeingEdited, setIsBeingEdited, classNa
         itemId: gameId,
         privacy: "PUBLIC",
     });
+
+    // Measure width when columns change
+    React.useEffect(() => {
+        measureTableWidth();
+    }, [userTableTitle?.value?.extraDayColumns?.length, userTableColumnVisibility?.value?.extraDayColumns]);
 
 
 
@@ -270,7 +289,7 @@ const DaysTable = ({ gameId, dayNumber, isBeingEdited, setIsBeingEdited, classNa
     };
 
     return (
-        <Column gap={0}>
+        <Column gap={0} onLayout={onLayout} ref={tableRef}>
             <Row gap={0}>
                 <Column gap={0} className={`border-border border-2 rounded w-min ${className || ''}`}>
                     <DayTitleRow
