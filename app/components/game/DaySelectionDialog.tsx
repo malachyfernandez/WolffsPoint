@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import ConvexDialog from '../ui/dialog/ConvexDialog';
 import Column from '../layout/Column';
 import AppButton from '../ui/buttons/AppButton';
@@ -22,6 +22,11 @@ const DaySelectionDialog = ({ isOpen, onOpenChange, index, dayDate, onPress, pre
     const [input, setInput] = useState('');
     const [isDateValid, setIsDateValid] = useState(false);
 
+    // Debug: log when isDateValid changes
+    useEffect(() => {
+        console.log('DaySelectionDialog: isDateValid changed to', isDateValid);
+    }, [isDateValid]);
+
     const formatDateWithConditionalYear = (date: Date): string => {
         const currentYear = new Date().getFullYear();
         const dayYear = date.getFullYear();
@@ -33,28 +38,40 @@ const DaySelectionDialog = ({ isOpen, onOpenChange, index, dayDate, onPress, pre
 
     const [date, setDate] = useState(() => formatDateWithConditionalYear(dayDate));
 
-    const normalizeDateInput = (value: string) => {
+    const normalizeDateInput = (value: string): Date => {
         const trimmed = value.trim();
-        if (!trimmed) return trimmed;
+        if (!trimmed) return new Date(); // fallback to today
 
         const segments = trimmed.split("/");
         const hasYear = segments.length === 3 && segments[2]?.length === 4;
-        if (hasYear) return trimmed;
-
-        if (segments.length >= 2) {
-            const inferredYear = dayDate.getFullYear();
-            return `${segments[0]}/${segments[1]}/${inferredYear}`;
+        
+        let month, day, year;
+        
+        if (hasYear) {
+            // MM/DD/YYYY format
+            month = parseInt(segments[0], 10);
+            day = parseInt(segments[1], 10);
+            year = parseInt(segments[2], 10);
+        } else if (segments.length >= 2) {
+            // MM/DD format - infer year from dayDate
+            month = parseInt(segments[0], 10);
+            day = parseInt(segments[1], 10);
+            year = dayDate.getFullYear();
+        } else {
+            return new Date(); // fallback to today
         }
 
-        return trimmed;
+        // Create Date object using reliable constructor
+        return new Date(year, month - 1, day);
     };
 
     const previousDatePlusOne = new Date(previousDate);
     previousDatePlusOne.setDate(previousDate.getDate() + 1); 
 
     const submitForum = () => {
-        const normalizedDate = normalizeDateInput(date);
-        const parsedDate = new Date(normalizedDate);
+        console.log('DaySelectionDialog: submitForum called', { date, isDateValid });
+        const parsedDate = normalizeDateInput(date);
+        console.log('DaySelectionDialog: parsed date', { parsedDate, isValid: !isNaN(parsedDate.getTime()) });
         if (!isNaN(parsedDate.getTime())) {
             replaceDayDate(index, parsedDate);
             onOpenChange(false);
@@ -97,11 +114,17 @@ const DaySelectionDialog = ({ isOpen, onOpenChange, index, dayDate, onPress, pre
                         </Column>
 
                         {isDateValid ? (
-                            <AppButton className='w-34 h-10' variant='black' onPress={submitForum}>
-                                <PoppinsText color='white' weight='medium'>Create</PoppinsText>
-                            </AppButton>
+                            <>
+                                {(() => { console.log('DaySelectionDialog: Rendering AppButton (valid)'); return null; })()}
+                                <AppButton className='w-34 h-10' variant='black' onPress={submitForum}>
+                                    <PoppinsText color='white' weight='medium'>Create</PoppinsText>
+                                </AppButton>
+                            </>
                         ) : (
-                            <StatusButton buttonText="Create" buttonAltText="Invalid Date" />
+                            <>
+                                {(() => { console.log('DaySelectionDialog: Rendering StatusButton (invalid)'); return null; })()}
+                                <StatusButton buttonText="Create" buttonAltText="Invalid Date" />
+                            </>
                         )}
                     </Column>
                 </ConvexDialog.Content>
