@@ -59,7 +59,7 @@ const GamePage = ({ gameId, currentUserId }: GamePageProps) => {
                     <NavTab text='Players' onPress={() => setNavBar("players")}>
                         <UserIcon />
                     </NavTab>
-                    <NavTab text='Config' onPress={() => setNavBar("config")}>
+                    <NavTab text='Roles' onPress={() => setNavBar("config")}>
 
                         <UserIcon />
 
@@ -79,7 +79,7 @@ const GamePage = ({ gameId, currentUserId }: GamePageProps) => {
                         <UserIcon />
                     </NavTab>
 
-                    <NavTab text='Config' isInvisible={navBar !== "config"} isHighlighted={true}>
+                    <NavTab text='Roles' isInvisible={navBar !== "config"} isHighlighted={true}>
                         <UserIcon />
                     </NavTab>
 
