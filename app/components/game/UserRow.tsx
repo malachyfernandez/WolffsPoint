@@ -104,12 +104,14 @@ const UserRow = ({ user, index, isLast, setLivingState, setExtraColumnValue, use
     }, [isNewPlayerRowJustCreated, isWaitingForNewPlayerRow]);
 
 
+    // GREAT UNDO EXAMPLE
     const [userTable, setUserTable] = useUserList<UserTableItem[]>({
         key: "userTable",
         itemId: gameId,
         privacy: "PUBLIC",
     });
     // User Row.tsx
+    // UserEditDialouge.tsx
 
 
     const deleteUser = (userIndex: number) => {

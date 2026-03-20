@@ -10,6 +10,7 @@ import { View, Text } from 'react-native';
 import { useUserList } from 'hooks/useUserList';
 import { RoleTableItem } from 'types/roleTable';
 import { UserTableItem } from 'types/playerTable';
+import { useCreateUndoSnapshot, useUndoRedo } from 'hooks/useUndoRedo';
 
 interface UserEditDialogProps {
     isOpen: boolean;
@@ -73,10 +74,29 @@ const UserEditDialog = ({
                 email: email.trim(),
                 role: role.trim()
             };
-            setUserTable(updatedUsers);
+            UNDOABLEsetUserTable(updatedUsers);
         }
 
         onOpenChange(false);
+    };
+
+    const deleteUser = (userIndex: number) => {
+        const filteredUserTable = userTable?.value?.filter((userRow, index) => index != userIndex);
+        setUserTable(filteredUserTable ?? []);
+    };
+
+    const { executeCommand } = useUndoRedo();
+    const createUndoSnapshot = useCreateUndoSnapshot();
+
+    const UNDOABLEsetUserTable = (updatedUsers: UserTableItem[]) => {
+        const previousUserTable = createUndoSnapshot(userTable?.value ?? []);
+        const nextUserTable = createUndoSnapshot(updatedUsers);
+
+        executeCommand({
+            action: () => setUserTable(createUndoSnapshot(nextUserTable)),
+            undoAction: () => setUserTable(createUndoSnapshot(previousUserTable)),
+            description: "Updated user"
+        });
     };
 
     const handleCancel = () => {

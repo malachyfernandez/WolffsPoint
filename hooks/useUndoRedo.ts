@@ -15,17 +15,34 @@ export interface UndoCommand {
  let isKeydownListenerAttached = false;
  const storeListeners = new Set<() => void>();
 
- export const createUndoSnapshot = <T,>(value: T): T => {
-   if (value === undefined || value === null) {
-     return value;
-   }
+ export const useCreateUndoSnapshot = () => {
+  const createUndoSnapshot = useCallback(<T,>(value: T): T => {
+    if (value === undefined || value === null) {
+      return value;
+    }
 
-   if (typeof structuredClone === 'function') {
-     return structuredClone(value);
-   }
+    if (typeof structuredClone === 'function') {
+      return structuredClone(value);
+    }
 
-   return JSON.parse(JSON.stringify(value)) as T;
- };
+    return JSON.parse(JSON.stringify(value)) as T;
+  }, []);
+
+  return createUndoSnapshot;
+};
+
+// Backward compatibility export
+export const createUndoSnapshot = <T,>(value: T): T => {
+  if (value === undefined || value === null) {
+    return value;
+  }
+
+  if (typeof structuredClone === 'function') {
+    return structuredClone(value);
+  }
+
+  return JSON.parse(JSON.stringify(value)) as T;
+};
 
  const notifyStoreListeners = () => {
    storeListeners.forEach((listener) => listener());
