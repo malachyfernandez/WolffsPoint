@@ -11,6 +11,7 @@ import { useUserList } from 'hooks/useUserList';
 import { RoleTableItem } from 'types/roleTable';
 import { UserTableItem } from 'types/playerTable';
 import { useCreateUndoSnapshot, useUndoRedo } from 'hooks/useUndoRedo';
+import Row from '../layout/Row';
 
 interface UserEditDialogProps {
     isOpen: boolean;
@@ -157,15 +158,20 @@ const UserEditDialog = ({
                         </Column>
 
                         <Column className='w-full items-center justify-center'>
-                            <AppButton className='w-48 h-10' variant='black' onPress={handleSubmit}>
-                                <PoppinsText color='white' weight='medium'>Save</PoppinsText>
-                            </AppButton>
-                            <AppButton className='w-48 h-10' variant='outline-alt' onPress={handleCancel}>
-                                <PoppinsText color='black' weight='medium'>Cancel</PoppinsText>
-                            </AppButton>
-                            <AppButton className='w-48 h-10 border-2 border-red-500' variant='outline' onPress={handleDeleteUser}>
-                                <Text className='text-red-500 font-medium'>Delete User</Text>
-                            </AppButton>
+                            <Column>
+                                <Row>
+                                    <AppButton className='w-48 h-10' variant='black' onPress={handleSubmit}>
+                                        <PoppinsText color='white' weight='medium'>Save</PoppinsText>
+                                    </AppButton>
+                                    <AppButton className='w-48 h-10' variant='outline-alt' onPress={handleCancel}>
+                                        <PoppinsText color='black' weight='medium'>Cancel</PoppinsText>
+                                    </AppButton>
+                                </Row>
+
+                                <AppButton className='w-full h-10 border-2 border-red-500' variant='outline' onPress={handleDeleteUser}>
+                                    <Text className='text-red-500 font-medium'>Delete User</Text>
+                                </AppButton>
+                            </Column>
                         </Column>
                     </Column>
                 </ConvexDialog.Content>
