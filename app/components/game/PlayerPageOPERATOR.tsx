@@ -138,9 +138,11 @@ const PlayerPageOPERATOR = ({ currentUserId, gameId }: PlayerPageOPERATORProps) 
     };
 
     const addUser = () => {
+        // Generate random number between 1 and 1,000,000
+        const randomId = Math.floor(Math.random() * 1000000) + 1;
         const newUser: UserTableItem = {
             realName: "John Doe3",
-            email: "john.doe@example.com",
+            email: `player${randomId}@example.com`,
             userId: "NOT-JOINED",
             role: "player",
             playerData: { livingState: "alive", extraColumns: ["Testing"] },

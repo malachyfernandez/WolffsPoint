@@ -46,20 +46,20 @@ const NightlyPageOPERATOR = ({ currentUserId, gameId }: NightlyPageOPERATORProps
 
     const users = userTable?.value ?? [];
 
-    // Nightly response list - tracks nightly responses per night
-    const [nightlyResponseList, setNightlyResponseList] = useUserList<string[][]>({
+    // Nightly response list - tracks nightly responses per night per email
+    const [nightlyResponseList, setNightlyResponseList] = useUserList<Record<string, string[]>>({
         key: "nightlyResponseList",
         itemId: gameId,
         privacy: "PUBLIC",
-        defaultValue: [],
+        defaultValue: {},
     });
 
-    // Nightly messages list - tracks nightly messages per night
-    const [nightlyMessagesList, setNightlyMessagesList] = useUserList<string[][]>({
+    // Nightly messages list - tracks nightly messages per night per email
+    const [nightlyMessagesList, setNightlyMessagesList] = useUserList<Record<string, string[]>>({
         key: "nightlyMessagesList",
         itemId: gameId,
         privacy: "PUBLIC",
-        defaultValue: [],
+        defaultValue: {},
     });
 
     // Shared selected day index (same as players tab)
@@ -110,52 +110,47 @@ const NightlyPageOPERATOR = ({ currentUserId, gameId }: NightlyPageOPERATORProps
 
     // Sync nightly lists when days are added
     useEffect(() => {
-        if (nightlyResponseList.value.length < fixedDayDatesArray.length && nightlyResponseList.state.isSyncing === false) {
-            const newResponses = [...nightlyResponseList.value];
-            while (newResponses.length < fixedDayDatesArray.length) {
-                newResponses.push(new Array(users.length).fill(""));
-            }
-            setNightlyResponseList(newResponses);
-        }
-    }, [fixedDayDatesArray.length, nightlyResponseList.value.length, users.length, nightlyResponseList.state.isSyncing]);
-
-    useEffect(() => {
-        if (nightlyMessagesList.value.length < fixedDayDatesArray.length && nightlyMessagesList.state.isSyncing === false) {
-            const newMessages = [...nightlyMessagesList.value];
-            while (newMessages.length < fixedDayDatesArray.length) {
-                newMessages.push(new Array(users.length).fill(""));
-            }
-            setNightlyMessagesList(newMessages);
-        }
-    }, [fixedDayDatesArray.length, nightlyMessagesList.value.length, users.length, nightlyMessagesList.state.isSyncing]);
-
-    // Sync nightly lists when users are added
-    useEffect(() => {
         if (nightlyResponseList.state.isSyncing === false && nightlyMessagesList.state.isSyncing === false) {
-            const updatedResponses = nightlyResponseList.value.map(dayResponses => {
-                const updatedDayResponses = [...dayResponses];
-                while (updatedDayResponses.length < users.length) {
-                    updatedDayResponses.push("");
+            const currentResponses = nightlyResponseList.value || {};
+            const currentMessages = nightlyMessagesList.value || {};
+            
+            // Ensure all users have entries for each day
+            const updatedResponses = { ...currentResponses };
+            const updatedMessages = { ...currentMessages };
+            
+            users.forEach(user => {
+                if (!updatedResponses[user.email]) {
+                    updatedResponses[user.email] = new Array(fixedDayDatesArray.length).fill("");
+                } else {
+                    // Ensure the user has enough days
+                    const userResponses = [...updatedResponses[user.email]];
+                    while (userResponses.length < fixedDayDatesArray.length) {
+                        userResponses.push("");
+                    }
+                    updatedResponses[user.email] = userResponses;
                 }
-                return updatedDayResponses;
+                
+                if (!updatedMessages[user.email]) {
+                    updatedMessages[user.email] = new Array(fixedDayDatesArray.length).fill("");
+                } else {
+                    // Ensure the user has enough days
+                    const userMessages = [...updatedMessages[user.email]];
+                    while (userMessages.length < fixedDayDatesArray.length) {
+                        userMessages.push("");
+                    }
+                    updatedMessages[user.email] = userMessages;
+                }
             });
             
-            const updatedMessages = nightlyMessagesList.value.map(dayMessages => {
-                const updatedDayMessages = [...dayMessages];
-                while (updatedDayMessages.length < users.length) {
-                    updatedDayMessages.push("");
-                }
-                return updatedDayMessages;
-            });
-
-            if (JSON.stringify(updatedResponses) !== JSON.stringify(nightlyResponseList.value)) {
+            // Update if changed
+            if (JSON.stringify(updatedResponses) !== JSON.stringify(currentResponses)) {
                 setNightlyResponseList(updatedResponses);
             }
-            if (JSON.stringify(updatedMessages) !== JSON.stringify(nightlyMessagesList.value)) {
+            if (JSON.stringify(updatedMessages) !== JSON.stringify(currentMessages)) {
                 setNightlyMessagesList(updatedMessages);
             }
         }
-    }, [users.length, nightlyResponseList.value, nightlyMessagesList.value, nightlyResponseList.state.isSyncing, nightlyMessagesList.state.isSyncing]);
+    }, [fixedDayDatesArray.length, users.length, nightlyResponseList.state.isSyncing, nightlyMessagesList.state.isSyncing]);
 
     const addNewDay = () => {
         const currentDays = [...fixedDayDatesArray];
@@ -184,20 +179,40 @@ const NightlyPageOPERATOR = ({ currentUserId, gameId }: NightlyPageOPERATORProps
 
     // Update nightly response for a specific user on a specific day
     const updateNightlyResponse = (dayIndex: number, userIndex: number, value: string) => {
-        const newResponses = [...nightlyResponseList.value];
-        if (newResponses[dayIndex]) {
-            newResponses[dayIndex][userIndex] = value;
-            setNightlyResponseList(newResponses);
+        const user = users[userIndex];
+        if (!user) return;
+        
+        const currentResponses = nightlyResponseList.value || {};
+        const updatedResponses = { ...currentResponses };
+        
+        if (!updatedResponses[user.email]) {
+            updatedResponses[user.email] = new Array(fixedDayDatesArray.length).fill("");
         }
+        
+        const userResponses = [...updatedResponses[user.email]];
+        userResponses[dayIndex] = value;
+        updatedResponses[user.email] = userResponses;
+        
+        setNightlyResponseList(updatedResponses);
     };
 
     // Update nightly message for a specific user on a specific day
     const updateNightlyMessage = (dayIndex: number, userIndex: number, value: string) => {
-        const newMessages = [...nightlyMessagesList.value];
-        if (newMessages[dayIndex]) {
-            newMessages[dayIndex][userIndex] = value;
-            setNightlyMessagesList(newMessages);
+        const user = users[userIndex];
+        if (!user) return;
+        
+        const currentMessages = nightlyMessagesList.value || {};
+        const updatedMessages = { ...currentMessages };
+        
+        if (!updatedMessages[user.email]) {
+            updatedMessages[user.email] = new Array(fixedDayDatesArray.length).fill("");
         }
+        
+        const userMessages = [...updatedMessages[user.email]];
+        userMessages[dayIndex] = value;
+        updatedMessages[user.email] = userMessages;
+        
+        setNightlyMessagesList(updatedMessages);
     };
 
     // Update player living state (same as players tab)
@@ -280,8 +295,8 @@ const NightlyPageOPERATOR = ({ currentUserId, gameId }: NightlyPageOPERATORProps
                                             onWidthChange={(width: number) => {
                                                 setDaysTableWidth(width);
                                             }}
-                                            nightlyResponseList={nightlyResponseList.value}
-                                            nightlyMessagesList={nightlyMessagesList.value}
+                                            nightlyResponseList={nightlyResponseList.value || {}}
+                                            nightlyMessagesList={nightlyMessagesList.value || {}}
                                             updateNightlyResponse={updateNightlyResponse}
                                             updateNightlyMessage={updateNightlyMessage}
                                         />

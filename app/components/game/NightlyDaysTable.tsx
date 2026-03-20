@@ -16,8 +16,8 @@ interface NightlyDaysTableProps {
     className?: string;
     onLayout?: (event: any) => void;
     onWidthChange?: (width: number) => void;
-    nightlyResponseList: string[][];
-    nightlyMessagesList: string[][];
+    nightlyResponseList: Record<string, string[]>;
+    nightlyMessagesList: Record<string, string[]>;
     updateNightlyResponse: (dayIndex: number, userIndex: number, value: string) => void;
     updateNightlyMessage: (dayIndex: number, userIndex: number, value: string) => void;
 }
@@ -68,24 +68,133 @@ const NightlyDaysTable = ({
 
     const users = userTable?.value ?? [];
 
+    const setVoteValue = (userIndex: number, newVoteValue: string) => {
+        const updatedUsers = [...users];
+        if (userIndex >= 0 && userIndex < updatedUsers.length) {
+            const user = updatedUsers[userIndex];
+            const days = [...user.days];
+            
+            // Ensure the day exists
+            while (days.length <= dayNumber) {
+                days.push({ vote: "", action: "", extraColumns: [] });
+            }
+            
+            days[dayNumber] = {
+                ...days[dayNumber],
+                vote: newVoteValue
+            };
+            
+            updatedUsers[userIndex] = {
+                ...user,
+                days: days
+            };
+            setUserTable(updatedUsers);
+        }
+    };
+
+    const UNDOABLEsetVoteValue = (userIndex: number, newVoteValue: string) => {
+        const previousUserTable = createUndoSnapshot(userTable?.value ?? []);
+        if (userIndex < 0 || userIndex >= previousUserTable.length) return;
+
+        const nextUserTable = createUndoSnapshot(previousUserTable);
+        const user = nextUserTable[userIndex];
+        const days = [...user.days];
+
+        while (days.length <= dayNumber) {
+            days.push({ vote: "", action: "", extraColumns: [] });
+        }
+
+        days[dayNumber] = {
+            ...days[dayNumber],
+            vote: newVoteValue
+        };
+
+        nextUserTable[userIndex] = {
+            ...user,
+            days
+        };
+
+        executeCommand({
+            action: () => setUserTable(createUndoSnapshot(nextUserTable)),
+            undoAction: () => setUserTable(createUndoSnapshot(previousUserTable)),
+            description: "Set Vote"
+        });
+    };
+
+    const setActionValue = (userIndex: number, newActionValue: string) => {
+        const updatedUsers = [...users];
+        if (userIndex >= 0 && userIndex < updatedUsers.length) {
+            const user = updatedUsers[userIndex];
+            const days = [...user.days];
+            
+            // Ensure the day exists
+            while (days.length <= dayNumber) {
+                days.push({ vote: "", action: "", extraColumns: [] });
+            }
+            
+            days[dayNumber] = {
+                ...days[dayNumber],
+                action: newActionValue
+            };
+            
+            updatedUsers[userIndex] = {
+                ...user,
+                days: days
+            };
+            setUserTable(updatedUsers);
+        }
+    };
+
+    const UNDOABLEsetActionValue = (userIndex: number, newActionValue: string) => {
+        const previousUserTable = createUndoSnapshot(userTable?.value ?? []);
+        if (userIndex < 0 || userIndex >= previousUserTable.length) return;
+
+        const nextUserTable = createUndoSnapshot(previousUserTable);
+        const user = nextUserTable[userIndex];
+        const days = [...user.days];
+
+        while (days.length <= dayNumber) {
+            days.push({ vote: "", action: "", extraColumns: [] });
+        }
+
+        days[dayNumber] = {
+            ...days[dayNumber],
+            action: newActionValue
+        };
+
+        nextUserTable[userIndex] = {
+            ...user,
+            days
+        };
+
+        executeCommand({
+            action: () => setUserTable(createUndoSnapshot(nextUserTable)),
+            undoAction: () => setUserTable(createUndoSnapshot(previousUserTable)),
+            description: "Set Action"
+        });
+    };
+
     const UNDOABLEupdateNightlyResponse = (dayIndex: number, userIndex: number, value: string) => {
+        const user = users[userIndex];
+        if (!user) return;
+        
         const previousResponseList = createUndoSnapshot(nightlyResponseList);
         const nextResponseList = createUndoSnapshot(previousResponseList);
         
-        if (nextResponseList[dayIndex]) {
-            nextResponseList[dayIndex][userIndex] = value;
+        if (!nextResponseList[user.email]) {
+            nextResponseList[user.email] = [];
         }
+        
+        const userResponses = [...nextResponseList[user.email]];
+        userResponses[dayIndex] = value;
+        nextResponseList[user.email] = userResponses;
 
         executeCommand({
             action: () => updateNightlyResponse(dayIndex, userIndex, value),
             undoAction: () => {
-                // Restore previous state by updating each changed value
-                if (previousResponseList[dayIndex] && nextResponseList[dayIndex]) {
-                    for (let i = 0; i < previousResponseList[dayIndex].length; i++) {
-                        if (previousResponseList[dayIndex][i] !== nextResponseList[dayIndex][i]) {
-                            updateNightlyResponse(dayIndex, i, previousResponseList[dayIndex][i]);
-                        }
-                    }
+                // Restore previous state
+                if (previousResponseList[user.email] && nextResponseList[user.email]) {
+                    updateNightlyResponse(dayIndex, userIndex, previousResponseList[user.email][dayIndex] || "");
                 }
             },
             description: "Update Nightly Response"
@@ -93,23 +202,26 @@ const NightlyDaysTable = ({
     };
 
     const UNDOABLEupdateNightlyMessage = (dayIndex: number, userIndex: number, value: string) => {
+        const user = users[userIndex];
+        if (!user) return;
+        
         const previousMessagesList = createUndoSnapshot(nightlyMessagesList);
         const nextMessagesList = createUndoSnapshot(previousMessagesList);
         
-        if (nextMessagesList[dayIndex]) {
-            nextMessagesList[dayIndex][userIndex] = value;
+        if (!nextMessagesList[user.email]) {
+            nextMessagesList[user.email] = [];
         }
+        
+        const userMessages = [...nextMessagesList[user.email]];
+        userMessages[dayIndex] = value;
+        nextMessagesList[user.email] = userMessages;
 
         executeCommand({
             action: () => updateNightlyMessage(dayIndex, userIndex, value),
             undoAction: () => {
-                // Restore previous state by updating each changed value
-                if (previousMessagesList[dayIndex] && nextMessagesList[dayIndex]) {
-                    for (let i = 0; i < previousMessagesList[dayIndex].length; i++) {
-                        if (previousMessagesList[dayIndex][i] !== nextMessagesList[dayIndex][i]) {
-                            updateNightlyMessage(dayIndex, i, previousMessagesList[dayIndex][i]);
-                        }
-                    }
+                // Restore previous state
+                if (previousMessagesList[user.email] && nextMessagesList[user.email]) {
+                    updateNightlyMessage(dayIndex, userIndex, previousMessagesList[user.email][dayIndex] || "");
                 }
             },
             description: "Update Nightly Message"
@@ -133,6 +245,8 @@ const NightlyDaysTable = ({
                             index={index}
                             isLast={index === users.length - 1}
                             dayNumber={dayNumber}
+                            setVoteValue={UNDOABLEsetVoteValue}
+                            setActionValue={UNDOABLEsetActionValue}
                             updateNightlyResponse={UNDOABLEupdateNightlyResponse}
                             updateNightlyMessage={UNDOABLEupdateNightlyMessage}
                             onEditStart={() => handleRowEditStart(index)}

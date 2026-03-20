@@ -66,6 +66,17 @@ const UserEditDialog = ({
     };
 
     const handleSubmit = () => {
+        // Check for email uniqueness (skip if it's the same user's current email)
+        const emailExists = users.some((user, index) => 
+            user.email === email.trim() && index !== userIndex
+        );
+        
+        if (emailExists) {
+            // You could show an error message here, but for now we'll just prevent submission
+            console.warn("Email already exists!");
+            return;
+        }
+
         // Local functions using the same cloud variable as PlayerTable
         const updatedUsers = [...users];
         if (userIndex >= 0 && userIndex < updatedUsers.length) {
