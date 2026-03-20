@@ -11,6 +11,7 @@ import NavTab from '../layout/NavTab';
 import { transform } from '@babel/core';
 import PlayerPageOPERATOR from './PlayerPageOPERATOR';
 import ConfigPageOPERATOR from './ConfigPageOPERATOR';
+import NightlyPageOPERATOR from './NightlyPageOPERATOR';
 import AppButton from '../ui/buttons/AppButton';
 
 interface GamePageProps {
@@ -44,7 +45,7 @@ const GamePage = ({ gameId, currentUserId }: GamePageProps) => {
     // TODO: (after userArray is made)
 
 
-    type navBarType = "players" | "config" | "stats" | "history" | "settings";
+    type navBarType = "players" | "config" | "nightly" | "stats" | "history" | "settings";
 
     const [navBar, setNavBar] = useState<navBarType>("players");
 
@@ -64,8 +65,8 @@ const GamePage = ({ gameId, currentUserId }: GamePageProps) => {
                         <UserIcon />
 
                     </NavTab>
-                    <NavTab text='Config'>
-                        <></>
+                    <NavTab text='Nightly' onPress={() => setNavBar("nightly")}>
+                        <UserIcon />
                     </NavTab>
                     <NavTab text='Config'>
                         <></>
@@ -83,9 +84,10 @@ const GamePage = ({ gameId, currentUserId }: GamePageProps) => {
                         <UserIcon />
                     </NavTab>
 
-                    <NavTab text='Players' isInvisible={true} isHighlighted={true}>
-                        <></>
+                    <NavTab text='Nightly' isInvisible={navBar !== "nightly"} isHighlighted={true}>
+                        <UserIcon />
                     </NavTab>
+
                     <NavTab text='Players' isInvisible={true} isHighlighted={true}>
                         <></>
                     </NavTab>
@@ -113,6 +115,11 @@ const GamePage = ({ gameId, currentUserId }: GamePageProps) => {
                     {/* if config */}
                     {navBar === "config" && (
                         <ConfigPageOPERATOR currentUserId={currentUserId} gameId={gameId} />
+                    )}
+                    
+                    {/* if nightly */}
+                    {navBar === "nightly" && (
+                        <NightlyPageOPERATOR currentUserId={currentUserId} gameId={gameId} />
                     )}
                 </Column>
             </ScrollView>
