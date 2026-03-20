@@ -237,3 +237,29 @@ Output:
 - `filterValue` / `searchValue` / `sortValue` are computed server-side from config + value.
 - exact fast counts are available through the dedicated `Length` hooks for `key + filterFor`, and `useUserListLength` also supports optional exact `itemId`
 
+## Undo/Redo Pattern
+
+Perfect example of implementing undo/redo with the `useUndoRedo` hook:
+
+```ts
+const { executeCommand } = useUndoRedo();
+const createUndoSnapshot = useCreateUndoSnapshot();
+
+const UNDOABLEsetUserTable = (updatedUsers: UserTableItem[]) => {
+    const previousUserTable = createUndoSnapshot(userTable?.value ?? []);
+    const nextUserTable = createUndoSnapshot(updatedUsers);
+
+    executeCommand({
+        action: () => setUserTable(createUndoSnapshot(nextUserTable)),
+        undoAction: () => setUserTable(createUndoSnapshot(previousUserTable)),
+        description: "Updated user"
+    });
+};
+```
+
+This pattern:
+1. Creates snapshots of the current and next state
+2. Wraps the state change in an undoable command
+3. Provides both action and undoAction functions
+4. Includes a descriptive message for the undo stack
+
