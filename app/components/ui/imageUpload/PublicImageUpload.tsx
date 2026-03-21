@@ -2,10 +2,10 @@ import React, { Dispatch, SetStateAction, useState } from 'react';
 import { useAction } from 'convex/react';
 import { ActivityIndicator, Image, View } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { api } from '../../../convex/_generated/api';
-import Column from '../layout/Column';
-import AppButton from '../ui/buttons/AppButton';
-import PoppinsText from '../ui/text/PoppinsText';
+import { api } from '../../../../convex/_generated/api';
+import Column from '../../layout/Column';
+import AppButton from '../buttons/AppButton';
+import PoppinsText from '../text/PoppinsText';
 
 type UrlSetter = Dispatch<SetStateAction<string>>;
 

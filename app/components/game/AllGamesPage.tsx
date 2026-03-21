@@ -11,7 +11,7 @@ import GameList from './GameList';
 import NoGames from './NoGames';
 import { MyGames } from 'types/games';
 import NewWolffspointButtonAndDialogue from './NewWolffspointButtonAndDialogue';
-import PublicImageUpload from './PublicImageUpload';
+import PublicImageUpload from '../ui/imageUpload/PublicImageUpload';
 
 interface AllGamesPageProps {
     activeGameId: string;
