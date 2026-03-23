@@ -77,17 +77,17 @@ const DaysTable = ({ gameId, dayNumber, isBeingEdited, setIsBeingEdited, classNa
         if (userIndex >= 0 && userIndex < updatedUsers.length) {
             const user = updatedUsers[userIndex];
             const days = [...user.days];
-            
+
             // Ensure the day exists
             while (days.length <= dayNumber) {
                 days.push({ vote: "", action: "", extraColumns: [] });
             }
-            
+
             days[dayNumber] = {
                 ...days[dayNumber],
                 vote: newVoteValue
             };
-            
+
             updatedUsers[userIndex] = {
                 ...user,
                 days: days
@@ -130,17 +130,17 @@ const DaysTable = ({ gameId, dayNumber, isBeingEdited, setIsBeingEdited, classNa
         if (userIndex >= 0 && userIndex < updatedUsers.length) {
             const user = updatedUsers[userIndex];
             const days = [...user.days];
-            
+
             // Ensure the day exists
             while (days.length <= dayNumber) {
                 days.push({ vote: "", action: "", extraColumns: [] });
             }
-            
+
             days[dayNumber] = {
                 ...days[dayNumber],
                 action: newActionValue
             };
-            
+
             updatedUsers[userIndex] = {
                 ...user,
                 days: days
@@ -183,12 +183,12 @@ const DaysTable = ({ gameId, dayNumber, isBeingEdited, setIsBeingEdited, classNa
         if (userIndex >= 0 && userIndex < updatedUsers.length) {
             const user = updatedUsers[userIndex];
             const days = [...user.days];
-            
+
             // Ensure the day exists
             while (days.length <= dayNumber) {
                 days.push({ vote: "", action: "", extraColumns: [] });
             }
-            
+
             const day = days[dayNumber];
             const currentExtraColumns = day.extraColumns || [];
             const updatedExtraColumns = [...currentExtraColumns];
@@ -282,12 +282,12 @@ const DaysTable = ({ gameId, dayNumber, isBeingEdited, setIsBeingEdited, classNa
         // Add new column value to each user's day at the end
         const updatedUsers = users.map((user, userIndex) => {
             const days = [...user.days];
-            
+
             // Ensure the day exists
             while (days.length <= dayNumber) {
                 days.push({ vote: "", action: "", extraColumns: [] });
             }
-            
+
             const day = days[dayNumber];
             days[dayNumber] = {
                 ...day,
@@ -296,7 +296,7 @@ const DaysTable = ({ gameId, dayNumber, isBeingEdited, setIsBeingEdited, classNa
                     values?.[userIndex] ?? ""
                 ]
             };
-            
+
             return {
                 ...user,
                 days: days
@@ -404,45 +404,47 @@ const DaysTable = ({ gameId, dayNumber, isBeingEdited, setIsBeingEdited, classNa
     };
 
     return (
-        <Column gap={0} onLayout={onLayout} ref={tableRef}>
-            <Row gap={0}>
-                <Column gap={0} className={`border-border border-2 rounded w-min ${className || ''}`}>
-                    <DayTitleRow
-                        userTableTitle={userTableTitle?.value}
-                        userTableColumnVisibility={userTableColumnVisibility?.value}
-                        setColumnTitle={UNDOABLEsetDayColumnTitle}
-                        setColumnVisibility={UNDOABLEsetDayColumnVisibility}
-                        onEditStart={() => handleRowEditStart('title')}
-                        onEditEnd={handleRowEditEnd}
-                        isEditing={editingRow === 'title'}
-                    />
-
-                    {users.map((user, index) => (
-                        <DayUserRow
-                            key={index}
-                            user={user}
-                            index={index}
-                            isLast={index === users.length - 1}
-                            dayNumber={dayNumber}
-                            setVoteValue={UNDOABLEsetVoteValue}
-                            setActionValue={UNDOABLEsetActionValue}
-                            setExtraColumnValue={UNDOABLEsetExtraDayColumnValue}
+        <>
+            <Column gap={0} onLayout={onLayout} ref={tableRef}>
+                <Row gap={0}>
+                    <Column gap={0} className={`border-border border-2 rounded w-min ${className || ''}`}>
+                        <DayTitleRow
+                            userTableTitle={userTableTitle?.value}
                             userTableColumnVisibility={userTableColumnVisibility?.value}
-                            onEditStart={() => handleRowEditStart(index)}
+                            setColumnTitle={UNDOABLEsetDayColumnTitle}
+                            setColumnVisibility={UNDOABLEsetDayColumnVisibility}
+                            onEditStart={() => handleRowEditStart('title')}
                             onEditEnd={handleRowEditEnd}
-                            isEditing={editingRow === index}
+                            isEditing={editingRow === 'title'}
                         />
-                    ))}
-                </Column>
-                <Row className='w-12 h-12 bg-light items-center justify-center -z-10'>
-                    <AppButton variant="green" className='w-8 max-h-8 ' onPress={UNDOABLEaddDayColumn}>
-                        <PoppinsText weight='bold' color='white' className='text-xl mt-[-0.1rem]'>+</PoppinsText>
-                    </AppButton>
+
+                        {users.map((user, index) => (
+                            <DayUserRow
+                                key={index}
+                                user={user}
+                                index={index}
+                                isLast={index === users.length - 1}
+                                dayNumber={dayNumber}
+                                setVoteValue={UNDOABLEsetVoteValue}
+                                setActionValue={UNDOABLEsetActionValue}
+                                setExtraColumnValue={UNDOABLEsetExtraDayColumnValue}
+                                userTableColumnVisibility={userTableColumnVisibility?.value}
+                                onEditStart={() => handleRowEditStart(index)}
+                                onEditEnd={handleRowEditEnd}
+                                isEditing={editingRow === index}
+                            />
+                        ))}
+                    </Column>
+                    <Row className='w-12 h-12 bg-light items-center justify-center -z-10'>
+                        <AppButton variant="green" className='w-8 max-h-8 ' onPress={UNDOABLEaddDayColumn}>
+                            <PoppinsText weight='bold' color='white' className='text-xl mt-[-0.1rem]'>+</PoppinsText>
+                        </AppButton>
+                    </Row>
+
                 </Row>
 
-            </Row>
-
-        </Column>
+            </Column>
+        </>
     );
 };
 

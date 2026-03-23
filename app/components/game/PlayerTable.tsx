@@ -17,11 +17,9 @@ interface PlayerTableProps {
     setIsBeingEdited: (value: boolean) => void;
     className?: string;
     dayDatesArray: Date[];
-    isNewPlayerRowJustCreated: boolean;
-    setIsNewPlayerRowJustCreated: (value: boolean) => void;
 }
 
-const PlayerTable = ({ gameId, doSync, setDoSync, isBeingEdited, setIsBeingEdited, className, dayDatesArray, isNewPlayerRowJustCreated, setIsNewPlayerRowJustCreated }: PlayerTableProps) => {
+const PlayerTable = ({ gameId, doSync, setDoSync, isBeingEdited, setIsBeingEdited, className, dayDatesArray }: PlayerTableProps) => {
     const { executeCommand } = useUndoRedo();
     const [editingRow, setEditingRow] = useState<'title' | number | null>(null);
 
@@ -373,8 +371,6 @@ const PlayerTable = ({ gameId, doSync, setDoSync, isBeingEdited, setIsBeingEdite
                             onEditEnd={handleRowEditEnd}
                             isEditing={editingRow === index}
                             gameId={gameId}
-                            isNewPlayerRowJustCreated={isNewPlayerRowJustCreated}
-                            setIsNewPlayerRowJustCreated={setIsNewPlayerRowJustCreated}
                         />
                     ))}
                 </Column>

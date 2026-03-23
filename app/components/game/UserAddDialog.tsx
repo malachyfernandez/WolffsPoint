@@ -6,7 +6,7 @@ import PoppinsText from '../ui/text/PoppinsText';
 import PoppinsTextInput from '../ui/forms/PoppinsTextInput';
 import AppDropdown from '../ui/forms/AppDropdown';
 import DialogHeader from '../ui/dialog/DialogHeader';
-import { View, Text } from 'react-native';
+import { View } from 'react-native';
 import { useUserList } from 'hooks/useUserList';
 import { RoleTableItem } from 'types/roleTable';
 import { UserTableItem } from 'types/playerTable';
@@ -14,31 +14,22 @@ import { useCreateUndoSnapshot, useUndoRedo } from 'hooks/useUndoRedo';
 import Row from '../layout/Row';
 import StatusButton from '../ui/StatusButton';
 
-interface UserEditDialogProps {
+interface UserAddDialogProps {
     isOpen: boolean;
     onOpenChange: (open: boolean) => void;
-    userIndex: number;
-    currentRealName: string;
-    currentEmail: string;
-    currentRole: string;
-    onPress: () => void;
     gameId: string;
-    onDelete: () => void;
+    onAddUser: (userData: { realName: string; email: string; role: string }) => void;
 }
 
-const UserEditDialog = ({
+const UserAddDialog = ({
     isOpen,
     onOpenChange,
-    userIndex,
-    currentRealName,
-    currentEmail,
-    currentRole,
     gameId,
-    onDelete
-}: UserEditDialogProps) => {
-    const [realName, setRealName] = useState(currentRealName || '');
-    const [email, setEmail] = useState(currentEmail || '');
-    const [role, setRole] = useState(currentRole || '');
+    onAddUser
+}: UserAddDialogProps) => {
+    const [realName, setRealName] = useState('');
+    const [email, setEmail] = useState('');
+    const [role, setRole] = useState('');
 
     // Use the same userList as PlayerTable - this is the cloud variable benefit!
     const [userTable, setUserTable] = useUserList<UserTableItem[]>({
@@ -75,20 +66,18 @@ const UserEditDialog = ({
         return emailRegex.test(email.trim());
     };
 
-    let emailExists;
-
     useEffect(() => {
-        emailExists = users.some((user, index) => 
-            user.email === email.trim() && index !== userIndex
+        const emailExists = users.some((user) => 
+            user.email === email.trim()
         );
         setIsUniqueEmail(!emailExists);
         setIsValidEmail(isValidEmailFormat(email));
-    }, [email, userIndex, users]);
+    }, [email, users]);
 
     const handleSubmit = () => {
-        // Check for email uniqueness (skip if it's the same user's current email)
-        emailExists = users.some((user, index) => 
-            user.email === email.trim() && index !== userIndex
+        // Check for email uniqueness and format
+        const emailExists = users.some((user) => 
+            user.email === email.trim()
         );
         
         if (emailExists) {
@@ -101,48 +90,31 @@ const UserEditDialog = ({
             return;
         }
 
-        // Local functions using the same cloud variable as PlayerTable
-        const updatedUsers = [...users];
-        if (userIndex >= 0 && userIndex < updatedUsers.length) {
-            updatedUsers[userIndex] = {
-                ...updatedUsers[userIndex],
-                realName: realName.trim(),
-                email: email.trim(),
-                role: role.trim()
-            };
-            UNDOABLEsetUserTable(updatedUsers);
+        // Validate that required fields are filled (role is optional)
+        if (!realName.trim() || !email.trim()) {
+            console.warn("Name and email must be filled!");
+            return;
         }
 
-        onOpenChange(false);
-    };
-
-
-    const { executeCommand } = useUndoRedo();
-    const createUndoSnapshot = useCreateUndoSnapshot();
-
-    const UNDOABLEsetUserTable = (updatedUsers: UserTableItem[]) => {
-        const previousUserTable = createUndoSnapshot(userTable?.value ?? []);
-        const nextUserTable = createUndoSnapshot(updatedUsers);
-
-        executeCommand({
-            action: () => setUserTable(createUndoSnapshot(nextUserTable)),
-            undoAction: () => setUserTable(createUndoSnapshot(previousUserTable)),
-            description: "Updated user"
+        // Call the onAddUser callback with the user data (role is optional)
+        onAddUser({
+            realName: realName.trim(),
+            email: email.trim(),
+            role: role.trim() || "UNSET" // Default to "UNSET" if no role selected
         });
+
+        // Reset form
+        setRealName('');
+        setEmail('');
+        setRole('');
+        
+        onOpenChange(false);
     };
 
     const handleCancel = () => {
-        setRealName(currentRealName || '');
-        setEmail(currentEmail || '');
-        setRole(currentRole || '');
-        onOpenChange(false);
-    };
-
-    const handleDeleteUser = () => {
-        // Remove user from the users array
-        const updatedUsers = users.filter((_, index) => index !== userIndex);
-        setUserTable(updatedUsers);
-        onDelete();
+        setRealName('');
+        setEmail('');
+        setRole('');
         onOpenChange(false);
     };
 
@@ -150,7 +122,7 @@ const UserEditDialog = ({
         <ConvexDialog.Root isOpen={isOpen} onOpenChange={handleDialogOpenChange}>
             <ConvexDialog.Trigger asChild>
                 <View>
-                    {/* This will be replaced by the actual pressable in UserRow */}
+                    {/* This will be replaced by the actual pressable in PlayerPageOPERATOR */}
                 </View>
             </ConvexDialog.Trigger>
             <ConvexDialog.Portal>
@@ -161,8 +133,8 @@ const UserEditDialog = ({
 
                     <Column>
                         <DialogHeader
-                            text={`Edit User`}
-                            subtext={`Set the user details`}
+                            text={`Add User`}
+                            subtext={`Enter the user details`}
                         />
                         <Column gap={2}>
                             <PoppinsText weight='medium'>Real Name</PoppinsText>
@@ -195,23 +167,18 @@ const UserEditDialog = ({
                         <Column className='w-full items-center justify-center'>
                             <Column className='w-min'>
                                 <Row className='w-min max-w-full'>
-                                {isUniqueEmail && isValidEmail ? (
+                                {isUniqueEmail && isValidEmail && realName.trim() && email.trim() ? (
                                     <AppButton className='max-w-[30vw] w-48 h-10' variant='black' onPress={handleSubmit}>
-                                        <PoppinsText color='white' weight='medium'>Save</PoppinsText>
+                                        <PoppinsText color='white' weight='medium'>Add User</PoppinsText>
                                     </AppButton> 
                                 ) : (
-                                    <StatusButton className='max-w-[30vw]  w-48 h-10' buttonText='Save' buttonAltText='Valid email required' />
-                                    // <PoppinsText weight='medium'>Email already exists!</PoppinsText>
+                                    <StatusButton className='max-w-[30vw]  w-48 h-10' buttonText='Add User' buttonAltText='Valid email required' />
                                 )}
                                     
                                     <AppButton className='max-w-[30vw] w-48 h-10' variant='outline-alt' onPress={handleCancel}>
                                         <PoppinsText color='black' weight='medium'>Cancel</PoppinsText>
                                     </AppButton>
                                 </Row>
-
-                                <AppButton className='w-full h-10 border-2 border-red-500' variant='outline' onPress={handleDeleteUser}>
-                                    <Text className='text-red-500 font-medium'>Delete User</Text>
-                                </AppButton>
                             </Column>
                         </Column>
                     </Column>
@@ -221,4 +188,4 @@ const UserEditDialog = ({
     );
 };
 
-export default UserEditDialog;
+export default UserAddDialog;

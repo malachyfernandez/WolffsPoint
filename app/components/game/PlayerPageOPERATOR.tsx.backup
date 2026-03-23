@@ -66,6 +66,7 @@ const PlayerPageOPERATOR = ({ currentUserId, gameId }: PlayerPageOPERATORProps) 
         privacy: "PUBLIC",
         defaultValue: 2,
     });
+    console.log("set default to 2 in PlayerPageOPERATOR.tsx.backup");
 
     const [dayDatesArray, setDayDatesArray] = useUserList<string[]>({
         key: "dayDatesArray",

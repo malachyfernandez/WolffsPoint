@@ -5,7 +5,7 @@ import Column from '../layout/Column';
 import Row from '../layout/Row';
 import CustomCheckbox from '../ui/CustomCheckbox';
 import Animated, { FadeInLeft, FadeInRight, FadeOutDown, FadeOutLeft, FadeOutRight, Easing, FadeInDown, FadeOutUp } from 'react-native-reanimated';
-import { Pressable } from 'react-native';
+import { Pressable, View } from 'react-native';
 import UserEditDialog from './UserEditDialog';
 import { useUserList } from 'hooks/useUserList';
 import { UserTableItem } from 'types/playerTable';
@@ -39,12 +39,10 @@ interface UserRowProps {
     onEditEnd?: () => void;
     isEditing?: boolean;
     gameId: string;
-    isNewPlayerRowJustCreated: boolean;
-    setIsNewPlayerRowJustCreated: (value: boolean) => void;
 }
 
 
-const UserRow = ({ user, index, isLast, setLivingState, setExtraColumnValue, userTableColumnVisibility, onEditStart, onEditEnd, isEditing, gameId, isNewPlayerRowJustCreated, setIsNewPlayerRowJustCreated }: UserRowProps) => {
+const UserRow = ({ user, index, isLast, setLivingState, setExtraColumnValue, userTableColumnVisibility, onEditStart, onEditEnd, isEditing, gameId }: UserRowProps) => {
     const [editingColumns, setEditingColumns] = useState<Record<number, boolean>>({});
     const [isDialogOpen, setIsDialogOpen] = useState(false);
 
@@ -64,44 +62,6 @@ const UserRow = ({ user, index, isLast, setLivingState, setExtraColumnValue, use
         setEditingColumns(prev => ({ ...prev, [columnIndex]: false }));
         onEditEnd?.();
     };
-
-
-    const [iExist, setIExist] = useState(true);
-    const [isWaitingForNewPlayerRow, setIsWaitingForNewPlayerRow] = useState(false);
-
-    useEffect(() => {
-        setIExist(false);
-    }, []);
-
-
-    useEffect(() => {
-        if (!iExist) {
-
-            // console.log('UserRow: Setting iExist to true, starting timer');
-
-            setIExist(true);
-            setIsWaitingForNewPlayerRow(true);
-
-            const timeoutId = setTimeout(() => {
-                setIsWaitingForNewPlayerRow(false);
-            }, 100);
-
-            return () => {
-                setIsWaitingForNewPlayerRow(false);
-                clearTimeout(timeoutId);
-            };
-        }
-    }, [iExist]);
-
-
-    useEffect(() => {
-        if (isWaitingForNewPlayerRow && isNewPlayerRowJustCreated) {
-            setIsDialogOpen(true);
-            setIsNewPlayerRowJustCreated(false);
-            setIsWaitingForNewPlayerRow(false);
-
-        }
-    }, [isNewPlayerRowJustCreated, isWaitingForNewPlayerRow]);
 
 
     // GREAT UNDO EXAMPLE
@@ -161,7 +121,11 @@ const UserRow = ({ user, index, isLast, setLivingState, setExtraColumnValue, use
                                 textDecorationStyle: 'dotted',
                             }}
                         >
-                            {user.role || (
+                            {user.role === "UNSET" ? (
+                                <PoppinsText className="opacity-50">UNSET</PoppinsText>
+                            ) : user.role ? (
+                                user.role
+                            ) : (
                                 <PoppinsText className="opacity-50">No role</PoppinsText>
                             )}
                         </PoppinsText>

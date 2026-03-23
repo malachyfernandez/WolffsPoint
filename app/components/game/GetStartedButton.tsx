@@ -40,6 +40,7 @@ const GetStartedButton = ({ gameId }: GetStartedButtonProps) => {
 
     const [date, setDate] = useState('');
     const [realDaysPerInGameDaySTATE, setRealDaysPerInGameDaySTATE] = useState('2');
+    console.log("set default to 2 in GetStartedButton.tsx useState realDaysPerInGameDaySTATE");
 
     const [isDateValid, setIsDateValid] = useState(false);
     const [isNumberValid, setIsNumberValid] = useState(true);
