@@ -107,9 +107,14 @@ const NewspaperColumnDialog = ({
                                 />
                             </Column>
 
-                            <Column className='flex-1 min-w-[18rem] rounded-xl border border-border bg-[#f7f1dd] p-4' gap={2}>
+                            <Column className='flex-1 min-w-[18rem]'>
+
                                 <PoppinsText weight='medium'>Preview</PoppinsText>
-                                <MarkdownRenderer markdown={message} textAlign='justify' />
+
+                                <Column className='flex-1 min-w-[18rem] rounded-xl border border-border bg-[#f7f1dd] p-4' gap={2}>
+
+                                    <MarkdownRenderer markdown={message} textAlign='justify' />
+                                </Column>
                             </Column>
                         </Row>
 
