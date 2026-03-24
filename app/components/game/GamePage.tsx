@@ -1,18 +1,14 @@
 import React, { useState } from 'react';
 import Column from '../layout/Column';
-import PoppinsText from '../ui/text/PoppinsText';
-import { ScrollView, TouchableOpacity, View, Platform } from 'react-native';
+import { ScrollView, Platform } from 'react-native';
 import Row from '../layout/Row';
 import { useUserListGet } from 'hooks/useUserListGet';
-import prettyLog from '../../../utils/prettyLog';
-import { useUserListSet } from 'hooks/useUserListSet';
-import UserIcon from '../ui/icons/UserIcon';
+import GameUserIcon from '../ui/icons/UserIcon';
 import NavTab from '../layout/NavTab';
-import { transform } from '@babel/core';
 import PlayerPageOPERATOR from './PlayerPageOPERATOR';
 import ConfigPageOPERATOR from './ConfigPageOPERATOR';
 import NightlyPageOPERATOR from './NightlyPageOPERATOR';
-import AppButton from '../ui/buttons/AppButton';
+import NewspaperPageOPERATOR from './NewspaperPageOPERATOR';
 import RemoveGameButton from './RemoveGameButton';
 
 interface GamePageProps {
@@ -28,16 +24,10 @@ const GamePage = ({ gameId, currentUserId }: GamePageProps) => {
     })
 
     if (gameDatas) {
-        if (gameDatas?.length != 1) {
+        if (gameDatas?.length !== 1) {
             console.log("PROBLEM GamePage.tsx");
         }
     }
-
-    const gameData = gameDatas?.[0];
-
-    const operatorId = gameData?.userToken || "";
-
-    const isOperator = operatorId === currentUserId;
 
     // CHECK IF WE ARE REPORTER
     // TO DO (after configurable in dashboard)
@@ -46,7 +36,7 @@ const GamePage = ({ gameId, currentUserId }: GamePageProps) => {
     // TODO: (after userArray is made)
 
 
-    type navBarType = "players" | "config" | "nightly" | "stats" | "history" | "settings";
+    type navBarType = "players" | "config" | "nightly" | "newspaper" | "history" | "settings";
 
     const [navBar, setNavBar] = useState<navBarType>("players");
 
@@ -59,15 +49,18 @@ const GamePage = ({ gameId, currentUserId }: GamePageProps) => {
                 <Row gap={0} className='mb-[-5rem]'>
 
                     <NavTab text='Players' onPress={() => setNavBar("players")}>
-                        <UserIcon />
+                        <GameUserIcon />
                     </NavTab>
                     <NavTab text='Roles' onPress={() => setNavBar("config")}>
 
-                        <UserIcon />
+                        <GameUserIcon />
 
                     </NavTab>
                     <NavTab text='Nightly' onPress={() => setNavBar("nightly")}>
-                        <UserIcon />
+                        <GameUserIcon />
+                    </NavTab>
+                    <NavTab text='Newspaper' onPress={() => setNavBar("newspaper")}>
+                        <GameUserIcon />
                     </NavTab>
                     <NavTab text='Config'>
                         <></>
@@ -78,15 +71,19 @@ const GamePage = ({ gameId, currentUserId }: GamePageProps) => {
                 </Row>
                 <Row gap={0} className='mb-[-10px] z-20' pointerEvents="none">
                     <NavTab text='Players' isInvisible={navBar !== "players"} isHighlighted={true}>
-                        <UserIcon />
+                        <GameUserIcon />
                     </NavTab>
 
                     <NavTab text='Roles' isInvisible={navBar !== "config"} isHighlighted={true}>
-                        <UserIcon />
+                        <GameUserIcon />
                     </NavTab>
 
                     <NavTab text='Nightly' isInvisible={navBar !== "nightly"} isHighlighted={true}>
-                        <UserIcon />
+                        <GameUserIcon />
+                    </NavTab>
+
+                    <NavTab text='Newspaper' isInvisible={navBar !== "newspaper"} isHighlighted={true}>
+                        <GameUserIcon />
                     </NavTab>
 
                     <NavTab text='Players' isInvisible={true} isHighlighted={true}>
@@ -122,6 +119,10 @@ const GamePage = ({ gameId, currentUserId }: GamePageProps) => {
                         {/* if nightly */}
                         {navBar === "nightly" && (
                             <NightlyPageOPERATOR currentUserId={currentUserId} gameId={gameId} />
+                        )}
+
+                        {navBar === "newspaper" && (
+                            <NewspaperPageOPERATOR currentUserId={currentUserId} gameId={gameId} />
                         )}
 
                     </Column>

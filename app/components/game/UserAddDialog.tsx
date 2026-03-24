@@ -9,8 +9,7 @@ import DialogHeader from '../ui/dialog/DialogHeader';
 import { View } from 'react-native';
 import { useUserList } from 'hooks/useUserList';
 import { RoleTableItem } from 'types/roleTable';
-import { UserTableItem } from 'types/playerTable';
-import { useCreateUndoSnapshot, useUndoRedo } from 'hooks/useUndoRedo';
+import { UserTableItem, UserTableTitle } from 'types/playerTable';
 import Row from '../layout/Row';
 import StatusButton from '../ui/StatusButton';
 
@@ -18,14 +17,12 @@ interface UserAddDialogProps {
     isOpen: boolean;
     onOpenChange: (open: boolean) => void;
     gameId: string;
-    onAddUser: (userData: { realName: string; email: string; role: string }) => void;
 }
 
 const UserAddDialog = ({
     isOpen,
     onOpenChange,
-    gameId,
-    onAddUser
+    gameId
 }: UserAddDialogProps) => {
     const [realName, setRealName] = useState('');
     const [email, setEmail] = useState('');
@@ -38,7 +35,20 @@ const UserAddDialog = ({
         privacy: "PUBLIC",
     });
 
-    const users = userTable?.value ?? [];
+    const users = userTable?.value;
+
+    const [userTableTitle] = useUserList<UserTableTitle>({
+        key: "userTableTitle",
+        itemId: gameId,
+        privacy: "PUBLIC",
+    });
+
+    const [dayDatesArray] = useUserList<string[]>({
+        key: "dayDatesArray",
+        itemId: gameId,
+        privacy: "PUBLIC",
+        defaultValue: [],
+    });
 
     const [roleTable] = useUserList<RoleTableItem[]>({
         key: "roleTable",
@@ -67,7 +77,7 @@ const UserAddDialog = ({
     };
 
     useEffect(() => {
-        const emailExists = users.some((user) => 
+        const emailExists = (users ?? []).some((user) => 
             user.email === email.trim()
         );
         setIsUniqueEmail(!emailExists);
@@ -76,7 +86,7 @@ const UserAddDialog = ({
 
     const handleSubmit = () => {
         // Check for email uniqueness and format
-        const emailExists = users.some((user) => 
+        const emailExists = (users ?? []).some((user) => 
             user.email === email.trim()
         );
         
@@ -96,12 +106,24 @@ const UserAddDialog = ({
             return;
         }
 
-        // Call the onAddUser callback with the user data (role is optional)
-        onAddUser({
+        const currentTitles = userTableTitle?.value ?? { extraUserColumns: [], extraDayColumns: [] };
+        const newUser: UserTableItem = {
             realName: realName.trim(),
             email: email.trim(),
-            role: role.trim() || "UNSET" // Default to "UNSET" if no role selected
-        });
+            userId: "NOT-JOINED",
+            role: role.trim() || "UNSET",
+            playerData: {
+                livingState: "alive",
+                extraColumns: Array(currentTitles.extraUserColumns.length).fill(""),
+            },
+            days: Array(dayDatesArray.value.length).fill(null).map(() => ({
+                vote: "",
+                action: "",
+                extraColumns: Array(currentTitles.extraDayColumns.length).fill(""),
+            })),
+        };
+
+        setUserTable([...(users ?? []), newUser]);
 
         // Reset form
         setRealName('');

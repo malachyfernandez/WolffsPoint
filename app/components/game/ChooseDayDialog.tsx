@@ -12,41 +12,38 @@ interface ChooseDayDialogProps {
     isOpen: boolean;
     onOpenChange: (open: boolean) => void;
     gameId: string;
-    addNewDay: () => void;
+    addNewDay: (customDaysPerGameDay?: number) => void;
 }
 
 const ChooseDayDialog = ({ isOpen, onOpenChange, gameId, addNewDay }: ChooseDayDialogProps) => {
     // Use the same user variable system as other components
-    const [numberOfRealDaysPerInGameDay, setNumberOfRealDaysPerInGameDay] = useUserList<number>({
+    const [numberOfRealDaysPerInGameDay, setNumberOfRealDaysPerInGameDay] = useUserList<number | false>({
         key: "numberOfRealDaysPerInGameDay",
         itemId: gameId,
         privacy: "PUBLIC",
-        defaultValue: 0,
+        defaultValue: false,
     });
 
-    const [daysValue, setDaysValue] = useState((numberOfRealDaysPerInGameDay?.value == false) ? "2" : numberOfRealDaysPerInGameDay?.value?.toString());
+    const [daysValue, setDaysValue] = useState(numberOfRealDaysPerInGameDay.value === false ? "2" : numberOfRealDaysPerInGameDay.value.toString());
 
-    // if (numberOfRealDaysPerInGameDay?.value == 0) {
-    //     setDaysValue("2");
-    // } else {
-        // setDaysValue((numberOfRealDaysPerInGameDay?.value ?? 2).toString());
-    // }
+    React.useEffect(() => {
+        setDaysValue(numberOfRealDaysPerInGameDay.value === false ? "2" : numberOfRealDaysPerInGameDay.value.toString());
+    }, [numberOfRealDaysPerInGameDay.value, isOpen]);
     // const [daysValue, setDaysValue] = useState((numberOfRealDaysPerInGameDay?.value || 2).toString());
 
+     const handleSubmit = () => {
+         const numericValue = parseInt(daysValue);
+         if (!isNaN(numericValue) && numericValue >= 1 && numericValue <= 30) {
+             setNumberOfRealDaysPerInGameDay(numericValue);
+             addNewDay(numericValue);
+             onOpenChange(false);
+         }
+     };
 
-    const handleSubmit = () => {
-        const numericValue = parseInt(daysValue);
-        if (!isNaN(numericValue) && numericValue >= 1 && numericValue <= 30) {
-            setNumberOfRealDaysPerInGameDay(numericValue);
-            addNewDay(numericValue);
-            onOpenChange(false);
-        }
-    };
-
-    const handleCancel = () => {
-        setDaysValue(numberOfRealDaysPerInGameDay?.value?.toString());
-        onOpenChange(false);
-    };
+     const handleCancel = () => {
+         setDaysValue(numberOfRealDaysPerInGameDay.value === false ? "2" : numberOfRealDaysPerInGameDay.value.toString());
+         onOpenChange(false);
+     };
 
 
     return (
