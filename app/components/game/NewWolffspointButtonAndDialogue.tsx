@@ -1,29 +1,25 @@
-
 import React, { useState } from 'react';
-import { useUserVariable } from 'hooks/useUserVariable';
 import ConvexDialog from '../ui/dialog/ConvexDialog';
 import Column from '../layout/Column';
 
 import AppButton from '../ui/buttons/AppButton';
 import PoppinsText from '../ui/text/PoppinsText';
 import PoppinsTextInput from '../ui/forms/PoppinsTextInput';
-import JoinHandler from '../ui/forms/JoinHandler';
 import DialogHeader from '../ui/dialog/DialogHeader';
 import SmartDateInput from '../ui/forms/SmartDateInput';
 import StatusButton from '../ui/StatusButton';
 import { useUserListSet } from 'hooks/useUserListSet';
 
 interface NewWolffspointButtonAndDialogueProps {
-    onPress: () => void;
+    onCreate?: (gameId: string) => void;
 }
 
-const NewWolffspointButtonAndDialogue = ({ onPress }: NewWolffspointButtonAndDialogueProps) => {
+const NewWolffspointButtonAndDialogue = ({ onCreate }: NewWolffspointButtonAndDialogueProps) => {
     const [isHeroDialogOpen, setIsHeroDialogOpen] = useState(false);
     const [input, setInput] = useState('');
 
     const [date, setDate] = useState('');
     const [isDateValid, setIsDateValid] = useState(false);
-
 
     const todaysDate = new Date()
 
@@ -37,9 +33,6 @@ const NewWolffspointButtonAndDialogue = ({ onPress }: NewWolffspointButtonAndDia
         }
         return result;
     }
-
-    const newGameId = generateGameId();
-
 
     const dateToStorageString = (date: Date): string => {
         return `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`;
@@ -64,6 +57,7 @@ const NewWolffspointButtonAndDialogue = ({ onPress }: NewWolffspointButtonAndDia
 
     const submitForum = () => {
         const finalInput = input || "WolffsPoint";
+        const newGameId = generateGameId();
 
         setUserListItem({
             key: "games",
@@ -81,6 +75,7 @@ const NewWolffspointButtonAndDialogue = ({ onPress }: NewWolffspointButtonAndDia
             privacy: "PUBLIC",
         });
 
+        onCreate?.(newGameId);
         setIsHeroDialogOpen(false);
     };
 

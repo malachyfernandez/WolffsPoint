@@ -21,10 +21,8 @@ interface AllGamesPageProps {
 }
 
 const AllGamesPage = ({
-    activeGameId,
     setActiveGameId,
     myGames,
-    addNewGame,
 }: AllGamesPageProps) => {
 
     const [uploadedImageUrl, setUploadedImageUrl] = useState('');
@@ -35,7 +33,12 @@ const AllGamesPage = ({
     });
 
     const joinGame = (gameId: string) => {
-        setGamesTheyJoined([...gamesTheyJoined.value, gameId]);
+        const updatedGamesTheyJoined = gamesTheyJoined.value.includes(gameId)
+            ? gamesTheyJoined.value
+            : [...gamesTheyJoined.value, gameId];
+
+        setGamesTheyJoined(updatedGamesTheyJoined);
+        setActiveGameId(gameId);
     };
 
     interface UserData {
@@ -103,7 +106,7 @@ const AllGamesPage = ({
             {/* bottom bar */}
             <Column>
                 <Row className='p-6 border-t border-subtle-border justify-between'>
-                    <NewWolffspointButtonAndDialogue onPress={addNewGame} />
+                    <NewWolffspointButtonAndDialogue onCreate={setActiveGameId} />
                     
 
                     {!isGamesPageEmpty && (

@@ -10,6 +10,7 @@ import ConfigPageOPERATOR from './ConfigPageOPERATOR';
 import NightlyPageOPERATOR from './NightlyPageOPERATOR';
 import NewspaperPageOPERATOR from './NewspaperPageOPERATOR';
 import RemoveGameButton from './RemoveGameButton';
+import { Newspaper } from 'lucide-react-native';
 
 interface GamePageProps {
     gameId: string;
@@ -60,7 +61,7 @@ const GamePage = ({ gameId, currentUserId }: GamePageProps) => {
                         <GameUserIcon />
                     </NavTab>
                     <NavTab text='Newspaper' onPress={() => setNavBar("newspaper")}>
-                        <GameUserIcon />
+                        <Newspaper />
                     </NavTab>
                     <NavTab text='Config'>
                         <></>
@@ -83,7 +84,7 @@ const GamePage = ({ gameId, currentUserId }: GamePageProps) => {
                     </NavTab>
 
                     <NavTab text='Newspaper' isInvisible={navBar !== "newspaper"} isHighlighted={true}>
-                        <GameUserIcon />
+                        <Newspaper />
                     </NavTab>
 
                     <NavTab text='Players' isInvisible={true} isHighlighted={true}>
