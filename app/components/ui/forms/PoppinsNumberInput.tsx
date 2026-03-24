@@ -92,7 +92,7 @@ const PoppinsNumberInput = ({
                 return `Maximum ${maxValue}`;
             }
         }
-        return '';
+        return ' ';
     }, [showError, numericValue, minValue, maxValue, inputValue.length]);
 
     const handleChangeText = (text: string) => {

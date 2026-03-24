@@ -13,6 +13,7 @@ import PlayerPageOPERATOR from './PlayerPageOPERATOR';
 import ConfigPageOPERATOR from './ConfigPageOPERATOR';
 import NightlyPageOPERATOR from './NightlyPageOPERATOR';
 import AppButton from '../ui/buttons/AppButton';
+import RemoveGameButton from './RemoveGameButton';
 
 interface GamePageProps {
     gameId: string;
@@ -102,26 +103,32 @@ const GamePage = ({ gameId, currentUserId }: GamePageProps) => {
                     // transform
                     style={{ transform: "translateX(-50%) translateY(2px)", left: Platform.OS === "web" ? "50%" : "25%" }}
                 />
-                <Column
-                    className='w-full bg-inner-background border-border border-2 rounded-xl p-4'
-                    style={{ boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)" }}
-                >
+                <Column>
+                    <Column
+                        className='w-full bg-inner-background border-border border-2 rounded-xl p-4'
+                        style={{ boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)" }}
+                    >
 
-                    {/* if players */}
-                    {navBar === "players" && (
-                        <PlayerPageOPERATOR currentUserId={currentUserId} gameId={gameId} />
-                    )}
-                    
-                    {/* if config */}
-                    {navBar === "config" && (
-                        <ConfigPageOPERATOR currentUserId={currentUserId} gameId={gameId} />
-                    )}
-                    
-                    {/* if nightly */}
-                    {navBar === "nightly" && (
-                        <NightlyPageOPERATOR currentUserId={currentUserId} gameId={gameId} />
-                    )}
+                        {/* if players */}
+                        {navBar === "players" && (
+                            <PlayerPageOPERATOR currentUserId={currentUserId} gameId={gameId} />
+                        )}
+
+                        {/* if config */}
+                        {navBar === "config" && (
+                            <ConfigPageOPERATOR currentUserId={currentUserId} gameId={gameId} />
+                        )}
+
+                        {/* if nightly */}
+                        {navBar === "nightly" && (
+                            <NightlyPageOPERATOR currentUserId={currentUserId} gameId={gameId} />
+                        )}
+
+                    </Column>
+                    <RemoveGameButton gameId={gameId} />
                 </Column>
+
+
             </ScrollView>
         </Column>
     );

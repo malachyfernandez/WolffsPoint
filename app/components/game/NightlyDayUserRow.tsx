@@ -3,6 +3,9 @@ import PoppinsText from '../ui/text/PoppinsText';
 import InlineEditableText from '../ui/forms/InlineEditableText';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
+import { Pressable } from 'react-native';
+import NightlyResponseDialog from './NightlyResponseDialog';
+import NightlyMessageDialog from './NightlyMessageDialog';
 
 interface NightlyDayUserRowProps {
     user: {
@@ -51,8 +54,8 @@ const NightlyDayUserRow = ({
 }: NightlyDayUserRowProps) => {
     const [editingVote, setEditingVote] = useState(false);
     const [editingAction, setEditingAction] = useState(false);
-    const [editingResponse, setEditingResponse] = useState(false);
-    const [editingMessage, setEditingMessage] = useState(false);
+    const [isResponseDialogOpen, setIsResponseDialogOpen] = useState(false);
+    const [isMessageDialogOpen, setIsMessageDialogOpen] = useState(false);
 
     const dayData = user.days[dayNumber] || { vote: "", action: "", extraColumns: [] };
 
@@ -76,26 +79,6 @@ const NightlyDayUserRow = ({
         onEditEnd?.();
     };
 
-    const handleResponseEditStart = () => {
-        setEditingResponse(true);
-        onEditStart?.();
-    };
-
-    const handleResponseEditEnd = () => {
-        setEditingResponse(false);
-        onEditEnd?.();
-    };
-
-    const handleMessageEditStart = () => {
-        setEditingMessage(true);
-        onEditStart?.();
-    };
-
-    const handleMessageEditEnd = () => {
-        setEditingMessage(false);
-        onEditEnd?.();
-    };
-
     const getCurrentNightlyResponse = () => {
         if (nightlyResponseList[user.email] && nightlyResponseList[user.email][dayNumber] !== undefined) {
             return nightlyResponseList[user.email][dayNumber];
@@ -111,52 +94,84 @@ const NightlyDayUserRow = ({
     };
 
     return (
-        <Row gap={0} className={` h-12 w-min ${isEditing ? 'z-50' : ''}`}>
-            <Column className={`w-28 h-full border border-subtle-border items-center justify-center z-10`}>
-                <InlineEditableText
-                    value={dayData.vote || ''}
-                    onChange={(newValue) => setVoteValue?.(index, newValue)}
-                    placeholder='Vote'
-                    className='w-20 text-center text-nowrap overflow-hidden'
-                    weight='medium'
-                    onEditStart={handleVoteEditStart}
-                    onEditEnd={handleVoteEditEnd}
-                />
-            </Column>
-            <Column gap={0} className={`w-28 h-full border border-subtle-border items-center justify-center ${editingVote ? 'z-0' : 'z-20'}`}>
-                <InlineEditableText
-                    value={dayData.action || ''}
-                    onChange={(newValue) => setActionValue?.(index, newValue)}
-                    placeholder='Action'
-                    className='w-20 text-center text-nowrap overflow-hidden'
-                    weight='medium'
-                    onEditStart={handleActionEditStart}
-                    onEditEnd={handleActionEditEnd}
-                />
-            </Column>
-            <Column className={`w-64 h-full border border-subtle-border items-center justify-center ${isLast ? 'rounded-br-lg' : ''} ${editingResponse ? 'z-50' : ''}`}>
-                <InlineEditableText
-                    value={getCurrentNightlyResponse()}
-                    onChange={(newValue) => updateNightlyResponse(dayNumber, index, newValue)}
-                    placeholder='No response'
-                    className='w-28 text-center text-nowrap overflow-hidden'
-                    weight='medium'
-                    onEditStart={handleResponseEditStart}
-                    onEditEnd={handleResponseEditEnd}
-                />
-            </Column>
-            <Column gap={0} className={`w-64 h-full border border-subtle-border items-center justify-center ${isLast ? 'rounded-br-lg' : ''}`}>
-                <InlineEditableText
-                    value={getCurrentNightlyMessage()}
-                    onChange={(newValue) => updateNightlyMessage(dayNumber, index, newValue)}
-                    placeholder='No message'
-                    className='w-28 text-center text-nowrap overflow-hidden'
-                    weight='medium'
-                    onEditStart={handleMessageEditStart}
-                    onEditEnd={handleMessageEditEnd}
-                />
-            </Column>
-        </Row>
+        <>
+            <Row gap={0} className={` h-12 w-min ${isEditing ? 'z-50' : ''}`}>
+                <Column className={`w-28 h-full border border-subtle-border items-center justify-center z-10`}>
+                    <InlineEditableText
+                        value={dayData.vote || ''}
+                        onChange={(newValue) => setVoteValue?.(index, newValue)}
+                        placeholder='Vote'
+                        className='w-20 text-center text-nowrap overflow-hidden'
+                        weight='medium'
+                        onEditStart={handleVoteEditStart}
+                        onEditEnd={handleVoteEditEnd}
+                    />
+                </Column>
+                <Column gap={0} className={`w-28 h-full border border-subtle-border items-center justify-center ${editingVote ? 'z-0' : 'z-20'}`}>
+                    <InlineEditableText
+                        value={dayData.action || ''}
+                        onChange={(newValue) => setActionValue?.(index, newValue)}
+                        placeholder='Action'
+                        className='w-20 text-center text-nowrap overflow-hidden'
+                        weight='medium'
+                        onEditStart={handleActionEditStart}
+                        onEditEnd={handleActionEditEnd}
+                    />
+                </Column>
+                <Column className={`w-64 h-full border border-subtle-border items-center justify-center ${isLast ? 'rounded-br-lg' : ''}`}>
+                    <Pressable onPress={() => setIsResponseDialogOpen(true)} className='w-60 h-full items-center justify-center'>
+                        <PoppinsText 
+                            weight='medium' 
+                            className='text-center text-nowrap overflow-hidden w-60'
+                            style={{
+                                textDecorationLine: 'underline',
+                                textDecorationStyle: 'dotted',
+                            }}
+                        >
+                            {getCurrentNightlyResponse() || (
+                                <PoppinsText className="opacity-50">No response...</PoppinsText>
+                            )}
+                        </PoppinsText>
+                    </Pressable>
+                </Column>
+                <Column gap={0} className={`w-64 h-full border border-subtle-border items-center justify-center ${isLast ? 'rounded-br-lg' : ''}`}>
+                    <Pressable onPress={() => setIsMessageDialogOpen(true)} className='w-60 h-full items-center justify-center'>
+                        <PoppinsText 
+                            weight='medium' 
+                            className='text-center text-nowrap overflow-hidden w-60'
+                            style={{
+                                textDecorationLine: 'underline',
+                                textDecorationStyle: 'dotted',
+                            }}
+                        >
+                            {getCurrentNightlyMessage() || (
+                                <PoppinsText className="opacity-50">No message...</PoppinsText>
+                            )}
+                        </PoppinsText>
+                    </Pressable>
+                </Column>
+            </Row>
+            <NightlyResponseDialog
+                isOpen={isResponseDialogOpen}
+                onOpenChange={setIsResponseDialogOpen}
+                dayIndex={dayNumber}
+                userIndex={index}
+                userName={user.realName || 'User'}
+                currentResponse={getCurrentNightlyResponse()}
+                onPress={() => setIsResponseDialogOpen(true)}
+                updateNightlyResponse={updateNightlyResponse}
+            />
+            <NightlyMessageDialog
+                isOpen={isMessageDialogOpen}
+                onOpenChange={setIsMessageDialogOpen}
+                dayIndex={dayNumber}
+                userIndex={index}
+                userName={user.realName || 'User'}
+                currentMessage={getCurrentNightlyMessage()}
+                onPress={() => setIsMessageDialogOpen(true)}
+                updateNightlyMessage={updateNightlyMessage}
+            />
+        </>
     );
 };
 

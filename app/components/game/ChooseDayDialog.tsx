@@ -24,7 +24,7 @@ const ChooseDayDialog = ({ isOpen, onOpenChange, gameId, addNewDay }: ChooseDayD
         defaultValue: 0,
     });
 
-    const [daysValue, setDaysValue] = useState((numberOfRealDaysPerInGameDay?.value?.toString()==="0") ? "2" : numberOfRealDaysPerInGameDay?.value?.toString());
+    const [daysValue, setDaysValue] = useState((numberOfRealDaysPerInGameDay?.value == false) ? "2" : numberOfRealDaysPerInGameDay?.value?.toString());
 
     // if (numberOfRealDaysPerInGameDay?.value == 0) {
     //     setDaysValue("2");

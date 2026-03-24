@@ -69,11 +69,11 @@ const PlayerPageOPERATOR = ({ currentUserId, gameId }: PlayerPageOPERATORProps) 
         defaultValue: 0,
     });
 
-    const [numberOfRealDaysPerInGameDay, setNumberOfRealDaysPerInGameDay] = useUserList<number>({
+    const [numberOfRealDaysPerInGameDay, setNumberOfRealDaysPerInGameDay] = useUserList<number | false>({
         key: "numberOfRealDaysPerInGameDay",
         itemId: gameId,
         privacy: "PUBLIC",
-        defaultValue: 0,
+        defaultValue: false,
     });
 
     const [isChooseDayDialogOpen, setIsChooseDayDialogOpen] = useState(false);
@@ -110,10 +110,11 @@ const PlayerPageOPERATOR = ({ currentUserId, gameId }: PlayerPageOPERATORProps) 
 
     const handleAddNewDay = () => {
         // setIsChooseDayDialogOpen(true);
-        if (numberOfRealDaysPerInGameDay.value == 0) {
+        if (numberOfRealDaysPerInGameDay.value == false) {
             setIsChooseDayDialogOpen(true);
         } else {
-            addNewDay()
+            console.log('Adding new day with custom days per game day:', numberOfRealDaysPerInGameDay.value);
+            addNewDay(numberOfRealDaysPerInGameDay.value)
         }
     };
 
@@ -136,7 +137,7 @@ const PlayerPageOPERATOR = ({ currentUserId, gameId }: PlayerPageOPERATORProps) 
 
     };
 
-    
+
 
 
 
@@ -282,22 +283,24 @@ const PlayerPageOPERATOR = ({ currentUserId, gameId }: PlayerPageOPERATORProps) 
                             <PoppinsText weight='bold' className='text-white'>Add Player</PoppinsText>
                         </AppButton>
 
-                        <Row className="items-center pt-8 mt-4 border-t border-subtle-border">
-                            <PoppinsText weight='medium'>Days per game day</PoppinsText>
-                            <PoppinsNumberInput
-                                value={numberOfRealDaysPerInGameDay.value}
-                                onChangeText={(displayValue, isValid, numericValue) => {
-                                    if (isValid && numericValue !== null) {
-                                        setNumberOfRealDaysPerInGameDay(numericValue);
-                                    }
-                                }}
-                                minValue={1}
-                                maxValue={30}
-                                inline={true}
-                                useDefaultStyling={true}
-                            />
+                        {numberOfRealDaysPerInGameDay.value !== false && (
+                            <Row className="items-center pt-8 mt-4 border-t border-subtle-border">
+                                <PoppinsText weight='medium'>Days per game day</PoppinsText>
+                                <PoppinsNumberInput
+                                    value={numberOfRealDaysPerInGameDay.value}
+                                    onChangeText={(displayValue, isValid, numericValue) => {
+                                        if (isValid && numericValue !== null) {
+                                            setNumberOfRealDaysPerInGameDay(numericValue);
+                                        }
+                                    }}
+                                    minValue={1}
+                                    maxValue={30}
+                                    inline={true}
+                                    useDefaultStyling={true}
+                                />
 
-                        </Row>
+                            </Row>
+                        )}
                     </Column>
                 ) : (
                     <Row className='items-center justify-center'>
@@ -326,7 +329,7 @@ const PlayerPageOPERATOR = ({ currentUserId, gameId }: PlayerPageOPERATORProps) 
                 gameId={gameId}
                 onAddUser={handleAddUser}
             />
-            
+
         </>
     );
 };

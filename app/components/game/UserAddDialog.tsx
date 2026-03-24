@@ -172,7 +172,11 @@ const UserAddDialog = ({
                                         <PoppinsText color='white' weight='medium'>Add User</PoppinsText>
                                     </AppButton> 
                                 ) : (
-                                    <StatusButton className='max-w-[30vw]  w-48 h-10' buttonText='Add User' buttonAltText='Valid email required' />
+                                    <StatusButton 
+                                        className='max-w-[30vw]  w-48 h-10' 
+                                        buttonText='Add User' 
+                                        buttonAltText={!isUniqueEmail ? 'Email already exists' : 'Valid email required'} 
+                                    />
                                 )}
                                     
                                     <AppButton className='max-w-[30vw] w-48 h-10' variant='outline-alt' onPress={handleCancel}>
