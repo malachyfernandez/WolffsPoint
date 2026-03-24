@@ -83,10 +83,7 @@ const MainPage: React.FC<MainPageProps> = ({
     return (
 
         <View className=' justify-between w-full h-full'>
-            <View className='absolute right-4 top-20 z-10'>
-                
-            </View>
-
+           
             <TopSiteBar isInAGame={isInAGame} setActiveGameId={setActiveGameId} />
             {!isInAGame ? (
                 <AllGamesPage

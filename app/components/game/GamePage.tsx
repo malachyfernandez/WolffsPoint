@@ -43,8 +43,8 @@ const GamePage = ({ gameId, currentUserId }: GamePageProps) => {
 
     return (
 
-        <Column className='h-full'>
-            <ScrollView className='p-6'>
+        <Column className='max-h-[calc(100vh-6rem)] h-full'>
+            <ScrollView className='p-6 h-full '>
                 {/* <PoppinsText>{`Game ${gameId}`}</PoppinsText> */}
 
                 <Row gap={0} className='mb-[-5rem]'>

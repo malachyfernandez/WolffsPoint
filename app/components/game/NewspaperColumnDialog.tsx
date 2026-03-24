@@ -66,10 +66,10 @@ const NewspaperColumnDialog = ({
             <ConvexDialog.Portal>
                 <ConvexDialog.Overlay />
 
-                <ConvexDialog.Content>
+                <ConvexDialog.Content className='p-1 h-[85vh]'>
                     <ConvexDialog.Close iconProps={{ color: 'rgb(246, 238, 219)' }} className="w-10 h-10 bg-accent-hover absolute right-4 top-4 z-10" />
 
-                    <Column className='p-1 max-h-[85vh]'>
+                    <Column className='p-1  h-[85vh]'>
                         <DialogHeader
                             text={`Column ${columnIndex + 1}`}
                             subtext='Write and preview newspaper markdown'
@@ -98,21 +98,19 @@ const NewspaperColumnDialog = ({
                                 <PoppinsText weight='medium'>Editor</PoppinsText>
                                 <PoppinsTextInput
                                     placeholder='Write newspaper markdown...'
-                                    className='w-full border border-subtle-border p-3 bg-[#fffaf0]'
+                                    className='w-full border border-subtle-border p-3 bg-inner-background'
                                     value={message}
                                     onChangeText={setMessage}
                                     multiline
-                                    numberOfLines={18}
-                                    style={{ minHeight: 360, textAlignVertical: 'top' }}
+                                    autoGrow
+                                    scrollEnabled={false}
+                                    style={{ minHeight: 44, textAlignVertical: 'top' }}
                                 />
                             </Column>
 
                             <Column className='flex-1 min-w-[18rem]'>
-
                                 <PoppinsText weight='medium'>Preview</PoppinsText>
-
-                                <Column className='flex-1 min-w-[18rem] rounded-xl border border-border bg-[#f7f1dd] p-4' gap={2}>
-
+                                <Column className='flex-1 min-w-[18rem] rounded-xl border border-border bg-background p-4' gap={2}>
                                     <MarkdownRenderer markdown={message} textAlign='justify' />
                                 </Column>
                             </Column>

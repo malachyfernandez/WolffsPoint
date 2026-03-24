@@ -128,7 +128,7 @@ const NewspaperPageOPERATOR = ({ gameId }: NewspaperPageOPERATORProps) => {
                                 />
 
                                 <Pressable className='min-h-120 p-4' onPress={() => openColumn(columnIndex)}>
-                                    <Column className='min-h-108 justify-between' gap={4}>
+                                    <Column className=' h-full justify-between' gap={4}>
                                         <Column gap={3}>
                                             {columnMarkdown.trim().length > 0 ? (
                                                 <MarkdownRenderer markdown={columnMarkdown} textAlign='justify' />

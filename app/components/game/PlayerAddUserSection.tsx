@@ -8,9 +8,10 @@ import { UserTableItem } from 'types/playerTable';
 
 interface PlayerAddUserSectionProps {
     gameId: string;
+    removeBottomSpace?: boolean;
 }
 
-const PlayerAddUserSection = ({ gameId }: PlayerAddUserSectionProps) => {
+const PlayerAddUserSection = ({ gameId, removeBottomSpace = false }: PlayerAddUserSectionProps) => {
     const [userTable] = useUserList<UserTableItem[]>({
         key: 'userTable',
         itemId: gameId,
@@ -32,7 +33,7 @@ const PlayerAddUserSection = ({ gameId }: PlayerAddUserSectionProps) => {
                     <PoppinsText weight='bold' className='text-white'>Add Player</PoppinsText>
                 </AppButton>
             ) : (
-                <Row className='items-center justify-center'>
+                <Row className={`items-center justify-center ${removeBottomSpace ? '-mb-6' : ''}`}>
                     <AppButton variant="black" className='w-40 h-8' onPress={handleOpenDialog}>
                         <PoppinsText weight='bold' className='text-white text-xl'>+</PoppinsText>
                         <PoppinsText weight='bold' className='text-white'>Add Player</PoppinsText>

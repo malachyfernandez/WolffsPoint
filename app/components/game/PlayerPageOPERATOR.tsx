@@ -160,7 +160,9 @@ const PlayerPageOPERATOR = ({ currentUserId, gameId }: PlayerPageOPERATORProps) 
                         )}
                     </Column>
                 ) : (
-                    <PlayerAddUserSection gameId={gameId} />
+                   
+                    // <PoppinsText>Hellow</PoppinsText>
+                    <PlayerAddUserSection gameId={gameId} removeBottomSpace />
                 )}
 
 

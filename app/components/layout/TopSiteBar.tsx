@@ -18,7 +18,7 @@ const TopSiteBar = ({ className = '', isInAGame, setActiveGameId }: TopSiteBarPr
 
     return (
         <Column className={className}>
-            <Row className='justify-between items-center p-6'>
+            <Row className='justify-between items-center h-24 px-4'>
                 <TouchableOpacity onPress={() => { setActiveGameId(""); }}>
                     <PoppinsText weight='bold' className='text-lg'>{isInAGame ? "< WolffsPoint" : "WolffsPoint"}</PoppinsText>
                 </TouchableOpacity>
