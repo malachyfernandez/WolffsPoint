@@ -11,6 +11,7 @@ import NewspaperColumnFooter from './newspaperPageOperator/NewspaperColumnFooter
 import NewspaperColumnHeader from './newspaperPageOperator/NewspaperColumnHeader';
 import NewspaperPageHeader from './newspaperPageOperator/NewspaperPageHeader';
 import { Usepaper } from 'types/usepaper';
+import NewspaperColumnDialogContent from './NewspaperColumnDialogContent';
 
 interface NewspaperPageOPERATORProps {
     currentUserId: string;
@@ -29,6 +30,7 @@ const NewspaperPageOPERATOR = ({ gameId }: NewspaperPageOPERATORProps) => {
     const { executeCommand } = useUndoRedo();
     const [selectedColumnIndex, setSelectedColumnIndex] = useState<number | null>(null);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
+
 
     const [usepaper, setUsepaper] = useUserList<Usepaper>({
         key: 'usepaper',
@@ -108,11 +110,32 @@ const NewspaperPageOPERATOR = ({ gameId }: NewspaperPageOPERATORProps) => {
         setIsDialogOpen(true);
     };
 
+// HERE AND DOWN
+    const demoMarkdown = `# Front Page
+
+## Market Update
+
+The harbor opened early today as merchants rolled in with fresh goods from the northern route.
+
+- Bread prices are steady
+- Fish supply is up
+- Workers expect rain by evening
+
+> Citizens are advised to check the bulletin board for route closures.`;
+
+    const [demoMessage, setDemoMessage] = useState(demoMarkdown);
+
+    const handleDemoSubmit = () => undefined;
+
+    const handleDemoCancel = () => {
+        setDemoMessage(demoMarkdown);
+    };
+
     return (
         <>
 
             <Column gap={4}>
-                <NewspaperPageHeader onAddColumn={addColumn} />
+                {/* <NewspaperPageHeader onAddColumn={addColumn} /> */}
 
                 <ScrollView horizontal className='pb-2'>
                     <Row gap={0} className='w-min rounded-xl border-2 border-border bg-background-inverse'>
@@ -120,20 +143,22 @@ const NewspaperPageOPERATOR = ({ gameId }: NewspaperPageOPERATORProps) => {
                             <Column
                                 key={columnIndex}
                                 gap={0}
-                                className={`w-80 ${columnIndex !== newspaperColumns.length - 1 ? 'border-r border-border' : ''}`}
+                                className={`w-80 bg-background ${columnIndex !== newspaperColumns.length - 1 ? 'border-r border-border' : ''}`}
                             >
                                 <NewspaperColumnHeader
                                     columnIndex={columnIndex}
                                     onRemove={() => removeColumn(columnIndex)}
                                 />
 
-                                <Pressable className='min-h-120 p-4' onPress={() => openColumn(columnIndex)}>
+                                <Pressable className='min-h-120 p-4 bg-inner-background' onPress={() => openColumn(columnIndex)}>
                                     <Column className=' h-full justify-between' gap={4}>
                                         <Column gap={3}>
                                             {columnMarkdown.trim().length > 0 ? (
                                                 <MarkdownRenderer markdown={columnMarkdown} textAlign='justify' />
+                                                // <></>
                                             ) : (
                                                 <NewspaperColumnEmptyState />
+                                                // <></>
                                             )}
                                         </Column>
 
@@ -143,7 +168,16 @@ const NewspaperPageOPERATOR = ({ gameId }: NewspaperPageOPERATORProps) => {
                             </Column>
                         ))}
                     </Row>
+                    
                 </ScrollView>
+
+                <NewspaperColumnDialogContent
+                    columnIndex={0}
+                    message={demoMessage}
+                    setMessage={setDemoMessage}
+                    onSubmit={handleDemoSubmit}
+                    onCancel={handleDemoCancel}
+                />
             </Column>
 
 
