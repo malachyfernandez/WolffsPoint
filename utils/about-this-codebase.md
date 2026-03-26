@@ -466,8 +466,27 @@ app/
 1. Use Uniwind classes for all styling
 2. Follow the established color system
 3. Use gap props for spacing in layouts
-4. Test on both iOS and Android
-5. Ensure accessibility with proper contrast ratios
+4. **Scrolling Content**: Always wrap ScrollView in ScrollShadow for consistent visual effects
+5. Test on both iOS and Android
+6. Ensure accessibility with proper contrast ratios
+
+#### ScrollShadow Pattern
+
+For all scrollable content, use the ScrollShadow wrapper from HeroUI:
+
+```tsx
+<ScrollShadow LinearGradientComponent={LinearGradient} className='h-full'>
+  <ScrollView className='h-full'>
+    {/* Scrollable content */}
+  </ScrollView>
+</ScrollShadow>
+```
+
+**Benefits:**
+- Consistent fade effects at scroll boundaries
+- Smooth visual transitions
+- Cross-platform compatibility
+- Automatic shadow direction based on scroll position
 
 ---
 
