@@ -1,3 +1,52 @@
+/**
+ * PublicImageUpload - A complete image upload component with UploadThing integration
+ * 
+ * This component handles the full image upload workflow including:
+ * - Media library permissions
+ * - Image selection and editing
+ * - Upload to UploadThing service
+ * - Progress indication and error handling
+ * - Image preview after successful upload
+ * 
+ * @example Basic Usage
+ * ```tsx
+ * const [imageUrl, setImageUrl] = useState('');
+ * 
+ * <PublicImageUpload
+ *   url={imageUrl}
+ *   setUrl={setImageUrl}
+ *   buttonLabel="Upload profile picture"
+ *   emptyLabel="No profile picture uploaded yet"
+ * />
+ * ```
+ * 
+ * @props {string} url - Current uploaded image URL
+ * @props {Dispatch<SetStateAction<string>>} setUrl - Function to update the URL state
+ * @props {string} buttonLabel - Text for the upload button (default: "Upload image")
+ * @props {string} emptyLabel - Text shown when no image is uploaded (default: "No image uploaded yet")
+ * 
+ * @workflow
+ * 1. User clicks upload button
+ * 2. Requests media library permissions
+ * 3. Opens image picker with editing enabled
+ * 4. Converts selected asset to UploadThing format
+ * 5. Generates presigned upload URL from Convex
+ * 6. Uploads file to UploadThing service
+ * 7. Updates URL state with public image URL
+ * 8. Shows preview of uploaded image
+ * 
+ * @features
+ * - Automatic error handling with user-friendly messages
+ * - Loading state during upload process
+ * - Image preview with proper aspect ratio
+ * - Permission request handling
+ * - Support for both file assets and URI-based assets
+ * 
+ * @dependencies
+ * - expo-image-picker for image selection
+ * - UploadThing for file hosting
+ * - Convex for backend integration
+ */
 import React, { Dispatch, SetStateAction, useState } from 'react';
 import { useAction } from 'convex/react';
 import { ActivityIndicator, Image, View } from 'react-native';

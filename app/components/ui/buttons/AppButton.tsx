@@ -1,3 +1,57 @@
+/**
+ * AppButton - A versatile button component with multiple visual variants
+ * 
+ * This component provides a consistent button interface across the app with
+ * built-in press animations, multiple styling variants, and accessibility features.
+ * 
+ * @example Basic Usage
+ * ```tsx
+ * <AppButton onPress={handlePress}>
+ *   <PoppinsText>Click me</PoppinsText>
+ * </AppButton>
+ * ```
+ * 
+ * @example Different Variants
+ * ```tsx
+ * <AppButton variant="outline" onPress={handleCancel}>
+ *   <PoppinsText>Cancel</PoppinsText>
+ * </AppButton>
+ * 
+ * <AppButton variant="green" onPress={handleSubmit}>
+ *   <PoppinsText color="white">Submit</PoppinsText>
+ * </AppButton>
+ * 
+ * <AppButton variant="grey" onPress={handleDelete}>
+ *   <PoppinsText color="white">Delete</PoppinsText>
+ * </AppButton>
+ * ```
+ * 
+ * @props {React.ReactNode} children - Content to display inside the button
+ * @props {'outline' | 'outline-alt' | 'black' | 'grey' | 'green'} variant - Visual style variant (default: 'outline')
+ * @props {string} className - Additional CSS classes for styling
+ * @props {() => void} onPress - Function called when button is pressed
+ * @props {boolean} dropShadow - Whether to show drop shadow (default: true)
+ * 
+ * @variants
+ * - outline: Transparent background with border, hover effect fills background
+ * - outline-alt: Similar to outline but with lighter hover effect
+ * - black: Solid black/dark background with brightness hover effect
+ * - grey: Solid grey background (#374559ae) with brightness hover effect
+ * - green: Solid green background (primary-accent) with brightness hover effect
+ * 
+ * @features
+ * - Built-in press animation with brightness changes
+ * - TouchableOpacity with proper active opacity
+ * - Consistent sizing (h-10) and rounded corners
+ * - Proper accessibility with pointerEvents handling
+ * - Gap spacing for internal content layout
+ * 
+ * @styling Notes
+ * - Uses flexbox layout for consistent content alignment
+ * - Base styles include overflow-hidden and rounded corners
+ * - Press states use brightness filters for visual feedback
+ * - Drop shadow can be disabled for cleaner designs
+ */
 import React, { useState } from 'react';
 import { TouchableOpacity } from 'react-native';
 import Row from '../../layout/Row';

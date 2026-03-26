@@ -1,3 +1,74 @@
+/**
+ * StateAnimatedView - A compound component system for page-based screen transitions
+ * 
+ * This component provides a declarative API for managing screen transitions based on
+ * page hierarchy and directional animations. Unlike traditional state-based animation
+ * systems, this uses a page-tree approach where animations are determined by the
+ * relative position of pages in the component tree.
+ * 
+ * @example Basic Usage
+ * ```tsx
+ * <StateAnimatedView.Container stateVar={currentScreen} className='flex-1'>
+ *   <StateAnimatedView.Option page={1} stateValue='allGames'>
+ *     <AllGamesPage />
+ *   </StateAnimatedView.Option>
+ *   
+ *   <StateAnimatedView.OptionContainer page={2} pushInAnimation={fromRight}>
+ *     <StateAnimatedView.Option stateValue='game'>
+ *       <GamePage />
+ *     </StateAnimatedView.Option>
+ *   </StateAnimatedView.OptionContainer>
+ * </StateAnimatedView.Container>
+ * ```
+ * 
+ * @example Custom Animation Direction
+ * ```tsx
+ * <StateAnimatedView.OptionContainer page={3} pushInAnimation={fromTop}>
+ *   <StateAnimatedView.Option stateValue='settings'>
+ *     <SettingsPage />
+ *   </StateAnimatedView.Option>
+ * </StateAnimatedView.OptionContainer>
+ * ```
+ * 
+ * @component StateAnimatedView.Container
+ * The root container that manages the current active state and coordinates transitions.
+ * 
+ * @props {TState} stateVar - The current active state value
+ * @props {string} className - Optional CSS classes for styling
+ * @props {ReactNode} children - Option and OptionContainer components
+ * 
+ * @component StateAnimatedView.Option
+ * Represents a single screen/page in the navigation hierarchy.
+ * 
+ * @props {TState} stateValue - The state value that activates this option
+ * @props {number} page - Page number (inherited from OptionContainer if not provided)
+ * @props {ReactNode} children - Content to render when this option is active
+ * 
+ * @component StateAnimatedView.OptionContainer
+ * Groups options with shared animation settings and page numbering.
+ * The higher-numbered page's pushInAnimation controls both forward and backward transitions.
+ * 
+ * @props {number} page - Page number for determining animation direction
+ * @props {StateAnimatedViewPushInAnimation} pushInAnimation - Animation preset (defaults to fromRight)
+ * @props {ReactNode} children - Option components within this container
+ * 
+ * @animation Behavior
+ * - Only adjacent page changes animate (page difference of exactly 1)
+ * - Same-page changes and non-adjacent jumps render with no animation
+ * - The higher-numbered page's pushInAnimation determines the transition direction
+ * - Elements are completely removed from DOM after exit animation completes
+ * 
+ * @animation Presets
+ * - fromRight: Enter from right, exit to left (default)
+ * - fromLeft: Enter from left, exit to right  
+ * - fromTop: Enter from top, exit to bottom
+ * - fromBottom: Enter from bottom, exit to top
+ * 
+ * @performance Notes
+ * - Leaving elements have pointerEvents='none' during transition
+ * - DOM cleanup happens exactly when exit animation completes
+ * - No performance overhead from hidden elements after transition
+ */
 import React, { PropsWithChildren, ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, {
