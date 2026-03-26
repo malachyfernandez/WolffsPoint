@@ -1,7 +1,7 @@
 import React, { PropsWithChildren, useState } from 'react';
 import { Button } from 'heroui-native/button';
 import { Dialog } from 'heroui-native/dialog';
-import { View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 import Column from './layout/Column';
 import PoppinsText from './ui/text/PoppinsText';
 import { useUserVariable } from 'hooks/useUserVariable';
@@ -11,12 +11,18 @@ import { GameInfo } from 'types/games';
 import TopSiteBar from './layout/TopSiteBar';
 import AllGamesPage from './game/AllGamesPage';
 import GamePage from './game/GamePage';
+import StateAnimatedView, {
+    fromRight,
+} from './ui/StateAnimatedView';
 import PoppinsTextInput from './ui/forms/PoppinsTextInput';
 import JoinHandler from './ui/forms/JoinHandler';
+import { ScrollShadow } from 'heroui-native';
+import { LinearGradient } from 'expo-linear-gradient';
 
 
 
 type FontWeight = 'regular' | 'medium' | 'bold';
+type ScreenState = 'allGames' | 'game';
 
 interface MainPageProps extends PropsWithChildren {
     className?: string;
@@ -79,26 +85,39 @@ const MainPage: React.FC<MainPageProps> = ({
 
     const setUserListItem = useUserListSet();
     const isInAGame = activeGameId.value !== "";
+    const currentScreen: ScreenState = isInAGame ? 'game' : 'allGames';
+
+    const isActiveGameLoading = (activeGameId.state.isSyncing == true)
 
     return (
 
-        <View className=' justify-between w-full h-full'>
-           
+        <View className='w-screen h-screen p-safe'>
+
             <TopSiteBar isInAGame={isInAGame} setActiveGameId={setActiveGameId} />
-            {!isInAGame ? (
-                <AllGamesPage
-                    activeGameId={activeGameId.value}
-                    setActiveGameId={setActiveGameId}
-                    myGames={myGames}
-                    addNewGame={addNewGame}
-                />
+            {isActiveGameLoading ? (
+                <PoppinsText>Loading</PoppinsText>
             ) : (
-                <GamePage
-                    gameId={activeGameId.value}
-                    currentUserId={userId}
-                />
+                <StateAnimatedView.Container stateVar={currentScreen} className='flex-1'>
+                    <StateAnimatedView.Option page={1} stateValue='allGames'>
+                        <AllGamesPage
+                            activeGameId={activeGameId.value}
+                            setActiveGameId={setActiveGameId}
+                            myGames={myGames}
+                            addNewGame={addNewGame}
+                        />
+                    </StateAnimatedView.Option>
+
+                    <StateAnimatedView.OptionContainer page={2} pushInAnimation={fromRight}>
+                        <StateAnimatedView.Option stateValue='game'>
+                            <GamePage
+                                gameId={activeGameId.value}
+                                currentUserId={userId}
+                            />
+                        </StateAnimatedView.Option>
+                    </StateAnimatedView.OptionContainer>
+                </StateAnimatedView.Container>
             )}
-        </View>
+        </View >
     );
 };
 

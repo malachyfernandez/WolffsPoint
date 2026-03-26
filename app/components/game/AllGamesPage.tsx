@@ -3,15 +3,16 @@ import React, { useState } from 'react';
 import { useUserVariable } from 'hooks/useUserVariable';
 import { useSyncUserData } from 'hooks/useSyncUserData';
 import Column from '../layout/Column';
+import BottomBar from '../layout/BottomBar';
 import { ScrollView } from 'react-native';
-import Animated, { FadeInDown, FadeOutDown } from 'react-native-reanimated';
 import JoinGameButton from './JoinGameButton';
-import Row from '../layout/Row';
 import GameList from './GameList';
 import NoGames from './NoGames';
 import { MyGames } from 'types/games';
 import NewWolffspointButtonAndDialogue from './NewWolffspointButtonAndDialogue';
 import PublicImageUpload from '../ui/imageUpload/PublicImageUpload';
+import { ScrollShadow } from 'heroui-native';
+import { LinearGradient } from 'expo-linear-gradient';
 
 interface AllGamesPageProps {
     activeGameId: string;
@@ -63,21 +64,18 @@ const AllGamesPage = ({
     const isGamesLoading = gamesTheyJoined?.state.isSyncing;
 
     return (
-        <Column className='flex-1 h-full'>
-            <PublicImageUpload
+        <Column className='flex-1'>
+            {/* <PublicImageUpload
                 url={uploadedImageUrl}
                 setUrl={setUploadedImageUrl}
-            />
+            /> */}
 
-            <Column className='flex-1 h-full'>
+            <Column className='flex-1   '>
                 {!isGamesLoading && (
+                    <ScrollShadow LinearGradientComponent={LinearGradient} className='h-full'>
+                        <ScrollView className='h-full'>
 
-                    !isGamesPageEmpty ? (
-                        <Animated.View
-                            entering={FadeInDown.duration(600)}
-                            exiting={FadeOutDown.duration(600)}
-                        >
-                            <ScrollView>
+                            {!isGamesPageEmpty ? (
                                 <GameList
                                     gamesTheyJoined={gamesTheyJoined.value}
                                     setGamesTheyJoined={setGamesTheyJoined}
@@ -86,33 +84,28 @@ const AllGamesPage = ({
                                     hasMadeAGame={hasMadeAGame}
                                     setActiveGameId={setActiveGameId}
                                 />
-                            </ScrollView>
-                        </Animated.View>
-                    ) : (
-                        <Column className='items-center justify-center flex-1'>
-                            <Animated.View
-                                entering={FadeInDown.duration(600)}
-                                exiting={FadeOutDown.duration(600)}
-                            >
-                                <NoGames joinGame={joinGame} />
-                            </Animated.View>
-                        </Column>
+                            ) : (
+                                <Column className='items-center justify-center flex-1'>
+                                    <NoGames joinGame={joinGame} />
+                                </Column>
 
-                    )
+                            )}
+                        </ScrollView>
+                    </ScrollShadow>
                 )}
 
             </Column>
 
             {/* bottom bar */}
-            <Column>
-                <Row className='p-6 border-t border-subtle-border justify-between'>
+            <Column className='h-24'>
+                <BottomBar>
                     <NewWolffspointButtonAndDialogue onCreate={setActiveGameId} />
-                    
+
 
                     {!isGamesPageEmpty && (
                         <JoinGameButton onJoin={joinGame} />
                     )}
-                </Row>
+                </BottomBar>
             </Column>
 
         </Column>
