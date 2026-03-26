@@ -11,9 +11,7 @@ import { GameInfo } from 'types/games';
 import TopSiteBar from './layout/TopSiteBar';
 import AllGamesPage from './game/AllGamesPage';
 import GamePage from './game/GamePage';
-import StateAnimatedView, {
-    fromRight,
-} from './ui/StateAnimatedView';
+import StateAnimatedView from './ui/StateAnimatedView';
 import PoppinsTextInput from './ui/forms/PoppinsTextInput';
 import JoinHandler from './ui/forms/JoinHandler';
 import { ScrollShadow } from 'heroui-native';
@@ -107,7 +105,7 @@ const MainPage: React.FC<MainPageProps> = ({
                         />
                     </StateAnimatedView.Option>
 
-                    <StateAnimatedView.OptionContainer page={2} pushInAnimation={fromRight}>
+                    <StateAnimatedView.OptionContainer page={2}>
                         <StateAnimatedView.Option stateValue='game'>
                             <GamePage
                                 gameId={activeGameId.value}

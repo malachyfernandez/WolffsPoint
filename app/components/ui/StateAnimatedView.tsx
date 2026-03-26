@@ -39,7 +39,7 @@ interface StateAnimatedViewOptionProps<TState extends TransitionStateKey> extend
 
 interface StateAnimatedViewOptionContainerProps extends PropsWithChildren {
     page: number;
-    pushInAnimation: StateAnimatedViewPushInAnimation;
+    pushInAnimation?: StateAnimatedViewPushInAnimation;
 }
 
 type ResolvedOption<TState extends TransitionStateKey> = {
@@ -209,7 +209,7 @@ const collectOptions = <TState extends TransitionStateKey>(
                 ...collectOptions<TState>(
                     optionContainerProps.children,
                     optionContainerProps.page,
-                    optionContainerProps.pushInAnimation,
+                    optionContainerProps.pushInAnimation ?? fromRight,
                 ),
             );
             return;
