@@ -1,0 +1,381 @@
+import React, { useState, useMemo, useEffect } from 'react';
+import PoppinsText from '../ui/text/PoppinsText';
+import { useUserList } from 'hooks/useUserList';
+import Column from '../layout/Column';
+import PlayerTable from './PlayerTable';
+import DaysTable from './DaysTable';
+import { UserTableItem } from 'types/playerTable';
+import AppButton from '../ui/buttons/AppButton';
+import Row from '../layout/Row';
+import { ScrollShadow } from 'heroui-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { ScrollView, View, StyleSheet } from 'react-native';
+import DaySelectionDialog from './DaySelectionDialog';
+import prettyLog from 'utils/prettyLog';
+import PoppinsNumberInput from '../ui/forms/PoppinsNumberInput';
+import PoppinsTextInput from '../ui/forms/PoppinsTextInput';
+import DaysPerGameDayDialog from './DaysPerGameDayDialog';
+import * as SelectPrimitive from '@rn-primitives/select';
+
+
+
+
+
+
+interface PlayerPageOPERATORProps {
+    currentUserId: string;
+    gameId: string;
+}
+
+
+const PlayerPageOPERATOR = ({ currentUserId, gameId }: PlayerPageOPERATORProps) => {
+    const [demoSelected, setDemoSelected] = useState<{ value: string; label: string } | undefined>();
+    
+    const demoOptions = [
+        { value: 'option1', label: 'Option 1' },
+        { value: 'option2', label: 'Option 2' },
+        { value: 'option3', label: 'Option 3' },
+    ];
+
+    // const [startingDate] = useUserList({
+    //     key: "startingDate",
+    //     itemId: gameId,
+    //     privacy: "PUBLIC",
+    //     defaultValue: "Unset",
+    // });
+
+    const [userTable, setUserTable] = useUserList<UserTableItem[]>({
+        key: "userTable",
+        itemId: gameId,
+        privacy: "PUBLIC",
+    });
+
+    const users = userTable?.value ?? [];
+
+
+    const [selectedDayIndex, setSelectedDayIndex] = useUserList<number>({
+        key: "selectedDayIndex",
+        itemId: gameId,
+        privacy: "PUBLIC",
+        defaultValue: 0,
+    });
+
+    const [numberOfRealDaysPerInGameDay, setNumberOfRealDaysPerInGameDay] = useUserList<number>({
+        key: "numberOfRealDaysPerInGameDay",
+        itemId: gameId,
+        privacy: "PUBLIC",
+        defaultValue: 2,
+    });
+    console.log("set default to 2 in PlayerPageOPERATOR.tsx.backup");
+
+    const [dayDatesArray, setDayDatesArray] = useUserList<string[]>({
+        key: "dayDatesArray",
+        itemId: gameId,
+        privacy: "PUBLIC",
+        defaultValue: [],
+    });
+
+    const [showDaysPerGameDay, setShowDaysPerGameDay] = useUserList<boolean>({
+        key: "showDaysPerGameDay",
+        itemId: gameId,
+        privacy: "PUBLIC",
+        defaultValue: false,
+    });
+
+    // Convert stored MM/DD/YYYY strings back to real Date objects for UI use
+    const fixedDayDatesArray = dayDatesArray.value.map(dateStr => {
+        const [month, day, year] = dateStr.split('/').map(Number);
+        return new Date(year, month - 1, day);
+    });
+
+    // Helper: convert Date to MM/DD/YYYY string
+    const dateToStorageString = (date: Date): string => {
+        return `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`;
+    };
+
+    // Clean setter that accepts Date[] and handles string conversion internally
+    const setFixedDayDatesArray = (dates: Date[]) => {
+        setDayDatesArray(dates.map(dateToStorageString));
+    };
+
+
+    useEffect(() => {
+        if (dayDatesArray.value.length === 0 && dayDatesArray.state.isSyncing === false) {
+            setFixedDayDatesArray([new Date()]);
+        }
+    }, [dayDatesArray, setFixedDayDatesArray]);
+
+    const addNewDay = () => {
+        if (!showDaysPerGameDay.value) {
+            setIsDaysDialogOpen(true);
+        } else {
+            const currentDays = [...fixedDayDatesArray];
+            const lastDate = currentDays[currentDays.length - 1];
+            const newDate = new Date(lastDate);
+            newDate.setDate(newDate.getDate() + numberOfRealDaysPerInGameDay.value);
+            setFixedDayDatesArray([...currentDays, newDate]);
+
+            // Sync the table to add the new day to all users
+            setDoSync(true);
+
+            // Snap to the newest day
+            setSelectedDayIndex(currentDays.length);
+        }
+    };
+
+
+
+
+
+    const [doSync, setDoSync] = useState(false);
+    const [isPlayerTableBeingEdited, setIsPlayerTableBeingEdited] = useState(false);
+    const [isDaysTableBeingEdited, setIsDaysTableBeingEdited] = useState(false);
+    const [daysTableWidth, setDaysTableWidth] = useState(320); // default width
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [isDaysDialogOpen, setIsDaysDialogOpen] = useState(false);
+
+
+    const replaceDayDate = (index: number, replacementDate: Date) => {
+        const currentDays = [...fixedDayDatesArray];
+        if (index >= 0 && index < currentDays.length) {
+            currentDays[index] = replacementDate;
+            setFixedDayDatesArray(currentDays);
+        }
+    };
+
+    const addUser = () => {
+        const newUser: UserTableItem = {
+            realName: "John Doe3",
+            email: "john.doe@example.com",
+            userId: "NOT-JOINED",
+            role: "player",
+            playerData: { livingState: "alive", extraColumns: ["Testing"] },
+            days: [{ vote: "", action: "", extraColumns: [""] }]
+        };
+        setUserTable([...users, newUser]);
+        setDoSync(true);
+    };
+
+
+
+
+
+
+
+    return (
+
+        <>
+            <Column>
+
+                {users.length > 0 ? (
+                    <Column>
+
+                        <ScrollShadow LinearGradientComponent={LinearGradient} color="#fdfbf6" className='mr-1 pt-1'>
+                            {/* <Row > */}
+                            <ScrollView horizontal={true} className='px-1 py-5'>
+                                <Row>
+                                    <Column gap={1}>
+                                        <Row className='h-6'>
+                                            {/* spacer to align with days table */}
+                                        </Row>
+                                        <Row className={isPlayerTableBeingEdited ? 'z-50' : ''}>
+                                            <PlayerTable
+                                                gameId={gameId}
+                                                doSync={doSync}
+                                                setDoSync={setDoSync}
+                                                isBeingEdited={isPlayerTableBeingEdited}
+                                                setIsBeingEdited={setIsPlayerTableBeingEdited}
+                                                dayDatesArray={fixedDayDatesArray}
+                                            />
+                                        </Row>
+                                    </Column>
+                                    <Column gap={1}>
+                                        <ScrollShadow LinearGradientComponent={LinearGradient} color="#fdfbf6" className='mr-1 pr-1 max-w-min'>
+                                            <ScrollView horizontal={true} className='px-1 m-0 h-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]' style={{ width: daysTableWidth }}>
+                                                <Row className='h-6' gap={1}>
+                                                    {fixedDayDatesArray.map((date, index) => (
+                                                        selectedDayIndex.value === index ? (
+                                                            <DaySelectionDialog
+                                                                key={index}
+                                                                isOpen={isDialogOpen}
+                                                                onOpenChange={setIsDialogOpen}
+                                                                index={index}
+                                                                dayDate={date}
+                                                                previousDate={index > 0 ? fixedDayDatesArray[index - 1] : new Date()}
+                                                                followingDate={index < fixedDayDatesArray.length - 1 ? fixedDayDatesArray[index + 1] : undefined}
+                                                                onPress={() => setSelectedDayIndex(index)}
+                                                                replaceDayDate={replaceDayDate}
+                                                            />
+                                                        ) : (
+                                                            <AppButton
+                                                                key={index}
+                                                                variant="grey"
+                                                                className='w-16 max-h-6'
+                                                                onPress={() => setSelectedDayIndex(index)}
+                                                            >
+                                                                <PoppinsText className='text-white'>{fixedDayDatesArray[index].getMonth() + 1}/{fixedDayDatesArray[index].getDate()}</PoppinsText>
+                                                            </AppButton>
+                                                        )
+                                                    ))}
+                                                    <AppButton variant="green" className='max-w-6 min-w-6 max-h-6 ml-1 rounded-full' onPress={addNewDay}>
+                                                        <PoppinsText weight="bold" className='text-white'>+</PoppinsText>
+                                                    </AppButton>
+                                                </Row>
+                                            </ScrollView>
+                                        </ScrollShadow>
+                                        <Row className={`${isDaysTableBeingEdited ? 'z-10' : ''} w-min max-w-min`}>
+                                            <DaysTable
+                                                gameId={gameId}
+                                                dayNumber={selectedDayIndex.value}
+                                                isBeingEdited={isDaysTableBeingEdited}
+                                                setIsBeingEdited={setIsDaysTableBeingEdited}
+                                                onLayout={(event) => {
+                                                    const { width } = event.nativeEvent.layout;
+                                                    setDaysTableWidth(width);
+                                                }}
+                                                onWidthChange={(width) => {
+                                                    setDaysTableWidth(width);
+                                                }}
+                                            />
+                                        </Row>
+                                    </Column>
+                                </Row>
+
+                            </ScrollView>
+                            {/* </Row> */}
+
+                        </ScrollShadow>
+                        <AppButton variant="black" className='w-40 h-8 ml-4 -mt-6' onPress={addUser}>
+                            <PoppinsText weight='bold' className='text-white text-xl'>+</PoppinsText>
+                            <PoppinsText weight='bold' className='text-white'>Add Player</PoppinsText>
+                        </AppButton>
+
+                        {showDaysPerGameDay.value && (
+                            <Row className="items-center pt-4 mt-4 border-t border-subtle-border">
+                                <PoppinsText weight='medium'>Days per game day</PoppinsText>
+                                <PoppinsNumberInput
+                                    value={numberOfRealDaysPerInGameDay.value}
+                                    onChangeText={(displayValue, isValid, numericValue) => {
+                                        if (isValid && numericValue !== null) {
+                                            setNumberOfRealDaysPerInGameDay(numericValue);
+                                        }
+                                    }}
+                                    minValue={1}
+                            </Row>
+                        </Column>
+
+                        <Column className='w-full h-full bg-subtle-bg border-x border-b border-border rounded-b-lg p-4'>
+                            <Column className='w-full h-full'>
+                                <Column className='w-full p-4 mb-4 bg-background border border-subtle-border rounded-lg'>
+                                    <PoppinsText weight='bold' className='text-foreground mb-2'>Demo Select</PoppinsText>
+                                    <SelectPrimitive.Root
+                                        value={demoSelected}
+                                        onValueChange={setDemoSelected}
+                                        defaultValue={demoSelected}
+                                    >
+                                        <SelectPrimitive.Trigger style={{ 
+                                            borderWidth: 1, 
+                                            borderColor: 'rgb(203 213 225)', 
+                                            borderRadius: 8, 
+                                            paddingHorizontal: 12, 
+                                            paddingVertical: 8, 
+                                            backgroundColor: 'white',
+                                            width: '100%',
+                                            justifyContent: 'space-between',
+                                            alignItems: 'center',
+                                            flexDirection: 'row'
+                                        }}>
+                                            <SelectPrimitive.Value
+                                                placeholder='Select an option'
+                                                style={{ fontSize: 16, color: 'black', flex: 1 }}
+                                            />
+                                        </SelectPrimitive.Trigger>
+                                        <SelectPrimitive.Portal>
+                                            <SelectPrimitive.Overlay
+                                                style={{ 
+                                                    ...StyleSheet.absoluteFillObject, 
+                                                    backgroundColor: 'rgba(0,0,0,0.3)',
+                                                    zIndex: 1000
+                                                }}
+                                            >
+                                                <SelectPrimitive.Content style={{ 
+                                                    backgroundColor: 'white', 
+                                                    borderWidth: 1, 
+                                                    borderColor: 'rgb(203 213 225)', 
+                                                    borderRadius: 12, 
+                                                    width: 256, 
+                                                    maxHeight: 288, 
+                                                    alignSelf: 'center',
+                                                    marginTop: 96,
+                                                    overflow: 'hidden',
+                                                    zIndex: 1001
+                                                }}>
+                                                    <SelectPrimitive.ScrollUpButton />
+                                                    <SelectPrimitive.Viewport>
+                                                        <SelectPrimitive.Group>
+                                                            <SelectPrimitive.Label style={{ 
+                                                                paddingHorizontal: 16, 
+                                                                paddingVertical: 12, 
+                                                                fontSize: 12, 
+                                                                textTransform: 'uppercase', 
+                                                                letterSpacing: 1, 
+                                                                color: 'rgb(107 114 128)' 
+                                                            }}>
+                                                                Demo Options
+                                                            </SelectPrimitive.Label>
+                                                            {demoOptions.map((option) => (
+                                                                <SelectPrimitive.Item
+                                                                    key={option.value}
+                                                                    value={option.value}
+                                                                    label={option.label}
+                                                                    style={{ 
+                                                                        paddingHorizontal: 16, 
+                                                                        paddingVertical: 8, 
+                                                                        flexDirection: 'row', 
+                                                                        alignItems: 'center', 
+                                                                        justifyContent: 'space-between', 
+                                                                        borderBottomWidth: 1, 
+                                                                        borderBottomColor: 'rgb(203 213 225)' 
+                                                                    }}
+                                                                >
+                                                                    <PoppinsText style={{ fontSize: 16, color: 'black' }}>
+                                                                        {option.label}
+                                                                    </PoppinsText>
+                                                                    <SelectPrimitive.ItemIndicator style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: 'black' }} />
+                                                                </SelectPrimitive.Item>
+                                                            ))}
+                                                        </SelectPrimitive.Group>
+                                                    </SelectPrimitive.Viewport>
+                                                    <SelectPrimitive.ScrollDownButton />
+                                                </SelectPrimitive.Content>
+                                            </SelectPrimitive.Overlay>
+                                        </SelectPrimitive.Portal>
+                                    </SelectPrimitive.Root>
+                                    {demoSelected && (
+                                        <PoppinsText style={{ marginTop: 8, fontSize: 14, color: 'rgb(107 114 128)' }}>
+                                            Selected: {demoSelected.label}
+                                        </PoppinsText>
+                                    )}
+                                </Column>
+                            </Column>
+                        </Column>
+                    </Column>
+                </Column>
+                <DaysPerGameDayDialog
+                    isOpen={isDaysDialogOpen}
+                    onOpenChange={setIsDaysDialogOpen}
+                    currentValue={numberOfRealDaysPerInGameDay.value}
+                    onPress={() => setIsDaysDialogOpen(true)}
+                    setNumberOfRealDaysPerInGameDay={(value) => {
+                        setNumberOfRealDaysPerInGameDay(value);
+                        setShowDaysPerGameDay(true);
+                    }}
+                />
+            </Column>
+
+        </>
+    );
+};
+
+export default PlayerPageOPERATOR;
+

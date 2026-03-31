@@ -1,0 +1,40 @@
+@import 'tailwindcss';
+@import 'uniwind';
+
+@import 'heroui-native/styles';
+
+@source './node_modules/heroui-native/lib';
+
+@theme {
+    --color-l: rgb(246, 0, 0);
+    --color-background: rgb(246, 238, 219);
+    --color-inner-background: rgb(253, 251, 246);
+    --color-text: #1a1a1a;
+    --color-muted-text: #888888;
+    --color-primary-accent: #2d5a2d;
+    --color-accent-hover: #3a6a3a;
+    --color-highlight: #7cb87c;
+    --color-border: #1a1a1a;
+    --color-subtle-border: #cccccc;
+    --color-inverted-sections: #1a1a1a;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -40%);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, -50%);
+    }
+}
