@@ -1,8 +1,10 @@
 {
+  "cleanUrls": true,
+  "outputDirectory": "dist",
   "rewrites": [
     {
-      "source": "/(.*)",
-      "destination": "/"
+      "source": "/(?!_expo/static|static|assets|_next).*",
+      "destination": "/index.html"
     }
   ]
 }
