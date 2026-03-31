@@ -3,6 +3,7 @@ import { SafeAreaListener, SafeAreaView } from "react-native-safe-area-context";
 import React, { useEffect, useState } from "react";
 import { SignedIn, SignedOut, useOAuth, useUser } from "@clerk/clerk-expo";
 import * as WebBrowser from "expo-web-browser";
+import * as AuthSession from "expo-auth-session";
 import { Uniwind } from "uniwind";
 
 import AuthButton from "./components/ui/buttons/AuthButton";
@@ -32,6 +33,16 @@ export default function HomeScreen() {
   const { user } = useUser();
   const [searchText, setSearchText] = useState("");
 
+  // Update OAuth flow configuration
+  const authFlow = () =>
+    startGoogleFlow(
+      Platform.OS === "web"
+        ? {
+            redirectUrl: AuthSession.makeRedirectUri({ path: "auth/callback" }),
+          }
+        : undefined,
+    );
+
   return (
     <SafeAreaListener
       onChange={({ insets }) => {
@@ -60,7 +71,7 @@ export default function HomeScreen() {
             buttonText="Continue with Apple"
           /> */}
                   <AuthButton
-                    authFlow={startGoogleFlow}
+                    authFlow={authFlow}
                     buttonText="Sign in with Google"
                   />
                 </Column>

@@ -13,27 +13,30 @@ function isSerializedDate(value: unknown): value is SerializedDate {
 }
 
 export function encodeUserValue<T>(value: T): T {
-  if (value instanceof Date) {
-    return {
-      __beanJarSerializedType: "Date",
-      iso: value.toISOString(),
-    } as T;
-  }
+    if (value === null || value === undefined) {
+        return value;
+    }
+    
+    if (value instanceof Date) {
+        return {
+            __beanJarSerializedType: "Date",
+            iso: value.toISOString(),
+        } as T;
+    }
 
-  if (Array.isArray(value)) {
-    return value.map((item) => encodeUserValue(item)) as T;
-  }
+    if (Array.isArray(value)) {
+        return value.map((item) => encodeUserValue(item)) as T;
+    }
 
-  if (typeof value === "object" && value !== null) {
-    return Object.fromEntries(
-      Object.entries(value).map(([key, nestedValue]) => [
-        key,
-        encodeUserValue(nestedValue),
-      ])
-    ) as T;
-  }
+    if (typeof value === "object" && value !== null) {
+        return Object.fromEntries(
+            Object.entries(value)
+                .filter(([, nestedValue]) => nestedValue !== undefined)
+                .map(([key, nestedValue]) => [key, encodeUserValue(nestedValue)])
+        ) as T;
+    }
 
-  return value;
+    return value;
 }
 
 export function decodeUserValue<T>(value: T): T {
