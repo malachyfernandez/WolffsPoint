@@ -1,9 +1,14 @@
 {
   "cleanUrls": true,
   "outputDirectory": "dist",
+  "trailingSlash": false,
   "rewrites": [
     {
-      "source": "/((?!_expo/static|static|assets|_next).*)",
+      "source": "/auth/callback",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/(.*)",
       "destination": "/index.html"
     }
   ]
