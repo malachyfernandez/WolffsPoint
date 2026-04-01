@@ -95,3 +95,54 @@ The structure (mask + grouped paths) is valid. The **only** part that breaks RN 
 - `app/components/icons/UserIcon.tsx` (simple stroke animation).
 
 Follow this checklist whenever you port additional animated icons from web SVG to React Native Reanimated.
+
+## 7. React Native Reanimated Animation Guidelines
+
+### Critical Animation Rules
+
+1. **NEVER use `.springify()` for fast animations**
+   - Spring animations ignore duration settings under 300ms
+   - Always use plain `.duration()` for animations under 300ms
+   - Example: `ZoomIn.duration(100)` ✅ vs `ZoomIn.duration(100).springify()` ❌
+
+2. **ALWAYS add `key` props to animated components**
+   - Reanimated requires keys for proper component identification
+   - Sometimes works without keys, but it's good practice to include them
+   - Example: `key="url-input"`, `key="upload-buttons"`
+
+3. **Use 100ms for perfect animation speed**
+   - 100ms provides the ideal balance between responsiveness and visibility
+   - Faster than 100ms (like 10ms) is barely perceptible
+   - Slower than 100ms feels sluggish for UI transitions
+
+### Animation Examples
+
+```tsx
+// ✅ CORRECT - Fast, responsive animation
+<Animated.View
+  entering={ZoomIn.duration(100)}
+  exiting={ZoomOut.duration(100)}
+  key="url-input"
+>
+
+// ❌ WRONG - Springify ignores fast duration
+<Animated.View
+  entering={ZoomIn.duration(100).springify()}  // Will act like 300ms+
+  exiting={ZoomOut.duration(100).springify()}
+  key="url-input"
+>
+
+// ❌ WRONG - Missing key (can cause animation issues)
+<Animated.View
+  entering={ZoomIn.duration(100)}
+  exiting={ZoomOut.duration(100)}
+>
+```
+
+### Animation Duration Guidelines
+- **100ms**: Perfect for UI transitions, button states, form inputs
+- **300ms+**: Use `.springify()` for longer, more fluid animations
+- **50ms**: Too fast, barely visible
+- **10ms**: Essentially invisible, appears broken
+
+These rules ensure consistent, responsive animations throughout the app.

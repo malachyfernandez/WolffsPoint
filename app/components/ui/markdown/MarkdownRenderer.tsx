@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Text, View } from 'react-native';
+import { Text, View, Image } from 'react-native';
 import Column from '../../layout/Column';
 import Row from '../../layout/Row';
 import PoppinsText from '../text/PoppinsText';
@@ -16,11 +16,12 @@ type MarkdownBlock =
     | { type: 'list'; ordered: boolean; items: string[] }
     | { type: 'quote'; text: string }
     | { type: 'rule' }
-    | { type: 'space' };
+    | { type: 'space' }
+    | { type: 'image'; alt: string; url: string };
 
 const renderInlineMarkdown = (text: string, keyPrefix: string) => {
     return text
-        .split(/(\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`)/g)
+        .split(/(\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`|!\[[^\]]*\]\([^)]*\))/g)
         .filter((part) => part.length > 0)
         .map((part, index) => {
             if (part.startsWith('**') && part.endsWith('**')) {
@@ -47,6 +48,22 @@ const renderInlineMarkdown = (text: string, keyPrefix: string) => {
                 );
             }
 
+            // Handle inline images (though we'll parse them as blocks for better layout)
+            if (part.startsWith('![') && part.includes('](') && part.endsWith(')')) {
+                const altMatch = part.match(/^!\[([^\]]*)\]/);
+                const urlMatch = part.match(/\]\(([^)]*)\)$/);
+                if (altMatch && urlMatch) {
+                    return (
+                        <Image
+                            key={`${keyPrefix}-image-${index}`}
+                            source={{ uri: urlMatch[1] }}
+                            style={{ width: '100%', height: 200, resizeMode: 'cover' }}
+                            className="rounded-lg my-2"
+                        />
+                    );
+                }
+            }
+
             return <Text key={`${keyPrefix}-text-${index}`}>{part}</Text>;
         });
 };
@@ -61,6 +78,18 @@ const parseMarkdown = (markdown: string): MarkdownBlock[] => {
 
         if (line.length === 0) {
             blocks.push({ type: 'space' });
+            index += 1;
+            continue;
+        }
+
+        // Check for image on its own line
+        const imageMatch = line.match(/^!\[([^\]]*)\]\(([^)]*)\)$/);
+        if (imageMatch) {
+            blocks.push({
+                type: 'image',
+                alt: imageMatch[1],
+                url: imageMatch[2],
+            });
             index += 1;
             continue;
         }
@@ -123,7 +152,8 @@ const parseMarkdown = (markdown: string): MarkdownBlock[] => {
                 /^\d+\.\s+/.test(paragraphLine) ||
                 paragraphLine.startsWith('> ') ||
                 /^---+$/.test(paragraphLine) ||
-                /^\*\*\*+$/.test(paragraphLine)
+                /^\*\*\*+$/.test(paragraphLine) ||
+                /^!\[([^\]]*)\]\(([^)]*)\)$/.test(paragraphLine)
             ) {
                 break;
             }
@@ -201,11 +231,32 @@ const MarkdownRenderer = ({ markdown, className = '', textAlign = 'left' }: Mark
                     );
                 }
 
-                return (
-                    <PoppinsText key={`paragraph-${index}`} style={{ textAlign, lineHeight: 24 }}>
-                        {renderInlineMarkdown(block.text, `paragraph-${index}`)}
-                    </PoppinsText>
-                );
+                if (block.type === 'image') {
+                    return (
+                        <View key={`image-${index}`} className='my-4'>
+                            <Image
+                                source={{ uri: block.url }}
+                                style={{ width: '100%', height: 200, resizeMode: 'cover' }}
+                                className='rounded-lg'
+                            />
+                            {block.alt && block.alt !== 'IMAGE1' && (
+                                <PoppinsText className='text-center mt-2 text-muted' style={{ fontSize: 12 }}>
+                                    {block.alt}
+                                </PoppinsText>
+                            )}
+                        </View>
+                    );
+                }
+
+                if (block.type === 'paragraph') {
+                    return (
+                        <PoppinsText key={`paragraph-${index}`} style={{ textAlign, lineHeight: 24 }}>
+                            {renderInlineMarkdown(block.text, `paragraph-${index}`)}
+                        </PoppinsText>
+                    );
+                }
+
+                return null;
             })}
         </Column>
     );

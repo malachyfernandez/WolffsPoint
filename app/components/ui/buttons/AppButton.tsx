@@ -77,7 +77,7 @@ const AppButton = ({
 }: AppButtonProps) => {
     const [isPressed, setIsPressed] = useState(false);
 
-    const baseStyles = 'h-10 flex-row items-center justify-center rounded gap-2 overflow-hidden';
+    const baseStyles = 'h-12 flex-row items-center justify-center rounded gap-2 overflow-hidden';
     let extraStyles = '';
 
     let pressedStyles = 'brightness-50';
