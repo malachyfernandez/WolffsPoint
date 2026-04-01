@@ -14,6 +14,7 @@ import DaySelectionDialog from './DaySelectionDialog';
 import PoppinsNumberInput from '../ui/forms/PoppinsNumberInput';
 import { useUserList as useRoleList } from 'hooks/useUserList';
 import { RoleTableItem } from 'types/roleTable';
+import ComprehensiveDaySelector from '../ui/daySelector/ComprehensiveDaySelector';
 
 interface NightlyPageOPERATORProps {
     currentUserId: string;
@@ -63,7 +64,7 @@ const NightlyPageOPERATOR = ({ currentUserId, gameId }: NightlyPageOPERATORProps
     });
 
     // Shared selected day index (same as players tab)
-    const [selectedDayIndex, setSelectedDayIndex] = useUserList<number>({
+    const [selectedDayIndex] = useUserList<number>({
         key: "selectedDayIndex",
         itemId: gameId,
         privacy: "PUBLIC",
@@ -79,7 +80,7 @@ const NightlyPageOPERATOR = ({ currentUserId, gameId }: NightlyPageOPERATORProps
     });
 
     // Shared day dates array (same as players tab)
-    const [dayDatesArray, setDayDatesArray] = useUserList<string[]>({
+    const [dayDatesArray] = useUserList<string[]>({
         key: "dayDatesArray",
         itemId: gameId,
         privacy: "PUBLIC",
@@ -91,22 +92,6 @@ const NightlyPageOPERATOR = ({ currentUserId, gameId }: NightlyPageOPERATORProps
         const [month, day, year] = dateStr.split('/').map(Number);
         return new Date(year, month - 1, day);
     });
-
-    // Helper: convert Date to MM/DD/YYYY string
-    const dateToStorageString = (date: Date): string => {
-        return `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`;
-    };
-
-    // Clean setter that accepts Date[] and handles string conversion internally
-    const setFixedDayDatesArray = (dates: Date[]) => {
-        setDayDatesArray(dates.map(dateToStorageString));
-    };
-
-    useEffect(() => {
-        if (dayDatesArray.value.length === 0 && dayDatesArray.state.isSyncing === false) {
-            setFixedDayDatesArray([new Date()]);
-        }
-    }, [dayDatesArray, setFixedDayDatesArray]);
 
     // Sync nightly lists when days are added
     useEffect(() => {
@@ -152,30 +137,11 @@ const NightlyPageOPERATOR = ({ currentUserId, gameId }: NightlyPageOPERATORProps
         }
     }, [fixedDayDatesArray.length, users.length, nightlyResponseList.state.isSyncing, nightlyMessagesList.state.isSyncing]);
 
-    const addNewDay = () => {
-        const currentDays = [...fixedDayDatesArray];
-        const lastDate = currentDays[currentDays.length - 1];
-        const newDate = new Date(lastDate);
-        newDate.setDate(newDate.getDate() + numberOfRealDaysPerInGameDay.value);
-        setFixedDayDatesArray([...currentDays, newDate]);
-
-        // Snap to the newest day
-        setSelectedDayIndex(currentDays.length);
-    };
-
     const [doSync, setDoSync] = useState(false);
     const [isPlayerTableBeingEdited, setIsPlayerTableBeingEdited] = useState(false);
     const [isDaysTableBeingEdited, setIsDaysTableBeingEdited] = useState(false);
     const [daysTableWidth, setDaysTableWidth] = useState(320); // default width
     const [isDialogOpen, setIsDialogOpen] = useState(false);
-
-    const replaceDayDate = (index: number, replacementDate: Date) => {
-        const currentDays = [...fixedDayDatesArray];
-        if (index >= 0 && index < currentDays.length) {
-            currentDays[index] = replacementDate;
-            setFixedDayDatesArray(currentDays);
-        }
-    };
 
     // Update nightly response for a specific user on a specific day
     const updateNightlyResponse = (dayIndex: number, userIndex: number, value: string) => {
@@ -249,39 +215,9 @@ const NightlyPageOPERATOR = ({ currentUserId, gameId }: NightlyPageOPERATORProps
                                     </Row>
                                 </Column>
                                 <Column gap={1}>
-                                    <ScrollShadow LinearGradientComponent={LinearGradient} color="#fdfbf6" className='mr-1 pr-1 max-w-min'>
-                                        <ScrollView horizontal={true} className='px-1 m-0 h-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]' style={{ width: daysTableWidth }}>
-                                            <Row className='h-6' gap={1}>
-                                                {fixedDayDatesArray.map((date, index) => (
-                                                    selectedDayIndex.value === index ? (
-                                                        <DaySelectionDialog
-                                                            key={index}
-                                                            isOpen={isDialogOpen}
-                                                            onOpenChange={setIsDialogOpen}
-                                                            index={index}
-                                                            dayDate={date}
-                                                            previousDate={index > 0 ? fixedDayDatesArray[index - 1] : new Date()}
-                                                            followingDate={index < fixedDayDatesArray.length - 1 ? fixedDayDatesArray[index + 1] : undefined}
-                                                            onPress={() => setSelectedDayIndex(index)}
-                                                            replaceDayDate={replaceDayDate}
-                                                        />
-                                                    ) : (
-                                                        <AppButton
-                                                            key={index}
-                                                            variant="grey"
-                                                            className='w-16 max-h-6'
-                                                            onPress={() => setSelectedDayIndex(index)}
-                                                        >
-                                                            <PoppinsText className='text-white'>{fixedDayDatesArray[index].getMonth() + 1}/{fixedDayDatesArray[index].getDate()}</PoppinsText>
-                                                        </AppButton>
-                                                    )
-                                                ))}
-                                                <AppButton variant="green" className='max-w-6 min-w-6 max-h-6 ml-1 rounded-full' onPress={addNewDay}>
-                                                    <PoppinsText weight="bold" className='text-white'>+</PoppinsText>
-                                                </AppButton>
-                                            </Row>
-                                        </ScrollView>
-                                    </ScrollShadow>
+                                    <ComprehensiveDaySelector
+                                        gameId={gameId}
+                                    />
                                     <Row className={`${isDaysTableBeingEdited ? 'z-10' : ''} w-min max-w-min`}>
                                         <NightlyDaysTable
                                             gameId={gameId}

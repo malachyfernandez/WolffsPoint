@@ -117,11 +117,6 @@ const NewspaperImageUploadDialog = ({
 />
 
                     <Column>
-                        <DialogHeader
-                            text='Upload Image'
-                            subtext='Choose an image to insert into your column'
-                        />
-
                         <Column className='flex-1 px-0'>
                             {/* Permanent Preview Area */}
                             <Column className='w-full h-56 overflow-hidden rounded-lg border border-subtle-border bg-background items-center justify-center relative'>

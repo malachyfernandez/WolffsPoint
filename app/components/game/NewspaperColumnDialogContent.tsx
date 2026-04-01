@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ScrollView } from 'react-native';
 import { ScrollShadow } from 'heroui-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
 import AppButton from '../ui/buttons/AppButton';
+import DisableableButton from '../ui/buttons/DisableableButton';
 import PoppinsText from '../ui/text/PoppinsText';
 import PoppinsTextInput from '../ui/forms/PoppinsTextInput';
 import DialogHeader from '../ui/dialog/DialogHeader';
@@ -14,6 +15,7 @@ import NewspaperImageUploadDialog from './NewspaperImageUploadDialog';
 interface NewspaperColumnDialogContentProps {
     columnIndex: number;
     message: string;
+    originalMessage: string;
     setMessage: React.Dispatch<React.SetStateAction<string>>;
     onSubmit: () => void;
     onCancel: () => void;
@@ -38,11 +40,17 @@ const applyLine = (value: string, prefix: string) => {
 const NewspaperColumnDialogContent = ({
     columnIndex,
     message,
+    originalMessage,
     setMessage,
     onSubmit,
     onCancel,
 }: NewspaperColumnDialogContentProps) => {
     const [showImageUpload, setShowImageUpload] = useState(false);
+    const [hasChanges, setHasChanges] = useState(false);
+
+    useEffect(() => {
+        setHasChanges(message.trim() !== originalMessage.trim());
+    }, [message, originalMessage]);
 
     const handleImageInsert = (imageUrl: string) => {
         const imagePlaceholder = `![IMAGE1](${imageUrl})`;
@@ -77,40 +85,64 @@ const NewspaperColumnDialogContent = ({
                 </AppButton>
             </Row>
 
-            <ScrollShadow LinearGradientComponent={LinearGradient}>
-                <ScrollView className='h-[50vh]'>
-                    <Column className='h-full'>
-                        <Row className='items-start max-w-full' gap={4}>
-                            <Column className='max-w-full shrink flex-1' gap={2}>
-                                <PoppinsText weight='medium'>Editor</PoppinsText>
-                                <PoppinsTextInput
-                                    placeholder='Write newspaper markdown...'
-                                    className='w-full min-h-40 border border-subtle-border p-3 bg-inner-background'
-                                    value={message}
-                                    onChangeText={setMessage}
-                                    multiline
-                                    autoGrow
-                                    scrollEnabled={false}
-                                    style={{ minHeight: 44, textAlignVertical: 'top' }}
-                                />
+            <Row className='flex-1 h-[50vh]'>
+                <Column className='flex-1 h-[50vh]'>
+                    <ScrollShadow LinearGradientComponent={LinearGradient}>
+                        <ScrollView className='h-[50vh]'>
+                            <Column className='h-full'>
+                                <Row className='items-start max-w-full' gap={4}>
+                                    <Column className='max-w-full shrink flex-1' gap={2}>
+                                        <PoppinsText weight='medium'>Editor</PoppinsText>
+                                        <PoppinsTextInput
+                                            placeholder='Write newspaper markdown...'
+                                            className='w-full min-h-40 border border-subtle-border p-3 bg-inner-background'
+                                            value={message}
+                                            onChangeText={setMessage}
+                                            multiline
+                                            autoGrow
+                                            scrollEnabled={false}
+                                            style={{ minHeight: 44, textAlignVertical: 'top' }}
+                                        />
+                                    </Column>
+
+
+
+
+                                </Row>
                             </Column>
+                        </ScrollView>
+                    </ScrollShadow>
+                </Column>
+                <Column className='flex-1 h-[50vh]'>
+                    <ScrollShadow LinearGradientComponent={LinearGradient}>
+                        <ScrollView className='h-[50vh]'>
+                            <Column className='h-full'>
+                                <Row className='items-start max-w-full h-full' gap={4}>
 
-                            <Column className='max-w-full shrink flex-1 ' gap={2}>
-                                <PoppinsText weight='medium'>Preview</PoppinsText>
-                                <Column className='flex-1 w-full rounded-xl border border-border bg-background p-3' gap={2}>
-                                    <MarkdownRenderer markdown={message} textAlign='justify' />
-                                </Column>
+
+                                    <Column className='max-w-full shrink flex-1 h-full' gap={2}>
+                                        <PoppinsText weight='medium'>Preview</PoppinsText>
+                                        <Column className='flex-1 w-full h-full rounded-xl border border-border bg-background p-3' gap={2}>
+                                            <MarkdownRenderer markdown={message} textAlign='justify' />
+                                        </Column>
+                                    </Column>
+
+
+                                </Row>
                             </Column>
-
-
-                        </Row>
-                    </Column>
-                </ScrollView>
-            </ScrollShadow>
+                        </ScrollView>
+                    </ScrollShadow>
+                </Column>
+            </Row>
             <Row gap={2}>
-                <AppButton className='w-34 h-10' variant='black' onPress={onSubmit}>
-                    <PoppinsText color='white' weight='medium'>Save</PoppinsText>
-                </AppButton>
+                <DisableableButton
+                    isEnabled={hasChanges}
+                    enabledText="Save"
+                    disabledText="No changes"
+                    onPress={onSubmit}
+                    enabledVariant="green"
+                    className="w-34 h-10"
+                />
                 <AppButton className='w-34 h-10' variant='outline' onPress={onCancel}>
                     <PoppinsText color='black' weight='medium'>Cancel</PoppinsText>
                 </AppButton>

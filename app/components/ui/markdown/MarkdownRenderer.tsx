@@ -69,7 +69,14 @@ const renderInlineMarkdown = (text: string, keyPrefix: string) => {
 };
 
 const parseMarkdown = (markdown: string): MarkdownBlock[] => {
-    const lines = markdown.replace(/\r\n/g, '\n').split('\n');
+    // Early logic: Add double spaces after each line before processing
+    const processedMarkdown = markdown
+        .replace(/\r\n/g, '\n')
+        .split('\n')
+        .map(line => line + '  ') // Add double spaces to each line
+        .join('\n');
+    
+    const lines = processedMarkdown.split('\n');
     const blocks: MarkdownBlock[] = [];
     let index = 0;
 
@@ -142,27 +149,13 @@ const parseMarkdown = (markdown: string): MarkdownBlock[] => {
             continue;
         }
 
-        const paragraphLines: string[] = [];
-        while (index < lines.length) {
-            const paragraphLine = lines[index].trim();
-            if (
-                paragraphLine.length === 0 ||
-                /^(#{1,3})\s+/.test(paragraphLine) ||
-                /^[-*]\s+/.test(paragraphLine) ||
-                /^\d+\.\s+/.test(paragraphLine) ||
-                paragraphLine.startsWith('> ') ||
-                /^---+$/.test(paragraphLine) ||
-                /^\*\*\*+$/.test(paragraphLine) ||
-                /^!\[([^\]]*)\]\(([^)]*)\)$/.test(paragraphLine)
-            ) {
-                break;
-            }
-
-            paragraphLines.push(paragraphLine);
+        // Treat each non-empty line as its own paragraph for single line breaks
+        const currentLine = lines[index].trim();
+        if (currentLine.length > 0) {
+            blocks.push({ type: 'paragraph', text: currentLine });
             index += 1;
+            continue;
         }
-
-        blocks.push({ type: 'paragraph', text: paragraphLines.join(' ') });
     }
 
     return blocks;

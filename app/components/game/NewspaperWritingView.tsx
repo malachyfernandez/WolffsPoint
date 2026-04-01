@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ScrollView, Pressable, View } from 'react-native';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
@@ -14,7 +14,7 @@ import PoppinsText from '../ui/text/PoppinsText';
 import { Usepaper } from 'types/usepaper';
 
 interface NewspaperWritingViewProps {
-    gameId: string;
+    gameId: string; // This will now be in format "originalGameId-day-year-month-day"
 }
 
 const defaultUsepaper: Usepaper = {
@@ -96,7 +96,7 @@ const NewspaperWritingView = ({ gameId }: NewspaperWritingViewProps) => {
             <Column gap={4} className='w-full'>
                 <NewspaperPageHeader onAddColumn={addColumn} />
                 <View className='pb-2 w-full'>
-                    <Row gap={0} className='w-full rounded-xl border-2 border-border items-stretch'>
+                    <Row gap={0} className='w-full rounded-xl border-2 border-border items-stretch overflow-hidden'>
                         {newspaperColumns.map((columnMarkdown, columnIndex) => (
                             <Column
                                 key={columnIndex}

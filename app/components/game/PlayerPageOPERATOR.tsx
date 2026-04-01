@@ -9,8 +9,9 @@ import { ScrollShadow } from 'heroui-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ScrollView } from 'react-native';
 import PoppinsNumberInput from '../ui/forms/PoppinsNumberInput';
-import PlayerDaysSection from './PlayerDaysSection';
 import PlayerAddUserSection from './PlayerAddUserSection';
+import ComprehensiveDaySelector from '../ui/daySelector/ComprehensiveDaySelector';
+import DaysTable from './DaysTable';
 
 
 
@@ -39,7 +40,6 @@ const PlayerPageOPERATOR = ({ currentUserId, gameId }: PlayerPageOPERATORProps) 
 
     const users = userTable?.value ?? [];
 
-
     const [numberOfRealDaysPerInGameDay, setNumberOfRealDaysPerInGameDay] = useUserList<number | false>({
         key: "numberOfRealDaysPerInGameDay",
         itemId: gameId,
@@ -47,7 +47,8 @@ const PlayerPageOPERATOR = ({ currentUserId, gameId }: PlayerPageOPERATORProps) 
         defaultValue: false,
     });
 
-    const [dayDatesArray, setDayDatesArray] = useUserList<string[]>({
+    // Get day dates for PlayerTable
+    const [dayDatesArray] = useUserList<string[]>({
         key: "dayDatesArray",
         itemId: gameId,
         privacy: "PUBLIC",
@@ -60,43 +61,18 @@ const PlayerPageOPERATOR = ({ currentUserId, gameId }: PlayerPageOPERATORProps) 
         return new Date(year, month - 1, day);
     });
 
-    // Helper: convert Date to MM/DD/YYYY string
-    const dateToStorageString = (date: Date): string => {
-        return `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`;
-    };
-
-    useEffect(() => {
-        if (dayDatesArray.value.length === 0 && dayDatesArray.state.isSyncing === false) {
-            setDayDatesArray([dateToStorageString(new Date())]);
-        }
-    }, [dayDatesArray.value.length, dayDatesArray.state.isSyncing, setDayDatesArray]);
-
-    const addNewDay = (customDaysPerGameDay?: number) => {
-
-        const currentDays = [...fixedDayDatesArray];
-        const lastDate = currentDays[currentDays.length - 1];
-        const newDate = new Date(lastDate);
-
-        const daysToAdd = customDaysPerGameDay ?? numberOfRealDaysPerInGameDay.value;
-        if (typeof daysToAdd === 'number') {
-            newDate.setDate(newDate.getDate() + daysToAdd);
-        }
-
-        setDayDatesArray([...currentDays, newDate].map(dateToStorageString));
-
-        // Sync the table to add the new day to all users
-        setDoSync(true);
-
-    };
-
-
-
-
-
-
-
     const [doSync, setDoSync] = useState(false);
     const [isPlayerTableBeingEdited, setIsPlayerTableBeingEdited] = useState(false);
+    const [isDaysTableBeingEdited, setIsDaysTableBeingEdited] = useState(false);
+    const [daysTableWidth, setDaysTableWidth] = useState(320); // default width
+
+    // Get selected day index for DaysTable
+    const [selectedDayIndex] = useUserList<number>({
+        key: "selectedDayIndex",
+        itemId: gameId,
+        privacy: "PUBLIC",
+        defaultValue: 0,
+    });
 
 
 
@@ -128,10 +104,26 @@ const PlayerPageOPERATOR = ({ currentUserId, gameId }: PlayerPageOPERATORProps) 
                                             />
                                         </Row>
                                     </Column>
-                                    <PlayerDaysSection
+                                    <Column gap={1}>
+                                    <ComprehensiveDaySelector
                                         gameId={gameId}
-                                        addNewDay={addNewDay}
                                     />
+                                    <Row className={`${isDaysTableBeingEdited ? 'z-10' : ''} w-min max-w-min`}>
+                                        <DaysTable
+                                            gameId={gameId}
+                                            dayNumber={selectedDayIndex.value}
+                                            isBeingEdited={isDaysTableBeingEdited}
+                                            setIsBeingEdited={setIsDaysTableBeingEdited}
+                                            onLayout={(event) => {
+                                                const { width } = event.nativeEvent.layout;
+                                                setDaysTableWidth(width);
+                                            }}
+                                            onWidthChange={(width) => {
+                                                setDaysTableWidth(width);
+                                            }}
+                                        />
+                                    </Row>
+                                </Column>
                                 </Row>
 
                             </ScrollView>
@@ -155,7 +147,6 @@ const PlayerPageOPERATOR = ({ currentUserId, gameId }: PlayerPageOPERATORProps) 
                                     inline={true}
                                     useDefaultStyling={true}
                                 />
-
                             </Row>
                         )}
                     </Column>
