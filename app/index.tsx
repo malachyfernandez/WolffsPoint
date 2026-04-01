@@ -54,8 +54,8 @@ export default function HomeScreen() {
 
               <Column className="w-[80vw] p-6 max-w-96 bg-text border-4 border-primary-accent items-center" gap={6}>
                 <DialogHeader
-                  text="Welcome to Example Project"
-                  subtext="Sign in with Google to convert handwritten math to LaTeX."
+                  text="Welcome to Wolffspoint"
+                  subtext="Sign in with Google to join."
                   className="w-[80vw] max-w-96"
                 />
                 <Column gap={8} className="items-center">
