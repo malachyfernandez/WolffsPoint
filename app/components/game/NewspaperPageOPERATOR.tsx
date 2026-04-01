@@ -94,7 +94,7 @@ const NewspaperPageOPERATOR = ({ gameId }: NewspaperPageOPERATORProps) => {
             </View>
 
             {/* Content Area */}
-            <Column className='w-[950px]'>
+            <Column className='max-w-[950px] w-full'>
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1">
                     <Tabs.Content value="writing" className='flex-1'>
                         <Column gap={4}>

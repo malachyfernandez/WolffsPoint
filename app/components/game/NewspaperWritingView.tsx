@@ -5,6 +5,8 @@ import Row from '../layout/Row';
 import MarkdownRenderer from '../ui/markdown/MarkdownRenderer';
 import { useUserList } from 'hooks/useUserList';
 import { createUndoSnapshot, useUndoRedo } from 'hooks/useUndoRedo';
+import { ScrollShadow } from 'heroui-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import NewspaperColumnDialog from './NewspaperColumnDialog';
 import NewspaperColumnEmptyState from './newspaperPageOperator/NewspaperColumnEmptyState';
 import NewspaperColumnFooter from './newspaperPageOperator/NewspaperColumnFooter';
@@ -93,39 +95,43 @@ const NewspaperWritingView = ({ gameId }: NewspaperWritingViewProps) => {
 
     return (
         <>
-            <Column gap={4} className='w-full'>
-                <NewspaperPageHeader onAddColumn={addColumn} />
-                <View className='pb-2 w-full'>
-                    <Row gap={0} className='w-full rounded-xl border-2 border-border items-stretch overflow-hidden'>
-                        {newspaperColumns.map((columnMarkdown, columnIndex) => (
-                            <Column
-                                key={columnIndex}
-                                gap={0}
-                                className={`flex-1 shrink bg-background ${columnIndex !== newspaperColumns.length - 1 ? 'border-r border-border' : ''}`}
-                            >
-                                <NewspaperColumnHeader
-                                    columnIndex={columnIndex}
-                                    onRemove={() => removeColumn(columnIndex)}
-                                />
+            <ScrollShadow LinearGradientComponent={LinearGradient} color="#fdfbf6" className='w-full'>
+                <ScrollView horizontal={true} className='w-full'>
+                    <Column gap={4} className='w-[950px]'>
+                        <NewspaperPageHeader onAddColumn={addColumn} />
+                        <View className='w-full'>
+                            <Row gap={0} className='w-full rounded-xl border-2 border-border items-stretch overflow-hidden'>
+                                {newspaperColumns.map((columnMarkdown, columnIndex) => (
+                                    <Column
+                                        key={columnIndex}
+                                        gap={0}
+                                        className={`flex-1 shrink bg-background ${columnIndex !== newspaperColumns.length - 1 ? 'border-r border-border' : ''}`}
+                                    >
+                                        <NewspaperColumnHeader
+                                            columnIndex={columnIndex}
+                                            onRemove={() => removeColumn(columnIndex)}
+                                        />
 
-                                <Pressable className='flex-1 min-h-120 p-4 bg-inner-background' onPress={() => openColumn(columnIndex)}>
-                                    <Column className='h-full justify-between' gap={4}>
-                                        <Column gap={3}>
-                                            {columnMarkdown.trim().length > 0 ? (
-                                                <MarkdownRenderer markdown={columnMarkdown} textAlign='justify' />
-                                            ) : (
-                                                <NewspaperColumnEmptyState />
-                                            )}
-                                        </Column>
+                                        <Pressable className='flex-1 min-h-120 p-4 bg-inner-background' onPress={() => openColumn(columnIndex)}>
+                                            <Column className='h-full justify-between' gap={4}>
+                                                <Column gap={3}>
+                                                    {columnMarkdown.trim().length > 0 ? (
+                                                        <MarkdownRenderer markdown={columnMarkdown} textAlign='justify' />
+                                                    ) : (
+                                                        <NewspaperColumnEmptyState />
+                                                    )}
+                                                </Column>
 
-                                        <NewspaperColumnFooter />
+                                                <NewspaperColumnFooter />
+                                            </Column>
+                                        </Pressable>
                                     </Column>
-                                </Pressable>
-                            </Column>
-                        ))}
-                    </Row>
-                </View>
-            </Column>
+                                ))}
+                            </Row>
+                        </View>
+                    </Column>
+                </ScrollView>
+            </ScrollShadow>
 
             {selectedColumnIndex !== null && (
                 <NewspaperColumnDialog

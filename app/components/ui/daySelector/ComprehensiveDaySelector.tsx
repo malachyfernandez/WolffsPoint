@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { ScrollView, View } from 'react-native';
 import Column from '../../layout/Column';
 import Row from '../../layout/Row';
@@ -18,6 +18,8 @@ interface ComprehensiveDaySelectorProps {
 }
 
 const ComprehensiveDaySelector = ({ gameId }: ComprehensiveDaySelectorProps) => {
+    const scrollViewRef = useRef<ScrollView>(null);
+    
     // Shared selected day index
     const [selectedDayIndex, setSelectedDayIndex] = useUserList<number>({
         key: "selectedDayIndex",
@@ -48,21 +50,33 @@ const ComprehensiveDaySelector = ({ gameId }: ComprehensiveDaySelectorProps) => 
         return new Date(year, month - 1, day);
     });
 
-    // Helper: convert Date to MM/DD/YYYY string
-    const dateToStorageString = (date: Date): string => {
-        return `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`;
-    };
-
     // Clean setter that accepts Date[] and handles string conversion internally
-    const setFixedDayDatesArray = (dates: Date[]) => {
-        setDayDatesArray(dates.map(dateToStorageString));
-    };
+    const setFixedDayDatesArray = useCallback((dates: Date[]) => {
+        setDayDatesArray(
+            dates.map((date) => `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`)
+        );
+    }, [setDayDatesArray]);
 
     useEffect(() => {
         if (dayDatesArray.value.length === 0 && dayDatesArray.state.isSyncing === false) {
             setFixedDayDatesArray([new Date()]);
         }
     }, [dayDatesArray, setFixedDayDatesArray]);
+
+    // Auto-scroll to selected day
+    useEffect(() => {
+        if (scrollViewRef.current && selectedDayIndex.value !== undefined && fixedDayDatesArray.length > 0) {
+            // Each day button is approximately 64px wide (w-16) + 4px gap
+            const dayButtonWidth = 64;
+            const gapWidth = 4;
+            const selectedDayPosition = selectedDayIndex.value * (dayButtonWidth + gapWidth);
+            
+            // Scroll to position with some padding to center the selected day
+            const scrollPosition = Math.max(0, selectedDayPosition - 100);
+            
+            scrollViewRef.current.scrollTo({ x: scrollPosition, animated: true });
+        }
+    }, [selectedDayIndex.value, fixedDayDatesArray.length]);
 
     const addNewDay = (customDaysPerGameDay?: number) => {
         const currentDays = [...fixedDayDatesArray];
@@ -153,61 +167,61 @@ const ComprehensiveDaySelector = ({ gameId }: ComprehensiveDaySelectorProps) => 
         return false;
     };
 
-    const DaySelectorBar = () => (
-        <ScrollShadow key="day-selector-scroll" LinearGradientComponent={LinearGradient} color="#fdfbf6" className='mr-1 pr-1 max-w-min -mb-3 -mt-1'>
-            <ScrollView key="day-selector-scrollview" horizontal={true} className='px-1 m-0 h-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]'>
-                <Row className='h-6' gap={1}>
-                    {fixedDayDatesArray.map((date, index) => {
-                        const isCurrentDay = isCurrentOrNextDay(date);
-                        const isSelected = selectedDayIndex.value === index;
-                        
-                        if (isSelected) {
+    return (
+        <Column>
+            <ScrollShadow LinearGradientComponent={LinearGradient} color="#fdfbf6" className='mr-1 pr-1 max-w-min -mb-3 -mt-1'>
+                <ScrollView
+                    ref={scrollViewRef}
+                    horizontal={true}
+                    className='px-1 m-0 h-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]'
+                >
+                    <Row className='h-6' gap={1}>
+                        {fixedDayDatesArray.map((date, index) => {
+                            const isCurrentDay = isCurrentOrNextDay(date);
+                            const isSelected = selectedDayIndex.value === index;
+
+                            if (isSelected) {
+                                return (
+                                    <DayButton
+                                        key={index}
+                                        date={date}
+                                        index={index}
+                                        isSelected={true}
+                                        showCurrentDayIndicator={isCurrentDay}
+                                        onPress={() => handleDaySelect(index)}
+                                    >
+                                        <DaySelectionDialog
+                                            isOpen={isDialogOpen}
+                                            onOpenChange={setIsDialogOpen}
+                                            index={index}
+                                            dayDate={date}
+                                            previousDate={index > 0 ? fixedDayDatesArray[index - 1] : new Date()}
+                                            followingDate={index < fixedDayDatesArray.length - 1 ? fixedDayDatesArray[index + 1] : undefined}
+                                            onPress={() => handleDaySelect(index)}
+                                            replaceDayDate={replaceDayDate}
+                                            showCurrentDayIndicator={isCurrentDay}
+                                        />
+                                    </DayButton>
+                                );
+                            }
+
                             return (
                                 <DayButton
                                     key={index}
                                     date={date}
                                     index={index}
-                                    isSelected={true}
+                                    isSelected={false}
                                     showCurrentDayIndicator={isCurrentDay}
                                     onPress={() => handleDaySelect(index)}
-                                >
-                                    <DaySelectionDialog
-                                        isOpen={isDialogOpen}
-                                        onOpenChange={setIsDialogOpen}
-                                        index={index}
-                                        dayDate={date}
-                                        previousDate={index > 0 ? fixedDayDatesArray[index - 1] : new Date()}
-                                        followingDate={index < fixedDayDatesArray.length - 1 ? fixedDayDatesArray[index + 1] : undefined}
-                                        onPress={() => handleDaySelect(index)}
-                                        replaceDayDate={replaceDayDate}
-                                        showCurrentDayIndicator={isCurrentDay}
-                                    />
-                                </DayButton>
+                                />
                             );
-                        }
-                        
-                        return (
-                            <DayButton
-                                key={index}
-                                date={date}
-                                index={index}
-                                isSelected={false}
-                                showCurrentDayIndicator={isCurrentDay}
-                                onPress={() => handleDaySelect(index)}
-                            />
-                        );
-                    })}
-                    <AppButton key="add-day" variant="green" className='max-w-6 min-w-6 max-h-6 ml-1 rounded-full' onPress={handleAddNewDay}>
-                        <PoppinsText weight="bold" className='text-white'>+</PoppinsText>
-                    </AppButton>
-                </Row>
-            </ScrollView>
-        </ScrollShadow>
-    );
-
-    return (
-        <Column>
-            <DaySelectorBar />
+                        })}
+                        <AppButton variant="green" className='max-w-6 min-w-6 max-h-6 ml-1 rounded-full' onPress={handleAddNewDay}>
+                            <PoppinsText weight="bold" className='text-white'>+</PoppinsText>
+                        </AppButton>
+                    </Row>
+                </ScrollView>
+            </ScrollShadow>
 
             {/* ChooseDayDialog for initial setup */}
             <ChooseDayDialog
