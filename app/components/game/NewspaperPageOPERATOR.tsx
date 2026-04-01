@@ -57,7 +57,7 @@ const NewspaperPageOPERATOR = ({ gameId }: NewspaperPageOPERATORProps) => {
     return (
         <Column gap={4}>
             {/* Day Selector Bar - Now using reusable component */}
-            <View className='mt-2 -mb-4'>
+            <View className='mt-2 -mb-4 w-full'>
                 <ComprehensiveDaySelector gameId={gameId} />
             </View>
 

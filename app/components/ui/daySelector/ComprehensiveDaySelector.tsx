@@ -4,12 +4,12 @@ import Column from '../../layout/Column';
 import Row from '../../layout/Row';
 import AppButton from '../buttons/AppButton';
 import PoppinsText from '../text/PoppinsText';
-import PoppinsNumberInput from '../forms/PoppinsNumberInput';
 import { useUserList } from 'hooks/useUserList';
 import { ScrollShadow } from 'heroui-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import DaySelectionDialog from '../../game/DaySelectionDialog';
 import ChooseDayDialog from '../../game/ChooseDayDialog';
+import DayButton from './DayButton';
 
 export type DaySelectorMode = 'player' | 'nightly' | 'newspaper';
 
@@ -107,35 +107,97 @@ const ComprehensiveDaySelector = ({ gameId }: ComprehensiveDaySelectorProps) => 
 
     const currentDayKey = getDayKey(selectedDayIndex.value);
 
+    // Check if a date is today or the next coming day
+    const isCurrentOrNextDay = (date: Date): boolean => {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Set to start of day
+        
+        const checkDate = new Date(date);
+        checkDate.setHours(0, 0, 0, 0); // Set to start of day
+        
+        // Check if it's today
+        if (checkDate.getTime() === today.getTime()) {
+            return true;
+        }
+        
+        // Check if it's the next day after today
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        if (checkDate.getTime() === tomorrow.getTime()) {
+            return true;
+        }
+        
+        // If today is not in the list, check if this is the next upcoming day
+        const todayIndex = fixedDayDatesArray.findIndex(date => {
+            const d = new Date(date);
+            d.setHours(0, 0, 0, 0);
+            return d.getTime() === today.getTime();
+        });
+        
+        if (todayIndex === -1) {
+            // Find the first day that's after today
+            const futureDays = fixedDayDatesArray.filter(date => {
+                const d = new Date(date);
+                d.setHours(0, 0, 0, 0);
+                return d.getTime() > today.getTime();
+            }).sort((a, b) => a.getTime() - b.getTime());
+            
+            const nextDay = futureDays[0];
+            if (nextDay) {
+                const next = new Date(nextDay);
+                next.setHours(0, 0, 0, 0);
+                return checkDate.getTime() === next.getTime();
+            }
+        }
+        
+        return false;
+    };
+
     const DaySelectorBar = () => (
-        <ScrollShadow LinearGradientComponent={LinearGradient} color="#fdfbf6" className='mr-1 pr-1 max-w-min -mb-3 -mt-1'>
-            <ScrollView horizontal={true} className='px-1 m-0 h-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]'>
+        <ScrollShadow key="day-selector-scroll" LinearGradientComponent={LinearGradient} color="#fdfbf6" className='mr-1 pr-1 max-w-min -mb-3 -mt-1'>
+            <ScrollView key="day-selector-scrollview" horizontal={true} className='px-1 m-0 h-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]'>
                 <Row className='h-6' gap={1}>
-                    {fixedDayDatesArray.map((date, index) => (
-                        selectedDayIndex.value === index ? (
-                            <DaySelectionDialog
+                    {fixedDayDatesArray.map((date, index) => {
+                        const isCurrentDay = isCurrentOrNextDay(date);
+                        const isSelected = selectedDayIndex.value === index;
+                        
+                        if (isSelected) {
+                            return (
+                                <DayButton
+                                    key={index}
+                                    date={date}
+                                    index={index}
+                                    isSelected={true}
+                                    showCurrentDayIndicator={isCurrentDay}
+                                    onPress={() => handleDaySelect(index)}
+                                >
+                                    <DaySelectionDialog
+                                        isOpen={isDialogOpen}
+                                        onOpenChange={setIsDialogOpen}
+                                        index={index}
+                                        dayDate={date}
+                                        previousDate={index > 0 ? fixedDayDatesArray[index - 1] : new Date()}
+                                        followingDate={index < fixedDayDatesArray.length - 1 ? fixedDayDatesArray[index + 1] : undefined}
+                                        onPress={() => handleDaySelect(index)}
+                                        replaceDayDate={replaceDayDate}
+                                        showCurrentDayIndicator={isCurrentDay}
+                                    />
+                                </DayButton>
+                            );
+                        }
+                        
+                        return (
+                            <DayButton
                                 key={index}
-                                isOpen={isDialogOpen}
-                                onOpenChange={setIsDialogOpen}
+                                date={date}
                                 index={index}
-                                dayDate={date}
-                                previousDate={index > 0 ? fixedDayDatesArray[index - 1] : new Date()}
-                                followingDate={index < fixedDayDatesArray.length - 1 ? fixedDayDatesArray[index + 1] : undefined}
+                                isSelected={false}
+                                showCurrentDayIndicator={isCurrentDay}
                                 onPress={() => handleDaySelect(index)}
-                                replaceDayDate={replaceDayDate}
                             />
-                        ) : (
-                            <AppButton
-                                key={index}
-                                variant="grey"
-                                className='w-16 max-h-6'
-                                onPress={() => handleDaySelect(index)}
-                            >
-                                <PoppinsText className='text-white'>{fixedDayDatesArray[index].getMonth() + 1}/{fixedDayDatesArray[index].getDate()}</PoppinsText>
-                            </AppButton>
-                        )
-                    ))}
-                    <AppButton variant="green" className='max-w-6 min-w-6 max-h-6 ml-1 rounded-full' onPress={handleAddNewDay}>
+                        );
+                    })}
+                    <AppButton key="add-day" variant="green" className='max-w-6 min-w-6 max-h-6 ml-1 rounded-full' onPress={handleAddNewDay}>
                         <PoppinsText weight="bold" className='text-white'>+</PoppinsText>
                     </AppButton>
                 </Row>

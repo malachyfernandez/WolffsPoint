@@ -7,7 +7,7 @@ import { UserTableItem } from 'types/playerTable';
 import Row from '../layout/Row';
 import { ScrollShadow } from 'heroui-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ScrollView } from 'react-native';
+import { ScrollView, View } from 'react-native';
 import PoppinsNumberInput from '../ui/forms/PoppinsNumberInput';
 import PlayerAddUserSection from './PlayerAddUserSection';
 import ComprehensiveDaySelector from '../ui/daySelector/ComprehensiveDaySelector';
@@ -105,25 +105,27 @@ const PlayerPageOPERATOR = ({ currentUserId, gameId }: PlayerPageOPERATORProps) 
                                         </Row>
                                     </Column>
                                     <Column gap={1}>
-                                    <ComprehensiveDaySelector
-                                        gameId={gameId}
-                                    />
-                                    <Row className={`${isDaysTableBeingEdited ? 'z-10' : ''} w-min max-w-min`}>
-                                        <DaysTable
-                                            gameId={gameId}
-                                            dayNumber={selectedDayIndex.value}
-                                            isBeingEdited={isDaysTableBeingEdited}
-                                            setIsBeingEdited={setIsDaysTableBeingEdited}
-                                            onLayout={(event) => {
-                                                const { width } = event.nativeEvent.layout;
-                                                setDaysTableWidth(width);
-                                            }}
-                                            onWidthChange={(width) => {
-                                                setDaysTableWidth(width);
-                                            }}
-                                        />
-                                    </Row>
-                                </Column>
+                                        <View className='' style={{ width: daysTableWidth }}>
+                                            <ComprehensiveDaySelector
+                                                gameId={gameId}
+                                            />
+                                        </View>
+                                        <Row className={`${isDaysTableBeingEdited ? 'z-10' : ''} w-min max-w-min`}>
+                                            <DaysTable
+                                                gameId={gameId}
+                                                dayNumber={selectedDayIndex.value}
+                                                isBeingEdited={isDaysTableBeingEdited}
+                                                setIsBeingEdited={setIsDaysTableBeingEdited}
+                                                onLayout={(event) => {
+                                                    const { width } = event.nativeEvent.layout;
+                                                    setDaysTableWidth(width);
+                                                }}
+                                                onWidthChange={(width) => {
+                                                    setDaysTableWidth(width);
+                                                }}
+                                            />
+                                        </Row>
+                                    </Column>
                                 </Row>
 
                             </ScrollView>
@@ -151,7 +153,7 @@ const PlayerPageOPERATOR = ({ currentUserId, gameId }: PlayerPageOPERATORProps) 
                         )}
                     </Column>
                 ) : (
-                   
+
                     // <PoppinsText>Hellow</PoppinsText>
                     <PlayerAddUserSection gameId={gameId} removeBottomSpace />
                 )}

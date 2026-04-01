@@ -215,9 +215,11 @@ const NightlyPageOPERATOR = ({ currentUserId, gameId }: NightlyPageOPERATORProps
                                     </Row>
                                 </Column>
                                 <Column gap={1}>
-                                    <ComprehensiveDaySelector
-                                        gameId={gameId}
-                                    />
+                                    <View style={{ width: daysTableWidth }}>
+                                        <ComprehensiveDaySelector
+                                            gameId={gameId}
+                                        />
+                                    </View>
                                     <Row className={`${isDaysTableBeingEdited ? 'z-10' : ''} w-min max-w-min`}>
                                         <NightlyDaysTable
                                             gameId={gameId}

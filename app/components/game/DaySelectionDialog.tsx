@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { View } from 'react-native';
 import ConvexDialog from '../ui/dialog/ConvexDialog';
 import Column from '../layout/Column';
+import Row from '../layout/Row';
 import AppButton from '../ui/buttons/AppButton';
 import PoppinsText from '../ui/text/PoppinsText';
 import PoppinsTextInput from '../ui/forms/PoppinsTextInput';
@@ -17,9 +19,10 @@ interface DaySelectionDialogProps {
     previousDate: Date;
     followingDate?: Date;
     replaceDayDate: (index: number, replacementDate: Date) => void;
+    showCurrentDayIndicator?: boolean;
 }
 
-const DaySelectionDialog = ({ isOpen, onOpenChange, index, dayDate, onPress, previousDate, followingDate, replaceDayDate }: DaySelectionDialogProps) => {
+const DaySelectionDialog = ({ isOpen, onOpenChange, index, dayDate, onPress, previousDate, followingDate, replaceDayDate, showCurrentDayIndicator = false }: DaySelectionDialogProps) => {
     const [input, setInput] = useState('');
     const [isDateValid, setIsDateValid] = useState(false);
 
@@ -91,7 +94,12 @@ const DaySelectionDialog = ({ isOpen, onOpenChange, index, dayDate, onPress, pre
                     className='w-16 max-h-6'
                     onPress={onPress}
                 >
-                    <PoppinsText className='text-white'>{dayDate.getMonth() + 1}/{dayDate.getDate()}</PoppinsText>
+                    <Row className='items-center' gap={2}>
+                        {showCurrentDayIndicator && (
+                            <View className='w-1.5 h-1.5 bg-red-500 rounded-full' />
+                        )}
+                        <PoppinsText className='text-white'>{dayDate.getMonth() + 1}/{dayDate.getDate()}</PoppinsText>
+                    </Row>
                 </AppButton>
             </ConvexDialog.Trigger>
             <ConvexDialog.Portal>
