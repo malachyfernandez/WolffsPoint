@@ -170,13 +170,11 @@ const SimpleImageUpload = ({
                 return;
             }
 
-            if (Platform.OS !== 'web') {
-                const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+            const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
-                if (!permission.granted) {
-                    setErrorMessage('Media library permission is required to upload an image.');
-                    return;
-                }
+            if (!permission.granted) {
+                setErrorMessage('Media library permission is required to upload an image.');
+                return;
             }
 
             const result = await ImagePicker.launchImageLibraryAsync({

@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import PoppinsText from '../ui/text/PoppinsText';
 import { useUserList } from 'hooks/useUserList';
+import { useUserVariable } from 'hooks/useUserVariable';
+import { useUserVariableGet } from 'hooks/useUserVariableGet';
 import Column from '../layout/Column';
 import NightlyPlayerTable from './NightlyPlayerTable';
 import NightlyDaysTable from './NightlyDaysTable';
@@ -10,11 +12,14 @@ import Row from '../layout/Row';
 import { ScrollShadow } from 'heroui-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ScrollView, View } from 'react-native';
-import DaySelectionDialog from './DaySelectionDialog';
 import PoppinsNumberInput from '../ui/forms/PoppinsNumberInput';
 import { useUserList as useRoleList } from 'hooks/useUserList';
 import { RoleTableItem } from 'types/roleTable';
 import ComprehensiveDaySelector from '../ui/daySelector/ComprehensiveDaySelector';
+import PoppinsTextInput from '../ui/forms/PoppinsTextInput';
+import NightlyCertificationDialog from './NightlyCertificationDialog';
+import { defaultGameSchedule, getGameScopedKey } from '../../../utils/multiplayer';
+import { GameSchedule, PlayerNightSubmission } from '../../../types/multiplayer';
 
 interface NightlyPageOPERATORProps {
     currentUserId: string;
@@ -22,21 +27,18 @@ interface NightlyPageOPERATORProps {
 }
 
 const NightlyPageOPERATOR = ({ currentUserId, gameId }: NightlyPageOPERATORProps) => {
-    // Demo popover role picker
-    const [demoRole, setDemoRole] = useState('');
+    const [isCertificationDialogOpen, setIsCertificationDialogOpen] = useState(false);
+    const [gameSchedule, setGameSchedule] = useUserVariable<GameSchedule>({
+        key: getGameScopedKey('gameSchedule', gameId),
+        defaultValue: defaultGameSchedule,
+        privacy: 'PUBLIC',
+    });
 
     const [roleTable] = useRoleList<RoleTableItem[]>({
         key: "roleTable",
         itemId: gameId,
         privacy: "PUBLIC",
     });
-
-    const demoRoleOptions = (roleTable?.value ?? [])
-        .filter((roleItem) => roleItem.role.trim().length > 0 && roleItem.isVisible !== false)
-        .map((roleItem) => ({
-            value: roleItem.role,
-            label: roleItem.role,
-        }));
 
     // Shared user table (same as players tab)
     const [userTable, setUserTable] = useUserList<UserTableItem[]>({
@@ -70,6 +72,20 @@ const NightlyPageOPERATOR = ({ currentUserId, gameId }: NightlyPageOPERATORProps
         privacy: "PUBLIC",
         defaultValue: 0,
     });
+
+    const submissionRecords = useUserVariableGet<PlayerNightSubmission>({
+        key: getGameScopedKey(`playerNightSubmission-day-${selectedDayIndex.value}`, gameId),
+        returnTop: 200,
+    });
+
+    const submissionsByEmail = Object.fromEntries(
+        (submissionRecords ?? [])
+            .filter((record) => record.value.playerEmail.trim().length > 0)
+            .map((record) => [record.value.playerEmail, record.value])
+    ) as Record<string, PlayerNightSubmission>;
+
+    const voteCount = users.filter((user) => (submissionsByEmail[user.email]?.vote ?? '').trim().length > 0).length;
+    const actionCount = users.filter((user) => (submissionsByEmail[user.email]?.action ?? '').trim().length > 0).length;
 
     // Shared number of real days per in-game day (same as players tab)
     const [numberOfRealDaysPerInGameDay, setNumberOfRealDaysPerInGameDay] = useUserList<number>({
@@ -141,7 +157,6 @@ const NightlyPageOPERATOR = ({ currentUserId, gameId }: NightlyPageOPERATORProps
     const [isPlayerTableBeingEdited, setIsPlayerTableBeingEdited] = useState(false);
     const [isDaysTableBeingEdited, setIsDaysTableBeingEdited] = useState(false);
     const [daysTableWidth, setDaysTableWidth] = useState(320); // default width
-    const [isDialogOpen, setIsDialogOpen] = useState(false);
 
     // Update nightly response for a specific user on a specific day
     const updateNightlyResponse = (dayIndex: number, userIndex: number, value: string) => {
@@ -191,10 +206,47 @@ const NightlyPageOPERATOR = ({ currentUserId, gameId }: NightlyPageOPERATORProps
         }
     };
 
+    const certifySubmissions = () => {
+        const certifiedUsers = users.map((user) => {
+            const submission = submissionsByEmail[user.email];
+            const nextDays = [...(user.days ?? [])];
+
+            while (nextDays.length <= selectedDayIndex.value) {
+                nextDays.push({});
+            }
+
+            if (submission) {
+                nextDays[selectedDayIndex.value] = {
+                    ...nextDays[selectedDayIndex.value],
+                    vote: submission.vote,
+                    action: submission.action,
+                };
+            }
+
+            return {
+                ...user,
+                days: nextDays,
+            };
+        });
+
+        setUserTable(certifiedUsers);
+        setDoSync(true);
+    };
+
     return (
         <Column>
             {users.length > 0 ? (
                 <Column>
+                    <Row className='justify-between items-center mb-4'>
+                        <Column gap={0}>
+                            <PoppinsText weight='medium'>Player submissions</PoppinsText>
+                            <PoppinsText varient='subtext'>{voteCount}/{users.length} voted, {actionCount}/{users.length} submitted actions</PoppinsText>
+                        </Column>
+                        <AppButton variant='black' className='w-48' onPress={() => setIsCertificationDialogOpen(true)}>
+                            <PoppinsText weight='medium' color='white'>Review / Certify</PoppinsText>
+                        </AppButton>
+                    </Row>
+
                     <ScrollShadow LinearGradientComponent={LinearGradient} color="#fdfbf6" className='mr-1 pt-1'>
                         <ScrollView horizontal={true} className='px-1 py-5'>
                             <Row>
@@ -259,6 +311,42 @@ const NightlyPageOPERATOR = ({ currentUserId, gameId }: NightlyPageOPERATORProps
                             useDefaultStyling={true}
                         />
                     </Row>
+
+                    <Column className='mt-6 rounded-xl border border-subtle-border bg-white p-4' gap={3}>
+                        <PoppinsText weight='medium'>Nightly schedule</PoppinsText>
+                        <Column gap={1}>
+                            <PoppinsText varient='subtext'>Action / vote deadline</PoppinsText>
+                            <PoppinsTextInput
+                                className='w-40 border border-subtle-border p-3'
+                                value={gameSchedule.value.nightlyDeadlineTime}
+                                onChangeText={(value) => setGameSchedule({
+                                    ...gameSchedule.value,
+                                    nightlyDeadlineTime: value,
+                                })}
+                                placeholder='22:00'
+                            />
+                        </Column>
+                        <Column gap={1}>
+                            <PoppinsText varient='subtext'>Nightly response release time</PoppinsText>
+                            <PoppinsTextInput
+                                className='w-40 border border-subtle-border p-3'
+                                value={gameSchedule.value.nightlyResponseReleaseTime}
+                                onChangeText={(value) => setGameSchedule({
+                                    ...gameSchedule.value,
+                                    nightlyResponseReleaseTime: value,
+                                })}
+                                placeholder='23:00'
+                            />
+                        </Column>
+                    </Column>
+
+                    <NightlyCertificationDialog
+                        isOpen={isCertificationDialogOpen}
+                        onOpenChange={setIsCertificationDialogOpen}
+                        users={users}
+                        submissionsByEmail={submissionsByEmail}
+                        onCertify={certifySubmissions}
+                    />
                 </Column>
             ) : (
                 <Row className='items-center justify-center'>

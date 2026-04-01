@@ -1,17 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { View } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { Tabs } from 'heroui-native';
 import Column from '../layout/Column';
-import Row from '../layout/Row';
 import PoppinsText from '../ui/text/PoppinsText';
-import AppButton from '../ui/buttons/AppButton';
 import NewspaperWritingView from './NewspaperWritingView';
 import NewspaperViewingView from './NewspaperViewingView';
-import NewspaperPageHeader from './newspaperPageOperator/NewspaperPageHeader';
 import NewspaperViewingHeader from './NewspaperViewingHeader';
 import { useUserList } from 'hooks/useUserList';
+import { useUserVariable } from 'hooks/useUserVariable';
 import ComprehensiveDaySelector from '../ui/daySelector/ComprehensiveDaySelector';
+import PoppinsTextInput from '../ui/forms/PoppinsTextInput';
+import { defaultGameSchedule, getGameScopedKey } from '../../../utils/multiplayer';
+import { GameSchedule } from '../../../types/multiplayer';
 
 interface NewspaperPageOPERATORProps {
     currentUserId: string;
@@ -20,6 +21,11 @@ interface NewspaperPageOPERATORProps {
 
 const NewspaperPageOPERATOR = ({ gameId }: NewspaperPageOPERATORProps) => {
     const [activeTab, setActiveTab] = useState('writing');
+    const [gameSchedule, setGameSchedule] = useUserVariable<GameSchedule>({
+        key: getGameScopedKey('gameSchedule', gameId),
+        defaultValue: defaultGameSchedule,
+        privacy: 'PUBLIC',
+    });
 
     // Get the current day key from shared state
     const [selectedDayIndex] = useUserList<number>({
@@ -36,23 +42,12 @@ const NewspaperPageOPERATOR = ({ gameId }: NewspaperPageOPERATORProps) => {
         defaultValue: [],
     });
 
-    // Convert stored MM/DD/YYYY strings back to real Date objects for UI use
-    const fixedDayDatesArray = dayDatesArray.value.map(dateStr => {
-        const [month, day, year] = dateStr.split('/').map(Number);
-        return new Date(year, month - 1, day);
-    });
-
     // Create a unique key for the newspaper based on the day index (not date)
     const getNewspaperKey = (dayIndex: number) => {
         return `day-${dayIndex}`;
     };
 
     const currentDayKey = getNewspaperKey(selectedDayIndex.value);
-
-    const addColumn = () => {
-        // This function will be handled by the NewspaperWritingView component
-        // which has its own state management for columns
-    };
 
     return (
         <Column gap={4}>
@@ -109,6 +104,20 @@ const NewspaperPageOPERATOR = ({ gameId }: NewspaperPageOPERATORProps) => {
                         </Column>
                     </Tabs.Content>
                 </Tabs>
+
+                <Column className='mt-6 rounded-xl border border-subtle-border bg-white p-4' gap={2}>
+                    <PoppinsText weight='medium'>Newspaper release time</PoppinsText>
+                    <PoppinsText varient='subtext'>Players can read the current day once this time is reached.</PoppinsText>
+                    <PoppinsTextInput
+                        className='w-40 border border-subtle-border p-3'
+                        value={gameSchedule.value.newspaperReleaseTime}
+                        onChangeText={(value) => setGameSchedule({
+                            ...gameSchedule.value,
+                            newspaperReleaseTime: value,
+                        })}
+                        placeholder='08:00'
+                    />
+                </Column>
             </Column>
         </Column>
     );

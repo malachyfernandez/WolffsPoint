@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ConvexDialog } from '../ui/dialog/ConvexDialog';
+import ConvexDialog from '../ui/dialog/ConvexDialog';
 import Column from '../layout/Column';
 import Animated from 'react-native-reanimated';
 import { FadeInRight, FadeOutRight } from 'react-native-reanimated';
@@ -8,7 +8,7 @@ import PoppinsText from '../ui/text/PoppinsText';
 import PoppinsTextInput from '../ui/forms/PoppinsTextInput';
 import SmartDateInput from '../ui/forms/SmartDateInput';
 import SmartNumberInput from '../ui/forms/SmartNumberInput';
-import { StatusButton } from '../ui/StatusButton';
+import StatusButton from '../ui/StatusButton';
 import JoinHandler from '../ui/forms/JoinHandler';
 import DialogHeader from '../ui/dialog/DialogHeader';
 import { useUserList } from 'hooks/useUserList';

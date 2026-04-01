@@ -1,0 +1,46 @@
+import React from 'react';
+import { ScrollView } from 'react-native';
+import { ScrollShadow } from 'heroui-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import Column from '../layout/Column';
+import Row from '../layout/Row';
+import DayButton from '../ui/daySelector/DayButton';
+
+interface PlayerDaySelectorProps {
+    dayDates: Date[];
+    selectedDayIndex: number;
+    currentDayIndex: number;
+    onSelectDay: (index: number) => void;
+}
+
+const PlayerDaySelector = ({ dayDates, selectedDayIndex, currentDayIndex, onSelectDay }: PlayerDaySelectorProps) => {
+    return (
+        <Column>
+            <ScrollShadow LinearGradientComponent={LinearGradient} color="#fdfbf6" className='mr-1 pr-1 max-w-min -mb-3 -mt-1'>
+                <ScrollView horizontal={true} className='px-1 m-0 h-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]'>
+                    <Row className='h-6' gap={1}>
+                        {dayDates.map((date, index) => {
+                            const isLocked = index > currentDayIndex;
+                            return (
+                                <DayButton
+                                    key={index}
+                                    date={date}
+                                    index={index}
+                                    isSelected={selectedDayIndex === index}
+                                    showCurrentDayIndicator={index === currentDayIndex}
+                                    onPress={() => {
+                                        if (!isLocked) {
+                                            onSelectDay(index);
+                                        }
+                                    }}
+                                />
+                            );
+                        })}
+                    </Row>
+                </ScrollView>
+            </ScrollShadow>
+        </Column>
+    );
+};
+
+export default PlayerDaySelector;
