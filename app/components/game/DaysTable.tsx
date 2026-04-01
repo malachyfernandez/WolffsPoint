@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import PoppinsText from '../ui/text/PoppinsText';
 import { useUserList } from 'hooks/useUserList';
 import Column from '../layout/Column';
@@ -22,7 +22,7 @@ interface DaysTableProps {
 const DaysTable = ({ gameId, dayNumber, isBeingEdited, setIsBeingEdited, className, onLayout, onWidthChange }: DaysTableProps) => {
     const { executeCommand } = useUndoRedo();
     const [editingRow, setEditingRow] = useState<'title' | number | null>(null);
-    const tableRef = React.useRef<any>(null);
+    const tableRef = useRef<any>(null);
 
     const handleRowEditStart = (rowType: 'title' | number) => {
         setEditingRow(rowType);
@@ -37,11 +37,16 @@ const DaysTable = ({ gameId, dayNumber, isBeingEdited, setIsBeingEdited, classNa
     const measureTableWidth = () => {
         if (tableRef.current && onWidthChange) {
             // Use setTimeout to ensure layout is updated after state changes
-            setTimeout(() => {
-                tableRef.current.measure((x: number, y: number, width: number, height: number) => {
-                    onWidthChange(width);
-                });
+            const timeoutId = setTimeout(() => {
+                if (tableRef.current) {
+                    tableRef.current.measure((x: number, y: number, width: number, height: number) => {
+                        onWidthChange(width);
+                    });
+                }
             }, 0);
+            
+            // Cleanup timeout if component unmounts
+            return () => clearTimeout(timeoutId);
         }
     };
 
@@ -66,8 +71,9 @@ const DaysTable = ({ gameId, dayNumber, isBeingEdited, setIsBeingEdited, classNa
     });
 
     // Measure width when columns change
-    React.useEffect(() => {
-        measureTableWidth();
+    useEffect(() => {
+        const cleanup = measureTableWidth();
+        return cleanup;
     }, [userTableTitle?.value?.extraDayColumns?.length, userTableColumnVisibility?.value?.extraDayColumns]);
 
 
