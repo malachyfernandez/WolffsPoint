@@ -69,7 +69,9 @@ const ComprehensiveDaySelector = ({ gameId }: ComprehensiveDaySelectorProps) => 
             // Each day button is approximately 64px wide (w-16) + 4px gap
             const dayButtonWidth = 64;
             const gapWidth = 4;
-            const selectedDayPosition = selectedDayIndex.value * (dayButtonWidth + gapWidth);
+            // Calculate position in reversed order: newest days are first (after + button)
+            const reversedIndex = fixedDayDatesArray.length - 1 - selectedDayIndex.value;
+            const selectedDayPosition = reversedIndex * (dayButtonWidth + gapWidth);
             
             // Scroll to position with some padding to center the selected day
             const scrollPosition = Math.max(0, selectedDayPosition - 100);
@@ -176,7 +178,11 @@ const ComprehensiveDaySelector = ({ gameId }: ComprehensiveDaySelectorProps) => 
                     className='px-1 m-0 h-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]'
                 >
                     <Row className='h-6' gap={1}>
-                        {fixedDayDatesArray.map((date, index) => {
+                        <AppButton variant="green" className='max-w-6 min-w-6 max-h-6 ml-1 rounded-full' onPress={handleAddNewDay}>
+                            <PoppinsText weight="bold" className='text-white'>+</PoppinsText>
+                        </AppButton>
+                        {fixedDayDatesArray.slice().reverse().map((date, reverseIndex) => {
+                            const index = fixedDayDatesArray.length - 1 - reverseIndex;
                             const isCurrentDay = isCurrentOrNextDay(date);
                             const isSelected = selectedDayIndex.value === index;
 
@@ -216,9 +222,6 @@ const ComprehensiveDaySelector = ({ gameId }: ComprehensiveDaySelectorProps) => 
                                 />
                             );
                         })}
-                        <AppButton variant="green" className='max-w-6 min-w-6 max-h-6 ml-1 rounded-full' onPress={handleAddNewDay}>
-                            <PoppinsText weight="bold" className='text-white'>+</PoppinsText>
-                        </AppButton>
                     </Row>
                 </ScrollView>
             </ScrollShadow>
