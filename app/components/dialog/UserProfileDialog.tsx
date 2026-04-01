@@ -22,7 +22,7 @@ const UserProfileDialog = ({ children }: UserProfileDialogProps) => {
     const [userData] = useUserVariable({
         key: 'userData',
         defaultValue: { name: '', email: '', userId: '' },
-        privacy: 'PRIVATE'
+        privacy: 'PUBLIC'
     });
 
 

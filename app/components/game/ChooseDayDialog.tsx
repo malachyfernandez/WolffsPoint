@@ -17,17 +17,17 @@ interface ChooseDayDialogProps {
 
 const ChooseDayDialog = ({ isOpen, onOpenChange, gameId, addNewDay }: ChooseDayDialogProps) => {
     // Use the same user variable system as other components
-    const [numberOfRealDaysPerInGameDay, setNumberOfRealDaysPerInGameDay] = useUserList<number | false>({
+    const [numberOfRealDaysPerInGameDay, setNumberOfRealDaysPerInGameDay] = useUserList<number>({
         key: "numberOfRealDaysPerInGameDay",
         itemId: gameId,
         privacy: "PUBLIC",
-        defaultValue: false,
+        defaultValue: 2,
     });
 
-    const [daysValue, setDaysValue] = useState(numberOfRealDaysPerInGameDay.value === false ? "2" : numberOfRealDaysPerInGameDay.value.toString());
+    const [daysValue, setDaysValue] = useState(numberOfRealDaysPerInGameDay.value.toString());
 
     React.useEffect(() => {
-        setDaysValue(numberOfRealDaysPerInGameDay.value === false ? "2" : numberOfRealDaysPerInGameDay.value.toString());
+        setDaysValue(numberOfRealDaysPerInGameDay.value.toString());
     }, [numberOfRealDaysPerInGameDay.value, isOpen]);
     // const [daysValue, setDaysValue] = useState((numberOfRealDaysPerInGameDay?.value || 2).toString());
 
@@ -41,7 +41,7 @@ const ChooseDayDialog = ({ isOpen, onOpenChange, gameId, addNewDay }: ChooseDayD
      };
 
      const handleCancel = () => {
-         setDaysValue(numberOfRealDaysPerInGameDay.value === false ? "2" : numberOfRealDaysPerInGameDay.value.toString());
+         setDaysValue(numberOfRealDaysPerInGameDay.value.toString());
          onOpenChange(false);
      };
 

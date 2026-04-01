@@ -52,7 +52,7 @@ const AllGamesPage = ({
 
     const [userData, setUserData] = useUserVariable<UserData>({
         key: "userData",
-        defaultValue: {},
+        defaultValue: { name: "", email: "", userId: "" },
         privacy: "PUBLIC",
         searchKeys: ["name"],
     });

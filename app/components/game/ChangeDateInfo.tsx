@@ -27,10 +27,10 @@ const ChangeDateInfo = ({ gameId, isGettingStarted }: ChangeDateInfoProps) => {
         itemId: gameId,
     });
 
-    const [realDaysPerInGameDay, setRealDaysPerInGameDay] = useUserList({
-        key: "realDaysPerInGameDay",
+    const [numberOfRealDaysPerInGameDay, setNumberOfRealDaysPerInGameDay] = useUserList<number>({
+        key: "numberOfRealDaysPerInGameDay",
         itemId: gameId,
-        defaultValue: '2',
+        defaultValue: 2,
     });
     console.log("set default to 2 in ChangeDateInfo.tsx");
 
@@ -49,7 +49,7 @@ const ChangeDateInfo = ({ gameId, isGettingStarted }: ChangeDateInfoProps) => {
 
     const formSubmit = () => {
         setStartingDate(date);
-        setRealDaysPerInGameDay(realDaysPerInGameDaySTATE);
+        setNumberOfRealDaysPerInGameDay(Number(realDaysPerInGameDaySTATE));
         setIsHeroDialogOpen(false);
         resetState();
     };
@@ -71,13 +71,13 @@ const ChangeDateInfo = ({ gameId, isGettingStarted }: ChangeDateInfoProps) => {
     }, [startingDate]);
 
     useEffect(() => {
-        if (realDaysPerInGameDaySTATE == '2' && realDaysPerInGameDay.value != '2') {
+        if (realDaysPerInGameDaySTATE == '2' && numberOfRealDaysPerInGameDay.value != 2) {
             console.log("set default to 2 in ChangeDateInfo.tsx useEffect checking realDaysPerInGameDaySTATE");
-            setRealDaysPerInGameDaySTATE(realDaysPerInGameDay.value as string);
+            setRealDaysPerInGameDaySTATE(numberOfRealDaysPerInGameDay.value.toString());
             setIsNumberValid(true);
-            setOldRealDaysPerInGameDay(realDaysPerInGameDay.value as string);
+            setOldRealDaysPerInGameDay(numberOfRealDaysPerInGameDay.value.toString());
         }
-    }, [realDaysPerInGameDay]);
+    }, [numberOfRealDaysPerInGameDay]);
 
     const hasChanged = oldDate !== date || oldRealDaysPerInGameDay !== realDaysPerInGameDaySTATE;
     

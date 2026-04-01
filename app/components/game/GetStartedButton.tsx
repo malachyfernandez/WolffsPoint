@@ -26,15 +26,16 @@ const GetStartedButton = ({ gameId }: GetStartedButtonProps) => {
         itemId: gameId,
     });
 
-    const [realDaysPerInGameDay, setRealDaysPerInGameDay] = useUserList({
-        key: "realDaysPerInGameDay",
+    const [numberOfRealDaysPerInGameDay, setNumberOfRealDaysPerInGameDay] = useUserList<number>({
+        key: "numberOfRealDaysPerInGameDay",
         itemId: gameId,
+        defaultValue: 2,
     });
 
 
     const formSubmit = () => {
         setStartingDate(date);
-        setRealDaysPerInGameDay(realDaysPerInGameDaySTATE);
+        setNumberOfRealDaysPerInGameDay(Number(realDaysPerInGameDaySTATE));
         setIsHeroDialogOpen(false);
     };
 

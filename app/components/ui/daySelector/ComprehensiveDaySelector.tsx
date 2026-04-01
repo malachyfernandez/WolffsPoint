@@ -29,11 +29,11 @@ const ComprehensiveDaySelector = ({ gameId }: ComprehensiveDaySelectorProps) => 
     });
 
     // Number of real days per in-game day
-    const [numberOfRealDaysPerInGameDay] = useUserList<number | false>({
+    const [numberOfRealDaysPerInGameDay] = useUserList<number>({
         key: "numberOfRealDaysPerInGameDay",
         itemId: gameId,
         privacy: "PUBLIC",
-        defaultValue: false,
+        defaultValue: 2,
     });
 
     // Shared day dates array
@@ -85,7 +85,7 @@ const ComprehensiveDaySelector = ({ gameId }: ComprehensiveDaySelectorProps) => 
         const lastDate = currentDays[currentDays.length - 1];
         const newDate = new Date(lastDate);
 
-        const daysToAdd = customDaysPerGameDay ?? (typeof numberOfRealDaysPerInGameDay.value === 'number' ? numberOfRealDaysPerInGameDay.value : 2);
+        const daysToAdd = customDaysPerGameDay ?? numberOfRealDaysPerInGameDay.value;
         newDate.setDate(newDate.getDate() + daysToAdd);
         setFixedDayDatesArray([...currentDays, newDate]);
 
@@ -109,11 +109,7 @@ const ComprehensiveDaySelector = ({ gameId }: ComprehensiveDaySelectorProps) => 
     };
 
     const handleAddNewDay = () => {
-        if (numberOfRealDaysPerInGameDay.value === false) {
-            setIsChooseDayDialogOpen(true);
-        } else {
-            addNewDay();
-        }
+        addNewDay();
     };
 
     // Create a unique key for content based on the day index

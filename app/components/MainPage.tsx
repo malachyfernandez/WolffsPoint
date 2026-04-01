@@ -91,7 +91,7 @@ const MainPage: React.FC<MainPageProps> = ({
 
         <View className='w-screen h-screen p-safe'>
 
-            <TopSiteBar isInAGame={isInAGame} setActiveGameId={setActiveGameId} />
+            <TopSiteBar />
             {isActiveGameLoading ? (
                 <PoppinsText>Loading</PoppinsText>
             ) : (

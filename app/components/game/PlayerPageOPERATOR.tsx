@@ -40,11 +40,11 @@ const PlayerPageOPERATOR = ({ currentUserId, gameId }: PlayerPageOPERATORProps) 
 
     const users = userTable?.value ?? [];
 
-    const [numberOfRealDaysPerInGameDay, setNumberOfRealDaysPerInGameDay] = useUserList<number | false>({
+    const [numberOfRealDaysPerInGameDay, setNumberOfRealDaysPerInGameDay] = useUserList<number>({
         key: "numberOfRealDaysPerInGameDay",
         itemId: gameId,
         privacy: "PUBLIC",
-        defaultValue: false,
+        defaultValue: 2,
     });
 
     // Get day dates for PlayerTable
@@ -134,23 +134,21 @@ const PlayerPageOPERATOR = ({ currentUserId, gameId }: PlayerPageOPERATORProps) 
                         </ScrollShadow>
                         <PlayerAddUserSection gameId={gameId} />
 
-                        {numberOfRealDaysPerInGameDay.value !== false && (
-                            <Row className="items-center pt-8 mt-4 border-t border-subtle-border">
-                                <PoppinsText weight='medium'>Days per game day</PoppinsText>
-                                <PoppinsNumberInput
-                                    value={numberOfRealDaysPerInGameDay.value}
-                                    onChangeText={(displayValue, isValid, numericValue) => {
-                                        if (isValid && numericValue !== null) {
-                                            setNumberOfRealDaysPerInGameDay(numericValue);
-                                        }
-                                    }}
-                                    minValue={1}
-                                    maxValue={30}
-                                    inline={true}
-                                    useDefaultStyling={true}
-                                />
-                            </Row>
-                        )}
+                        <Row className="items-center pt-8 mt-4 border-t border-subtle-border">
+                            <PoppinsText weight='medium'>Days per game day</PoppinsText>
+                            <PoppinsNumberInput
+                                value={numberOfRealDaysPerInGameDay.value}
+                                onChangeText={(displayValue, isValid, numericValue) => {
+                                    if (isValid && numericValue !== null) {
+                                        setNumberOfRealDaysPerInGameDay(numericValue);
+                                    }
+                                }}
+                                minValue={1}
+                                maxValue={30}
+                                inline={true}
+                                useDefaultStyling={true}
+                            />
+                        </Row>
                     </Column>
                 ) : (
 

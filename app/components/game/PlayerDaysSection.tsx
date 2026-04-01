@@ -24,11 +24,11 @@ const PlayerDaysSection = ({ gameId, addNewDay }: PlayerDaysSectionProps) => {
         defaultValue: 0,
     });
 
-    const [numberOfRealDaysPerInGameDay] = useUserList<number | false>({
+    const [numberOfRealDaysPerInGameDay] = useUserList<number>({
         key: "numberOfRealDaysPerInGameDay",
         itemId: gameId,
         privacy: "PUBLIC",
-        defaultValue: false,
+        defaultValue: 2,
     });
 
     const [dayDatesArray, setDayDatesArray] = useUserList<string[]>({
@@ -78,11 +78,7 @@ const PlayerDaysSection = ({ gameId, addNewDay }: PlayerDaysSectionProps) => {
     };
 
     const handleAddNewDay = () => {
-        if (numberOfRealDaysPerInGameDay.value === false) {
-            setIsChooseDayDialogOpen(true);
-        } else {
-            addNewDay(numberOfRealDaysPerInGameDay.value);
-        }
+        addNewDay(numberOfRealDaysPerInGameDay.value);
     };
 
     return (
