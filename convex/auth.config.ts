@@ -6,7 +6,7 @@ export default {
       applicationID: "convex",
     },
     {
-      domain: "https://clerk.paper.malachyf.com",
+      domain: "https://clerk.wolffspoint.malachyf.com",
       applicationID: "convex",
     },
   ],
