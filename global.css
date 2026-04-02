@@ -11,7 +11,6 @@
     --color-inner-background: rgb(105, 95, 95);
     --color-text: #000;
     --color-muted-text: #a0a0a0;
-    --color-primary-accent: #4a8a4a;
     --color-accent-hover: #5aa85a;
     --color-highlight: #8cc88c;
     --color-border: #666666;
@@ -22,17 +21,18 @@
 @theme {
 
    --color-outer-background: rgb(30, 30, 30);
-   
-   
+   --color-accent: #C39f27;
+   --color-accent-hover: #d3af37;
+   --color-text: #1a1a1a;
+   --color-text-inverted: #ffffff;
 
 
     --color-l: rgb(246, 0, 0);
     --color-background: rgb(246, 238, 219);
     --color-inner-background: rgb(253, 251, 246);
-    --color-text: #1a1a1a;
+    
     --color-muted-text: #888888;
-    --color-primary-accent: #2d5a2d;
-    --color-accent-hover: #3a6a3a;
+    /* --color-accent-hover: #3a6a3a; */
     --color-highlight: #7cb87c;
     --color-border: #1a1a1a;
     --color-subtle-border: #cccccc;

@@ -10,7 +10,7 @@ interface DialogHeaderProps {
 
 const DialogHeader = ({ text, subtext, className }: DialogHeaderProps) => {
     return (
-        <Column gap={0} className={`bg-primary-accent p-4 items-center -m-5 rounded-t-sm mb-0 ${className || ''}`}>
+        <Column gap={0} className={`bg-accent p-4 items-center -m-5 rounded-t-sm mb-0 ${className || ''}`}>
             <PoppinsText weight='medium' color='white'>{text}</PoppinsText>
             {subtext && (
                 <PoppinsText varient='subtext' weight='medium' color='white'>{subtext}</PoppinsText>

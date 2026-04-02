@@ -38,7 +38,7 @@
  * - outline-alt: Transparent background with border, hover effect fills background
  * - black: Solid black/dark background with brightness hover effect
  * - grey: Solid grey background (#374559ae) with brightness hover effect
- * - green: Solid green background (primary-accent) with brightness hover effect
+ * - green: Solid green background (accent) with brightness hover effect
  * - red: Transparent background with red border and red text styling
  * 
  * @features
@@ -60,7 +60,7 @@ import Row from '../../layout/Row';
 
 interface AppButtonProps {
     children: React.ReactNode;
-    variant?: 'outline-alt' | 'outline' | 'black' | 'grey' | 'green' | 'red' | 'none';
+    variant?: 'outline-alt' | 'outline' | 'outline-accent' | 'black' | 'grey' | 'green' | 'red' | 'none';
     className?: string;
     onPress?: () => void;
     dropShadow?: boolean;
@@ -90,6 +90,10 @@ const AppButton = ({
         const bg = 'bg-none';
         extraStyles = `border-2 border-border ${bg} group hover:bg-border/10`;
         
+    } else if (variant === 'outline-accent') {
+        const bg = 'bg-none';
+        extraStyles = `border-2 border-accent ${bg} group hover:bg-accent/10`;
+        
     } else if (variant === 'grey') {
         const bg = 'bg-[#374559ae]';
         extraStyles = bg;
@@ -99,7 +103,7 @@ const AppButton = ({
         extraStyles = bg;
         pressedStyles = 'brightness-100';
     } else if (variant === 'green') {
-        const bg = 'bg-primary-accent';
+        const bg = 'bg-accent';
         extraStyles = `${bg} group hover:brightness-125 active:brightness-50`;
     } else if (variant === 'red') {
         const bg = 'bg-none';

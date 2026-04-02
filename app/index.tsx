@@ -52,7 +52,7 @@ export default function HomeScreen() {
 
             <SignedOut>
 
-              <Column className="w-[80vw] p-6 max-w-96 bg-text border-4 border-primary-accent items-center" gap={6}>
+              <Column className="w-[80vw] p-6 max-w-96 bg-text border-4 border-accent items-center" gap={6}>
                 <DialogHeader
                   text="Welcome to Wolffspoint"
                   subtext="Sign in with Google to join."

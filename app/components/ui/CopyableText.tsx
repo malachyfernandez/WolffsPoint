@@ -10,16 +10,20 @@ import {
 import PoppinsText from '../ui/text/PoppinsText';
 import Row from '../layout/Row';
 import StateAnimatedView from '../ui/StateAnimatedView';
+import { useGetColor } from '../../../hooks/useColor';
 
 interface CopyableTextProps {
     text: string;
     prefix?: string;
     className?: string;
     copyText?: string;
+    color?: string | 'text-inverted';
 }
 
-const CopyableText = ({ text, prefix = '', className = '', copyText = 'Copied' }: CopyableTextProps) => {
+const CopyableText = ({ text, prefix = '', className = '', copyText = 'Copied', color }: CopyableTextProps) => {
     const [copied, setCopied] = useState(false);
+    
+    const resolvedColor = useGetColor(color);
 
     const handleCopy = async () => {
         await navigator.clipboard.writeText(text);
@@ -30,7 +34,7 @@ const CopyableText = ({ text, prefix = '', className = '', copyText = 'Copied' }
 
     return (
         <TouchableOpacity onPress={handleCopy}>
-            <Row className={`items-center justify-center w-fit  ${className}`} gap={2}>
+            <Row className={`items-center justify-center w-fit  opacity-50 ${className}`} gap={2}>
                 <View className="items-center">
                     <PoppinsText varient='cardHeader' style={{ color: 'transparent' }}>
                         {fullText}
@@ -45,7 +49,7 @@ const CopyableText = ({ text, prefix = '', className = '', copyText = 'Copied' }
                                 onValue={FadeIn.duration(100)}
                                 onNotValue={FadeOut.duration(100)}
                             >
-                                <PoppinsText varient='lowercaseCardHeader'>
+                                <PoppinsText varient='lowercaseCardHeader' style={{ color: resolvedColor }}>
                                     {fullText}
                                 </PoppinsText>
                             </StateAnimatedView.Option>
@@ -56,7 +60,7 @@ const CopyableText = ({ text, prefix = '', className = '', copyText = 'Copied' }
                                 onNotValue={ZoomOut.duration(150)}
                             >
 
-                                <PoppinsText varient='cardHeader'>
+                                <PoppinsText varient='cardHeader' style={{ color: resolvedColor }}>
                                     {copyText}
                                 </PoppinsText>
 
@@ -64,7 +68,7 @@ const CopyableText = ({ text, prefix = '', className = '', copyText = 'Copied' }
                         </StateAnimatedView.Container>
                     </View>
                 </View>
-                <Copy size={12} color="#666" />
+                <Copy size={12} color="#fff" />
             </Row>
         </TouchableOpacity>
     );

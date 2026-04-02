@@ -11,7 +11,7 @@ import { GameInfo } from 'types/games';
 import TopSiteBar from './layout/TopSiteBar';
 import AllGamesPage from './game/AllGamesPage';
 import GamePage from './game/GamePage';
-import LayoutStateAnimatedView from './ui/LayoutStateAnimatedView';
+import LayoutStateAnimatedView, { fromBottom } from './ui/LayoutStateAnimatedView';
 import PoppinsTextInput from './ui/forms/PoppinsTextInput';
 import JoinHandler from './ui/forms/JoinHandler';
 import { ScrollShadow } from 'heroui-native';
@@ -88,34 +88,40 @@ const MainPage: React.FC<MainPageProps> = ({
     const isActiveGameLoading = (activeGameId.state.isSyncing == true)
 
     return (
+        <>
+            <View className='w-screen h-screen p-safe'>
 
-        <View className='w-screen h-screen p-safe'>
 
-            <TopSiteBar />
-            {isActiveGameLoading ? (
-                <PoppinsText>Loading</PoppinsText>
-            ) : (
-                <LayoutStateAnimatedView.Container stateVar={currentScreen} className='flex-1'>
-                    <LayoutStateAnimatedView.Option page={1} stateValue='allGames'>
-                        <AllGamesPage
-                            activeGameId={activeGameId.value}
-                            setActiveGameId={setActiveGameId}
-                            myGames={myGames}
-                            addNewGame={addNewGame}
-                        />
-                    </LayoutStateAnimatedView.Option>
-
-                    <LayoutStateAnimatedView.OptionContainer page={2}>
-                        <LayoutStateAnimatedView.Option stateValue='game'>
-                            <GamePage
-                                gameId={activeGameId.value}
-                                currentUserId={userId}
+                {isActiveGameLoading ? (
+                    <PoppinsText>Loading</PoppinsText>
+                ) : (
+                    <LayoutStateAnimatedView.Container stateVar={currentScreen} className='flex-1'>
+                        <LayoutStateAnimatedView.Option page={1} stateValue='allGames'>
+                            <AllGamesPage
+                                activeGameId={activeGameId.value}
+                                setActiveGameId={setActiveGameId}
+                                myGames={myGames}
+                                addNewGame={addNewGame}
                             />
                         </LayoutStateAnimatedView.Option>
-                    </LayoutStateAnimatedView.OptionContainer>
-                </LayoutStateAnimatedView.Container>
-            )}
-        </View >
+
+                        <LayoutStateAnimatedView.OptionContainer pushInAnimation={fromBottom} page={2}>
+                            <LayoutStateAnimatedView.Option stateValue='game'>
+                                <GamePage
+                                    gameId={activeGameId.value}
+                                    currentUserId={userId}
+                                />
+                            </LayoutStateAnimatedView.Option>
+                        </LayoutStateAnimatedView.OptionContainer>
+                    </LayoutStateAnimatedView.Container>
+                )}
+
+
+            </View >
+            <View className='absolute right-0 top-0 left-0'>
+                <TopSiteBar />
+            </View>
+        </>
     );
 };
 

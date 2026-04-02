@@ -7,15 +7,18 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import Svg, { Path, G } from 'react-native-svg';
+import { useColor } from '../../../../hooks/useColor';
 
 interface UserIconProps {
   size?: number;
-  color?: string;
+  color?: string | 'accent';
 }
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 
 export function UserIcon({ size = 24, color = '#1a1a1a' }: UserIconProps) {
+  const { getColor } = useColor();
+  const resolvedColor = getColor(color);
   const bodyDashOffset = useSharedValue(28);
   const headDashOffset = useSharedValue(28);
 
@@ -49,7 +52,7 @@ export function UserIcon({ size = 24, color = '#1a1a1a' }: UserIconProps) {
       {/* Icon from Material Line Icons by Vjacheslav Trushkin - https://github.com/cyberalien/line-md/blob/master/license.txt */}
       <G
         fill="none"
-        stroke={color}
+        stroke={resolvedColor}
         strokeDasharray="28"
         strokeDashoffset="28"
         strokeLinecap="round"
