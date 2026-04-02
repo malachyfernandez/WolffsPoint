@@ -65,12 +65,7 @@ const PlayerAccessGate = ({ gameId, currentUserId, children }: PlayerAccessGateP
         sortKey: 'inGameName',
     });
 
-    useEffect(() => {
-        if (matchingPlayer && profile.value.inGameName.trim().length === 0) {
-            setIsProfileDialogOpen(true);
-        }
-    }, [matchingPlayer, profile.value.inGameName]);
-
+    
     if (!currentEmail.trim()) {
         return (
             <Column className='rounded-xl border border-subtle-border bg-white p-4'>

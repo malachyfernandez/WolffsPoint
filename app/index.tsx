@@ -43,7 +43,7 @@ export default function HomeScreen() {
         Uniwind.updateInsets(insets);
       }}
     >
-      <View className="flex-1 bg-background">
+      <View className="flex-1 bg-outer-background">
         <SafeAreaView className="flex-1">
           <View className="w-full h-full items-center justify-center">
             <SignedIn>

@@ -19,8 +19,8 @@ interface PlayerGamePageProps {
 const playerTabs: GameTabDefinition<PlayerTab>[] = [
     { label: 'Town Square', value: 'townSquare', icon: <MessageSquare size={20} /> },
     { label: 'Newspaper', value: 'newspaper', icon: <Newspaper size={20} /> },
-    { label: 'Rule Book', value: 'ruleBook', icon: <BookUser size={20} /> },
     { label: 'Your Eyes Only', value: 'eyesOnly', icon: <Eye size={20} /> },
+    { label: 'Rule Book', value: 'ruleBook', icon: <BookUser size={20} /> },
     { label: 'Phone Book', value: 'phoneBook', icon: <Phone size={20} /> },
 ];
 

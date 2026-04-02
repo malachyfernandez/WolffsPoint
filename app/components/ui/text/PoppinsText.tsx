@@ -3,7 +3,7 @@ import { Text, TextStyle, LayoutChangeEvent } from 'react-native';
 import { useFonts } from 'expo-font';
 
 type FontWeight = 'regular' | 'medium' | 'bold';
-type PoppinsTextVarient = 'default' | 'heading' | 'subtext' | 'cardHeader';
+type PoppinsTextVarient = 'default' | 'heading' | 'subtext' | 'cardHeader' | 'lowercaseCardHeader';
 type TextColor = 'black' | 'white' | 'red';
 
 interface PoppinsTextProps extends PropsWithChildren {
@@ -38,6 +38,10 @@ const PoppinsText = ({
 
     if (varient === 'cardHeader') {
         className += ' text-xs opacity-50 uppercase tracking-wider';
+    }
+
+    if (varient === 'lowercaseCardHeader') {
+        className += ' text-xs opacity-50 tracking-wider';
     }
 
     if (!fontsLoaded) {

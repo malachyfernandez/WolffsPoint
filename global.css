@@ -5,7 +5,27 @@
 
 @source './node_modules/heroui-native/lib';
 
+/* @theme {
+    --color-l: rgb(246, 0, 0);
+    --color-background: rgb(30, 30, 30);
+    --color-inner-background: rgb(105, 95, 95);
+    --color-text: #000;
+    --color-muted-text: #a0a0a0;
+    --color-primary-accent: #4a8a4a;
+    --color-accent-hover: #5aa85a;
+    --color-highlight: #8cc88c;
+    --color-border: #666666;
+    --color-subtle-border: #444444;
+    --color-inverted-sections: #f0f0f0;
+} */
+
 @theme {
+
+   --color-outer-background: rgb(30, 30, 30);
+   
+   
+
+
     --color-l: rgb(246, 0, 0);
     --color-background: rgb(246, 238, 219);
     --color-inner-background: rgb(253, 251, 246);

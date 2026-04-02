@@ -57,6 +57,8 @@ import Animated, {
     useAnimatedStyle,
     useSharedValue,
     withTiming,
+    EntryExitAnimationFunction,
+    BaseAnimationBuilder,
 } from 'react-native-reanimated';
 
 type StateKey = string | number | boolean | null | undefined;
@@ -69,6 +71,9 @@ export interface AnimationConfig {
     scale?: [number, number];
 }
 
+// Union type to support both AnimationConfig and Reanimated animation builders
+type AnimationType = AnimationConfig | BaseAnimationBuilder;
+
 interface StateAnimatedViewContainerProps<TState extends StateKey> extends PropsWithChildren {
     stateVar: TState;
     className?: string;
@@ -76,21 +81,25 @@ interface StateAnimatedViewContainerProps<TState extends StateKey> extends Props
 
 interface StateAnimatedViewOptionProps<TState extends StateKey> extends PropsWithChildren {
     stateValue: TState;
-    onValue?: AnimationConfig;
-    onNotValue?: AnimationConfig;
+    onValue?: AnimationType;
+    onNotValue?: AnimationType;
     className?: string;
 }
 
 type ResolvedOption<TState extends StateKey> = {
     stateValue: TState;
-    onValue?: AnimationConfig;
-    onNotValue?: AnimationConfig;
+    onValue?: AnimationType;
+    onNotValue?: AnimationType;
     className?: string;
     children: ReactNode;
 };
 
 const DEFAULT_DURATION = 250;
 const NO_ANIMATION: AnimationConfig = {};
+
+const isReanimatedBuilder = (animation: AnimationType): animation is BaseAnimationBuilder => {
+    return typeof animation === 'object' && 'build' in animation;
+};
 
 const getDuration = (animation: AnimationConfig) => animation.duration ?? DEFAULT_DURATION;
 
@@ -99,27 +108,65 @@ const getValuePair = (value?: [number, number], fallbackStart = 0, fallbackEnd =
 };
 
 const applyAnimation = (
-    animation: AnimationConfig,
+    animation: AnimationType,
     opacity: SharedValue<number>,
     translateX: SharedValue<number>,
     translateY: SharedValue<number>,
     scale: SharedValue<number>,
 ) => {
-    const [opacityStart, opacityEnd] = getValuePair(animation.opacity, 1, 1);
-    const [xStart, xEnd] = getValuePair(animation.x, 0, 0);
-    const [yStart, yEnd] = getValuePair(animation.y, 0, 0);
-    const [scaleStart, scaleEnd] = getValuePair(animation.scale, 1, 1);
-    const duration = getDuration(animation);
+    if (isReanimatedBuilder(animation)) {
+        // For reanimated builders, we need to extract the animation configuration
+        const animationName = (animation as any).constructor?.name || '';
+        const duration = (animation as any).durationMs || DEFAULT_DURATION; // Extract duration if set
+        
+        if (animationName.includes('FadeIn')) {
+            opacity.value = 0;
+            opacity.value = withTiming(1, { duration });
+        } else if (animationName.includes('FadeOut')) {
+            opacity.value = 1;
+            opacity.value = withTiming(0, { duration });
+        } else if (animationName.includes('ZoomIn')) {
+            opacity.value = 0;
+            scale.value = 0.8;
+            opacity.value = withTiming(1, { duration });
+            scale.value = withTiming(1, { duration });
+        } else if (animationName.includes('ZoomOut')) {
+            opacity.value = 1;
+            scale.value = 1;
+            opacity.value = withTiming(0, { duration });
+            scale.value = withTiming(0.8, { duration });
+        } else {
+            // Default fade for unknown animations
+            opacity.value = withTiming(1, { duration });
+        }
+        
+        // Reset other properties
+        if (!animationName.includes('Zoom')) {
+            translateX.value = 0;
+            translateY.value = 0;
+            scale.value = 1;
+        } else {
+            translateX.value = 0;
+            translateY.value = 0;
+        }
+    } else {
+        // Handle existing AnimationConfig objects
+        const [opacityStart, opacityEnd] = getValuePair(animation.opacity, 1, 1);
+        const [xStart, xEnd] = getValuePair(animation.x, 0, 0);
+        const [yStart, yEnd] = getValuePair(animation.y, 0, 0);
+        const [scaleStart, scaleEnd] = getValuePair(animation.scale, 1, 1);
+        const duration = getDuration(animation);
 
-    opacity.value = opacityStart;
-    translateX.value = xStart;
-    translateY.value = yStart;
-    scale.value = scaleStart;
+        opacity.value = opacityStart;
+        translateX.value = xStart;
+        translateY.value = yStart;
+        scale.value = scaleStart;
 
-    opacity.value = withTiming(opacityEnd, { duration });
-    translateX.value = withTiming(xEnd, { duration });
-    translateY.value = withTiming(yEnd, { duration });
-    scale.value = withTiming(scaleEnd, { duration });
+        opacity.value = withTiming(opacityEnd, { duration });
+        translateX.value = withTiming(xEnd, { duration });
+        translateY.value = withTiming(yEnd, { duration });
+        scale.value = withTiming(scaleEnd, { duration });
+    }
 };
 
 const StateAnimatedViewOption = <TState extends StateKey>(_props: StateAnimatedViewOptionProps<TState>) => null;

@@ -18,8 +18,12 @@ const JoinedGameListItem = ({ game, onLeave, className, setActiveGameId, index }
         filterFor: game,
     })
 
-    const GameName = gameInfo?.[0].value.name
-    const GameID = gameInfo?.[0].value.id
+    const GameName = gameInfo?.[0]?.value?.name
+    const GameID = gameInfo?.[0]?.value?.id
+    
+    const displayName = GameName || 'Unknown Game'
+    const displayId = GameID || game
+    const isGameDeleted = !GameName && !GameID
 
     const handleSetActiveGameId = () => {
         setActiveGameId(game)
@@ -32,7 +36,14 @@ const JoinedGameListItem = ({ game, onLeave, className, setActiveGameId, index }
     return (
         <>
             <ListRow className={`justify-between items-center ${className || ''} ${borderClass}`} onPress={handleSetActiveGameId}>
-                <PoppinsText>{`${GameName} (${GameID})`}</PoppinsText>
+                <PoppinsText>
+                    {`${displayName} (${displayId})`}
+                    {isGameDeleted && (
+                        <PoppinsText className="text-gray-500 text-sm">
+                            {' - (this game might have been deleted)'}
+                        </PoppinsText>
+                    )}
+                </PoppinsText>
 
             </ListRow>
             {/* <AppButton

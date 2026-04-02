@@ -9,6 +9,7 @@ import UserProfileDialog from '../dialog/UserProfileDialog';
 import { useUserListGet } from '../../../hooks/useUserListGet';
 import { useUserVariable } from '../../../hooks/useUserVariable';
 import { GameInfo } from '../../../types/games';
+import CopyableText from '../ui/CopyableText';
 
 interface TopSiteBarProps {
     className?: string;
@@ -37,7 +38,7 @@ const TopSiteBar = ({ className = '' }: TopSiteBarProps) => {
                 </TouchableOpacity>
                 <Row className='items-center'>
                     {gameJoinCode && (
-                        <PoppinsText varient='cardHeader'>Join Code: {gameJoinCode}</PoppinsText>
+                        <CopyableText text={gameJoinCode} />
                     )}
                     <UserProfileDialog>
                         <AppButton variant="outline" className="h-14 w-14">
