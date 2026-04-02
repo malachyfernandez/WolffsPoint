@@ -12,7 +12,7 @@ interface JoinedGamesProps {
 const JoinedGames = ({ gamesTheyJoined, setGamesTheyJoined, setActiveGameId }: JoinedGamesProps) => {
     return (
         <Column>
-            <PoppinsText weight='bold'>Joined Games</PoppinsText>
+            <PoppinsText weight='bold' className='text-text-inverted'>Joined Games</PoppinsText>
 
             <Column gap={0}>
                 {gamesTheyJoined.map((game, index) => (

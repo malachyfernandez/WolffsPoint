@@ -36,10 +36,10 @@ const JoinedGameListItem = ({ game, onLeave, className, setActiveGameId, index }
     return (
         <>
             <ListRow className={`justify-between items-center ${className || ''} ${borderClass}`} onPress={handleSetActiveGameId}>
-                <PoppinsText>
+                <PoppinsText className='text-text-inverted' >
                     {`${displayName} (${displayId})`}
                     {isGameDeleted && (
-                        <PoppinsText className="text-gray-500 text-sm">
+                        <PoppinsText className="text-text-inverted text-sm">
                             {' - (this game might have been deleted)'}
                         </PoppinsText>
                     )}

@@ -98,8 +98,8 @@ export const useColor = () => {
  * @returns {string} The resolved color value
  */
 export const useGetColor = (colorName: string | undefined, defaultColor?: string): string => {
-    if (!colorName) {
-        return defaultColor || '#000000';
+    if (!colorName || colorName === '') {
+        return defaultColor || '';
     }
     
     // If it's already a hex/rgb color, return as-is

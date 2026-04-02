@@ -1,6 +1,7 @@
 import React, { PropsWithChildren } from 'react';
 import { Text, TextStyle, LayoutChangeEvent } from 'react-native';
 import { useFonts } from 'expo-font';
+import { useGetColor } from '../../../../hooks/useColor';
 
 type FontWeight = 'regular' | 'medium' | 'bold';
 type PoppinsTextVarient = 'default' | 'heading' | 'subtext' | 'cardHeader' | 'lowercaseCardHeader';
@@ -10,7 +11,7 @@ interface PoppinsTextProps extends PropsWithChildren {
     className?: string;
     weight?: FontWeight;
     varient?: PoppinsTextVarient;
-    color?: TextColor;
+    color?: TextColor | string | 'text-inverted';
     style?: TextStyle;
     onLayout?: (event: LayoutChangeEvent) => void;
 }
@@ -20,7 +21,7 @@ const PoppinsText = ({
     className = '',
     weight = 'regular',
     varient = 'default',
-    color = 'black',
+    color = '',
     style,
     onLayout
 }: PoppinsTextProps) => {
@@ -29,6 +30,8 @@ const PoppinsText = ({
         'Poppins-Medium': require('../../../../assets/fonts/Poppins/Poppins-Medium.ttf'),
         'Poppins-Bold': require('../../../../assets/fonts/Poppins/Poppins-Bold.ttf'),
     });
+
+    const resolvedColor = useGetColor(color);
 
 
 
@@ -59,12 +62,10 @@ const PoppinsText = ({
         }
     };
 
-    const tailwindColor = color === 'black' ? 'text-text' : color === 'red' ? 'text-red-500' : 'text-white';
-
     return (
         <Text
-            className={`${tailwindColor} ${className}`}
-            style={{ fontFamily: getFontFamily(), ...style }}
+            className={`text-text ${className}`}
+            style={{ fontFamily: getFontFamily(), color: resolvedColor, ...style }}
             onLayout={onLayout}
         >
             {children}

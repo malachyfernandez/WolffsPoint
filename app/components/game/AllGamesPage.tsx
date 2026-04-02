@@ -79,11 +79,6 @@ const AllGamesPage = ({
                 </UserProfileDialog>
             </Row>
 
-            {/* <PublicImageUpload
-                url={uploadedImageUrl}
-                setUrl={setUploadedImageUrl}
-            /> */}
-
             <Column className='flex-1   '>
                 {!isGamesLoading && (
                     <ScrollShadow LinearGradientComponent={LinearGradient} className='h-full'>

@@ -9,6 +9,7 @@ import { useUserListGet } from '../../../hooks/useUserListGet';
 import { useUserVariable } from '../../../hooks/useUserVariable';
 import { GameInfo } from '../../../types/games';
 import CopyableText from '../ui/CopyableText';
+import Animated, { FadeIn } from 'react-native-reanimated';
 
 interface TopSiteBarProps {
     className?: string;
@@ -38,18 +39,28 @@ const TopSiteBar = ({ className = '' }: TopSiteBarProps) => {
 
                 {/* spacer */}
                 <></>
-                <Row className='items-center'>
-                    {gameJoinCode && (
-                        <CopyableText text={gameJoinCode} color='text-inverted' />
-                    )}
+                {isInAGame && (
+                    <Animated.View entering={FadeIn}>
+                        <Row className='items-center'>
 
-                    {isInAGame && (
-                        <AppButton variant="outline-accent" className="h-14 w-14" onPress={() => { setActiveGameId(''); }}>
-                            <UserIcon size={24} color='accent' />
-                        </AppButton>
-                    )}
+                            {gameJoinCode && (
+                                <CopyableText.Container>
+                                    <PoppinsText varient='lowercaseCardHeader' color='text-inverted'>Code:</PoppinsText>
+                                    <CopyableText text={gameJoinCode} color='text-inverted' />
+                                </CopyableText.Container>
+                            )}
 
-                </Row>
+
+
+
+                            <AppButton variant="outline-accent" className="h-14 w-14" onPress={() => { setActiveGameId(''); }}>
+                                <UserIcon size={24} color='accent' />
+                            </AppButton>
+
+
+                        </Row>
+                    </Animated.View>
+                )}
             </Row>
         </Column>
     );

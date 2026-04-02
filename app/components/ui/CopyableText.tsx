@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, createContext, useContext } from 'react';
 import { TouchableOpacity, View } from 'react-native';
 import { Copy } from 'lucide-react-native';
 import {
@@ -9,8 +9,14 @@ import {
 } from 'react-native-reanimated';
 import PoppinsText from '../ui/text/PoppinsText';
 import Row from '../layout/Row';
+import Column from '../layout/Column';
 import StateAnimatedView from '../ui/StateAnimatedView';
 import { useGetColor } from '../../../hooks/useColor';
+
+const CopyableContext = createContext<{
+    copied: boolean;
+    handleCopy: () => void;
+} | null>(null);
 
 interface CopyableTextProps {
     text: string;
@@ -18,60 +24,112 @@ interface CopyableTextProps {
     className?: string;
     copyText?: string;
     color?: string | 'text-inverted';
+    copied?: boolean;
 }
 
-const CopyableText = ({ text, prefix = '', className = '', copyText = 'Copied', color }: CopyableTextProps) => {
-    const [copied, setCopied] = useState(false);
+interface CopyableTextContainerProps {
+    className?: string;
+    copyText?: string;
+    color?: string | 'text-inverted';
+    children?: React.ReactNode;
+}
+
+const CopyableText = ({ text, prefix = '', className = '', copyText = 'Copied', color, copied: externalCopied }: CopyableTextProps) => {
+    const [internalCopied, setInternalCopied] = useState(false);
+    const copyableContext = useContext(CopyableContext);
     
+    // Use context if available, otherwise use external prop or internal state
+    const copied = copyableContext?.copied ?? externalCopied ?? internalCopied;
+
     const resolvedColor = useGetColor(color);
 
     const handleCopy = async () => {
         await navigator.clipboard.writeText(text);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
+        if (copyableContext) {
+            copyableContext.handleCopy();
+        } else if (externalCopied === undefined) {
+            setInternalCopied(true);
+            setTimeout(() => setInternalCopied(false), 2000);
+        }
     };
     const fullText = `${prefix}${text}`;
 
-    return (
-        <TouchableOpacity onPress={handleCopy}>
-            <Row className={`items-center justify-center w-fit  opacity-50 ${className}`} gap={2}>
-                <View className="items-center">
-                    <PoppinsText varient='cardHeader' style={{ color: 'transparent' }}>
-                        {fullText}
-                    </PoppinsText>
+    const content = (
+        <Row className={`items-center justify-center w-fit ${className}`} gap={1}>
+            <View className="items-center">
+                <PoppinsText varient='cardHeader' style={{ color: 'transparent' }}>
+                    {fullText}
+                </PoppinsText>
 
 
 
-                    <View className="absolute">
-                        <StateAnimatedView.Container stateVar={copied}>
-                            <StateAnimatedView.Option
-                                stateValue={false}
-                                onValue={FadeIn.duration(100)}
-                                onNotValue={FadeOut.duration(100)}
-                            >
-                                <PoppinsText varient='lowercaseCardHeader' style={{ color: resolvedColor }}>
-                                    {fullText}
-                                </PoppinsText>
-                            </StateAnimatedView.Option>
+                <View className="absolute">
+                    <StateAnimatedView.Container stateVar={copied}>
+                        <StateAnimatedView.Option
+                            stateValue={false}
+                            onValue={FadeIn.duration(100)}
+                            onNotValue={FadeOut.duration(100)}
+                        >
+                            <PoppinsText varient='lowercaseCardHeader' style={{ color: resolvedColor }}>
+                                {fullText}
+                            </PoppinsText>
+                        </StateAnimatedView.Option>
 
-                            <StateAnimatedView.Option
-                                stateValue={true}
-                                onValue={ZoomIn.duration(150)}
-                                onNotValue={ZoomOut.duration(150)}
-                            >
+                        <StateAnimatedView.Option
+                            stateValue={true}
+                            onValue={ZoomIn.duration(150)}
+                            onNotValue={ZoomOut.duration(150)}
+                        >
 
-                                <PoppinsText varient='cardHeader' style={{ color: resolvedColor }}>
-                                    {copyText}
-                                </PoppinsText>
+                            <PoppinsText varient='cardHeader' style={{ color: resolvedColor }}>
+                                {copyText}
+                            </PoppinsText>
 
-                            </StateAnimatedView.Option>
-                        </StateAnimatedView.Container>
-                    </View>
+                        </StateAnimatedView.Option>
+                    </StateAnimatedView.Container>
                 </View>
-                <Copy size={12} color="#fff" />
-            </Row>
-        </TouchableOpacity>
+            </View>
+            <View className='opacity-50'>
+                <Copy size={12} color={resolvedColor} />
+            </View>
+        </Row>
     );
+
+    // Only wrap with TouchableOpacity if we're handling our own copy logic
+    if (externalCopied === undefined) {
+        return (
+            <TouchableOpacity onPress={handleCopy}>
+                {content}
+            </TouchableOpacity>
+        );
+    }
+
+    return content;
 };
 
 export default CopyableText;
+
+// Container component that provides context to child CopyableText components
+CopyableText.Container = ({ className = '', copyText = 'Copied', color, children }: CopyableTextContainerProps) => {
+    const [copied, setCopied] = useState(false);
+
+    const handleCopy = async () => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    };
+
+    const contextValue = {
+        copied,
+        handleCopy
+    };
+
+    return (
+        <CopyableContext.Provider value={contextValue}>
+            <TouchableOpacity onPress={handleCopy}>
+                <Column gap={0} className={className}>
+                    {children}
+                </Column>
+            </TouchableOpacity>
+        </CopyableContext.Provider>
+    );
+};

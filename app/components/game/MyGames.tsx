@@ -14,7 +14,7 @@ interface MyGamesProps {
 const MyGames = ({ myGames, setActiveGameId }: MyGamesProps) => {
     return (
         <Column>
-            <PoppinsText weight='bold'>My Games</PoppinsText>
+            <PoppinsText weight='bold' className='text-text-inverted'>My Games</PoppinsText>
             <Column gap={0}>
                 {myGames?.map((game, index) => (
                     <MyGameListItem

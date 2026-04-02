@@ -21,9 +21,9 @@ const MyGameListItem = ({ game, index, setActiveGameId }: MyGameListItemProps) =
     return (
 
         <ListRow className={`justify-between ${borderClass}`} onPress={handleSetActiveGameId}>
-            <PoppinsText>{game.value.name}</PoppinsText>
-            <PoppinsText>{game.value.description}</PoppinsText>
-            <PoppinsText>{game.value.id}</PoppinsText>
+            <PoppinsText className='text-text-inverted'>{game.value.name}</PoppinsText>
+            <PoppinsText className='text-text-inverted'>{game.value.description}</PoppinsText>
+            <PoppinsText className='text-text-inverted'>{game.value.id}</PoppinsText>
         </ListRow>
     );
 };
