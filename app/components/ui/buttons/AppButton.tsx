@@ -60,7 +60,7 @@ import Row from '../../layout/Row';
 
 interface AppButtonProps {
     children: React.ReactNode;
-    variant?: 'outline-alt' | 'outline' | 'outline-accent' | 'black' | 'grey' | 'accent' | 'red' | 'none';
+    variant?: 'outline-alt' | 'outline' | 'outline-accent' | 'outline-invert' | 'black' | 'grey' | 'accent' | 'green' | 'red' | 'none';
     className?: string;
     onPress?: () => void;
     dropShadow?: boolean;
@@ -93,6 +93,10 @@ const AppButton = ({
     } else if (variant === 'outline-accent') {
         const bg = 'bg-none';
         extraStyles = `border-2 border-accent ${bg} group hover:bg-accent/10`;
+        
+    } else if (variant === 'outline-invert') {
+        const bg = 'bg-none';
+        extraStyles = `border-2 border-text-inverted ${bg} group hover:bg-text-inverted/10`;
         
     } else if (variant === 'grey') {
         const bg = 'bg-[#374559ae]';

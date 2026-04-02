@@ -32,9 +32,9 @@ const GamePage = ({ gameId, currentUserId }: GamePageProps) => {
     const isOperator = (ownedGameRows?.length ?? 0) > 0;
 
     return (
-        <Column className='w-full h-full'>
-            <ScrollShadow LinearGradientComponent={LinearGradient}>
-                <ScrollView className='p-6 max-h-[calc(100vh-6rem)] h-full w-full flex-1'>
+        <Column className='w-full h-screen'>
+            <ScrollShadow LinearGradientComponent={LinearGradient} color="rgb(30, 30, 30)">
+                <ScrollView className='p-6 h-screen w-full'>
                     <View className="w-full max-w-[1000px] mx-auto">
                         {isOperator ? (
                             <OperatorGamePage currentUserId={currentUserId} gameId={gameId} />

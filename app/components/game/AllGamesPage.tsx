@@ -68,7 +68,7 @@ const AllGamesPage = ({
     const isGamesLoading = gamesTheyJoined?.state.isSyncing;
 
     return (
-        <Column className='flex-1'>
+        <Column className='flex-1 mt-10 max-w-[1000px] w-full mx-auto'>
             <ProfileInfo />
 
             <Column className='flex-1   '>
