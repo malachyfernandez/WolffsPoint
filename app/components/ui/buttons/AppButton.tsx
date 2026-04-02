@@ -57,14 +57,16 @@
 import React, { useState } from 'react';
 import { TouchableOpacity } from 'react-native';
 import Row from '../../layout/Row';
+import { useGetColor } from 'hooks/useColor';
 
 interface AppButtonProps {
     children: React.ReactNode;
-    variant?: 'outline-alt' | 'outline' | 'outline-accent' | 'black' | 'grey' | 'green' | 'red' | 'none';
+    variant?: 'outline-alt' | 'outline' | 'outline-accent' | 'black' | 'grey' | 'accent' | 'red' | 'none';
     className?: string;
     onPress?: () => void;
     dropShadow?: boolean;
     disabled?: boolean;
+    outlineColor?: string;
 }
 
 const AppButton = ({
@@ -73,9 +75,11 @@ const AppButton = ({
     className = '',
     onPress,
     dropShadow = true,
-    disabled = false
+    disabled = false,
+    outlineColor
 }: AppButtonProps) => {
     const [isPressed, setIsPressed] = useState(false);
+    const resolvedOutlineColor = useGetColor(outlineColor);
 
     const baseStyles = 'h-12 flex-row items-center justify-center rounded gap-2 overflow-hidden';
     let extraStyles = '';
@@ -84,15 +88,18 @@ const AppButton = ({
 
     if (variant === 'outline-alt') {
         const bg = 'bg-none';
-        extraStyles = `border-2 border-border ${bg} group hover:bg-border`;
+        const borderColor = resolvedOutlineColor ? `border-[${resolvedOutlineColor}]` : 'border-border';
+        extraStyles = `border-2 ${borderColor} ${bg} group hover:bg-border`;
         
     } else if (variant === 'outline') {
         const bg = 'bg-none';
-        extraStyles = `border-2 border-border ${bg} group hover:bg-border/10`;
+        const borderColor = resolvedOutlineColor ? `border-[${resolvedOutlineColor}]` : 'border-border';
+        extraStyles = `border-2 ${borderColor} ${bg} group hover:bg-border/10`;
         
     } else if (variant === 'outline-accent') {
         const bg = 'bg-none';
-        extraStyles = `border-2 border-accent ${bg} group hover:bg-accent/10`;
+        const borderColor = resolvedOutlineColor ? `border-[${resolvedOutlineColor}]` : 'border-accent';
+        extraStyles = `border-2 ${borderColor} ${bg} group hover:bg-accent/10`;
         
     } else if (variant === 'grey') {
         const bg = 'bg-[#374559ae]';

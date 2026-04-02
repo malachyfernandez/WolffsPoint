@@ -15,8 +15,8 @@ import { ScrollShadow } from 'heroui-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import StateAnimatedView from '../ui/StateAnimatedView';
 import Row from '../layout/Row';
-import UserProfileDialog from '../dialog/UserProfileDialog';
 import PoppinsText from '../ui/text/PoppinsText';
+import ProfileInfo from './ProfileInfo';
 
 interface AllGamesPageProps {
     activeGameId: string;
@@ -69,15 +69,7 @@ const AllGamesPage = ({
 
     return (
         <Column className='flex-1'>
-            {/* Profile Section */}
-            <Row className='justify-end items-center p-4'>
-                <UserProfileDialog>
-                    <Row className='items-center gap-2'>
-                        <PoppinsText varient='subtext'>Profile</PoppinsText>
-                        <View className="w-8 h-8 bg-gray-400 rounded-full" />
-                    </Row>
-                </UserProfileDialog>
-            </Row>
+            <ProfileInfo />
 
             <Column className='flex-1   '>
                 {!isGamesLoading && (

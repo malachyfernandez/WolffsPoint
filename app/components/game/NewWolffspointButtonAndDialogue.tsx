@@ -9,6 +9,7 @@ import DialogHeader from '../ui/dialog/DialogHeader';
 import SmartDateInput from '../ui/forms/SmartDateInput';
 import StatusButton from '../ui/StatusButton';
 import { useUserListSet } from 'hooks/useUserListSet';
+import { useGetColor } from 'hooks/useColor';
 
 interface NewWolffspointButtonAndDialogueProps {
     onCreate?: (gameId: string) => void;
@@ -17,6 +18,7 @@ interface NewWolffspointButtonAndDialogueProps {
 const NewWolffspointButtonAndDialogue = ({ onCreate }: NewWolffspointButtonAndDialogueProps) => {
     const [isHeroDialogOpen, setIsHeroDialogOpen] = useState(false);
     const [input, setInput] = useState('');
+    const outlineColor = useGetColor('text-invert');
 
     const [date, setDate] = useState('');
     const [isDateValid, setIsDateValid] = useState(false);
@@ -132,7 +134,7 @@ const NewWolffspointButtonAndDialogue = ({ onCreate }: NewWolffspointButtonAndDi
 
 
                         {isDateValid ? (
-                            <AppButton className='w-34 h-10' variant='black' onPress={submitForum}>
+                            <AppButton className='w-34 h-10' variant='outline' outlineColor={outlineColor} onPress={submitForum}>
                                 <PoppinsText color='white' weight='medium'>Create</PoppinsText>
                             </AppButton>
                         ) : (
