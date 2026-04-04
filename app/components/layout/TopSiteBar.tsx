@@ -10,6 +10,7 @@ import { useUserVariable } from '../../../hooks/useUserVariable';
 import { GameInfo } from '../../../types/games';
 import CopyableText from '../ui/CopyableText';
 import Animated, { FadeIn } from 'react-native-reanimated';
+import { BlurView } from 'expo-blur';
 
 interface TopSiteBarProps {
     className?: string;
@@ -32,7 +33,7 @@ const TopSiteBar = ({ className = '' }: TopSiteBarProps) => {
 
     return (
         <Column className={className}>
-            <Row className='justify-end items-center h-24 px-4'>
+            <Row className='justify-end items-center h-24 w-fit px-4 top-0 right-0'>
                 {/* <TouchableOpacity onPress={() => { setActiveGameId(''); }}>
                     <PoppinsText weight='bold' className='text-lg'>{isInAGame ? "< WolffsPoint" : "WolffsPoint"}</PoppinsText>
                 </TouchableOpacity> */}
@@ -44,16 +45,21 @@ const TopSiteBar = ({ className = '' }: TopSiteBarProps) => {
                         <Row className='items-center'>
 
                             {gameJoinCode && (
-                                <CopyableText.Container>
-                                    <PoppinsText varient='lowercaseCardHeader' color='text-inverted'>Code:</PoppinsText>
-                                    <CopyableText text={gameJoinCode} color='text-inverted' />
-                                </CopyableText.Container>
+                                <>
+                                    <BlurView intensity={20} className='rounded'>
+                                        <CopyableText.Container className='bg-outer-background/20 p-2 rounded'>
+                                            <PoppinsText varient='lowercaseCardHeader' className='opacity-100 text-text-inverted'>Code:</PoppinsText>
+                                            <CopyableText text={gameJoinCode} className='opacity-100' color='text-inverted' />
+                                        </CopyableText.Container>
+                                    </BlurView>
+                                   
+                                </>
                             )}
 
 
 
 
-                            <AppButton variant="outline-accent" className="h-14 w-14" onPress={() => { setActiveGameId(''); }}>
+                            <AppButton variant="outline-accent" blurred={true} className="h-14 w-14" onPress={() => { setActiveGameId(''); }}>
                                 <UserIcon size={24} color='accent' />
                             </AppButton>
 

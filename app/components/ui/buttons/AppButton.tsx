@@ -57,6 +57,7 @@
 import React, { useState } from 'react';
 import { TouchableOpacity } from 'react-native';
 import Row from '../../layout/Row';
+import { BlurView } from 'expo-blur';
 
 interface AppButtonProps {
     children: React.ReactNode;
@@ -65,6 +66,7 @@ interface AppButtonProps {
     onPress?: () => void;
     dropShadow?: boolean;
     disabled?: boolean;
+    blurred?: boolean;
 }
 
 const AppButton = ({
@@ -73,7 +75,8 @@ const AppButton = ({
     className = '',
     onPress,
     dropShadow = true,
-    disabled = false
+    disabled = false,
+    blurred = false
 }: AppButtonProps) => {
     const [isPressed, setIsPressed] = useState(false);
 
@@ -119,8 +122,7 @@ const AppButton = ({
 
     
 
-    return (
-
+    const buttonContent = (
         <TouchableOpacity
             className={`${baseStyles} ${extraStyles} ${className} ${isPressed ? pressedStyles : ''} ${disabled ? 'opacity-50' : ''}`}
             onPressIn={() => !disabled && setIsPressed(true)}
@@ -134,8 +136,13 @@ const AppButton = ({
             </Row>
             
         </TouchableOpacity>
-
     );
+
+    return blurred ? (
+        <BlurView intensity={20} className='rounded'>
+            {buttonContent}
+        </BlurView>
+    ) : buttonContent;
 };
 
 export default AppButton;

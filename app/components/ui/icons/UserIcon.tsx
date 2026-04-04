@@ -7,7 +7,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import Svg, { Path, G } from 'react-native-svg';
-import { useColor } from '../../../../hooks/useColor';
+import { useCSSVariable } from 'uniwind';
 
 interface UserIconProps {
   size?: number;
@@ -17,8 +17,7 @@ interface UserIconProps {
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 
 export function UserIcon({ size = 24, color = '#1a1a1a' }: UserIconProps) {
-  const { getColor } = useColor();
-  const resolvedColor = getColor(color);
+  const resolvedColor = String(useCSSVariable(`--color-${color}`) || color);
   const bodyDashOffset = useSharedValue(28);
   const headDashOffset = useSharedValue(28);
 

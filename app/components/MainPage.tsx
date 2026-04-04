@@ -118,7 +118,7 @@ const MainPage: React.FC<MainPageProps> = ({
 
 
             </View >
-            <View className='absolute right-0 top-0 left-0'>
+            <View className='absolute top-0 right-0'>
                 <TopSiteBar />
             </View>
         </>

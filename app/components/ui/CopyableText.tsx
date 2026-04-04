@@ -11,7 +11,7 @@ import PoppinsText from '../ui/text/PoppinsText';
 import Row from '../layout/Row';
 import Column from '../layout/Column';
 import StateAnimatedView from '../ui/StateAnimatedView';
-import { useGetColor } from '../../../hooks/useColor';
+import { useCSSVariable } from 'uniwind';
 
 const CopyableContext = createContext<{
     copied: boolean;
@@ -41,7 +41,7 @@ const CopyableText = ({ text, prefix = '', className = '', copyText = 'Copied', 
     // Use context if available, otherwise use external prop or internal state
     const copied = copyableContext?.copied ?? externalCopied ?? internalCopied;
 
-    const resolvedColor = useGetColor(color);
+    const resolvedColor = String(useCSSVariable(`--color-${color}`) || color);
 
     const handleCopy = async () => {
         await navigator.clipboard.writeText(text);
@@ -70,7 +70,7 @@ const CopyableText = ({ text, prefix = '', className = '', copyText = 'Copied', 
                             onValue={FadeIn.duration(100)}
                             onNotValue={FadeOut.duration(100)}
                         >
-                            <PoppinsText varient='lowercaseCardHeader' style={{ color: resolvedColor }}>
+                            <PoppinsText varient='lowercaseCardHeader' className='opacity-100' style={{ color: resolvedColor }}>
                                 {fullText}
                             </PoppinsText>
                         </StateAnimatedView.Option>
@@ -81,7 +81,7 @@ const CopyableText = ({ text, prefix = '', className = '', copyText = 'Copied', 
                             onNotValue={ZoomOut.duration(150)}
                         >
 
-                            <PoppinsText varient='cardHeader' style={{ color: resolvedColor }}>
+                            <PoppinsText varient='cardHeader' className='opacity-100' style={{ color: resolvedColor }}>
                                 {copyText}
                             </PoppinsText>
 
@@ -89,7 +89,7 @@ const CopyableText = ({ text, prefix = '', className = '', copyText = 'Copied', 
                     </StateAnimatedView.Container>
                 </View>
             </View>
-            <View className='opacity-50'>
+            <View className=''>
                 <Copy size={12} color={resolvedColor} />
             </View>
         </Row>

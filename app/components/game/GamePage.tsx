@@ -35,7 +35,7 @@ const GamePage = ({ gameId, currentUserId }: GamePageProps) => {
         <Column className='w-full h-screen'>
             <ScrollShadow LinearGradientComponent={LinearGradient} color="rgb(30, 30, 30)">
                 <ScrollView className='p-6 h-screen w-full'>
-                    <View className="w-full max-w-[1000px] mx-auto">
+                    <View className="w-full max-w-[1000px] mx-auto pt-60">
                         {isOperator ? (
                             <OperatorGamePage currentUserId={currentUserId} gameId={gameId} />
                         ) : (

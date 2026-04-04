@@ -1,7 +1,7 @@
 import React, { PropsWithChildren } from 'react';
 import { Text, TextStyle, LayoutChangeEvent } from 'react-native';
 import { useFonts } from 'expo-font';
-import { useGetColor } from '../../../../hooks/useColor';
+import { useCSSVariable } from 'uniwind';
 
 type FontWeight = 'regular' | 'medium' | 'bold';
 type PoppinsTextVarient = 'default' | 'heading' | 'subtext' | 'cardHeader' | 'lowercaseCardHeader';
@@ -31,7 +31,7 @@ const PoppinsText = ({
         'Poppins-Bold': require('../../../../assets/fonts/Poppins/Poppins-Bold.ttf'),
     });
 
-    const resolvedColor = useGetColor(color);
+    const resolvedColor = String(useCSSVariable(`--color-${color}`) || color);
 
 
 
@@ -48,7 +48,15 @@ const PoppinsText = ({
     }
 
     if (!fontsLoaded) {
-        return <Text className={`text-white ${className}`}>{children}</Text>;
+        return (
+        <Text
+            className={`text-text ${className}`}
+            style={{color: resolvedColor, ...style }}
+            onLayout={onLayout}
+        >
+            {children}
+        </Text>
+    );
     }
 
     const getFontFamily = () => {
