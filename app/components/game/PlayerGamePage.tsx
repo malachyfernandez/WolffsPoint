@@ -8,6 +8,7 @@ import RuleBookPagePLAYER from './RuleBookPagePLAYER';
 import YourEyesOnlyPagePLAYER from './YourEyesOnlyPagePLAYER';
 import PhoneBookPagePLAYER from './PhoneBookPagePLAYER';
 import PlayerAccessGate from './PlayerAccessGate';
+import PaperContainer from '../ui/PaperContainer';
 
 export type PlayerTab = 'townSquare' | 'newspaper' | 'ruleBook' | 'eyesOnly' | 'phoneBook';
 
@@ -17,11 +18,11 @@ interface PlayerGamePageProps {
 }
 
 const playerTabs: GameTabDefinition<PlayerTab>[] = [
-    { label: 'Town Square', value: 'townSquare', icon: <MessageSquare size={20} /> },
-    { label: 'Newspaper', value: 'newspaper', icon: <Newspaper size={20} /> },
-    { label: 'Your Eyes Only', value: 'eyesOnly', icon: <Eye size={20} /> },
-    { label: 'Rule Book', value: 'ruleBook', icon: <BookUser size={20} /> },
-    { label: 'Phone Book', value: 'phoneBook', icon: <Phone size={20} /> },
+    { label: 'Town Square', condensedLabel: 'Town Sq', value: 'townSquare', icon: <MessageSquare size={20} /> },
+    { label: 'Newspaper', condensedLabel: 'News', value: 'newspaper', icon: <Newspaper size={20} /> },
+    { label: 'Your Eyes Only', condensedLabel: 'Your Eyes Only', value: 'eyesOnly', icon: <Eye size={20} /> },
+    { label: 'Rule Book', condensedLabel: 'Rule Bk', value: 'ruleBook', icon: <BookUser size={20} /> },
+    { label: 'Phone Book', condensedLabel: 'Phone Bk', value: 'phoneBook', icon: <Phone size={20} /> },
 ];
 
 const PlayerGamePage = ({ gameId, currentUserId }: PlayerGamePageProps) => {
@@ -30,9 +31,9 @@ const PlayerGamePage = ({ gameId, currentUserId }: PlayerGamePageProps) => {
     return (
         <PlayerAccessGate gameId={gameId} currentUserId={currentUserId}>
             {({ currentEmail, matchingPlayer, profile }) => (
-                <Column>
+                <Column gap={1}>
                     <GameTabBar activeTab={activeTab} onTabPress={setActiveTab} tabs={playerTabs} />
-                    <Column className='w-full bg-inner-background border-border border-2 rounded-xl p-4 mb-8' style={{ boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)' }}>
+                    <PaperContainer>
                         {activeTab === 'townSquare' && <TownSquarePagePLAYER gameId={gameId} currentProfile={profile} />}
                         {activeTab === 'newspaper' && <ReadOnlyNewspaperPagePLAYER gameId={gameId} />}
                         {activeTab === 'ruleBook' && <RuleBookPagePLAYER gameId={gameId} />}
@@ -51,7 +52,7 @@ const PlayerGamePage = ({ gameId, currentUserId }: PlayerGamePageProps) => {
                                 currentEmail={currentEmail}
                             />
                         )}
-                    </Column>
+                    </PaperContainer>
                 </Column>
             )}
         </PlayerAccessGate>

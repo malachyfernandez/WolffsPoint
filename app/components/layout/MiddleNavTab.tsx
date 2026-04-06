@@ -4,7 +4,7 @@ import PoppinsText from '../ui/text/PoppinsText';
 import { ReactElement } from 'react';
 import { useCSSVariable } from 'uniwind';
 
-interface NavTabProps {
+interface MiddleNavTabProps {
   text: string;
   children: React.ReactNode;
   isLast?: boolean;
@@ -13,7 +13,7 @@ interface NavTabProps {
   onPress?: () => void;
 }
 
-const NavTab = ({ text, children, isLast = false, isInvisible = false, isHighlighted = false, onPress }: NavTabProps): React.ReactElement => {
+const MiddleNavTab = ({ text, children, isLast = false, isInvisible = false, isHighlighted = false, onPress }: MiddleNavTabProps): React.ReactElement => {
   const accentColor = useCSSVariable('--color-accent');
   const textColor = useCSSVariable('--color-text');
   
@@ -29,7 +29,7 @@ const NavTab = ({ text, children, isLast = false, isInvisible = false, isHighlig
   return (
     <TouchableOpacity
       onPress={onPress}
-      className={`h-12 justify-center flex-2 border-accent border-t-2 border-x-2 rounded-t-4xl rounded-b-[1px] flex-col items-center gap-0 box-border ${isHighlighted ? 'bg-accent' : 'bg-none hover:bg-accent/20'} ${isInvisible ? 'opacity-0' : 'opacity-100'} min-w-0`}
+      className={`h-12 justify-center flex-3 border-accent border-t-2 border-x-2 rounded-t-4xl rounded-b-[1px] flex-col items-center gap-0 box-border ${isHighlighted ? 'bg-accent' : 'bg-none hover:bg-accent/20'} ${isInvisible ? 'opacity-0' : 'opacity-100'} min-w-0`}
     >
       {clonedChildren}
       {isHighlighted ? (
@@ -41,4 +41,4 @@ const NavTab = ({ text, children, isLast = false, isInvisible = false, isHighlig
   );
 };
 
-export default NavTab;
+export default MiddleNavTab;

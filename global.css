@@ -21,7 +21,8 @@
 @theme {
 
    --color-outer-background: rgb(30, 30, 30);
-   --color-accent: #C39f27;
+   --color-accent: #9a7a33;
+   /* --color-accent: #C39f27; */
    --color-accent-hover: #d3af37;
    --color-text: #1a1a1a;
    --color-text-inverted: #ffffff;
@@ -29,7 +30,7 @@
 
     --color-l: rgb(246, 0, 0);
     --color-background: rgb(246, 238, 219);
-    --color-inner-background: rgb(253, 251, 246);
+    --color-inner-background: rgb(153, 151, 146);
     
     --color-muted-text: #888888;
     /* --color-accent-hover: #3a6a3a; */
