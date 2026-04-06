@@ -1,110 +1,163 @@
-import React, { useMemo, useState } from 'react';
-import { Image, Pressable, View } from 'react-native';
-import { useUserListGet } from '../../../hooks/useUserListGet';
-import { useUserListSet } from '../../../hooks/useUserListSet';
-import { PlayerProfile, TownSquarePost } from '../../../types/multiplayer';
-import { createClientId, getGameScopedKey } from '../../../utils/multiplayer';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { ScrollView } from 'react-native';
+import LayoutStateAnimatedView, { fromRight } from '../ui/LayoutStateAnimatedView';
 import Column from '../layout/Column';
-import Row from '../layout/Row';
-import PoppinsText from '../ui/text/PoppinsText';
-import AppButton from '../ui/buttons/AppButton';
-import MarkdownRenderer from '../ui/markdown/MarkdownRenderer';
-import MarkdownComposerDialog from './MarkdownComposerDialog';
-import TownSquarePostDialog from './TownSquarePostDialog';
+import { PlayerProfile } from '../../../types/multiplayer';
+import TownSquareComposerDialog from './townSquare/TownSquareComposerDialog';
+import TownSquareThreadDetailView from './townSquare/TownSquareThreadDetailView';
+import TownSquareThreadListView from './townSquare/TownSquareThreadListView';
+import { truncateText } from './townSquare/townSquareUtils';
+import { useTownSquareForum } from './townSquare/useTownSquareForum';
 
 interface TownSquarePagePLAYERProps {
     gameId: string;
     currentProfile: PlayerProfile;
 }
 
+type TownSquareScreenState = 'list' | 'thread';
+
 const TownSquarePagePLAYER = ({ gameId, currentProfile }: TownSquarePagePLAYERProps) => {
-    const [isComposeDialogOpen, setIsComposeDialogOpen] = useState(false);
-    const [selectedPostId, setSelectedPostId] = useState<string>('');
-    const setPost = useUserListSet<TownSquarePost>();
-    const postKey = getGameScopedKey('townSquarePosts', gameId);
-    const posts = useUserListGet<TownSquarePost>({
-        key: postKey,
-        returnTop: 200,
+    const [isThreadComposerOpen, setIsThreadComposerOpen] = useState(false);
+    const [isReplyComposerOpen, setIsReplyComposerOpen] = useState(false);
+    const [selectedPostId, setSelectedPostId] = useState('');
+    const [replyTargetCommentId, setReplyTargetCommentId] = useState<string | null>(null);
+    const [threadListScrollY, setThreadListScrollY] = useState(0);
+    const [expandedBranchIds, setExpandedBranchIds] = useState<Record<string, boolean>>({});
+
+    const listScrollRef = useRef<ScrollView | null>(null);
+    const {
+        createReply,
+        createThread,
+        markThreadRead,
+        replies,
+        selectedThread,
+        selectedThreadReplyTree,
+        threads,
+    } = useTownSquareForum({
+        currentProfile,
+        gameId,
+        selectedPostId,
     });
 
-    const sortedPosts = useMemo(() => {
-        return [...(posts ?? [])].sort((left, right) => (right.value.createdAt ?? 0) - (left.value.createdAt ?? 0));
-    }, [posts]);
+    const activeScreen: TownSquareScreenState = selectedThread ? 'thread' : 'list';
 
-    const selectedPost = sortedPosts.find((post) => post.value.postId === selectedPostId)?.value ?? null;
+    useEffect(() => {
+        if (activeScreen !== 'list') {
+            return;
+        }
+
+        const timeoutId = setTimeout(() => {
+            listScrollRef.current?.scrollTo({ animated: false, y: threadListScrollY });
+        }, 0);
+
+        return () => clearTimeout(timeoutId);
+    }, [activeScreen, threadListScrollY]);
+
+    const selectedReplyTarget = useMemo(() => {
+        if (!replyTargetCommentId) {
+            return null;
+        }
+
+        return replies.find((reply) => reply.commentId === replyTargetCommentId) ?? null;
+    }, [replies, replyTargetCommentId]);
+
+    const openThread = (postId: string) => {
+        setSelectedPostId(postId);
+        setExpandedBranchIds({});
+        setReplyTargetCommentId(null);
+        markThreadRead(postId);
+    };
+
+    const closeThread = () => {
+        setSelectedPostId('');
+        setExpandedBranchIds({});
+        setReplyTargetCommentId(null);
+    };
+
+    const replyTargetLabel = selectedReplyTarget
+        ? `Replying to ${selectedReplyTarget.authorDisplayName}: “${truncateText(selectedReplyTarget.plainTextResolved, 80)}”`
+        : selectedThread
+            ? `Replying inside ${selectedThread.titleResolved}`
+            : undefined;
 
     return (
-        <Column gap={4}>
-            <Row className='justify-between items-center'>
-                <Column gap={0}>
-                    <PoppinsText weight='medium'>Town Square</PoppinsText>
-                    <PoppinsText varient='subtext'>Markdown posts and comments for everyone in the game.</PoppinsText>
-                </Column>
-                <AppButton variant='black' className='w-36' onPress={() => setIsComposeDialogOpen(true)}>
-                    <PoppinsText weight='medium' color='white'>New post</PoppinsText>
-                </AppButton>
-            </Row>
-            <Column gap={3}>
-                {sortedPosts.length > 0 ? sortedPosts.map((post) => (
-                    <Pressable key={post.value.postId} onPress={() => setSelectedPostId(post.value.postId)}>
-                        <Column className='rounded-xl border border-subtle-border bg-white p-4' gap={3}>
-                            <Row className='items-center gap-3'>
-                                {post.value.authorImageUrl ? (
-                                    <Image source={{ uri: post.value.authorImageUrl }} className='w-12 h-12 rounded-full border border-subtle-border bg-white' />
-                                ) : (
-                                    <View className='w-12 h-12 rounded-full border border-subtle-border bg-white items-center justify-center'>
-                                        <PoppinsText weight='medium'>{post.value.authorInGameName.slice(0, 1).toUpperCase()}</PoppinsText>
-                                    </View>
-                                )}
-                                <Column gap={0}>
-                                    <PoppinsText weight='medium'>{post.value.authorInGameName}</PoppinsText>
-                                    <PoppinsText varient='subtext'>{new Date(post.value.createdAt).toLocaleString()}</PoppinsText>
-                                </Column>
-                            </Row>
-                            <MarkdownRenderer markdown={post.value.markdown} />
-                        </Column>
-                    </Pressable>
-                )) : (
-                    <Column className='rounded-xl border border-subtle-border bg-white p-4'>
-                        <PoppinsText varient='subtext'>No posts yet. Start the conversation.</PoppinsText>
-                    </Column>
-                )}
-            </Column>
-            <MarkdownComposerDialog
-                isOpen={isComposeDialogOpen}
-                onOpenChange={setIsComposeDialogOpen}
-                title='New Town Square Post'
-                submitLabel='Post'
-                onSubmit={(markdown) => {
-                    const postId = createClientId('post');
-                    setPost({
-                        key: postKey,
-                        itemId: postId,
-                        value: {
-                            gameId,
-                            postId,
-                            authorUserId: currentProfile.userId,
-                            authorInGameName: currentProfile.inGameName,
-                            authorImageUrl: currentProfile.profileImageUrl,
-                            markdown,
-                            createdAt: Date.now(),
-                        },
-                        privacy: 'PUBLIC',
-                        searchKeys: ['markdown', 'authorInGameName'],
-                        sortKey: 'createdAt',
-                    });
-                }}
+        <Column className='flex-1 min-h-[760px]' gap={0}>
+            <LayoutStateAnimatedView.Container stateVar={activeScreen} className='flex-1'>
+                <LayoutStateAnimatedView.Option page={1} stateValue='list'>
+                    <TownSquareThreadListView
+                        listScrollRef={listScrollRef}
+                        onNewThread={() => setIsThreadComposerOpen(true)}
+                        onOpenThread={(thread) => openThread(thread.postId)}
+                        onScrollYChange={setThreadListScrollY}
+                        threads={threads}
+                    />
+                </LayoutStateAnimatedView.Option>
+
+                <LayoutStateAnimatedView.OptionContainer page={2} pushInAnimation={fromRight}>
+                    <LayoutStateAnimatedView.Option stateValue='thread'>
+                        {selectedThread ? (
+                            <TownSquareThreadDetailView
+                                expandedBranchIds={expandedBranchIds}
+                                onBack={closeThread}
+                                onExpandBranch={(branchId) => setExpandedBranchIds((currentValue) => ({
+                                    ...currentValue,
+                                    [branchId]: true,
+                                }))}
+                                onReplyToComment={(reply) => {
+                                    setReplyTargetCommentId(reply.commentId);
+                                    setIsReplyComposerOpen(true);
+                                }}
+                                onReplyToThread={() => {
+                                    setReplyTargetCommentId(null);
+                                    setIsReplyComposerOpen(true);
+                                }}
+                                replyTree={selectedThreadReplyTree}
+                                selectedThread={selectedThread}
+                            />
+                        ) : (
+                            <Column className='flex-1' />
+                        )}
+                    </LayoutStateAnimatedView.Option>
+                </LayoutStateAnimatedView.OptionContainer>
+            </LayoutStateAnimatedView.Container>
+
+            <TownSquareComposerDialog
+                includeTitle={true}
+                isOpen={isThreadComposerOpen}
+                onOpenChange={setIsThreadComposerOpen}
+                onSubmit={createThread}
+                submitLabel='Publish'
+                title='Create thread'
             />
-            <TownSquarePostDialog
-                gameId={gameId}
-                isOpen={selectedPost !== null}
-                onOpenChange={(open) => {
-                    if (!open) {
-                        setSelectedPostId('');
+
+            <TownSquareComposerDialog
+                includeTitle={false}
+                isOpen={isReplyComposerOpen}
+                onOpenChange={setIsReplyComposerOpen}
+                onSubmit={({ markdown, plainText }) => {
+                    if (!selectedThread) {
+                        return;
                     }
+
+                    createReply({
+                        markdown,
+                        parentCommentId: replyTargetCommentId ?? undefined,
+                        plainText,
+                        postId: selectedThread.postId,
+                    });
+
+                    if (replyTargetCommentId) {
+                        setExpandedBranchIds((currentValue) => ({
+                            ...currentValue,
+                            [replyTargetCommentId]: true,
+                        }));
+                    }
+
+                    setReplyTargetCommentId(null);
                 }}
-                post={selectedPost}
-                currentProfile={currentProfile}
+                submitLabel='Post reply'
+                targetLabel={replyTargetLabel}
+                title='Write reply'
             />
         </Column>
     );

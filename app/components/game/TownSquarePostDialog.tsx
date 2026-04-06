@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { Image, ScrollView, View } from 'react-native';
 import { useUserListGet } from '../../../hooks/useUserListGet';
 import { useUserListSet } from '../../../hooks/useUserListSet';
-import { TownSquareComment, TownSquarePost } from '../../../types/multiplayer';
+import { PlayerProfile, TownSquareComment, TownSquarePost } from '../../../types/multiplayer';
 import { createClientId, getGameScopedKey } from '../../../utils/multiplayer';
 import ConvexDialog from '../ui/dialog/ConvexDialog';
 import DialogHeader from '../ui/dialog/DialogHeader';
@@ -12,7 +12,6 @@ import PoppinsText from '../ui/text/PoppinsText';
 import MarkdownRenderer from '../ui/markdown/MarkdownRenderer';
 import AppButton from '../ui/buttons/AppButton';
 import MarkdownComposerDialog from './MarkdownComposerDialog';
-import { PlayerProfile } from '../../../types/multiplayer';
 
 interface TownSquarePostDialogProps {
     gameId: string;
@@ -109,6 +108,13 @@ const TownSquarePostDialog = ({ gameId, isOpen, onOpenChange, post, currentProfi
                 submitLabel='Post comment'
                 onSubmit={(markdown) => {
                     const commentId = createClientId('comment');
+                    const plainText = markdown
+                        .replace(/!\[[^\]]*\]\([^)]*\)/g, ' ')
+                        .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$1')
+                        .replace(/[`*_>#-]/g, ' ')
+                        .replace(/\n+/g, ' ')
+                        .replace(/\s+/g, ' ')
+                        .trim();
                     setComment({
                         key: commentKey,
                         itemId: commentId,
@@ -120,11 +126,12 @@ const TownSquarePostDialog = ({ gameId, isOpen, onOpenChange, post, currentProfi
                             authorInGameName: currentProfile.inGameName,
                             authorImageUrl: currentProfile.profileImageUrl,
                             markdown,
+                            plainText,
                             createdAt: Date.now(),
                         },
                         privacy: 'PUBLIC',
                         filterKey: 'postId',
-                        searchKeys: ['markdown', 'authorInGameName'],
+                        searchKeys: ['plainText', 'markdown', 'authorInGameName'],
                         sortKey: 'createdAt',
                     });
                 }}

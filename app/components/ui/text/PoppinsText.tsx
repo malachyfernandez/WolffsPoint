@@ -36,15 +36,15 @@ const PoppinsText = ({
 
 
     if (varient === 'subtext') {
-        className += ' text-sm opacity-50';
+        className += ' text-sm opacity-70';
     }
 
     if (varient === 'cardHeader') {
-        className += ' text-xs opacity-50 uppercase tracking-wider';
+        className += ' text-xs opacity-70 uppercase tracking-wider';
     }
 
     if (varient === 'lowercaseCardHeader') {
-        className += ' text-xs opacity-50 tracking-wider';
+        className += ' text-xs opacity-70 tracking-wider';
     }
 
     if (!fontsLoaded) {

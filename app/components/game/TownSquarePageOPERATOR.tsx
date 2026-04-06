@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { Image, Pressable, View } from 'react-native';
 import { useUserListGet } from '../../../hooks/useUserListGet';
 import { useUserListSet } from '../../../hooks/useUserListSet';
-import { PlayerProfile, TownSquarePost } from '../../../types/multiplayer';
+import { TownSquarePost } from '../../../types/multiplayer';
 import { createClientId, getGameScopedKey } from '../../../utils/multiplayer';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
@@ -77,6 +77,13 @@ const TownSquarePageOPERATOR = ({ gameId, currentUserId }: TownSquarePageOPERATO
                 submitLabel='Post'
                 onSubmit={(markdown) => {
                     const postId = createClientId('post');
+                    const plainText = markdown
+                        .replace(/!\[[^\]]*\]\([^)]*\)/g, ' ')
+                        .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$1')
+                        .replace(/[`*_>#-]/g, ' ')
+                        .replace(/\n+/g, ' ')
+                        .replace(/\s+/g, ' ')
+                        .trim();
                     setPost({
                         key: postKey,
                         itemId: postId,
@@ -86,11 +93,13 @@ const TownSquarePageOPERATOR = ({ gameId, currentUserId }: TownSquarePageOPERATO
                             authorUserId: currentUserId,
                             authorInGameName: 'Game Operator',
                             authorImageUrl: '',
+                            bodyMarkdown: markdown,
                             markdown,
+                            plainText,
                             createdAt: Date.now(),
                         },
                         privacy: 'PUBLIC',
-                        searchKeys: ['markdown', 'authorInGameName'],
+                        searchKeys: ['title', 'plainText', 'markdown', 'authorInGameName'],
                         sortKey: 'createdAt',
                     });
                 }}

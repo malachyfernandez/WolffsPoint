@@ -17,13 +17,13 @@ const PaperContainer = ({ children }: PaperContainerProps) => {
                     right: 0,
                     bottom: 0,
                     borderRadius: 12,
-                    opacity: 1,
+                    opacity: 0.5,
 
                     // --- Web-Only Properties ---
                     // @ts-ignore: RN types don't know about web CSS
                     backgroundImage: "url('https://dydrl5o9tb.ufs.sh/f/6bPCFkuBjl92dnXGroFLInwCTmuU48v7QcbPaXDEgKZzYeBq')",
                     backgroundRepeat: 'repeat',
-                    backgroundSize: '442px 442px',
+                    backgroundSize: '642px 642px',
                     mixBlendMode: 'multiply',
                 }}
             />

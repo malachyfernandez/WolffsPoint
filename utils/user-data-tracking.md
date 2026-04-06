@@ -98,6 +98,10 @@ type TownSquarePost = {
   authorInGameName: string;
   authorImageUrl: string;
   markdown: string;
+  title?: string;
+  bodyMarkdown?: string;
+  bodyHtml?: string;
+  plainText?: string;
   createdAt: number;
 };
 ```
@@ -113,6 +117,10 @@ type TownSquareComment = {
   authorInGameName: string;
   authorImageUrl: string;
   markdown: string;
+  bodyHtml?: string;
+  plainText?: string;
+  parentCommentId?: string;
+  replyToCommentId?: string;
   createdAt: number;
 };
 ```
@@ -336,6 +344,21 @@ getGameScopedKey(`playerNightSubmission-day-${dayIndex}`, gameId)
   - `NightlyPageOPERATOR.tsx`
 - **Meaning**: one submission variable per user for one game day.
 
+### `townSquareReadState-{gameId}`
+
+- **Hook**: `useUserVariable<Record<string, number>>`
+- **Canonical shape**:
+
+```ts
+Record<string, number>
+```
+
+- **Privacy**: implicit default (`PRIVATE`)
+- **Key builder**: `getGameScopedKey('townSquareReadState', gameId)`
+- **Used by**:
+  - `TownSquarePagePLAYER.tsx`
+- **Meaning**: per-user last-read timestamps keyed by `postId` for unread reply highlighting.
+
 ## User Lists
 
 ### `games`
@@ -524,10 +547,11 @@ Record<string, string[]>
 - **Key builder**: `getGameScopedKey('townSquarePosts', gameId)`
 - **itemId**: `postId`
 - **Privacy**: `PUBLIC`
-- **searchKeys**: `['markdown', 'authorInGameName']`
+- **searchKeys**: `['title', 'plainText', 'markdown', 'authorInGameName']`
 - **sortKey**: `'createdAt'`
 - **Used by**:
   - `TownSquarePagePLAYER.tsx`
+  - `TownSquarePageOPERATOR.tsx`
 
 ### `townSquareComments-{gameId}`
 
@@ -537,9 +561,10 @@ Record<string, string[]>
 - **itemId**: `commentId`
 - **Privacy**: `PUBLIC`
 - **filterKey**: `'postId'`
-- **searchKeys**: `['markdown', 'authorInGameName']`
+- **searchKeys**: `['plainText', 'markdown', 'authorInGameName']`
 - **sortKey**: `'createdAt'`
 - **Used by**:
+  - `TownSquarePagePLAYER.tsx`
   - `TownSquarePostDialog.tsx`
 
 ### `mathDocuments`

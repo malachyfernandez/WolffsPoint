@@ -25,6 +25,10 @@ export type TownSquarePost = {
     authorInGameName: string;
     authorImageUrl: string;
     markdown: string;
+    title?: string;
+    bodyMarkdown?: string;
+    bodyHtml?: string;
+    plainText?: string;
     createdAt: number;
 };
 
@@ -36,6 +40,10 @@ export type TownSquareComment = {
     authorInGameName: string;
     authorImageUrl: string;
     markdown: string;
+    bodyHtml?: string;
+    plainText?: string;
+    parentCommentId?: string;
+    replyToCommentId?: string;
     createdAt: number;
 };
 
