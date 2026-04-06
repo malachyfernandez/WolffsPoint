@@ -17,7 +17,7 @@
  *   <PoppinsText>Cancel</PoppinsText>
  * </AppButton>
  * 
- * <AppButton variant="green" onPress={handleSubmit}>
+ * <AppButton variant="accent" onPress={handleSubmit}>
  *   <PoppinsText color="white">Submit</PoppinsText>
  * </AppButton>
  * 
@@ -27,7 +27,7 @@
  * ```
  * 
  * @props {React.ReactNode} children - Content to display inside the button
- * @props {'outline' | 'outline-alt' | 'black' | 'grey' | 'green' | 'red'} variant - Visual style variant (default: 'outline-alt')
+ * @props {'outline' | 'outline-alt' | 'filled' | 'grey' | 'accent' | 'red'} variant - Visual style variant (default: 'outline-alt')
  * @props {string} className - Additional CSS classes for styling
  * @props {() => void} onPress - Function called when button is pressed
  * @props {boolean} dropShadow - Whether to show drop shadow (default: true)
@@ -36,9 +36,9 @@
  * @variants
  * - outline: Similar to outline but with lighter hover effect (default)
  * - outline-alt: Transparent background with border, hover effect fills background
- * - black: Solid black/dark background with brightness hover effect
+ * - filled: Solid text background with brightness hover effect
  * - grey: Solid grey background (#374559ae) with brightness hover effect
- * - green: Solid green background (accent) with brightness hover effect
+ * - accent: Solid accent background with brightness hover effect
  * - red: Transparent background with red border and red text styling
  * 
  * @features
@@ -61,7 +61,7 @@ import { BlurView } from 'expo-blur';
 
 interface AppButtonProps {
     children: React.ReactNode;
-    variant?: 'outline-alt' | 'outline' | 'outline-accent' | 'outline-invert' | 'black' | 'grey' | 'accent' | 'green' | 'red' | 'none';
+    variant?: 'outline-alt' | 'outline' | 'outline-accent' | 'outline-invert' | 'filled' | 'grey' | 'accent' | 'red' | 'none';
     className?: string;
     onPress?: () => void;
     dropShadow?: boolean;
@@ -109,9 +109,12 @@ const AppButton = ({
         const bg = 'bg-none';
         extraStyles = bg;
         pressedStyles = 'brightness-100';
-    } else if (variant === 'green') {
+    } else if (variant === 'accent') {
         const bg = 'bg-accent';
         extraStyles = `${bg} group hover:brightness-125 active:brightness-50`;
+    } else if (variant === 'filled') {
+        const bg = 'bg-text';
+        extraStyles = `${bg} group hover:brightness-150 active:brightness-50`;
     } else if (variant === 'red') {
         const bg = 'bg-none';
         extraStyles = `border-2 border-red-500 ${bg} group hover:bg-red-500/10`;

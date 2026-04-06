@@ -93,7 +93,7 @@ const ChangeDateInfo = ({ gameId, isGettingStarted }: ChangeDateInfoProps) => {
 
         <ConvexDialog.Root isOpen={isHeroDialogOpen} onOpenChange={setIsHeroDialogOpen}>
             <ConvexDialog.Trigger asChild>
-                <AppButton variant="green" className="h-12 w-40 shrink">
+                <AppButton variant="accent" className="h-12 w-40 shrink">
                     <PoppinsText weight='medium' color="white">{isGettingStarted ? 'Get Started' : 'Change'}</PoppinsText>
                 </AppButton>
             </ConvexDialog.Trigger>
@@ -142,7 +142,7 @@ const ChangeDateInfo = ({ gameId, isGettingStarted }: ChangeDateInfoProps) => {
                             {isFormValid ?
                                 (
                                     hasChanged ? (
-                                        <AppButton variant="black" className="h-10 w-20" onPress={formSubmit}>
+                                        <AppButton variant="filled" className="h-10 w-20" onPress={formSubmit}>
                                             <PoppinsText weight='medium' color='white'>Save</PoppinsText>
                                         </AppButton>
                                     ) : (

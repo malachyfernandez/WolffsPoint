@@ -18,7 +18,7 @@ const BackgroundPreview = ({ imageUrl }: BackgroundPreviewProps) => {
                         resizeMode='contain'
                     />
                     <LinearGradient
-                        colors={['rgb(246, 238, 219)', 'transparent']}
+                        colors={['rgb(165, 159, 150)', 'transparent']}
                         className='absolute top-0 left-0 right-0 h-40'
                         pointerEvents='none'
                     />

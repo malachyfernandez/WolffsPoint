@@ -69,7 +69,7 @@ const ConfigPageOPERATOR = ({ currentUserId, gameId }: ConfigPageOPERATORProps) 
                                 </Row>
                             </ScrollView>
                         </ScrollShadow>
-                        <AppButton variant="black" className='w-40 h-8 ml-4 -mt-6' onPress={addRole}>
+                        <AppButton variant="filled" className='w-40 h-8 ml-4 -mt-6' onPress={addRole}>
                             <PoppinsText weight='bold' className='text-white text-xl'>+</PoppinsText>
                             <PoppinsText weight='bold' className='text-white'>Add Role</PoppinsText>
                         </AppButton>
@@ -77,7 +77,7 @@ const ConfigPageOPERATOR = ({ currentUserId, gameId }: ConfigPageOPERATORProps) 
 
                 ) : (
                     <Row className='items-center justify-center'>
-                        <AppButton variant="black" className='w-40 h-8' onPress={addRole}>
+                        <AppButton variant="filled" className='w-40 h-8' onPress={addRole}>
                             <PoppinsText weight='bold' className='text-white text-xl'>+</PoppinsText>
                             <PoppinsText weight='bold' className='text-white'>Add Role</PoppinsText>
                         </AppButton>

@@ -11,7 +11,7 @@ interface ImageUploadButtonRowProps {
     showUrlButton?: boolean;
     urlButtonText?: string;
     uploadButtonText?: string;
-    uploadButtonVariant?: 'black' | 'green' | 'grey' | 'outline' | 'outline-alt';
+    uploadButtonVariant?: 'filled' | 'accent' | 'grey' | 'outline' | 'outline-alt';
     uploadButtonClassName?: string;
     urlButtonClassName?: string;
 }
@@ -22,7 +22,7 @@ const ImageUploadButtonRow = ({
     showUrlButton = true,
     urlButtonText = 'Use URL',
     uploadButtonText = 'Choose Image',
-    uploadButtonVariant = 'green',
+    uploadButtonVariant = 'accent',
     uploadButtonClassName = '',
     urlButtonClassName = 'w-24 h-8',
 }: ImageUploadButtonRowProps) => {

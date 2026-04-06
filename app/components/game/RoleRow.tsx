@@ -76,7 +76,7 @@ const RoleRow = ({ role, index, isLast, setRoleName, setDoesRoleVote, setRoleMes
                     </Pressable>
                 </Column>
                 <Column className={`w-0 h-12 items-center justify-center`}>
-                    <AppButton variant="black" className='w-8 max-h-8' onPress={() => onDeleteRole(index)}>
+                    <AppButton variant="filled" className='w-8 max-h-8' onPress={() => onDeleteRole(index)}>
                         <PoppinsText weight='bold' color='white' className='text-xl mt-[-0.1rem]'>-</PoppinsText>
                     </AppButton>
                 </Column>

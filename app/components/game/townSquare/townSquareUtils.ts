@@ -15,7 +15,6 @@ export type ThreadViewModel = TownSquarePost & {
     titleResolved: string;
     bodyMarkdownResolved: string;
     previewText: string;
-    authorDisplayName: string;
     latestActivityAt: number;
     replyCount: number;
     isUnread: boolean;
@@ -24,7 +23,6 @@ export type ThreadViewModel = TownSquarePost & {
 export type ReplyViewModel = TownSquareComment & {
     bodyMarkdownResolved: string;
     plainTextResolved: string;
-    authorDisplayName: string;
 };
 
 export type ReplyTreeNode = ReplyViewModel & {
@@ -66,11 +64,6 @@ export const formatTimestamp = (timestamp: number) => {
         month: 'numeric',
         year: '2-digit',
     });
-};
-
-export const getDisplayName = (characterName: string, realName?: string) => {
-    const safeRealName = realName?.trim() || 'Unknown';
-    return `${characterName} (${safeRealName})`;
 };
 
 export const getPostBodyMarkdown = (post: TownSquarePost) => {

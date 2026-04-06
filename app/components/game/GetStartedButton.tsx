@@ -54,7 +54,7 @@ const GetStartedButton = ({ gameId }: GetStartedButtonProps) => {
 
         <ConvexDialog.Root isOpen={isHeroDialogOpen} onOpenChange={setIsHeroDialogOpen}>
             <ConvexDialog.Trigger asChild>
-                <AppButton variant="green" className="h-12 w-40 shrink">
+                <AppButton variant="accent" className="h-12 w-40 shrink">
                     <PoppinsText weight='medium' color="white">Get Started</PoppinsText>
                 </AppButton>
             </ConvexDialog.Trigger>
@@ -102,7 +102,7 @@ const GetStartedButton = ({ gameId }: GetStartedButtonProps) => {
 
                             {isFormValid ?
                                 (
-                                    <AppButton variant="black" className="h-10 w-28" onPress={formSubmit}>
+                                    <AppButton variant="filled" className="h-10 w-28" onPress={formSubmit}>
                                         <PoppinsText weight='medium' color='white'>Save</PoppinsText>
                                     </AppButton>
                                 )

@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Image, ScrollView, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 import { useUserListGet } from '../../../hooks/useUserListGet';
 import { useUserListSet } from '../../../hooks/useUserListSet';
 import { PlayerProfile, TownSquareComment, TownSquarePost } from '../../../types/multiplayer';
@@ -12,6 +12,7 @@ import PoppinsText from '../ui/text/PoppinsText';
 import MarkdownRenderer from '../ui/markdown/MarkdownRenderer';
 import AppButton from '../ui/buttons/AppButton';
 import MarkdownComposerDialog from './MarkdownComposerDialog';
+import { TownSquareAuthorAvatar, TownSquareAuthorName } from './townSquare/TownSquareAuthorIdentity';
 
 interface TownSquarePostDialogProps {
     gameId: string;
@@ -53,15 +54,9 @@ const TownSquarePostDialog = ({ gameId, isOpen, onOpenChange, post, currentProfi
                         <ScrollView className='p-4'>
                             <Column gap={4}>
                                 <Row className='items-center gap-3'>
-                                    {post.authorImageUrl ? (
-                                        <Image source={{ uri: post.authorImageUrl }} className='w-12 h-12 rounded-full border border-subtle-border bg-white' />
-                                    ) : (
-                                        <View className='w-12 h-12 rounded-full border border-subtle-border bg-white items-center justify-center'>
-                                            <PoppinsText weight='medium'>{post.authorInGameName.slice(0, 1).toUpperCase()}</PoppinsText>
-                                        </View>
-                                    )}
+                                    <TownSquareAuthorAvatar gameId={post.gameId} size={48} userId={post.authorUserId} />
                                     <Column gap={0}>
-                                        <PoppinsText weight='medium'>{post.authorInGameName}</PoppinsText>
+                                        <TownSquareAuthorName gameId={post.gameId} userId={post.authorUserId} weight='medium' />
                                         <PoppinsText varient='subtext'>{new Date(post.createdAt).toLocaleString()}</PoppinsText>
                                     </Column>
                                 </Row>
@@ -70,23 +65,17 @@ const TownSquarePostDialog = ({ gameId, isOpen, onOpenChange, post, currentProfi
                                 </Column>
                                 <Row className='justify-between items-center'>
                                     <PoppinsText weight='medium'>Comments</PoppinsText>
-                                    <AppButton variant='black' className='w-40' onPress={() => setIsCommentDialogOpen(true)}>
+                                    <AppButton variant='accent' className='w-40' onPress={() => setIsCommentDialogOpen(true)}>
                                         <PoppinsText weight='medium' color='white'>Add comment</PoppinsText>
                                     </AppButton>
                                 </Row>
                                 <Column gap={3}>
                                     {sortedComments.length > 0 ? sortedComments.map((comment) => (
                                         <Row key={comment.value.commentId} className='items-start gap-3 rounded-xl border border-subtle-border bg-white p-3'>
-                                            {comment.value.authorImageUrl ? (
-                                                <Image source={{ uri: comment.value.authorImageUrl }} className='w-10 h-10 rounded-full border border-subtle-border bg-white' />
-                                            ) : (
-                                                <View className='w-10 h-10 rounded-full border border-subtle-border bg-white items-center justify-center'>
-                                                    <PoppinsText weight='medium'>{comment.value.authorInGameName.slice(0, 1).toUpperCase()}</PoppinsText>
-                                                </View>
-                                            )}
+                                            <TownSquareAuthorAvatar gameId={comment.value.gameId} size={40} userId={comment.value.authorUserId} />
                                             <Column className='flex-1' gap={1}>
                                                 <Row className='justify-between'>
-                                                    <PoppinsText weight='medium'>{comment.value.authorInGameName}</PoppinsText>
+                                                    <TownSquareAuthorName gameId={comment.value.gameId} userId={comment.value.authorUserId} weight='medium' />
                                                     <PoppinsText varient='subtext'>{new Date(comment.value.createdAt).toLocaleString()}</PoppinsText>
                                                 </Row>
                                                 <MarkdownRenderer markdown={comment.value.markdown} />
@@ -123,15 +112,13 @@ const TownSquarePostDialog = ({ gameId, isOpen, onOpenChange, post, currentProfi
                             postId: post.postId,
                             commentId,
                             authorUserId: currentProfile.userId,
-                            authorInGameName: currentProfile.inGameName,
-                            authorImageUrl: currentProfile.profileImageUrl,
                             markdown,
                             plainText,
                             createdAt: Date.now(),
                         },
                         privacy: 'PUBLIC',
                         filterKey: 'postId',
-                        searchKeys: ['plainText', 'markdown', 'authorInGameName'],
+                        searchKeys: ['plainText', 'markdown'],
                         sortKey: 'createdAt',
                     });
                 }}

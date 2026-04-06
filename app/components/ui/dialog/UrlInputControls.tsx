@@ -6,13 +6,13 @@ import Animated, {
     FadeIn,
     FadeOut,
 } from 'react-native-reanimated';
-import Row from '../layout/Row';
-import AppButton from '../ui/buttons/AppButton';
-import PoppinsText from '../ui/text/PoppinsText';
-import PoppinsTextInput from '../ui/forms/PoppinsTextInput';
-import ImageUploadButtonRow from './ImageUploadButtonRow';
+import Row from '../../layout/Row';
+import AppButton from '../buttons/AppButton';
+import PoppinsText from '../text/PoppinsText';
+import PoppinsTextInput from '../forms/PoppinsTextInput';
+import ImageUploadButtonRow from '../../game/ImageUploadButtonRow';
 
-interface ForegroundControlsProps {
+interface UrlInputControlsProps {
     showUrlInput: boolean;
     urlInput: string;
     urlError: string;
@@ -24,7 +24,7 @@ interface ForegroundControlsProps {
     onCancelUrlInput: () => void;
 }
 
-const ForegroundControls = ({
+const UrlInputControls = ({
     showUrlInput,
     urlInput,
     urlError,
@@ -34,7 +34,7 @@ const ForegroundControls = ({
     onUrlInputChange,
     onUrlSubmit,
     onCancelUrlInput,
-}: ForegroundControlsProps) => {
+}: UrlInputControlsProps) => {
     if (showUrlInput) {
         return (
             <Animated.View
@@ -49,7 +49,7 @@ const ForegroundControls = ({
                 ) : null}
                 <Row className='gap-2'>
                     <PoppinsTextInput
-                        placeholder='https://example.com/image.jpg'
+                        placeholder='Enter image URL here...'
                         className='flex-1 border border-subtle-border p-2 bg-inner-background'
                         value={urlInput}
                         onChangeText={onUrlInputChange}
@@ -84,4 +84,4 @@ const ForegroundControls = ({
     );
 };
 
-export default ForegroundControls;
+export default UrlInputControls;

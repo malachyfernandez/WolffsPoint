@@ -4,6 +4,7 @@ import LayoutStateAnimatedView, { fromRight } from '../ui/LayoutStateAnimatedVie
 import Column from '../layout/Column';
 import { PlayerProfile } from '../../../types/multiplayer';
 import TownSquareComposerDialog from './townSquare/TownSquareComposerDialog';
+import { useTownSquareAuthorIdentity } from './townSquare/TownSquareAuthorIdentity';
 import TownSquareThreadDetailView from './townSquare/TownSquareThreadDetailView';
 import TownSquareThreadListView from './townSquare/TownSquareThreadListView';
 import { truncateText } from './townSquare/townSquareUtils';
@@ -18,8 +19,10 @@ type TownSquareScreenState = 'list' | 'thread';
 
 const TownSquarePagePLAYER = ({ gameId, currentProfile }: TownSquarePagePLAYERProps) => {
     const [isThreadComposerOpen, setIsThreadComposerOpen] = useState(false);
+    const [isThreadEditComposerOpen, setIsThreadEditComposerOpen] = useState(false);
     const [isReplyComposerOpen, setIsReplyComposerOpen] = useState(false);
     const [selectedPostId, setSelectedPostId] = useState('');
+    const [editingReplyId, setEditingReplyId] = useState<string | null>(null);
     const [replyTargetCommentId, setReplyTargetCommentId] = useState<string | null>(null);
     const [threadListScrollY, setThreadListScrollY] = useState(0);
     const [expandedBranchIds, setExpandedBranchIds] = useState<Record<string, boolean>>({});
@@ -28,11 +31,15 @@ const TownSquarePagePLAYER = ({ gameId, currentProfile }: TownSquarePagePLAYERPr
     const {
         createReply,
         createThread,
+        deleteReply,
+        deleteThread,
         markThreadRead,
         replies,
         selectedThread,
         selectedThreadReplyTree,
         threads,
+        updateReply,
+        updateThread,
     } = useTownSquareForum({
         currentProfile,
         gameId,
@@ -61,9 +68,24 @@ const TownSquarePagePLAYER = ({ gameId, currentProfile }: TownSquarePagePLAYERPr
         return replies.find((reply) => reply.commentId === replyTargetCommentId) ?? null;
     }, [replies, replyTargetCommentId]);
 
+    const editingReply = useMemo(() => {
+        if (!editingReplyId) {
+            return null;
+        }
+
+        return replies.find((reply) => reply.commentId === editingReplyId) ?? null;
+    }, [editingReplyId, replies]);
+
+    const selectedReplyAuthor = useTownSquareAuthorIdentity({
+        gameId,
+        userId: selectedReplyTarget?.authorUserId ?? currentProfile.userId,
+    });
+
     const openThread = (postId: string) => {
         setSelectedPostId(postId);
         setExpandedBranchIds({});
+        setEditingReplyId(null);
+        setIsThreadEditComposerOpen(false);
         setReplyTargetCommentId(null);
         markThreadRead(postId);
     };
@@ -71,11 +93,13 @@ const TownSquarePagePLAYER = ({ gameId, currentProfile }: TownSquarePagePLAYERPr
     const closeThread = () => {
         setSelectedPostId('');
         setExpandedBranchIds({});
+        setEditingReplyId(null);
+        setIsThreadEditComposerOpen(false);
         setReplyTargetCommentId(null);
     };
 
     const replyTargetLabel = selectedReplyTarget
-        ? `Replying to ${selectedReplyTarget.authorDisplayName}: “${truncateText(selectedReplyTarget.plainTextResolved, 80)}”`
+        ? `Replying to ${selectedReplyAuthor.displayName}: “${truncateText(selectedReplyTarget.plainTextResolved, 80)}”`
         : selectedThread
             ? `Replying inside ${selectedThread.titleResolved}`
             : undefined;
@@ -97,8 +121,26 @@ const TownSquarePagePLAYER = ({ gameId, currentProfile }: TownSquarePagePLAYERPr
                     <LayoutStateAnimatedView.Option stateValue='thread'>
                         {selectedThread ? (
                             <TownSquareThreadDetailView
+                                currentUserId={currentProfile.userId}
                                 expandedBranchIds={expandedBranchIds}
                                 onBack={closeThread}
+                                onDeleteReply={(reply) => {
+                                    deleteReply(reply.commentId);
+                                    if (replyTargetCommentId === reply.commentId) {
+                                        setReplyTargetCommentId(null);
+                                    }
+                                    if (editingReplyId === reply.commentId) {
+                                        setEditingReplyId(null);
+                                    }
+                                }}
+                                onDeleteThread={() => {
+                                    deleteThread(selectedThread.postId);
+                                    closeThread();
+                                }}
+                                onEditReply={(reply) => {
+                                    setEditingReplyId(reply.commentId);
+                                }}
+                                onEditThread={() => setIsThreadEditComposerOpen(true)}
                                 onExpandBranch={(branchId) => setExpandedBranchIds((currentValue) => ({
                                     ...currentValue,
                                     [branchId]: true,
@@ -131,6 +173,28 @@ const TownSquarePagePLAYER = ({ gameId, currentProfile }: TownSquarePagePLAYERPr
             />
 
             <TownSquareComposerDialog
+                includeTitle={true}
+                initialBody={selectedThread?.bodyMarkdownResolved ?? ''}
+                initialTitle={selectedThread?.title ?? ''}
+                isOpen={isThreadEditComposerOpen}
+                onOpenChange={setIsThreadEditComposerOpen}
+                onSubmit={({ markdown, plainText, title }) => {
+                    if (!selectedThread) {
+                        return;
+                    }
+
+                    updateThread({
+                        markdown,
+                        plainText,
+                        postId: selectedThread.postId,
+                        title,
+                    });
+                }}
+                submitLabel='Save changes'
+                title='Edit thread'
+            />
+
+            <TownSquareComposerDialog
                 includeTitle={false}
                 isOpen={isReplyComposerOpen}
                 onOpenChange={setIsReplyComposerOpen}
@@ -158,6 +222,31 @@ const TownSquarePagePLAYER = ({ gameId, currentProfile }: TownSquarePagePLAYERPr
                 submitLabel='Post reply'
                 targetLabel={replyTargetLabel}
                 title='Write reply'
+            />
+
+            <TownSquareComposerDialog
+                includeTitle={false}
+                initialBody={editingReply?.bodyMarkdownResolved ?? ''}
+                isOpen={editingReply !== null}
+                onOpenChange={(open) => {
+                    if (!open) {
+                        setEditingReplyId(null);
+                    }
+                }}
+                onSubmit={({ markdown, plainText }) => {
+                    if (!editingReply) {
+                        return;
+                    }
+
+                    updateReply({
+                        commentId: editingReply.commentId,
+                        markdown,
+                        plainText,
+                    });
+                    setEditingReplyId(null);
+                }}
+                submitLabel='Save changes'
+                title='Edit reply'
             />
         </Column>
     );

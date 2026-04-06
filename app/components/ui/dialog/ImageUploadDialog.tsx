@@ -1,37 +1,33 @@
 import React, { useState } from 'react';
-import { View, Image } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import Animated, {
-    FadeIn,
-    ZoomInRotate,
-    ZoomOutRotate,
-    FadeOut,
-} from 'react-native-reanimated';
-import ConvexDialog from '../ui/dialog/ConvexDialog';
-import Column from '../layout/Column';
-import Row from '../layout/Row';
-import AppButton from '../ui/buttons/AppButton';
-import PoppinsText from '../ui/text/PoppinsText';
-import PoppinsTextInput from '../ui/forms/PoppinsTextInput';
-import DialogHeader from '../ui/dialog/DialogHeader';
-import SimpleImageUpload from '../ui/imageUpload/SimpleImageUpload';
-import DisableableButton from '../ui/buttons/DisableableButton';
-import ImageUploadButtonRow from './ImageUploadButtonRow';
-import BackgroundPreview from './BackgroundPreview';
-import ForegroundControls from './ForegroundControls';
+import { View } from 'react-native';
+import ConvexDialog from './ConvexDialog';
+import Column from '../../layout/Column';
+import Row from '../../layout/Row';
+import AppButton from '../buttons/AppButton';
+import PoppinsText from '../text/PoppinsText';
+import DialogHeader from './DialogHeader';
+import DisableableButton from '../buttons/DisableableButton';
+import ImagePreview from './ImagePreview';
+import UrlInputControls from './UrlInputControls';
 
-interface NewspaperImageUploadDialogProps {
+interface ImageUploadDialogProps {
     isOpen: boolean;
     onOpenChange: (open: boolean) => void;
-    onImageInsert: (imageUrl: string) => void;
+    onImageSelect: (imageUrl: string) => void;
+    title?: string;
+    subtitle?: string;
+    initialImageUrl?: string;
 }
 
-const NewspaperImageUploadDialog = ({
+const ImageUploadDialog = ({
     isOpen,
     onOpenChange,
-    onImageInsert,
-}: NewspaperImageUploadDialogProps) => {
-    const [uploadedImageUrl, setUploadedImageUrl] = useState('');
+    onImageSelect,
+    title = "Select Image",
+    subtitle = "Choose an image from your device or enter a URL",
+    initialImageUrl = '',
+}: ImageUploadDialogProps) => {
+    const [uploadedImageUrl, setUploadedImageUrl] = useState(initialImageUrl);
     const [showUrlInput, setShowUrlInput] = useState(false);
     const [urlInput, setUrlInput] = useState('');
     const [urlError, setUrlError] = useState('');
@@ -39,7 +35,7 @@ const NewspaperImageUploadDialog = ({
     const handleOpenChange = (open: boolean) => {
         if (!open) {
             // Clear all state when dialog is closing
-            setUploadedImageUrl('');
+            setUploadedImageUrl(initialImageUrl);
             setUrlInput('');
             setUrlError('');
             setShowUrlInput(false);
@@ -47,16 +43,15 @@ const NewspaperImageUploadDialog = ({
         onOpenChange(open);
     };
 
-    const handleInsert = () => {
+    const handleSelect = () => {
         if (uploadedImageUrl) {
-            onImageInsert(uploadedImageUrl);
-            setUploadedImageUrl('');
+            onImageSelect(uploadedImageUrl);
             onOpenChange(false);
         }
     };
 
     const handleCancel = () => {
-        setUploadedImageUrl('');
+        setUploadedImageUrl(initialImageUrl);
         setUrlInput('');
         setShowUrlInput(false);
         onOpenChange(false);
@@ -112,17 +107,22 @@ const NewspaperImageUploadDialog = ({
 
                 <ConvexDialog.Content className='p-1 h-[60vh]'>
                     <ConvexDialog.Close 
-    iconProps={{ color: 'rgb(246, 238, 219)' }} 
-    className="w-10 h-10 bg-accent-hover absolute right-4 top-4 z-10"
-/>
+                        iconProps={{ color: 'rgb(246, 238, 219)' }} 
+                        className="w-10 h-10 bg-accent-hover absolute right-4 top-4 z-10"
+                    />
 
                     <Column>
+                        <DialogHeader
+                            text={title}
+                            subtext={subtitle}
+                        />
+                        
                         <Column className='flex-1 px-0'>
-                            {/* Permanent Preview Area */}
+                            {/* Preview Area */}
                             <Column className='w-full h-56 overflow-hidden rounded-lg border border-subtle-border bg-background items-center justify-center relative'>
-                                <BackgroundPreview imageUrl={uploadedImageUrl} />
+                                <ImagePreview imageUrl={uploadedImageUrl} />
                                 <View className='absolute top-2 items-center w-full px-4'>
-                                    <ForegroundControls
+                                    <UrlInputControls
                                         showUrlInput={showUrlInput}
                                         urlInput={urlInput}
                                         urlError={urlError}
@@ -137,25 +137,24 @@ const NewspaperImageUploadDialog = ({
                             </Column>
                         </Column>
 
-                        <Row gap={2} className='items-center w-full'>
+                        <Row gap={2} className='items-center w-full justify-center'>
                             <DisableableButton
                                 isEnabled={!!uploadedImageUrl}
-                                enabledText="Insert Image"
+                                enabledText="Select Image"
                                 disabledText="No image selected"
-                                onPress={handleInsert}
-                                enabledVariant="accent"
-                                className='w-xs h-10'
+                                onPress={handleSelect}
+                                enabledVariant="filled"
+                                className='w-xs h-12'
                             />
-                            {/* <AppButton className='w-32 h-10' variant='outline' onPress={handleCancel}>
+                            <AppButton className='w-32' variant='outline' onPress={handleCancel}>
                                 <PoppinsText color='black' weight='medium'>Cancel</PoppinsText>
-                            </AppButton> */}
+                            </AppButton>
                         </Row>
                     </Column>
-
                 </ConvexDialog.Content>
             </ConvexDialog.Portal>
         </ConvexDialog.Root >
     );
 };
 
-export default NewspaperImageUploadDialog;
+export default ImageUploadDialog;

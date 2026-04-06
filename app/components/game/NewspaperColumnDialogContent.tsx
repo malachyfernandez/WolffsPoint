@@ -80,7 +80,7 @@ const NewspaperColumnDialogContent = ({
                 <AppButton className='w-20 h-8' variant='grey' onPress={() => setMessage((value) => applyLine(value, '>'))}>
                     <PoppinsText color='white' weight='medium'>Quote</PoppinsText>
                 </AppButton>
-                <AppButton className='w-24 h-8' variant='green' onPress={() => setShowImageUpload(true)}>
+                <AppButton className='w-24 h-8' variant='accent' onPress={() => setShowImageUpload(true)}>
                     <PoppinsText color='white' weight='medium'>Image</PoppinsText>
                 </AppButton>
             </Row>
@@ -140,7 +140,7 @@ const NewspaperColumnDialogContent = ({
                     enabledText="Save"
                     disabledText="No changes"
                     onPress={onSubmit}
-                    enabledVariant="green"
+                    enabledVariant="accent"
                     className="w-34 h-10"
                 />
                 <AppButton className='w-34 h-10' variant='outline' onPress={onCancel}>

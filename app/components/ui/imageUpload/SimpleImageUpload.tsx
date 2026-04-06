@@ -31,7 +31,7 @@ interface SimpleImageUploadProps {
     onUpload: UrlSetter;
     buttonLabel?: string;
     className?: string;
-    variant?: 'black' | 'green' | 'grey' | 'outline' | 'outline-alt';
+    variant?: 'filled' | 'accent' | 'grey' | 'outline' | 'outline-alt';
 }
 
 const UPLOAD_TIMEOUT_MS = 90000;
@@ -128,7 +128,7 @@ const SimpleImageUpload = ({
     onUpload,
     buttonLabel = 'Upload image',
     className = '',
-    variant = 'green',
+    variant = 'accent',
 }: SimpleImageUploadProps) => {
     const [isUploading, setIsUploading] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');

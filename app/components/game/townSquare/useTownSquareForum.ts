@@ -2,18 +2,15 @@ import { useMemo } from 'react';
 import { useUserListGet } from '../../../../hooks/useUserListGet';
 import { useUserListRemove } from '../../../../hooks/useUserListRemove';
 import { useUserListSet } from '../../../../hooks/useUserListSet';
-import { useSharedListValue } from '../../../../hooks/useSharedListValue';
 import { useUndoRedo, createUndoSnapshot } from '../../../../hooks/useUndoRedo';
 import { useUserVariable } from '../../../../hooks/useUserVariable';
 import { PlayerProfile, TownSquareComment, TownSquarePost } from '../../../../types/multiplayer';
-import { UserTableItem } from '../../../../types/playerTable';
 import { createClientId, getGameScopedKey } from '../../../../utils/multiplayer';
 import {
     ComposerSubmitPayload,
     ReplyViewModel,
     buildReplyTree,
     getCommentBodyMarkdown,
-    getDisplayName,
     getPostBodyMarkdown,
     stripMarkdownSyntax,
     truncateText,
@@ -44,26 +41,10 @@ export const useTownSquareForum = ({ currentProfile, gameId, selectedPostId }: U
         returnTop: 500,
     });
 
-    const { value: userTable } = useSharedListValue<UserTableItem[]>({
-        defaultValue: [],
-        itemId: gameId,
-        key: 'userTable',
-    });
-
     const [readState, setReadState] = useUserVariable<Record<string, number>>({
         defaultValue: {},
         key: readStateKey,
     });
-
-    const realNameByUserId = useMemo(() => {
-        return userTable.reduce<Record<string, string>>((accumulator, user) => {
-            if (user.userId !== 'NOT-JOINED') {
-                accumulator[user.userId] = user.realName;
-            }
-
-            return accumulator;
-        }, {});
-    }, [userTable]);
 
     const replies = useMemo(() => {
         return [...(comments ?? [])]
@@ -74,13 +55,12 @@ export const useTownSquareForum = ({ currentProfile, gameId, selectedPostId }: U
 
                 return {
                     ...comment,
-                    authorDisplayName: getDisplayName(comment.authorInGameName, realNameByUserId[comment.authorUserId]),
                     bodyMarkdownResolved,
                     plainTextResolved,
                 } satisfies ReplyViewModel;
             })
             .sort((left, right) => left.createdAt - right.createdAt);
-    }, [comments, realNameByUserId]);
+    }, [comments]);
 
     const threads = useMemo(() => {
         return [...(posts ?? [])]
@@ -95,7 +75,6 @@ export const useTownSquareForum = ({ currentProfile, gameId, selectedPostId }: U
 
                 return {
                     ...post,
-                    authorDisplayName: getDisplayName(post.authorInGameName, realNameByUserId[post.authorUserId]),
                     bodyMarkdownResolved,
                     isUnread,
                     latestActivityAt: latestReplyAt,
@@ -105,7 +84,7 @@ export const useTownSquareForum = ({ currentProfile, gameId, selectedPostId }: U
                 };
             })
             .sort((left, right) => right.latestActivityAt - left.latestActivityAt);
-    }, [posts, readState.value, realNameByUserId, replies]);
+    }, [posts, readState.value, replies]);
 
     const selectedThread = useMemo(() => {
         return threads.find((thread) => thread.postId === selectedPostId) ?? null;
@@ -133,8 +112,6 @@ export const useTownSquareForum = ({ currentProfile, gameId, selectedPostId }: U
     const createThread = ({ markdown, plainText, title }: ComposerSubmitPayload) => {
         const postId = createClientId('post');
         const postValue: TownSquarePost = {
-            authorImageUrl: currentProfile.profileImageUrl,
-            authorInGameName: currentProfile.inGameName,
             authorUserId: currentProfile.userId,
             bodyMarkdown: markdown,
             createdAt: Date.now(),
@@ -151,7 +128,7 @@ export const useTownSquareForum = ({ currentProfile, gameId, selectedPostId }: U
                     itemId: postId,
                     key: postKey,
                     privacy: 'PUBLIC',
-                    searchKeys: ['title', 'plainText', 'markdown', 'authorInGameName'],
+                    searchKeys: ['title', 'plainText', 'markdown'],
                     sortKey: 'createdAt',
                     value: postValue,
                 });
@@ -184,8 +161,6 @@ export const useTownSquareForum = ({ currentProfile, gameId, selectedPostId }: U
             [postId]: Date.now(),
         });
         const commentValue: TownSquareComment = {
-            authorImageUrl: currentProfile.profileImageUrl,
-            authorInGameName: currentProfile.inGameName,
             authorUserId: currentProfile.userId,
             commentId,
             createdAt: Date.now(),
@@ -205,7 +180,7 @@ export const useTownSquareForum = ({ currentProfile, gameId, selectedPostId }: U
                     key: commentKey,
                     overwriteStoredConfig: true,
                     privacy: 'PUBLIC',
-                    searchKeys: ['plainText', 'markdown', 'authorInGameName'],
+                    searchKeys: ['plainText', 'markdown'],
                     sortKey: 'createdAt',
                     value: commentValue,
                 });
@@ -222,13 +197,182 @@ export const useTownSquareForum = ({ currentProfile, gameId, selectedPostId }: U
         });
     };
 
+    const updateThread = ({ markdown, plainText, postId, title }: ComposerSubmitPayload & { postId: string }) => {
+        const existingPost = posts?.find((record) => record.value.postId === postId)?.value;
+
+        if (!existingPost) {
+            return;
+        }
+
+        setPost({
+            itemId: postId,
+            key: postKey,
+            overwriteStoredConfig: true,
+            privacy: 'PUBLIC',
+            searchKeys: ['title', 'plainText', 'markdown'],
+            sortKey: 'createdAt',
+            value: {
+                ...existingPost,
+                bodyMarkdown: markdown,
+                markdown,
+                plainText,
+                title,
+            },
+        });
+    };
+
+    const updateReply = ({ commentId, markdown, plainText }: { commentId: string; markdown: string; plainText: string }) => {
+        const existingComment = comments?.find((record) => record.value.commentId === commentId)?.value;
+
+        if (!existingComment) {
+            return;
+        }
+
+        setComment({
+            filterKey: 'postId',
+            itemId: commentId,
+            key: commentKey,
+            overwriteStoredConfig: true,
+            privacy: 'PUBLIC',
+            searchKeys: ['plainText', 'markdown'],
+            sortKey: 'createdAt',
+            value: {
+                ...existingComment,
+                markdown,
+                plainText,
+            },
+        });
+    };
+
+    const getReplyCascadeIds = (commentId: string) => {
+        const childrenByParentId = (comments ?? []).reduce<Record<string, string[]>>((accumulator, record) => {
+            const parentId = record.value.parentCommentId;
+
+            if (!parentId) {
+                return accumulator;
+            }
+
+            if (!accumulator[parentId]) {
+                accumulator[parentId] = [];
+            }
+
+            accumulator[parentId].push(record.value.commentId);
+            return accumulator;
+        }, {});
+
+        const idsToDelete = new Set<string>();
+        const queue = [commentId];
+
+        while (queue.length > 0) {
+            const currentId = queue.shift();
+
+            if (!currentId || idsToDelete.has(currentId)) {
+                continue;
+            }
+
+            idsToDelete.add(currentId);
+            (childrenByParentId[currentId] ?? []).forEach((childId) => queue.push(childId));
+        }
+
+        return Array.from(idsToDelete);
+    };
+
+    const deleteThread = (postId: string) => {
+        const postRecord = posts?.find((record) => record.value.postId === postId);
+        const commentRecords = (comments ?? []).filter((record) => record.value.postId === postId);
+
+        if (!postRecord) {
+            return;
+        }
+
+        executeCommand({
+            action: () => {
+                removeUserListItem({
+                    itemId: postId,
+                    key: postKey,
+                });
+
+                commentRecords.forEach((record) => {
+                    removeUserListItem({
+                        itemId: record.value.commentId,
+                        key: commentKey,
+                    });
+                });
+            },
+            description: 'Delete Town Square Thread',
+            undoAction: () => {
+                setPost({
+                    itemId: postRecord.value.postId,
+                    key: postKey,
+                    overwriteStoredConfig: true,
+                    privacy: 'PUBLIC',
+                    searchKeys: ['title', 'plainText', 'markdown'],
+                    sortKey: 'createdAt',
+                    value: postRecord.value,
+                });
+
+                commentRecords.forEach((record) => {
+                    setComment({
+                        filterKey: 'postId',
+                        itemId: record.value.commentId,
+                        key: commentKey,
+                        overwriteStoredConfig: true,
+                        privacy: 'PUBLIC',
+                        searchKeys: ['plainText', 'markdown'],
+                        sortKey: 'createdAt',
+                        value: record.value,
+                    });
+                });
+            },
+        });
+    };
+
+    const deleteReply = (commentId: string) => {
+        const replyIdsToDelete = getReplyCascadeIds(commentId);
+        const commentRecords = (comments ?? []).filter((record) => replyIdsToDelete.includes(record.value.commentId));
+
+        if (commentRecords.length === 0) {
+            return;
+        }
+
+        executeCommand({
+            action: () => {
+                commentRecords.forEach((record) => {
+                    removeUserListItem({
+                        itemId: record.value.commentId,
+                        key: commentKey,
+                    });
+                });
+            },
+            description: 'Delete Town Square Reply',
+            undoAction: () => {
+                commentRecords.forEach((record) => {
+                    setComment({
+                        filterKey: 'postId',
+                        itemId: record.value.commentId,
+                        key: commentKey,
+                        overwriteStoredConfig: true,
+                        privacy: 'PUBLIC',
+                        searchKeys: ['plainText', 'markdown'],
+                        sortKey: 'createdAt',
+                        value: record.value,
+                    });
+                });
+            },
+        });
+    };
+
     return {
         createReply,
         createThread,
+        deleteReply,
+        deleteThread,
         markThreadRead,
         replies,
         selectedThread,
         selectedThreadReplyTree,
         threads,
+        updateReply,
+        updateThread,
     };
 };

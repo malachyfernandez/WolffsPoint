@@ -57,11 +57,11 @@ const JoinHandler = ({
     return (
         <>
             {doesGameExist ?
-                <AppButton variant="black" className="h-10 w-20" onPress={joinGame}>
+                <AppButton variant="filled" className="h-10 w-20" onPress={joinGame}>
                     <PoppinsText weight='medium' color='white'>{'Join'}</PoppinsText>
                 </AppButton>
                 
-                // <AppButton variant="black" className="h-10 w-20" onPress={() => onJoin(gameCode)}>
+                // <AppButton variant="filled" className="h-10 w-20" onPress={() => onJoin(gameCode)}>
                 //     <PoppinsText weight='medium' color='white'>{'Join'}</PoppinsText>
                 // </AppButton>
                 :

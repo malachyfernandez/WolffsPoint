@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Image, Pressable, View } from 'react-native';
+import { Pressable } from 'react-native';
 import { useUserListGet } from '../../../hooks/useUserListGet';
 import { useUserListSet } from '../../../hooks/useUserListSet';
 import { TownSquarePost } from '../../../types/multiplayer';
@@ -11,6 +11,7 @@ import AppButton from '../ui/buttons/AppButton';
 import MarkdownRenderer from '../ui/markdown/MarkdownRenderer';
 import MarkdownComposerDialog from './MarkdownComposerDialog';
 import TownSquarePostDialog from './TownSquarePostDialog';
+import { TownSquareAuthorAvatar, TownSquareAuthorName } from './townSquare/TownSquareAuthorIdentity';
 
 interface TownSquarePageOPERATORProps {
     gameId: string;
@@ -40,7 +41,7 @@ const TownSquarePageOPERATOR = ({ gameId, currentUserId }: TownSquarePageOPERATO
                     <PoppinsText weight='medium'>Town Square</PoppinsText>
                     <PoppinsText varient='subtext'>Markdown posts and comments for everyone in the game.</PoppinsText>
                 </Column>
-                <AppButton variant='black' className='w-36' onPress={() => setIsComposeDialogOpen(true)}>
+                <AppButton variant='accent' className='w-36' onPress={() => setIsComposeDialogOpen(true)}>
                     <PoppinsText weight='medium' color='white'>New post</PoppinsText>
                 </AppButton>
             </Row>
@@ -49,15 +50,9 @@ const TownSquarePageOPERATOR = ({ gameId, currentUserId }: TownSquarePageOPERATO
                     <Pressable key={post.value.postId} onPress={() => setSelectedPostId(post.value.postId)}>
                         <Column className='rounded-xl border border-subtle-border bg-white p-4' gap={3}>
                             <Row className='items-center gap-3'>
-                                {post.value.authorImageUrl ? (
-                                    <Image source={{ uri: post.value.authorImageUrl }} className='w-12 h-12 rounded-full border border-subtle-border bg-white' />
-                                ) : (
-                                    <View className='w-12 h-12 rounded-full border border-subtle-border bg-white items-center justify-center'>
-                                        <PoppinsText weight='medium'>{post.value.authorInGameName.slice(0, 1).toUpperCase()}</PoppinsText>
-                                    </View>
-                                )}
+                                <TownSquareAuthorAvatar gameId={post.value.gameId} size={48} userId={post.value.authorUserId} />
                                 <Column gap={0}>
-                                    <PoppinsText weight='medium'>{post.value.authorInGameName}</PoppinsText>
+                                    <TownSquareAuthorName gameId={post.value.gameId} userId={post.value.authorUserId} weight='medium' />
                                     <PoppinsText varient='subtext'>{new Date(post.value.createdAt).toLocaleString()}</PoppinsText>
                                 </Column>
                             </Row>
@@ -91,15 +86,13 @@ const TownSquarePageOPERATOR = ({ gameId, currentUserId }: TownSquarePageOPERATO
                             gameId,
                             postId,
                             authorUserId: currentUserId,
-                            authorInGameName: 'Game Operator',
-                            authorImageUrl: '',
                             bodyMarkdown: markdown,
                             markdown,
                             plainText,
                             createdAt: Date.now(),
                         },
                         privacy: 'PUBLIC',
-                        searchKeys: ['title', 'plainText', 'markdown', 'authorInGameName'],
+                        searchKeys: ['title', 'plainText', 'markdown'],
                         sortKey: 'createdAt',
                     });
                 }}

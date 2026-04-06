@@ -30,7 +30,7 @@ const TownSquareThreadListView = ({
                 <Column gap={1}>
                     <PoppinsText weight='bold' className='text-3xl leading-10'>Town Square</PoppinsText>
                 </Column>
-                <AppButton variant='green' className='w-36' onPress={onNewThread}>
+                <AppButton variant='accent' className='w-36' onPress={onNewThread}>
                     <PoppinsText weight='medium' color='white'>New thread</PoppinsText>
                 </AppButton>
             </Row>

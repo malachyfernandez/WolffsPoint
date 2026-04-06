@@ -26,6 +26,8 @@ import {
 
 interface TownSquareComposerDialogProps {
     includeTitle: boolean;
+    initialBody?: string;
+    initialTitle?: string;
     isOpen: boolean;
     onOpenChange: (open: boolean) => void;
     onSubmit: (payload: ComposerSubmitPayload) => void;
@@ -36,6 +38,8 @@ interface TownSquareComposerDialogProps {
 
 const TownSquareComposerDialog = ({
     includeTitle,
+    initialBody,
+    initialTitle,
     isOpen,
     onOpenChange,
     onSubmit,
@@ -55,13 +59,13 @@ const TownSquareComposerDialog = ({
             return;
         }
 
-        setDraftTitle('');
-        setDraftBody('');
+        setDraftTitle(initialTitle ?? '');
+        setDraftBody(initialBody ?? '');
         setSelection(emptySelection);
         setIsMoreDialogOpen(false);
         setIsLinkDialogOpen(false);
         setIsImageDialogOpen(false);
-    }, [isOpen]);
+    }, [initialBody, initialTitle, isOpen]);
 
     const canSubmit = includeTitle
         ? draftTitle.trim().length > 0 && draftBody.trim().length > 0
@@ -130,7 +134,7 @@ const TownSquareComposerDialog = ({
                                     <PoppinsText weight='medium'>Cancel</PoppinsText>
                                 </AppButton>
                                 <AppButton
-                                    variant='green'
+                                    variant='accent'
                                     className='w-40'
                                     disabled={!canSubmit}
                                     onPress={() => {

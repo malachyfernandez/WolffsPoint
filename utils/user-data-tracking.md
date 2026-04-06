@@ -95,8 +95,6 @@ type TownSquarePost = {
   gameId: string;
   postId: string;
   authorUserId: string;
-  authorInGameName: string;
-  authorImageUrl: string;
   markdown: string;
   title?: string;
   bodyMarkdown?: string;
@@ -114,8 +112,6 @@ type TownSquareComment = {
   postId: string;
   commentId: string;
   authorUserId: string;
-  authorInGameName: string;
-  authorImageUrl: string;
   markdown: string;
   bodyHtml?: string;
   plainText?: string;

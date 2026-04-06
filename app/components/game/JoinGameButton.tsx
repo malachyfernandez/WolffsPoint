@@ -31,7 +31,7 @@ const JoinGameButton = ({ onJoin }: JoinGameButtonProps) => {
         <View>
             <ConvexDialog.Root isOpen={isHeroDialogOpen} onOpenChange={setIsHeroDialogOpen}>
                 <ConvexDialog.Trigger asChild>
-                    <AppButton variant="green" className="h-12 w-40 shrink">
+                    <AppButton variant="accent" className="h-12 w-40 shrink">
                         <PoppinsText weight='medium' color="white">Join a Game</PoppinsText>
                     </AppButton>
                 </ConvexDialog.Trigger>

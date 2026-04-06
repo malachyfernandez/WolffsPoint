@@ -111,7 +111,7 @@ const PlayerDaysSection = ({ gameId, addNewDay }: PlayerDaysSectionProps) => {
                                     </AppButton>
                                 )
                             ))}
-                            <AppButton variant="green" className='max-w-6 min-w-6 max-h-6 ml-1 rounded-full' onPress={handleAddNewDay}>
+                            <AppButton variant="accent" className='max-w-6 min-w-6 max-h-6 ml-1 rounded-full' onPress={handleAddNewDay}>
                                 <PoppinsText weight="bold" className='text-white'>+</PoppinsText>
                             </AppButton>
                         </Row>

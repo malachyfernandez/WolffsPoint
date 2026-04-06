@@ -174,7 +174,7 @@ const ComprehensiveDaySelector = ({ gameId }: ComprehensiveDaySelectorProps) => 
                     className='px-1 m-0 h-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]'
                 >
                     <Row className='h-6' gap={1}>
-                        <AppButton variant="green" className='max-w-6 min-w-6 max-h-6 ml-1 rounded-full' onPress={handleAddNewDay}>
+                        <AppButton variant="accent" className='max-w-6 min-w-6 max-h-6 ml-1 rounded-full' onPress={handleAddNewDay}>
                             <PoppinsText weight="bold" className='text-white'>+</PoppinsText>
                         </AppButton>
                         {fixedDayDatesArray.slice().reverse().map((date, reverseIndex) => {

@@ -9,6 +9,7 @@ interface PoppinsTextInputProps extends TextInputProps {
     weight?: FontWeight;
     style?: TextStyle;
     autoGrow?: boolean;
+    varient?: 'default' | 'styled';
     onKeyDown?: React.KeyboardEventHandler<HTMLTextAreaElement>;
     onSubmitEditing?: (event: any) => void;
     submitBehavior?: 'submit' | 'newline';
@@ -19,6 +20,7 @@ const PoppinsTextInput = ({
     weight = 'regular',
     style,
     autoGrow = false,
+    varient = 'default',
     onChangeText,
     value,
     placeholder,
@@ -51,6 +53,15 @@ const PoppinsTextInput = ({
                 return 'Poppins-Bold';
             default:
                 return 'Poppins-Regular';
+        }
+    };
+
+    const getVariantClasses = () => {
+        switch (varient) {
+            case 'styled':
+                return 'border-b-2 border-text/50 px-2 bg-text/5';
+            default:
+                return '';
         }
     };
 
@@ -95,7 +106,7 @@ const PoppinsTextInput = ({
                     }
                 }}
                 rows={1}
-                className={`${className} focus:outline-none rounded resize-none overflow-hidden`}
+                className={`${className} ${getVariantClasses()} focus:outline-none rounded resize-none overflow-hidden`}
                 style={{ fontFamily: fontsLoaded ? getFontFamily() : undefined, ...(style as React.CSSProperties), minHeight: 44 }}
             />
         );
@@ -103,9 +114,9 @@ const PoppinsTextInput = ({
 
     return (
         <TextInput
-            className={`${className} focus:outline-none rounded`}
+            className={`${className} ${getVariantClasses()} focus:outline-none rounded`}
             style={{ fontFamily: fontsLoaded ? getFontFamily() : undefined, color: 'text', ...style }}
-            placeholderTextColor="#9CA3AF"
+            placeholderTextColor="rgb(0 0 0 / 0.3)"
             value={value}
             placeholder={placeholder}
             onChangeText={onChangeText}

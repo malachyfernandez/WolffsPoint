@@ -10,7 +10,7 @@ interface DisableableButtonProps {
     disabledText: string;
     onPress: () => void;
     className?: string;
-    enabledVariant?: 'black' | 'green' | 'grey' | 'outline' | 'outline-alt';
+    enabledVariant?: 'filled' | 'grey' | 'outline' | 'outline-alt' | 'accent';
 }
 
 const DisableableButton = ({
@@ -19,15 +19,15 @@ const DisableableButton = ({
     disabledText,
     onPress,
     className = '',
-    enabledVariant = 'black',
+    enabledVariant = 'filled',
 }: DisableableButtonProps) => {
     return isEnabled ? (
         <AppButton 
-            className={`w-32 h-10 ${className}`} 
+            className={`w-32 h-12 ${className}`} 
             variant={enabledVariant} 
             onPress={onPress}
         >
-            <PoppinsText color={enabledVariant === 'outline' ? 'black' : 'white'} weight='medium'>
+            <PoppinsText color={enabledVariant === 'outline' || enabledVariant === 'outline-alt' ? 'black' : 'white'} weight='medium'>
                 {enabledText}
             </PoppinsText>
         </AppButton>
@@ -35,7 +35,7 @@ const DisableableButton = ({
         <StatusButton 
             buttonText={enabledText}
             buttonAltText={disabledText}
-            className={`w-32 h-10 ${className}`}
+            className={`w-32 h-12 ${className}`}
         />
     );
 };
