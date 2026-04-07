@@ -133,7 +133,7 @@ const TownSquareComposerDialog = ({
                             <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 h-[40vh] max-h-[40vh]">
                                 <Tabs.Content value="editing" className='flex-1 '>
                                     <Column gap={1}>
-                                        <PoppinsText weight='medium'>Composer</PoppinsText>
+                                        {/* <PoppinsText weight='medium'>Composer</PoppinsText> */}
                                         <TownSquareComposerToolbar
                                             onBold={() => runBodyUpdate((value, range) => wrapSelection(value, range, '**', '**', 'bold text'))}
                                             onImage={() => setIsImageDialogOpen(true)}
@@ -154,11 +154,16 @@ const TownSquareComposerDialog = ({
                                 </Tabs.Content>
 
                                 <Tabs.Content value="preview" className='flex-1'>
-                                    <TownSquareComposerPreviewPane
-                                        includeTitle={includeTitle}
-                                        markdown={draftBody}
-                                        title={draftTitle}
-                                    />
+                                    <ScrollShadow LinearGradientComponent={LinearGradient} className='flex-1'>
+                                        <ScrollView className='h-[40vh] max-h-[40vh] rounded-[24px] py-4'>
+                                            <TownSquareComposerPreviewPane
+                                                includeTitle={includeTitle}
+                                                markdown={draftBody}
+                                                title={draftTitle}
+                                            />
+                                        </ScrollView>
+                                    </ScrollShadow>
+
                                 </Tabs.Content>
                             </Tabs>
 

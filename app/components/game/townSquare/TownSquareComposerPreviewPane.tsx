@@ -15,7 +15,7 @@ interface TownSquareComposerPreviewPaneProps {
 const TownSquareComposerPreviewPane = ({ includeTitle, markdown, title }: TownSquareComposerPreviewPaneProps) => {
     return (
         <Column className='flex-1 min-w-0' gap={2}>
-            <PoppinsText weight='medium'>Preview</PoppinsText>
+            {/* <PoppinsText weight='medium'>Preview</PoppinsText> */}
             <ScrollShadow LinearGradientComponent={LinearGradient} className='h-[52vh] flex-1'>
                 <ScrollView className='h-[52vh] flex-1 rounded-[24px] border border-subtle-border px-4 py-4'>
                     <Column gap={3}>

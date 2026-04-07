@@ -27,7 +27,7 @@ const TownSquareToolbarButton = ({
         <TouchableOpacity
             activeOpacity={disabled ? 1 : 0.8}
             className={[
-                'h-12 min-w-12 items-center justify-center border-y-2 border-border px-4',
+                'h-12 min-w-12 items-center justify-center border-y-2 border-border px-4 hover:bg-text/5',
                 isFirst ? 'rounded-l-2xl border-l-2' : 'border-l-0',
                 isLast ? 'rounded-r-2xl border-r-2' : 'border-r-0',
                 isActive ? 'bg-accent/10' : '',
