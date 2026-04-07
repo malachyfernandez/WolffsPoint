@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View } from 'react-native';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
@@ -35,6 +35,15 @@ const EditInfoDialog = ({
     // Auto-fill with Clerk data initially, but allow custom overrides
     const [name, setName] = useState(customUserInfo.name || clerkData.name || '');
     const [photoUrl, setPhotoUrl] = useState(customUserInfo.photoUrl || '');
+
+    useEffect(() => {
+        if (!isOpen) {
+            return;
+        }
+
+        setName(customUserInfo.name || clerkData.name || '');
+        setPhotoUrl(customUserInfo.photoUrl || '');
+    }, [clerkData.name, customUserInfo.name, customUserInfo.photoUrl, isOpen]);
 
     const handleSave = () => {
         const updatedInfo: CustomUserInfo = {

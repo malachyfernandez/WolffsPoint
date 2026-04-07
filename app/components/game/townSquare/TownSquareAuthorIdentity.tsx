@@ -5,6 +5,11 @@ import { getGameScopedKey } from '../../../../utils/multiplayer';
 import PoppinsText from '../../ui/text/PoppinsText';
 import TownSquareAvatar from './TownSquareAvatar';
 
+type PublicCustomUserInfo = {
+    name?: string;
+    photoUrl?: string;
+};
+
 type PublicUserData = {
     email?: string;
     name?: string;
@@ -37,12 +42,18 @@ export const useTownSquareAuthorIdentity = ({ gameId, userId }: { gameId: string
         returnTop: 1,
         userIds: [userId],
     });
+    const customUserInfos = useUserVariableGet<PublicCustomUserInfo>({
+        key: 'customUserInfo',
+        returnTop: 1,
+        userIds: [userId],
+    });
 
     return useMemo(() => {
         const profile = playerProfiles?.[0]?.value;
+        const customUserInfo = customUserInfos?.[0]?.value;
         const userData = userDatas?.[0]?.value;
         const inGameName = profile?.inGameName?.trim() || '';
-        const realName = userData?.name?.trim() || '';
+        const realName = customUserInfo?.name?.trim() || userData?.name?.trim() || '';
         const email = userData?.email?.trim() || '';
         const displayName = inGameName
             ? realName && realName !== inGameName
@@ -55,10 +66,10 @@ export const useTownSquareAuthorIdentity = ({ gameId, userId }: { gameId: string
             displayName,
             fallbackInitials: getInitials(fallbackLabel),
             fallbackLabel,
-            imageUrl: profile?.profileImageUrl?.trim() || '',
+            imageUrl: profile?.profileImageUrl?.trim() || customUserInfo?.photoUrl?.trim() || '',
             inGameName,
         };
-    }, [playerProfiles, userDatas]);
+    }, [customUserInfos, playerProfiles, userDatas]);
 };
 
 interface TownSquareAuthorNameProps {
