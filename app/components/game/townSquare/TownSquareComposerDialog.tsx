@@ -13,7 +13,7 @@ import PoppinsTextInput from '../../ui/forms/PoppinsTextInput';
 import TownSquareComposerEditorPane from './TownSquareComposerEditorPane';
 import TownSquareComposerPreviewPane from './TownSquareComposerPreviewPane';
 import TownSquareComposerToolbar from './TownSquareComposerToolbar';
-import TownSquareImageDialog from './TownSquareImageDialog';
+import ImageUploadDialog from '../../ui/dialog/ImageUploadDialog';
 import TownSquareLinkDialog from './TownSquareLinkDialog';
 import TownSquareMoreOptionsDialog from './TownSquareMoreOptionsDialog';
 import {
@@ -209,10 +209,10 @@ const TownSquareComposerDialog = ({
                 selectedText={selectedText}
             />
 
-            <TownSquareImageDialog
+            <ImageUploadDialog
                 isOpen={isImageDialogOpen}
-                onInsert={(caption, url) => runBodyUpdate((value, range) => insertMarkdownImage(value, range, caption, url))}
                 onOpenChange={setIsImageDialogOpen}
+                onImageSelect={(imageUrl) => runBodyUpdate((value, range) => insertMarkdownImage(value, range, '', imageUrl))}
             />
         </>
     );

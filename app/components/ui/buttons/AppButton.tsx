@@ -111,7 +111,7 @@ const AppButton = ({
         pressedStyles = 'brightness-100';
     } else if (variant === 'accent') {
         const bg = 'bg-accent';
-        extraStyles = `${bg} group hover:brightness-125 active:brightness-50`;
+        extraStyles = `${bg} group hover:bg-accent-hover active:brightness-75`;
     } else if (variant === 'filled') {
         const bg = 'bg-text';
         extraStyles = `${bg} group hover:brightness-150 active:brightness-50`;

@@ -41,7 +41,7 @@ const TownSquareReplyBranch = ({
 
                 return (
                     <Column key={node.commentId} gap={3} style={{ marginLeft: depth * 24 }}>
-                        <Row className='items-start gap-3 border-l border-border/25 pl-4'>
+                        <Row className='items-start gap-3 border-l-[1px] border-border/25 pl-4'>
                             <TownSquareAuthorAvatar gameId={node.gameId} size={42} userId={node.authorUserId} />
                             <Column className='flex-1' gap={2}>
                                 <Row className='items-center justify-between gap-3'>

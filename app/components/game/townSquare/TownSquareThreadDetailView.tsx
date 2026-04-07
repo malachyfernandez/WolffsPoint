@@ -86,7 +86,6 @@ const TownSquareThreadDetailView = ({
                         <Column gap={4}>
                             <Row className='items-center justify-between'>
                                 <PoppinsText weight='medium' className='text-2xl'>Replies</PoppinsText>
-                                <PoppinsText varient='subtext'>Nested branches open only where needed.</PoppinsText>
                             </Row>
 
                             {replyTree.length > 0 ? (

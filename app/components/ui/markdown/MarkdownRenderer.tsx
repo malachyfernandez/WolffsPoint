@@ -1,5 +1,11 @@
-import React, { useMemo } from 'react';
-import { Text, View, Image } from 'react-native';
+import React, { useEffect, useMemo, useState } from 'react';
+import {
+    Image,
+    LayoutChangeEvent,
+    Text,
+    View,
+    useWindowDimensions,
+} from 'react-native';
 import Column from '../../layout/Column';
 import Row from '../../layout/Row';
 import PoppinsText from '../text/PoppinsText';
@@ -18,6 +24,79 @@ type MarkdownBlock =
     | { type: 'rule' }
     | { type: 'space' }
     | { type: 'image'; alt: string; url: string };
+
+const MarkdownImage = ({ url, alt }: { url: string; alt: string }) => {
+    const { height: windowHeight } = useWindowDimensions();
+    const [containerWidth, setContainerWidth] = useState(0);
+    const [naturalSize, setNaturalSize] = useState<{ width: number; height: number } | null>(null);
+
+    useEffect(() => {
+        let isMounted = true;
+        const image = new window.Image();
+
+        image.onload = () => {
+            if (!isMounted) {
+                return;
+            }
+
+            if (image.naturalWidth && image.naturalHeight) {
+                setNaturalSize({
+                    width: image.naturalWidth,
+                    height: image.naturalHeight,
+                });
+            }
+        };
+
+        image.src = url;
+
+        return () => {
+            isMounted = false;
+        };
+    }, [url]);
+
+    const maxImageHeight = windowHeight * 0.5;
+    const availableWidth = Math.max(containerWidth - 24, 0);
+
+    let imageWidth = availableWidth || undefined;
+    let imageHeight = maxImageHeight;
+
+    if (naturalSize && availableWidth > 0) {
+        const scale = Math.min(
+            1,
+            availableWidth / naturalSize.width,
+            maxImageHeight / naturalSize.height,
+        );
+
+        imageWidth = naturalSize.width * scale;
+        imageHeight = naturalSize.height * scale;
+    }
+
+    return (
+        <View key={url} className='my-4 w-full'>
+            <View
+                className='w-full items-center justify-center rounded-lg border border-border px-3 py-3'
+                onLayout={(event: LayoutChangeEvent) => {
+                    setContainerWidth(event.nativeEvent.layout.width);
+                }}
+            >
+                <Image
+                    source={{ uri: url }}
+                    style={{
+                        width: imageWidth,
+                        height: imageHeight,
+                        maxWidth: '100%',
+                    }}
+                    resizeMode='contain'
+                />
+            </View>
+            {alt && alt !== 'IMAGE1' && (
+                <PoppinsText className='mt-2 text-center text-muted' style={{ fontSize: 12 }}>
+                    {alt}
+                </PoppinsText>
+            )}
+        </View>
+    );
+};
 
 const renderInlineMarkdown = (text: string, keyPrefix: string) => {
     return text
@@ -57,7 +136,8 @@ const renderInlineMarkdown = (text: string, keyPrefix: string) => {
                         <Image
                             key={`${keyPrefix}-image-${index}`}
                             source={{ uri: urlMatch[1] }}
-                            style={{ width: '100%', height: 200, resizeMode: 'cover' }}
+                            style={{ width: '100%', height: 200 }}
+                            resizeMode='contain'
                             className="rounded-lg my-2"
                         />
                     );
@@ -226,18 +306,7 @@ const MarkdownRenderer = ({ markdown, className = '', textAlign = 'left' }: Mark
 
                 if (block.type === 'image') {
                     return (
-                        <View key={`image-${index}`} className='my-4'>
-                            <Image
-                                source={{ uri: block.url }}
-                                style={{ width: '100%', height: 200, resizeMode: 'cover' }}
-                                className='rounded-lg'
-                            />
-                            {block.alt && block.alt !== 'IMAGE1' && (
-                                <PoppinsText className='text-center mt-2 text-muted' style={{ fontSize: 12 }}>
-                                    {block.alt}
-                                </PoppinsText>
-                            )}
-                        </View>
+                        <MarkdownImage key={`image-${index}`} url={block.url} alt={block.alt} />
                     );
                 }
 
