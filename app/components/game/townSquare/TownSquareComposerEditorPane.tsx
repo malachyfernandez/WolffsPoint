@@ -12,16 +12,17 @@ interface TownSquareComposerEditorPaneProps {
 
 const TownSquareComposerEditorPane = ({ onBodyChange, onSelectionChange, value }: TownSquareComposerEditorPaneProps) => {
     return (
-        <Column className='flex-1 min-w-0' gap={2}>
-            <PoppinsText weight='medium'>Body</PoppinsText>
+        <Column className='min-w-0' gap={2}>
+            {/* <PoppinsText weight='medium'>Body</PoppinsText> */}
             <TextInput
                 multiline={true}
-                className='h-[52vh] w-full rounded-[24px] border border-subtle-border px-4 py-4 text-base text-text'
+                className='min-h-[50vh] min-w-0 rounded-[24px] bg-text/10 overflow-hidden p-4 text-base text-text'
                 onChangeText={onBodyChange}
                 onSelectionChange={(event) => onSelectionChange(event.nativeEvent.selection)}
                 placeholder='Write the thread the way you want it to look.'
-                scrollEnabled={true}
-                style={{ lineHeight: 24, textAlignVertical: 'top' }}
+                placeholderTextColor='#0004'
+                scrollEnabled={false}
+                style={{ lineHeight: 24, textAlignVertical: 'top', height: Math.max(120, value.split('\n').length * 24 + 32) }}
                 value={value}
             />
         </Column>

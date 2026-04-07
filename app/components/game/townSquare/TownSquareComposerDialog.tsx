@@ -1,5 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { View } from 'react-native';
+import { ScrollView, View } from 'react-native';
+import { Tabs } from 'heroui-native';
+import { ScrollShadow } from 'heroui-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import ConvexDialog from '../../ui/dialog/ConvexDialog';
 import DialogHeader from '../../ui/dialog/DialogHeader';
 import Column from '../../layout/Column';
@@ -47,6 +50,7 @@ const TownSquareComposerDialog = ({
     targetLabel,
     title,
 }: TownSquareComposerDialogProps) => {
+    const [activeTab, setActiveTab] = useState('editing');
     const [draftTitle, setDraftTitle] = useState('');
     const [draftBody, setDraftBody] = useState('');
     const [selection, setSelection] = useState<SelectionRange>(emptySelection);
@@ -59,6 +63,7 @@ const TownSquareComposerDialog = ({
             return;
         }
 
+        setActiveTab('editing');
         setDraftTitle(initialTitle ?? '');
         setDraftBody(initialBody ?? '');
         setSelection(emptySelection);
@@ -89,10 +94,10 @@ const TownSquareComposerDialog = ({
                 </ConvexDialog.Trigger>
                 <ConvexDialog.Portal>
                     <ConvexDialog.Overlay />
-                    <ConvexDialog.Content className='h-[88vh] max-w-6xl p-1'>
+                    <ConvexDialog.Content className='max-w-6xl p-1'>
                         <ConvexDialog.Close iconProps={{ color: 'rgb(246, 238, 219)' }} className='absolute right-4 top-4 z-10 h-10 w-10 bg-accent-hover' />
                         <DialogHeader text={title} subtext={targetLabel} />
-                        <Column className='flex-1 p-5' gap={4}>
+                        <Column className='flex-1 pt-5 max-h-[80vh]  h-[80vh]' gap={4}>
                             {includeTitle ? (
                                 <Column gap={1}>
                                     <PoppinsText weight='medium'>Thread title</PoppinsText>
@@ -105,29 +110,57 @@ const TownSquareComposerDialog = ({
                                 </Column>
                             ) : null}
 
-                            <Column gap={1}>
-                                <PoppinsText weight='medium'>Composer</PoppinsText>
-                                <TownSquareComposerToolbar
-                                    onBold={() => runBodyUpdate((value, range) => wrapSelection(value, range, '**', '**', 'bold text'))}
-                                    onImage={() => setIsImageDialogOpen(true)}
-                                    onItalic={() => runBodyUpdate((value, range) => wrapSelection(value, range, '*', '*', 'italic text'))}
-                                    onLink={() => setIsLinkDialogOpen(true)}
-                                    onMore={() => setIsMoreDialogOpen(true)}
-                                />
-                            </Column>
+                            <Tabs value={activeTab} onValueChange={setActiveTab} variant="secondary" className="flex-1 grow-0 pb-10">
+                                <Tabs.List>
+                                    <Tabs.Indicator />
+                                    <Tabs.Trigger value="editing">
+                                        {({ isSelected }) => (
+                                            <Tabs.Label className={isSelected ? 'text-black font-medium' : 'text-gray-500'}>
+                                                Editing
+                                            </Tabs.Label>
+                                        )}
+                                    </Tabs.Trigger>
+                                    <Tabs.Trigger value="preview">
+                                        {({ isSelected }) => (
+                                            <Tabs.Label className={isSelected ? 'text-black font-medium' : 'text-gray-500'}>
+                                                Preview
+                                            </Tabs.Label>
+                                        )}
+                                    </Tabs.Trigger>
+                                </Tabs.List>
+                            </Tabs>
 
-                            <Row className='flex-1 items-start gap-5'>
-                                <TownSquareComposerEditorPane
-                                    onBodyChange={setDraftBody}
-                                    onSelectionChange={setSelection}
-                                    value={draftBody}
-                                />
-                                <TownSquareComposerPreviewPane
-                                    includeTitle={includeTitle}
-                                    markdown={draftBody}
-                                    title={draftTitle}
-                                />
-                            </Row>
+                            <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 h-[40vh] max-h-[40vh]">
+                                <Tabs.Content value="editing" className='flex-1 '>
+                                    <Column gap={1}>
+                                        <PoppinsText weight='medium'>Composer</PoppinsText>
+                                        <TownSquareComposerToolbar
+                                            onBold={() => runBodyUpdate((value, range) => wrapSelection(value, range, '**', '**', 'bold text'))}
+                                            onImage={() => setIsImageDialogOpen(true)}
+                                            onItalic={() => runBodyUpdate((value, range) => wrapSelection(value, range, '*', '*', 'italic text'))}
+                                            onLink={() => setIsLinkDialogOpen(true)}
+                                            onMore={() => setIsMoreDialogOpen(true)}
+                                        />
+                                    </Column>
+                                    <ScrollShadow LinearGradientComponent={LinearGradient} className='flex-1'>
+                                        <ScrollView className='flex-1 rounded-[24px] py-4'>
+                                            <TownSquareComposerEditorPane
+                                                onBodyChange={setDraftBody}
+                                                onSelectionChange={setSelection}
+                                                value={draftBody}
+                                            />
+                                        </ScrollView>
+                                    </ScrollShadow>
+                                </Tabs.Content>
+
+                                <Tabs.Content value="preview" className='flex-1'>
+                                    <TownSquareComposerPreviewPane
+                                        includeTitle={includeTitle}
+                                        markdown={draftBody}
+                                        title={draftTitle}
+                                    />
+                                </Tabs.Content>
+                            </Tabs>
 
                             <Row className='justify-end gap-3 pt-1'>
                                 <AppButton variant='outline' className='w-32' onPress={() => onOpenChange(false)}>
