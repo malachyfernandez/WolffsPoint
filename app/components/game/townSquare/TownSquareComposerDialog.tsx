@@ -213,6 +213,7 @@ const TownSquareComposerDialog = ({
                 isOpen={isImageDialogOpen}
                 onOpenChange={setIsImageDialogOpen}
                 onImageSelect={(imageUrl) => runBodyUpdate((value, range) => insertMarkdownImage(value, range, '', imageUrl))}
+                key={isImageDialogOpen ? 'open' : 'closed'}
             />
         </>
     );

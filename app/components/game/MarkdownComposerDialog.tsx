@@ -65,7 +65,7 @@ const MarkdownComposerDialog = ({ isOpen, onOpenChange, title, submitLabel, init
                             <PoppinsText weight='medium'>Cancel</PoppinsText>
                         </AppButton>
                         <AppButton
-                            variant='black'
+                            variant='filled'
                             className='w-40'
                             onPress={() => {
                                 if (!canSubmit) return;

@@ -55,7 +55,7 @@ const MarkdownImage = ({ url, alt }: { url: string; alt: string }) => {
     }, [url]);
 
     const maxImageHeight = windowHeight * 0.5;
-    const availableWidth = Math.max(containerWidth - 24, 0);
+    const availableWidth = Math.max(containerWidth, 0);
 
     let imageWidth = availableWidth || undefined;
     let imageHeight = maxImageHeight;
@@ -74,7 +74,7 @@ const MarkdownImage = ({ url, alt }: { url: string; alt: string }) => {
     return (
         <View key={url} className='my-4 w-full'>
             <View
-                className='w-full items-center justify-center rounded-lg border border-border px-3 py-3'
+                className='w-full items-center justify-center rounded-lg border border-border'
                 onLayout={(event: LayoutChangeEvent) => {
                     setContainerWidth(event.nativeEvent.layout.width);
                 }}

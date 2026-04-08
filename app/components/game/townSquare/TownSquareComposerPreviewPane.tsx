@@ -30,7 +30,7 @@ const TownSquareComposerPreviewPane = ({ includeTitle, markdown, title }: TownSq
                         ) : (
                             <Column className='py-12' gap={1}>
                                 <PoppinsText weight='medium'>Nothing to preview yet</PoppinsText>
-                                <PoppinsText varient='subtext'>Start typing on the left to see the rendered thread.</PoppinsText>
+                                <PoppinsText varient='subtext'>Start typing in the Editing tab.</PoppinsText>
                             </Column>
                         )}
                     </Column>
