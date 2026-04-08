@@ -45,16 +45,6 @@ const RoleTable = ({ gameId, doSync, setDoSync, isBeingEdited, setIsBeingEdited,
         setDoSync(false);
     }, [doSync]);
 
-    const setRoleName = (roleIndex: number, newRoleName: string) => {
-        const updatedRoles = [...roles];
-        if (roleIndex >= 0 && roleIndex < updatedRoles.length) {
-            updatedRoles[roleIndex] = {
-                ...updatedRoles[roleIndex],
-                role: newRoleName
-            };
-            setRoleTable(updatedRoles);
-        }
-    };
 
     const UNDOABLEsetRoleName = (roleIndex: number, newRoleName: string) => {
         const previousRoleTable = createUndoSnapshot(roleTable?.value ?? []);
@@ -73,16 +63,6 @@ const RoleTable = ({ gameId, doSync, setDoSync, isBeingEdited, setIsBeingEdited,
         });
     };
 
-    const setDoesRoleVote = (roleIndex: number, newDoesRoleVote: boolean) => {
-        const updatedRoles = [...roles];
-        if (roleIndex >= 0 && roleIndex < updatedRoles.length) {
-            updatedRoles[roleIndex] = {
-                ...updatedRoles[roleIndex],
-                doesRoleVote: newDoesRoleVote
-            };
-            setRoleTable(updatedRoles);
-        }
-    };
 
     const UNDOABLEsetDoesRoleVote = (roleIndex: number, newDoesRoleVote: boolean) => {
         const previousRoleTable = createUndoSnapshot(roleTable?.value ?? []);
@@ -101,27 +81,7 @@ const RoleTable = ({ gameId, doSync, setDoSync, isBeingEdited, setIsBeingEdited,
         });
     };
 
-    const setRoleMessage = (roleIndex: number, newRoleMessage: string) => {
-        const updatedRoles = [...roles];
-        if (roleIndex >= 0 && roleIndex < updatedRoles.length) {
-            updatedRoles[roleIndex] = {
-                ...updatedRoles[roleIndex],
-                roleMessage: newRoleMessage
-            };
-            setRoleTable(updatedRoles);
-        }
-    };
 
-    const setAboutRole = (roleIndex: number, newAboutRole: string) => {
-        const updatedRoles = [...roles];
-        if (roleIndex >= 0 && roleIndex < updatedRoles.length) {
-            updatedRoles[roleIndex] = {
-                ...updatedRoles[roleIndex],
-                aboutRole: newAboutRole
-            };
-            setRoleTable(updatedRoles);
-        }
-    };
 
     const UNDOABLEsetRoleMessage = (roleIndex: number, newRoleMessage: string) => {
         const previousRoleTable = createUndoSnapshot(roleTable?.value ?? []);
@@ -157,47 +117,8 @@ const RoleTable = ({ gameId, doSync, setDoSync, isBeingEdited, setIsBeingEdited,
         });
     };
 
-    const addRole = () => {
-        const newRole: RoleTableItem = {
-            role: "New Role",
-            doesRoleVote: false,
-            roleMessage: "",
-            aboutRole: "",
-            isVisible: true
-        };
-        setRoleTable([...roles, newRole]);
-    };
 
-    const UNDOABLEaddRole = () => {
-        const previousRoleTable = createUndoSnapshot(roleTable?.value ?? []);
-        const nextRoleTable = [
-            ...createUndoSnapshot(previousRoleTable),
-            {
-                role: "New Role",
-                doesRoleVote: false,
-                roleMessage: "",
-                aboutRole: "",
-                isVisible: true
-            }
-        ];
 
-        executeCommand({
-            action: () => setRoleTable(createUndoSnapshot(nextRoleTable)),
-            undoAction: () => setRoleTable(createUndoSnapshot(previousRoleTable)),
-            description: "Add Role"
-        });
-    };
-
-    const deleteRole = (roleIndex: number) => {
-        const updatedRoles = [...roles];
-        if (roleIndex >= 0 && roleIndex < updatedRoles.length) {
-            updatedRoles[roleIndex] = {
-                ...updatedRoles[roleIndex],
-                isVisible: false
-            };
-            setRoleTable(updatedRoles);
-        }
-    };
 
     const UNDOABLEdeleteRole = (roleIndex: number) => {
         const previousRoleTable = createUndoSnapshot(roleTable?.value ?? []);

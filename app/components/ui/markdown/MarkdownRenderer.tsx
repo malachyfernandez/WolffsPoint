@@ -14,6 +14,8 @@ interface MarkdownRendererProps {
     markdown: string;
     className?: string;
     textAlign?: 'left' | 'center' | 'justify';
+    viewHeightImages?: number; // percentage of window height for images
+    removeImageBorders?: boolean; // remove borders around images
 }
 
 type MarkdownBlock =
@@ -25,7 +27,7 @@ type MarkdownBlock =
     | { type: 'space' }
     | { type: 'image'; alt: string; url: string };
 
-const MarkdownImage = ({ url, alt }: { url: string; alt: string }) => {
+const MarkdownImage = ({ url, alt, viewHeightImages, removeImageBorders }: { url: string; alt: string; viewHeightImages?: number; removeImageBorders?: boolean }) => {
     const { height: windowHeight } = useWindowDimensions();
     const [containerWidth, setContainerWidth] = useState(0);
     const [naturalSize, setNaturalSize] = useState<{ width: number; height: number } | null>(null);
@@ -54,7 +56,7 @@ const MarkdownImage = ({ url, alt }: { url: string; alt: string }) => {
         };
     }, [url]);
 
-    const maxImageHeight = windowHeight * 0.5;
+    const maxImageHeight = windowHeight * ((viewHeightImages || 50) / 100);
     const availableWidth = Math.max(containerWidth, 0);
 
     let imageWidth = availableWidth || undefined;
@@ -72,9 +74,9 @@ const MarkdownImage = ({ url, alt }: { url: string; alt: string }) => {
     }
 
     return (
-        <View key={url} className='my-4 w-full'>
+        <View key={url} className='my-0 w-full'>
             <View
-                className='w-full items-center justify-center rounded-lg border border-border'
+                className={`w-full items-center justify-center ${removeImageBorders === false ? 'rounded-lg border border-border' : ''}`}
                 onLayout={(event: LayoutChangeEvent) => {
                     setContainerWidth(event.nativeEvent.layout.width);
                 }}
@@ -241,7 +243,7 @@ const parseMarkdown = (markdown: string): MarkdownBlock[] => {
     return blocks;
 };
 
-const MarkdownRenderer = ({ markdown, className = '', textAlign = 'left' }: MarkdownRendererProps) => {
+const MarkdownRenderer = ({ markdown, className = '', textAlign = 'left', viewHeightImages, removeImageBorders }: MarkdownRendererProps) => {
     const blocks = useMemo(() => parseMarkdown(markdown || ''), [markdown]);
 
     return (
@@ -268,7 +270,7 @@ const MarkdownRenderer = ({ markdown, className = '', textAlign = 'left' }: Mark
                             key={`heading-${index}`}
                             weight='bold'
                             className={sizeClassName}
-                            style={{ textAlign: 'left' }}
+                            style={{ textAlign }}
                         >
                             {renderInlineMarkdown(block.text, `heading-${index}`)}
                         </PoppinsText>
@@ -306,7 +308,7 @@ const MarkdownRenderer = ({ markdown, className = '', textAlign = 'left' }: Mark
 
                 if (block.type === 'image') {
                     return (
-                        <MarkdownImage key={`image-${index}`} url={block.url} alt={block.alt} />
+                        <MarkdownImage key={`image-${index}`} url={block.url} alt={block.alt} viewHeightImages={viewHeightImages} removeImageBorders={removeImageBorders} />
                     );
                 }
 

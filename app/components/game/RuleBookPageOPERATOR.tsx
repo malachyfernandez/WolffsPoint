@@ -1,14 +1,13 @@
 import React, { useState } from 'react';
-import { Pressable, ScrollView } from 'react-native';
+import { Pressable } from 'react-native';
 import Column from '../layout/Column';
-import Row from '../layout/Row';
 import PoppinsText from '../ui/text/PoppinsText';
 import MarkdownRenderer from '../ui/markdown/MarkdownRenderer';
 import { useUserVariable } from '../../../hooks/useUserVariable';
-import { useUserList } from '../../../hooks/useUserList';
 import { getGameScopedKey } from '../../../utils/multiplayer';
 import TableMarkdownDialog from './TableMarkdownDialog';
-import { RoleTableItem } from '../../../types/roleTable';
+import RuleBookRoleDescriptions from './RuleBookRoleDescriptions';
+import { RuleBookData } from '../../../types/ruleBook';
 
 interface RuleBookPageOPERATORProps {
     gameId: string;
@@ -16,20 +15,11 @@ interface RuleBookPageOPERATORProps {
 
 const RuleBookPageOPERATOR = ({ gameId }: RuleBookPageOPERATORProps) => {
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-    const [ruleBookMarkdown, setRuleBookMarkdown] = useUserVariable<string>({
+    const [ruleBookData, setRuleBookData] = useUserVariable<RuleBookData>({
         key: getGameScopedKey('ruleBook', gameId),
-        defaultValue: '',
+        defaultValue: { content: '', roleOrder: [] },
         privacy: 'PUBLIC',
     });
-
-    const [roleTable] = useUserList<RoleTableItem[]>({
-        key: "roleTable",
-        itemId: gameId,
-        privacy: "PUBLIC",
-    });
-
-    const roles = roleTable?.value ?? [];
-    const visibleRoles = roles.filter(role => role.isVisible !== false && role.aboutRole && role.aboutRole.trim().length > 0);
 
     return (
         <Column gap={4}>
@@ -39,39 +29,26 @@ const RuleBookPageOPERATOR = ({ gameId }: RuleBookPageOPERATORProps) => {
                     onPress={() => setIsEditDialogOpen(true)}
                     className='flex-1'
                 >
-                    {ruleBookMarkdown.value.trim().length > 0 ? (
-                        <MarkdownRenderer markdown={ruleBookMarkdown.value} />
+                    {ruleBookData?.value?.content?.trim()?.length > 0 ? (
+                        <MarkdownRenderer markdown={ruleBookData.value.content} />
                     ) : (
                         <PoppinsText varient='subtext'>No rule book written yet. Tap to edit.</PoppinsText>
                     )}
                 </Pressable>
             </Column>
             
-            {visibleRoles.length > 0 && (
-                <Column gap={2}>
-                    <PoppinsText weight='bold' className='text-xl'>Role Descriptions</PoppinsText>
-                    <ScrollView className='max-h-[400px]'>
-                        <Column gap={4}>
-                            {visibleRoles.map((role, index) => (
-                                <Column key={index} className='gap-2'>
-                                    <PoppinsText weight='bold' className='text-lg'>
-                                        {role.role}
-                                    </PoppinsText>
-                                    <MarkdownRenderer markdown={role.aboutRole} />
-                                </Column>
-                            ))}
-                        </Column>
-                    </ScrollView>
-                </Column>
-            )}
+            <RuleBookRoleDescriptions gameId={gameId} />
             
             <TableMarkdownDialog
                 isOpen={isEditDialogOpen}
                 onOpenChange={setIsEditDialogOpen}
                 title="Rule Book"
                 submitLabel="Save Rule Book"
-                initialMarkdown={ruleBookMarkdown.value}
-                onSubmit={(markdown) => setRuleBookMarkdown(markdown)}
+                initialMarkdown={ruleBookData?.value?.content || ''}
+                onSubmit={(markdown) => setRuleBookData({
+                    ...(ruleBookData?.value || { content: '', roleOrder: [] }),
+                    content: markdown
+                })}
             />
         </Column>
     );

@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
-import PoppinsText from '../ui/text/PoppinsText';
-import { useUserList } from 'hooks/useUserList';
-import Column from '../layout/Column';
-import RoleTable from './RoleTable';
-import { RoleTableItem } from 'types/roleTable';
-import AppButton from '../ui/buttons/AppButton';
-import Row from '../layout/Row';
-import { ScrollShadow } from 'heroui-native';
+import { ScrollView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ScrollView, View } from 'react-native';
+import { ScrollShadow } from 'heroui-native';
+import Column from '../layout/Column';
+import Row from '../layout/Row';
+import RoleTable from './RoleTable';
+import AppButton from '../ui/buttons/AppButton';
+import PoppinsText from '../ui/text/PoppinsText';
+import { useUserList } from '../../../hooks/useUserList';
+import { useUndoRedo, useCreateUndoSnapshot } from '../../../hooks/useUndoRedo';
+import { getGameScopedKey } from '../../../utils/multiplayer';
+import { RoleTableItem } from '../../../types/roleTable';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 
 interface ConfigPageOPERATORProps {
@@ -17,6 +19,9 @@ interface ConfigPageOPERATORProps {
 }
 
 const ConfigPageOPERATOR = ({ currentUserId, gameId }: ConfigPageOPERATORProps) => {
+    const { executeCommand } = useUndoRedo();
+    const createUndoSnapshot = useCreateUndoSnapshot();
+    
     const [roleTable, setRoleTable] = useUserList<RoleTableItem[]>({
         key: "roleTable",
         itemId: gameId,
@@ -35,11 +40,25 @@ const ConfigPageOPERATOR = ({ currentUserId, gameId }: ConfigPageOPERATORProps) 
         const newRole: RoleTableItem = {
             role: "New Role",
             doesRoleVote: false,
-            roleMessage: "",
+            roleMessage: "Unset role message",
+            aboutRole: "## NEW ROLE - No description set",
             isVisible: true
         };
         setRoleTable([...roles, newRole]);
         setDoSync(true);
+    };
+
+    const UNDOABLEaddRole = () => {
+        const previousRoleTable = createUndoSnapshot(roleTable?.value ?? []);
+        
+        executeCommand({
+            action: addRole,
+            undoAction: () => {
+                setRoleTable(previousRoleTable);
+                setDoSync(true);
+            },
+            description: "Add Role"
+        });
     };
 
     return (
@@ -69,7 +88,7 @@ const ConfigPageOPERATOR = ({ currentUserId, gameId }: ConfigPageOPERATORProps) 
                                 </Row>
                             </ScrollView>
                         </ScrollShadow>
-                        <AppButton variant="filled" className='w-40 h-8 ml-4 -mt-6' onPress={addRole}>
+                        <AppButton variant="filled" className='w-40 h-8 ml-4 -mt-6' onPress={UNDOABLEaddRole}>
                             <PoppinsText weight='bold' className='text-white text-xl'>+</PoppinsText>
                             <PoppinsText weight='bold' className='text-white'>Add Role</PoppinsText>
                         </AppButton>
@@ -77,7 +96,7 @@ const ConfigPageOPERATOR = ({ currentUserId, gameId }: ConfigPageOPERATORProps) 
 
                 ) : (
                     <Row className='items-center justify-center'>
-                        <AppButton variant="filled" className='w-40 h-8' onPress={addRole}>
+                        <AppButton variant="filled" className='w-40 h-8' onPress={UNDOABLEaddRole}>
                             <PoppinsText weight='bold' className='text-white text-xl'>+</PoppinsText>
                             <PoppinsText weight='bold' className='text-white'>Add Role</PoppinsText>
                         </AppButton>
