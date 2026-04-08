@@ -1,5 +1,6 @@
 import React from 'react';
 import { Pressable } from 'react-native';
+import { ChevronRight } from 'lucide-react-native';
 import Column from '../../layout/Column';
 import Row from '../../layout/Row';
 import PoppinsText from '../../ui/text/PoppinsText';
@@ -31,6 +32,7 @@ const TownSquareThreadListItem = ({ index, isLast, onPress, thread }: TownSquare
                         {`${thread.replyCount} repl${thread.replyCount === 1 ? 'y' : 'ies'}`}
                     </PoppinsText>
                 </Column>
+                <ChevronRight size={20} color="#666" className="mt-8" />
             </Row>
         </Pressable>
     );

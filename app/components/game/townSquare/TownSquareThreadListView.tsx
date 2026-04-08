@@ -37,8 +37,7 @@ const TownSquareThreadListView = ({
 
             <Column className='flex-1' gap={3}>
                 <Row className='items-center justify-between border-b border-border/20 pb-3'>
-                    <PoppinsText weight='medium'>Discussion index</PoppinsText>
-                    <PoppinsText varient='subtext'>{`${threads.length} thread${threads.length === 1 ? '' : 's'}`}</PoppinsText>
+                                        <PoppinsText varient='subtext'>{`${threads.length} thread${threads.length === 1 ? '' : 's'}`}</PoppinsText>
                 </Row>
 
                 <ScrollShadow LinearGradientComponent={LinearGradient} className='flex-1'>
