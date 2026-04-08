@@ -6,7 +6,7 @@ import Row from '../layout/Row';
 import CustomCheckbox from '../ui/CustomCheckbox';
 import AppButton from '../ui/buttons/AppButton';
 import { Pressable, Text } from 'react-native';
-import VoteMessageDialog from './VoteMessageDialog';
+import TableMarkdownDialog from './TableMarkdownDialog';
 import { RoleTableItem } from 'types/roleTable';
 
 interface RoleRowProps {
@@ -16,15 +16,17 @@ interface RoleRowProps {
     setRoleName: (roleIndex: number, newRoleName: string) => void;
     setDoesRoleVote: (roleIndex: number, newDoesRoleVote: boolean) => void;
     setRoleMessage: (roleIndex: number, newRoleMessage: string) => void;
+    setAboutRole: (roleIndex: number, newAboutRole: string) => void;
     onDeleteRole: (roleIndex: number) => void;
     onEditStart?: () => void;
     onEditEnd?: () => void;
     isEditing?: boolean;
 }
 
-const RoleRow = ({ role, index, isLast, setRoleName, setDoesRoleVote, setRoleMessage, onDeleteRole, onEditStart, onEditEnd, isEditing }: RoleRowProps) => {
+const RoleRow = ({ role, index, isLast, setRoleName, setDoesRoleVote, setRoleMessage, setAboutRole, onDeleteRole, onEditStart, onEditEnd, isEditing }: RoleRowProps) => {
     const [editingCell, setEditingCell] = useState<string | null>(null);
-    const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [isRoleMessageDialogOpen, setIsRoleMessageDialogOpen] = useState(false);
+    const [isAboutRoleDialogOpen, setIsAboutRoleDialogOpen] = useState(false);
 
     const toggleDoesRoleVote = () => {
         const newDoesRoleVote = !role.doesRoleVote;
@@ -59,8 +61,8 @@ const RoleRow = ({ role, index, isLast, setRoleName, setDoesRoleVote, setRoleMes
                 <Column className='w-24 h-full border border-subtle-border items-center justify-center'>
                     <CustomCheckbox checked={role.doesRoleVote} onChange={toggleDoesRoleVote} />
                 </Column>
-                <Column className={`w-64 h-full border border-subtle-border items-center justify-center ${isLast ? 'rounded-br-lg' : ''}`}>
-                    <Pressable onPress={() => setIsDialogOpen(true)} className='w-60 h-full items-center justify-center'>
+                <Column className={`w-64 h-full border border-subtle-border items-center justify-center`}>
+                    <Pressable onPress={() => setIsRoleMessageDialogOpen(true)} className='w-60 h-full items-center justify-center'>
                         <PoppinsText 
                             weight='medium' 
                             className='text-center text-nowrap overflow-hidden w-60'
@@ -69,8 +71,28 @@ const RoleRow = ({ role, index, isLast, setRoleName, setDoesRoleVote, setRoleMes
                                 textDecorationStyle: 'dotted',
                             }}
                         >
-                            {role.roleMessage || (
+                            {role.roleMessage ? (
+                                <PoppinsText className="text-center">{role.roleMessage.slice(0, 30)}{role.roleMessage.length > 30 ? '...' : ''}</PoppinsText>
+                            ) : (
                                 <PoppinsText className="opacity-50">Role message...</PoppinsText>
+                            )}
+                        </PoppinsText>
+                    </Pressable>
+                </Column>
+                <Column className={`w-64 h-full border border-subtle-border items-center justify-center ${isLast ? 'rounded-br-lg' : ''}`}>
+                    <Pressable onPress={() => setIsAboutRoleDialogOpen(true)} className='w-full h-full items-center justify-center'>
+                        <PoppinsText 
+                            weight='medium' 
+                            className='text-center text-nowrap overflow-hidden w-60'
+                            style={{
+                                textDecorationLine: 'underline',
+                                textDecorationStyle: 'dotted',
+                            }}
+                        >
+                            {role.aboutRole ? (
+                                <PoppinsText className="text-center">{role.aboutRole.slice(0, 30)}{role.aboutRole.length > 30 ? '...' : ''}</PoppinsText>
+                            ) : (
+                                <PoppinsText className="opacity-50">About role...</PoppinsText>
                             )}
                         </PoppinsText>
                     </Pressable>
@@ -81,14 +103,21 @@ const RoleRow = ({ role, index, isLast, setRoleName, setDoesRoleVote, setRoleMes
                     </AppButton>
                 </Column>
             </Row>
-            <VoteMessageDialog
-                isOpen={isDialogOpen}
-                onOpenChange={setIsDialogOpen}
-                roleIndex={index}
-                roleName={role.role || 'Role'}
-                currentMessage={role.roleMessage}
-                onPress={() => setIsDialogOpen(true)}
-                setRoleMessage={setRoleMessage}
+            <TableMarkdownDialog
+                isOpen={isRoleMessageDialogOpen}
+                onOpenChange={setIsRoleMessageDialogOpen}
+                title={`${role.role || 'Role'} Role Message`}
+                submitLabel="Save Message"
+                initialMarkdown={role.roleMessage}
+                onSubmit={(markdown) => setRoleMessage(index, markdown)}
+            />
+            <TableMarkdownDialog
+                isOpen={isAboutRoleDialogOpen}
+                onOpenChange={setIsAboutRoleDialogOpen}
+                title={`About ${role.role || 'Role'}`}
+                submitLabel="Save About"
+                initialMarkdown={role.aboutRole}
+                onSubmit={(markdown) => setAboutRole(index, markdown)}
             />
         </>
     );

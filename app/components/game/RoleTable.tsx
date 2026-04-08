@@ -112,6 +112,17 @@ const RoleTable = ({ gameId, doSync, setDoSync, isBeingEdited, setIsBeingEdited,
         }
     };
 
+    const setAboutRole = (roleIndex: number, newAboutRole: string) => {
+        const updatedRoles = [...roles];
+        if (roleIndex >= 0 && roleIndex < updatedRoles.length) {
+            updatedRoles[roleIndex] = {
+                ...updatedRoles[roleIndex],
+                aboutRole: newAboutRole
+            };
+            setRoleTable(updatedRoles);
+        }
+    };
+
     const UNDOABLEsetRoleMessage = (roleIndex: number, newRoleMessage: string) => {
         const previousRoleTable = createUndoSnapshot(roleTable?.value ?? []);
         if (roleIndex < 0 || roleIndex >= previousRoleTable.length) return;
@@ -129,11 +140,29 @@ const RoleTable = ({ gameId, doSync, setDoSync, isBeingEdited, setIsBeingEdited,
         });
     };
 
+    const UNDOABLEsetAboutRole = (roleIndex: number, newAboutRole: string) => {
+        const previousRoleTable = createUndoSnapshot(roleTable?.value ?? []);
+        if (roleIndex < 0 || roleIndex >= previousRoleTable.length) return;
+
+        const nextRoleTable = createUndoSnapshot(previousRoleTable);
+        nextRoleTable[roleIndex] = {
+            ...nextRoleTable[roleIndex],
+            aboutRole: newAboutRole
+        };
+
+        executeCommand({
+            action: () => setRoleTable(createUndoSnapshot(nextRoleTable)),
+            undoAction: () => setRoleTable(createUndoSnapshot(previousRoleTable)),
+            description: "Set About Role"
+        });
+    };
+
     const addRole = () => {
         const newRole: RoleTableItem = {
             role: "New Role",
             doesRoleVote: false,
             roleMessage: "",
+            aboutRole: "",
             isVisible: true
         };
         setRoleTable([...roles, newRole]);
@@ -147,6 +176,7 @@ const RoleTable = ({ gameId, doSync, setDoSync, isBeingEdited, setIsBeingEdited,
                 role: "New Role",
                 doesRoleVote: false,
                 roleMessage: "",
+                aboutRole: "",
                 isVisible: true
             }
         ];
@@ -201,6 +231,9 @@ const RoleTable = ({ gameId, doSync, setDoSync, isBeingEdited, setIsBeingEdited,
                         <Column className='w-64 h-full items-center justify-center'>
                             <PoppinsText weight='medium' className='text-center'>Role Message</PoppinsText>
                         </Column>
+                        <Column className='w-64 h-full items-center justify-center'>
+                            <PoppinsText weight='medium' className='text-center'>About Role</PoppinsText>
+                        </Column>
                         {/* <Column className='w-12 h-full items-center justify-center'> */}
                             
                         {/* </Column> */}
@@ -218,6 +251,7 @@ const RoleTable = ({ gameId, doSync, setDoSync, isBeingEdited, setIsBeingEdited,
                                 setRoleName={UNDOABLEsetRoleName}
                                 setDoesRoleVote={UNDOABLEsetDoesRoleVote}
                                 setRoleMessage={UNDOABLEsetRoleMessage}
+                                setAboutRole={UNDOABLEsetAboutRole}
                                 onDeleteRole={UNDOABLEdeleteRole}
                                 onEditStart={() => handleRowEditStart(actualIndex)}
                                 onEditEnd={handleRowEditEnd}
