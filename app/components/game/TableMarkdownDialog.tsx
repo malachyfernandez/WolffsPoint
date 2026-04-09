@@ -17,6 +17,7 @@ import TownSquareComposerPreviewPane from './townSquare/TownSquareComposerPrevie
 import ImageUploadDialog from '../ui/dialog/ImageUploadDialog';
 import TownSquareLinkDialog from './townSquare/TownSquareLinkDialog';
 import TownSquareMoreOptionsDialog from './townSquare/TownSquareMoreOptionsDialog';
+import { useUndoRedo, useCreateUndoSnapshot } from '../../../hooks/useUndoRedo';
 import {
     SelectionRange,
     applyMoreComposerAction,
@@ -37,8 +38,12 @@ interface TableMarkdownDialogProps {
 }
 
 const TableMarkdownDialog = ({ isOpen, onOpenChange, title, submitLabel, initialMarkdown = '', onSubmit }: TableMarkdownDialogProps) => {
+    const { executeCommand } = useUndoRedo();
+    const createUndoSnapshot = useCreateUndoSnapshot();
+    
     const [activeTab, setActiveTab] = useState('editing');
     const [draftBody, setDraftBody] = useState('');
+    const [editingStartText, setEditingStartText] = useState('');
     const [selection, setSelection] = useState<SelectionRange>(emptySelection);
     const [isMoreDialogOpen, setIsMoreDialogOpen] = useState(false);
     const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false);
@@ -51,11 +56,32 @@ const TableMarkdownDialog = ({ isOpen, onOpenChange, title, submitLabel, initial
 
         setActiveTab('editing');
         setDraftBody(initialMarkdown ?? '');
+        setEditingStartText(initialMarkdown ?? ''); // Set initial editing start text
         setSelection(emptySelection);
         setIsMoreDialogOpen(false);
         setIsLinkDialogOpen(false);
         setIsImageDialogOpen(false);
     }, [initialMarkdown, isOpen]);
+
+    // Handle tab changes for undo/redo tracking
+    const handleTabChange = (newTab: string) => {
+        if (activeTab === 'editing' && newTab === 'preview') {
+            // Switching from editing to preview - create undo/redo snapshot
+            const previousText = createUndoSnapshot(editingStartText);
+            const currentText = createUndoSnapshot(draftBody);
+            
+            executeCommand({
+                action: () => setDraftBody(currentText),
+                undoAction: () => setDraftBody(previousText),
+                description: "Edit markdown"
+            });
+        } else if (activeTab === 'preview' && newTab === 'editing') {
+            // Switching from preview to editing - set new editing start state
+            setEditingStartText(draftBody);
+        }
+        
+        setActiveTab(newTab);
+    };
 
     const canSubmit = draftBody.trim().length > 0;
 
@@ -81,7 +107,7 @@ const TableMarkdownDialog = ({ isOpen, onOpenChange, title, submitLabel, initial
                         <ConvexDialog.Close iconProps={{ color: 'rgb(246, 238, 219)' }} className="absolute right-4 top-4 z-10 h-10 w-10 bg-accent-hover" />
                         <DialogHeader text={title} />
                         <Column className='flex-1 pt-5 max-h-[80vh]  h-[80vh]' gap={4}>
-                            <Tabs value={activeTab} onValueChange={setActiveTab} variant="secondary" className="flex-1 grow-0 pb-10">
+                            <Tabs value={activeTab} onValueChange={handleTabChange} variant="secondary" className="flex-1 grow-0 pb-10">
                                 <Tabs.List>
                                     <Tabs.Indicator />
                                     <Tabs.Trigger value="editing">
@@ -101,7 +127,7 @@ const TableMarkdownDialog = ({ isOpen, onOpenChange, title, submitLabel, initial
                                 </Tabs.List>
                             </Tabs>
 
-                            <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 h-[40vh] max-h-[40vh]">
+                            <Tabs value={activeTab} onValueChange={handleTabChange} className="flex-1 h-[40vh] max-h-[40vh]">
                                 <Tabs.Content value="editing" className='flex-1 '>
                                     <Column gap={1}>
                                         <TownSquareComposerToolbar
