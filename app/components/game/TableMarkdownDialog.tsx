@@ -1,13 +1,15 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { ScrollView, View } from 'react-native';
+import { ScrollView, View, Pressable } from 'react-native';
 import { Tabs } from 'heroui-native';
 import { ScrollShadow } from 'heroui-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import ConvexDialog from '../ui/dialog/ConvexDialog';
 import DialogHeader from '../ui/dialog/DialogHeader';
+import UnsavedChangesDialog from '../ui/dialog/UnsavedChangesDialog';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
 import AppButton from '../ui/buttons/AppButton';
+import DisableableButton from '../ui/buttons/DisableableButton';
 import PoppinsText from '../ui/text/PoppinsText';
 import PoppinsTextInput from '../ui/forms/PoppinsTextInput';
 import MarkdownRenderer from '../ui/markdown/MarkdownRenderer';
@@ -48,6 +50,8 @@ const TableMarkdownDialog = ({ isOpen, onOpenChange, title, submitLabel, initial
     const [isMoreDialogOpen, setIsMoreDialogOpen] = useState(false);
     const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false);
     const [isImageDialogOpen, setIsImageDialogOpen] = useState(false);
+    const [isLeaveConfirmDialogOpen, setIsLeaveConfirmDialogOpen] = useState(false);
+    const [pendingClose, setPendingClose] = useState(false);
 
     useEffect(() => {
         if (!isOpen) {
@@ -61,6 +65,8 @@ const TableMarkdownDialog = ({ isOpen, onOpenChange, title, submitLabel, initial
         setIsMoreDialogOpen(false);
         setIsLinkDialogOpen(false);
         setIsImageDialogOpen(false);
+        setIsLeaveConfirmDialogOpen(false);
+        setPendingClose(false);
     }, [initialMarkdown, isOpen]);
 
     // Handle tab changes for undo/redo tracking
@@ -83,7 +89,28 @@ const TableMarkdownDialog = ({ isOpen, onOpenChange, title, submitLabel, initial
         setActiveTab(newTab);
     };
 
-    const canSubmit = draftBody.trim().length > 0;
+    const canSubmit = draftBody.trim() !== (initialMarkdown?.trim() || '');
+    const hasUnsavedChanges = canSubmit;
+
+    const handleAttemptClose = () => {
+        if (hasUnsavedChanges) {
+            setIsLeaveConfirmDialogOpen(true);
+            setPendingClose(true);
+        } else {
+            onOpenChange(false);
+        }
+    };
+
+    const handleConfirmLeave = () => {
+        setIsLeaveConfirmDialogOpen(false);
+        setPendingClose(false);
+        onOpenChange(false);
+    };
+
+    const handleCancelLeave = () => {
+        setIsLeaveConfirmDialogOpen(false);
+        setPendingClose(false);
+    };
 
     const selectedText = useMemo(() => {
         return draftBody.slice(selection.start, selection.end);
@@ -104,7 +131,9 @@ const TableMarkdownDialog = ({ isOpen, onOpenChange, title, submitLabel, initial
                 <ConvexDialog.Portal>
                     <ConvexDialog.Overlay />
                     <ConvexDialog.Content className='max-w-6xl p-1'>
-                        <ConvexDialog.Close iconProps={{ color: 'rgb(246, 238, 219)' }} className="absolute right-4 top-4 z-10 h-10 w-10 bg-accent-hover" />
+                        <Pressable onPress={handleAttemptClose} className="absolute right-4 top-4 z-10 h-10 w-10 bg-accent-hover rounded-full items-center justify-center">
+                    <PoppinsText color='rgb(246, 238, 219)' weight='bold' className='text-xl'>×</PoppinsText>
+                </Pressable>
                         <DialogHeader text={title} />
                         <Column className='flex-1 pt-5 max-h-[80vh]  h-[80vh]' gap={4}>
                             <Tabs value={activeTab} onValueChange={handleTabChange} variant="secondary" className="flex-1 grow-0 pb-10">
@@ -164,24 +193,20 @@ const TableMarkdownDialog = ({ isOpen, onOpenChange, title, submitLabel, initial
                             </Tabs>
 
                             <Row className='justify-end gap-3 pt-1'>
-                                <AppButton variant='outline' className='w-32' onPress={() => onOpenChange(false)}>
+                                <AppButton variant='outline' className='w-32' onPress={handleAttemptClose}>
                                     <PoppinsText weight='medium'>Cancel</PoppinsText>
                                 </AppButton>
-                                <AppButton
-                                    variant='accent'
+                                <DisableableButton
+                                    isEnabled={canSubmit}
+                                    enabledText={submitLabel}
+                                    disabledText={"No Changes"}
+                                    enabledVariant='filled'
                                     className='w-40'
-                                    disabled={!canSubmit}
                                     onPress={() => {
-                                        if (!canSubmit) {
-                                            return;
-                                        }
-
                                         onSubmit(draftBody.trim());
                                         onOpenChange(false);
                                     }}
-                                >
-                                    <PoppinsText weight='medium' color='white'>{submitLabel}</PoppinsText>
-                                </AppButton>
+                                />
                             </Row>
                         </Column>
                     </ConvexDialog.Content>
@@ -206,6 +231,13 @@ const TableMarkdownDialog = ({ isOpen, onOpenChange, title, submitLabel, initial
                 onOpenChange={setIsImageDialogOpen}
                 onImageSelect={(imageUrl) => runBodyUpdate((value, range) => insertMarkdownImage(value, range, '', imageUrl))}
                 key={isImageDialogOpen ? 'open' : 'closed'}
+            />
+
+            <UnsavedChangesDialog
+                isOpen={isLeaveConfirmDialogOpen}
+                onOpenChange={setIsLeaveConfirmDialogOpen}
+                onStay={handleCancelLeave}
+                onLeave={handleConfirmLeave}
             />
         </>
     );
