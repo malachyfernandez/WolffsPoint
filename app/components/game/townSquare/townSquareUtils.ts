@@ -155,6 +155,15 @@ export const insertMarkdownImage = (
     return insertAtSelection(value, selection, `\n\n![${caption}](${url})\n\n`);
 };
 
+export const insertMarkdownInput = (
+    value: string,
+    selection: SelectionRange,
+    label: string,
+    inputType: string,
+) => {
+    return insertAtSelection(value, selection, `\n\n/["${label}":${inputType}]/\n\n`);
+};
+
 export const applyMoreComposerAction = (
     value: string,
     selection: SelectionRange,

@@ -12,11 +12,15 @@ import AppButton from '../ui/buttons/AppButton';
 import DisableableButton from '../ui/buttons/DisableableButton';
 import PoppinsText from '../ui/text/PoppinsText';
 import PoppinsTextInput from '../ui/forms/PoppinsTextInput';
-import MarkdownRenderer from '../ui/markdown/MarkdownRenderer';
+import { useUserList } from '../../../hooks/useUserList';
+import { RoleTableItem } from '../../../types/roleTable';
+import { UserTableItem } from '../../../types/playerTable';
+import { MarkdownRendererInputDataProvider } from '../ui/markdown/MarkdownRenderer';
 import TownSquareComposerToolbar from './townSquare/TownSquareComposerToolbar';
 import TownSquareComposerEditorPane from './townSquare/TownSquareComposerEditorPane';
 import TownSquareComposerPreviewPane from './townSquare/TownSquareComposerPreviewPane';
 import ImageUploadDialog from '../ui/dialog/ImageUploadDialog';
+import MarkdownInputBuilderDialog from './MarkdownInputBuilderDialog';
 import TownSquareLinkDialog from './townSquare/TownSquareLinkDialog';
 import TownSquareMoreOptionsDialog from './townSquare/TownSquareMoreOptionsDialog';
 import { useUndoRedo, useCreateUndoSnapshot } from '../../../hooks/useUndoRedo';
@@ -25,6 +29,7 @@ import {
     applyMoreComposerAction,
     emptySelection,
     insertMarkdownImage,
+    insertMarkdownInput,
     insertMarkdownLink,
     stripMarkdownSyntax,
     wrapSelection,
@@ -37,11 +42,23 @@ interface TableMarkdownDialogProps {
     submitLabel: string;
     initialMarkdown?: string;
     onSubmit: (markdown: string) => void;
+    gameId?: string;
+    showInputs?: boolean;
 }
 
-const TableMarkdownDialog = ({ isOpen, onOpenChange, title, submitLabel, initialMarkdown = '', onSubmit }: TableMarkdownDialogProps) => {
+const TableMarkdownDialog = ({ isOpen, onOpenChange, title, submitLabel, initialMarkdown = '', onSubmit, gameId, showInputs = false }: TableMarkdownDialogProps) => {
     const { executeCommand } = useUndoRedo();
     const createUndoSnapshot = useCreateUndoSnapshot();
+    const [userTable] = useUserList<UserTableItem[]>({
+        key: 'userTable',
+        itemId: gameId || '__table_markdown_dialog_no_game__',
+        privacy: 'PUBLIC',
+    });
+    const [roleTable] = useUserList<RoleTableItem[]>({
+        key: 'roleTable',
+        itemId: gameId || '__table_markdown_dialog_no_game__',
+        privacy: 'PUBLIC',
+    });
     
     const [activeTab, setActiveTab] = useState('editing');
     const [draftBody, setDraftBody] = useState('');
@@ -50,7 +67,9 @@ const TableMarkdownDialog = ({ isOpen, onOpenChange, title, submitLabel, initial
     const [isMoreDialogOpen, setIsMoreDialogOpen] = useState(false);
     const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false);
     const [isImageDialogOpen, setIsImageDialogOpen] = useState(false);
+    const [isInputDialogOpen, setIsInputDialogOpen] = useState(false);
     const [isLeaveConfirmDialogOpen, setIsLeaveConfirmDialogOpen] = useState(false);
+    const [previewInputState, setPreviewInputState] = useState<Record<string, string | undefined>>({});
     const [pendingClose, setPendingClose] = useState(false);
 
     useEffect(() => {
@@ -65,7 +84,9 @@ const TableMarkdownDialog = ({ isOpen, onOpenChange, title, submitLabel, initial
         setIsMoreDialogOpen(false);
         setIsLinkDialogOpen(false);
         setIsImageDialogOpen(false);
+        setIsInputDialogOpen(false);
         setIsLeaveConfirmDialogOpen(false);
+        setPreviewInputState({});
         setPendingClose(false);
     }, [initialMarkdown, isOpen]);
 
@@ -122,6 +143,33 @@ const TableMarkdownDialog = ({ isOpen, onOpenChange, title, submitLabel, initial
         setSelection(result.selection);
     };
 
+    const playerOptions = useMemo(() => {
+        if (!showInputs) {
+            return [];
+        }
+
+        return (userTable?.value ?? []).map((user) => ({
+            value: user.realName,
+            label: `${user.realName}${user.playerData.livingState === 'dead' ? ' (dead)' : ''}`,
+            meta: {
+                livingState: user.playerData.livingState,
+            },
+        }));
+    }, [showInputs, userTable?.value]);
+
+    const roleOptions = useMemo(() => {
+        if (!showInputs) {
+            return [];
+        }
+
+        return (roleTable?.value ?? [])
+            .filter((role) => role.role.trim().length > 0 && role.isVisible !== false)
+            .map((role) => ({
+                value: role.role,
+                label: role.role,
+            }));
+    }, [roleTable?.value, showInputs]);
+
     return (
         <>
             <ConvexDialog.Root isOpen={isOpen} onOpenChange={onOpenChange}>
@@ -161,10 +209,12 @@ const TableMarkdownDialog = ({ isOpen, onOpenChange, title, submitLabel, initial
                                     <Column gap={1}>
                                         <TownSquareComposerToolbar
                                             onBold={() => runBodyUpdate((value, range) => wrapSelection(value, range, '**', '**', 'bold text'))}
+                                            onInput={() => setIsInputDialogOpen(true)}
                                             onImage={() => setIsImageDialogOpen(true)}
                                             onItalic={() => runBodyUpdate((value, range) => wrapSelection(value, range, '*', '*', 'italic text'))}
                                             onLink={() => setIsLinkDialogOpen(true)}
                                             onMore={() => setIsMoreDialogOpen(true)}
+                                            showInputs={showInputs}
                                         />
                                     </Column>
                                     <ScrollShadow LinearGradientComponent={LinearGradient} className='flex-1'>
@@ -181,11 +231,15 @@ const TableMarkdownDialog = ({ isOpen, onOpenChange, title, submitLabel, initial
                                 <Tabs.Content value="preview" className='flex-1'>
                                     <ScrollShadow LinearGradientComponent={LinearGradient} className='flex-1'>
                                         <ScrollView className='h-[40vh] max-h-[40vh] rounded-[24px] py-4'>
-                                            <TownSquareComposerPreviewPane
-                                                includeTitle={false}
-                                                markdown={draftBody}
-                                                title={''}
-                                            />
+                                            <MarkdownRendererInputDataProvider playerOptions={playerOptions} roleOptions={roleOptions}>
+                                                <TownSquareComposerPreviewPane
+                                                    includeTitle={false}
+                                                    markdown={draftBody}
+                                                    markdownInputState={previewInputState}
+                                                    setMarkdownInputState={setPreviewInputState}
+                                                    title={''}
+                                                />
+                                            </MarkdownRendererInputDataProvider>
                                         </ScrollView>
                                     </ScrollShadow>
 
@@ -232,6 +286,15 @@ const TableMarkdownDialog = ({ isOpen, onOpenChange, title, submitLabel, initial
                 onImageSelect={(imageUrl) => runBodyUpdate((value, range) => insertMarkdownImage(value, range, '', imageUrl))}
                 key={isImageDialogOpen ? 'open' : 'closed'}
             />
+
+            <MarkdownRendererInputDataProvider playerOptions={playerOptions} roleOptions={roleOptions}>
+                <MarkdownInputBuilderDialog
+                    isOpen={isInputDialogOpen}
+                    onInsert={(label, inputType) => runBodyUpdate((value, range) => insertMarkdownInput(value, range, label, inputType))}
+                    onOpenChange={setIsInputDialogOpen}
+                    selectedText={selectedText}
+                />
+            </MarkdownRendererInputDataProvider>
 
             <UnsavedChangesDialog
                 isOpen={isLeaveConfirmDialogOpen}

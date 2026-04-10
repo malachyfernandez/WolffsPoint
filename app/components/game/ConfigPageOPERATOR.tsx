@@ -82,6 +82,7 @@ const ConfigPageOPERATOR = ({ currentUserId, gameId }: ConfigPageOPERATORProps) 
                                                 setDoSync={setDoSync}
                                                 isBeingEdited={isRoleTableBeingEdited}
                                                 setIsBeingEdited={setIsRoleTableBeingEdited}
+                                                showInputs={true}
                                             />
                                         </Row>
                                     </Column>

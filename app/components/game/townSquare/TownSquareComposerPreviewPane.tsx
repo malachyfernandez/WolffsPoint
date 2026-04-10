@@ -9,10 +9,12 @@ import PoppinsText from '../../ui/text/PoppinsText';
 interface TownSquareComposerPreviewPaneProps {
     includeTitle: boolean;
     markdown: string;
+    markdownInputState?: Record<string, string | undefined>;
+    setMarkdownInputState?: (nextState: Record<string, string | undefined>) => void;
     title: string;
 }
 
-const TownSquareComposerPreviewPane = ({ includeTitle, markdown, title }: TownSquareComposerPreviewPaneProps) => {
+const TownSquareComposerPreviewPane = ({ includeTitle, markdown, markdownInputState, setMarkdownInputState, title }: TownSquareComposerPreviewPaneProps) => {
     return (
         <Column className='flex-1 min-w-0' gap={2}>
             {/* <PoppinsText weight='medium'>Preview</PoppinsText> */}
@@ -26,7 +28,7 @@ const TownSquareComposerPreviewPane = ({ includeTitle, markdown, title }: TownSq
                         ) : null}
 
                         {markdown.trim() ? (
-                            <MarkdownRenderer markdown={markdown.trim()} />
+                            <MarkdownRenderer markdown={markdown.trim()} state={markdownInputState} setState={setMarkdownInputState} />
                         ) : (
                             <Column className='py-12' gap={1}>
                                 <PoppinsText weight='medium'>Nothing to preview yet</PoppinsText>

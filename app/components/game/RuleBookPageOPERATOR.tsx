@@ -27,7 +27,7 @@ const RuleBookPageOPERATOR = ({ gameId }: RuleBookPageOPERATORProps) => {
                 <PoppinsText weight='bold' className='text-xl'>Rule Book</PoppinsText>
                 <Pressable 
                     onPress={() => setIsEditDialogOpen(true)}
-                    className='flex-1'
+                    className='flex-1 min-h-[220px] rounded-xl bg-text/10 p-4 hover:bg-text/5'
                 >
                     {ruleBookData?.value?.content?.trim()?.length > 0 ? (
                         <MarkdownRenderer markdown={ruleBookData.value.content} />

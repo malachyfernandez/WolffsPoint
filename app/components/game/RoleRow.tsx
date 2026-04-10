@@ -10,6 +10,7 @@ import TableMarkdownDialog from './TableMarkdownDialog';
 import { RoleTableItem } from 'types/roleTable';
 
 interface RoleRowProps {
+    gameId: string;
     role: RoleTableItem;
     index: number;
     isLast: boolean;
@@ -21,9 +22,10 @@ interface RoleRowProps {
     onEditStart?: () => void;
     onEditEnd?: () => void;
     isEditing?: boolean;
+    showInputs?: boolean;
 }
 
-const RoleRow = ({ role, index, isLast, setRoleName, setDoesRoleVote, setRoleMessage, setAboutRole, onDeleteRole, onEditStart, onEditEnd, isEditing }: RoleRowProps) => {
+const RoleRow = ({ gameId, role, index, isLast, setRoleName, setDoesRoleVote, setRoleMessage, setAboutRole, onDeleteRole, onEditStart, onEditEnd, isEditing, showInputs = false }: RoleRowProps) => {
     const [editingCell, setEditingCell] = useState<string | null>(null);
     const [isRoleMessageDialogOpen, setIsRoleMessageDialogOpen] = useState(false);
     const [isAboutRoleDialogOpen, setIsAboutRoleDialogOpen] = useState(false);
@@ -110,6 +112,8 @@ const RoleRow = ({ role, index, isLast, setRoleName, setDoesRoleVote, setRoleMes
                 submitLabel="Save Message"
                 initialMarkdown={role.roleMessage}
                 onSubmit={(markdown) => setRoleMessage(index, markdown)}
+                gameId={gameId}
+                showInputs={showInputs}
             />
             <TableMarkdownDialog
                 isOpen={isAboutRoleDialogOpen}

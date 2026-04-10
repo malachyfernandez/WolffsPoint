@@ -15,9 +15,10 @@ interface RoleTableProps {
     isBeingEdited: boolean;
     setIsBeingEdited: (value: boolean) => void;
     className?: string;
+    showInputs?: boolean;
 }
 
-const RoleTable = ({ gameId, doSync, setDoSync, isBeingEdited, setIsBeingEdited, className }: RoleTableProps) => {
+const RoleTable = ({ gameId, doSync, setDoSync, isBeingEdited, setIsBeingEdited, className, showInputs = false }: RoleTableProps) => {
     const { executeCommand } = useUndoRedo();
     const [editingRow, setEditingRow] = useState<number | null>(null);
 
@@ -166,6 +167,7 @@ const RoleTable = ({ gameId, doSync, setDoSync, isBeingEdited, setIsBeingEdited,
                         return (
                             <RoleRow
                                 key={actualIndex}
+                                gameId={gameId}
                                 role={role}
                                 index={actualIndex}
                                 isLast={index === visibleRoles.length - 1}
@@ -177,6 +179,7 @@ const RoleTable = ({ gameId, doSync, setDoSync, isBeingEdited, setIsBeingEdited,
                                 onEditStart={() => handleRowEditStart(actualIndex)}
                                 onEditEnd={handleRowEditEnd}
                                 isEditing={editingRow === actualIndex}
+                                showInputs={showInputs}
                             />
                         );
                     })}

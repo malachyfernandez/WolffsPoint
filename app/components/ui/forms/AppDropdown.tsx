@@ -27,6 +27,7 @@ interface AppDropdownProps {
     selectedItemClassName?: string;
     emptyStateClassName?: string;
     centered?: boolean;
+    disabled?: boolean;
 }
 
 interface WebDropdownMenuPosition {
@@ -52,6 +53,7 @@ const AppDropdown = ({
     selectedItemClassName = '',
     emptyStateClassName = '',
     centered = false,
+    disabled = false,
 }: AppDropdownProps) => {
     const [isOpen, setIsOpen] = useState(false);
     const [selectedValue, setSelectedValue] = useState(value ?? '');
@@ -121,6 +123,10 @@ const AppDropdown = ({
     }, [closeDropdown, onValueChange]);
 
     const handleTriggerPress = useCallback(() => {
+        if (disabled) {
+            return;
+        }
+
         setIsOpen((currentValue) => {
             const nextValue = !currentValue;
 
@@ -132,7 +138,15 @@ const AppDropdown = ({
 
             return nextValue;
         });
-    }, [updateWebMenuPosition]);
+    }, [disabled, updateWebMenuPosition]);
+
+    useEffect(() => {
+        if (!disabled) {
+            return;
+        }
+
+        closeDropdown();
+    }, [closeDropdown, disabled]);
 
     useEffect(() => {
         if (Platform.OS !== 'web' || !isOpen) {
@@ -246,11 +260,12 @@ const AppDropdown = ({
                 <>
                     <AppDropdownTrigger
                         ref={triggerRef}
-                        className={triggerClassName}
+                        className={`${triggerClassName} ${disabled ? 'opacity-60' : ''}`.trim()}
                         isOpen={isOpen}
                         isPlaceholder={!selectedOption}
                         label={selectedOption?.label ?? placeholder}
                         onPress={handleTriggerPress}
+                        disabled={disabled}
                     />
 
                     {centeredWebOverlay}
@@ -263,11 +278,12 @@ const AppDropdown = ({
             <>
                 <AppDropdownTrigger
                     ref={triggerRef}
-                    className={triggerClassName}
+                    className={`${triggerClassName} ${disabled ? 'opacity-60' : ''}`.trim()}
                     isOpen={isOpen}
                     isPlaceholder={!selectedOption}
                     label={selectedOption?.label ?? placeholder}
                     onPress={handleTriggerPress}
+                    disabled={disabled}
                 />
 
                 {isOpen && webMenuPosition ? (
@@ -325,7 +341,7 @@ const AppDropdown = ({
 
     return (
         <Popover isOpen={isOpen} onOpenChange={setIsOpen}>
-            <Popover.Trigger className={`w-full flex-row items-center justify-between rounded border border-subtle-border bg-background px-3 py-3 ${triggerClassName}`.trim()}>
+            <Popover.Trigger className={`w-full flex-row items-center justify-between rounded border border-subtle-border bg-background px-3 py-3 ${triggerClassName} ${disabled ? 'opacity-60' : ''}`.trim()} isDisabled={disabled}>
                 <PoppinsText weight='medium' className={!selectedOption ? 'opacity-60' : ''}>
                     {selectedOption?.label ?? placeholder}
                 </PoppinsText>
