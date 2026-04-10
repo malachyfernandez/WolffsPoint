@@ -1,5 +1,5 @@
-import React from 'react';
-import { ScrollView } from 'react-native';
+import React, { useState } from 'react';
+import { ScrollView, Pressable } from 'react-native';
 import { ChevronUp, ChevronDown } from 'lucide-react-native';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
@@ -8,22 +8,28 @@ import MarkdownRenderer from '../ui/markdown/MarkdownRenderer';
 import AppButton from '../ui/buttons/AppButton';
 import { useUserVariable } from '../../../hooks/useUserVariable';
 import { useUserList } from '../../../hooks/useUserList';
+import { useUndoRedo, useCreateUndoSnapshot } from '../../../hooks/useUndoRedo';
 import { getGameScopedKey } from '../../../utils/multiplayer';
 import { RuleBookData } from '../../../types/ruleBook';
 import { RoleTableItem } from '../../../types/roleTable';
+import TableMarkdownDialog from './TableMarkdownDialog';
 
 interface RuleBookRoleDescriptionsProps {
     gameId: string;
 }
 
 const RuleBookRoleDescriptions = ({ gameId }: RuleBookRoleDescriptionsProps) => {
+    const { executeCommand } = useUndoRedo();
+    const createUndoSnapshot = useCreateUndoSnapshot();
+    const [editingRoleIndex, setEditingRoleIndex] = useState<number | null>(null);
+    
     const [ruleBookData, setRuleBookData] = useUserVariable<RuleBookData>({
         key: getGameScopedKey('ruleBook', gameId),
         defaultValue: { content: '', roleOrder: [] },
         privacy: 'PUBLIC',
     });
 
-    const [roleTable] = useUserList<RoleTableItem[]>({
+    const [roleTable, setRoleTable] = useUserList<RoleTableItem[]>({
         key: "roleTable",
         itemId: gameId,
         privacy: "PUBLIC",
@@ -55,6 +61,23 @@ const RuleBookRoleDescriptions = ({ gameId }: RuleBookRoleDescriptionsProps) => 
     };
     
     const orderedRoles = getOrderedRoles();
+    
+    const UNDOABLEsetAboutRole = (roleIndex: number, newAboutRole: string) => {
+        const previousRoleTable = createUndoSnapshot(roleTable?.value ?? []);
+        if (roleIndex < 0 || roleIndex >= previousRoleTable.length) return;
+
+        const nextRoleTable = createUndoSnapshot(previousRoleTable);
+        nextRoleTable[roleIndex] = {
+            ...nextRoleTable[roleIndex],
+            aboutRole: newAboutRole
+        };
+
+        executeCommand({
+            action: () => setRoleTable(createUndoSnapshot(nextRoleTable)),
+            undoAction: () => setRoleTable(createUndoSnapshot(previousRoleTable)),
+            description: "Set About Role"
+        });
+    };
     
     const moveRoleUp = (currentIndex: number) => {
         if (currentIndex <= 0) return;
@@ -127,41 +150,65 @@ const RuleBookRoleDescriptions = ({ gameId }: RuleBookRoleDescriptionsProps) => 
     }
 
     return (
-        <Column gap={2}>
-            <PoppinsText weight='bold' className='text-xl'>Role Descriptions</PoppinsText>
-            {/* <ScrollView> */}
-                <Column gap={4}>
-                    {orderedRoles.map((role, index) => (
-                        <Row key={roles.indexOf(role)} className='items-start gap-2'>
-                            <Column className='flex-1 gap-2'>
-                                {/* <PoppinsText weight='bold' className='text-lg'>
-                                    {role.role}
-                                </PoppinsText> */}
-                                <MarkdownRenderer markdown={role.aboutRole} textAlign="center" viewHeightImages={30}/>
-                            </Column>
-                            <Column className='gap-1 justify-center' gap={0}>
-                                <AppButton 
-                                    variant='none' 
-                                    className='h-12 w-12' 
-                                    onPress={() => moveRoleUp(index)}
-                                    disabled={index === 0}
-                                >
-                                    <ChevronUp size={20} color="white" />
-                                </AppButton>
-                                <AppButton 
-                                    variant='none' 
-                                    className='h-12 w-12' 
-                                    onPress={() => moveRoleDown(index)}
-                                    disabled={index === orderedRoles.length - 1}
-                                >
-                                    <ChevronDown size={20} color="white" />
-                                </AppButton>
-                            </Column>
-                        </Row>
-                    ))}
-                </Column>
-            {/* </ScrollView> */}
-        </Column>
+        <>
+            <Column gap={2}>
+                <PoppinsText weight='bold' className='text-xl'>Role Descriptions</PoppinsText>
+                {/* <ScrollView> */}
+                    <Column gap={4}>
+                        {orderedRoles.map((role, index) => (
+                            <Row key={roles.indexOf(role)} className='items-start gap-2'>
+                                <Column className='flex-1 gap-2'>
+                                    {/* <PoppinsText weight='bold' className='text-lg'>
+                                        {role.role}
+                                    </PoppinsText> */}
+                                    <Pressable 
+                                        onPress={() => setEditingRoleIndex(roles.indexOf(role))}
+                                        className='w-full'
+                                    >
+                                        <MarkdownRenderer 
+                                            markdown={role.aboutRole} 
+                                            textAlign="center" 
+                                            viewHeightImages={30}
+                                        />
+                                    </Pressable>
+                                </Column>
+                                <Column className='gap-1 justify-center' gap={0}>
+                                    <AppButton 
+                                        variant='none' 
+                                        className='h-12 w-12' 
+                                        onPress={() => moveRoleUp(index)}
+                                        disabled={index === 0}
+                                    >
+                                        <ChevronUp size={20} color="white" />
+                                    </AppButton>
+                                    <AppButton 
+                                        variant='none' 
+                                        className='h-12 w-12' 
+                                        onPress={() => moveRoleDown(index)}
+                                        disabled={index === orderedRoles.length - 1}
+                                    >
+                                        <ChevronDown size={20} color="white" />
+                                    </AppButton>
+                                </Column>
+                            </Row>
+                        ))}
+                    </Column>
+                {/* </ScrollView> */}
+            </Column>
+            
+            <TableMarkdownDialog
+                isOpen={editingRoleIndex !== null}
+                onOpenChange={(open) => !open && setEditingRoleIndex(null)}
+                title={`About ${editingRoleIndex !== null ? roles[editingRoleIndex]?.role || 'Role' : 'Role'}`}
+                submitLabel="Save About"
+                initialMarkdown={editingRoleIndex !== null ? roles[editingRoleIndex]?.aboutRole || '' : ''}
+                onSubmit={(markdown) => {
+                    if (editingRoleIndex !== null) {
+                        UNDOABLEsetAboutRole(editingRoleIndex, markdown);
+                    }
+                }}
+            />
+        </>
     );
 };
 
