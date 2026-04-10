@@ -184,3 +184,170 @@ The undo system integrates with:
 - Check that `createUndoSnapshot` is called before state changes
 - Verify both action and undoAction handle the same side effects
 - Test with keyboard shortcuts to ensure full integration
+
+## Special Case: Tab-Based Undo/Redo Systems
+
+Some components, like markdown editors with editing/preview tabs, require a different approach to undo tracking. Instead of tracking every single keystroke, these systems track complete editing sessions.
+
+### Use Case
+Markdown dialogs with separate editing and preview tabs where:
+- Users type in the editing tab
+- Users switch to preview tab to see results
+- Each editing session should be tracked as a single undoable operation
+
+### Implementation Pattern
+
+#### 1. Track Editing Session Start
+```tsx
+const [editingStartText, setEditingStartText] = useState('');
+
+// When dialog opens
+useEffect(() => {
+    if (isOpen) {
+        setEditingStartText(initialMarkdown ?? '');
+    }
+}, [initialMarkdown, isOpen]);
+```
+
+#### 2. Handle Tab Changes for Undo Tracking
+```tsx
+const handleTabChange = (newTab: string) => {
+    if (activeTab === 'editing' && newTab === 'preview') {
+        // Switching from editing to preview - create undo/redo snapshot
+        const previousText = createUndoSnapshot(editingStartText);
+        const currentText = createUndoSnapshot(draftBody);
+        
+        executeCommand({
+            action: () => setDraftBody(currentText),
+            undoAction: () => setDraftBody(previousText),
+            description: "Edit markdown"
+        });
+    } else if (activeTab === 'preview' && newTab === 'editing') {
+        // Switching from preview to editing - set new editing start state
+        setEditingStartText(draftBody);
+    }
+    
+    setActiveTab(newTab);
+};
+```
+
+#### 3. Key Workflow
+1. **Dialog Entry**: Set `editingStartText` to initial value
+2. **Editing Session**: User types in editing tab
+3. **Switch to Preview**: Create undo command with start/current states
+4. **Switch Back to Edit**: Update `editingStartText` for next session
+5. **Repeat**: Each editing cycle creates a new undo command
+
+### Benefits of This Approach
+
+#### 1. Session-Based Tracking
+- Each complete editing session becomes one undoable operation
+- Users don't get overwhelmed with per-keystroke undos
+- Natural workflow: edit, preview, undo if needed
+
+#### 2. Clean User Experience
+- "Undo: Edit markdown" clearly describes what was undone
+- Keyboard shortcuts (Ctrl+Z/Cmd+Z) work automatically
+- Toast notifications provide feedback
+
+#### 3. State Management
+- `editingStartText` tracks where each editing session began
+- Snapshots capture the complete state change
+- No conflicts between multiple editing sessions
+
+### When to Use This Pattern
+
+#### Good For:
+- **Tab-based editors** where users switch between modes
+- **Form wizards** with multi-step processes
+- **Complex components** where changes happen in discrete phases
+- **Content creation tools** with preview functionality
+
+#### Not Good For:
+- **Real-time editors** where every keystroke should be undoable
+- **Simple form inputs** where traditional undo works better
+- **Components without clear session boundaries**
+
+### Implementation Tips
+
+#### 1. Clear Session Boundaries
+```tsx
+// Define clear start/end points for editing sessions
+const startEditingSession = () => {
+    setEditingStartText(draftBody);
+};
+
+const endEditingSession = () => {
+    // Create undo command
+    createUndoCommand(editingStartText, draftBody);
+};
+```
+
+#### 2. Handle Edge Cases
+```tsx
+// Handle empty or unchanged content
+if (editingStartText === draftBody) {
+    // No change, don't create undo command
+    return;
+}
+```
+
+#### 3. Reset State Properly
+```tsx
+// Reset when dialog closes
+useEffect(() => {
+    if (!isOpen) {
+        setEditingStartText('');
+        setActiveTab('editing');
+    }
+}, [isOpen]);
+```
+
+### Example: Complete Implementation
+```tsx
+const MarkdownDialog = ({ isOpen, initialMarkdown }) => {
+    const [activeTab, setActiveTab] = useState('editing');
+    const [draftBody, setDraftBody] = useState('');
+    const [editingStartText, setEditingStartText] = useState('');
+    const { executeCommand } = useUndoRedo();
+    const createUndoSnapshot = useCreateUndoSnapshot();
+
+    // Initialize editing session when dialog opens
+    useEffect(() => {
+        if (isOpen) {
+            setDraftBody(initialMarkdown ?? '');
+            setEditingStartText(initialMarkdown ?? '');
+        }
+    }, [isOpen, initialMarkdown]);
+
+    // Handle tab changes for undo tracking
+    const handleTabChange = (newTab) => {
+        if (activeTab === 'editing' && newTab === 'preview') {
+            // Create undo command for completed editing session
+            const previousText = createUndoSnapshot(editingStartText);
+            const currentText = createUndoSnapshot(draftBody);
+            
+            if (previousText !== currentText) {
+                executeCommand({
+                    action: () => setDraftBody(currentText),
+                    undoAction: () => setDraftBody(previousText),
+                    description: "Edit markdown"
+                });
+            }
+        } else if (activeTab === 'preview' && newTab === 'editing') {
+            // Start new editing session
+            setEditingStartText(draftBody);
+        }
+        
+        setActiveTab(newTab);
+    };
+
+    return (
+        <Tabs value={activeTab} onValueChange={handleTabChange}>
+            {/* Tab content */}
+        </Tabs>
+    );
+};
+```
+
+This pattern provides a clean, intuitive undo experience for tab-based editing interfaces while maintaining the same underlying undo/redo infrastructure.
