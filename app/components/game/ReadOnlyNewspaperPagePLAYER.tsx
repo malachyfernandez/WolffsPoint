@@ -8,7 +8,7 @@ import { Usepaper } from '../../../types/usepaper';
 import { useSharedListValue } from '../../../hooks/useSharedListValue';
 import { useUserVariableGet } from '../../../hooks/useUserVariableGet';
 import PlayerDaySelector from './PlayerDaySelector';
-import { defaultGameSchedule, formatTimeLabel, getCurrentPlayableDayIndex, getGameScopedKey, isDayReleasedAtTime, parseStoredDayDates } from '../../../utils/multiplayer';
+import { defaultGameSchedule, formatTimeLabel, getCurrentPlayableDayIndex, getGameScopedKey, isDayReleasedAtTime, normalizeGameSchedule, parseStoredDayDates } from '../../../utils/multiplayer';
 
 interface ReadOnlyNewspaperPagePLAYERProps {
     gameId: string;
@@ -45,9 +45,9 @@ const ReadOnlyNewspaperPagePLAYER = ({ gameId }: ReadOnlyNewspaperPagePLAYERProp
         defaultValue: minimumUsepaper,
     });
 
-    const schedule = scheduleRecords?.[0]?.value ?? defaultGameSchedule;
+    const schedule = normalizeGameSchedule(scheduleRecords?.[0]?.value ?? defaultGameSchedule);
     const selectedDate = dayDates[selectedDayIndex];
-    const isLocked = selectedDate ? !isDayReleasedAtTime(selectedDate, schedule.newspaperReleaseTime) && selectedDayIndex === currentDayIndex : false;
+    const isLocked = selectedDate ? !isDayReleasedAtTime(selectedDate, schedule.wakeUpTime) && selectedDayIndex === currentDayIndex : false;
     const usepaper = newspaperRecords.value?.columns?.length ? newspaperRecords.value : minimumUsepaper;
 
     return (
@@ -67,7 +67,7 @@ const ReadOnlyNewspaperPagePLAYER = ({ gameId }: ReadOnlyNewspaperPagePLAYERProp
                     {isLocked ? (
                         <Column className='rounded-xl border border-subtle-border bg-white p-4'>
                             <PoppinsText weight='medium'>Today&apos;s paper is not out yet.</PoppinsText>
-                            <PoppinsText varient='subtext'>It releases at {formatTimeLabel(schedule.newspaperReleaseTime)}.</PoppinsText>
+                            <PoppinsText varient='subtext'>It releases at {formatTimeLabel(schedule.wakeUpTime)}.</PoppinsText>
                         </Column>
                     ) : (
                         <ScrollView horizontal={true} className='w-full'>

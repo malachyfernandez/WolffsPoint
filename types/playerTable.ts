@@ -1,3 +1,5 @@
+import { PlayerActionValue } from './multiplayer';
+
 export type PlayerData = {
     livingState: 'alive' | 'dead';
     extraColumns?: string[];
@@ -5,7 +7,7 @@ export type PlayerData = {
 
 export type DayData = {
     vote?: string;
-    action?: string;
+    action?: PlayerActionValue;
     extraColumns?: string[];
 };
 

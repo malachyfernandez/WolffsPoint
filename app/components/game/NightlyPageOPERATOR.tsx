@@ -18,7 +18,7 @@ import { RoleTableItem } from 'types/roleTable';
 import ComprehensiveDaySelector from '../ui/daySelector/ComprehensiveDaySelector';
 import PoppinsTextInput from '../ui/forms/PoppinsTextInput';
 import NightlyCertificationDialog from './NightlyCertificationDialog';
-import { defaultGameSchedule, getGameScopedKey } from '../../../utils/multiplayer';
+import { defaultGameSchedule, getGameScopedKey, hasPlayerActionContent, normalizeGameSchedule } from '../../../utils/multiplayer';
 import { GameSchedule, PlayerNightSubmission } from '../../../types/multiplayer';
 
 interface NightlyPageOPERATORProps {
@@ -49,17 +49,8 @@ const NightlyPageOPERATOR = ({ currentUserId, gameId }: NightlyPageOPERATORProps
 
     const users = userTable?.value ?? [];
 
-    // Nightly response list - tracks nightly responses per night per email
-    const [nightlyResponseList, setNightlyResponseList] = useUserList<Record<string, string[]>>({
-        key: "nightlyResponseList",
-        itemId: gameId,
-        privacy: "PUBLIC",
-        defaultValue: {},
-    });
-
-    // Nightly messages list - tracks nightly messages per night per email
-    const [nightlyMessagesList, setNightlyMessagesList] = useUserList<Record<string, string[]>>({
-        key: "nightlyMessagesList",
+    const [morningMessagesList, setMorningMessagesList] = useUserList<Record<string, string[]>>({
+        key: "morningMessagesList",
         itemId: gameId,
         privacy: "PUBLIC",
         defaultValue: {},
@@ -85,7 +76,7 @@ const NightlyPageOPERATOR = ({ currentUserId, gameId }: NightlyPageOPERATORProps
     ) as Record<string, PlayerNightSubmission>;
 
     const voteCount = users.filter((user) => (submissionsByEmail[user.email]?.vote ?? '').trim().length > 0).length;
-    const actionCount = users.filter((user) => (submissionsByEmail[user.email]?.action ?? '').trim().length > 0).length;
+    const actionCount = users.filter((user) => hasPlayerActionContent(submissionsByEmail[user.email]?.action)).length;
 
     // Shared number of real days per in-game day (same as players tab)
     const [numberOfRealDaysPerInGameDay, setNumberOfRealDaysPerInGameDay] = useUserList<number>({
@@ -109,32 +100,18 @@ const NightlyPageOPERATOR = ({ currentUserId, gameId }: NightlyPageOPERATORProps
         return new Date(year, month - 1, day);
     });
 
-    // Sync nightly lists when days are added
+    const schedule = normalizeGameSchedule(gameSchedule.value);
+
     useEffect(() => {
-        if (nightlyResponseList.state.isSyncing === false && nightlyMessagesList.state.isSyncing === false) {
-            const currentResponses = nightlyResponseList.value || {};
-            const currentMessages = nightlyMessagesList.value || {};
+        if (morningMessagesList.state.isSyncing === false) {
+            const currentMessages = morningMessagesList.value || {};
             
-            // Ensure all users have entries for each day
-            const updatedResponses = { ...currentResponses };
             const updatedMessages = { ...currentMessages };
             
             users.forEach(user => {
-                if (!updatedResponses[user.email]) {
-                    updatedResponses[user.email] = new Array(fixedDayDatesArray.length).fill("");
-                } else {
-                    // Ensure the user has enough days
-                    const userResponses = [...updatedResponses[user.email]];
-                    while (userResponses.length < fixedDayDatesArray.length) {
-                        userResponses.push("");
-                    }
-                    updatedResponses[user.email] = userResponses;
-                }
-                
                 if (!updatedMessages[user.email]) {
                     updatedMessages[user.email] = new Array(fixedDayDatesArray.length).fill("");
                 } else {
-                    // Ensure the user has enough days
                     const userMessages = [...updatedMessages[user.email]];
                     while (userMessages.length < fixedDayDatesArray.length) {
                         userMessages.push("");
@@ -143,46 +120,22 @@ const NightlyPageOPERATOR = ({ currentUserId, gameId }: NightlyPageOPERATORProps
                 }
             });
             
-            // Update if changed
-            if (JSON.stringify(updatedResponses) !== JSON.stringify(currentResponses)) {
-                setNightlyResponseList(updatedResponses);
-            }
             if (JSON.stringify(updatedMessages) !== JSON.stringify(currentMessages)) {
-                setNightlyMessagesList(updatedMessages);
+                setMorningMessagesList(updatedMessages);
             }
         }
-    }, [fixedDayDatesArray.length, users.length, nightlyResponseList.state.isSyncing, nightlyMessagesList.state.isSyncing]);
+    }, [fixedDayDatesArray.length, users.length, morningMessagesList.state.isSyncing]);
 
     const [doSync, setDoSync] = useState(false);
     const [isPlayerTableBeingEdited, setIsPlayerTableBeingEdited] = useState(false);
     const [isDaysTableBeingEdited, setIsDaysTableBeingEdited] = useState(false);
     const [daysTableWidth, setDaysTableWidth] = useState(320); // default width
 
-    // Update nightly response for a specific user on a specific day
-    const updateNightlyResponse = (dayIndex: number, userIndex: number, value: string) => {
+    const updateMorningMessage = (dayIndex: number, userIndex: number, value: string) => {
         const user = users[userIndex];
         if (!user) return;
         
-        const currentResponses = nightlyResponseList.value || {};
-        const updatedResponses = { ...currentResponses };
-        
-        if (!updatedResponses[user.email]) {
-            updatedResponses[user.email] = new Array(fixedDayDatesArray.length).fill("");
-        }
-        
-        const userResponses = [...updatedResponses[user.email]];
-        userResponses[dayIndex] = value;
-        updatedResponses[user.email] = userResponses;
-        
-        setNightlyResponseList(updatedResponses);
-    };
-
-    // Update nightly message for a specific user on a specific day
-    const updateNightlyMessage = (dayIndex: number, userIndex: number, value: string) => {
-        const user = users[userIndex];
-        if (!user) return;
-        
-        const currentMessages = nightlyMessagesList.value || {};
+        const currentMessages = morningMessagesList.value || {};
         const updatedMessages = { ...currentMessages };
         
         if (!updatedMessages[user.email]) {
@@ -193,7 +146,7 @@ const NightlyPageOPERATOR = ({ currentUserId, gameId }: NightlyPageOPERATORProps
         userMessages[dayIndex] = value;
         updatedMessages[user.email] = userMessages;
         
-        setNightlyMessagesList(updatedMessages);
+        setMorningMessagesList(updatedMessages);
     };
 
     // Update player living state (same as players tab)
@@ -242,7 +195,7 @@ const NightlyPageOPERATOR = ({ currentUserId, gameId }: NightlyPageOPERATORProps
                             <PoppinsText weight='medium'>Player submissions</PoppinsText>
                             <PoppinsText varient='subtext'>{voteCount}/{users.length} voted, {actionCount}/{users.length} submitted actions</PoppinsText>
                         </Column>
-                        <AppButton variant='black' className='w-48' onPress={() => setIsCertificationDialogOpen(true)}>
+                        <AppButton variant='filled' className='w-48' onPress={() => setIsCertificationDialogOpen(true)}>
                             <PoppinsText weight='medium' color='white'>Review / Certify</PoppinsText>
                         </AppButton>
                     </Row>
@@ -270,6 +223,8 @@ const NightlyPageOPERATOR = ({ currentUserId, gameId }: NightlyPageOPERATORProps
                                     <View style={{ width: daysTableWidth }}>
                                         <ComprehensiveDaySelector
                                             gameId={gameId}
+                                            showAddButton={true}
+                                            showInitialSetupDialog={true}
                                         />
                                     </View>
                                     <Row className={`${isDaysTableBeingEdited ? 'z-10' : ''} w-min max-w-min`}>
@@ -285,10 +240,8 @@ const NightlyPageOPERATOR = ({ currentUserId, gameId }: NightlyPageOPERATORProps
                                             onWidthChange={(width: number) => {
                                                 setDaysTableWidth(width);
                                             }}
-                                            nightlyResponseList={nightlyResponseList.value || {}}
-                                            nightlyMessagesList={nightlyMessagesList.value || {}}
-                                            updateNightlyResponse={updateNightlyResponse}
-                                            updateNightlyMessage={updateNightlyMessage}
+                                            morningMessagesList={morningMessagesList.value || {}}
+                                            updateMorningMessage={updateMorningMessage}
                                         />
                                     </Row>
                                 </Column>
@@ -318,24 +271,26 @@ const NightlyPageOPERATOR = ({ currentUserId, gameId }: NightlyPageOPERATORProps
                             <PoppinsText varient='subtext'>Action / vote deadline</PoppinsText>
                             <PoppinsTextInput
                                 className='w-40 border border-subtle-border p-3'
-                                value={gameSchedule.value.nightlyDeadlineTime}
+                                value={schedule.nightlyDeadlineTime}
                                 onChangeText={(value) => setGameSchedule({
-                                    ...gameSchedule.value,
+                                    ...schedule,
                                     nightlyDeadlineTime: value,
                                 })}
                                 placeholder='22:00'
                             />
                         </Column>
                         <Column gap={1}>
-                            <PoppinsText varient='subtext'>Nightly response release time</PoppinsText>
+                            <PoppinsText varient='subtext'>Wake up time</PoppinsText>
                             <PoppinsTextInput
                                 className='w-40 border border-subtle-border p-3'
-                                value={gameSchedule.value.nightlyResponseReleaseTime}
+                                value={schedule.wakeUpTime}
                                 onChangeText={(value) => setGameSchedule({
-                                    ...gameSchedule.value,
+                                    ...schedule,
+                                    wakeUpTime: value,
                                     nightlyResponseReleaseTime: value,
+                                    newspaperReleaseTime: value,
                                 })}
-                                placeholder='23:00'
+                                placeholder='08:00'
                             />
                         </Column>
                     </Column>

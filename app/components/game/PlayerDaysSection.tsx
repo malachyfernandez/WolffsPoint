@@ -138,7 +138,7 @@ const PlayerDaysSection = ({ gameId, addNewDay }: PlayerDaysSectionProps) => {
                 isOpen={isChooseDayDialogOpen}
                 onOpenChange={setIsChooseDayDialogOpen}
                 gameId={gameId}
-                addNewDay={addNewDay}
+                onSubmitDaysValue={(daysPerGameDay) => addNewDay(daysPerGameDay)}
             />
         </>
     );

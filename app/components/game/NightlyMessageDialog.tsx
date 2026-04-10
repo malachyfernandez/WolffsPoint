@@ -55,12 +55,12 @@ const NightlyMessageDialog = ({
 
                     <Column>
                         <DialogHeader
-                            text={`${userName} Nightly Message`}
-                            subtext={`Set the nightly message for ${userName} on Day ${dayIndex + 1}`}
+                            text={`${userName} Morning Message`}
+                            subtext={`Set the morning message for ${userName} on Day ${dayIndex + 1}`}
                         />
                         <Column gap={2}>
                             <PoppinsTextInput
-                                placeholder="Enter nightly message..."
+                                placeholder="Enter morning message..."
                                 className="w-full border border-subtle-border p-2"
                                 value={message}
                                 onChangeText={setMessage}
@@ -71,7 +71,7 @@ const NightlyMessageDialog = ({
                         </Column>
 
                         <Column gap={2}>
-                            <AppButton className='w-34 h-10' variant='black' onPress={handleSubmit}>
+                            <AppButton className='w-34 h-10' variant='filled' onPress={handleSubmit}>
                                 <PoppinsText color='white' weight='medium'>Save</PoppinsText>
                             </AppButton>
                             <AppButton className='w-34 h-10' variant='outline' onPress={handleCancel}>

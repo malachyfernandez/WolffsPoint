@@ -4,23 +4,11 @@ import InlineEditableText from '../ui/forms/InlineEditableText';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
 import Animated, { FadeInLeft, FadeInRight, FadeOutDown, FadeOutLeft, FadeOutRight, Easing, FadeInDown, FadeOutUp } from 'react-native-reanimated';
+import { UserTableItem } from '../../../types/playerTable';
+import { getPlayerActionSummary } from '../../../utils/multiplayer';
 
 interface DayUserRowProps {
-    user: {
-        realName: string;
-        email: string;
-        userId: string | "NOT-JOINED";
-        role: string;
-        playerData: {
-            livingState: 'alive' | 'dead';
-            extraColumns?: string[];
-        };
-        days: Array<{
-            vote?: string;
-            action?: string;
-            extraColumns?: string[];
-        }>;
-    };
+    user: UserTableItem;
     index: number;
     isLast: boolean;
     dayNumber: number;
@@ -77,6 +65,7 @@ const DayUserRow = ({ user, index, isLast, dayNumber, setVoteValue, setActionVal
 
     const [isEditingVote, setIsEditingVote] = useState(false);
 
+    const actionDisplayValue = getPlayerActionSummary(dayData.action);
 
 
     return (
@@ -94,7 +83,7 @@ const DayUserRow = ({ user, index, isLast, dayNumber, setVoteValue, setActionVal
             </Column>
             <Column gap={0} className={`w-28 h-full border border-subtle-border items-center justify-center ${isEditingVote ? 'z-0' : 'z-20'}`}>
                 <InlineEditableText
-                    value={dayData.action || ''}
+                    value={actionDisplayValue}
                     onChange={(newValue) => setActionValue?.(index, newValue)}
                     placeholder='Action'
                     className='w-20 text-center text-nowrap overflow-hidden'

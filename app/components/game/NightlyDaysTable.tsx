@@ -16,10 +16,8 @@ interface NightlyDaysTableProps {
     className?: string;
     onLayout?: (event: any) => void;
     onWidthChange?: (width: number) => void;
-    nightlyResponseList: Record<string, string[]>;
-    nightlyMessagesList: Record<string, string[]>;
-    updateNightlyResponse: (dayIndex: number, userIndex: number, value: string) => void;
-    updateNightlyMessage: (dayIndex: number, userIndex: number, value: string) => void;
+    morningMessagesList: Record<string, string[]>;
+    updateMorningMessage: (dayIndex: number, userIndex: number, value: string) => void;
 }
 
 const NightlyDaysTable = ({ 
@@ -30,10 +28,8 @@ const NightlyDaysTable = ({
     className, 
     onLayout, 
     onWidthChange,
-    nightlyResponseList,
-    nightlyMessagesList,
-    updateNightlyResponse,
-    updateNightlyMessage
+    morningMessagesList,
+    updateMorningMessage
 }: NightlyDaysTableProps) => {
     const { executeCommand } = useUndoRedo();
     const [editingRow, setEditingRow] = useState<'title' | number | null>(null);
@@ -174,38 +170,11 @@ const NightlyDaysTable = ({
         });
     };
 
-    const UNDOABLEupdateNightlyResponse = (dayIndex: number, userIndex: number, value: string) => {
+    const UNDOABLEupdateMorningMessage = (dayIndex: number, userIndex: number, value: string) => {
         const user = users[userIndex];
         if (!user) return;
         
-        const previousResponseList = createUndoSnapshot(nightlyResponseList);
-        const nextResponseList = createUndoSnapshot(previousResponseList);
-        
-        if (!nextResponseList[user.email]) {
-            nextResponseList[user.email] = [];
-        }
-        
-        const userResponses = [...nextResponseList[user.email]];
-        userResponses[dayIndex] = value;
-        nextResponseList[user.email] = userResponses;
-
-        executeCommand({
-            action: () => updateNightlyResponse(dayIndex, userIndex, value),
-            undoAction: () => {
-                // Restore previous state
-                if (previousResponseList[user.email] && nextResponseList[user.email]) {
-                    updateNightlyResponse(dayIndex, userIndex, previousResponseList[user.email][dayIndex] || "");
-                }
-            },
-            description: "Update Nightly Response"
-        });
-    };
-
-    const UNDOABLEupdateNightlyMessage = (dayIndex: number, userIndex: number, value: string) => {
-        const user = users[userIndex];
-        if (!user) return;
-        
-        const previousMessagesList = createUndoSnapshot(nightlyMessagesList);
+        const previousMessagesList = createUndoSnapshot(morningMessagesList);
         const nextMessagesList = createUndoSnapshot(previousMessagesList);
         
         if (!nextMessagesList[user.email]) {
@@ -217,14 +186,13 @@ const NightlyDaysTable = ({
         nextMessagesList[user.email] = userMessages;
 
         executeCommand({
-            action: () => updateNightlyMessage(dayIndex, userIndex, value),
+            action: () => updateMorningMessage(dayIndex, userIndex, value),
             undoAction: () => {
-                // Restore previous state
                 if (previousMessagesList[user.email] && nextMessagesList[user.email]) {
-                    updateNightlyMessage(dayIndex, userIndex, previousMessagesList[user.email][dayIndex] || "");
+                    updateMorningMessage(dayIndex, userIndex, previousMessagesList[user.email][dayIndex] || "");
                 }
             },
-            description: "Update Nightly Message"
+            description: "Update Morning Message"
         });
     };
 
@@ -247,13 +215,11 @@ const NightlyDaysTable = ({
                             dayNumber={dayNumber}
                             setVoteValue={UNDOABLEsetVoteValue}
                             setActionValue={UNDOABLEsetActionValue}
-                            updateNightlyResponse={UNDOABLEupdateNightlyResponse}
-                            updateNightlyMessage={UNDOABLEupdateNightlyMessage}
+                            updateMorningMessage={UNDOABLEupdateMorningMessage}
                             onEditStart={() => handleRowEditStart(index)}
                             onEditEnd={handleRowEditEnd}
                             isEditing={editingRow === index}
-                            nightlyResponseList={nightlyResponseList}
-                            nightlyMessagesList={nightlyMessagesList}
+                            morningMessagesList={morningMessagesList}
                         />
                     ))}
                 </Column>

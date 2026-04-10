@@ -12,10 +12,12 @@ interface ChooseDayDialogProps {
     isOpen: boolean;
     onOpenChange: (open: boolean) => void;
     gameId: string;
-    addNewDay: (customDaysPerGameDay?: number) => void;
+    onSubmitDaysValue: (daysPerGameDay: number) => void;
+    title?: string;
+    subtext?: string;
 }
 
-const ChooseDayDialog = ({ isOpen, onOpenChange, gameId, addNewDay }: ChooseDayDialogProps) => {
+const ChooseDayDialog = ({ isOpen, onOpenChange, gameId, onSubmitDaysValue, title = 'Game Settings', subtext = 'Configure days per game day' }: ChooseDayDialogProps) => {
     // Use the same user variable system as other components
     const [numberOfRealDaysPerInGameDay, setNumberOfRealDaysPerInGameDay] = useUserList<number>({
         key: "numberOfRealDaysPerInGameDay",
@@ -35,7 +37,7 @@ const ChooseDayDialog = ({ isOpen, onOpenChange, gameId, addNewDay }: ChooseDayD
          const numericValue = parseInt(daysValue);
          if (!isNaN(numericValue) && numericValue >= 1 && numericValue <= 30) {
              setNumberOfRealDaysPerInGameDay(numericValue);
-             addNewDay(numericValue);
+             onSubmitDaysValue(numericValue);
              onOpenChange(false);
          }
      };
@@ -61,8 +63,8 @@ const ChooseDayDialog = ({ isOpen, onOpenChange, gameId, addNewDay }: ChooseDayD
 
                     <Column>
                         <DialogHeader
-                            text="Game Settings"
-                            subtext="Configure days per game day"
+                            text={title}
+                            subtext={subtext}
                         />
                         <Column gap={2}>
                             <PoppinsText weight='medium'>Days per game day</PoppinsText>
@@ -76,7 +78,7 @@ const ChooseDayDialog = ({ isOpen, onOpenChange, gameId, addNewDay }: ChooseDayD
                         </Column>
 
                         <Column gap={2}>
-                            <AppButton className='w-34 h-10' variant='black' onPress={handleSubmit}>
+                            <AppButton className='w-34 h-10' variant='filled' onPress={handleSubmit}>
                                 <PoppinsText color='white' weight='medium'>Save</PoppinsText>
                             </AppButton>
                             <AppButton className='w-34 h-10' variant='outline' onPress={handleCancel}>

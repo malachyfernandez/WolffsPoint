@@ -8,6 +8,7 @@ import PoppinsText from '../ui/text/PoppinsText';
 import AppButton from '../ui/buttons/AppButton';
 import { PlayerNightSubmission } from '../../../types/multiplayer';
 import { UserTableItem } from '../../../types/playerTable';
+import { getPlayerActionSummary } from '../../../utils/multiplayer';
 
 interface NightlyCertificationDialogProps {
     isOpen: boolean;
@@ -41,7 +42,7 @@ const NightlyCertificationDialog = ({ isOpen, onOpenChange, users, submissionsBy
                                     <Row key={user.email} className='border-b border-subtle-border py-2'>
                                         <PoppinsText className='flex-1'>{user.realName || user.email}</PoppinsText>
                                         <PoppinsText className='flex-1'>{submission?.vote || '—'}</PoppinsText>
-                                        <PoppinsText className='flex-1'>{submission?.action || '—'}</PoppinsText>
+                                        <PoppinsText className='flex-1'>{getPlayerActionSummary(submission?.action) || '—'}</PoppinsText>
                                     </Row>
                                 );
                             })}

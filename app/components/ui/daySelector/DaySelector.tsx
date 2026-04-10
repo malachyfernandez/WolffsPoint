@@ -12,9 +12,10 @@ import DaySelectionDialog from '../../game/DaySelectionDialog';
 interface DaySelectorProps {
     gameId: string;
     className?: string;
+    showAddButton?: boolean;
 }
 
-const DaySelector = ({ gameId, className = '' }: DaySelectorProps) => {
+const DaySelector = ({ gameId, className = '', showAddButton = false }: DaySelectorProps) => {
     // Shared selected day index (same as players tab and nightly tab)
     const [selectedDayIndex, setSelectedDayIndex] = useUserList<number>({
         key: "selectedDayIndex",
@@ -123,9 +124,11 @@ const DaySelector = ({ gameId, className = '' }: DaySelectorProps) => {
                                                 </AppButton>
                                             )
                                         ))}
-                                        <AppButton variant="accent" className='max-w-6 min-w-6 max-h-6 ml-1 rounded-full' onPress={addNewDay}>
-                                            <PoppinsText weight="bold" className='text-white'>+</PoppinsText>
-                                        </AppButton>
+                                        {showAddButton && (
+                                            <AppButton variant="accent" className='max-w-6 min-w-6 max-h-6 ml-1 rounded-full' onPress={addNewDay}>
+                                                <PoppinsText weight="bold" className='text-white'>+</PoppinsText>
+                                            </AppButton>
+                                        )}
                                     </Row>
                                 </ScrollView>
                             </ScrollShadow>

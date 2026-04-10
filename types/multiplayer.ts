@@ -12,10 +12,15 @@ export type PlayerProfile = {
     claimedAt: number;
 };
 
+export type MarkdownInputState = Record<string, string | undefined>;
+
+export type PlayerActionValue = string | MarkdownInputState;
+
 export type GameSchedule = {
-    newspaperReleaseTime: string;
     nightlyDeadlineTime: string;
-    nightlyResponseReleaseTime: string;
+    wakeUpTime: string;
+    nightlyResponseReleaseTime?: string;
+    newspaperReleaseTime?: string;
 };
 
 export type TownSquarePost = {
@@ -50,7 +55,7 @@ export type PlayerNightSubmission = {
     playerEmail: string;
     playerUserId: string;
     vote: string;
-    action: string;
+    action: PlayerActionValue;
     submittedVoteAt: number | null;
     submittedActionAt: number | null;
 };

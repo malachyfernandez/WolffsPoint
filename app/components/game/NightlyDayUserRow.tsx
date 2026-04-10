@@ -4,37 +4,22 @@ import InlineEditableText from '../ui/forms/InlineEditableText';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
 import { Pressable } from 'react-native';
-import NightlyResponseDialog from './NightlyResponseDialog';
 import NightlyMessageDialog from './NightlyMessageDialog';
+import { UserTableItem } from '../../../types/playerTable';
+import { getPlayerActionSummary } from '../../../utils/multiplayer';
 
 interface NightlyDayUserRowProps {
-    user: {
-        realName: string;
-        email: string;
-        userId: string | "NOT-JOINED";
-        role: string;
-        playerData: {
-            livingState: 'alive' | 'dead';
-            extraColumns?: string[];
-        };
-        days: Array<{
-            vote?: string;
-            action?: string;
-            extraColumns?: string[];
-        }>;
-    };
+    user: UserTableItem;
     index: number;
     isLast: boolean;
     dayNumber: number;
     setVoteValue?: (userIndex: number, newValue: string) => void;
     setActionValue?: (userIndex: number, newValue: string) => void;
-    updateNightlyResponse: (dayIndex: number, userIndex: number, value: string) => void;
-    updateNightlyMessage: (dayIndex: number, userIndex: number, value: string) => void;
+    updateMorningMessage: (dayIndex: number, userIndex: number, value: string) => void;
     onEditStart?: () => void;
     onEditEnd?: () => void;
     isEditing?: boolean;
-    nightlyResponseList: Record<string, string[]>;
-    nightlyMessagesList: Record<string, string[]>;
+    morningMessagesList: Record<string, string[]>;
 }
 
 const NightlyDayUserRow = ({ 
@@ -44,20 +29,18 @@ const NightlyDayUserRow = ({
     dayNumber, 
     setVoteValue, 
     setActionValue,
-    updateNightlyResponse, 
-    updateNightlyMessage, 
+    updateMorningMessage,
     onEditStart, 
     onEditEnd, 
     isEditing,
-    nightlyResponseList,
-    nightlyMessagesList
+    morningMessagesList
 }: NightlyDayUserRowProps) => {
     const [editingVote, setEditingVote] = useState(false);
     const [editingAction, setEditingAction] = useState(false);
-    const [isResponseDialogOpen, setIsResponseDialogOpen] = useState(false);
     const [isMessageDialogOpen, setIsMessageDialogOpen] = useState(false);
 
     const dayData = user.days[dayNumber] || { vote: "", action: "", extraColumns: [] };
+    const actionDisplayValue = getPlayerActionSummary(dayData.action);
 
     const handleVoteEditStart = () => {
         setEditingVote(true);
@@ -79,16 +62,9 @@ const NightlyDayUserRow = ({
         onEditEnd?.();
     };
 
-    const getCurrentNightlyResponse = () => {
-        if (nightlyResponseList[user.email] && nightlyResponseList[user.email][dayNumber] !== undefined) {
-            return nightlyResponseList[user.email][dayNumber];
-        }
-        return "";
-    };
-
-    const getCurrentNightlyMessage = () => {
-        if (nightlyMessagesList[user.email] && nightlyMessagesList[user.email][dayNumber] !== undefined) {
-            return nightlyMessagesList[user.email][dayNumber];
+    const getCurrentMorningMessage = () => {
+        if (morningMessagesList[user.email] && morningMessagesList[user.email][dayNumber] !== undefined) {
+            return morningMessagesList[user.email][dayNumber];
         }
         return "";
     };
@@ -109,7 +85,7 @@ const NightlyDayUserRow = ({
                 </Column>
                 <Column gap={0} className={`w-28 h-full border border-subtle-border items-center justify-center ${editingVote ? 'z-0' : 'z-20'}`}>
                     <InlineEditableText
-                        value={dayData.action || ''}
+                        value={actionDisplayValue}
                         onChange={(newValue) => setActionValue?.(index, newValue)}
                         placeholder='Action'
                         className='w-20 text-center text-nowrap overflow-hidden'
@@ -117,22 +93,6 @@ const NightlyDayUserRow = ({
                         onEditStart={handleActionEditStart}
                         onEditEnd={handleActionEditEnd}
                     />
-                </Column>
-                <Column className={`w-64 h-full border border-subtle-border items-center justify-center ${isLast ? 'rounded-br-lg' : ''}`}>
-                    <Pressable onPress={() => setIsResponseDialogOpen(true)} className='w-60 h-full items-center justify-center'>
-                        <PoppinsText 
-                            weight='medium' 
-                            className='text-center text-nowrap overflow-hidden w-60'
-                            style={{
-                                textDecorationLine: 'underline',
-                                textDecorationStyle: 'dotted',
-                            }}
-                        >
-                            {getCurrentNightlyResponse() || (
-                                <PoppinsText className="opacity-50">No response...</PoppinsText>
-                            )}
-                        </PoppinsText>
-                    </Pressable>
                 </Column>
                 <Column gap={0} className={`w-64 h-full border border-subtle-border items-center justify-center ${isLast ? 'rounded-br-lg' : ''}`}>
                     <Pressable onPress={() => setIsMessageDialogOpen(true)} className='w-60 h-full items-center justify-center'>
@@ -144,32 +104,22 @@ const NightlyDayUserRow = ({
                                 textDecorationStyle: 'dotted',
                             }}
                         >
-                            {getCurrentNightlyMessage() || (
-                                <PoppinsText className="opacity-50">No message...</PoppinsText>
+                            {getCurrentMorningMessage() || (
+                                <PoppinsText className="opacity-50">No morning message...</PoppinsText>
                             )}
                         </PoppinsText>
                     </Pressable>
                 </Column>
             </Row>
-            <NightlyResponseDialog
-                isOpen={isResponseDialogOpen}
-                onOpenChange={setIsResponseDialogOpen}
-                dayIndex={dayNumber}
-                userIndex={index}
-                userName={user.realName || 'User'}
-                currentResponse={getCurrentNightlyResponse()}
-                onPress={() => setIsResponseDialogOpen(true)}
-                updateNightlyResponse={updateNightlyResponse}
-            />
             <NightlyMessageDialog
                 isOpen={isMessageDialogOpen}
                 onOpenChange={setIsMessageDialogOpen}
                 dayIndex={dayNumber}
                 userIndex={index}
                 userName={user.realName || 'User'}
-                currentMessage={getCurrentNightlyMessage()}
+                currentMessage={getCurrentMorningMessage()}
                 onPress={() => setIsMessageDialogOpen(true)}
-                updateNightlyMessage={updateNightlyMessage}
+                updateNightlyMessage={updateMorningMessage}
             />
         </>
     );

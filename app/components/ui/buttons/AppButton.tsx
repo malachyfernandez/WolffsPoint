@@ -61,7 +61,7 @@ import { BlurView } from 'expo-blur';
 
 interface AppButtonProps {
     children: React.ReactNode;
-    variant?: 'outline-alt' | 'outline' | 'outline-accent' | 'outline-invert' | 'filled' | 'grey' | 'accent' | 'red' | 'none';
+    variant?: 'outline-alt' | 'outline' | 'outline-accent' | 'outline-invert' | 'filled' | 'grey' | 'accent' | 'red' | 'none' | 'black' | 'green';
     className?: string;
     onPress?: () => void;
     dropShadow?: boolean;
@@ -112,7 +112,13 @@ const AppButton = ({
     } else if (variant === 'accent') {
         const bg = 'bg-accent';
         extraStyles = `${bg} group hover:bg-accent-hover active:brightness-75`;
+    } else if (variant === 'green') {
+        const bg = 'bg-accent';
+        extraStyles = `${bg} group hover:bg-accent-hover active:brightness-75`;
     } else if (variant === 'filled') {
+        const bg = 'bg-text';
+        extraStyles = `${bg} group hover:brightness-150 active:brightness-50`;
+    } else if (variant === 'black') {
         const bg = 'bg-text';
         extraStyles = `${bg} group hover:brightness-150 active:brightness-50`;
     } else if (variant === 'red') {

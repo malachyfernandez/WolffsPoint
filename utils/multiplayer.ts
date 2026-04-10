@@ -1,12 +1,29 @@
-import { GameSchedule } from '../types/multiplayer';
+import { GameSchedule, MarkdownInputState, PlayerActionValue } from '../types/multiplayer';
 
 const DEFAULT_SCHEDULE: GameSchedule = {
-    newspaperReleaseTime: '08:00',
     nightlyDeadlineTime: '22:00',
-    nightlyResponseReleaseTime: '23:00',
+    wakeUpTime: '08:00',
+    nightlyResponseReleaseTime: '08:00',
+    newspaperReleaseTime: '08:00',
 };
 
 export const defaultGameSchedule = DEFAULT_SCHEDULE;
+
+export const getWakeUpTime = (schedule: GameSchedule) => {
+    return schedule.wakeUpTime || schedule.newspaperReleaseTime || schedule.nightlyResponseReleaseTime || defaultGameSchedule.wakeUpTime;
+};
+
+export const normalizeGameSchedule = (schedule?: Partial<GameSchedule> | null): GameSchedule => {
+    const nightlyDeadlineTime = schedule?.nightlyDeadlineTime || defaultGameSchedule.nightlyDeadlineTime;
+    const wakeUpTime = schedule?.wakeUpTime || schedule?.newspaperReleaseTime || schedule?.nightlyResponseReleaseTime || defaultGameSchedule.wakeUpTime;
+
+    return {
+        nightlyDeadlineTime,
+        wakeUpTime,
+        nightlyResponseReleaseTime: wakeUpTime,
+        newspaperReleaseTime: wakeUpTime,
+    };
+};
 
 export const getGameScopedKey = (baseKey: string, gameId: string) => {
     return `${baseKey}-${gameId}`;
@@ -80,4 +97,97 @@ export const isDayReleasedAtTime = (dayDate: Date, time24: string, now: Date = n
 export const isNightWindowOpen = (dayDate: Date, deadlineTime24: string, now: Date = new Date()) => {
     const deadline = buildScheduledDate(dayDate, deadlineTime24);
     return now.getTime() <= deadline.getTime();
+};
+
+export const normalizePlayerActionState = (action: PlayerActionValue | undefined): MarkdownInputState => {
+    if (!action) {
+        return {};
+    }
+
+    if (typeof action === 'string') {
+        const trimmedValue = action.trim();
+        if (!trimmedValue.startsWith('{')) {
+            return {};
+        }
+
+        try {
+            const parsedValue = JSON.parse(trimmedValue) as MarkdownInputState;
+            return typeof parsedValue === 'object' && parsedValue !== null ? parsedValue : {};
+        } catch {
+            return {};
+        }
+    }
+
+    return action;
+};
+
+export const getPlayerActionSummary = (action: PlayerActionValue | undefined) => {
+    if (!action) {
+        return '';
+    }
+
+    if (typeof action === 'string') {
+        return action;
+    }
+
+    const entries = Object.entries(action)
+        .map(([label, value]) => [label, value?.trim() || ''] as const)
+        .filter(([, value]) => value.length > 0);
+
+    return entries.map(([label, value]) => `${label}: ${value}`).join(' • ');
+};
+
+export const hasPlayerActionContent = (action: PlayerActionValue | undefined) => {
+    return getPlayerActionSummary(action).trim().length > 0;
+};
+
+export const getLatestReleasedDayIndex = (dayDates: Date[], wakeUpTime24: string, now: Date = new Date()) => {
+    if (dayDates.length === 0) {
+        return -1;
+    }
+
+    let latestReleasedIndex = -1;
+
+    dayDates.forEach((dayDate, index) => {
+        if (isDayReleasedAtTime(dayDate, wakeUpTime24, now)) {
+            latestReleasedIndex = index;
+        }
+    });
+
+    return latestReleasedIndex;
+};
+
+export const formatCountdown = (targetDate: Date, now: Date = new Date()) => {
+    const differenceMs = targetDate.getTime() - now.getTime();
+    if (differenceMs <= 0) {
+        return '00:00:00';
+    }
+
+    const totalSeconds = Math.floor(differenceMs / 1000);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+
+    return [hours, minutes, seconds].map((value) => `${value}`.padStart(2, '0')).join(':');
+};
+
+export const formatRelativeDuration = (targetDate: Date, now: Date = new Date()) => {
+    const differenceMs = targetDate.getTime() - now.getTime();
+    if (differenceMs <= 0) {
+        return 'now';
+    }
+
+    const totalMinutes = Math.ceil(differenceMs / 60000);
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+
+    if (hours === 0) {
+        return `${minutes}m`;
+    }
+
+    if (minutes === 0) {
+        return `${hours}h`;
+    }
+
+    return `${hours}h ${minutes}m`;
 };

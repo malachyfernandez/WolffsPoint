@@ -15,9 +15,11 @@ export type DaySelectorMode = 'player' | 'nightly' | 'newspaper';
 
 interface ComprehensiveDaySelectorProps {
     gameId: string;
+    showAddButton?: boolean;
+    showInitialSetupDialog?: boolean;
 }
 
-const ComprehensiveDaySelector = ({ gameId }: ComprehensiveDaySelectorProps) => {
+const ComprehensiveDaySelector = ({ gameId, showAddButton = false, showInitialSetupDialog = false }: ComprehensiveDaySelectorProps) => {
     const scrollViewRef = useRef<ScrollView>(null);
     
     // Shared selected day index
@@ -34,6 +36,13 @@ const ComprehensiveDaySelector = ({ gameId }: ComprehensiveDaySelectorProps) => 
         itemId: gameId,
         privacy: "PUBLIC",
         defaultValue: 2,
+    });
+
+    const [hasCompletedInitialDaySetup, setHasCompletedInitialDaySetup] = useUserList<boolean>({
+        key: "hasCompletedInitialDaySetup",
+        itemId: gameId,
+        privacy: "PUBLIC",
+        defaultValue: false,
     });
 
     // Shared day dates array
@@ -58,10 +67,10 @@ const ComprehensiveDaySelector = ({ gameId }: ComprehensiveDaySelectorProps) => 
     }, [setDayDatesArray]);
 
     useEffect(() => {
-        if (dayDatesArray.value.length === 0 && dayDatesArray.state.isSyncing === false) {
-            setFixedDayDatesArray([new Date()]);
+        if (dayDatesArray.value.length > 0 && hasCompletedInitialDaySetup.state.isSyncing === false && hasCompletedInitialDaySetup.value === false) {
+            setHasCompletedInitialDaySetup(true);
         }
-    }, [dayDatesArray, setFixedDayDatesArray]);
+    }, [dayDatesArray.value.length, hasCompletedInitialDaySetup.state.isSyncing, hasCompletedInitialDaySetup.value, setHasCompletedInitialDaySetup]);
 
     // Auto-scroll to selected day
     useEffect(() => {
@@ -82,6 +91,13 @@ const ComprehensiveDaySelector = ({ gameId }: ComprehensiveDaySelectorProps) => 
 
     const addNewDay = (customDaysPerGameDay?: number) => {
         const currentDays = [...fixedDayDatesArray];
+        if (currentDays.length === 0) {
+            const firstDay = new Date();
+            setFixedDayDatesArray([firstDay]);
+            setSelectedDayIndex(0);
+            setHasCompletedInitialDaySetup(true);
+            return;
+        }
         const lastDate = currentDays[currentDays.length - 1];
         const newDate = new Date(lastDate);
 
@@ -96,6 +112,18 @@ const ComprehensiveDaySelector = ({ gameId }: ComprehensiveDaySelectorProps) => 
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [isChooseDayDialogOpen, setIsChooseDayDialogOpen] = useState(false);
 
+    useEffect(() => {
+        if (
+            showInitialSetupDialog &&
+            dayDatesArray.state.isSyncing === false &&
+            hasCompletedInitialDaySetup.state.isSyncing === false &&
+            dayDatesArray.value.length === 0 &&
+            hasCompletedInitialDaySetup.value === false
+        ) {
+            setIsChooseDayDialogOpen(true);
+        }
+    }, [dayDatesArray.state.isSyncing, dayDatesArray.value.length, hasCompletedInitialDaySetup.state.isSyncing, hasCompletedInitialDaySetup.value, showInitialSetupDialog]);
+
     const replaceDayDate = (index: number, replacementDate: Date) => {
         const currentDays = [...fixedDayDatesArray];
         if (index >= 0 && index < currentDays.length) {
@@ -109,7 +137,29 @@ const ComprehensiveDaySelector = ({ gameId }: ComprehensiveDaySelectorProps) => 
     };
 
     const handleAddNewDay = () => {
+        if (showAddButton === false) {
+            return;
+        }
+
+        if (fixedDayDatesArray.length === 0 && showInitialSetupDialog) {
+            setIsChooseDayDialogOpen(true);
+            return;
+        }
+
         addNewDay();
+    };
+
+    const handleInitialDaySetupSubmit = (daysPerGameDay: number) => {
+        if (fixedDayDatesArray.length === 0) {
+            setFixedDayDatesArray([new Date()]);
+            setSelectedDayIndex(0);
+        }
+
+        if (daysPerGameDay !== numberOfRealDaysPerInGameDay.value && fixedDayDatesArray.length > 0) {
+            setSelectedDayIndex(Math.min(selectedDayIndex.value, fixedDayDatesArray.length - 1));
+        }
+
+        setHasCompletedInitialDaySetup(true);
     };
 
     // Create a unique key for content based on the day index
@@ -174,9 +224,11 @@ const ComprehensiveDaySelector = ({ gameId }: ComprehensiveDaySelectorProps) => 
                     className='px-1 m-0 h-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]'
                 >
                     <Row className='h-6' gap={1}>
-                        <AppButton variant="accent" className='max-w-6 min-w-6 max-h-6 ml-1 rounded-full' onPress={handleAddNewDay}>
-                            <PoppinsText weight="bold" className='text-white'>+</PoppinsText>
-                        </AppButton>
+                        {showAddButton && (
+                            <AppButton variant="accent" className='max-w-6 min-w-6 max-h-6 ml-1 rounded-full' onPress={handleAddNewDay}>
+                                <PoppinsText weight="bold" className='text-white'>+</PoppinsText>
+                            </AppButton>
+                        )}
                         {fixedDayDatesArray.slice().reverse().map((date, reverseIndex) => {
                             const index = fixedDayDatesArray.length - 1 - reverseIndex;
                             const isCurrentDay = isCurrentOrNextDay(date);
@@ -227,7 +279,7 @@ const ComprehensiveDaySelector = ({ gameId }: ComprehensiveDaySelectorProps) => 
                 isOpen={isChooseDayDialogOpen}
                 onOpenChange={setIsChooseDayDialogOpen}
                 gameId={gameId}
-                addNewDay={addNewDay}
+                onSubmitDaysValue={handleInitialDaySetupSubmit}
             />
         </Column>
     );
