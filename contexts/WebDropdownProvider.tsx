@@ -54,6 +54,14 @@ interface WebDropdownPortalProps {
 export const WebDropdownPortal = ({ children }: WebDropdownPortalProps) => {
     const portalElement = useWebDropdownPortalElement();
 
+    useEffect(() => {
+        if (Platform.OS !== 'web' || !portalElement || !portalElement.parentNode) {
+            return;
+        }
+
+        document.body.appendChild(portalElement);
+    }, [portalElement]);
+
     if (Platform.OS !== 'web' || !portalElement) {
         return null;
     }

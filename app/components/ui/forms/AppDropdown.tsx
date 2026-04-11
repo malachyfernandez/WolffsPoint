@@ -211,7 +211,7 @@ const AppDropdown = ({
                     inset: 0,
                     pointerEvents: 'auto',
                     position: 'fixed',
-                    zIndex: 99999,
+                    zIndex: 2147483646,
                     animation: 'fadeIn 0.2s ease-out',
                 },
             })}
@@ -223,7 +223,7 @@ const AppDropdown = ({
                     left: '50%',
                     transform: 'translate(-50%, -50%)',
                     pointerEvents: 'auto',
-                    zIndex: 100000,
+                    zIndex: 2147483647,
                     animation: 'slideUp 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
                 }}
             >
@@ -268,7 +268,11 @@ const AppDropdown = ({
                         disabled={disabled}
                     />
 
-                    {centeredWebOverlay}
+                    {centeredWebOverlay ? (
+                        <WebDropdownPortal>
+                            {centeredWebOverlay}
+                        </WebDropdownPortal>
+                    ) : null}
                 </>
             );
         }

@@ -149,8 +149,14 @@ export const getLatestReleasedDayIndex = (dayDates: Date[], wakeUpTime24: string
     let latestReleasedIndex = -1;
 
     dayDates.forEach((dayDate, index) => {
-        if (isDayReleasedAtTime(dayDate, wakeUpTime24, now)) {
-            latestReleasedIndex = index;
+        // Morning message for Day N is released on Day N+1 after wakeUpTime
+        // So we check if the next day exists and if wakeUpTime has passed on that next day
+        const nextDayIndex = index + 1;
+        if (nextDayIndex < dayDates.length) {
+            const nextDayDate = dayDates[nextDayIndex];
+            if (isDayReleasedAtTime(nextDayDate, wakeUpTime24, now)) {
+                latestReleasedIndex = index;
+            }
         }
     });
 
