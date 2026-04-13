@@ -4,15 +4,14 @@ import Row from '../layout/Row';
 import PoppinsText from '../ui/text/PoppinsText';
 import AppDropdown from '../ui/forms/AppDropdown';
 import MarkdownRenderer, { MarkdownRendererInputDataProvider } from '../ui/markdown/MarkdownRenderer';
+import PlayerDaySelector from './PlayerDaySelector';
 import { useSharedListValue } from '../../../hooks/useSharedListValue';
 import { useUserVariable } from '../../../hooks/useUserVariable';
 import { useUserVariableGet } from '../../../hooks/useUserVariableGet';
 import { PlayerNightSubmission, PlayerProfile } from '../../../types/multiplayer';
 import { RoleTableItem } from '../../../types/roleTable';
 import { UserTableItem } from '../../../types/playerTable';
-import { buildScheduledDate, defaultGameSchedule, formatCountdown, formatRelativeDuration, formatTimeLabel, getCurrentPlayableDayIndex, getGameScopedKey, getLatestReleasedDayIndex, getPlayerActionSummary, isNightWindowOpen, normalizeGameSchedule, normalizePlayerActionState, parseStoredDayDates } from '../../../utils/multiplayer';
-import { ChevronLeft, ChevronRight } from 'lucide-react-native';
-import { Pressable } from 'react-native';
+import { buildScheduledDate, defaultGameSchedule, formatCountdown, formatRelativeDuration, formatTimeLabel, getCurrentPlayableDayIndex, getDayEndDate, getDayRangeLabel, getDayReleaseDate, getGameScopedKey, getPlayerActionSummary, isDayContentReleased, isNightWindowOpen, normalizeGameSchedule, normalizePlayerActionState, parseStoredDayDates } from '../../../utils/multiplayer';
 
 interface YourEyesOnlyPagePLAYERProps {
     gameId: string;
@@ -25,15 +24,25 @@ const YourEyesOnlyPagePLAYER = ({ gameId, currentEmail, matchingPlayer, currentP
     const { value: userTable } = useSharedListValue<UserTableItem[]>({ key: 'userTable', itemId: gameId, defaultValue: [] });
     const { value: morningMessagesList } = useSharedListValue<Record<string, string[]>>({ key: 'morningMessagesList', itemId: gameId, defaultValue: {} });
     const { value: dayDateStrings } = useSharedListValue<string[]>({ key: 'dayDatesArray', itemId: gameId, defaultValue: [] });
+    const { value: numberOfRealDaysPerInGameDay } = useSharedListValue<number>({ key: 'numberOfRealDaysPerInGameDay', itemId: gameId, defaultValue: 2 });
     const roleTable = useSharedListValue<RoleTableItem[]>({ key: 'roleTable', itemId: gameId, defaultValue: [] });
     const scheduleRecords = useUserVariableGet({ key: getGameScopedKey('gameSchedule', gameId), returnTop: 1 });
     const [now, setNow] = useState(() => new Date());
-    const [selectedMorningDayIndex, setSelectedMorningDayIndex] = useState(0);
 
     const dayDates = useMemo(() => parseStoredDayDates(dayDateStrings), [dayDateStrings]);
     const currentDayIndex = useMemo(() => getCurrentPlayableDayIndex(dayDates), [dayDates]);
-    const currentDayDate = dayDates[currentDayIndex] ?? new Date();
+    const [selectedDayIndex, setSelectedDayIndex] = useState(currentDayIndex);
     const schedule = normalizeGameSchedule(scheduleRecords?.[0]?.value ?? defaultGameSchedule);
+    const selectedDayEndDate = useMemo(() => getDayEndDate(dayDates, selectedDayIndex, numberOfRealDaysPerInGameDay), [selectedDayIndex, dayDates, numberOfRealDaysPerInGameDay]);
+    const selectedDayRangeLabel = useMemo(() => getDayRangeLabel(dayDates, selectedDayIndex, numberOfRealDaysPerInGameDay), [selectedDayIndex, dayDates, numberOfRealDaysPerInGameDay]);
+    const selectedMorningDayIndex = selectedDayIndex - 1;
+    const selectedMorningRangeLabel = useMemo(() => getDayRangeLabel(dayDates, selectedMorningDayIndex, numberOfRealDaysPerInGameDay), [selectedMorningDayIndex, dayDates, numberOfRealDaysPerInGameDay]);
+    const selectedMorningReleaseDate = useMemo(() => selectedMorningDayIndex >= 0 ? getDayReleaseDate(dayDates, selectedMorningDayIndex, schedule.wakeUpTime) : null, [dayDates, schedule.wakeUpTime, selectedMorningDayIndex]);
+    const hasSelectedMorning = selectedMorningDayIndex >= 0 && isDayContentReleased(dayDates, selectedMorningDayIndex, schedule.wakeUpTime, now);
+
+    useEffect(() => {
+        setSelectedDayIndex((currentValue) => Math.min(currentValue, currentDayIndex));
+    }, [currentDayIndex]);
 
     useEffect(() => {
         const intervalId = setInterval(() => {
@@ -44,11 +53,11 @@ const YourEyesOnlyPagePLAYER = ({ gameId, currentEmail, matchingPlayer, currentP
     }, []);
 
     const [submission, setSubmission] = useUserVariable<PlayerNightSubmission>({
-        key: getGameScopedKey(`playerNightSubmission-day-${currentDayIndex}`, gameId),
+        key: getGameScopedKey(`playerNightSubmission-day-${selectedDayIndex}`, gameId),
         defaultValue: {
             gameId,
-            gameDayId: `${gameId}-day-${currentDayIndex}`,
-            dayIndex: currentDayIndex,
+            gameDayId: `${gameId}-day-${selectedDayIndex}`,
+            dayIndex: selectedDayIndex,
             playerEmail: currentEmail,
             playerUserId: currentProfile.userId,
             vote: '',
@@ -82,26 +91,13 @@ const YourEyesOnlyPagePLAYER = ({ gameId, currentEmail, matchingPlayer, currentP
             value: role.role,
             label: role.role,
         }));
-    const canEditNight = isNightWindowOpen(currentDayDate, schedule.nightlyDeadlineTime);
-    const latestReleasedMorningDayIndex = useMemo(() => getLatestReleasedDayIndex(dayDates, schedule.wakeUpTime, now), [dayDates, now, schedule.wakeUpTime]);
-    const releasedMorningCount = latestReleasedMorningDayIndex + 1;
-    const hasReleasedMorning = latestReleasedMorningDayIndex >= 0;
-    const displayedMorningDayIndex = hasReleasedMorning ? Math.min(selectedMorningDayIndex, latestReleasedMorningDayIndex) : -1;
-    const currentMorningMessage = displayedMorningDayIndex >= 0 ? morningMessagesList[currentEmail]?.[displayedMorningDayIndex] ?? '' : '';
+    const isSelectedDayLocked = selectedDayIndex < currentDayIndex || !isNightWindowOpen(selectedDayEndDate, schedule.nightlyDeadlineTime, now);
+    const currentMorningMessage = hasSelectedMorning ? morningMessagesList[currentEmail]?.[selectedMorningDayIndex] ?? '' : '';
     const currentActionState = useMemo(() => normalizePlayerActionState(submission.value.action), [submission.value.action]);
     const currentActionSummary = useMemo(() => getPlayerActionSummary(submission.value.action), [submission.value.action]);
-    const nightlyDeadline = useMemo(() => buildScheduledDate(currentDayDate, schedule.nightlyDeadlineTime), [currentDayDate, schedule.nightlyDeadlineTime]);
-    const voteCountdown = formatCountdown(nightlyDeadline, now);
+    const nightlyDeadline = useMemo(() => buildScheduledDate(selectedDayEndDate, schedule.nightlyDeadlineTime), [selectedDayEndDate, schedule.nightlyDeadlineTime]);
+    const voteCountdown = isSelectedDayLocked ? 'LOCKED' : formatCountdown(nightlyDeadline, now);
     const actionDueIn = formatRelativeDuration(nightlyDeadline, now);
-
-    useEffect(() => {
-        if (latestReleasedMorningDayIndex < 0) {
-            setSelectedMorningDayIndex(0);
-            return;
-        }
-
-        setSelectedMorningDayIndex(latestReleasedMorningDayIndex);
-    }, [latestReleasedMorningDayIndex]);
 
     return (
         <Column className='pb-8' gap={7}>
@@ -119,66 +115,52 @@ const YourEyesOnlyPagePLAYER = ({ gameId, currentEmail, matchingPlayer, currentP
                 )}
             </Column>
 
-            <Column className='border-y border-border/15 py-5' gap={3}>
-                <Row className='items-center justify-between gap-4'>
-                    <Pressable
-                        onPress={() => {
-                            if (displayedMorningDayIndex > 0) {
-                                setSelectedMorningDayIndex(displayedMorningDayIndex - 1);
-                            }
-                        }}
-                        disabled={displayedMorningDayIndex <= 0}
-                        className={`h-12 w-12 items-center justify-center rounded-full ${displayedMorningDayIndex <= 0 ? 'opacity-30' : ''}`}
-                    >
-                        <ChevronLeft size={28} color='rgb(46, 41, 37)' />
-                    </Pressable>
+            <Column className='border-y border-border/15 py-5' gap={5}>
+                <PlayerDaySelector
+                    dayDates={dayDates}
+                    selectedDayIndex={selectedDayIndex}
+                    currentDayIndex={currentDayIndex}
+                    onSelectDay={setSelectedDayIndex}
+                    fallbackSpanDays={numberOfRealDaysPerInGameDay}
+                />
 
-                    <Column className='flex-1 items-center' gap={1}>
-                        <PoppinsText weight='medium' className='text-center'>Morning Message</PoppinsText>
-                        {hasReleasedMorning ? (
-                            <PoppinsText varient='subtext' className='text-center'>
-                                Day {displayedMorningDayIndex + 1} of {releasedMorningCount}
-                            </PoppinsText>
-                        ) : (
-                            <PoppinsText varient='subtext' className='text-center'>
-                                Morning messages unlock at {formatTimeLabel(schedule.wakeUpTime)}.
-                            </PoppinsText>
-                        )}
-                    </Column>
+                <Column className='items-center' gap={2}>
+                    <PoppinsText weight='medium' className='text-center'>Morning Message</PoppinsText>
+                    <PoppinsText varient='subtext' className='text-center'>
+                        {selectedMorningDayIndex >= 0 ? `Received when ${selectedDayRangeLabel} begins` : 'There is no morning message before the first game day.'}
+                    </PoppinsText>
+                    <PoppinsText className='text-center text-lg leading-8'>
+                        {selectedMorningDayIndex < 0
+                            ? 'No morning message yet.'
+                            : hasSelectedMorning
+                                ? (currentMorningMessage || 'No morning message yet.')
+                                : selectedMorningReleaseDate
+                                    ? `You haven’t woken up for ${selectedDayRangeLabel || 'this game day'} yet. Unlocks ${selectedMorningReleaseDate.getMonth() + 1}/${selectedMorningReleaseDate.getDate()} at ${formatTimeLabel(schedule.wakeUpTime)}.`
+                                    : `You haven’t woken up for ${selectedDayRangeLabel || 'this game day'} yet.`}
+                    </PoppinsText>
+                    {selectedMorningDayIndex >= 0 && selectedMorningRangeLabel ? (
+                        <PoppinsText varient='subtext' className='text-center'>Comes from the overnight results after {selectedMorningRangeLabel}.</PoppinsText>
+                    ) : null}
+                </Column>
 
-                    <Pressable
-                        onPress={() => {
-                            if (displayedMorningDayIndex < latestReleasedMorningDayIndex) {
-                                setSelectedMorningDayIndex(displayedMorningDayIndex + 1);
-                            }
-                        }}
-                        disabled={!hasReleasedMorning || displayedMorningDayIndex >= latestReleasedMorningDayIndex}
-                        className={`h-12 w-12 items-center justify-center rounded-full ${!hasReleasedMorning || displayedMorningDayIndex >= latestReleasedMorningDayIndex ? 'opacity-30' : ''}`}
-                    >
-                        <ChevronRight size={28} color='rgb(46, 41, 37)' />
-                    </Pressable>
-                </Row>
-
-                <PoppinsText className='text-center text-lg leading-8'>
-                    {hasReleasedMorning ? (currentMorningMessage || 'No morning message yet.') : `You haven’t woken up for Day 1 yet.`}
-                </PoppinsText>
-            </Column>
-
-            <Column className='items-center border-b border-border/15 pb-5' gap={1}>
                 <PoppinsText weight='bold' className='text-lg tracking-[0.45em]'>VOTE</PoppinsText>
                 <PoppinsText weight='bold' className='text-5xl leading-[3.5rem]'>{voteCountdown}</PoppinsText>
-                <PoppinsText varient='subtext'>Voting due at {formatTimeLabel(schedule.nightlyDeadlineTime)}.</PoppinsText>
-                <PoppinsText varient='subtext'>Actions due {nightlyDeadline.getTime() > now.getTime() ? `in ${actionDueIn}` : 'now'}.</PoppinsText>
+                <PoppinsText varient='subtext'>{selectedDayRangeLabel || 'Current game day'} closes at {formatTimeLabel(schedule.nightlyDeadlineTime)}.</PoppinsText>
+                <PoppinsText varient='subtext'>
+                    {isSelectedDayLocked
+                        ? `This day is locked. You’re viewing the saved vote and action for ${selectedDayRangeLabel || 'this game day'}.`
+                        : `Actions due ${nightlyDeadline.getTime() > now.getTime() ? `in ${actionDueIn}` : 'now'}.`}
+                </PoppinsText>
             </Column>
 
             <Row className='items-start gap-6' style={{ flexWrap: 'wrap' }}>
                 <Column className='min-w-[240px] flex-1' gap={3}>
-                    <PoppinsText weight='medium' className='text-sm tracking-[0.24em] uppercase opacity-60'>Tonight&apos;s Vote</PoppinsText>
+                    <PoppinsText weight='medium' className='text-sm tracking-[0.24em] uppercase opacity-60'>{selectedDayRangeLabel || 'Current'} Vote</PoppinsText>
                     <AppDropdown
                         options={voteOptions}
                         value={submission.value.vote}
                         onValueChange={(value) => {
-                            if (!canEditNight || roleData?.doesRoleVote === false) {
+                            if (isSelectedDayLocked || roleData?.doesRoleVote === false) {
                                 return;
                             }
 
@@ -191,10 +173,12 @@ const YourEyesOnlyPagePLAYER = ({ gameId, currentEmail, matchingPlayer, currentP
                         placeholder={roleData?.doesRoleVote === false ? 'This role does not vote' : 'Choose a player'}
                         triggerClassName='rounded-2xl border border-border/15 bg-none px-4 py-4'
                         contentClassName='border border-border/15'
-                        disabled={!canEditNight || roleData?.doesRoleVote === false}
+                        disabled={isSelectedDayLocked || roleData?.doesRoleVote === false}
                     />
                     {roleData?.doesRoleVote === false ? (
                         <PoppinsText varient='subtext'>This role doesn&apos;t submit a vote.</PoppinsText>
+                    ) : isSelectedDayLocked ? (
+                        <PoppinsText varient='subtext'>Locked vote: {submission.value.vote || 'No vote submitted.'}</PoppinsText>
                     ) : null}
                 </Column>
 
@@ -204,7 +188,7 @@ const YourEyesOnlyPagePLAYER = ({ gameId, currentEmail, matchingPlayer, currentP
                             <MarkdownRenderer
                                 markdown={roleData.roleMessage}
                                 state={currentActionState}
-                                setState={canEditNight ? (nextState) => {
+                                setState={!isSelectedDayLocked ? (nextState) => {
                                     setSubmission({
                                         ...submission.value,
                                         action: nextState,
@@ -217,8 +201,8 @@ const YourEyesOnlyPagePLAYER = ({ gameId, currentEmail, matchingPlayer, currentP
                         )}
                     </MarkdownRendererInputDataProvider>
 
-                    {!canEditNight ? (
-                        <PoppinsText varient='subtext'>The action window has closed for tonight.</PoppinsText>
+                    {isSelectedDayLocked ? (
+                        <PoppinsText varient='subtext'>LOCKED. You&apos;re viewing the saved action state for this day.</PoppinsText>
                     ) : currentActionSummary.trim().length > 0 ? (
                         <PoppinsText varient='subtext'>Current action: {currentActionSummary}</PoppinsText>
                     ) : null}

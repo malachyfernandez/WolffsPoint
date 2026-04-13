@@ -33,7 +33,7 @@ The player eyes-only screen is the private interface where players view their ro
 - `userTable` - All players with their roles, living state, and day-by-day data
 - `roleTable` - All roles with their markdown content (`aboutRole`, `roleMessage`)
 - `morningMessagesList` - Morning messages organized by player email and day index
-- `dayDatesArray` - Calendar dates for each game day
+- `dayDatesArray` - Start dates for each in-game day; each day may span multiple real dates until the next start date
 
 ### User Variables (Per-Player State)
 - `playerNightSubmission-day-{N}` - Current day's vote and action submission
@@ -71,13 +71,13 @@ type PlayerNightSubmission = {
 
 ### 2. Morning Message Navigation
 - Left/right arrows to browse released morning messages
-- Navigation locked by `wakeUpTime` - morning messages for Day N are released on Day N+1 after wake-up time
+- Navigation locked by `wakeUpTime` - morning messages for an in-game day unlock on the next in-game day after wake-up time
 - Auto-snaps to the latest released morning when new days unlock
-- Shows "Day X of Y" counter and unlock time if no mornings released yet
+- Shows the in-game day range label (for example `4/11 - 4/12`) and unlock time if no mornings released yet
 
 ### 3. Vote/Deadline Section
-- Large countdown display showing time until nightly deadline
-- Vote due time display
+- Large countdown display showing time until the current in-game day closes
+- Vote due time display for the end of the current in-game day range
 - Action due relative timing ("in 2h 15m" or "now")
 - Updates every second with live countdown
 
@@ -128,14 +128,17 @@ Optional note:
 ## Time Calculations
 
 ### Shared Helpers
-- `isNightWindowOpen()` - Checks if submission window is still open
+- `isNightWindowOpen()` - Checks if submission window is still open through the end date of the current in-game day range
 - `getLatestReleasedDayIndex()` - Finds the newest day whose morning message has been released (Day N releases on Day N+1)
+- `getDayEndDate()` - Resolves the end date for an in-game day using the next configured start date or the fallback span
+- `getDayRangeLabel()` - Formats an in-game day as a date range like `4/11 - 4/12`
+- `getDayReleaseDate()` - Resolves when a day's morning content unlocks on the following in-game day
 - `formatCountdown()` - Formats remaining time as HH:MM:SS
 - `formatRelativeDuration()` - Formats time as "2h 15m" or "now"
 
 ### Schedule Integration
 - Uses normalized `gameSchedule` with fallback defaults
-- Respects `nightlyDeadlineTime` for submission windows
+- Respects `nightlyDeadlineTime` for submission windows at the end of the current in-game day range
 - Respects `wakeUpTime` for morning message releases (Day N messages release on Day N+1)
 
 ## Compatibility Layer
@@ -169,10 +172,10 @@ Optional note:
 ### Missing Content
 - No `aboutRole` markdown - shows placeholder message
 - No `roleMessage` markdown - shows placeholder message
-- No released mornings - shows unlock time message
+- No released mornings - shows unlock date/time for the first in-game day range
 
 ### Timing States
-- Before wake-up time - navigation disabled, shows unlock time
+- Before wake-up time - navigation disabled, shows the next unlock date/time
 - After deadline - inputs disabled, shows "window closed" message
 - Role doesn't vote - dropdown disabled, shows explanatory text
 
@@ -185,13 +188,15 @@ Optional note:
 
 ### Key Behaviors to Verify
 - Morning navigation respects wake-up time locks
+- Morning headers show date ranges instead of `Day X of Y`
 - Countdown updates correctly and stops at deadline
+- Vote and action windows stay open through the full in-game day range
 - Markdown inputs update submission state immediately
 - Action summaries display properly in operator views
 - Old string actions still work in certification dialog
 
 ### Time-Based Testing
-- Test before/after nightly deadline
+- Test before/after the final real date in an in-game day range
 - Test before/after wake-up time for different days (morning messages should appear the next day)
 - Verify countdown second-by-second updates
 - Check navigation auto-snap when new days release

@@ -55,8 +55,8 @@ const NightlyMessageDialog = ({
 
                     <Column>
                         <DialogHeader
-                            text={`${userName} Morning Message`}
-                            subtext={`Set the morning message for ${userName} on Day ${dayIndex + 1}`}
+                            text={`${userName} Morning Message (Tomorrow)`}
+                            subtext={`Set the message ${userName} will see after this day ends.`}
                         />
                         <Column gap={2}>
                             <PoppinsTextInput

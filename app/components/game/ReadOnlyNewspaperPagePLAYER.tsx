@@ -8,7 +8,7 @@ import { Usepaper } from '../../../types/usepaper';
 import { useSharedListValue } from '../../../hooks/useSharedListValue';
 import { useUserVariableGet } from '../../../hooks/useUserVariableGet';
 import PlayerDaySelector from './PlayerDaySelector';
-import { defaultGameSchedule, formatTimeLabel, getCurrentPlayableDayIndex, getGameScopedKey, isDayReleasedAtTime, normalizeGameSchedule, parseStoredDayDates } from '../../../utils/multiplayer';
+import { defaultGameSchedule, formatTimeLabel, getCurrentPlayableDayIndex, getDayRangeLabel, getGameScopedKey, isDayContentReleased, normalizeGameSchedule, parseStoredDayDates } from '../../../utils/multiplayer';
 
 interface ReadOnlyNewspaperPagePLAYERProps {
     gameId: string;
@@ -23,6 +23,11 @@ const ReadOnlyNewspaperPagePLAYER = ({ gameId }: ReadOnlyNewspaperPagePLAYERProp
         key: 'dayDatesArray',
         itemId: gameId,
         defaultValue: [],
+    });
+    const { value: numberOfRealDaysPerInGameDay } = useSharedListValue<number>({
+        key: 'numberOfRealDaysPerInGameDay',
+        itemId: gameId,
+        defaultValue: 2,
     });
 
     const scheduleRecords = useUserVariableGet({
@@ -46,8 +51,8 @@ const ReadOnlyNewspaperPagePLAYER = ({ gameId }: ReadOnlyNewspaperPagePLAYERProp
     });
 
     const schedule = normalizeGameSchedule(scheduleRecords?.[0]?.value ?? defaultGameSchedule);
-    const selectedDate = dayDates[selectedDayIndex];
-    const isLocked = selectedDate ? !isDayReleasedAtTime(selectedDate, schedule.wakeUpTime) && selectedDayIndex === currentDayIndex : false;
+    const selectedDayRangeLabel = getDayRangeLabel(dayDates, selectedDayIndex, numberOfRealDaysPerInGameDay);
+    const isLocked = dayDates[selectedDayIndex] ? !isDayContentReleased(dayDates, selectedDayIndex, schedule.wakeUpTime) : false;
     const usepaper = newspaperRecords.value?.columns?.length ? newspaperRecords.value : minimumUsepaper;
 
     return (
@@ -63,10 +68,11 @@ const ReadOnlyNewspaperPagePLAYER = ({ gameId }: ReadOnlyNewspaperPagePLAYERProp
                         selectedDayIndex={selectedDayIndex}
                         currentDayIndex={currentDayIndex}
                         onSelectDay={setSelectedDayIndex}
+                        fallbackSpanDays={numberOfRealDaysPerInGameDay}
                     />
                     {isLocked ? (
                         <Column className='rounded-xl border border-subtle-border bg-white p-4'>
-                            <PoppinsText weight='medium'>Today&apos;s paper is not out yet.</PoppinsText>
+                            <PoppinsText weight='medium'>{selectedDayRangeLabel || 'This paper'} is not out yet.</PoppinsText>
                             <PoppinsText varient='subtext'>It releases at {formatTimeLabel(schedule.wakeUpTime)}.</PoppinsText>
                         </Column>
                     ) : (

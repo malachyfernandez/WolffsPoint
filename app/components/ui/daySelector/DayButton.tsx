@@ -7,6 +7,7 @@ import Row from '../../layout/Row';
 interface DayButtonProps {
     date: Date;
     index: number;
+    label?: string;
     isSelected: boolean;
     showCurrentDayIndicator: boolean;
     onPress: () => void;
@@ -16,6 +17,7 @@ interface DayButtonProps {
 const DayButton = ({ 
     date, 
     index, 
+    label,
     isSelected, 
     showCurrentDayIndicator, 
     onPress,
@@ -29,14 +31,14 @@ const DayButton = ({
         <AppButton
             key={index}
             variant={isSelected ? "black" : "grey"}
-            className='w-16 max-h-6'
+            className='min-w-28 px-2 max-h-6'
             onPress={onPress}
         >
             <Row className='items-center' gap={2}>
                 {showCurrentDayIndicator && (
                     <View className='w-1.5 h-1.5 bg-red-500 rounded-full' />
                 )}
-                <PoppinsText className='text-white'>{date.getMonth() + 1}/{date.getDate()}</PoppinsText>
+                <PoppinsText className='text-white'>{label || `${date.getMonth() + 1}/${date.getDate()}`}</PoppinsText>
             </Row>
         </AppButton>
     );

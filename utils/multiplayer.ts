@@ -57,6 +57,73 @@ export const buildScheduledDate = (baseDate: Date, time24: string) => {
     return scheduledDate;
 };
 
+export const addDays = (date: Date, days: number) => {
+    const nextDate = new Date(date);
+    nextDate.setDate(nextDate.getDate() + days);
+    return nextDate;
+};
+
+export const getDayEndDate = (dayDates: Date[], dayIndex: number, fallbackSpanDays: number = 1) => {
+    const startDate = dayDates[dayIndex];
+    if (!startDate) {
+        return new Date();
+    }
+
+    const nextStartDate = dayDates[dayIndex + 1];
+    if (nextStartDate) {
+        return addDays(nextStartDate, -1);
+    }
+
+    return addDays(startDate, Math.max(fallbackSpanDays, 1) - 1);
+};
+
+export const getDayReleaseDate = (dayDates: Date[], dayIndex: number, wakeUpTime24: string) => {
+    const nextStartDate = dayDates[dayIndex + 1];
+    if (!nextStartDate) {
+        return null;
+    }
+
+    return buildScheduledDate(nextStartDate, wakeUpTime24);
+};
+
+export const isDayContentReleased = (dayDates: Date[], dayIndex: number, wakeUpTime24: string, now: Date = new Date()) => {
+    const releaseDate = getDayReleaseDate(dayDates, dayIndex, wakeUpTime24);
+    if (!releaseDate) {
+        return false;
+    }
+
+    return now.getTime() >= releaseDate.getTime();
+};
+
+const formatRangeDate = (date: Date, includeYear: boolean = false) => {
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
+
+    if (includeYear) {
+        return `${month}/${day}/${date.getFullYear()}`;
+    }
+
+    return `${month}/${day}`;
+};
+
+export const getDayRangeLabel = (dayDates: Date[], dayIndex: number, fallbackSpanDays: number = 1) => {
+    const startDate = dayDates[dayIndex];
+    if (!startDate) {
+        return '';
+    }
+
+    const endDate = getDayEndDate(dayDates, dayIndex, fallbackSpanDays);
+    const includeYear = startDate.getFullYear() !== endDate.getFullYear();
+    const startLabel = formatRangeDate(startDate, includeYear);
+    const endLabel = formatRangeDate(endDate, includeYear);
+
+    if (startDate.getTime() === endDate.getTime()) {
+        return startLabel;
+    }
+
+    return `${startLabel} - ${endLabel}`;
+};
+
 export const getCurrentPlayableDayIndex = (dayDates: Date[], now: Date = new Date()) => {
     if (dayDates.length === 0) {
         return 0;
@@ -149,14 +216,8 @@ export const getLatestReleasedDayIndex = (dayDates: Date[], wakeUpTime24: string
     let latestReleasedIndex = -1;
 
     dayDates.forEach((dayDate, index) => {
-        // Morning message for Day N is released on Day N+1 after wakeUpTime
-        // So we check if the next day exists and if wakeUpTime has passed on that next day
-        const nextDayIndex = index + 1;
-        if (nextDayIndex < dayDates.length) {
-            const nextDayDate = dayDates[nextDayIndex];
-            if (isDayReleasedAtTime(nextDayDate, wakeUpTime24, now)) {
-                latestReleasedIndex = index;
-            }
+        if (isDayContentReleased(dayDates, index, wakeUpTime24, now)) {
+            latestReleasedIndex = index;
         }
     });
 

@@ -10,6 +10,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import DaySelectionDialog from '../../game/DaySelectionDialog';
 import ChooseDayDialog from '../../game/ChooseDayDialog';
 import DayButton from './DayButton';
+import { getCurrentPlayableDayIndex, getDayRangeLabel, parseStoredDayDates } from '../../../../utils/multiplayer';
 
 export type DaySelectorMode = 'player' | 'nightly' | 'newspaper';
 
@@ -54,10 +55,8 @@ const ComprehensiveDaySelector = ({ gameId, showAddButton = false, showInitialSe
     });
 
     // Convert stored MM/DD/YYYY strings back to real Date objects for UI use
-    const fixedDayDatesArray = dayDatesArray.value.map(dateStr => {
-        const [month, day, year] = dateStr.split('/').map(Number);
-        return new Date(year, month - 1, day);
-    });
+    const fixedDayDatesArray = parseStoredDayDates(dayDatesArray.value);
+    const currentPlayableDayIndex = getCurrentPlayableDayIndex(fixedDayDatesArray);
 
     // Clean setter that accepts Date[] and handles string conversion internally
     const setFixedDayDatesArray = useCallback((dates: Date[]) => {
@@ -75,8 +74,7 @@ const ComprehensiveDaySelector = ({ gameId, showAddButton = false, showInitialSe
     // Auto-scroll to selected day
     useEffect(() => {
         if (scrollViewRef.current && selectedDayIndex.value !== undefined && fixedDayDatesArray.length > 0) {
-            // Each day button is approximately 64px wide (w-16) + 4px gap
-            const dayButtonWidth = 64;
+            const dayButtonWidth = 112;
             const gapWidth = 4;
             // Calculate position in reversed order: newest days are first (after + button)
             const reversedIndex = fixedDayDatesArray.length - 1 - selectedDayIndex.value;
@@ -167,54 +165,6 @@ const ComprehensiveDaySelector = ({ gameId, showAddButton = false, showInitialSe
         return `day-${dayIndex}`;
     };
 
-    const currentDayKey = getDayKey(selectedDayIndex.value);
-
-    // Check if a date is today or the next coming day
-    const isCurrentOrNextDay = (date: Date): boolean => {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0); // Set to start of day
-        
-        const checkDate = new Date(date);
-        checkDate.setHours(0, 0, 0, 0); // Set to start of day
-        
-        // Check if it's today
-        if (checkDate.getTime() === today.getTime()) {
-            return true;
-        }
-        
-        // Check if it's the next day after today
-        const tomorrow = new Date(today);
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        if (checkDate.getTime() === tomorrow.getTime()) {
-            return true;
-        }
-        
-        // If today is not in the list, check if this is the next upcoming day
-        const todayIndex = fixedDayDatesArray.findIndex(date => {
-            const d = new Date(date);
-            d.setHours(0, 0, 0, 0);
-            return d.getTime() === today.getTime();
-        });
-        
-        if (todayIndex === -1) {
-            // Find the first day that's after today
-            const futureDays = fixedDayDatesArray.filter(date => {
-                const d = new Date(date);
-                d.setHours(0, 0, 0, 0);
-                return d.getTime() > today.getTime();
-            }).sort((a, b) => a.getTime() - b.getTime());
-            
-            const nextDay = futureDays[0];
-            if (nextDay) {
-                const next = new Date(nextDay);
-                next.setHours(0, 0, 0, 0);
-                return checkDate.getTime() === next.getTime();
-            }
-        }
-        
-        return false;
-    };
-
     return (
         <Column>
             <ScrollShadow LinearGradientComponent={LinearGradient} color="#fdfbf6" className='mr-1 pr-1 max-w-min -mb-3 -mt-1'>
@@ -231,8 +181,9 @@ const ComprehensiveDaySelector = ({ gameId, showAddButton = false, showInitialSe
                         )}
                         {fixedDayDatesArray.slice().reverse().map((date, reverseIndex) => {
                             const index = fixedDayDatesArray.length - 1 - reverseIndex;
-                            const isCurrentDay = isCurrentOrNextDay(date);
+                            const isCurrentDay = index === currentPlayableDayIndex;
                             const isSelected = selectedDayIndex.value === index;
+                            const label = getDayRangeLabel(fixedDayDatesArray, index, numberOfRealDaysPerInGameDay.value);
 
                             if (isSelected) {
                                 return (
@@ -240,6 +191,7 @@ const ComprehensiveDaySelector = ({ gameId, showAddButton = false, showInitialSe
                                         key={index}
                                         date={date}
                                         index={index}
+                                        label={label}
                                         isSelected={true}
                                         showCurrentDayIndicator={isCurrentDay}
                                         onPress={() => handleDaySelect(index)}
@@ -249,6 +201,7 @@ const ComprehensiveDaySelector = ({ gameId, showAddButton = false, showInitialSe
                                             onOpenChange={setIsDialogOpen}
                                             index={index}
                                             dayDate={date}
+                                            buttonLabel={label}
                                             previousDate={index > 0 ? fixedDayDatesArray[index - 1] : new Date()}
                                             followingDate={index < fixedDayDatesArray.length - 1 ? fixedDayDatesArray[index + 1] : undefined}
                                             onPress={() => handleDaySelect(index)}
@@ -264,6 +217,7 @@ const ComprehensiveDaySelector = ({ gameId, showAddButton = false, showInitialSe
                                     key={index}
                                     date={date}
                                     index={index}
+                                    label={label}
                                     isSelected={false}
                                     showCurrentDayIndicator={isCurrentDay}
                                     onPress={() => handleDaySelect(index)}

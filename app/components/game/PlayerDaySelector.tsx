@@ -5,15 +5,17 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
 import DayButton from '../ui/daySelector/DayButton';
+import { getDayRangeLabel } from '../../../utils/multiplayer';
 
 interface PlayerDaySelectorProps {
     dayDates: Date[];
     selectedDayIndex: number;
     currentDayIndex: number;
     onSelectDay: (index: number) => void;
+    fallbackSpanDays?: number;
 }
 
-const PlayerDaySelector = ({ dayDates, selectedDayIndex, currentDayIndex, onSelectDay }: PlayerDaySelectorProps) => {
+const PlayerDaySelector = ({ dayDates, selectedDayIndex, currentDayIndex, onSelectDay, fallbackSpanDays = 1 }: PlayerDaySelectorProps) => {
     return (
         <Column>
             <ScrollShadow LinearGradientComponent={LinearGradient} color="#fdfbf6" className='mr-1 pr-1 max-w-min -mb-3 -mt-1'>
@@ -26,6 +28,7 @@ const PlayerDaySelector = ({ dayDates, selectedDayIndex, currentDayIndex, onSele
                                     key={index}
                                     date={date}
                                     index={index}
+                                    label={getDayRangeLabel(dayDates, index, fallbackSpanDays)}
                                     isSelected={selectedDayIndex === index}
                                     showCurrentDayIndicator={index === currentDayIndex}
                                     onPress={() => {

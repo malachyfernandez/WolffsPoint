@@ -10,6 +10,7 @@ import { ScrollView } from 'react-native';
 import DaySelectionDialog from './DaySelectionDialog';
 import ChooseDayDialog from './ChooseDayDialog';
 import DaysTable from './DaysTable';
+import { getDayRangeLabel, parseStoredDayDates } from '../../../utils/multiplayer';
 
 interface PlayerDaysSectionProps {
     gameId: string;
@@ -38,10 +39,7 @@ const PlayerDaysSection = ({ gameId, addNewDay }: PlayerDaysSectionProps) => {
         defaultValue: [],
     });
 
-    const fixedDayDatesArray = dayDatesArray.value.map(dateStr => {
-        const [month, day, year] = dateStr.split('/').map(Number);
-        return new Date(year, month - 1, day);
-    });
+    const fixedDayDatesArray = parseStoredDayDates(dayDatesArray.value);
 
     const dateToStorageString = (date: Date): string => {
         return `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`;
@@ -87,14 +85,17 @@ const PlayerDaysSection = ({ gameId, addNewDay }: PlayerDaysSectionProps) => {
                 <ScrollShadow LinearGradientComponent={LinearGradient} color="#fdfbf6" className='mr-1 pr-1 max-w-min'>
                     <ScrollView horizontal={true} className='px-1 m-0 h-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]' style={{ width: daysTableWidth }}>
                         <Row className='h-6' gap={1}>
-                            {fixedDayDatesArray.map((date, index) => (
-                                selectedDayIndex.value === index ? (
+                            {fixedDayDatesArray.map((date, index) => {
+                                const label = getDayRangeLabel(fixedDayDatesArray, index, numberOfRealDaysPerInGameDay.value);
+
+                                return selectedDayIndex.value === index ? (
                                     <DaySelectionDialog
                                         key={index}
                                         isOpen={isDialogOpen}
                                         onOpenChange={setIsDialogOpen}
                                         index={index}
                                         dayDate={date}
+                                        buttonLabel={label}
                                         previousDate={index > 0 ? fixedDayDatesArray[index - 1] : new Date()}
                                         followingDate={index < fixedDayDatesArray.length - 1 ? fixedDayDatesArray[index + 1] : undefined}
                                         onPress={() => setSelectedDayIndex(index)}
@@ -104,13 +105,13 @@ const PlayerDaysSection = ({ gameId, addNewDay }: PlayerDaysSectionProps) => {
                                     <AppButton
                                         key={index}
                                         variant="grey"
-                                        className='w-16 max-h-6'
+                                        className='min-w-28 px-2 max-h-6'
                                         onPress={() => setSelectedDayIndex(index)}
                                     >
-                                        <PoppinsText className='text-white'>{fixedDayDatesArray[index].getMonth() + 1}/{fixedDayDatesArray[index].getDate()}</PoppinsText>
+                                        <PoppinsText className='text-white'>{label}</PoppinsText>
                                     </AppButton>
-                                )
-                            ))}
+                                );
+                            })}
                             <AppButton variant="accent" className='max-w-6 min-w-6 max-h-6 ml-1 rounded-full' onPress={handleAddNewDay}>
                                 <PoppinsText weight="bold" className='text-white'>+</PoppinsText>
                             </AppButton>

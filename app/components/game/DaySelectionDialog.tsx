@@ -15,6 +15,7 @@ interface DaySelectionDialogProps {
     onOpenChange: (open: boolean) => void;
     index: number;
     dayDate: Date;
+    buttonLabel?: string;
     onPress: () => void;
     previousDate: Date;
     followingDate?: Date;
@@ -22,7 +23,7 @@ interface DaySelectionDialogProps {
     showCurrentDayIndicator?: boolean;
 }
 
-const DaySelectionDialog = ({ isOpen, onOpenChange, index, dayDate, onPress, previousDate, followingDate, replaceDayDate, showCurrentDayIndicator = false }: DaySelectionDialogProps) => {
+const DaySelectionDialog = ({ isOpen, onOpenChange, index, dayDate, buttonLabel, onPress, previousDate, followingDate, replaceDayDate, showCurrentDayIndicator = false }: DaySelectionDialogProps) => {
     const [input, setInput] = useState('');
     const [isDateValid, setIsDateValid] = useState(false);
 
@@ -91,14 +92,14 @@ const DaySelectionDialog = ({ isOpen, onOpenChange, index, dayDate, onPress, pre
                 <AppButton
                     key={index}
                     variant={"black"}
-                    className='w-16 max-h-6'
+                    className='min-w-28 px-2 max-h-6'
                     onPress={onPress}
                 >
                     <Row className='items-center' gap={2}>
                         {showCurrentDayIndicator && (
                             <View className='w-1.5 h-1.5 bg-red-500 rounded-full' />
                         )}
-                        <PoppinsText className='text-white'>{dayDate.getMonth() + 1}/{dayDate.getDate()}</PoppinsText>
+                        <PoppinsText className='text-white'>{buttonLabel || `${dayDate.getMonth() + 1}/${dayDate.getDate()}`}</PoppinsText>
                     </Row>
                 </AppButton>
             </ConvexDialog.Trigger>

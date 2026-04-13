@@ -19,7 +19,7 @@ const NightlyDayTitleRow = ({ onEditStart, onEditEnd, isEditing }: NightlyDayTit
                 <PoppinsText weight='medium' className='text-center'>Action</PoppinsText>
             </Column>
             <Column gap={0} className='w-64 h-full items-center justify-center'>
-                <PoppinsText weight='medium' className='text-center'>Morning Message</PoppinsText>
+                <PoppinsText weight='medium' className='text-center'>Morning Message (Tomorrow)</PoppinsText>
             </Column>
         </Row>
     );
