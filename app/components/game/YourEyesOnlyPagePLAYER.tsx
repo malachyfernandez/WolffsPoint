@@ -4,7 +4,6 @@ import Row from '../layout/Row';
 import PoppinsText from '../ui/text/PoppinsText';
 import AppDropdown from '../ui/forms/AppDropdown';
 import MarkdownRenderer, { MarkdownRendererInputDataProvider } from '../ui/markdown/MarkdownRenderer';
-import PlayerDaySelector from './PlayerDaySelector';
 import { useSharedListValue } from '../../../hooks/useSharedListValue';
 import { useUserVariable } from '../../../hooks/useUserVariable';
 import { useUserVariableGet } from '../../../hooks/useUserVariableGet';
@@ -12,6 +11,8 @@ import { PlayerNightSubmission, PlayerProfile } from '../../../types/multiplayer
 import { RoleTableItem } from '../../../types/roleTable';
 import { UserTableItem } from '../../../types/playerTable';
 import { buildScheduledDate, defaultGameSchedule, formatCountdown, formatRelativeDuration, formatTimeLabel, getCurrentPlayableDayIndex, getDayEndDate, getDayRangeLabel, getDayReleaseDate, getGameScopedKey, getPlayerActionSummary, isDayContentReleased, isNightWindowOpen, normalizeGameSchedule, normalizePlayerActionState, parseStoredDayDates } from '../../../utils/multiplayer';
+import { ChevronLeft, ChevronRight } from 'lucide-react-native';
+import { Pressable } from 'react-native';
 
 interface YourEyesOnlyPagePLAYERProps {
     gameId: string;
@@ -36,9 +37,10 @@ const YourEyesOnlyPagePLAYER = ({ gameId, currentEmail, matchingPlayer, currentP
     const selectedDayEndDate = useMemo(() => getDayEndDate(dayDates, selectedDayIndex, numberOfRealDaysPerInGameDay), [selectedDayIndex, dayDates, numberOfRealDaysPerInGameDay]);
     const selectedDayRangeLabel = useMemo(() => getDayRangeLabel(dayDates, selectedDayIndex, numberOfRealDaysPerInGameDay), [selectedDayIndex, dayDates, numberOfRealDaysPerInGameDay]);
     const selectedMorningDayIndex = selectedDayIndex - 1;
-    const selectedMorningRangeLabel = useMemo(() => getDayRangeLabel(dayDates, selectedMorningDayIndex, numberOfRealDaysPerInGameDay), [selectedMorningDayIndex, dayDates, numberOfRealDaysPerInGameDay]);
     const selectedMorningReleaseDate = useMemo(() => selectedMorningDayIndex >= 0 ? getDayReleaseDate(dayDates, selectedMorningDayIndex, schedule.wakeUpTime) : null, [dayDates, schedule.wakeUpTime, selectedMorningDayIndex]);
     const hasSelectedMorning = selectedMorningDayIndex >= 0 && isDayContentReleased(dayDates, selectedMorningDayIndex, schedule.wakeUpTime, now);
+    const previousDayLabel = useMemo(() => selectedDayIndex > 0 ? getDayRangeLabel(dayDates, selectedDayIndex - 1, numberOfRealDaysPerInGameDay) : '', [dayDates, numberOfRealDaysPerInGameDay, selectedDayIndex]);
+    const nextDayLabel = useMemo(() => selectedDayIndex < currentDayIndex ? getDayRangeLabel(dayDates, selectedDayIndex + 1, numberOfRealDaysPerInGameDay) : '', [currentDayIndex, dayDates, numberOfRealDaysPerInGameDay, selectedDayIndex]);
 
     useEffect(() => {
         setSelectedDayIndex((currentValue) => Math.min(currentValue, currentDayIndex));
@@ -116,46 +118,72 @@ const YourEyesOnlyPagePLAYER = ({ gameId, currentEmail, matchingPlayer, currentP
             </Column>
 
             <Column className='border-y border-border/15 py-5' gap={5}>
-                <PlayerDaySelector
-                    dayDates={dayDates}
-                    selectedDayIndex={selectedDayIndex}
-                    currentDayIndex={currentDayIndex}
-                    onSelectDay={setSelectedDayIndex}
-                    fallbackSpanDays={numberOfRealDaysPerInGameDay}
-                />
+                <Row className='items-start justify-between gap-4'>
+                    <Pressable
+                        onPress={() => {
+                            if (selectedDayIndex > 0) {
+                                setSelectedDayIndex(selectedDayIndex - 1);
+                            }
+                        }}
+                        disabled={selectedDayIndex <= 0}
+                        className={`w-20 items-center ${selectedDayIndex <= 0 ? 'opacity-30' : ''}`}
+                    >
+                        <ChevronLeft size={28} color='rgb(46, 41, 37)' />
+                        <PoppinsText varient='subtext' className='text-center text-xs'>
+                            {previousDayLabel || ' '}
+                        </PoppinsText>
+                    </Pressable>
+
+                    <Column className='flex-1 items-center pt-1' gap={1}>
+                        <PoppinsText weight='medium' className='text-center'>
+                            {selectedDayRangeLabel || 'Current game day'}
+                        </PoppinsText>
+                    </Column>
+
+                    <Pressable
+                        onPress={() => {
+                            if (selectedDayIndex < currentDayIndex) {
+                                setSelectedDayIndex(selectedDayIndex + 1);
+                            }
+                        }}
+                        disabled={selectedDayIndex >= currentDayIndex}
+                        className={`w-20 items-center ${selectedDayIndex >= currentDayIndex ? 'opacity-30' : ''}`}
+                    >
+                        <ChevronRight size={28} color='rgb(46, 41, 37)' />
+                        <PoppinsText varient='subtext' className='text-center text-xs'>
+                            {nextDayLabel || ' '}
+                        </PoppinsText>
+                    </Pressable>
+                </Row>
 
                 <Column className='items-center' gap={2}>
                     <PoppinsText weight='medium' className='text-center'>Morning Message</PoppinsText>
-                    <PoppinsText varient='subtext' className='text-center'>
-                        {selectedMorningDayIndex >= 0 ? `Received when ${selectedDayRangeLabel} begins` : 'There is no morning message before the first game day.'}
-                    </PoppinsText>
                     <PoppinsText className='text-center text-lg leading-8'>
                         {selectedMorningDayIndex < 0
                             ? 'No morning message yet.'
                             : hasSelectedMorning
                                 ? (currentMorningMessage || 'No morning message yet.')
                                 : selectedMorningReleaseDate
-                                    ? `You haven’t woken up for ${selectedDayRangeLabel || 'this game day'} yet. Unlocks ${selectedMorningReleaseDate.getMonth() + 1}/${selectedMorningReleaseDate.getDate()} at ${formatTimeLabel(schedule.wakeUpTime)}.`
-                                    : `You haven’t woken up for ${selectedDayRangeLabel || 'this game day'} yet.`}
+                                    ? `Unlocks at ${formatTimeLabel(schedule.wakeUpTime)}.`
+                                    : `Unlocks at ${formatTimeLabel(schedule.wakeUpTime)}.`}
                     </PoppinsText>
-                    {selectedMorningDayIndex >= 0 && selectedMorningRangeLabel ? (
-                        <PoppinsText varient='subtext' className='text-center'>Comes from the overnight results after {selectedMorningRangeLabel}.</PoppinsText>
-                    ) : null}
                 </Column>
 
-                <PoppinsText weight='bold' className='text-lg tracking-[0.45em]'>VOTE</PoppinsText>
-                <PoppinsText weight='bold' className='text-5xl leading-[3.5rem]'>{voteCountdown}</PoppinsText>
-                <PoppinsText varient='subtext'>{selectedDayRangeLabel || 'Current game day'} closes at {formatTimeLabel(schedule.nightlyDeadlineTime)}.</PoppinsText>
-                <PoppinsText varient='subtext'>
-                    {isSelectedDayLocked
-                        ? `This day is locked. You’re viewing the saved vote and action for ${selectedDayRangeLabel || 'this game day'}.`
-                        : `Actions due ${nightlyDeadline.getTime() > now.getTime() ? `in ${actionDueIn}` : 'now'}.`}
-                </PoppinsText>
+                <Column className='items-center' gap={1}>
+                    <PoppinsText weight='bold' className='text-lg tracking-[0.45em]'>VOTE</PoppinsText>
+                    <PoppinsText weight='bold' className='text-5xl leading-[3.5rem]'>{voteCountdown}</PoppinsText>
+                    <PoppinsText varient='subtext'>Voting due at {formatTimeLabel(schedule.nightlyDeadlineTime)}.</PoppinsText>
+                    <PoppinsText varient='subtext'>
+                        {isSelectedDayLocked
+                            ? 'The action window has closed for this day.'
+                            : `Actions due ${nightlyDeadline.getTime() > now.getTime() ? `in ${actionDueIn}` : 'now'}.`}
+                    </PoppinsText>
+                </Column>
             </Column>
 
             <Row className='items-start gap-6' style={{ flexWrap: 'wrap' }}>
                 <Column className='min-w-[240px] flex-1' gap={3}>
-                    <PoppinsText weight='medium' className='text-sm tracking-[0.24em] uppercase opacity-60'>{selectedDayRangeLabel || 'Current'} Vote</PoppinsText>
+                    <PoppinsText weight='medium' className='text-sm tracking-[0.24em] uppercase opacity-60'>Vote</PoppinsText>
                     <AppDropdown
                         options={voteOptions}
                         value={submission.value.vote}
@@ -178,7 +206,7 @@ const YourEyesOnlyPagePLAYER = ({ gameId, currentEmail, matchingPlayer, currentP
                     {roleData?.doesRoleVote === false ? (
                         <PoppinsText varient='subtext'>This role doesn&apos;t submit a vote.</PoppinsText>
                     ) : isSelectedDayLocked ? (
-                        <PoppinsText varient='subtext'>Locked vote: {submission.value.vote || 'No vote submitted.'}</PoppinsText>
+                        <PoppinsText varient='subtext'>Saved vote: {submission.value.vote || 'No vote submitted.'}</PoppinsText>
                     ) : null}
                 </Column>
 
@@ -202,7 +230,7 @@ const YourEyesOnlyPagePLAYER = ({ gameId, currentEmail, matchingPlayer, currentP
                     </MarkdownRendererInputDataProvider>
 
                     {isSelectedDayLocked ? (
-                        <PoppinsText varient='subtext'>LOCKED. You&apos;re viewing the saved action state for this day.</PoppinsText>
+                        <PoppinsText varient='subtext'>The action window has closed for this day.</PoppinsText>
                     ) : currentActionSummary.trim().length > 0 ? (
                         <PoppinsText varient='subtext'>Current action: {currentActionSummary}</PoppinsText>
                     ) : null}
