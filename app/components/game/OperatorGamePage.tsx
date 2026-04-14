@@ -39,7 +39,7 @@ const OperatorGamePage = ({ gameId, currentUserId }: OperatorGamePageProps) => {
                 {activeTab === 'nightly' && <NightlyPageOPERATOR currentUserId={currentUserId} gameId={gameId} />}
                 {activeTab === 'forum' && <TownSquarePageOPERATOR gameId={gameId} currentUserId={currentUserId} />}
                 {activeTab === 'newspaper' && <NewspaperPageOPERATOR currentUserId={currentUserId} gameId={gameId} />}
-                {activeTab === 'rulebook' && <ConfigPageOPERATOR gameId={gameId} />}
+                {activeTab === 'rulebook' && <ConfigPageOPERATOR gameId={gameId} currentUserId={currentUserId} />}
             </Column>
             <RemoveGameButton gameId={gameId} />
         </Column>

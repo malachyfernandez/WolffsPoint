@@ -1,11 +1,11 @@
-import React, { ReactNode, useEffect, useMemo, useState } from 'react';
+import React, { ReactNode, useMemo, useState } from 'react';
 import { useUserVariable } from '../../../hooks/useUserVariable';
 import { useSharedListValue } from '../../../hooks/useSharedListValue';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
 import PoppinsText from '../ui/text/PoppinsText';
 import AppButton from '../ui/buttons/AppButton';
-import PlayerProfileDialog from './PlayerProfileDialog';
+import PlayerProfileDialog from './PlayerProfileDialogNEW';
 import { UserTableItem } from '../../../types/playerTable';
 import { PlayerProfile } from '../../../types/multiplayer';
 import { getGameScopedKey } from '../../../utils/multiplayer';
@@ -64,6 +64,12 @@ const PlayerAccessGate = ({ gameId, currentUserId, children }: PlayerAccessGateP
         searchKeys: ['inGameName', 'bioMarkdown'],
         sortKey: 'inGameName',
     });
+    const initialProfileValue = useMemo(() => ({
+        ...profile.value,
+        gameId,
+        email: currentEmail,
+        userId: currentUserId,
+    }), [currentEmail, currentUserId, gameId, profile.value]);
 
     
     if (!currentEmail.trim()) {
@@ -96,12 +102,7 @@ const PlayerAccessGate = ({ gameId, currentUserId, children }: PlayerAccessGateP
                     </Row>
                 </Column>
                 <PlayerProfileDialog
-                    initialValue={{
-                        ...profile.value,
-                        gameId,
-                        email: currentEmail,
-                        userId: currentUserId,
-                    }}
+                    initialValue={initialProfileValue}
                     isOpen={isProfileDialogOpen}
                     onOpenChange={setIsProfileDialogOpen}
                     onSave={setProfile}
@@ -117,21 +118,11 @@ const PlayerAccessGate = ({ gameId, currentUserId, children }: PlayerAccessGateP
             {children({
                 currentEmail,
                 matchingPlayer,
-                profile: {
-                    ...profile.value,
-                    gameId,
-                    email: currentEmail,
-                    userId: currentUserId,
-                },
+                profile: initialProfileValue,
                 setProfile,
             })}
             <PlayerProfileDialog
-                initialValue={{
-                    ...profile.value,
-                    gameId,
-                    email: currentEmail,
-                    userId: currentUserId,
-                }}
+                initialValue={initialProfileValue}
                 isOpen={isProfileDialogOpen}
                 onOpenChange={setIsProfileDialogOpen}
                 onSave={setProfile}

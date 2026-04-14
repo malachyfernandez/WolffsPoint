@@ -15,14 +15,17 @@ import VoteDeadlineConfigItem from './config/VoteDeadlineConfigItem';
 import WakeUpTimeConfigItem from './config/WakeUpTimeConfigItem';
 import DaysPerGameDayConfigItem from './config/DaysPerGameDayConfigItem';
 import RuleBookPageOPERATOR from './RuleBookPageOPERATOR';
+import PhoneBookPageOPERATOR from './PhoneBookPageOPERATOR';
 
 interface ConfigPageOPERATORProps {
     gameId: string;
+    currentUserId: string;
 }
 
-type ConfigPageScreenState = 'config' | 'ruleBook';
+type ConfigPageScreenState = 'config' | 'ruleBook' | 'phoneBook';
 
-interface RuleBookPreviewCardProps extends ConfigPageOPERATORProps {
+interface RuleBookPreviewCardProps {
+    gameId: string;
     onPress: () => void;
 }
 
@@ -75,11 +78,42 @@ const RuleBookPreviewCard = ({ gameId, onPress }: RuleBookPreviewCardProps) => {
     );
 };
 
+interface PhoneBookPreviewCardProps {
+    gameId: string;
+    currentUserId: string;
+    onPress: () => void;
+}
+
+const PhoneBookPreviewCard = ({ gameId, currentUserId, onPress }: PhoneBookPreviewCardProps) => {
+    const [userTable] = useUserList<any[]>({
+        key: "userTable",
+        itemId: gameId,
+        privacy: "PUBLIC",
+    });
+
+    const playerCount = (userTable?.value ?? []).filter((user: any) => user.userId !== currentUserId).length;
+
+    return (
+        <Pressable onPress={onPress} className='w-full rounded-3xl bg-text/5 px-4 py-4'>
+            <Row className='items-start gap-3'>
+                
+                <Column className='flex-1' gap={1}>
+                    <PoppinsText weight='medium'>Phone book</PoppinsText>
+                    <PoppinsText varient='subtext'>
+                        {playerCount} player{playerCount === 1 ? '' : 's'} in the game
+                    </PoppinsText>
+                </Column>
+                <ChevronRight size={20} color='rgb(46, 41, 37)' className='mt-1' />
+            </Row>
+        </Pressable>
+    );
+};
+
 /**
  * Main configuration page for operators.
  * Contains game schedule settings and provides access to the rule book editor.
  */
-const ConfigPageOPERATOR = ({ gameId }: ConfigPageOPERATORProps) => {
+const ConfigPageOPERATOR = ({ gameId, currentUserId }: ConfigPageOPERATORProps) => {
     const [activeScreen, setActiveScreen] = useState<ConfigPageScreenState>('config');
 
     return (
@@ -88,6 +122,7 @@ const ConfigPageOPERATOR = ({ gameId }: ConfigPageOPERATORProps) => {
                 <LayoutStateAnimatedView.Option page={1} stateValue='config'>
                     <Column className='pb-6' gap={6}>
                         <RuleBookPreviewCard gameId={gameId} onPress={() => setActiveScreen('ruleBook')} />
+                        <PhoneBookPreviewCard gameId={gameId} currentUserId={currentUserId} onPress={() => setActiveScreen('phoneBook')} />
 
                         <Column className='border-y border-border/15' gap={0}>
                             <ActionDeadlineConfigItem gameId={gameId} />
@@ -101,6 +136,9 @@ const ConfigPageOPERATOR = ({ gameId }: ConfigPageOPERATORProps) => {
                 <LayoutStateAnimatedView.OptionContainer page={2} pushInAnimation={fromRight}>
                     <LayoutStateAnimatedView.Option stateValue='ruleBook'>
                         <RuleBookPageOPERATOR gameId={gameId} onBack={() => setActiveScreen('config')} />
+                    </LayoutStateAnimatedView.Option>
+                    <LayoutStateAnimatedView.Option stateValue='phoneBook'>
+                        <PhoneBookPageOPERATOR gameId={gameId} currentUserId={currentUserId} onBack={() => setActiveScreen('config')} />
                     </LayoutStateAnimatedView.Option>
                 </LayoutStateAnimatedView.OptionContainer>
             </LayoutStateAnimatedView.Container>

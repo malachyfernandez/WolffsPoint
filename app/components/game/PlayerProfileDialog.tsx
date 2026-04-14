@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Image, ScrollView, View } from 'react-native';
 import ConvexDialog from '../ui/dialog/ConvexDialog';
 import Column from '../layout/Column';
@@ -29,11 +29,16 @@ const PlayerProfileDialog = ({
     saveLabel = 'Save profile',
 }: PlayerProfileDialogProps) => {
     const [draft, setDraft] = useState<PlayerProfile>(initialValue);
+    const wasOpenRef = useRef(isOpen);
 
     useEffect(() => {
-        if (isOpen) {
+        const wasOpen = wasOpenRef.current;
+
+        if (isOpen && !wasOpen) {
             setDraft(initialValue);
         }
+
+        wasOpenRef.current = isOpen;
     }, [initialValue, isOpen]);
 
     const canSave = useMemo(() => draft.inGameName.trim().length > 0, [draft.inGameName]);

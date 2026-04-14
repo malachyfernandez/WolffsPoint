@@ -7,6 +7,7 @@ import AppButton from '../ui/buttons/AppButton';
 import { useUserVariable } from 'hooks/useUserVariable';
 import { UserData } from 'types/common';
 import EditInfoDialog from './EditInfoDialog';
+import { useClerk } from '@clerk/clerk-expo';
 
 interface CustomUserInfo {
     name?: string;
@@ -15,6 +16,7 @@ interface CustomUserInfo {
 
 const ProfileInfo = () => {
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+    const { signOut } = useClerk();
     
     // Original Clerk data (fallback)
     const [userData] = useUserVariable<UserData>({ key: 'userData' });
@@ -32,8 +34,12 @@ const ProfileInfo = () => {
     const displayEmail = userData?.value?.email || 'Not available';
     const displayUserId = userData?.value?.userId || 'Not available';
 
-    const handleSignOut = () => {
-        // TODO: Implement sign out logic
+    const handleSignOut = async () => {
+        try {
+            await signOut();
+        } catch (error) {
+            console.error('Error signing out:', error);
+        }
     };
 
     const handleEditInfo = () => {
