@@ -1,18 +1,17 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
 import PoppinsText from '../ui/text/PoppinsText';
-import AppDropdown from '../ui/forms/AppDropdown';
-import MarkdownRenderer, { MarkdownRendererInputDataProvider } from '../ui/markdown/MarkdownRenderer';
+import MarkdownRenderer from '../ui/markdown/MarkdownRenderer';
 import { useSharedListValue } from '../../../hooks/useSharedListValue';
-import { useUserVariable } from '../../../hooks/useUserVariable';
-import { useUserVariableGet } from '../../../hooks/useUserVariableGet';
-import { PlayerNightSubmission, PlayerProfile } from '../../../types/multiplayer';
+import { PlayerProfile } from '../../../types/multiplayer';
 import { RoleTableItem } from '../../../types/roleTable';
 import { UserTableItem } from '../../../types/playerTable';
-import { buildScheduledDate, defaultGameSchedule, formatCountdown, formatRelativeDuration, formatTimeLabel, getCurrentPlayableDayIndex, getDayEndDate, getDayRangeLabel, getDayReleaseDate, getGameScopedKey, getPlayerActionSummary, isDayContentReleased, isNightWindowOpen, normalizeGameSchedule, normalizePlayerActionState, parseStoredDayDates } from '../../../utils/multiplayer';
+import { getCurrentPlayableDayIndex, getDayRangeLabel, parseStoredDayDates } from '../../../utils/multiplayer';
 import { ChevronLeft, ChevronRight } from 'lucide-react-native';
-import { Pressable } from 'react-native';
+import { Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+import YourEyesOnlyDayContentPLAYER from './YourEyesOnlyDayContentPLAYER';
 
 interface YourEyesOnlyPagePLAYERProps {
     gameId: string;
@@ -21,85 +20,107 @@ interface YourEyesOnlyPagePLAYERProps {
     currentProfile: PlayerProfile;
 }
 
+type AnimationDirection = 'left' | 'right';
+
 const YourEyesOnlyPagePLAYER = ({ gameId, currentEmail, matchingPlayer, currentProfile }: YourEyesOnlyPagePLAYERProps) => {
-    const { value: userTable } = useSharedListValue<UserTableItem[]>({ key: 'userTable', itemId: gameId, defaultValue: [] });
-    const { value: morningMessagesList } = useSharedListValue<Record<string, string[]>>({ key: 'morningMessagesList', itemId: gameId, defaultValue: {} });
     const { value: dayDateStrings } = useSharedListValue<string[]>({ key: 'dayDatesArray', itemId: gameId, defaultValue: [] });
     const { value: numberOfRealDaysPerInGameDay } = useSharedListValue<number>({ key: 'numberOfRealDaysPerInGameDay', itemId: gameId, defaultValue: 2 });
     const roleTable = useSharedListValue<RoleTableItem[]>({ key: 'roleTable', itemId: gameId, defaultValue: [] });
-    const scheduleRecords = useUserVariableGet({ key: getGameScopedKey('gameSchedule', gameId), returnTop: 1 });
-    const [now, setNow] = useState(() => new Date());
+    const { width } = useWindowDimensions();
 
     const dayDates = useMemo(() => parseStoredDayDates(dayDateStrings), [dayDateStrings]);
     const currentDayIndex = useMemo(() => getCurrentPlayableDayIndex(dayDates), [dayDates]);
     const [selectedDayIndex, setSelectedDayIndex] = useState(currentDayIndex);
-    const schedule = normalizeGameSchedule(scheduleRecords?.[0]?.value ?? defaultGameSchedule);
-    const selectedDayEndDate = useMemo(() => getDayEndDate(dayDates, selectedDayIndex, numberOfRealDaysPerInGameDay), [selectedDayIndex, dayDates, numberOfRealDaysPerInGameDay]);
     const selectedDayRangeLabel = useMemo(() => getDayRangeLabel(dayDates, selectedDayIndex, numberOfRealDaysPerInGameDay), [selectedDayIndex, dayDates, numberOfRealDaysPerInGameDay]);
-    const selectedMorningDayIndex = selectedDayIndex - 1;
-    const selectedMorningReleaseDate = useMemo(() => selectedMorningDayIndex >= 0 ? getDayReleaseDate(dayDates, selectedMorningDayIndex, schedule.wakeUpTime) : null, [dayDates, schedule.wakeUpTime, selectedMorningDayIndex]);
-    const hasSelectedMorning = selectedMorningDayIndex >= 0 && isDayContentReleased(dayDates, selectedMorningDayIndex, schedule.wakeUpTime, now);
     const previousDayLabel = useMemo(() => selectedDayIndex > 0 ? getDayRangeLabel(dayDates, selectedDayIndex - 1, numberOfRealDaysPerInGameDay) : '', [dayDates, numberOfRealDaysPerInGameDay, selectedDayIndex]);
     const nextDayLabel = useMemo(() => selectedDayIndex < currentDayIndex ? getDayRangeLabel(dayDates, selectedDayIndex + 1, numberOfRealDaysPerInGameDay) : '', [currentDayIndex, dayDates, numberOfRealDaysPerInGameDay, selectedDayIndex]);
+    const roleData = roleTable.value.find((roleItem) => roleItem.role === matchingPlayer.role);
+    const slideDistance = useMemo(() => Math.min(Math.max(width * 0.12, 24), 72), [width]);
+    const transitionDuration = 240;
+    const [leavingDayIndex, setLeavingDayIndex] = useState<number | null>(null);
+    const previousDayIndexRef = useRef<number | null>(null);
+    const leavingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const hasInitializedSelectedDayRef = useRef(false);
+
+    const enteringOpacity = useSharedValue(1);
+    const enteringTranslateX = useSharedValue(0);
+    const leavingOpacity = useSharedValue(1);
+    const leavingTranslateX = useSharedValue(0);
 
     useEffect(() => {
+        if (!hasInitializedSelectedDayRef.current && dayDates.length > 0) {
+            hasInitializedSelectedDayRef.current = true;
+            setSelectedDayIndex(currentDayIndex);
+            return;
+        }
+
         setSelectedDayIndex((currentValue) => Math.min(currentValue, currentDayIndex));
-    }, [currentDayIndex]);
+    }, [currentDayIndex, dayDates.length]);
 
     useEffect(() => {
-        const intervalId = setInterval(() => {
-            setNow(new Date());
-        }, 1000);
-
-        return () => clearInterval(intervalId);
+        return () => {
+            if (leavingTimeoutRef.current) {
+                clearTimeout(leavingTimeoutRef.current);
+            }
+        };
     }, []);
 
-    const [submission, setSubmission] = useUserVariable<PlayerNightSubmission>({
-        key: getGameScopedKey(`playerNightSubmission-day-${selectedDayIndex}`, gameId),
-        defaultValue: {
-            gameId,
-            gameDayId: `${gameId}-day-${selectedDayIndex}`,
-            dayIndex: selectedDayIndex,
-            playerEmail: currentEmail,
-            playerUserId: currentProfile.userId,
-            vote: '',
-            action: {},
-            submittedVoteAt: null,
-            submittedActionAt: null,
-        },
-        privacy: 'PUBLIC',
-        filterKey: 'playerEmail',
-        searchKeys: ['playerEmail', 'vote'],
-        sortKey: 'submittedActionAt',
+    useEffect(() => {
+        const previousDayIndex = previousDayIndexRef.current;
+
+        if (previousDayIndex == null) {
+            previousDayIndexRef.current = selectedDayIndex;
+            enteringOpacity.value = 1;
+            enteringTranslateX.value = 0;
+            leavingOpacity.value = 0;
+            leavingTranslateX.value = 0;
+            return;
+        }
+
+        if (previousDayIndex === selectedDayIndex) {
+            return;
+        }
+
+        if (leavingTimeoutRef.current) {
+            clearTimeout(leavingTimeoutRef.current);
+        }
+
+        const direction: AnimationDirection = selectedDayIndex > previousDayIndex ? 'left' : 'right';
+        const enteringStartX = direction === 'left' ? slideDistance : -slideDistance;
+        const leavingEndX = direction === 'left' ? -slideDistance : slideDistance;
+
+        setLeavingDayIndex(previousDayIndex);
+
+        enteringOpacity.value = 0;
+        enteringTranslateX.value = enteringStartX;
+        leavingOpacity.value = 1;
+        leavingTranslateX.value = 0;
+
+        enteringOpacity.value = withTiming(1, { duration: transitionDuration });
+        enteringTranslateX.value = withTiming(0, { duration: transitionDuration });
+        leavingOpacity.value = withTiming(0, { duration: transitionDuration });
+        leavingTranslateX.value = withTiming(leavingEndX, { duration: transitionDuration });
+
+        leavingTimeoutRef.current = setTimeout(() => {
+            setLeavingDayIndex(null);
+        }, transitionDuration);
+
+        previousDayIndexRef.current = selectedDayIndex;
+    }, [enteringOpacity, enteringTranslateX, leavingOpacity, leavingTranslateX, selectedDayIndex, slideDistance]);
+
+    const enteringStyle = useAnimatedStyle(() => {
+        return {
+            opacity: enteringOpacity.value,
+            transform: [{ translateX: enteringTranslateX.value }],
+        };
     });
 
-    const roleData = roleTable.value.find((roleItem) => roleItem.role === matchingPlayer.role);
-    const voteOptions = userTable
-        .filter((user) => user.playerData.livingState !== 'dead')
-        .map((user) => ({
-            value: user.email,
-            label: user.realName || user.email,
-        }));
-    const playerOptions = userTable.map((user) => ({
-        value: user.realName,
-        label: `${user.realName}${user.playerData.livingState === 'dead' ? ' (dead)' : ''}`,
-        meta: {
-            livingState: user.playerData.livingState,
-        },
-    }));
-    const roleOptions = roleTable.value
-        .filter((role) => role.role.trim().length > 0 && role.isVisible !== false)
-        .map((role) => ({
-            value: role.role,
-            label: role.role,
-        }));
-    const isSelectedDayLocked = selectedDayIndex < currentDayIndex || !isNightWindowOpen(selectedDayEndDate, schedule.nightlyDeadlineTime, now);
-    const currentMorningMessage = hasSelectedMorning ? morningMessagesList[currentEmail]?.[selectedMorningDayIndex] ?? '' : '';
-    const currentActionState = useMemo(() => normalizePlayerActionState(submission.value.action), [submission.value.action]);
-    const currentActionSummary = useMemo(() => getPlayerActionSummary(submission.value.action), [submission.value.action]);
-    const nightlyDeadline = useMemo(() => buildScheduledDate(selectedDayEndDate, schedule.nightlyDeadlineTime), [selectedDayEndDate, schedule.nightlyDeadlineTime]);
-    const voteCountdown = isSelectedDayLocked ? 'LOCKED' : formatCountdown(nightlyDeadline, now);
-    const actionDueIn = formatRelativeDuration(nightlyDeadline, now);
+    const leavingStyle = useAnimatedStyle(() => {
+        return {
+            opacity: leavingOpacity.value,
+            transform: [{ translateX: leavingTranslateX.value }],
+        };
+    });
 
     return (
         <Column className='pb-8' gap={7}>
@@ -156,88 +177,44 @@ const YourEyesOnlyPagePLAYER = ({ gameId, currentEmail, matchingPlayer, currentP
                     </Pressable>
                 </Row>
 
-                <Column className='items-center' gap={2}>
-                    <PoppinsText weight='medium' className='text-center'>Morning Message</PoppinsText>
-                    <PoppinsText className='text-center text-lg leading-8'>
-                        {selectedMorningDayIndex < 0
-                            ? 'No morning message yet.'
-                            : hasSelectedMorning
-                                ? (currentMorningMessage || 'No morning message yet.')
-                                : selectedMorningReleaseDate
-                                    ? `Unlocks at ${formatTimeLabel(schedule.wakeUpTime)}.`
-                                    : `Unlocks at ${formatTimeLabel(schedule.wakeUpTime)}.`}
-                    </PoppinsText>
-                </Column>
-
-                <Column className='items-center' gap={1}>
-                    <PoppinsText weight='bold' className='text-lg tracking-[0.45em]'>VOTE</PoppinsText>
-                    <PoppinsText weight='bold' className='text-5xl leading-[3.5rem]'>{voteCountdown}</PoppinsText>
-                    <PoppinsText varient='subtext'>Voting due at {formatTimeLabel(schedule.nightlyDeadlineTime)}.</PoppinsText>
-                    <PoppinsText varient='subtext'>
-                        {isSelectedDayLocked
-                            ? 'The action window has closed for this day.'
-                            : `Actions due ${nightlyDeadline.getTime() > now.getTime() ? `in ${actionDueIn}` : 'now'}.`}
-                    </PoppinsText>
-                </Column>
-            </Column>
-
-            <Row className='items-start gap-6' style={{ flexWrap: 'wrap' }}>
-                <Column className='min-w-[240px] flex-1' gap={3}>
-                    <PoppinsText weight='medium' className='text-sm tracking-[0.24em] uppercase opacity-60'>Vote</PoppinsText>
-                    <AppDropdown
-                        options={voteOptions}
-                        value={submission.value.vote}
-                        onValueChange={(value) => {
-                            if (isSelectedDayLocked || roleData?.doesRoleVote === false) {
-                                return;
-                            }
-
-                            setSubmission({
-                                ...submission.value,
-                                vote: value,
-                                submittedVoteAt: Date.now(),
-                            });
-                        }}
-                        placeholder={roleData?.doesRoleVote === false ? 'This role does not vote' : 'Choose a player'}
-                        triggerClassName='rounded-2xl border border-border/15 bg-none px-4 py-4'
-                        contentClassName='border border-border/15'
-                        disabled={isSelectedDayLocked || roleData?.doesRoleVote === false}
-                    />
-                    {roleData?.doesRoleVote === false ? (
-                        <PoppinsText varient='subtext'>This role doesn&apos;t submit a vote.</PoppinsText>
-                    ) : isSelectedDayLocked ? (
-                        <PoppinsText varient='subtext'>Saved vote: {submission.value.vote || 'No vote submitted.'}</PoppinsText>
-                    ) : null}
-                </Column>
-
-                <Column className='min-w-[320px] flex-1' gap={3}>
-                    <MarkdownRendererInputDataProvider playerOptions={playerOptions} roleOptions={roleOptions}>
-                        {roleData?.roleMessage?.trim().length ? (
-                            <MarkdownRenderer
-                                markdown={roleData.roleMessage}
-                                state={currentActionState}
-                                setState={!isSelectedDayLocked ? (nextState) => {
-                                    setSubmission({
-                                        ...submission.value,
-                                        action: nextState,
-                                        submittedActionAt: Date.now(),
-                                    });
-                                } : undefined}
+                <View style={styles.animatedContentContainer}>
+                    {leavingDayIndex != null ? (
+                        <Animated.View
+                            key={`leaving-${leavingDayIndex}`}
+                            pointerEvents='none'
+                            style={[styles.animatedContentOverlay, leavingStyle]}
+                        >
+                            <YourEyesOnlyDayContentPLAYER
+                                gameId={gameId}
+                                currentEmail={currentEmail}
+                                currentUserId={currentProfile.userId}
+                                dayIndex={leavingDayIndex}
                             />
-                        ) : (
-                            <PoppinsText varient='subtext'>The operator has not written your role action instructions yet.</PoppinsText>
-                        )}
-                    </MarkdownRendererInputDataProvider>
-
-                    {isSelectedDayLocked ? (
-                        <PoppinsText varient='subtext'>The action window has closed for this day.</PoppinsText>
-                    ) : currentActionSummary.trim().length > 0 ? (
-                        <PoppinsText varient='subtext'>Current action: {currentActionSummary}</PoppinsText>
+                        </Animated.View>
                     ) : null}
-                </Column>
-            </Row>
+
+                    <Animated.View key={`selected-${selectedDayIndex}`} style={enteringStyle}>
+                        <YourEyesOnlyDayContentPLAYER
+                            gameId={gameId}
+                            currentEmail={currentEmail}
+                            currentUserId={currentProfile.userId}
+                            dayIndex={selectedDayIndex}
+                        />
+                    </Animated.View>
+                </View>
+            </Column>
         </Column>
     );
 };
+
+const styles = StyleSheet.create({
+    animatedContentContainer: {
+        overflow: 'hidden',
+        position: 'relative',
+    },
+    animatedContentOverlay: {
+        ...StyleSheet.absoluteFillObject,
+    },
+});
 
 export default YourEyesOnlyPagePLAYER;

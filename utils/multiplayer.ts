@@ -2,6 +2,8 @@ import { GameSchedule, MarkdownInputState, PlayerActionValue } from '../types/mu
 
 const DEFAULT_SCHEDULE: GameSchedule = {
     nightlyDeadlineTime: '22:00',
+    actionDeadlineTime: '22:00',
+    voteDeadlineTime: '22:00',
     wakeUpTime: '08:00',
     nightlyResponseReleaseTime: '08:00',
     newspaperReleaseTime: '08:00',
@@ -14,11 +16,15 @@ export const getWakeUpTime = (schedule: GameSchedule) => {
 };
 
 export const normalizeGameSchedule = (schedule?: Partial<GameSchedule> | null): GameSchedule => {
-    const nightlyDeadlineTime = schedule?.nightlyDeadlineTime || defaultGameSchedule.nightlyDeadlineTime;
+    const fallbackDeadlineTime = schedule?.actionDeadlineTime || schedule?.voteDeadlineTime || schedule?.nightlyDeadlineTime || defaultGameSchedule.nightlyDeadlineTime;
+    const actionDeadlineTime = schedule?.actionDeadlineTime || fallbackDeadlineTime;
+    const voteDeadlineTime = schedule?.voteDeadlineTime || fallbackDeadlineTime;
     const wakeUpTime = schedule?.wakeUpTime || schedule?.newspaperReleaseTime || schedule?.nightlyResponseReleaseTime || defaultGameSchedule.wakeUpTime;
 
     return {
-        nightlyDeadlineTime,
+        nightlyDeadlineTime: fallbackDeadlineTime,
+        actionDeadlineTime,
+        voteDeadlineTime,
         wakeUpTime,
         nightlyResponseReleaseTime: wakeUpTime,
         newspaperReleaseTime: wakeUpTime,

@@ -12,7 +12,7 @@ import { useUndoRedo, useCreateUndoSnapshot } from '../../../hooks/useUndoRedo';
 import { getGameScopedKey } from '../../../utils/multiplayer';
 import { RuleBookData } from '../../../types/ruleBook';
 import { RoleTableItem } from '../../../types/roleTable';
-import TableMarkdownDialog from './TableMarkdownDialog';
+import MarkdownEditorDialog from './MarkdownEditorDialog';
 
 interface RuleBookRoleDescriptionsProps {
     gameId: string;
@@ -196,13 +196,13 @@ const RuleBookRoleDescriptions = ({ gameId }: RuleBookRoleDescriptionsProps) => 
                 {/* </ScrollView> */}
             </Column>
             
-            <TableMarkdownDialog
+            <MarkdownEditorDialog
                 isOpen={editingRoleIndex !== null}
                 onOpenChange={(open) => !open && setEditingRoleIndex(null)}
                 title={`About ${editingRoleIndex !== null ? roles[editingRoleIndex]?.role || 'Role' : 'Role'}`}
                 submitLabel="Save About"
                 initialMarkdown={editingRoleIndex !== null ? roles[editingRoleIndex]?.aboutRole || '' : ''}
-                onSubmit={(markdown) => {
+                onSubmit={({ markdown }) => {
                     if (editingRoleIndex !== null) {
                         UNDOABLEsetAboutRole(editingRoleIndex, markdown);
                     }

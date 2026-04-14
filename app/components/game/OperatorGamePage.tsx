@@ -19,12 +19,12 @@ interface OperatorGamePageProps {
 }
 
 const operatorTabs: GameTabDefinition<OperatorTab>[] = [
-    { label: 'Players', value: 'players', icon: <GameUserIcon /> },
-    { label: 'Roles', value: 'config', icon: <Shield size={20} /> },
-    { label: 'Nightly', value: 'nightly', icon: <Users size={20} /> },
-    { label: 'Forum', value: 'forum', icon: <MessageSquare size={20} /> },
-    { label: 'Newspaper', value: 'newspaper', icon: <Newspaper size={20} /> },
-    { label: 'Rule Book', value: 'rulebook', icon: <ScrollText size={20} /> },
+    { label: 'Players', condensedLabel: 'Players', value: 'players', icon: <GameUserIcon /> },
+    { label: 'Roles', condensedLabel: 'Roles', value: 'config', icon: <Shield size={20} /> },
+    { label: 'Nightly', condensedLabel: 'Nightly', value: 'nightly', icon: <Users size={20} /> },
+    { label: 'Forum', condensedLabel: 'Forum', value: 'forum', icon: <MessageSquare size={20} /> },
+    { label: 'Newspaper', condensedLabel: 'News', value: 'newspaper', icon: <Newspaper size={20} /> },
+    { label: 'Config', condensedLabel: 'Config', value: 'rulebook', icon: <ScrollText size={20} /> },
 ];
 
 const OperatorGamePage = ({ gameId, currentUserId }: OperatorGamePageProps) => {

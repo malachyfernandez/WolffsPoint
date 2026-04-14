@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import PoppinsText from '../ui/text/PoppinsText';
 import InlineEditableText from '../ui/forms/InlineEditableText';
-import Column from '../layout/Column';
 import Row from '../layout/Row';
 import AppButton from '../ui/buttons/AppButton';
+import ColumnActionsDialog from './ColumnActionsDialog';
+import { ColumnSizeOption, getInnerTextWidth } from './playerTableColumnSizing';
 
 interface DayTitleRowProps {
     userTableTitle?: {
@@ -15,16 +16,34 @@ interface DayTitleRowProps {
         extraDayColumns: boolean[];
     };
     setColumnTitle?: (columnIndex: number, newTitle: string) => void;
-    setColumnVisibility?: (columnIndex: number, visibility: boolean) => void;
     onEditStart?: () => void;
     onEditEnd?: () => void;
     isEditing?: boolean;
+    dayBaseColumnWidths: {
+        vote: number;
+        action: number;
+    };
+    extraDayColumnWidths: number[];
+    dayBaseColumnSizes: {
+        vote: ColumnSizeOption;
+        action: ColumnSizeOption;
+    };
+    extraDayColumnSizes: ColumnSizeOption[];
+    onSetDayBaseColumnSize?: (columnKey: 'vote' | 'action', size: ColumnSizeOption) => void;
+    onSetExtraDayColumnSize?: (columnIndex: number, size: ColumnSizeOption) => void;
+    onDeleteExtraDayColumn?: (columnIndex: number) => void;
 }
 
-const DayTitleRow = ({ userTableTitle, userTableColumnVisibility, setColumnTitle, setColumnVisibility, onEditStart, onEditEnd, isEditing }: DayTitleRowProps) => {
+type ActiveColumnMenu =
+    | { type: 'base'; column: 'vote' | 'action' }
+    | { type: 'extra'; index: number }
+    | null;
+
+const DayTitleRow = ({ userTableTitle, userTableColumnVisibility, setColumnTitle, onEditStart, onEditEnd, isEditing, dayBaseColumnWidths, extraDayColumnWidths, dayBaseColumnSizes, extraDayColumnSizes, onSetDayBaseColumnSize, onSetExtraDayColumnSize, onDeleteExtraDayColumn }: DayTitleRowProps) => {
     const titles = userTableTitle ?? { extraUserColumns: [], extraDayColumns: [] };
     const visibility = userTableColumnVisibility ?? { extraUserColumns: [], extraDayColumns: [] };
     const [editingColumns, setEditingColumns] = useState<Record<number, boolean>>({});
+    const [activeMenu, setActiveMenu] = useState<ActiveColumnMenu>(null);
 
     const handleColumnEditStart = (columnIndex: number) => {
         setEditingColumns(prev => ({ ...prev, [columnIndex]: true }));
@@ -37,36 +56,74 @@ const DayTitleRow = ({ userTableTitle, userTableColumnVisibility, setColumnTitle
     };
 
     return (
-        <Row gap={0} className={`h-12 w-min bg-background border-b-2 border-border rounded-t-lg ${isEditing ? 'z-50' : ''}`}>
-            <Column className='w-28 h-full items-center justify-center'>
-                <PoppinsText weight='medium' className='text-center'>Vote</PoppinsText>
-            </Column>
-            <Column gap={0} className='w-28 h-full items-center justify-center'>
-                <PoppinsText weight='medium' className='text-center'>Action</PoppinsText>
-            </Column>
-            {titles.extraDayColumns.map((columnTitle, index) => {
-                if (!visibility.extraDayColumns[index]) return null;
-                
-                return (
-                    <Row key={index} className={`h-full w-28 items-center justify-center px-2 ${editingColumns[index] ? 'z-50' : ''}`} gap={0}>
-                        <InlineEditableText
-                            value={columnTitle}
-                            onChange={(newValue) => setColumnTitle?.(index, newValue)}
-                            placeholder='UNSET'
-                            className='w-20 text-center text-nowrap overflow-hidden'
-                            weight='medium'
-                            onEditStart={() => handleColumnEditStart(index)}
-                            onEditEnd={() => handleColumnEditEnd(index)}
-                        />
-                        <AppButton variant="grey" className='w-6 max-h-6 mr-[0.4rem] ml-0' onPress={() => setColumnVisibility?.(index, false)}>
-                            {/* TODO: add this as a way to resize rows (modal to delete and to small medium large it)*/}
-                            {/* <PoppinsText weight='bold' color='white' className='text-xl mt-[-0.1rem]'>⋯</PoppinsText> */}
-                            <PoppinsText weight='bold' color='white' className='text-xl'>-</PoppinsText>
-                        </AppButton>
-                    </Row>
-                );
-            })}
-        </Row>
+        <>
+            <Row gap={0} className={`h-12 w-min bg-background border-b-2 border-border rounded-t-lg ${isEditing ? 'z-50' : ''}`}>
+                <Row className='h-full items-center justify-center px-2' gap={0} style={{ width: dayBaseColumnWidths.vote }}>
+                    <PoppinsText weight='medium' className='text-center' style={{ width: getInnerTextWidth(dayBaseColumnWidths.vote) }}>Vote</PoppinsText>
+                    <AppButton variant="grey" className='w-6 max-h-6 mr-[0.4rem] ml-0' onPress={() => setActiveMenu({ type: 'base', column: 'vote' })}>
+                        <PoppinsText weight='bold' color='white' className='text-lg mt-[-0.1rem]'>⋯</PoppinsText>
+                    </AppButton>
+                </Row>
+                <Row gap={0} className='h-full items-center justify-center px-2' style={{ width: dayBaseColumnWidths.action }}>
+                    <PoppinsText weight='medium' className='text-center' style={{ width: getInnerTextWidth(dayBaseColumnWidths.action) }}>Action</PoppinsText>
+                    <AppButton variant="grey" className='w-6 max-h-6 mr-[0.4rem] ml-0' onPress={() => setActiveMenu({ type: 'base', column: 'action' })}>
+                        <PoppinsText weight='bold' color='white' className='text-lg mt-[-0.1rem]'>⋯</PoppinsText>
+                    </AppButton>
+                </Row>
+                {titles.extraDayColumns.map((columnTitle, index) => {
+                    if (!visibility.extraDayColumns[index]) return null;
+
+                    const columnWidth = extraDayColumnWidths[index] ?? 112;
+                    const textWidth = getInnerTextWidth(columnWidth);
+
+                    return (
+                        <Row key={index} className={`h-full items-center justify-center px-2 ${editingColumns[index] ? 'z-50' : ''}`} gap={0} style={{ width: columnWidth }}>
+                            <InlineEditableText
+                                value={columnTitle}
+                                onChange={(newValue) => setColumnTitle?.(index, newValue)}
+                                placeholder='UNSET'
+                                className='text-center text-nowrap overflow-hidden'
+                                style={{ width: textWidth }}
+                                weight='medium'
+                                onEditStart={() => handleColumnEditStart(index)}
+                                onEditEnd={() => handleColumnEditEnd(index)}
+                            />
+                            <AppButton variant="grey" className='w-6 max-h-6 mr-[0.4rem] ml-0' onPress={() => setActiveMenu({ type: 'extra', index })}>
+                                <PoppinsText weight='bold' color='white' className='text-lg mt-[-0.1rem]'>⋯</PoppinsText>
+                            </AppButton>
+                        </Row>
+                    );
+                })}
+            </Row>
+
+            <ColumnActionsDialog
+                isOpen={activeMenu !== null}
+                onOpenChange={(open) => {
+                    if (!open) {
+                        setActiveMenu(null);
+                    }
+                }}
+                title={activeMenu?.type === 'extra' ? 'Column options' : 'Resize column'}
+                selectedSize={activeMenu?.type === 'base'
+                    ? dayBaseColumnSizes[activeMenu.column]
+                    : activeMenu?.type === 'extra'
+                        ? (extraDayColumnSizes[activeMenu.index] ?? 'small')
+                        : 'small'}
+                onSelectSize={(size) => {
+                    if (activeMenu?.type === 'base') {
+                        onSetDayBaseColumnSize?.(activeMenu.column, size);
+                        return;
+                    }
+
+                    if (activeMenu?.type === 'extra') {
+                        onSetExtraDayColumnSize?.(activeMenu.index, size);
+                    }
+                }}
+                onDelete={activeMenu?.type === 'extra'
+                    ? () => onDeleteExtraDayColumn?.(activeMenu.index)
+                    : undefined}
+            />
+        </>
     );
 };
 

@@ -6,7 +6,7 @@ import Row from '../layout/Row';
 import CustomCheckbox from '../ui/CustomCheckbox';
 import AppButton from '../ui/buttons/AppButton';
 import { Pressable, Text } from 'react-native';
-import TableMarkdownDialog from './TableMarkdownDialog';
+import MarkdownEditorDialog from './MarkdownEditorDialog';
 import { RoleTableItem } from 'types/roleTable';
 
 interface RoleRowProps {
@@ -105,23 +105,23 @@ const RoleRow = ({ gameId, role, index, isLast, setRoleName, setDoesRoleVote, se
                     </AppButton>
                 </Column>
             </Row>
-            <TableMarkdownDialog
+            <MarkdownEditorDialog
                 isOpen={isRoleMessageDialogOpen}
                 onOpenChange={setIsRoleMessageDialogOpen}
                 title={`${role.role || 'Role'} Role Message`}
                 submitLabel="Save Message"
                 initialMarkdown={role.roleMessage}
-                onSubmit={(markdown) => setRoleMessage(index, markdown)}
+                onSubmit={({ markdown }) => setRoleMessage(index, markdown)}
                 gameId={gameId}
                 showInputs={showInputs}
             />
-            <TableMarkdownDialog
+            <MarkdownEditorDialog
                 isOpen={isAboutRoleDialogOpen}
                 onOpenChange={setIsAboutRoleDialogOpen}
                 title={`About ${role.role || 'Role'}`}
                 submitLabel="Save About"
                 initialMarkdown={role.aboutRole}
-                onSubmit={(markdown) => setAboutRole(index, markdown)}
+                onSubmit={({ markdown }) => setAboutRole(index, markdown)}
             />
         </>
     );

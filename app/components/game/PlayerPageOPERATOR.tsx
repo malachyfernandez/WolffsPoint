@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import PoppinsText from '../ui/text/PoppinsText';
+import React, { useState } from 'react';
 import { useUserList } from 'hooks/useUserList';
 import Column from '../layout/Column';
 import PlayerTable from './PlayerTable';
@@ -31,7 +30,7 @@ const PlayerPageOPERATOR = ({ currentUserId, gameId }: PlayerPageOPERATORProps) 
     //     defaultValue: "Unset",
     // });
 
-    const [userTable, setUserTable] = useUserList<UserTableItem[]>({
+    const [userTable] = useUserList<UserTableItem[]>({
         key: "userTable",
         itemId: gameId,
         privacy: "PUBLIC",
@@ -106,6 +105,7 @@ const PlayerPageOPERATOR = ({ currentUserId, gameId }: PlayerPageOPERATORProps) 
                                             <DaysTable
                                                 gameId={gameId}
                                                 dayNumber={selectedDayIndex.value}
+                                                dayCount={fixedDayDatesArray.length}
                                                 isBeingEdited={isDaysTableBeingEdited}
                                                 setIsBeingEdited={setIsDaysTableBeingEdited}
                                                 onLayout={(event) => {

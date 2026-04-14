@@ -17,7 +17,9 @@ export type MarkdownInputState = Record<string, string | undefined>;
 export type PlayerActionValue = string | MarkdownInputState;
 
 export type GameSchedule = {
-    nightlyDeadlineTime: string;
+    nightlyDeadlineTime?: string;
+    actionDeadlineTime?: string;
+    voteDeadlineTime?: string;
     wakeUpTime: string;
     nightlyResponseReleaseTime?: string;
     newspaperReleaseTime?: string;

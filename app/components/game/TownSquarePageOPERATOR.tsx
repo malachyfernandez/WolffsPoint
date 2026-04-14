@@ -9,7 +9,7 @@ import Row from '../layout/Row';
 import PoppinsText from '../ui/text/PoppinsText';
 import AppButton from '../ui/buttons/AppButton';
 import MarkdownRenderer from '../ui/markdown/MarkdownRenderer';
-import MarkdownComposerDialog from './MarkdownComposerDialog';
+import MarkdownEditorDialog from './MarkdownEditorDialog';
 import TownSquarePostDialog from './TownSquarePostDialog';
 import { TownSquareAuthorAvatar, TownSquareAuthorName } from './townSquare/TownSquareAuthorIdentity';
 
@@ -65,20 +65,14 @@ const TownSquarePageOPERATOR = ({ gameId, currentUserId }: TownSquarePageOPERATO
                     </Column>
                 )}
             </Column>
-            <MarkdownComposerDialog
+            <MarkdownEditorDialog
                 isOpen={isComposeDialogOpen}
                 onOpenChange={setIsComposeDialogOpen}
                 title='New Town Square Post'
                 submitLabel='Post'
-                onSubmit={(markdown) => {
+                requireMarkdown={true}
+                onSubmit={({ markdown, plainText }) => {
                     const postId = createClientId('post');
-                    const plainText = markdown
-                        .replace(/!\[[^\]]*\]\([^)]*\)/g, ' ')
-                        .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$1')
-                        .replace(/[`*_>#-]/g, ' ')
-                        .replace(/\n+/g, ' ')
-                        .replace(/\s+/g, ' ')
-                        .trim();
                     setPost({
                         key: postKey,
                         itemId: postId,

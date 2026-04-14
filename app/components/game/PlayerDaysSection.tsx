@@ -122,6 +122,7 @@ const PlayerDaysSection = ({ gameId, addNewDay }: PlayerDaysSectionProps) => {
                     <DaysTable
                         gameId={gameId}
                         dayNumber={selectedDayIndex.value}
+                        dayCount={fixedDayDatesArray.length}
                         isBeingEdited={isDaysTableBeingEdited}
                         setIsBeingEdited={setIsDaysTableBeingEdited}
                         onLayout={(event) => {

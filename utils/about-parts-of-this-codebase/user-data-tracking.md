@@ -340,6 +340,51 @@ getGameScopedKey(`playerNightSubmission-day-${dayIndex}`, gameId)
   - `NightlyPageOPERATOR.tsx`
 - **Meaning**: one submission variable per user for one game day.
 
+### `playerPageColumnSizes-{gameId}`
+
+- **Hook**: `useUserVariable<PlayerPageColumnSizes>`
+- **Canonical shape**:
+
+```ts
+type ColumnSizeOption = 'small' | 'medium' | 'large';
+
+type PlayerPageColumnSizes = {
+  playerBaseColumns: {
+    status: ColumnSizeOption;
+    player: ColumnSizeOption;
+  };
+  playerExtraColumns: ColumnSizeOption[];
+  dayBaseColumns: {
+    vote: ColumnSizeOption;
+    action: ColumnSizeOption;
+  };
+  dayExtraColumns: ColumnSizeOption[];
+};
+```
+
+- **Default value**:
+
+```ts
+{
+  playerBaseColumns: {
+    status: 'small',
+    player: 'small',
+  },
+  playerExtraColumns: [],
+  dayBaseColumns: {
+    vote: 'small',
+    action: 'small',
+  },
+  dayExtraColumns: [],
+}
+```
+
+- **Privacy**: implicit default (`PRIVATE`)
+- **Key builder**: `getGameScopedKey('playerPageColumnSizes', gameId)`
+- **Used by**:
+  - `DaysTable.tsx`
+- **Meaning**: per-user remembered width choices for operator player-page columns, stored by column so the selection persists across days.
+
 ### `townSquareReadState-{gameId}`
 
 - **Hook**: `useUserVariable<Record<string, number>>`

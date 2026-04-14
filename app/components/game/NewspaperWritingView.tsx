@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { ScrollView, Pressable, View } from 'react-native';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
@@ -7,12 +7,11 @@ import { useUserList } from 'hooks/useUserList';
 import { createUndoSnapshot, useUndoRedo } from 'hooks/useUndoRedo';
 import { ScrollShadow } from 'heroui-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import NewspaperColumnDialog from './NewspaperColumnDialog';
+import MarkdownEditorDialog from './MarkdownEditorDialog';
 import NewspaperColumnEmptyState from './newspaperPageOperator/NewspaperColumnEmptyState';
 import NewspaperColumnFooter from './newspaperPageOperator/NewspaperColumnFooter';
 import NewspaperColumnHeader from './newspaperPageOperator/NewspaperColumnHeader';
 import NewspaperPageHeader from './newspaperPageOperator/NewspaperPageHeader';
-import PoppinsText from '../ui/text/PoppinsText';
 import { Usepaper } from 'types/usepaper';
 
 interface NewspaperWritingViewProps {
@@ -134,7 +133,7 @@ const NewspaperWritingView = ({ gameId }: NewspaperWritingViewProps) => {
             </ScrollShadow>
 
             {selectedColumnIndex !== null && (
-                <NewspaperColumnDialog
+                <MarkdownEditorDialog
                     isOpen={isDialogOpen}
                     onOpenChange={(open) => {
                         setIsDialogOpen(open);
@@ -142,9 +141,11 @@ const NewspaperWritingView = ({ gameId }: NewspaperWritingViewProps) => {
                             setSelectedColumnIndex(null);
                         }
                     }}
-                    columnIndex={selectedColumnIndex}
-                    currentMarkdown={newspaperColumns[selectedColumnIndex] ?? ''}
-                    setColumnMarkdown={setColumnMarkdown}
+                    title={`Column ${selectedColumnIndex + 1}`}
+                    submitLabel='Save Column'
+                    initialMarkdown={newspaperColumns[selectedColumnIndex] ?? ''}
+                    onSubmit={({ markdown }) => setColumnMarkdown(selectedColumnIndex, markdown)}
+                    isPreviewSideBySide={true}
                 />
             )}
         </>

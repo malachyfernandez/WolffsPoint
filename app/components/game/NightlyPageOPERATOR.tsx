@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import PoppinsText from '../ui/text/PoppinsText';
 import { useUserList } from 'hooks/useUserList';
-import { useUserVariable } from 'hooks/useUserVariable';
 import { useUserVariableGet } from 'hooks/useUserVariableGet';
 import Column from '../layout/Column';
 import NightlyPlayerTable from './NightlyPlayerTable';
@@ -12,33 +11,18 @@ import Row from '../layout/Row';
 import { ScrollShadow } from 'heroui-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ScrollView, View } from 'react-native';
-import PoppinsNumberInput from '../ui/forms/PoppinsNumberInput';
-import { useUserList as useRoleList } from 'hooks/useUserList';
-import { RoleTableItem } from 'types/roleTable';
 import ComprehensiveDaySelector from '../ui/daySelector/ComprehensiveDaySelector';
-import PoppinsTextInput from '../ui/forms/PoppinsTextInput';
 import NightlyCertificationDialog from './NightlyCertificationDialog';
-import { defaultGameSchedule, getGameScopedKey, hasPlayerActionContent, normalizeGameSchedule } from '../../../utils/multiplayer';
-import { GameSchedule, PlayerNightSubmission } from '../../../types/multiplayer';
+import { getGameScopedKey, hasPlayerActionContent } from '../../../utils/multiplayer';
+import { PlayerNightSubmission } from '../../../types/multiplayer';
 
 interface NightlyPageOPERATORProps {
     currentUserId: string;
     gameId: string;
 }
 
-const NightlyPageOPERATOR = ({ currentUserId, gameId }: NightlyPageOPERATORProps) => {
+const NightlyPageOPERATOR = ({ currentUserId: _currentUserId, gameId }: NightlyPageOPERATORProps) => {
     const [isCertificationDialogOpen, setIsCertificationDialogOpen] = useState(false);
-    const [gameSchedule, setGameSchedule] = useUserVariable<GameSchedule>({
-        key: getGameScopedKey('gameSchedule', gameId),
-        defaultValue: defaultGameSchedule,
-        privacy: 'PUBLIC',
-    });
-
-    const [roleTable] = useRoleList<RoleTableItem[]>({
-        key: "roleTable",
-        itemId: gameId,
-        privacy: "PUBLIC",
-    });
 
     // Shared user table (same as players tab)
     const [userTable, setUserTable] = useUserList<UserTableItem[]>({
@@ -78,14 +62,6 @@ const NightlyPageOPERATOR = ({ currentUserId, gameId }: NightlyPageOPERATORProps
     const voteCount = users.filter((user) => (submissionsByEmail[user.email]?.vote ?? '').trim().length > 0).length;
     const actionCount = users.filter((user) => hasPlayerActionContent(submissionsByEmail[user.email]?.action)).length;
 
-    // Shared number of real days per in-game day (same as players tab)
-    const [numberOfRealDaysPerInGameDay, setNumberOfRealDaysPerInGameDay] = useUserList<number>({
-        key: "numberOfRealDaysPerInGameDay",
-        itemId: gameId,
-        privacy: "PUBLIC",
-        defaultValue: 2,
-    });
-
     // Shared day dates array (same as players tab)
     const [dayDatesArray] = useUserList<string[]>({
         key: "dayDatesArray",
@@ -99,8 +75,6 @@ const NightlyPageOPERATOR = ({ currentUserId, gameId }: NightlyPageOPERATORProps
         const [month, day, year] = dateStr.split('/').map(Number);
         return new Date(year, month - 1, day);
     });
-
-    const schedule = normalizeGameSchedule(gameSchedule.value);
 
     useEffect(() => {
         if (morningMessagesList.state.isSyncing === false) {
@@ -248,52 +222,6 @@ const NightlyPageOPERATOR = ({ currentUserId, gameId }: NightlyPageOPERATORProps
                             </Row>
                         </ScrollView>
                     </ScrollShadow>
-
-                    <Row className="items-center pt-8 mt-4 border-t border-subtle-border">
-                        <PoppinsText weight='medium'>Days per game day</PoppinsText>
-                        <PoppinsNumberInput
-                            value={numberOfRealDaysPerInGameDay.value}
-                            onChangeText={(displayValue, isValid, numericValue) => {
-                                if (isValid && numericValue !== null) {
-                                    setNumberOfRealDaysPerInGameDay(numericValue);
-                                }
-                            }}
-                            minValue={1}
-                            maxValue={30}
-                            inline={true}
-                            useDefaultStyling={true}
-                        />
-                    </Row>
-
-                    <Column className='mt-6 rounded-xl border border-subtle-border bg-white p-4' gap={3}>
-                        <PoppinsText weight='medium'>Nightly schedule</PoppinsText>
-                        <Column gap={1}>
-                            <PoppinsText varient='subtext'>Action / vote deadline</PoppinsText>
-                            <PoppinsTextInput
-                                className='w-40 border border-subtle-border p-3'
-                                value={schedule.nightlyDeadlineTime}
-                                onChangeText={(value) => setGameSchedule({
-                                    ...schedule,
-                                    nightlyDeadlineTime: value,
-                                })}
-                                placeholder='22:00'
-                            />
-                        </Column>
-                        <Column gap={1}>
-                            <PoppinsText varient='subtext'>Wake up time</PoppinsText>
-                            <PoppinsTextInput
-                                className='w-40 border border-subtle-border p-3'
-                                value={schedule.wakeUpTime}
-                                onChangeText={(value) => setGameSchedule({
-                                    ...schedule,
-                                    wakeUpTime: value,
-                                    nightlyResponseReleaseTime: value,
-                                    newspaperReleaseTime: value,
-                                })}
-                                placeholder='08:00'
-                            />
-                        </Column>
-                    </Column>
 
                     <NightlyCertificationDialog
                         isOpen={isCertificationDialogOpen}

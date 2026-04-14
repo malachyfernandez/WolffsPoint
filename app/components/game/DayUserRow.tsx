@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import PoppinsText from '../ui/text/PoppinsText';
 import InlineEditableText from '../ui/forms/InlineEditableText';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
-import Animated, { FadeInLeft, FadeInRight, FadeOutDown, FadeOutLeft, FadeOutRight, Easing, FadeInDown, FadeOutUp } from 'react-native-reanimated';
+import Animated, { Easing, FadeInDown, FadeOutUp } from 'react-native-reanimated';
 import { UserTableItem } from '../../../types/playerTable';
 import { getPlayerActionSummary } from '../../../utils/multiplayer';
+import { getInnerTextWidth } from './playerTableColumnSizing';
 
 interface DayUserRowProps {
     user: UserTableItem;
@@ -22,12 +22,16 @@ interface DayUserRowProps {
     onEditStart?: () => void;
     onEditEnd?: () => void;
     isEditing?: boolean;
+    dayBaseColumnWidths: {
+        vote: number;
+        action: number;
+    };
+    extraDayColumnWidths: number[];
 }
 
-const DayUserRow = ({ user, index, isLast, dayNumber, setVoteValue, setActionValue, setExtraColumnValue, userTableColumnVisibility, onEditStart, onEditEnd, isEditing }: DayUserRowProps) => {
+const DayUserRow = ({ user, index, isLast, dayNumber, setVoteValue, setActionValue, setExtraColumnValue, userTableColumnVisibility, onEditStart, onEditEnd, isEditing, dayBaseColumnWidths, extraDayColumnWidths }: DayUserRowProps) => {
     const [editingColumns, setEditingColumns] = useState<Record<number, boolean>>({});
-    const [editingVote, setEditingVote] = useState(false);
-    const [editingAction, setEditingAction] = useState(false);
+    const [isEditingVote, setIsEditingVote] = useState(false);
 
     const dayData = user.days[dayNumber] || { vote: "", action: "", extraColumns: [] };
 
@@ -42,51 +46,47 @@ const DayUserRow = ({ user, index, isLast, dayNumber, setVoteValue, setActionVal
     };
 
     const handleVoteEditStart = () => {
-        setEditingVote(true);
         onEditStart?.();
         setIsEditingVote(true);
     };
 
     const handleVoteEditEnd = () => {
-        setEditingVote(false);
         onEditEnd?.();
         setIsEditingVote(false);
     };
 
     const handleActionEditStart = () => {
-        setEditingAction(true);
         onEditStart?.();
     };
 
     const handleActionEditEnd = () => {
-        setEditingAction(false);
         onEditEnd?.();
     };
-
-    const [isEditingVote, setIsEditingVote] = useState(false);
 
     const actionDisplayValue = getPlayerActionSummary(dayData.action);
 
 
     return (
         <Row gap={0} className={` h-12 w-min ${isEditing ? 'z-50' : ''}`}>
-            <Column className={`w-28 h-full border border-subtle-border items-center justify-center z-10 ${isLast ? 'rounded-bl-lg' : ''}`}>
+            <Column className={`h-full border border-subtle-border items-center justify-center z-10 ${isLast ? 'rounded-bl-lg' : ''}`} style={{ width: dayBaseColumnWidths.vote }}>
                 <InlineEditableText
                     value={dayData.vote || ''}
                     onChange={(newValue) => setVoteValue?.(index, newValue)}
                     placeholder='Vote'
-                    className='w-20 text-center text-nowrap overflow-hidden'
+                    className='text-center text-nowrap overflow-hidden'
+                    style={{ width: getInnerTextWidth(dayBaseColumnWidths.vote, 16) }}
                     weight='medium'
                     onEditStart={handleVoteEditStart}
                     onEditEnd={handleVoteEditEnd}
                 />
             </Column>
-            <Column gap={0} className={`w-28 h-full border border-subtle-border items-center justify-center ${isEditingVote ? 'z-0' : 'z-20'}`}>
+            <Column gap={0} className={`h-full border border-subtle-border items-center justify-center ${isEditingVote ? 'z-0' : 'z-20'}`} style={{ width: dayBaseColumnWidths.action }}>
                 <InlineEditableText
                     value={actionDisplayValue}
                     onChange={(newValue) => setActionValue?.(index, newValue)}
                     placeholder='Action'
-                    className='w-20 text-center text-nowrap overflow-hidden'
+                    className='text-center text-nowrap overflow-hidden'
+                    style={{ width: getInnerTextWidth(dayBaseColumnWidths.action, 16) }}
                     weight='medium'
                     onEditStart={handleActionEditStart}
                     onEditEnd={handleActionEditEnd}
@@ -99,6 +99,7 @@ const DayUserRow = ({ user, index, isLast, dayNumber, setVoteValue, setActionVal
                 const visibleColumns = dayData.extraColumns?.filter((_, idx) => userTableColumnVisibility?.extraDayColumns[idx]) || [];
                 const visibleIndex = visibleColumns.indexOf(column);
                 const isLastVisibleColumn = visibleIndex === visibleColumns.length - 1;
+                const columnWidth = extraDayColumnWidths[columnIndex] ?? 112;
 
                 return (
                     <Animated.View
@@ -111,12 +112,13 @@ const DayUserRow = ({ user, index, isLast, dayNumber, setVoteValue, setActionVal
                             FadeOutUp.duration(100).easing(Easing.ease)
                         }
                     >
-                        <Column className={`w-28 h-full border border-subtle-border items-center justify-center ${isLast && isLastVisibleColumn ? 'rounded-br-lg' : ''} `}>
+                        <Column className={`h-full border border-subtle-border items-center justify-center ${isLast && isLastVisibleColumn ? 'rounded-br-lg' : ''} `} style={{ width: columnWidth }}>
                             <InlineEditableText
                                 value={column}
                                 onChange={(newValue) => setExtraColumnValue?.(index, columnIndex, newValue)}
                                 placeholder='UNSET'
-                                className='w-20 text-center text-nowrap overflow-hidden'
+                                className='text-center text-nowrap overflow-hidden'
+                                style={{ width: getInnerTextWidth(columnWidth, 16) }}
                                 weight='medium'
                                 onEditStart={() => handleColumnEditStart(columnIndex)}
                                 onEditEnd={() => handleColumnEditEnd(columnIndex)}

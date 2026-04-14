@@ -3,8 +3,8 @@ import { ScrollView } from 'react-native';
 import LayoutStateAnimatedView, { fromRight } from '../ui/LayoutStateAnimatedView';
 import Column from '../layout/Column';
 import { PlayerProfile } from '../../../types/multiplayer';
+import MarkdownEditorDialog from './MarkdownEditorDialog';
 import { useTownSquareAuthorIdentity } from './townSquare/TownSquareAuthorIdentity';
-import TownSquarePlayerComposerDialog from './townSquare/TownSquarePlayerComposerDialog';
 import TownSquareThreadDetailView from './townSquare/TownSquareThreadDetailView';
 import TownSquareThreadListView from './townSquare/TownSquareThreadListView';
 import { truncateText } from './townSquare/townSquareUtils';
@@ -163,21 +163,23 @@ const TownSquarePagePLAYER = ({ gameId, currentProfile }: TownSquarePagePLAYERPr
                 </LayoutStateAnimatedView.OptionContainer>
             </LayoutStateAnimatedView.Container>
 
-            <TownSquarePlayerComposerDialog
-                includeThreadTitle={true}
+            <MarkdownEditorDialog
+                includeTitle={true}
                 isOpen={isThreadComposerOpen}
                 onOpenChange={setIsThreadComposerOpen}
+                requireMarkdown={true}
                 onSubmit={createThread}
                 submitLabel='Publish'
                 title='Create thread'
             />
 
-            <TownSquarePlayerComposerDialog
-                includeThreadTitle={true}
-                initialBody={selectedThread?.bodyMarkdownResolved ?? ''}
+            <MarkdownEditorDialog
+                includeTitle={true}
+                initialMarkdown={selectedThread?.bodyMarkdownResolved ?? ''}
                 initialTitle={selectedThread?.title ?? ''}
                 isOpen={isThreadEditComposerOpen}
                 onOpenChange={setIsThreadEditComposerOpen}
+                requireMarkdown={true}
                 onSubmit={({ markdown, plainText, title }) => {
                     if (!selectedThread) {
                         return;
@@ -194,10 +196,11 @@ const TownSquarePagePLAYER = ({ gameId, currentProfile }: TownSquarePagePLAYERPr
                 title='Edit thread'
             />
 
-            <TownSquarePlayerComposerDialog
-                includeThreadTitle={false}
+            <MarkdownEditorDialog
                 isOpen={isReplyComposerOpen}
                 onOpenChange={setIsReplyComposerOpen}
+                dialogSubtext={replyTargetLabel}
+                requireMarkdown={true}
                 onSubmit={({ markdown, plainText }) => {
                     if (!selectedThread) {
                         return;
@@ -220,19 +223,18 @@ const TownSquarePagePLAYER = ({ gameId, currentProfile }: TownSquarePagePLAYERPr
                     setReplyTargetCommentId(null);
                 }}
                 submitLabel='Post reply'
-                targetLabel={replyTargetLabel}
                 title='Write reply'
             />
 
-            <TownSquarePlayerComposerDialog
-                includeThreadTitle={false}
-                initialBody={editingReply?.bodyMarkdownResolved ?? ''}
+            <MarkdownEditorDialog
+                initialMarkdown={editingReply?.bodyMarkdownResolved ?? ''}
                 isOpen={editingReply !== null}
                 onOpenChange={(open) => {
                     if (!open) {
                         setEditingReplyId(null);
                     }
                 }}
+                requireMarkdown={true}
                 onSubmit={({ markdown, plainText }) => {
                     if (!editingReply) {
                         return;

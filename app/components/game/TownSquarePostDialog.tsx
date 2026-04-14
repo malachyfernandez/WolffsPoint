@@ -11,7 +11,7 @@ import Row from '../layout/Row';
 import PoppinsText from '../ui/text/PoppinsText';
 import MarkdownRenderer from '../ui/markdown/MarkdownRenderer';
 import AppButton from '../ui/buttons/AppButton';
-import MarkdownComposerDialog from './MarkdownComposerDialog';
+import MarkdownEditorDialog from './MarkdownEditorDialog';
 import { TownSquareAuthorAvatar, TownSquareAuthorName } from './townSquare/TownSquareAuthorIdentity';
 
 interface TownSquarePostDialogProps {
@@ -90,20 +90,14 @@ const TownSquarePostDialog = ({ gameId, isOpen, onOpenChange, post, currentProfi
                     </ConvexDialog.Content>
                 </ConvexDialog.Portal>
             </ConvexDialog.Root>
-            <MarkdownComposerDialog
+            <MarkdownEditorDialog
                 isOpen={isCommentDialogOpen}
                 onOpenChange={setIsCommentDialogOpen}
                 title='Add comment'
                 submitLabel='Post comment'
-                onSubmit={(markdown) => {
+                requireMarkdown={true}
+                onSubmit={({ markdown, plainText }) => {
                     const commentId = createClientId('comment');
-                    const plainText = markdown
-                        .replace(/!\[[^\]]*\]\([^)]*\)/g, ' ')
-                        .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$1')
-                        .replace(/[`*_>#-]/g, ' ')
-                        .replace(/\n+/g, ' ')
-                        .replace(/\s+/g, ' ')
-                        .trim();
                     setComment({
                         key: commentKey,
                         itemId: commentId,

@@ -1,6 +1,7 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useCallback, useEffect, useState, useRef } from 'react';
 import PoppinsText from '../ui/text/PoppinsText';
 import { useUserList } from 'hooks/useUserList';
+import { useUserVariable } from 'hooks/useUserVariable';
 import Column from '../layout/Column';
 import AppButton from '../ui/buttons/AppButton';
 import Row from '../layout/Row';
@@ -8,10 +9,13 @@ import DayUserRow from './DayUserRow';
 import DayTitleRow from './DayTitleRow';
 import { createUndoSnapshot, useUndoRedo } from 'hooks/useUndoRedo';
 import { UserTableItem, UserTableTitle, UserTableColumnVisibility } from 'types/playerTable';
+import { ColumnSizeOption, PlayerPageColumnSizes, defaultPlayerPageColumnSizes, getPlayerPageColumnSizesKey, getWidthForColumnSize } from './playerTableColumnSizing';
+import { getTargetDayCount, normalizePlayerPageState } from './playerTableNormalization';
 
 interface DaysTableProps {
     gameId: string;
     dayNumber: number;
+    dayCount: number;
     isBeingEdited: boolean;
     setIsBeingEdited: (value: boolean) => void;
     className?: string;
@@ -19,7 +23,7 @@ interface DaysTableProps {
     onWidthChange?: (width: number) => void;
 }
 
-const DaysTable = ({ gameId, dayNumber, isBeingEdited, setIsBeingEdited, className, onLayout, onWidthChange }: DaysTableProps) => {
+const DaysTable = ({ gameId, dayNumber, dayCount, isBeingEdited, setIsBeingEdited, className, onLayout, onWidthChange }: DaysTableProps) => {
     const { executeCommand } = useUndoRedo();
     const [editingRow, setEditingRow] = useState<'title' | number | null>(null);
     const tableRef = useRef<any>(null);
@@ -34,7 +38,7 @@ const DaysTable = ({ gameId, dayNumber, isBeingEdited, setIsBeingEdited, classNa
         setIsBeingEdited(false);
     };
 
-    const measureTableWidth = () => {
+    const measureTableWidth = useCallback(() => {
         if (tableRef.current && onWidthChange) {
             // Use setTimeout to ensure layout is updated after state changes
             const timeoutId = setTimeout(() => {
@@ -48,7 +52,7 @@ const DaysTable = ({ gameId, dayNumber, isBeingEdited, setIsBeingEdited, classNa
             // Cleanup timeout if component unmounts
             return () => clearTimeout(timeoutId);
         }
-    };
+    }, [onWidthChange]);
 
     const [userTable, setUserTable] = useUserList<UserTableItem[]>({
         key: "userTable",
@@ -70,43 +74,69 @@ const DaysTable = ({ gameId, dayNumber, isBeingEdited, setIsBeingEdited, classNa
         privacy: "PUBLIC",
     });
 
+    const [columnSizes, setColumnSizes] = useUserVariable<PlayerPageColumnSizes>({
+        key: getPlayerPageColumnSizesKey(gameId),
+        defaultValue: defaultPlayerPageColumnSizes,
+    });
+
+    const targetDayCount = getTargetDayCount(userTable?.value, Math.max(dayCount, dayNumber + 1));
+
+    const getNormalizedState = useCallback((overrides?: {
+        titles?: UserTableTitle;
+        visibility?: UserTableColumnVisibility;
+        users?: UserTableItem[];
+        columnSizes?: PlayerPageColumnSizes;
+    }) => {
+        return normalizePlayerPageState({
+            titles: overrides?.titles ?? userTableTitle?.value,
+            visibility: overrides?.visibility ?? userTableColumnVisibility?.value,
+            users: overrides?.users ?? userTable?.value,
+            targetDayCount,
+            columnSizes: overrides?.columnSizes ?? columnSizes.value,
+        });
+    }, [columnSizes.value, targetDayCount, userTable?.value, userTableColumnVisibility?.value, userTableTitle?.value]);
+
+    useEffect(() => {
+        const normalizedState = getNormalizedState();
+        const currentTitles = userTableTitle?.value ?? { extraUserColumns: [], extraDayColumns: [] };
+        const currentVisibility = userTableColumnVisibility?.value ?? { extraUserColumns: [], extraDayColumns: [] };
+        const currentUsers = userTable?.value ?? [];
+        const currentColumnSizes = columnSizes.value ?? defaultPlayerPageColumnSizes;
+
+        if (JSON.stringify(currentVisibility) !== JSON.stringify(normalizedState.visibility)) {
+            setUserTableColumnVisibility(normalizedState.visibility);
+        }
+
+        if (JSON.stringify(currentUsers) !== JSON.stringify(normalizedState.users)) {
+            setUserTable(normalizedState.users);
+        }
+
+        if (JSON.stringify(currentColumnSizes) !== JSON.stringify(normalizedState.columnSizes)) {
+            setColumnSizes(normalizedState.columnSizes);
+        }
+
+        if (JSON.stringify(currentTitles) !== JSON.stringify(normalizedState.titles)) {
+            setUserTableTitle(normalizedState.titles);
+        }
+    }, [columnSizes.value, getNormalizedState, setColumnSizes, setUserTable, setUserTableColumnVisibility, setUserTableTitle, userTable?.value, userTableColumnVisibility?.value, userTableTitle?.value]);
+
     // Measure width when columns change
     useEffect(() => {
         const cleanup = measureTableWidth();
         return cleanup;
-    }, [userTableTitle?.value?.extraDayColumns?.length, userTableColumnVisibility?.value?.extraDayColumns]);
-
-
-
-    const setVoteValue = (userIndex: number, newVoteValue: string) => {
-        const updatedUsers = [...users];
-        if (userIndex >= 0 && userIndex < updatedUsers.length) {
-            const user = updatedUsers[userIndex];
-            const days = [...user.days];
-
-            // Ensure the day exists
-            while (days.length <= dayNumber) {
-                days.push({ vote: "", action: "", extraColumns: [] });
-            }
-
-            days[dayNumber] = {
-                ...days[dayNumber],
-                vote: newVoteValue
-            };
-
-            updatedUsers[userIndex] = {
-                ...user,
-                days: days
-            };
-            setUserTable(updatedUsers);
-        }
-    };
-
+    }, [
+        measureTableWidth,
+        userTableTitle?.value?.extraDayColumns?.length,
+        userTableColumnVisibility?.value?.extraDayColumns,
+        columnSizes.value.dayBaseColumns.action,
+        columnSizes.value.dayBaseColumns.vote,
+        columnSizes.value.dayExtraColumns,
+    ]);
     const UNDOABLEsetVoteValue = (userIndex: number, newVoteValue: string) => {
         const previousUserTable = createUndoSnapshot(userTable?.value ?? []);
         if (userIndex < 0 || userIndex >= previousUserTable.length) return;
 
-        const nextUserTable = createUndoSnapshot(previousUserTable);
+        const nextUserTable = createUndoSnapshot(getNormalizedState({ users: previousUserTable }).users);
         const user = nextUserTable[userIndex];
         const days = [...user.days];
 
@@ -131,35 +161,11 @@ const DaysTable = ({ gameId, dayNumber, isBeingEdited, setIsBeingEdited, classNa
         });
     };
 
-    const setActionValue = (userIndex: number, newActionValue: string) => {
-        const updatedUsers = [...users];
-        if (userIndex >= 0 && userIndex < updatedUsers.length) {
-            const user = updatedUsers[userIndex];
-            const days = [...user.days];
-
-            // Ensure the day exists
-            while (days.length <= dayNumber) {
-                days.push({ vote: "", action: "", extraColumns: [] });
-            }
-
-            days[dayNumber] = {
-                ...days[dayNumber],
-                action: newActionValue
-            };
-
-            updatedUsers[userIndex] = {
-                ...user,
-                days: days
-            };
-            setUserTable(updatedUsers);
-        }
-    };
-
     const UNDOABLEsetActionValue = (userIndex: number, newActionValue: string) => {
         const previousUserTable = createUndoSnapshot(userTable?.value ?? []);
         if (userIndex < 0 || userIndex >= previousUserTable.length) return;
 
-        const nextUserTable = createUndoSnapshot(previousUserTable);
+        const nextUserTable = createUndoSnapshot(getNormalizedState({ users: previousUserTable }).users);
         const user = nextUserTable[userIndex];
         const days = [...user.days];
 
@@ -184,40 +190,11 @@ const DaysTable = ({ gameId, dayNumber, isBeingEdited, setIsBeingEdited, classNa
         });
     };
 
-    const setExtraDayColumnValue = (userIndex: number, extraColumnIndex: number, newExtraColumnValue: string) => {
-        const updatedUsers = [...users];
-        if (userIndex >= 0 && userIndex < updatedUsers.length) {
-            const user = updatedUsers[userIndex];
-            const days = [...user.days];
-
-            // Ensure the day exists
-            while (days.length <= dayNumber) {
-                days.push({ vote: "", action: "", extraColumns: [] });
-            }
-
-            const day = days[dayNumber];
-            const currentExtraColumns = day.extraColumns || [];
-            const updatedExtraColumns = [...currentExtraColumns];
-            updatedExtraColumns[extraColumnIndex] = newExtraColumnValue;
-
-            days[dayNumber] = {
-                ...day,
-                extraColumns: updatedExtraColumns
-            };
-
-            updatedUsers[userIndex] = {
-                ...user,
-                days: days
-            };
-            setUserTable(updatedUsers);
-        }
-    };
-
     const UNDOABLEsetExtraDayColumnValue = (userIndex: number, extraColumnIndex: number, newExtraColumnValue: string) => {
         const previousUserTable = createUndoSnapshot(userTable?.value ?? []);
         if (userIndex < 0 || userIndex >= previousUserTable.length) return;
 
-        const nextUserTable = createUndoSnapshot(previousUserTable);
+        const nextUserTable = createUndoSnapshot(getNormalizedState({ users: previousUserTable }).users);
         const user = nextUserTable[userIndex];
         const days = [...user.days];
 
@@ -246,21 +223,9 @@ const DaysTable = ({ gameId, dayNumber, isBeingEdited, setIsBeingEdited, classNa
         });
     };
 
-    const setDayColumnTitle = (columnIndex: number, newTitle: string) => {
-        const currentTitles = userTableTitle?.value ?? { extraUserColumns: [], extraDayColumns: [] };
-        const updatedExtraDayColumns = [...currentTitles.extraDayColumns];
-        updatedExtraDayColumns[columnIndex] = newTitle;
-
-        const updatedTitles = {
-            ...currentTitles,
-            extraDayColumns: updatedExtraDayColumns
-        };
-        setUserTableTitle(updatedTitles);
-    };
-
     const UNDOABLEsetDayColumnTitle = (columnIndex: number, newTitle: string) => {
         const previousTitles = createUndoSnapshot(userTableTitle?.value ?? { extraUserColumns: [], extraDayColumns: [] });
-        const nextTitles = createUndoSnapshot(previousTitles);
+        const nextTitles = createUndoSnapshot(getNormalizedState({ titles: previousTitles }).titles);
         nextTitles.extraDayColumns[columnIndex] = newTitle;
 
         executeCommand({
@@ -270,62 +235,33 @@ const DaysTable = ({ gameId, dayNumber, isBeingEdited, setIsBeingEdited, classNa
         });
     };
 
-    const addDayColumn = (title?: string, values?: string[], index?: number | "Last") => {
-        // Add new column title
-        const currentTitles = userTableTitle?.value ?? { extraUserColumns: [], extraDayColumns: [] };
-        const newTitle = title ?? `Column ${currentTitles.extraDayColumns.length + 1}`;
-
-        // ALWAYS add to the end
-        const updatedTitles = {
-            ...currentTitles,
-            extraDayColumns: [
-                ...currentTitles.extraDayColumns,
-                newTitle
-            ]
-        };
-        setUserTableTitle(updatedTitles);
-
-        // Add new column value to each user's day at the end
-        const updatedUsers = users.map((user, userIndex) => {
-            const days = [...user.days];
-
-            // Ensure the day exists
-            while (days.length <= dayNumber) {
-                days.push({ vote: "", action: "", extraColumns: [] });
-            }
-
-            const day = days[dayNumber];
-            days[dayNumber] = {
-                ...day,
-                extraColumns: [
-                    ...(day.extraColumns || []),
-                    values?.[userIndex] ?? ""
-                ]
-            };
-
-            return {
-                ...user,
-                days: days
-            };
+    const setDayBaseColumnSize = (columnKey: 'vote' | 'action', size: ColumnSizeOption) => {
+        const currentSizes = columnSizes.value ?? defaultPlayerPageColumnSizes;
+        setColumnSizes({
+            ...currentSizes,
+            dayBaseColumns: {
+                ...currentSizes.dayBaseColumns,
+                [columnKey]: size,
+            },
         });
-        setUserTable(updatedUsers);
+    };
 
-        // Add visibility for new column (default to visible)
-        const currentVisibility = userTableColumnVisibility?.value ?? { extraUserColumns: [], extraDayColumns: [] };
-        const updatedVisibility = {
-            ...currentVisibility,
-            extraDayColumns: [
-                ...currentVisibility.extraDayColumns,
-                true
-            ]
-        };
-        setUserTableColumnVisibility(updatedVisibility);
+    const setDayExtraColumnSize = (columnIndex: number, size: ColumnSizeOption) => {
+        const currentSizes = columnSizes.value ?? defaultPlayerPageColumnSizes;
+        const nextExtraColumnSizes = [...currentSizes.dayExtraColumns];
+        nextExtraColumnSizes[columnIndex] = size;
+
+        setColumnSizes({
+            ...currentSizes,
+            dayExtraColumns: nextExtraColumnSizes,
+        });
     };
 
     const UNDOABLEaddDayColumn = () => {
         const previousTitles = createUndoSnapshot(userTableTitle?.value ?? { extraUserColumns: [], extraDayColumns: [] });
         const previousUserTable = createUndoSnapshot(userTable?.value ?? []);
         const previousVisibility = createUndoSnapshot(userTableColumnVisibility?.value ?? { extraUserColumns: [], extraDayColumns: [] });
+        const previousSizes = createUndoSnapshot(columnSizes.value ?? defaultPlayerPageColumnSizes);
 
         const newTitle = `Column ${previousTitles.extraDayColumns.length + 1}`;
         const nextTitles = {
@@ -336,29 +272,7 @@ const DaysTable = ({ gameId, dayNumber, isBeingEdited, setIsBeingEdited, classNa
             ]
         };
 
-        const nextUserTable = previousUserTable.map((user) => {
-            const days = [...user.days];
-
-            while (days.length <= dayNumber) {
-                days.push({ vote: "", action: "", extraColumns: [] });
-            }
-
-            const day = days[dayNumber];
-            days[dayNumber] = {
-                ...day,
-                extraColumns: [
-                    ...(day.extraColumns || []),
-                    ""
-                ]
-            };
-
-            return {
-                ...user,
-                days
-            };
-        });
-
-        const nextVisibility = {
+        const nextVisibilityInput = {
             ...previousVisibility,
             extraDayColumns: [
                 ...previousVisibility.extraDayColumns,
@@ -366,48 +280,91 @@ const DaysTable = ({ gameId, dayNumber, isBeingEdited, setIsBeingEdited, classNa
             ]
         };
 
+        const nextSizesInput = {
+            ...previousSizes,
+            dayExtraColumns: [
+                ...previousSizes.dayExtraColumns,
+                'small' as ColumnSizeOption
+            ]
+        };
+
+        const normalizedNextState = getNormalizedState({
+            titles: nextTitles,
+            visibility: nextVisibilityInput,
+            users: previousUserTable,
+            columnSizes: nextSizesInput,
+        });
+
         executeCommand({
             action: () => {
-                setUserTableTitle(createUndoSnapshot(nextTitles));
-                setUserTable(createUndoSnapshot(nextUserTable));
-                setUserTableColumnVisibility(createUndoSnapshot(nextVisibility));
+                setUserTableTitle(createUndoSnapshot(normalizedNextState.titles));
+                setUserTable(createUndoSnapshot(normalizedNextState.users));
+                setUserTableColumnVisibility(createUndoSnapshot(normalizedNextState.visibility));
+                setColumnSizes(createUndoSnapshot(normalizedNextState.columnSizes));
             },
             undoAction: () => {
                 setUserTableTitle(createUndoSnapshot(previousTitles));
                 setUserTable(createUndoSnapshot(previousUserTable));
                 setUserTableColumnVisibility(createUndoSnapshot(previousVisibility));
+                setColumnSizes(createUndoSnapshot(previousSizes));
             },
             description: "Add Day Column"
         });
     };
 
-    const setDayColumnVisibility = (columnIndex: number, visibility: boolean) => {
-        // Update column visibility
-        const currentVisibility = userTableColumnVisibility?.value ?? { extraUserColumns: [], extraDayColumns: [] };
-        const updatedVisibility = {
-            ...currentVisibility,
-            extraDayColumns: currentVisibility.extraDayColumns.map((v, index) =>
-                index === columnIndex ? visibility : v
-            )
-        };
-        setUserTableColumnVisibility(updatedVisibility);
-    };
-
-    const UNDOABLEsetDayColumnVisibility = (columnIndex: number, visibility: boolean) => {
+    const UNDOABLEdeleteDayColumn = (columnIndex: number) => {
+        const previousTitles = createUndoSnapshot(userTableTitle?.value ?? { extraUserColumns: [], extraDayColumns: [] });
+        const previousUserTable = createUndoSnapshot(userTable?.value ?? []);
         const previousVisibility = createUndoSnapshot(userTableColumnVisibility?.value ?? { extraUserColumns: [], extraDayColumns: [] });
-        const nextVisibility = {
-            ...previousVisibility,
-            extraDayColumns: previousVisibility.extraDayColumns.map((v, index) =>
-                index === columnIndex ? visibility : v
-            )
+        const previousSizes = createUndoSnapshot(columnSizes.value ?? defaultPlayerPageColumnSizes);
+
+        const nextTitles = {
+            ...previousTitles,
+            extraDayColumns: previousTitles.extraDayColumns.filter((_, index) => index !== columnIndex)
         };
+
+        const nextVisibilityInput = {
+            ...previousVisibility,
+            extraDayColumns: previousVisibility.extraDayColumns.filter((_, index) => index !== columnIndex)
+        };
+
+        const nextSizesInput = {
+            ...previousSizes,
+            dayExtraColumns: previousSizes.dayExtraColumns.filter((_, index) => index !== columnIndex)
+        };
+
+        const normalizedNextState = getNormalizedState({
+            titles: nextTitles,
+            visibility: nextVisibilityInput,
+            users: previousUserTable,
+            columnSizes: nextSizesInput,
+        });
 
         executeCommand({
-            action: () => setUserTableColumnVisibility(createUndoSnapshot(nextVisibility)),
-            undoAction: () => setUserTableColumnVisibility(createUndoSnapshot(previousVisibility)),
-            description: visibility ? "Show Day Column" : "Hide Day Column"
+            action: () => {
+                setUserTableTitle(createUndoSnapshot(normalizedNextState.titles));
+                setUserTable(createUndoSnapshot(normalizedNextState.users));
+                setUserTableColumnVisibility(createUndoSnapshot(normalizedNextState.visibility));
+                setColumnSizes(createUndoSnapshot(normalizedNextState.columnSizes));
+            },
+            undoAction: () => {
+                setUserTableTitle(createUndoSnapshot(previousTitles));
+                setUserTable(createUndoSnapshot(previousUserTable));
+                setUserTableColumnVisibility(createUndoSnapshot(previousVisibility));
+                setColumnSizes(createUndoSnapshot(previousSizes));
+            },
+            description: "Delete Day Column"
         });
     };
+
+    const dayBaseColumnWidths = {
+        vote: getWidthForColumnSize(112, columnSizes.value.dayBaseColumns.vote),
+        action: getWidthForColumnSize(112, columnSizes.value.dayBaseColumns.action),
+    };
+
+    const extraDayColumnWidths = (userTableTitle?.value?.extraDayColumns ?? []).map((_, index) => {
+        return getWidthForColumnSize(112, columnSizes.value.dayExtraColumns[index]);
+    });
 
     return (
         <>
@@ -418,10 +375,16 @@ const DaysTable = ({ gameId, dayNumber, isBeingEdited, setIsBeingEdited, classNa
                             userTableTitle={userTableTitle?.value}
                             userTableColumnVisibility={userTableColumnVisibility?.value}
                             setColumnTitle={UNDOABLEsetDayColumnTitle}
-                            setColumnVisibility={UNDOABLEsetDayColumnVisibility}
                             onEditStart={() => handleRowEditStart('title')}
                             onEditEnd={handleRowEditEnd}
                             isEditing={editingRow === 'title'}
+                            dayBaseColumnWidths={dayBaseColumnWidths}
+                            extraDayColumnWidths={extraDayColumnWidths}
+                            dayBaseColumnSizes={columnSizes.value.dayBaseColumns}
+                            extraDayColumnSizes={columnSizes.value.dayExtraColumns}
+                            onSetDayBaseColumnSize={setDayBaseColumnSize}
+                            onSetExtraDayColumnSize={setDayExtraColumnSize}
+                            onDeleteExtraDayColumn={UNDOABLEdeleteDayColumn}
                         />
 
                         {users.map((user, index) => (
@@ -438,6 +401,8 @@ const DaysTable = ({ gameId, dayNumber, isBeingEdited, setIsBeingEdited, classNa
                                 onEditStart={() => handleRowEditStart(index)}
                                 onEditEnd={handleRowEditEnd}
                                 isEditing={editingRow === index}
+                                dayBaseColumnWidths={dayBaseColumnWidths}
+                                extraDayColumnWidths={extraDayColumnWidths}
                             />
                         ))}
                     </Column>
