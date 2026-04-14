@@ -20,6 +20,7 @@ interface MarkdownRendererProps {
     removeImageBorders?: boolean; // remove borders around images
     state?: Record<string, string | undefined>;
     setState?: (nextState: Record<string, string | undefined>) => void;
+    isInDialog?: boolean;
 }
 
 type MarkdownBlock =
@@ -249,6 +250,7 @@ const MarkdownInputField = ({
     onChange,
     playerOptions,
     roleOptions,
+    isInDialog = false,
 }: {
     input: Extract<MarkdownInlineSegment, { type: 'input' }>;
     value?: string;
@@ -256,6 +258,7 @@ const MarkdownInputField = ({
     onChange: (nextValue: string) => void;
     playerOptions: PlayerDropdownOption[];
     roleOptions: AppDropdownOption[];
+    isInDialog?: boolean;
 }) => {
     const dropdownOptions =
         input.inputKind === 'player_alive'
@@ -287,7 +290,7 @@ const MarkdownInputField = ({
                     emptyText='No options available'
                     triggerClassName='border-0 bg-text/10 hover:bg-text/5 rounded-xl'
                     contentClassName='border-0'
-                    centered={true}
+                    isInDialog={isInDialog}
                     disabled={disabled}
                 />
             )}
@@ -306,6 +309,7 @@ const InlineMarkdownWithInputs = ({
     setState,
     playerOptions,
     roleOptions,
+    isInDialog = false,
 }: {
     text: string;
     keyPrefix: string;
@@ -317,6 +321,7 @@ const InlineMarkdownWithInputs = ({
     setState?: (nextState: Record<string, string | undefined>) => void;
     playerOptions: PlayerDropdownOption[];
     roleOptions: AppDropdownOption[];
+    isInDialog?: boolean;
 }) => {
     const segments = useMemo(() => parseInlineSegments(text), [text]);
     const disabled = !setState;
@@ -355,6 +360,7 @@ const InlineMarkdownWithInputs = ({
                             }}
                             playerOptions={playerOptions}
                             roleOptions={roleOptions}
+                            isInDialog={isInDialog}
                         />
                     );
                 }
@@ -415,35 +421,38 @@ const renderInlineMarkdown = (text: string, keyPrefix: string) => {
                 );
             }
 
-            // Handle inline images (though we'll parse them as blocks for better layout)
             if (part.startsWith('![') && part.includes('](') && part.endsWith(')')) {
                 const altMatch = part.match(/^!\[([^\]]*)\]/);
                 const urlMatch = part.match(/\]\(([^)]*)\)$/);
+
                 if (altMatch && urlMatch) {
                     return (
                         <Image
                             key={`${keyPrefix}-image-${index}`}
                             source={{ uri: urlMatch[1] }}
-                            style={{ width: '100%', height: 200 }}
+                            style={{ width: 200, height: 120, maxWidth: '100%' }}
                             resizeMode='contain'
-                            className="rounded-lg my-2"
+                            className='rounded-lg my-2'
                         />
                     );
                 }
             }
 
-            return <PoppinsText key={`${keyPrefix}-text-${index}`}>{part}</PoppinsText>;
+            return (
+                <PoppinsText key={`${keyPrefix}-text-${index}`}>
+                    {part}
+                </PoppinsText>
+            );
         });
 };
 
 const parseMarkdown = (markdown: string): MarkdownBlock[] => {
-    // Early logic: Add double spaces after each line before processing
     const processedMarkdown = markdown
         .replace(/\r\n/g, '\n')
         .split('\n')
-        .map(line => line + '  ') // Add double spaces to each line
+        .map(line => line + '  ')
         .join('\n');
-    
+
     const lines = processedMarkdown.split('\n');
     const blocks: MarkdownBlock[] = [];
     let index = 0;
@@ -457,7 +466,6 @@ const parseMarkdown = (markdown: string): MarkdownBlock[] => {
             continue;
         }
 
-        // Check for image on its own line
         const imageMatch = line.match(/^!\[([^\]]*)\]\(([^)]*)\)$/);
         if (imageMatch) {
             blocks.push({
@@ -517,7 +525,6 @@ const parseMarkdown = (markdown: string): MarkdownBlock[] => {
             continue;
         }
 
-        // Treat each non-empty line as its own paragraph for single line breaks
         const currentLine = lines[index].trim();
         if (currentLine.length > 0) {
             blocks.push({ type: 'paragraph', text: currentLine });
@@ -529,7 +536,18 @@ const parseMarkdown = (markdown: string): MarkdownBlock[] => {
     return blocks;
 };
 
-const MarkdownRendererContent = ({ markdown, className = '', textAlign = 'left', viewHeightImages, removeImageBorders, state, setState, playerOptions, roleOptions }: MarkdownRendererProps & MarkdownRendererInputDataContextValue) => {
+const MarkdownRendererContent = ({
+    markdown,
+    className = '',
+    textAlign = 'left',
+    viewHeightImages,
+    removeImageBorders,
+    state,
+    setState,
+    isInDialog = false,
+    playerOptions,
+    roleOptions,
+}: MarkdownRendererProps & MarkdownRendererInputDataContextValue) => {
     const blocks = useMemo(() => parseMarkdown(markdown || ''), [markdown]);
 
     const containsInputs = useMemo(
@@ -570,6 +588,7 @@ const MarkdownRendererContent = ({ markdown, className = '', textAlign = 'left',
                                 setState={setState}
                                 playerOptions={playerOptions}
                                 roleOptions={roleOptions}
+                                isInDialog={isInDialog}
                             />
                         );
                     }
@@ -599,6 +618,7 @@ const MarkdownRendererContent = ({ markdown, className = '', textAlign = 'left',
                                     setState={setState}
                                     playerOptions={playerOptions}
                                     roleOptions={roleOptions}
+                                    isInDialog={isInDialog}
                                 />
                             ) : (
                                 <PoppinsText style={{ textAlign, lineHeight: 24, fontStyle: 'italic' }}>
@@ -628,6 +648,7 @@ const MarkdownRendererContent = ({ markdown, className = '', textAlign = 'left',
                                                 setState={setState}
                                                 playerOptions={playerOptions}
                                                 roleOptions={roleOptions}
+                                                isInDialog={isInDialog}
                                             />
                                         ) : (
                                             <PoppinsText style={{ textAlign, lineHeight: 24 }}>
@@ -660,6 +681,7 @@ const MarkdownRendererContent = ({ markdown, className = '', textAlign = 'left',
                                     setState={setState}
                                     playerOptions={playerOptions}
                                     roleOptions={roleOptions}
+                                    isInDialog={isInDialog}
                                 />
                             ) : (
                                 <PoppinsText style={{ textAlign, lineHeight: 24 }}>

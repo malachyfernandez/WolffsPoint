@@ -97,14 +97,15 @@ const YourEyesOnlyDayContentPLAYER = ({ gameId, currentEmail, currentUserId, day
 
     // Determine which deadline comes first
     const isVoteFirst = voteDeadline.getTime() <= actionDeadline.getTime();
-    const primaryDeadline = isVoteFirst ? voteDeadline : actionDeadline;
-    const primaryCountdown = (isVoteFirst ? isVoteLocked : isActionLocked) ? 'LOCKED' : formatCountdown(primaryDeadline, now);
-    const primaryLabel = isVoteFirst ? 'VOTE' : 'ACTION';
-    const primaryTimeLabel = isVoteFirst ? voteDeadlineTime : actionDeadlineTime;
-    const secondaryDeadline = isVoteFirst ? actionDeadline : voteDeadline;
-    const secondaryTimeLabel = isVoteFirst ? actionDeadlineTime : voteDeadlineTime;
-    const secondaryIsLocked = isVoteFirst ? isActionLocked : isVoteLocked;
-    const secondaryLabel = isVoteFirst ? 'Actions' : 'Voting';
+    const isVotePrimary = isVoteFirst && !(isVoteLocked && !isActionLocked); // Single selector for UI control - can be extended with extra criteria
+    const primaryDeadline = isVotePrimary ? voteDeadline : actionDeadline;
+    const primaryCountdown = (isVotePrimary ? isVoteLocked : isActionLocked) ? 'LOCKED' : formatCountdown(primaryDeadline, now);
+    const primaryLabel = isVotePrimary ? 'VOTE' : 'ACTION';
+    const primaryTimeLabel = isVotePrimary ? voteDeadlineTime : actionDeadlineTime;
+    const secondaryDeadline = isVotePrimary ? actionDeadline : voteDeadline;
+    const secondaryTimeLabel = isVotePrimary ? actionDeadlineTime : voteDeadlineTime;
+    const secondaryIsLocked = isVotePrimary ? isActionLocked : isVoteLocked;
+    const secondaryLabel = isVotePrimary ? 'Actions' : 'Voting';
     const primaryDateLabel = formatContextualDateLabel(primaryDeadline, undefined, now, 'lower');
     const secondaryDateLabel = formatContextualDateLabel(secondaryDeadline, undefined, now, 'lower');
 

@@ -28,7 +28,7 @@ const TownSquareComposerPreviewPane = ({ includeTitle, markdown, markdownInputSt
                         ) : null}
 
                         {markdown.trim() ? (
-                            <MarkdownRenderer markdown={markdown.trim()} state={markdownInputState} setState={setMarkdownInputState} />
+                            <MarkdownRenderer markdown={markdown.trim()} state={markdownInputState} setState={setMarkdownInputState} isInDialog={true} />
                         ) : (
                             <Column className='py-12' gap={1}>
                                 <PoppinsText weight='medium'>Nothing to preview yet</PoppinsText>

@@ -188,7 +188,7 @@ const UserEditDialog = ({
                                 onValueChange={setRole}
                                 placeholder='Select a role'
                                 emptyText='No roles available'
-                                centered={true}
+                                isInDialog={true}
                             />
                         </Column>
 

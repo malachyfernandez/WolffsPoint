@@ -80,7 +80,7 @@ const MarkdownInputBuilderDialog = ({ isOpen, onInsert, onOpenChange, selectedTe
                                 placeholder='Select an input type'
                                 triggerClassName='border-0 bg-text/10 hover:bg-text/5 rounded-xl'
                                 contentClassName='border-0'
-                                centered={true}
+                                isInDialog={true}
                             />
                         </Column>
 
@@ -92,6 +92,7 @@ const MarkdownInputBuilderDialog = ({ isOpen, onInsert, onOpenChange, selectedTe
                                         markdown={previewMarkdown}
                                         state={previewState}
                                         setState={setPreviewState}
+                                        isInDialog={true}
                                     />
                                 ) : (
                                     <PoppinsText varient='subtext'>Add a label to preview the input.</PoppinsText>

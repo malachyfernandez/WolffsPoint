@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { Platform } from 'react-native';
-import { Popover } from 'heroui-native';
+import { Dialog, Popover } from 'heroui-native';
 import { ChevronDown } from 'lucide-react-native';
 import Column from '../../layout/Column';
 import { WebDropdownPortal } from '../../../../contexts/WebDropdownProvider';
@@ -26,7 +26,7 @@ interface AppDropdownProps {
     itemClassName?: string;
     selectedItemClassName?: string;
     emptyStateClassName?: string;
-    centered?: boolean;
+    isInDialog?: boolean;
     disabled?: boolean;
 }
 
@@ -52,7 +52,7 @@ const AppDropdown = ({
     itemClassName = '',
     selectedItemClassName = '',
     emptyStateClassName = '',
-    centered = false,
+    isInDialog = false,
     disabled = false,
 }: AppDropdownProps) => {
     const [isOpen, setIsOpen] = useState(false);
@@ -130,7 +130,7 @@ const AppDropdown = ({
         setIsOpen((currentValue) => {
             const nextValue = !currentValue;
 
-            if (Platform.OS === 'web' && nextValue) {
+            if (Platform.OS === 'web' && nextValue && !isInDialog) {
                 requestAnimationFrame(() => {
                     updateWebMenuPosition();
                 });
@@ -138,7 +138,7 @@ const AppDropdown = ({
 
             return nextValue;
         });
-    }, [disabled, updateWebMenuPosition]);
+    }, [disabled, isInDialog, updateWebMenuPosition]);
 
     useEffect(() => {
         if (!disabled) {
@@ -149,7 +149,7 @@ const AppDropdown = ({
     }, [closeDropdown, disabled]);
 
     useEffect(() => {
-        if (Platform.OS !== 'web' || !isOpen) {
+        if (Platform.OS !== 'web' || !isOpen || isInDialog) {
             return;
         }
 
@@ -175,7 +175,7 @@ const AppDropdown = ({
             window.removeEventListener('scroll', handleScrollOrResize, true);
             document.removeEventListener('keydown', handleKeyDown);
         };
-    }, [closeDropdown, isOpen, updateWebMenuPosition]);
+    }, [closeDropdown, isInDialog, isOpen, updateWebMenuPosition]);
 
     const dropdownList = options.length ? (
         <Column gap={1} className='w-full'>
@@ -194,68 +194,25 @@ const AppDropdown = ({
         <AppDropdownEmptyState className={emptyStateClassName} text={emptyText} />
     );
 
-    const centeredWebOverlay = isOpen ? (
-        <>
-            {React.createElement('div', {
-                'aria-hidden': true,
-                onClick: (event: { preventDefault?: () => void; stopPropagation?: () => void }) => {
-                    event.preventDefault?.();
-                    event.stopPropagation?.();
-                    closeDropdown();
-                },
-                onMouseDown: (event: { preventDefault?: () => void; stopPropagation?: () => void }) => {
-                    event.preventDefault?.();
-                    event.stopPropagation?.();
-                },
-                style: {
-                    inset: 0,
-                    pointerEvents: 'auto',
-                    position: 'fixed',
-                    zIndex: 2147483646,
-                    animation: 'fadeIn 0.2s ease-out',
-                },
-            })}
-
-            <div
-                style={{
-                    position: 'fixed',
-                    top: '50%',
-                    left: '50%',
-                    transform: 'translate(-50%, -50%)',
-                    pointerEvents: 'auto',
-                    zIndex: 2147483647,
-                    animation: 'slideUp 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
-                }}
-            >
-                <AppDropdownMenu
-                    id={menuId}
-                    className={contentClassName}
-                    onClick={(event) => {
-                        event.preventDefault?.();
-                        event.stopPropagation?.();
-                    }}
-                    onMouseDown={(event) => {
-                        event.preventDefault?.();
-                        event.stopPropagation?.();
-                    }}
-                    style={{
-                        boxShadow: '0 100px 1000px -100px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(0, 0, 0, 0.1), 0 0 80px rgba(0, 0, 0, 0.3)',
-                        filter: 'drop-shadow(0 0 1000px rgba(0, 0, 0, 0.4))',
-                        maxHeight: '60vh',
-                        overflowY: 'auto',
-                        minWidth: '100px',
-                        width: '400px',
-                        maxWidth: '80vw',
-                    }}
-                >
-                    {dropdownList}
-                </AppDropdownMenu>
-            </div>
-        </>
-    ) : null;
+    const dialogDropdownList = options.length ? (
+        <Column gap={1} className='w-full'>
+            {options.map((option) => (
+                <AppDropdownItem
+                    key={option.value}
+                    className={itemClassName}
+                    isSelected={option.value === selectedValue}
+                    label={option.label}
+                    onSelect={() => handleValueChange(option.value)}
+                    selectedClassName={selectedItemClassName || 'bg-accent'}
+                />
+            ))}
+        </Column>
+    ) : (
+        <AppDropdownEmptyState className={emptyStateClassName} text={emptyText} />
+    );
 
     if (Platform.OS === 'web') {
-        if (centered) {
+        if (isInDialog) {
             return (
                 <>
                     <AppDropdownTrigger
@@ -268,11 +225,22 @@ const AppDropdown = ({
                         disabled={disabled}
                     />
 
-                    {centeredWebOverlay ? (
-                        <WebDropdownPortal>
-                            {centeredWebOverlay}
-                        </WebDropdownPortal>
-                    ) : null}
+                    <Dialog isOpen={isOpen} onOpenChange={setIsOpen}>
+                        <Dialog.Portal>
+                            <Dialog.Overlay className='bg-black/20' />
+                            <Dialog.Content className='mx-auto w-[min(90vw,22rem)] max-w-sm rounded border-2 border-border bg-background p-1'>
+                                {React.createElement(
+                                    'div',
+                                    {
+                                        id: menuId,
+                                        role: 'listbox',
+                                        className: `max-h-[60vh] w-full overflow-y-auto rounded ${contentClassName}`.trim(),
+                                    },
+                                    dialogDropdownList,
+                                )}
+                            </Dialog.Content>
+                        </Dialog.Portal>
+                    </Dialog>
                 </>
             );
         }
