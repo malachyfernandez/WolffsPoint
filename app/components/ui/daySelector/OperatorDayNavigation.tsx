@@ -56,7 +56,7 @@ const OperatorDayNavigation = ({ gameId }: OperatorDayNavigationProps) => {
     };
 
     return (
-        <Column className='border-y border-border/15 py-3'>
+        <Column className='border-b border-border/15 pb-4'>
             <View>
                 <Row className='items-start justify-between gap-4'>
                     <Pressable
