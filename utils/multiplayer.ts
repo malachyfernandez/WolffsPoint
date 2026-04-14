@@ -69,6 +69,41 @@ export const addDays = (date: Date, days: number) => {
     return nextDate;
 };
 
+export const formatCalendarDateLabel = (date: Date, includeYear: boolean = false) => {
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
+
+    if (includeYear) {
+        return `${month}/${day}/${date.getFullYear()}`;
+    }
+
+    return `${month}/${day}`;
+};
+
+const getCalendarDayValue = (date: Date) => {
+    return Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
+};
+
+export const getRelativeCalendarLabel = (date: Date, casing: 'lower' | 'title' = 'title', now: Date = new Date()) => {
+    const dayDifference = Math.round((getCalendarDayValue(date) - getCalendarDayValue(now)) / 86400000);
+    const relativeLabel = dayDifference === -1 ? 'yesterday' : dayDifference === 0 ? 'today' : dayDifference === 1 ? 'tomorrow' : null;
+
+    if (!relativeLabel) {
+        return null;
+    }
+
+    return casing === 'title' ? `${relativeLabel.charAt(0).toUpperCase()}${relativeLabel.slice(1)}` : relativeLabel;
+};
+
+export const formatContextualDateLabel = (
+    date: Date,
+    fallbackLabel: string = formatCalendarDateLabel(date),
+    now: Date = new Date(),
+    casing: 'lower' | 'title' = 'title',
+) => {
+    return getRelativeCalendarLabel(date, casing, now) ?? fallbackLabel;
+};
+
 export const getDayEndDate = (dayDates: Date[], dayIndex: number, fallbackSpanDays: number = 1) => {
     const startDate = dayDates[dayIndex];
     if (!startDate) {
@@ -101,17 +136,6 @@ export const isDayContentReleased = (dayDates: Date[], dayIndex: number, wakeUpT
     return now.getTime() >= releaseDate.getTime();
 };
 
-const formatRangeDate = (date: Date, includeYear: boolean = false) => {
-    const month = date.getMonth() + 1;
-    const day = date.getDate();
-
-    if (includeYear) {
-        return `${month}/${day}/${date.getFullYear()}`;
-    }
-
-    return `${month}/${day}`;
-};
-
 export const getDayRangeLabel = (dayDates: Date[], dayIndex: number, fallbackSpanDays: number = 1) => {
     const startDate = dayDates[dayIndex];
     if (!startDate) {
@@ -120,8 +144,26 @@ export const getDayRangeLabel = (dayDates: Date[], dayIndex: number, fallbackSpa
 
     const endDate = getDayEndDate(dayDates, dayIndex, fallbackSpanDays);
     const includeYear = startDate.getFullYear() !== endDate.getFullYear();
-    const startLabel = formatRangeDate(startDate, includeYear);
-    const endLabel = formatRangeDate(endDate, includeYear);
+    const startLabel = formatCalendarDateLabel(startDate, includeYear);
+    const endLabel = formatCalendarDateLabel(endDate, includeYear);
+
+    if (startDate.getTime() === endDate.getTime()) {
+        return startLabel;
+    }
+
+    return `${startLabel} - ${endLabel}`;
+};
+
+export const getContextualDayRangeLabel = (dayDates: Date[], dayIndex: number, fallbackSpanDays: number = 1, now: Date = new Date()) => {
+    const startDate = dayDates[dayIndex];
+    if (!startDate) {
+        return '';
+    }
+
+    const endDate = getDayEndDate(dayDates, dayIndex, fallbackSpanDays);
+    const includeYear = startDate.getFullYear() !== endDate.getFullYear();
+    const startLabel = formatContextualDateLabel(startDate, formatCalendarDateLabel(startDate, includeYear), now, 'title');
+    const endLabel = formatContextualDateLabel(endDate, formatCalendarDateLabel(endDate, includeYear), now, 'title');
 
     if (startDate.getTime() === endDate.getTime()) {
         return startLabel;

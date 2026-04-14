@@ -72,7 +72,7 @@ const PoppinsTimeInput = ({ value = '08:00', onChangeText, className = '' }: Pop
 
     return (
         <Column className={className} gap={2}>
-            <Row className='items-center gap-2' style={{ flexWrap: 'wrap' }}>
+            <Row className='items-center gap-2'>
                 <AppDropdown
                     options={HOUR_OPTIONS}
                     value={timeParts.hour12}

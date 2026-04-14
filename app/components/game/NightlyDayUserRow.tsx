@@ -4,7 +4,7 @@ import InlineEditableText from '../ui/forms/InlineEditableText';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
 import { Pressable } from 'react-native';
-import NightlyMessageDialog from './NightlyMessageDialog';
+import MarkdownEditorDialog from './MarkdownEditorDialog';
 import { UserTableItem } from '../../../types/playerTable';
 import { getPlayerActionSummary } from '../../../utils/multiplayer';
 
@@ -69,6 +69,15 @@ const NightlyDayUserRow = ({
         return "";
     };
 
+    const getMorningMessagePreview = () => {
+        const message = getCurrentMorningMessage();
+        return message ? (
+            message.slice(0, 30) + (message.length > 30 ? '...' : '')
+        ) : (
+            "No morning message..."
+        );
+    };
+
     return (
         <>
             <Row gap={0} className={` h-12 w-min ${isEditing ? 'z-50' : ''}`}>
@@ -104,22 +113,23 @@ const NightlyDayUserRow = ({
                                 textDecorationStyle: 'dotted',
                             }}
                         >
-                            {getCurrentMorningMessage() || (
+                            {getCurrentMorningMessage() ? (
+                                <PoppinsText className="text-center">{getMorningMessagePreview()}</PoppinsText>
+                            ) : (
                                 <PoppinsText className="opacity-50">No morning message...</PoppinsText>
                             )}
                         </PoppinsText>
                     </Pressable>
                 </Column>
             </Row>
-            <NightlyMessageDialog
+            <MarkdownEditorDialog
                 isOpen={isMessageDialogOpen}
                 onOpenChange={setIsMessageDialogOpen}
-                dayIndex={dayNumber}
-                userIndex={index}
-                userName={user.realName || 'User'}
-                currentMessage={getCurrentMorningMessage()}
-                onPress={() => setIsMessageDialogOpen(true)}
-                updateNightlyMessage={updateMorningMessage}
+                title={`${user.realName || 'User'} Morning Message (Tomorrow)`}
+                submitLabel="Save Message"
+                initialMarkdown={getCurrentMorningMessage()}
+                onSubmit={({ markdown }) => updateMorningMessage(dayNumber, index, markdown)}
+                dialogSubtext={`Set the message ${user.realName || 'User'} will see after this day ends.`}
             />
         </>
     );

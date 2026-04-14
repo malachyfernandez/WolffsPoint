@@ -2,11 +2,11 @@ import React, { useState } from 'react';
 import { MessageSquare, Newspaper, ScrollText, Shield, Users } from 'lucide-react-native';
 import Column from '../layout/Column';
 import PlayerPageOPERATOR from './PlayerPageOPERATOR';
-import ConfigPageOPERATOR from './ConfigPageOPERATOR';
+import RolesPageOPERATOR from './RolesPageOPERATOR';
 import NightlyPageOPERATOR from './NightlyPageOPERATOR';
 import TownSquarePageOPERATOR from './TownSquarePageOPERATOR';
 import NewspaperPageOPERATOR from './NewspaperPageOPERATOR';
-import RuleBookPageOPERATOR from './RuleBookPageOPERATOR';
+import ConfigPageOPERATOR from './ConfigPageOPERATOR';
 import GameTabBar, { GameTabDefinition } from './GameTabBar';
 import RemoveGameButton from './RemoveGameButton';
 import GameUserIcon from '../ui/icons/UserIcon';
@@ -35,11 +35,11 @@ const OperatorGamePage = ({ gameId, currentUserId }: OperatorGamePageProps) => {
             <GameTabBar activeTab={activeTab} onTabPress={setActiveTab} tabs={operatorTabs} />
             <Column className='w-full bg-inner-background border-border border-2 rounded-xl p-4 mb-8' style={{ boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)' }}>
                 {activeTab === 'players' && <PlayerPageOPERATOR currentUserId={currentUserId} gameId={gameId} />}
-                {activeTab === 'config' && <ConfigPageOPERATOR currentUserId={currentUserId} gameId={gameId} />}
+                {activeTab === 'config' && <RolesPageOPERATOR currentUserId={currentUserId} gameId={gameId} />}
                 {activeTab === 'nightly' && <NightlyPageOPERATOR currentUserId={currentUserId} gameId={gameId} />}
                 {activeTab === 'forum' && <TownSquarePageOPERATOR gameId={gameId} currentUserId={currentUserId} />}
                 {activeTab === 'newspaper' && <NewspaperPageOPERATOR currentUserId={currentUserId} gameId={gameId} />}
-                {activeTab === 'rulebook' && <RuleBookPageOPERATOR gameId={gameId} />}
+                {activeTab === 'rulebook' && <ConfigPageOPERATOR gameId={gameId} />}
             </Column>
             <RemoveGameButton gameId={gameId} />
         </Column>

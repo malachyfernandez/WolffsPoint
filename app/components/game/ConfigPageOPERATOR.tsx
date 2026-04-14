@@ -1,109 +1,109 @@
 import React, { useState } from 'react';
-import { ScrollView } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { ScrollShadow } from 'heroui-native';
+import { Pressable } from 'react-native';
+import { ChevronRight } from 'lucide-react-native';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
-import RoleTable from './RoleTable';
-import AppButton from '../ui/buttons/AppButton';
+import LayoutStateAnimatedView, { fromRight } from '../ui/LayoutStateAnimatedView';
 import PoppinsText from '../ui/text/PoppinsText';
+import { useUserVariable } from '../../../hooks/useUserVariable';
 import { useUserList } from '../../../hooks/useUserList';
-import { useUndoRedo, useCreateUndoSnapshot } from '../../../hooks/useUndoRedo';
-import { getGameScopedKey } from '../../../utils/multiplayer';
+import { RuleBookData } from '../../../types/ruleBook';
 import { RoleTableItem } from '../../../types/roleTable';
-import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
+import { getGameScopedKey } from '../../../utils/multiplayer';
+import ActionDeadlineConfigItem from './config/ActionDeadlineConfigItem';
+import VoteDeadlineConfigItem from './config/VoteDeadlineConfigItem';
+import WakeUpTimeConfigItem from './config/WakeUpTimeConfigItem';
+import DaysPerGameDayConfigItem from './config/DaysPerGameDayConfigItem';
+import RuleBookPageOPERATOR from './RuleBookPageOPERATOR';
 
 interface ConfigPageOPERATORProps {
-    currentUserId: string;
     gameId: string;
 }
 
-const ConfigPageOPERATOR = ({ currentUserId, gameId }: ConfigPageOPERATORProps) => {
-    const { executeCommand } = useUndoRedo();
-    const createUndoSnapshot = useCreateUndoSnapshot();
-    
-    const [roleTable, setRoleTable] = useUserList<RoleTableItem[]>({
-        key: "roleTable",
+type ConfigPageScreenState = 'config' | 'ruleBook';
+
+interface RuleBookPreviewCardProps extends ConfigPageOPERATORProps {
+    onPress: () => void;
+}
+
+const RuleBookPreviewCard = ({ gameId, onPress }: RuleBookPreviewCardProps) => {
+    const [ruleBookData] = useUserVariable<RuleBookData>({
+        key: getGameScopedKey('ruleBook', gameId),
+        defaultValue: { content: '', roleOrder: [] },
+        privacy: 'PUBLIC',
+    });
+    const [roleTable] = useUserList<RoleTableItem[]>({
+        key: 'roleTable',
         itemId: gameId,
-        privacy: "PUBLIC",
+        privacy: 'PUBLIC',
     });
 
-    const roles = roleTable?.value ?? [];
-    const visibleRoles = roles.filter(role => role.isVisible !== false);
-    const isSyncing = roleTable?.state?.isSyncing ?? false;
-    const lastOpStatus = roleTable?.state?.lastOpStatus ?? "idle";
+    const previewText = React.useMemo(() => {
+        const rawContent = ruleBookData?.value?.content ?? '';
+        const flattenedContent = rawContent
+            .replace(/!\[[^\]]*\]\([^)]*\)/g, ' ')
+            .replace(/\[[^\]]*\]\([^)]*\)/g, ' ')
+            .replace(/[`*_>#-]/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
 
-    const [doSync, setDoSync] = useState(false);
-    const [isRoleTableBeingEdited, setIsRoleTableBeingEdited] = useState(false);
+        if (!flattenedContent.length) {
+            return 'No rule book written yet.';
+        }
 
-    const addRole = () => {
-        const newRole: RoleTableItem = {
-            role: "New Role",
-            doesRoleVote: false,
-            roleMessage: "Unset role message",
-            aboutRole: "## NEW ROLE - No description set",
-            isVisible: true
-        };
-        setRoleTable([...roles, newRole]);
-        setDoSync(true);
-    };
+        return flattenedContent.length > 180 ? `${flattenedContent.slice(0, 180).trim()}...` : flattenedContent;
+    }, [ruleBookData?.value?.content]);
 
-    const UNDOABLEaddRole = () => {
-        const previousRoleTable = createUndoSnapshot(roleTable?.value ?? []);
-        
-        executeCommand({
-            action: addRole,
-            undoAction: () => {
-                setRoleTable(previousRoleTable);
-                setDoSync(true);
-            },
-            description: "Add Role"
-        });
-    };
+    const visibleRoleDescriptionCount = React.useMemo(() => {
+        return (roleTable?.value ?? []).filter((role) => role.isVisible !== false && role.aboutRole?.trim().length).length;
+    }, [roleTable?.value]);
 
     return (
-        <Column>
+        <Pressable onPress={onPress} className='w-full rounded-3xl bg-text/5 px-4 py-4'>
+            <Row className='items-start gap-3'>
+                
+                <Column className='flex-1' gap={1}>
+                    <PoppinsText weight='medium'>Rule book</PoppinsText>
+                    <PoppinsText varient='subtext'>{previewText}</PoppinsText>
+                    <PoppinsText varient='subtext'>
+                        {visibleRoleDescriptionCount} role description{visibleRoleDescriptionCount === 1 ? '' : 's'}
+                    </PoppinsText>
+                </Column>
+                <ChevronRight size={20} color='rgb(46, 41, 37)' className='mt-1' />
+            </Row>
+        </Pressable>
+    );
+};
 
-            {!isSyncing && (
-                visibleRoles.length > 0 ? (
+/**
+ * Main configuration page for operators.
+ * Contains game schedule settings and provides access to the rule book editor.
+ */
+const ConfigPageOPERATOR = ({ gameId }: ConfigPageOPERATORProps) => {
+    const [activeScreen, setActiveScreen] = useState<ConfigPageScreenState>('config');
 
-                    <Column>
-                        <ScrollShadow LinearGradientComponent={LinearGradient} color="#fdfbf6" className='mr-1'>
-                            <ScrollView horizontal={true} className='px-1 py-5'>
-                                <Row>
-                                    <Column gap={1}>
-                                        <Row className='h-6'>
-                                            {/* spacer to align with table */}
-                                        </Row>
-                                        <Row className={isRoleTableBeingEdited ? 'z-50' : ''}>
-                                            <RoleTable
-                                                gameId={gameId}
-                                                doSync={doSync}
-                                                setDoSync={setDoSync}
-                                                isBeingEdited={isRoleTableBeingEdited}
-                                                setIsBeingEdited={setIsRoleTableBeingEdited}
-                                                showInputs={true}
-                                            />
-                                        </Row>
-                                    </Column>
-                                </Row>
-                            </ScrollView>
-                        </ScrollShadow>
-                        <AppButton variant="filled" className='w-40 h-8 ml-4 -mt-6' onPress={UNDOABLEaddRole}>
-                            <PoppinsText weight='bold' className='text-white text-xl'>+</PoppinsText>
-                            <PoppinsText weight='bold' className='text-white'>Add Role</PoppinsText>
-                        </AppButton>
+    return (
+        <Column className='flex-1 min-h-[760px]' gap={0}>
+            <LayoutStateAnimatedView.Container stateVar={activeScreen} className='flex-1'>
+                <LayoutStateAnimatedView.Option page={1} stateValue='config'>
+                    <Column className='pb-6' gap={6}>
+                        <RuleBookPreviewCard gameId={gameId} onPress={() => setActiveScreen('ruleBook')} />
+
+                        <Column className='border-y border-border/15' gap={0}>
+                            <ActionDeadlineConfigItem gameId={gameId} />
+                            <VoteDeadlineConfigItem gameId={gameId} />
+                            <WakeUpTimeConfigItem gameId={gameId} />
+                            <DaysPerGameDayConfigItem gameId={gameId} />
+                        </Column>
                     </Column>
+                </LayoutStateAnimatedView.Option>
 
-                ) : (
-                    <Row className='items-center justify-center'>
-                        <AppButton variant="filled" className='w-40 h-8' onPress={UNDOABLEaddRole}>
-                            <PoppinsText weight='bold' className='text-white text-xl'>+</PoppinsText>
-                            <PoppinsText weight='bold' className='text-white'>Add Role</PoppinsText>
-                        </AppButton>
-                    </Row>
-                )
-            )}
+                <LayoutStateAnimatedView.OptionContainer page={2} pushInAnimation={fromRight}>
+                    <LayoutStateAnimatedView.Option stateValue='ruleBook'>
+                        <RuleBookPageOPERATOR gameId={gameId} onBack={() => setActiveScreen('config')} />
+                    </LayoutStateAnimatedView.Option>
+                </LayoutStateAnimatedView.OptionContainer>
+            </LayoutStateAnimatedView.Container>
         </Column>
     );
 };

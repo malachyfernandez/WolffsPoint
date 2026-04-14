@@ -61,7 +61,7 @@ const RoleRow = ({ gameId, role, index, isLast, setRoleName, setDoesRoleVote, se
                     />
                 </Column>
                 <Column className='w-24 h-full border border-subtle-border items-center justify-center'>
-                    <CustomCheckbox checked={role.doesRoleVote} onChange={toggleDoesRoleVote} />
+                    <CustomCheckbox checked={role.doesRoleVote} onChange={toggleDoesRoleVote} selectedStateAppearance='positive' />
                 </Column>
                 <Column className={`w-64 h-full border border-subtle-border items-center justify-center`}>
                     <Pressable onPress={() => setIsRoleMessageDialogOpen(true)} className='w-60 h-full items-center justify-center'>

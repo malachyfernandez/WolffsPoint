@@ -4,13 +4,14 @@ import Row from '../layout/Row';
 import PoppinsText from '../ui/text/PoppinsText';
 import AppDropdown from '../ui/forms/AppDropdown';
 import MarkdownRenderer, { MarkdownRendererInputDataProvider } from '../ui/markdown/MarkdownRenderer';
+import ChainWraper from './ChainWraper';
 import { useSharedListValue } from '../../../hooks/useSharedListValue';
 import { useUserVariable } from '../../../hooks/useUserVariable';
 import { useUserVariableGet } from '../../../hooks/useUserVariableGet';
 import { PlayerNightSubmission } from '../../../types/multiplayer';
 import { RoleTableItem } from '../../../types/roleTable';
 import { UserTableItem } from '../../../types/playerTable';
-import { buildScheduledDate, defaultGameSchedule, formatCountdown, formatRelativeDuration, formatTimeLabel, getCurrentPlayableDayIndex, getDayEndDate, getDayReleaseDate, getGameScopedKey, getPlayerActionSummary, isDayContentReleased, isNightWindowOpen, normalizeGameSchedule, normalizePlayerActionState, parseStoredDayDates } from '../../../utils/multiplayer';
+import { buildScheduledDate, defaultGameSchedule, formatContextualDateLabel, formatCountdown, formatRelativeDuration, formatTimeLabel, getCurrentPlayableDayIndex, getDayEndDate, getDayReleaseDate, getGameScopedKey, getPlayerActionSummary, isDayContentReleased, isNightWindowOpen, normalizeGameSchedule, normalizePlayerActionState, parseStoredDayDates } from '../../../utils/multiplayer';
 
 interface YourEyesOnlyDayContentPLAYERProps {
     gameId: string;
@@ -93,8 +94,19 @@ const YourEyesOnlyDayContentPLAYER = ({ gameId, currentEmail, currentUserId, day
     const currentActionSummary = useMemo(() => getPlayerActionSummary(submission.value.action), [submission.value.action]);
     const voteDeadline = useMemo(() => buildScheduledDate(selectedDayEndDate, voteDeadlineTime), [selectedDayEndDate, voteDeadlineTime]);
     const actionDeadline = useMemo(() => buildScheduledDate(selectedDayEndDate, actionDeadlineTime), [actionDeadlineTime, selectedDayEndDate]);
-    const voteCountdown = isVoteLocked ? 'LOCKED' : formatCountdown(voteDeadline, now);
-    const actionDueIn = formatRelativeDuration(actionDeadline, now);
+
+    // Determine which deadline comes first
+    const isVoteFirst = voteDeadline.getTime() <= actionDeadline.getTime();
+    const primaryDeadline = isVoteFirst ? voteDeadline : actionDeadline;
+    const primaryCountdown = (isVoteFirst ? isVoteLocked : isActionLocked) ? 'LOCKED' : formatCountdown(primaryDeadline, now);
+    const primaryLabel = isVoteFirst ? 'VOTE' : 'ACTION';
+    const primaryTimeLabel = isVoteFirst ? voteDeadlineTime : actionDeadlineTime;
+    const secondaryDeadline = isVoteFirst ? actionDeadline : voteDeadline;
+    const secondaryTimeLabel = isVoteFirst ? actionDeadlineTime : voteDeadlineTime;
+    const secondaryIsLocked = isVoteFirst ? isActionLocked : isVoteLocked;
+    const secondaryLabel = isVoteFirst ? 'Actions' : 'Voting';
+    const primaryDateLabel = formatContextualDateLabel(primaryDeadline, undefined, now, 'lower');
+    const secondaryDateLabel = formatContextualDateLabel(secondaryDeadline, undefined, now, 'lower');
 
     return (
         <Column gap={5}>
@@ -102,15 +114,11 @@ const YourEyesOnlyDayContentPLAYER = ({ gameId, currentEmail, currentUserId, day
                 {(selectedMorningDayIndex >= 0 && hasSelectedMorning && currentMorningMessage) ? (
                     <>
                         <PoppinsText varient='cardHeader' className='text-center'>Last Night:</PoppinsText>
-                        <PoppinsText weight='medium' className='text-center leading-8'>
-                            {selectedMorningDayIndex < 0
-                                ? 'no updates from last night'
-                                : hasSelectedMorning
-                                    ? (currentMorningMessage || '')
-                                    : selectedMorningReleaseDate
-                                        ? `Unlocks at ${formatTimeLabel(schedule.wakeUpTime)}.`
-                                        : `Unlocks at ${formatTimeLabel(schedule.wakeUpTime)}.`}
-                        </PoppinsText>
+                        <MarkdownRenderer
+                            markdown={currentMorningMessage}
+                            textAlign='center'
+                            viewHeightImages={20}
+                        />
                     </>
                 ) : (
                     <PoppinsText varient='cardHeader' className='text-center'>No updates from last night</PoppinsText>
@@ -118,71 +126,79 @@ const YourEyesOnlyDayContentPLAYER = ({ gameId, currentEmail, currentUserId, day
             </Column>
 
             <Column className='items-center' gap={1}>
-                <PoppinsText weight='bold' className='text-lg tracking-[0.45em]'>VOTE</PoppinsText>
-                <PoppinsText weight='bold' className='text-5xl leading-14'>{voteCountdown}</PoppinsText>
-                <PoppinsText varient='subtext'>Voting due at {formatTimeLabel(voteDeadlineTime)}.</PoppinsText>
+                <PoppinsText weight='bold' className='text-lg tracking-[0.45em]'>{primaryLabel}</PoppinsText>
+                <PoppinsText weight='bold' className='text-5xl leading-14'>{primaryCountdown}</PoppinsText>
                 <PoppinsText varient='subtext'>
-                    {isActionLocked
-                        ? 'The action window has closed for this day.'
-                        : `Actions due ${actionDeadline.getTime() > now.getTime() ? `in ${actionDueIn}` : 'now'}.`}
+                    {primaryLabel === 'VOTE'
+                        ? `Voting due ${primaryDateLabel} at ${formatTimeLabel(primaryTimeLabel)}.`
+                        : `Actions due ${primaryDateLabel} at ${formatTimeLabel(primaryTimeLabel)}.`}
+                </PoppinsText>
+                <PoppinsText varient='subtext'>
+                    {secondaryIsLocked
+                        ? `${secondaryLabel} due ${secondaryDateLabel} at ${formatTimeLabel(secondaryTimeLabel)}.`
+                        : `${secondaryLabel} due in ${formatRelativeDuration(secondaryDeadline, now)} (${formatTimeLabel(secondaryTimeLabel)}).`}
                 </PoppinsText>
             </Column>
 
             <Row className='items-start gap-6' style={{ flexWrap: 'wrap' }}>
-                <Column className='min-w-[240px] flex-1' gap={3}>
-                    <PoppinsText weight='medium' className='text-sm tracking-[0.24em] uppercase opacity-60'>Vote</PoppinsText>
-                    <AppDropdown
-                        options={voteOptions}
-                        value={submission.value.vote}
-                        onValueChange={(value) => {
-                            if (isVoteLocked || roleData?.doesRoleVote === false) {
-                                return;
-                            }
+                <ChainWraper className='min-w-[240px] flex-1' isDisabled={isVoteLocked && roleData?.doesRoleVote !== false}>
+                    <Column gap={3}>
+                        <PoppinsText weight='medium' className='text-sm tracking-[0.24em] uppercase opacity-60'>Vote</PoppinsText>
+                        <AppDropdown
+                            options={voteOptions}
+                            value={submission.value.vote}
+                            onValueChange={(value) => {
+                                if (isVoteLocked || roleData?.doesRoleVote === false) {
+                                    return;
+                                }
 
-                            setSubmission({
-                                ...submission.value,
-                                vote: value,
-                                submittedVoteAt: Date.now(),
-                            });
-                        }}
-                        placeholder={roleData?.doesRoleVote === false ? 'This role does not vote' : 'Choose a player'}
-                        triggerClassName='rounded-2xl border border-border/15 bg-none px-4 py-4'
-                        contentClassName='border border-border/15'
-                        disabled={isVoteLocked || roleData?.doesRoleVote === false}
-                    />
-                    {roleData?.doesRoleVote === false ? (
-                        <PoppinsText varient='subtext'>This role doesn&apos;t submit a vote.</PoppinsText>
-                    ) : isVoteLocked ? (
-                        <PoppinsText varient='subtext'>Saved vote: {submission.value.vote || 'No vote submitted.'}</PoppinsText>
-                    ) : null}
-                </Column>
+                                setSubmission({
+                                    ...submission.value,
+                                    vote: value,
+                                    submittedVoteAt: Date.now(),
+                                });
+                            }}
+                            placeholder={roleData?.doesRoleVote === false ? 'This role does not vote' : 'Choose a player'}
+                            triggerClassName='rounded-2xl border border-border/15 bg-none px-4 py-4'
+                            contentClassName='border border-border/15'
+                            disabled={isVoteLocked || roleData?.doesRoleVote === false}
+                        />
+                        {roleData?.doesRoleVote === false ? (
+                            <PoppinsText varient='subtext'>This role doesn&apos;t submit a vote.</PoppinsText>
+                        ) : isVoteLocked ? (
+                            <PoppinsText varient='subtext'>Saved vote: {submission.value.vote || 'No vote submitted.'}</PoppinsText>
+                        ) : null}
+                    </Column>
+                </ChainWraper>
 
-                <Column className='min-w-[320px] flex-1' gap={3}>
-                    <PoppinsText varient='subtext'>Action deadline: {formatTimeLabel(actionDeadlineTime)}.</PoppinsText>
-                    <MarkdownRendererInputDataProvider playerOptions={playerOptions} roleOptions={roleOptions}>
-                        {roleData?.roleMessage?.trim().length ? (
-                            <MarkdownRenderer
-                                markdown={roleData.roleMessage}
-                                state={currentActionState}
-                                setState={!isActionLocked ? (nextState) => {
-                                    setSubmission({
-                                        ...submission.value,
-                                        action: nextState,
-                                        submittedActionAt: Date.now(),
-                                    });
-                                } : undefined}
-                            />
-                        ) : (
-                            <PoppinsText varient='subtext'>The operator has not written your role action instructions yet.</PoppinsText>
-                        )}
-                    </MarkdownRendererInputDataProvider>
+                <ChainWraper className='min-w-[320px] flex-1' isDisabled={isActionLocked}>
+                    <Column gap={3}>
+                        <PoppinsText weight='medium' className='text-sm tracking-[0.24em] uppercase opacity-60'>Action</PoppinsText>
+                        <MarkdownRendererInputDataProvider playerOptions={playerOptions} roleOptions={roleOptions}>
+                            {roleData?.roleMessage?.trim().length ? (
+                                <MarkdownRenderer
+                                    markdown={roleData.roleMessage}
+                                    state={currentActionState}
+                                    setState={!isActionLocked ? (nextState) => {
+                                        setSubmission({
+                                            ...submission.value,
+                                            action: nextState,
+                                            submittedActionAt: Date.now(),
+                                        });
+                                    } : undefined}
+                                />
+                            ) : (
+                                <PoppinsText varient='subtext'>The operator has not written your role action instructions yet.</PoppinsText>
+                            )}
+                        </MarkdownRendererInputDataProvider>
 
-                    {isActionLocked ? (
-                        <PoppinsText varient='subtext'>The action window has closed for this day.</PoppinsText>
-                    ) : currentActionSummary.trim().length > 0 ? (
-                        <PoppinsText varient='subtext'>Current action: {currentActionSummary}</PoppinsText>
-                    ) : null}
-                </Column>
+                        {isActionLocked ? (
+                            <PoppinsText varient='subtext'>The action window has closed for this day.</PoppinsText>
+                        ) : currentActionSummary.trim().length > 0 ? (
+                            <PoppinsText varient='subtext'>Current action: {currentActionSummary}</PoppinsText>
+                        ) : null}
+                    </Column>
+                </ChainWraper>
             </Row>
         </Column>
     );

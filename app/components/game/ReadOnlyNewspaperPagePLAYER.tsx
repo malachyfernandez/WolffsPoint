@@ -8,7 +8,7 @@ import { Usepaper } from '../../../types/usepaper';
 import { useSharedListValue } from '../../../hooks/useSharedListValue';
 import { useUserVariableGet } from '../../../hooks/useUserVariableGet';
 import PlayerDaySelector from './PlayerDaySelector';
-import { defaultGameSchedule, formatTimeLabel, getCurrentPlayableDayIndex, getDayRangeLabel, getGameScopedKey, isDayContentReleased, normalizeGameSchedule, parseStoredDayDates } from '../../../utils/multiplayer';
+import { defaultGameSchedule, formatTimeLabel, getContextualDayRangeLabel, getCurrentPlayableDayIndex, getGameScopedKey, isDayContentReleased, normalizeGameSchedule, parseStoredDayDates } from '../../../utils/multiplayer';
 
 interface ReadOnlyNewspaperPagePLAYERProps {
     gameId: string;
@@ -51,7 +51,7 @@ const ReadOnlyNewspaperPagePLAYER = ({ gameId }: ReadOnlyNewspaperPagePLAYERProp
     });
 
     const schedule = normalizeGameSchedule(scheduleRecords?.[0]?.value ?? defaultGameSchedule);
-    const selectedDayRangeLabel = getDayRangeLabel(dayDates, selectedDayIndex, numberOfRealDaysPerInGameDay);
+    const selectedDayRangeLabel = getContextualDayRangeLabel(dayDates, selectedDayIndex, numberOfRealDaysPerInGameDay);
     const isLocked = dayDates[selectedDayIndex] ? !isDayContentReleased(dayDates, selectedDayIndex, schedule.wakeUpTime) : false;
     const usepaper = newspaperRecords.value?.columns?.length ? newspaperRecords.value : minimumUsepaper;
 

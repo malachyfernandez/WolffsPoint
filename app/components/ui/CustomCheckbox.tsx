@@ -4,20 +4,26 @@ import { TouchableOpacity, View, Text, StyleSheet } from 'react-native';
 interface CheckboxProps {
     checked: boolean;
     onChange: (checked: boolean) => void;
+    selectedStateAppearance?: 'negative' | 'positive';
 }
 
-const CustomCheckbox = ({ checked, onChange }: CheckboxProps) => {
+const CustomCheckbox = ({ checked, onChange, selectedStateAppearance = 'negative' }: CheckboxProps) => {
+    const isPositiveSelected = selectedStateAppearance === 'positive';
+    const isSelectedGreen = checked ? isPositiveSelected : !isPositiveSelected;
+    const iconText = checked ? (isPositiveSelected ? '✓' : '×') : null;
+    const iconStyle = isPositiveSelected ? styles.checkText : styles.xText;
+
     return (
         <TouchableOpacity
             onPress={() => onChange(!checked)}
             style={[
                 styles.checkbox,
-                checked ? styles.checked : styles.unchecked
+                isSelectedGreen ? styles.greenState : styles.redState
             ]}
         >
-            {checked && (
+            {iconText && (
                 <View style={styles.xContainer}>
-                    <Text style={styles.xText}>×</Text>
+                    <Text style={iconStyle}>{iconText}</Text>
                 </View>
             )}
         </TouchableOpacity>
@@ -33,11 +39,11 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
     },
-    checked: {
+    redState: {
         backgroundColor: '#ef4444',
         borderColor: '#dc2626',
     },
-    unchecked: {
+    greenState: {
         backgroundColor: '#22c55e',
         borderColor: '#16a34a',
     },
@@ -47,6 +53,11 @@ const styles = StyleSheet.create({
     },
     xText: {
         color: '#991b1b',
+        fontSize: 16,
+        fontWeight: 'bold',
+    },
+    checkText: {
+        color: '#166534',
         fontSize: 16,
         fontWeight: 'bold',
     },
