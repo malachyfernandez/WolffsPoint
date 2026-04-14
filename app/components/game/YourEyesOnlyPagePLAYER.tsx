@@ -159,6 +159,9 @@ const YourEyesOnlyPagePLAYER = ({ gameId, currentEmail, matchingPlayer, currentP
                         <PoppinsText weight='medium' className='text-center'>
                             {selectedDayRangeLabel || 'Current game day'}
                         </PoppinsText>
+                        <PoppinsText varient='subtext' className='text-xs text-center'>
+                            Day {selectedDayIndex + 1}
+                        </PoppinsText>
                     </Column>
 
                     <Pressable
