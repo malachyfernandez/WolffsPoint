@@ -62,7 +62,7 @@ const RolesPageOPERATOR = ({ currentUserId, gameId }: RolesPageOPERATORProps) =>
     };
 
     return (
-        <Column>
+        <Column className='min-h-[760px]'>
 
             {!isSyncing && (
                 visibleRoles.length > 0 ? (

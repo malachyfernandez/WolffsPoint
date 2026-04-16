@@ -1,6 +1,5 @@
 import React, { useMemo, useState } from 'react';
 import { Image, Pressable, View } from 'react-native';
-import { ChevronLeft } from 'lucide-react-native';
 import { useUserVariableGet } from '../../../hooks/useUserVariableGet';
 import { useUserList } from '../../../hooks/useUserList';
 import { PlayerProfile } from '../../../types/multiplayer';
@@ -23,11 +22,8 @@ interface PhoneBookPageOPERATORProps {
 const PhoneBookPageOPERATOR = ({ gameId, currentUserId, onBack }: PhoneBookPageOPERATORProps) => {
     return (
         <Column className='pb-6' gap={6}>
-            <Pressable onPress={onBack} className='self-start py-1'>
-                <Row className='items-center gap-2'>
-                    <ChevronLeft size={20} color='rgb(46, 41, 37)' />
-                    <PoppinsText weight='medium'>Config</PoppinsText>
-                </Row>
+            <Pressable onPress={onBack}>
+                <PoppinsText weight='medium' className='text-accent'>{'← Return'}</PoppinsText>
             </Pressable>
 
             <PhoneBookHeader />

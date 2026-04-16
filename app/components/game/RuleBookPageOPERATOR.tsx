@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import { Pressable } from 'react-native';
-import { ChevronLeft } from 'lucide-react-native';
 import Column from '../layout/Column';
-import Row from '../layout/Row';
 import PoppinsText from '../ui/text/PoppinsText';
 import MarkdownRenderer from '../ui/markdown/MarkdownRenderer';
 import { useUserVariable } from '../../../hooks/useUserVariable';
@@ -30,11 +28,8 @@ const RuleBookPageOPERATOR = ({ gameId, onBack }: RuleBookPageOPERATORProps) => 
 
     return (
         <Column className='pb-6' gap={6}>
-            <Pressable onPress={onBack} className='self-start py-1'>
-                <Row className='items-center gap-2'>
-                    <ChevronLeft size={20} color='rgb(46, 41, 37)' />
-                    <PoppinsText weight='medium'>Config</PoppinsText>
-                </Row>
+            <Pressable onPress={onBack}>
+                <PoppinsText weight='medium' className='text-accent'>{'← Return'}</PoppinsText>
             </Pressable>
 
             <Column className='border-y border-border/15 py-5' gap={5}>

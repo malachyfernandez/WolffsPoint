@@ -161,7 +161,7 @@ const NightlyPageOPERATOR = ({ currentUserId: _currentUserId, gameId }: NightlyP
     };
 
     return (
-        <Column>
+        <Column className='min-h-[760px]'>
             {users.length > 0 ? (
                 <Column>
                     <Row className='justify-between items-center mb-4'>
