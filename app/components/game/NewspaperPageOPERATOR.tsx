@@ -43,6 +43,7 @@ const NewspaperPageOPERATOR = ({ gameId }: NewspaperPageOPERATORProps) => {
     };
 
     const currentDayKey = getNewspaperKey(selectedDayIndex.value);
+    
 
     // Animation state
     const slideDistance = useMemo(() => Math.min(Math.max(width * 0.12, 24), 72), [width]);
@@ -187,7 +188,7 @@ const NewspaperPageOPERATOR = ({ gameId }: NewspaperPageOPERATORProps) => {
                                 <Tabs.Content value="viewing" className='flex-1'>
                                     <Column gap={4}>
                                         <NewspaperViewingHeader />
-                                        <NewspaperViewingView gameId={`${gameId}-${getNewspaperKey(leavingDayIndex)}`} />
+                                        <NewspaperViewingView itemId={`${gameId}-${getNewspaperKey(leavingDayIndex)}`} />
                                     </Column>
                                 </Tabs.Content>
                             </Tabs>
@@ -205,7 +206,7 @@ const NewspaperPageOPERATOR = ({ gameId }: NewspaperPageOPERATORProps) => {
                             <Tabs.Content value="viewing" className='flex-1'>
                                 <Column gap={4}>
                                     <NewspaperViewingHeader />
-                                    <NewspaperViewingView gameId={`${gameId}-${currentDayKey}`} />
+                                    <NewspaperViewingView itemId={`${gameId}-${currentDayKey}`} />
                                 </Column>
                             </Tabs.Content>
                         </Tabs>

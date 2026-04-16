@@ -35,7 +35,13 @@ const PlayerGamePage = ({ gameId, currentUserId }: PlayerGamePageProps) => {
                     <GameTabBar activeTab={activeTab} onTabPress={setActiveTab} tabs={playerTabs} />
                     <PaperContainer>
                         {activeTab === 'townSquare' && <TownSquarePagePLAYER gameId={gameId} currentProfile={profile} />}
-                        {activeTab === 'newspaper' && <ReadOnlyNewspaperPagePLAYER gameId={gameId} />}
+                        {activeTab === 'newspaper' &&
+                            <ReadOnlyNewspaperPagePLAYER
+                                gameId={gameId}
+                                currentEmail={currentEmail}
+                                matchingPlayer={matchingPlayer}
+                                currentProfile={profile}
+                            />}
                         {activeTab === 'ruleBook' && <RuleBookPagePLAYER gameId={gameId} />}
                         {activeTab === 'eyesOnly' && (
                             <YourEyesOnlyPagePLAYER
