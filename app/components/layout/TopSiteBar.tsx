@@ -3,7 +3,7 @@ import Column from './Column';
 import Row from './Row';
 import AppButton from '../ui/buttons/AppButton';
 import PoppinsText from '../ui/text/PoppinsText';
-import { UserIcon } from '../ui/icons/UserIcon';
+import { HomeIcon } from '../ui/icons/HomeIcon';
 import { TouchableOpacity } from 'react-native';
 import { useUserListGet } from '../../../hooks/useUserListGet';
 import { useUserVariable } from '../../../hooks/useUserVariable';
@@ -60,7 +60,7 @@ const TopSiteBar = ({ className = '' }: TopSiteBarProps) => {
 
 
                             <AppButton variant="outline-accent" blurred={true} className="h-14 w-14" onPress={() => { setActiveGameId(''); }}>
-                                <UserIcon size={24} color='accent' />
+                                <HomeIcon size={24} color='accent' />
                             </AppButton>
 
 

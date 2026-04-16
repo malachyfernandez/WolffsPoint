@@ -1,6 +1,7 @@
 import React, { ReactNode, useMemo, useState } from 'react';
 import { useUserVariable } from '../../../hooks/useUserVariable';
 import { useSharedListValue } from '../../../hooks/useSharedListValue';
+import Animated, { FadeInUp, FadeOut } from 'react-native-reanimated';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
 import PoppinsText from '../ui/text/PoppinsText';
@@ -34,7 +35,7 @@ const PlayerAccessGate = ({ gameId, currentUserId, children }: PlayerAccessGateP
         defaultValue: { name: '', email: '', userId: '' },
         privacy: 'PUBLIC',
     });
-    const { value: userTable } = useSharedListValue<UserTableItem[]>({
+    const { value: userTable, isLoading: isUserTableLoading } = useSharedListValue<UserTableItem[]>({
         key: 'userTable',
         itemId: gameId,
         defaultValue: [],
@@ -71,27 +72,49 @@ const PlayerAccessGate = ({ gameId, currentUserId, children }: PlayerAccessGateP
         userId: currentUserId,
     }), [currentEmail, currentUserId, gameId, profile.value]);
 
-    
+    // Check if all major data has finished loading (not syncing during initial load)
+    const hasLoaded = useMemo(() => {
+        const userDataLoaded = !userData.state.isSyncing;
+        const userTableLoaded = !isUserTableLoading;
+        const profileLoaded = !profile.state.isSyncing;
+        return userDataLoaded && userTableLoaded && profileLoaded;
+    }, [userData.state.isSyncing, isUserTableLoading, profile.state.isSyncing]);
+
+    // Show loading state while syncing for the first time
+    if (!hasLoaded) {
+        return (
+            <Animated.View entering={FadeInUp.duration(300)}>
+                <Column className='rounded-xl border border-subtle-border bg-white p-4'>
+                    <PoppinsText varient='subtext'>Loading your account information…</PoppinsText>
+                </Column>
+            </Animated.View>
+        );
+    }
+
     if (!currentEmail.trim()) {
         return (
-            <Column className='rounded-xl border border-subtle-border bg-white p-4'>
-                <PoppinsText varient='subtext'>Loading your account information…</PoppinsText>
-            </Column>
+            <Animated.View entering={FadeInUp.duration(300)}>
+                <Column className='rounded-xl border border-subtle-border bg-white p-4'>
+                    <PoppinsText varient='subtext'>Loading your account information…</PoppinsText>
+                </Column>
+            </Animated.View>
         );
     }
 
     if (!matchingPlayer) {
         return (
-            <Column className='rounded-xl border border-subtle-border bg-white p-4' gap={3}>
-                <PoppinsText weight='medium'>You are not on this game&apos;s player list.</PoppinsText>
-                <PoppinsText varient='subtext'>The operator needs to add {currentEmail} to the players table before you can enter.</PoppinsText>
-            </Column>
+            <Animated.View entering={FadeInUp.duration(300)}>
+                <Column className='rounded-xl border border-subtle-border bg-white p-4' gap={3}>
+                    <PoppinsText weight='medium'>You are not on this game&apos;s player list.</PoppinsText>
+                    <PoppinsText varient='subtext'>The operator needs to add {currentEmail} to the players table before you can enter.</PoppinsText>
+                </Column>
+            </Animated.View>
         );
     }
 
     if (profile.value.inGameName.trim().length === 0) {
         return (
-            <>
+            <Animated.View entering={FadeInUp.duration(300)}>
                 <Column className='rounded-xl border border-subtle-border bg-white p-4' gap={3}>
                     <PoppinsText weight='medium'>Claim your player profile</PoppinsText>
                     <PoppinsText varient='subtext'>You matched the email {matchingPlayer.email}. Finish your in-game profile to enter the player tabs.</PoppinsText>
@@ -109,11 +132,12 @@ const PlayerAccessGate = ({ gameId, currentUserId, children }: PlayerAccessGateP
                     title='Claim your player profile'
                     saveLabel='Enter game'
                 />
-            </>
+            </Animated.View>
         );
     }
 
     return (
+        // <Animated.View entering={FadeInUp.duration(300)} style={{ flex: 1 }}>
         <>
             {children({
                 currentEmail,
@@ -129,6 +153,7 @@ const PlayerAccessGate = ({ gameId, currentUserId, children }: PlayerAccessGateP
                 title='Edit your player profile'
             />
         </>
+        // </Animated.View>
     );
 };
 
