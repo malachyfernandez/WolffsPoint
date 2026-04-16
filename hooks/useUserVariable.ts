@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { devWarn } from "../utils/devWarnings";
 import { userVarConfig } from "../utils/userVarConfig";
 import { decodeUserValue, encodeUserValue } from "./userValueSerialization";
+import { globalRateLimitMonitor } from "./useRateLimitMonitor";
 
 type ObjectKeys<T> = T extends object ? Extract<keyof T, string> : never;
 type PrimitiveIndexValue = string | number | boolean;
@@ -333,6 +334,9 @@ export function useUserVariable<T>({
     );
 
     const setValue = (newValue: T) => {
+        // Track mutation for rate limit monitoring
+        globalRateLimitMonitor.trackCall(`user_vars:${key}`);
+
         if (isConvexAuthLoading || !isConvexAuthenticated) {
             devWarn(
                 "uservar_auth_not_ready",

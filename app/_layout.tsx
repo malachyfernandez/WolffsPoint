@@ -10,6 +10,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { PortalHost } from "@rn-primitives/portal";
 import { tokenCache } from '../utils/tokenCache';
 import { ToastProvider } from '../contexts/ToastContext';
+import { useGlobalRateLimitMonitor } from '../hooks/useRateLimitMonitor';
 import { GenerationProvider } from '../contexts/GenerationContext';
 import { WebDropdownProvider } from '../contexts/WebDropdownProvider';
 import "../global.css";
@@ -17,11 +18,18 @@ import "../global.css";
 const convex = new ConvexReactClient(process.env.EXPO_PUBLIC_CONVEX_URL!);
 const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!;
 
+// Component to initialize global rate limit monitoring
+function GlobalRateLimitMonitor() {
+  useGlobalRateLimitMonitor();
+  return null;
+}
+
 export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <GenerationProvider>
         <ToastProvider>
+          <GlobalRateLimitMonitor />
           <HeroUINativeProvider
             config={{
               devInfo: {
