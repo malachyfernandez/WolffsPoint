@@ -174,7 +174,7 @@ const NightlyPageOPERATOR = ({ currentUserId: _currentUserId, gameId }: NightlyP
                         </AppButton>
                     </Row>
 
-                    <ScrollShadow LinearGradientComponent={LinearGradient} color="#fdfbf6" className='mr-1 pt-1'>
+                    <ScrollShadow LinearGradientComponent={LinearGradient} className='mr-1 pt-1'>
                         <ScrollView horizontal={true} className='px-1 py-5'>
                             <Row>
                                 <Column gap={1}>

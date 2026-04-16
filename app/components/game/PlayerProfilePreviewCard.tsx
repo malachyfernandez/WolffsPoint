@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState } from 'react';
+import Animated, { FadeIn } from 'react-native-reanimated';
 import { Image, View } from 'react-native';
 import { AtSign, MessageSquare, Phone } from 'lucide-react-native';
 import { PlayerProfile } from '../../../types/multiplayer';
@@ -71,14 +72,31 @@ const getContactRows = (profile?: PlayerProfile | null) => {
     return rows.filter((item): item is ContactRow => item !== null);
 };
 
-export const PlayerProfileAvatar = ({ imageUrl, initials }: { imageUrl?: string; initials: string }) => {
+export const PlayerProfileAvatar = ({ imageUrl, initials, isLoading }: { imageUrl?: string; initials: string; isLoading?: boolean }) => {
+    const [imageLoaded, setImageLoaded] = useState(false);
+
+    // Show placeholder space while loading or when no image
+    if (isLoading || (!imageUrl && !initials)) {
+        return (
+            <View className='h-24 w-24 rounded-2xl border border-subtle-border bg-white/50' />
+        );
+    }
+
     if (imageUrl) {
         return (
-            <Image
-                source={{ uri: imageUrl }}
-                className='h-24 w-24 rounded-2xl border border-subtle-border bg-white'
-                resizeMode='cover'
-            />
+            <View className='h-24 w-24 rounded-2xl border border-subtle-border bg-white'>
+                {!imageLoaded && (
+                    <View className='absolute inset-0 rounded-2xl bg-white/50' />
+                )}
+                <Animated.View entering={FadeIn.duration(300)} className='h-full w-full'>
+                    <Image
+                        source={{ uri: imageUrl }}
+                        className='h-full w-full rounded-2xl'
+                        resizeMode='cover'
+                        onLoad={() => setImageLoaded(true)}
+                    />
+                </Animated.View>
+            </View>
         );
     }
 
@@ -122,13 +140,14 @@ const PlayerProfilePreviewCard = ({
     profile,
     className = '',
     emptyBioLabel = 'Write whatever you want people to know about you.',
-}: PlayerProfilePreviewCardProps) => {
+    isLoading = false,
+}: PlayerProfilePreviewCardProps & { isLoading?: boolean }) => {
     const trimmedBioMarkdown = bioMarkdown.trim();
 
     return (
         <Column className={`flex-1 rounded-3xl bg-text/5 p-6 gap-4 ${className}`.trim()}>
             <Column className='items-center gap-3'>
-                <PlayerProfileAvatar imageUrl={imageUrl} initials={initials} />
+                <PlayerProfileAvatar imageUrl={imageUrl} initials={initials} isLoading={isLoading} />
                 <Column className='w-full items-center gap-2'>
                     <PoppinsText weight='medium' className='text-lg text-center'>
                         {displayName}

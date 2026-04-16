@@ -52,6 +52,8 @@ const YourEyesOnlyPagePLAYER = ({ gameId, currentEmail, matchingPlayer, currentP
         if (!hasInitializedSelectedDayRef.current && dayDates.length > 0) {
             hasInitializedSelectedDayRef.current = true;
             setSelectedDayIndex(currentDayIndex);
+            // Set previousDayIndexRef so animation effect doesn't trigger on initial load
+            previousDayIndexRef.current = currentDayIndex;
             return;
         }
 
@@ -124,7 +126,7 @@ const YourEyesOnlyPagePLAYER = ({ gameId, currentEmail, matchingPlayer, currentP
     });
 
     return (
-        <Column className='pb-8' gap={7}>
+        <Column className='flex-1 min-h-[760px] pb-8' gap={7}>
 
 
             <Column className='border-y border-border/15 py-5' gap={5}>
@@ -176,7 +178,7 @@ const YourEyesOnlyPagePLAYER = ({ gameId, currentEmail, matchingPlayer, currentP
                             pointerEvents='none'
                             style={[styles.animatedContentOverlay, leavingStyle]}
                         >
-                            <NewspaperDayView gameId={gameId} dayIndex={leavingDayIndex} />
+                            <NewspaperDayView gameId={gameId} dayIndex={leavingDayIndex} isLeaving />
                         </Animated.View>
                     ) : null}
 

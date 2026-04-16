@@ -94,7 +94,7 @@ const NewspaperWritingView = ({ gameId }: NewspaperWritingViewProps) => {
 
     return (
         <>
-            <ScrollShadow LinearGradientComponent={LinearGradient} color="#fdfbf6" className='w-full'>
+            <ScrollShadow LinearGradientComponent={LinearGradient} className='w-full'>
                 <ScrollView horizontal={true} className='w-full'>
                     <Column gap={4} className='w-[950px]'>
                         <NewspaperPageHeader onAddColumn={addColumn} />

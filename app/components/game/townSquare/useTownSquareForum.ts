@@ -41,6 +41,8 @@ export const useTownSquareForum = ({ currentProfile, gameId, selectedPostId }: U
         returnTop: 500,
     });
 
+    const isLoading = posts === undefined || comments === undefined;
+
     const [readState, setReadState] = useUserVariable<Record<string, number>>({
         defaultValue: {},
         key: readStateKey,
@@ -367,6 +369,7 @@ export const useTownSquareForum = ({ currentProfile, gameId, selectedPostId }: U
         createThread,
         deleteReply,
         deleteThread,
+        isLoading,
         markThreadRead,
         replies,
         selectedThread,

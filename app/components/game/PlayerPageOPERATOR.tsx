@@ -76,7 +76,7 @@ const PlayerPageOPERATOR = ({ currentUserId, gameId }: PlayerPageOPERATORProps) 
                 {users.length > 0 ? (
                     <Column>
 
-                        <ScrollShadow LinearGradientComponent={LinearGradient} color="#fdfbf6" className='mr-1 pt-1'>
+                        <ScrollShadow LinearGradientComponent={LinearGradient} className='mr-1 pt-1'>
                             {/* <Row > */}
                             <ScrollView horizontal={true} className='px-1 py-5'>
                                 <Row>

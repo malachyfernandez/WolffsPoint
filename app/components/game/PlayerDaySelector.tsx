@@ -18,7 +18,7 @@ interface PlayerDaySelectorProps {
 const PlayerDaySelector = ({ dayDates, selectedDayIndex, currentDayIndex, onSelectDay, fallbackSpanDays = 1 }: PlayerDaySelectorProps) => {
     return (
         <Column>
-            <ScrollShadow LinearGradientComponent={LinearGradient} color="#fdfbf6" className='mr-1 pr-1 max-w-min -mb-3 -mt-1'>
+            <ScrollShadow LinearGradientComponent={LinearGradient} className='mr-1 pr-1 max-w-min -mb-3 -mt-1'>
                 <ScrollView horizontal={true} className='px-1 m-0 h-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]'>
                     <Row className='h-6' gap={1}>
                         {dayDates.map((date, index) => {

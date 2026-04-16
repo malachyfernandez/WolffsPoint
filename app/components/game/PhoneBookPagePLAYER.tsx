@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import Animated, { FadeIn } from 'react-native-reanimated';
 import { Image, Pressable, View } from 'react-native';
 import { useUserVariable } from '../../../hooks/useUserVariable';
 import { useUserVariableGet } from '../../../hooks/useUserVariableGet';
@@ -10,6 +11,7 @@ import { useTownSquareAuthorIdentity } from './townSquare/TownSquareAuthorIdenti
 import Column from '../layout/Column';
 import Row from '../layout/Row';
 import PoppinsText from '../ui/text/PoppinsText';
+import LoadingText from '../ui/loading/LoadingText';
 import AppButton from '../ui/buttons/AppButton';
 import MarkdownRenderer from '../ui/markdown/MarkdownRenderer';
 import PlayerProfileDialog from './PlayerProfileDialogNEW';
@@ -51,25 +53,37 @@ const PhoneBookPagePLAYER = ({ gameId, currentUserId, currentEmail }: PhoneBookP
         userId: currentUserId,
     }), [currentEmail, currentUserId, gameId, myProfile.value]);
 
-    return (
-        <Column gap={6}>
-            <PhoneBookHeader
-                onEditProfile={() => setIsProfileDialogOpen(true)}
-            />
-            <MyProfileCard
-                profile={initialProfileValue}
-                onPress={() => setIsProfileDialogOpen(true)}
-            />
-            <PhoneBookGrid gameId={gameId} />
+    const isLoading = myProfile.state.isSyncing;
 
-            <PlayerProfileDialog
-                initialValue={initialProfileValue}
-                isOpen={isProfileDialogOpen}
-                onOpenChange={setIsProfileDialogOpen}
-                onSave={setMyProfile}
-                title='Edit your profile'
-            />
-        </Column>
+    if (isLoading) {
+        return (
+            <Column className='flex-1 min-h-[760px] items-center justify-center'>
+                <LoadingText text='Loading phone book' delayMs={1500} />
+            </Column>
+        );
+    }
+
+    return (
+        <Animated.View entering={FadeIn.duration(300)} className='flex-1 min-h-[760px]'>
+            <Column className='flex-1' gap={6}>
+                <PhoneBookHeader
+                    onEditProfile={() => setIsProfileDialogOpen(true)}
+                />
+                <MyProfileCard
+                    profile={initialProfileValue}
+                    onPress={() => setIsProfileDialogOpen(true)}
+                />
+                <PhoneBookGrid gameId={gameId} />
+
+                <PlayerProfileDialog
+                    initialValue={initialProfileValue}
+                    isOpen={isProfileDialogOpen}
+                    onOpenChange={setIsProfileDialogOpen}
+                    onSave={setMyProfile}
+                    title='Edit your profile'
+                />
+            </Column>
+        </Animated.View>
     );
 };
 
@@ -132,17 +146,21 @@ const PhoneBookGrid = ({ gameId }: { gameId: string }) => {
 
     if (allPlayers.length === 0) {
         return (
-            <Column className='bg-text/5 rounded-3xl p-8 items-center'>
-                <PoppinsText varient='subtext' className='text-center'>No players in this game yet.</PoppinsText>
-            </Column>
+            <Animated.View entering={FadeIn.duration(300)}>
+                <Column className='bg-text/5 rounded-3xl p-8 items-center'>
+                    <PoppinsText varient='subtext' className='text-center'>No players in this game yet.</PoppinsText>
+                </Column>
+            </Animated.View>
         );
     }
 
     return (
         <Row className='flex-wrap  gap-4'>
-            {allPlayers.map((player) => (
+            {allPlayers.map((player, index) => (
                 <View key={`${player.userId}-${player.email}`} className='flex-1 min-w-[280px]'>
-                    <PlayerCard userId={player.userId} gameId={gameId} />
+                    <Animated.View entering={FadeIn.duration(300).delay(index * 50)}>
+                        <PlayerCard userId={player.userId} gameId={gameId} />
+                    </Animated.View>
                 </View>
             ))}
         </Row>
@@ -195,6 +213,9 @@ const PlayerCard = ({ userId, gameId }: { userId: string; gameId: string }) => {
     const identity = useTownSquareAuthorIdentity({ gameId, userId });
     const profile = usePlayerProfile({ userId, gameId });
 
+    // Check if identity data is still loading (has '?' as initials indicates no data loaded yet)
+    const isLoading = identity.fallbackInitials === '?' && !identity.displayName;
+
     const displayName = identity.displayName || 'Unknown';
     const bioMarkdown = profile?.bioMarkdown?.trim().length
         ? profile.bioMarkdown
@@ -205,8 +226,9 @@ const PlayerCard = ({ userId, gameId }: { userId: string; gameId: string }) => {
             displayName={displayName}
             bioMarkdown={bioMarkdown}
             imageUrl={identity.imageUrl || undefined}
-            initials={identity.fallbackInitials}
+            initials={identity.fallbackInitials === '?' ? '' : identity.fallbackInitials}
             profile={profile}
+            isLoading={isLoading}
         />
     );
 };

@@ -167,7 +167,7 @@ const ComprehensiveDaySelector = ({ gameId, showAddButton = false, showInitialSe
 
     return (
         <Column>
-            <ScrollShadow LinearGradientComponent={LinearGradient} color="#fdfbf6" className='mr-1 pr-1 max-w-min -mb-3 -mt-1'>
+            <ScrollShadow LinearGradientComponent={LinearGradient} className='mr-1 pr-1 max-w-min -mb-3 -mt-1'>
                 <ScrollView
                     ref={scrollViewRef}
                     horizontal={true}

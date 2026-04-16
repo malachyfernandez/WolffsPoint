@@ -1,14 +1,14 @@
-import React, { useEffect } from 'react';
-import { ScrollView, View } from 'react-native';
+import React from 'react';
+import { ScrollView } from 'react-native';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
 import MarkdownRenderer from '../ui/markdown/MarkdownRenderer';
 import PoppinsText from '../ui/text/PoppinsText';
+import LoadingText from '../ui/loading/LoadingText';
 import { useUserListGet } from 'hooks/useUserListGet';
 import { ScrollShadow } from 'heroui-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Usepaper } from 'types/usepaper';
-import prettyLog from 'utils/prettyLog';
 
 interface NewspaperViewingViewProps {
     itemId: string;
@@ -43,6 +43,16 @@ const NewspaperViewingView = ({ itemId }: NewspaperViewingViewProps) => {
         returnTop: 1,
     });
 
+    const isLoading = usepaperRecords === undefined;
+
+    if (isLoading) {
+        return (
+            <Column className='items-center justify-center py-24'>
+                <LoadingText text='Loading newspaper' delayMs={1500} />
+            </Column>
+        );
+    }
+
     const resolvedUsepaper = usepaperRecords?.[0]?.value?.columns?.length
         ? usepaperRecords[0].value
         : minimumUsepaper;
@@ -51,9 +61,8 @@ const NewspaperViewingView = ({ itemId }: NewspaperViewingViewProps) => {
 
     const hasContent = newspaperColumns.some(column => column.trim().length > 0);
 
-
     return (
-        <ScrollShadow LinearGradientComponent={LinearGradient} color="#fdfbf6" className='w-full'>
+        <ScrollShadow LinearGradientComponent={LinearGradient} className='w-full'>
             <ScrollView horizontal={true} className='w-full'>
                 <Column gap={4} className='w-[950px]'>
                     <Row gap={4} className='w-full p-4'>

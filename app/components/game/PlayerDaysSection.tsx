@@ -82,7 +82,7 @@ const PlayerDaysSection = ({ gameId, addNewDay }: PlayerDaysSectionProps) => {
     return (
         <>
             <Column gap={1}>
-                <ScrollShadow LinearGradientComponent={LinearGradient} color="#fdfbf6" className='mr-1 pr-1 max-w-min'>
+                <ScrollShadow LinearGradientComponent={LinearGradient} className='mr-1 pr-1 max-w-min'>
                     <ScrollView horizontal={true} className='px-1 m-0 h-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]' style={{ width: daysTableWidth }}>
                         <Row className='h-6' gap={1}>
                             {fixedDayDatesArray.map((date, index) => {

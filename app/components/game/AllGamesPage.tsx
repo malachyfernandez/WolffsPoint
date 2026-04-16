@@ -73,7 +73,7 @@ const AllGamesPage = ({
 
             <Column className='flex-1   '>
                 {!isGamesLoading && (
-                    <ScrollShadow LinearGradientComponent={LinearGradient} className='h-full'>
+                    <ScrollShadow LinearGradientComponent={LinearGradient} color="rgb(30, 30, 30)" className='h-full'>
                         <ScrollView className='h-full'>
 
                             {!isGamesPageEmpty ? (

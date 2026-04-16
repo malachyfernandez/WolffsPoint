@@ -33,8 +33,9 @@
    --color-background: rgb(165, 159, 150);
    --color-inner-background: rgb(165, 159, 150);
    --color-background-inner: rgb(165, 159, 150);
+
    
-   --color-background-light: rgb(246, 238, 219);
+   --color-background-light: rgb(165, 159, 150);
 
     --color-muted-text: #888888;
     /* --color-accent-hover: #3a6a3a; */

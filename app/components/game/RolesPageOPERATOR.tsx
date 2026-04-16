@@ -68,7 +68,7 @@ const RolesPageOPERATOR = ({ currentUserId, gameId }: RolesPageOPERATORProps) =>
                 visibleRoles.length > 0 ? (
 
                     <Column>
-                        <ScrollShadow LinearGradientComponent={LinearGradient} color="#fdfbf6" className='mr-1'>
+                        <ScrollShadow LinearGradientComponent={LinearGradient} className='mr-1'>
                             <ScrollView horizontal={true} className='px-1 py-5'>
                                 <Row>
                                     <Column gap={1}>

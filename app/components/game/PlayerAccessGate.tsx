@@ -1,10 +1,11 @@
 import React, { ReactNode, useMemo, useState } from 'react';
 import { useUserVariable } from '../../../hooks/useUserVariable';
 import { useSharedListValue } from '../../../hooks/useSharedListValue';
-import Animated, { FadeInUp, FadeOut } from 'react-native-reanimated';
+import Animated, { FadeInUp } from 'react-native-reanimated';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
 import PoppinsText from '../ui/text/PoppinsText';
+import LoadingText from '../ui/loading/LoadingText';
 import AppButton from '../ui/buttons/AppButton';
 import PlayerProfileDialog from './PlayerProfileDialogNEW';
 import { UserTableItem } from '../../../types/playerTable';
@@ -85,7 +86,7 @@ const PlayerAccessGate = ({ gameId, currentUserId, children }: PlayerAccessGateP
         return (
             <Animated.View entering={FadeInUp.duration(300)}>
                 <Column className='rounded-xl border border-subtle-border bg-white p-4'>
-                    <PoppinsText varient='subtext'>Loading your account information…</PoppinsText>
+                    <LoadingText text='Loading your account information' delayMs={2000} />
                 </Column>
             </Animated.View>
         );
@@ -95,7 +96,7 @@ const PlayerAccessGate = ({ gameId, currentUserId, children }: PlayerAccessGateP
         return (
             <Animated.View entering={FadeInUp.duration(300)}>
                 <Column className='rounded-xl border border-subtle-border bg-white p-4'>
-                    <PoppinsText varient='subtext'>Loading your account information…</PoppinsText>
+                    <LoadingText text='Loading your account information' delayMs={2000} />
                 </Column>
             </Animated.View>
         );

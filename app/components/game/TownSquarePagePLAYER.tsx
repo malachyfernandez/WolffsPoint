@@ -33,6 +33,7 @@ const TownSquarePagePLAYER = ({ gameId, currentProfile }: TownSquarePagePLAYERPr
         createThread,
         deleteReply,
         deleteThread,
+        isLoading,
         markThreadRead,
         replies,
         selectedThread,
@@ -109,6 +110,7 @@ const TownSquarePagePLAYER = ({ gameId, currentProfile }: TownSquarePagePLAYERPr
             <LayoutStateAnimatedView.Container stateVar={activeScreen} className='flex-1'>
                 <LayoutStateAnimatedView.Option page={1} stateValue='list'>
                     <TownSquareThreadListView
+                        isLoading={isLoading}
                         listScrollRef={listScrollRef}
                         onNewThread={() => setIsThreadComposerOpen(true)}
                         onOpenThread={(thread) => openThread(thread.postId)}
