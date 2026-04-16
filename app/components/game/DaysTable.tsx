@@ -96,29 +96,56 @@ const DaysTable = ({ gameId, dayNumber, dayCount, isBeingEdited, setIsBeingEdite
         });
     }, [columnSizes.value, targetDayCount, userTable?.value, userTableColumnVisibility?.value, userTableTitle?.value]);
 
+    // Normalization effect - only runs when data is synced and stable
     useEffect(() => {
+        // Skip if any data is still syncing to avoid fighting during load
+        if (userTable?.state?.isSyncing || userTableTitle?.state?.isSyncing || userTableColumnVisibility?.state?.isSyncing || columnSizes?.state?.isSyncing) {
+            return;
+        }
+
         const normalizedState = getNormalizedState();
         const currentTitles = userTableTitle?.value ?? { extraUserColumns: [], extraDayColumns: [] };
         const currentVisibility = userTableColumnVisibility?.value ?? { extraUserColumns: [], extraDayColumns: [] };
         const currentUsers = userTable?.value ?? [];
         const currentColumnSizes = columnSizes.value ?? defaultPlayerPageColumnSizes;
 
+        let hasChanges = false;
+
         if (JSON.stringify(currentVisibility) !== JSON.stringify(normalizedState.visibility)) {
             setUserTableColumnVisibility(normalizedState.visibility);
+            hasChanges = true;
         }
 
         if (JSON.stringify(currentUsers) !== JSON.stringify(normalizedState.users)) {
             setUserTable(normalizedState.users);
+            hasChanges = true;
         }
 
         if (JSON.stringify(currentColumnSizes) !== JSON.stringify(normalizedState.columnSizes)) {
             setColumnSizes(normalizedState.columnSizes);
+            hasChanges = true;
         }
 
         if (JSON.stringify(currentTitles) !== JSON.stringify(normalizedState.titles)) {
             setUserTableTitle(normalizedState.titles);
+            hasChanges = true;
         }
-    }, [columnSizes.value, getNormalizedState, setColumnSizes, setUserTable, setUserTableColumnVisibility, setUserTableTitle, userTable?.value, userTableColumnVisibility?.value, userTableTitle?.value]);
+
+        // Only measure width if columns actually changed
+        if (hasChanges) {
+            measureTableWidth();
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [
+        // Only depend on the actual values, not the callbacks
+        // Use JSON.stringify to create stable comparison of array contents
+        userTable?.state?.isSyncing,
+        userTableTitle?.state?.isSyncing,
+        userTableColumnVisibility?.state?.isSyncing,
+        columnSizes?.state?.isSyncing,
+        dayCount,
+        dayNumber,
+    ]);
 
     // Measure width when columns change
     useEffect(() => {

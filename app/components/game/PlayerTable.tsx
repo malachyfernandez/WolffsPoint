@@ -55,7 +55,13 @@ const PlayerTable = ({ gameId, doSync, setDoSync, isBeingEdited, setIsBeingEdite
         privacy: "PUBLIC",
     });
 
+    // Normalization effect - only runs when data is synced and stable
     useEffect(() => {
+        // Skip if any data is still syncing to avoid fighting during load
+        if (userTable?.state?.isSyncing || userTableTitle?.state?.isSyncing || userTableColumnVisibility?.state?.isSyncing) {
+            return;
+        }
+
         const normalizedState = normalizePlayerPageState({
             titles: userTableTitle?.value,
             visibility: userTableColumnVisibility?.value,
@@ -78,7 +84,15 @@ const PlayerTable = ({ gameId, doSync, setDoSync, isBeingEdited, setIsBeingEdite
         if (JSON.stringify(currentUsers) !== JSON.stringify(normalizedState.users)) {
             setUserTable(normalizedState.users);
         }
-    }, [dayDatesArray.length, setUserTable, setUserTableColumnVisibility, setUserTableTitle, userTable?.value, userTableColumnVisibility?.value, userTableTitle?.value]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [
+        // Only depend on the actual values, not the callbacks
+        // Use JSON.stringify to create stable comparison of array contents
+        userTable?.state?.isSyncing,
+        userTableTitle?.state?.isSyncing,
+        userTableColumnVisibility?.state?.isSyncing,
+        dayDatesArray.length,
+    ]);
 
     const syncAllColumnsToTitles = useCallback(() => {
         const normalizedState = normalizePlayerPageState({
