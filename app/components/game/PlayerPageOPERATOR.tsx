@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import Animated, { FadeIn } from 'react-native-reanimated';
 import { useUserList } from 'hooks/useUserList';
 import Column from '../layout/Column';
 import PlayerTable from './PlayerTable';
@@ -10,6 +11,7 @@ import { ScrollView, View } from 'react-native';
 import PlayerAddUserSection from './PlayerAddUserSection';
 import ComprehensiveDaySelector from '../ui/daySelector/ComprehensiveDaySelector';
 import DaysTable from './DaysTable';
+import LoadingText from '../ui/loading/LoadingText';
 
 
 
@@ -65,12 +67,29 @@ const PlayerPageOPERATOR = ({ currentUserId, gameId }: PlayerPageOPERATORProps) 
         defaultValue: 0,
     });
 
+    // Track when all data is loaded before showing table with fade-in
+    const isSyncing = userTable?.state?.isSyncing 
+        || selectedDayIndex?.state?.isSyncing
+        || dayDatesArray?.state?.isSyncing;
+    const [hasInitiallyLoaded, setHasInitiallyLoaded] = useState(false);
 
+    useEffect(() => {
+        if (!isSyncing && !hasInitiallyLoaded) {
+            setHasInitiallyLoaded(true);
+        }
+    }, [isSyncing, hasInitiallyLoaded]);
+
+    if (isSyncing || !hasInitiallyLoaded) {
+        return (
+            <Column className='min-h-[760px] items-center justify-center'>
+                <LoadingText text='Loading players' delayMs={1500} />
+            </Column>
+        );
+    }
 
     return (
         <>
-
-            <Column>
+            <Animated.View entering={FadeIn.duration(300)} className='min-h-[760px]'>
 
 
                 {users.length > 0 ? (
@@ -131,16 +150,9 @@ const PlayerPageOPERATOR = ({ currentUserId, gameId }: PlayerPageOPERATORProps) 
                     // <PoppinsText>Hellow</PoppinsText>
                     <PlayerAddUserSection gameId={gameId} removeBottomSpace />
                 )}
-
-
-
-
-
-            </Column>
-
+            </Animated.View>
         </>
     );
 };
 
 export default PlayerPageOPERATOR;
-

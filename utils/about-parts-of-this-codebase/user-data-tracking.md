@@ -385,6 +385,39 @@ type PlayerPageColumnSizes = {
   - `DaysTable.tsx`
 - **Meaning**: per-user remembered width choices for operator player-page columns, stored by column so the selection persists across days.
 
+### `nightlyPageColumnSizes-{gameId}`
+
+- **Hook**: `useUserVariable<NightlyPageColumnSizes>`
+- **Canonical shape**:
+
+```ts
+type ColumnSizeOption = 'small' | 'medium' | 'large';
+
+type NightlyPageColumnSizes = {
+  vote: ColumnSizeOption;
+  action: ColumnSizeOption;
+  morningMessage: ColumnSizeOption;
+};
+```
+
+- **Default value**:
+
+```ts
+{
+  vote: 'small',
+  action: 'small',
+  morningMessage: 'medium',
+}
+```
+
+- **Privacy**: implicit default (`PRIVATE`)
+- **Key builder**: `getGameScopedKey('nightlyPageColumnSizes', gameId)`
+- **Used by**:
+  - `NightlyDaysTable.tsx`
+  - `NightlyDayTitleRow.tsx`
+  - `NightlyDayUserRow.tsx`
+- **Meaning**: per-user remembered width choices for nightly page columns (Vote, Action, Morning Message). Separate from playerPageColumnSizes since this is a different table with different columns.
+
 ### `townSquareReadState-{gameId}`
 
 - **Hook**: `useUserVariable<Record<string, number>>`

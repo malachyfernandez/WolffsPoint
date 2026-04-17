@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import Animated, { FadeIn } from 'react-native-reanimated';
 import PoppinsText from '../ui/text/PoppinsText';
+import LoadingText from '../ui/loading/LoadingText';
 import { useUserList } from 'hooks/useUserList';
 import { useUserVariableGet } from 'hooks/useUserVariableGet';
 import Column from '../layout/Column';
@@ -69,6 +71,20 @@ const NightlyPageOPERATOR = ({ currentUserId: _currentUserId, gameId }: NightlyP
         privacy: "PUBLIC",
         defaultValue: [],
     });
+
+    // Track when all data is loaded before showing table with fade-in
+    const isSyncing = userTable?.state?.isSyncing 
+        || morningMessagesList?.state?.isSyncing 
+        || selectedDayIndex?.state?.isSyncing
+        || dayDatesArray?.state?.isSyncing
+        || submissionRecords === undefined;
+    const [hasInitiallyLoaded, setHasInitiallyLoaded] = useState(false);
+
+    useEffect(() => {
+        if (!isSyncing && !hasInitiallyLoaded) {
+            setHasInitiallyLoaded(true);
+        }
+    }, [isSyncing, hasInitiallyLoaded]);
 
     // Convert stored MM/DD/YYYY strings back to real Date objects for UI use
     const fixedDayDatesArray = dayDatesArray.value.map(dateStr => {
@@ -160,77 +176,87 @@ const NightlyPageOPERATOR = ({ currentUserId: _currentUserId, gameId }: NightlyP
         setDoSync(true);
     };
 
+    if (isSyncing || !hasInitiallyLoaded) {
+        return (
+            <Column className='min-h-[760px] items-center justify-center'>
+                <LoadingText text='Loading nightly data' delayMs={1500} />
+            </Column>
+        );
+    }
+
     return (
         <Column className='min-h-[760px]'>
             {users.length > 0 ? (
-                <Column>
-                    <Row className='justify-between items-center mb-4'>
-                        <Column gap={0}>
-                            <PoppinsText weight='medium'>Player submissions</PoppinsText>
-                            <PoppinsText varient='subtext'>{voteCount}/{users.length} voted, {actionCount}/{users.length} submitted actions</PoppinsText>
-                        </Column>
-                        <AppButton variant='filled' className='w-48' onPress={() => setIsCertificationDialogOpen(true)}>
-                            <PoppinsText weight='medium' color='white'>Review / Certify</PoppinsText>
-                        </AppButton>
-                    </Row>
+                <Animated.View entering={FadeIn.duration(300)}>
+                    <Column>
+                        <Row className='justify-between items-center mb-4'>
+                            <Column gap={0}>
+                                <PoppinsText weight='medium'>Player submissions</PoppinsText>
+                                <PoppinsText varient='subtext'>{voteCount}/{users.length} voted, {actionCount}/{users.length} submitted actions</PoppinsText>
+                            </Column>
+                            <AppButton variant='filled' className='w-48' onPress={() => setIsCertificationDialogOpen(true)}>
+                                <PoppinsText weight='medium' color='white'>Review / Certify</PoppinsText>
+                            </AppButton>
+                        </Row>
 
-                    <ScrollShadow LinearGradientComponent={LinearGradient} className='mr-1 pt-1'>
-                        <ScrollView horizontal={true} className='px-1 py-5'>
-                            <Row>
-                                <Column gap={1}>
-                                    <Row className='h-6'>
-                                        {/* spacer to align with days table */}
-                                    </Row>
-                                    <Row className={isPlayerTableBeingEdited ? 'z-50' : ''}>
-                                        <NightlyPlayerTable
-                                            gameId={gameId}
-                                            doSync={doSync}
-                                            setDoSync={setDoSync}
-                                            isBeingEdited={isPlayerTableBeingEdited}
-                                            setIsBeingEdited={setIsPlayerTableBeingEdited}
-                                            dayDatesArray={fixedDayDatesArray}
-                                            updatePlayerLivingState={updatePlayerLivingState}
-                                        />
-                                    </Row>
-                                </Column>
-                                <Column gap={1}>
-                                    <View style={{ width: daysTableWidth }}>
-                                        <ComprehensiveDaySelector
-                                            gameId={gameId}
-                                            showAddButton={true}
-                                            showInitialSetupDialog={true}
-                                        />
-                                    </View>
-                                    <Row className={`${isDaysTableBeingEdited ? 'z-10' : ''} w-min max-w-min`}>
-                                        <NightlyDaysTable
-                                            gameId={gameId}
-                                            dayNumber={selectedDayIndex.value}
-                                            isBeingEdited={isDaysTableBeingEdited}
-                                            setIsBeingEdited={setIsDaysTableBeingEdited}
-                                            onLayout={(event: any) => {
-                                                const { width } = event.nativeEvent.layout;
-                                                setDaysTableWidth(width);
-                                            }}
-                                            onWidthChange={(width: number) => {
-                                                setDaysTableWidth(width);
-                                            }}
-                                            morningMessagesList={morningMessagesList.value || {}}
-                                            updateMorningMessage={updateMorningMessage}
-                                        />
-                                    </Row>
-                                </Column>
-                            </Row>
-                        </ScrollView>
-                    </ScrollShadow>
+                        <ScrollShadow LinearGradientComponent={LinearGradient} className='mr-1 pt-1'>
+                            <ScrollView horizontal={true} className='px-1 py-5'>
+                                <Row>
+                                    <Column gap={1}>
+                                        <Row className='h-6'>
+                                            {/* spacer to align with days table */}
+                                        </Row>
+                                        <Row className={isPlayerTableBeingEdited ? 'z-50' : ''}>
+                                            <NightlyPlayerTable
+                                                gameId={gameId}
+                                                doSync={doSync}
+                                                setDoSync={setDoSync}
+                                                isBeingEdited={isPlayerTableBeingEdited}
+                                                setIsBeingEdited={setIsPlayerTableBeingEdited}
+                                                dayDatesArray={fixedDayDatesArray}
+                                                updatePlayerLivingState={updatePlayerLivingState}
+                                            />
+                                        </Row>
+                                    </Column>
+                                    <Column gap={1}>
+                                        <View style={{ width: daysTableWidth }}>
+                                            <ComprehensiveDaySelector
+                                                gameId={gameId}
+                                                showAddButton={true}
+                                                showInitialSetupDialog={true}
+                                            />
+                                        </View>
+                                        <Row className={`${isDaysTableBeingEdited ? 'z-10' : ''} w-min max-w-min`}>
+                                            <NightlyDaysTable
+                                                gameId={gameId}
+                                                dayNumber={selectedDayIndex.value}
+                                                isBeingEdited={isDaysTableBeingEdited}
+                                                setIsBeingEdited={setIsDaysTableBeingEdited}
+                                                onLayout={(event: any) => {
+                                                    const { width } = event.nativeEvent.layout;
+                                                    setDaysTableWidth(width);
+                                                }}
+                                                onWidthChange={(width: number) => {
+                                                    setDaysTableWidth(width);
+                                                }}
+                                                morningMessagesList={morningMessagesList.value || {}}
+                                                updateMorningMessage={updateMorningMessage}
+                                            />
+                                        </Row>
+                                    </Column>
+                                </Row>
+                            </ScrollView>
+                        </ScrollShadow>
 
-                    <NightlyCertificationDialog
-                        isOpen={isCertificationDialogOpen}
-                        onOpenChange={setIsCertificationDialogOpen}
-                        users={users}
-                        submissionsByEmail={submissionsByEmail}
-                        onCertify={certifySubmissions}
-                    />
-                </Column>
+                        <NightlyCertificationDialog
+                            isOpen={isCertificationDialogOpen}
+                            onOpenChange={setIsCertificationDialogOpen}
+                            users={users}
+                            submissionsByEmail={submissionsByEmail}
+                            onCertify={certifySubmissions}
+                        />
+                    </Column>
+                </Animated.View>
             ) : (
                 <Row className='items-center justify-center'>
                     <PoppinsText weight='medium' className='text-center text-gray-500'>

@@ -1,12 +1,21 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
+import Animated, { FadeIn } from 'react-native-reanimated';
 import PoppinsText from '../ui/text/PoppinsText';
 import { useUserList } from 'hooks/useUserList';
+import { useUserVariable } from 'hooks/useUserVariable';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
 import NightlyDayUserRow from './NightlyDayUserRow';
 import NightlyDayTitleRow from './NightlyDayTitleRow';
 import { createUndoSnapshot, useUndoRedo } from 'hooks/useUndoRedo';
 import { UserTableItem } from 'types/playerTable';
+import {
+    ColumnSizeOption,
+    NightlyPageColumnSizes,
+    defaultNightlyPageColumnSizes,
+    getNightlyPageColumnSizesKey,
+    getWidthForColumnSize,
+} from './nightlyTableColumnSizing';
 
 interface NightlyDaysTableProps {
     gameId: string;
@@ -20,13 +29,13 @@ interface NightlyDaysTableProps {
     updateMorningMessage: (dayIndex: number, userIndex: number, value: string) => void;
 }
 
-const NightlyDaysTable = ({ 
-    gameId, 
-    dayNumber, 
-    isBeingEdited, 
-    setIsBeingEdited, 
-    className, 
-    onLayout, 
+const NightlyDaysTable = ({
+    gameId,
+    dayNumber,
+    isBeingEdited,
+    setIsBeingEdited,
+    className,
+    onLayout,
     onWidthChange,
     morningMessagesList,
     updateMorningMessage
@@ -45,16 +54,49 @@ const NightlyDaysTable = ({
         setIsBeingEdited(false);
     };
 
-    const measureTableWidth = () => {
+    const measureTableWidth = useCallback(() => {
         if (tableRef.current && onWidthChange) {
             // Use setTimeout to ensure layout is updated after state changes
-            setTimeout(() => {
-                tableRef.current.measure((x: number, y: number, width: number, height: number) => {
-                    onWidthChange(width);
-                });
+            const timeoutId = setTimeout(() => {
+                if (tableRef.current) {
+                    tableRef.current.measure((x: number, y: number, width: number, height: number) => {
+                        onWidthChange(width);
+                    });
+                }
             }, 0);
+
+            // Cleanup timeout if component unmounts
+            return () => clearTimeout(timeoutId);
         }
+    }, [onWidthChange]);
+
+    // Subscribe to nightly page column sizes
+    const [columnSizes, setColumnSizes] = useUserVariable<NightlyPageColumnSizes>({
+        key: getNightlyPageColumnSizesKey(gameId),
+        defaultValue: defaultNightlyPageColumnSizes,
+    });
+
+    // Calculate column widths based on sizes
+    const columnWidths = {
+        vote: getWidthForColumnSize(112, columnSizes.value.vote),
+        action: getWidthForColumnSize(112, columnSizes.value.action),
+        morningMessage: getWidthForColumnSize(112, columnSizes.value.morningMessage),
     };
+
+    // Handle column size changes
+    const setColumnSize = (columnKey: 'vote' | 'action' | 'morningMessage', size: ColumnSizeOption) => {
+        const currentSizes = columnSizes.value ?? defaultNightlyPageColumnSizes;
+        setColumnSizes({
+            ...currentSizes,
+            [columnKey]: size,
+        });
+    };
+
+    // Measure width when column sizes change
+    useEffect(() => {
+        const cleanup = measureTableWidth();
+        return cleanup;
+    }, [measureTableWidth, columnSizes.value.vote, columnSizes.value.action, columnSizes.value.morningMessage]);
 
     const [userTable, setUserTable] = useUserList<UserTableItem[]>({
         key: "userTable",
@@ -204,23 +246,29 @@ const NightlyDaysTable = ({
                         onEditStart={() => handleRowEditStart('title')}
                         onEditEnd={handleRowEditEnd}
                         isEditing={editingRow === 'title'}
+                        columnWidths={columnWidths}
+                        columnSizes={columnSizes.value}
+                        onSetColumnSize={setColumnSize}
                     />
 
                     {users.map((user, index) => (
-                        <NightlyDayUserRow
-                            key={index}
-                            user={user}
-                            index={index}
-                            isLast={index === users.length - 1}
-                            dayNumber={dayNumber}
-                            setVoteValue={UNDOABLEsetVoteValue}
-                            setActionValue={UNDOABLEsetActionValue}
-                            updateMorningMessage={UNDOABLEupdateMorningMessage}
-                            onEditStart={() => handleRowEditStart(index)}
-                            onEditEnd={handleRowEditEnd}
-                            isEditing={editingRow === index}
-                            morningMessagesList={morningMessagesList}
-                        />
+                        <Animated.View key={index} entering={FadeIn.duration(300).delay(index * 50)}>
+                            <NightlyDayUserRow
+                                user={user}
+                                index={index}
+                                isLast={index === users.length - 1}
+                                dayNumber={dayNumber}
+                                setVoteValue={UNDOABLEsetVoteValue}
+                                setActionValue={UNDOABLEsetActionValue}
+                                updateMorningMessage={UNDOABLEupdateMorningMessage}
+                                onEditStart={() => handleRowEditStart(index)}
+                                onEditEnd={handleRowEditEnd}
+                                isEditing={editingRow === index}
+                                morningMessagesList={morningMessagesList}
+                                columnWidths={columnWidths}
+                                users={users}
+                            />
+                        </Animated.View>
                     ))}
                 </Column>
             </Row>

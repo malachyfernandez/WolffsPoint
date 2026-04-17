@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import Animated, { FadeIn } from 'react-native-reanimated';
 import PoppinsText from '../ui/text/PoppinsText';
 import { useUserList } from 'hooks/useUserList';
 import Column from '../layout/Column';
@@ -94,17 +95,18 @@ const NightlyPlayerTable = ({
                     />
 
                     {users.map((user, index) => (
-                        <NightlyUserRow
-                            key={index}
-                            user={user}
-                            index={index}
-                            isLast={index === users.length - 1}
-                            updatePlayerLivingState={UNDOABLEupdatePlayerLivingState}
-                            onEditStart={() => handleRowEditStart(index)}
-                            onEditEnd={handleRowEditEnd}
-                            isEditing={editingRow === index}
-                            gameId={gameId}
-                        />
+                        <Animated.View key={index} entering={FadeIn.duration(300).delay(index * 50)}>
+                            <NightlyUserRow
+                                user={user}
+                                index={index}
+                                isLast={index === users.length - 1}
+                                updatePlayerLivingState={UNDOABLEupdatePlayerLivingState}
+                                onEditStart={() => handleRowEditStart(index)}
+                                onEditEnd={handleRowEditEnd}
+                                isEditing={editingRow === index}
+                                gameId={gameId}
+                            />
+                        </Animated.View>
                     ))}
                 </Column>
             </Row>

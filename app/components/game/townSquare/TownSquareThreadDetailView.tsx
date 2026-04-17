@@ -1,5 +1,6 @@
 import React from 'react';
 import { Pressable, ScrollView } from 'react-native';
+import { ChevronLeft } from 'lucide-react-native';
 import { ScrollShadow } from 'heroui-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Column from '../../layout/Column';
@@ -44,8 +45,11 @@ const TownSquareThreadDetailView = ({
 
     return (
         <Column className='flex-1 px-6 py-6' gap={5}>
-            <Pressable onPress={onBack}>
-                <PoppinsText weight='medium' className='text-accent'>{'← Return'}</PoppinsText>
+            <Pressable onPress={onBack} className='self-start py-1'>
+                <Row className='items-center gap-2'>
+                    <ChevronLeft size={20} color='rgb(46, 41, 37)' />
+                    <PoppinsText weight='medium'>Town Square</PoppinsText>
+                </Row>
             </Pressable>
 
             <ScrollShadow LinearGradientComponent={LinearGradient} className='flex-1'>

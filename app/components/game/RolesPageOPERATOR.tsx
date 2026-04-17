@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ScrollView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ScrollShadow } from 'heroui-native';
@@ -7,6 +7,7 @@ import Row from '../layout/Row';
 import RoleTable from './RoleTable';
 import AppButton from '../ui/buttons/AppButton';
 import PoppinsText from '../ui/text/PoppinsText';
+import LoadingText from '../ui/loading/LoadingText';
 import { useUserList } from '../../../hooks/useUserList';
 import { useUndoRedo, useCreateUndoSnapshot } from '../../../hooks/useUndoRedo';
 import { getGameScopedKey } from '../../../utils/multiplayer';
@@ -35,6 +36,21 @@ const RolesPageOPERATOR = ({ currentUserId, gameId }: RolesPageOPERATORProps) =>
 
     const [doSync, setDoSync] = useState(false);
     const [isRoleTableBeingEdited, setIsRoleTableBeingEdited] = useState(false);
+    const [hasInitiallyLoaded, setHasInitiallyLoaded] = useState(false);
+
+    useEffect(() => {
+        if (!isSyncing && !hasInitiallyLoaded) {
+            setHasInitiallyLoaded(true);
+        }
+    }, [isSyncing, hasInitiallyLoaded]);
+
+    if (isSyncing || !hasInitiallyLoaded) {
+        return (
+            <Column className='min-h-[760px] items-center justify-center'>
+                <LoadingText text='Loading roles' delayMs={1500} />
+            </Column>
+        );
+    }
 
     const addRole = () => {
         const newRole: RoleTableItem = {
@@ -62,11 +78,9 @@ const RolesPageOPERATOR = ({ currentUserId, gameId }: RolesPageOPERATORProps) =>
     };
 
     return (
-        <Column className='min-h-[760px]'>
-
-            {!isSyncing && (
-                visibleRoles.length > 0 ? (
-
+        <Animated.View entering={FadeIn.duration(300)} className='min-h-[760px]'>
+            <Column>
+                {visibleRoles.length > 0 ? (
                     <Column>
                         <ScrollShadow LinearGradientComponent={LinearGradient} className='mr-1'>
                             <ScrollView horizontal={true} className='px-1 py-5'>
@@ -94,7 +108,6 @@ const RolesPageOPERATOR = ({ currentUserId, gameId }: RolesPageOPERATORProps) =>
                             <PoppinsText weight='bold' className='text-white'>Add Role</PoppinsText>
                         </AppButton>
                     </Column>
-
                 ) : (
                     <Row className='items-center justify-center'>
                         <AppButton variant="filled" className='w-40 h-8' onPress={UNDOABLEaddRole}>
@@ -102,9 +115,9 @@ const RolesPageOPERATOR = ({ currentUserId, gameId }: RolesPageOPERATORProps) =>
                             <PoppinsText weight='bold' className='text-white'>Add Role</PoppinsText>
                         </AppButton>
                     </Row>
-                )
-            )}
-        </Column>
+                )}
+            </Column>
+        </Animated.View>
     );
 };
 

@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View, StyleSheet, useWindowDimensions } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { Tabs } from 'heroui-native';
-import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+import Animated, { FadeIn, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import Column from '../layout/Column';
 import PoppinsText from '../ui/text/PoppinsText';
 import NewspaperWritingView from './NewspaperWritingView';
@@ -30,6 +30,9 @@ const NewspaperPageOPERATOR = ({ gameId }: NewspaperPageOPERATORProps) => {
         defaultValue: 0,
     });
 
+    // Track if we're still loading/syncing to prevent animation on default->real value transition
+    const isSyncing = selectedDayIndex.state?.isSyncing ?? true;
+
     const [dayDatesArray] = useUserList<string[]>({
         key: "dayDatesArray",
         itemId: gameId,
@@ -52,18 +55,26 @@ const NewspaperPageOPERATOR = ({ gameId }: NewspaperPageOPERATORProps) => {
     const previousDayIndexRef = useRef<number | null>(null);
     const leavingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const hasInitializedSelectedDayRef = useRef(false);
+    const [isInitialLoadComplete, setIsInitialLoadComplete] = useState(false);
 
     const enteringOpacity = useSharedValue(1);
     const enteringTranslateX = useSharedValue(0);
     const leavingOpacity = useSharedValue(1);
     const leavingTranslateX = useSharedValue(0);
 
+    // Don't render any day navigation or content until data is loaded
+    const isReady = isInitialLoadComplete && !isSyncing;
+
     useEffect(() => {
-        if (!hasInitializedSelectedDayRef.current && selectedDayIndex.value !== undefined) {
+        // Wait until syncing is complete AND we have a value before initializing
+        if (!hasInitializedSelectedDayRef.current && !isSyncing && selectedDayIndex.value !== undefined) {
             hasInitializedSelectedDayRef.current = true;
+            // Set previousDayIndexRef so animation effect doesn't trigger on initial load
+            previousDayIndexRef.current = selectedDayIndex.value;
+            setIsInitialLoadComplete(true);
             return;
         }
-    }, [selectedDayIndex.value]);
+    }, [selectedDayIndex.value, isSyncing]);
 
     useEffect(() => {
         return () => {
@@ -74,6 +85,11 @@ const NewspaperPageOPERATOR = ({ gameId }: NewspaperPageOPERATORProps) => {
     }, []);
 
     useEffect(() => {
+        // Don't animate until initial load is complete
+        if (!isInitialLoadComplete) {
+            return;
+        }
+
         const previousDayIndex = previousDayIndexRef.current;
 
         if (previousDayIndex == null) {
@@ -114,7 +130,7 @@ const NewspaperPageOPERATOR = ({ gameId }: NewspaperPageOPERATORProps) => {
         }, transitionDuration);
 
         previousDayIndexRef.current = selectedDayIndex.value;
-    }, [enteringOpacity, enteringTranslateX, leavingOpacity, leavingTranslateX, selectedDayIndex.value, slideDistance]);
+    }, [enteringOpacity, enteringTranslateX, leavingOpacity, leavingTranslateX, isInitialLoadComplete, selectedDayIndex.value, slideDistance]);
 
     const enteringStyle = useAnimatedStyle(() => {
         return {
@@ -129,6 +145,14 @@ const NewspaperPageOPERATOR = ({ gameId }: NewspaperPageOPERATORProps) => {
             transform: [{ translateX: leavingTranslateX.value }],
         };
     });
+
+    if (!isReady) {
+        return (
+            <Column className='min-h-[760px] items-center justify-center'>
+                <PoppinsText varient='subtext'>Loading newspaper…</PoppinsText>
+            </Column>
+        );
+    }
 
     return (
         <Column gap={4}>
@@ -195,7 +219,7 @@ const NewspaperPageOPERATOR = ({ gameId }: NewspaperPageOPERATORProps) => {
                         </Animated.View>
                     ) : null}
 
-                    <Animated.View key={`selected-${selectedDayIndex.value}`} style={enteringStyle}>
+                    <Animated.View entering={isInitialLoadComplete ? FadeIn.duration(300) : undefined} key={`selected-${selectedDayIndex.value}`} style={enteringStyle}>
                         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1">
                             <Tabs.Content value="writing" className='flex-1'>
                                 <Column gap={4}>
