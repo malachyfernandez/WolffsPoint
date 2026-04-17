@@ -1,11 +1,16 @@
-import React, { useState } from 'react';
+import React, { useRef, useState, useEffect, useMemo } from 'react';
+import { Pressable, View } from 'react-native';
 import InlineEditableText from '../ui/forms/InlineEditableText';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
+import PoppinsText from '../ui/text/PoppinsText';
 import Animated, { Easing, FadeInDown, FadeOutUp } from 'react-native-reanimated';
 import { UserTableItem } from '../../../types/playerTable';
 import { getPlayerActionSummary } from '../../../utils/multiplayer';
 import { getInnerTextWidth } from './playerTableColumnSizing';
+import ActionPills from './ActionPills';
+import ActionEditorDialog from './ActionEditorDialog';
+import VoteEditorDialog, { resolveVoteEmailToName } from './VoteEditorDialog';
 
 interface DayUserRowProps {
     user: UserTableItem;
@@ -27,11 +32,23 @@ interface DayUserRowProps {
         action: number;
     };
     extraDayColumnWidths: number[];
+    users: UserTableItem[];
 }
 
-const DayUserRow = ({ user, index, isLast, dayNumber, setVoteValue, setActionValue, setExtraColumnValue, userTableColumnVisibility, onEditStart, onEditEnd, isEditing, dayBaseColumnWidths, extraDayColumnWidths }: DayUserRowProps) => {
+const DayUserRow = ({ user, index, isLast, dayNumber, setVoteValue, setActionValue, setExtraColumnValue, userTableColumnVisibility, onEditStart, onEditEnd, isEditing, dayBaseColumnWidths, extraDayColumnWidths, users }: DayUserRowProps) => {
     const [editingColumns, setEditingColumns] = useState<Record<number, boolean>>({});
     const [isEditingVote, setIsEditingVote] = useState(false);
+    const [isActionDialogOpen, setIsActionDialogOpen] = useState(false);
+    const [isVoteDialogOpen, setIsVoteDialogOpen] = useState(false);
+    const hasMounted = useRef(false);
+
+    useEffect(() => {
+        // Mark as mounted after initial render to enable animations for add/remove
+        const timer = setTimeout(() => {
+            hasMounted.current = true;
+        }, 500);
+        return () => clearTimeout(timer);
+    }, []);
 
     const dayData = user.days[dayNumber] || { vote: "", action: "", extraColumns: [] };
 
@@ -45,52 +62,39 @@ const DayUserRow = ({ user, index, isLast, dayNumber, setVoteValue, setActionVal
         onEditEnd?.();
     };
 
-    const handleVoteEditStart = () => {
-        onEditStart?.();
-        setIsEditingVote(true);
+    const handleVotePress = () => {
+        setIsVoteDialogOpen(true);
     };
 
-    const handleVoteEditEnd = () => {
-        onEditEnd?.();
-        setIsEditingVote(false);
+    const handleActionPress = () => {
+        setIsActionDialogOpen(true);
     };
 
-    const handleActionEditStart = () => {
-        onEditStart?.();
-    };
-
-    const handleActionEditEnd = () => {
-        onEditEnd?.();
-    };
-
-    const actionDisplayValue = getPlayerActionSummary(dayData.action);
+    // Resolve vote email to player name
+    const resolvedVoteName = useMemo(() => {
+        return resolveVoteEmailToName(dayData.vote || '', users);
+    }, [dayData.vote, users]);
 
 
     return (
         <Row gap={0} className={` h-12 w-min ${isEditing ? 'z-50' : ''}`}>
             <Column className={`h-full border border-subtle-border items-center justify-center z-10 ${isLast ? 'rounded-bl-lg' : ''}`} style={{ width: dayBaseColumnWidths.vote }}>
-                <InlineEditableText
-                    value={dayData.vote || ''}
-                    onChange={(newValue) => setVoteValue?.(index, newValue)}
-                    placeholder='Vote'
-                    className='text-center text-nowrap overflow-hidden'
-                    style={{ width: getInnerTextWidth(dayBaseColumnWidths.vote, 16) }}
-                    weight='medium'
-                    onEditStart={handleVoteEditStart}
-                    onEditEnd={handleVoteEditEnd}
-                />
+                <Pressable onPress={handleVotePress} className="w-full h-full items-center justify-center px-1">
+                    <PoppinsText
+                        weight="medium"
+                        className="text-center text-nowrap overflow-hidden"
+                        style={{ width: dayBaseColumnWidths.vote - 16 }}
+                    >
+                        {dayData.vote ? resolvedVoteName : 'Vote'}
+                    </PoppinsText>
+                </Pressable>
             </Column>
-            <Column gap={0} className={`h-full border border-subtle-border items-center justify-center ${isEditingVote ? 'z-0' : 'z-20'}`} style={{ width: dayBaseColumnWidths.action }}>
-                <InlineEditableText
-                    value={actionDisplayValue}
-                    onChange={(newValue) => setActionValue?.(index, newValue)}
-                    placeholder='Action'
-                    className='text-center text-nowrap overflow-hidden'
-                    style={{ width: getInnerTextWidth(dayBaseColumnWidths.action, 16) }}
-                    weight='medium'
-                    onEditStart={handleActionEditStart}
-                    onEditEnd={handleActionEditEnd}
-                />
+            <Column gap={0} className={`h-full border border-subtle-border items-center justify-center z-20`} style={{ width: dayBaseColumnWidths.action }}>
+                <Pressable onPress={handleActionPress} className="w-full h-full items-center justify-center px-1">
+                    <View style={{ width: dayBaseColumnWidths.action - 8 }}>
+                        <ActionPills actionText={getPlayerActionSummary(dayData.action)} />
+                    </View>
+                </Pressable>
             </Column>
 
             {dayData.extraColumns?.map((column, columnIndex) => {
@@ -106,10 +110,10 @@ const DayUserRow = ({ user, index, isLast, dayNumber, setVoteValue, setActionVal
                         className={`${editingColumns[columnIndex] ? 'z-50' : ''}`}
                         key={columnIndex}
                         entering={
-                            FadeInDown.duration(100).easing(Easing.ease)
+                            hasMounted.current ? FadeInDown.duration(100).easing(Easing.ease) : undefined
                         }
                         exiting={
-                            FadeOutUp.duration(100).easing(Easing.ease)
+                            hasMounted.current ? FadeOutUp.duration(100).easing(Easing.ease) : undefined
                         }
                     >
                         <Column className={`h-full border border-subtle-border items-center justify-center ${isLast && isLastVisibleColumn ? 'rounded-br-lg' : ''} `} style={{ width: columnWidth }}>
@@ -127,6 +131,23 @@ const DayUserRow = ({ user, index, isLast, dayNumber, setVoteValue, setActionVal
                     </Animated.View>
                 );
             })}
+            <ActionEditorDialog
+                isOpen={isActionDialogOpen}
+                onOpenChange={setIsActionDialogOpen}
+                title={`${user.realName || 'User'} Action`}
+                initialAction={getPlayerActionSummary(dayData.action)}
+                onSubmit={(action) => setActionValue?.(index, action)}
+                dialogSubtext={`Set the action for ${user.realName || 'User'}.`}
+            />
+            <VoteEditorDialog
+                isOpen={isVoteDialogOpen}
+                onOpenChange={setIsVoteDialogOpen}
+                title={`${user.realName || 'User'} Vote`}
+                initialVote={dayData.vote || ''}
+                onSubmit={(vote) => setVoteValue?.(index, vote)}
+                dialogSubtext={`Set the vote target for ${user.realName || 'User'}.`}
+                users={users}
+            />
         </Row>
     );
 };

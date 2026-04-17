@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import PoppinsText from '../ui/text/PoppinsText';
 import { useUserList } from 'hooks/useUserList';
+import { useUserVariable } from 'hooks/useUserVariable';
 import Column from '../layout/Column';
 import AppButton from '../ui/buttons/AppButton';
 import Row from '../layout/Row';
@@ -9,6 +10,7 @@ import TitleRow from './TitleRow';
 import { createUndoSnapshot, useUndoRedo } from 'hooks/useUndoRedo';
 import { UserTableItem, UserTableTitle, UserTableColumnVisibility } from 'types/playerTable';
 import { normalizePlayerPageState } from './playerTableNormalization';
+import { PlayerPageColumnSizes, defaultPlayerPageColumnSizes, getPlayerPageColumnSizesKey, getWidthForColumnSize, ColumnSizeOption } from './playerTableColumnSizing';
 
 interface PlayerTableProps {
     gameId: string;
@@ -18,9 +20,10 @@ interface PlayerTableProps {
     setIsBeingEdited: (value: boolean) => void;
     className?: string;
     dayDatesArray: Date[];
+    onColumnsReady?: (ready: boolean) => void;
 }
 
-const PlayerTable = ({ gameId, doSync, setDoSync, isBeingEdited, setIsBeingEdited, className, dayDatesArray }: PlayerTableProps) => {
+const PlayerTable = ({ gameId, doSync, setDoSync, isBeingEdited, setIsBeingEdited, className, dayDatesArray, onColumnsReady }: PlayerTableProps) => {
     const { executeCommand } = useUndoRedo();
     const [editingRow, setEditingRow] = useState<'title' | number | null>(null);
 
@@ -54,6 +57,15 @@ const PlayerTable = ({ gameId, doSync, setDoSync, isBeingEdited, setIsBeingEdite
         itemId: gameId,
         privacy: "PUBLIC",
     });
+
+    // Track when column data is ready (only check isSyncing, not value presence)
+    const areColumnsReady = !userTable?.state?.isSyncing 
+        && !userTableTitle?.state?.isSyncing 
+        && !userTableColumnVisibility?.state?.isSyncing;
+
+    useEffect(() => {
+        onColumnsReady?.(areColumnsReady);
+    }, [areColumnsReady, onColumnsReady]);
 
     // Normalization effect - only runs when data is synced and stable
     useEffect(() => {
@@ -238,6 +250,75 @@ const PlayerTable = ({ gameId, doSync, setDoSync, isBeingEdited, setIsBeingEdite
         });
     };
 
+    // Subscribe to player page column sizes
+    const [columnSizes, setColumnSizes] = useUserVariable<PlayerPageColumnSizes>({
+        key: getPlayerPageColumnSizesKey(gameId),
+        defaultValue: defaultPlayerPageColumnSizes,
+    });
+
+    // Calculate extra user column widths based on sizes
+    const currentTitles = userTableTitle?.value ?? { extraUserColumns: [], extraDayColumns: [] };
+    const extraUserColumnWidths = currentTitles.extraUserColumns.map((_: string, index: number) => {
+        const size = columnSizes.value?.playerExtraColumns?.[index] ?? 'small';
+        return getWidthForColumnSize(112, size);
+    });
+
+    const setExtraUserColumnSize = (columnIndex: number, size: ColumnSizeOption) => {
+        const currentSizes = columnSizes.value ?? defaultPlayerPageColumnSizes;
+        const nextExtraColumnSizes = [...currentSizes.playerExtraColumns];
+        nextExtraColumnSizes[columnIndex] = size;
+        setColumnSizes({
+            ...currentSizes,
+            playerExtraColumns: nextExtraColumnSizes,
+        });
+    };
+
+    const UNDOABLEdeleteExtraUserColumn = (columnIndex: number) => {
+        const previousTitles = createUndoSnapshot(userTableTitle?.value ?? { extraUserColumns: [], extraDayColumns: [] });
+        const previousUserTable = createUndoSnapshot(userTable?.value ?? []);
+        const previousVisibility = createUndoSnapshot(userTableColumnVisibility?.value ?? { extraUserColumns: [], extraDayColumns: [] });
+        const previousColumnSizes = createUndoSnapshot(columnSizes.value ?? defaultPlayerPageColumnSizes);
+
+        const nextTitles = {
+            ...previousTitles,
+            extraUserColumns: previousTitles.extraUserColumns.filter((_, i) => i !== columnIndex)
+        };
+
+        const nextUserTable = previousUserTable.map((user) => ({
+            ...user,
+            playerData: {
+                ...user.playerData,
+                extraColumns: (user.playerData.extraColumns || []).filter((_, i) => i !== columnIndex)
+            }
+        }));
+
+        const nextVisibility = {
+            ...previousVisibility,
+            extraUserColumns: previousVisibility.extraUserColumns.filter((_, i) => i !== columnIndex)
+        };
+
+        const nextColumnSizes = {
+            ...previousColumnSizes,
+            playerExtraColumns: previousColumnSizes.playerExtraColumns.filter((_, i) => i !== columnIndex)
+        };
+
+        executeCommand({
+            action: () => {
+                setUserTableTitle(createUndoSnapshot(nextTitles));
+                setUserTable(createUndoSnapshot(nextUserTable));
+                setUserTableColumnVisibility(createUndoSnapshot(nextVisibility));
+                setColumnSizes(createUndoSnapshot(nextColumnSizes));
+            },
+            undoAction: () => {
+                setUserTableTitle(createUndoSnapshot(previousTitles));
+                setUserTable(createUndoSnapshot(previousUserTable));
+                setUserTableColumnVisibility(createUndoSnapshot(previousVisibility));
+                setColumnSizes(createUndoSnapshot(previousColumnSizes));
+            },
+            description: "Delete Column"
+        });
+    };
+
     return (
         <Column gap={0}>
             <Row gap={0}>
@@ -250,6 +331,10 @@ const PlayerTable = ({ gameId, doSync, setDoSync, isBeingEdited, setIsBeingEdite
                         onEditStart={() => handleRowEditStart('title')}
                         onEditEnd={handleRowEditEnd}
                         isEditing={editingRow === 'title'}
+                        extraUserColumnWidths={extraUserColumnWidths}
+                        extraUserColumnSizes={columnSizes.value?.playerExtraColumns}
+                        onSetExtraUserColumnSize={setExtraUserColumnSize}
+                        onDeleteExtraUserColumn={UNDOABLEdeleteExtraUserColumn}
                     />
 
                     {users.map((user, index) => (
@@ -265,6 +350,7 @@ const PlayerTable = ({ gameId, doSync, setDoSync, isBeingEdited, setIsBeingEdite
                             onEditEnd={handleRowEditEnd}
                             isEditing={editingRow === index}
                             gameId={gameId}
+                            extraUserColumnWidths={extraUserColumnWidths}
                         />
                     ))}
                 </Column>

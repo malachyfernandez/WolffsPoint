@@ -11,6 +11,7 @@ import NoGames from './NoGames';
 import { MyGames } from 'types/games';
 import NewWolffspointButtonAndDialogue from './NewWolffspointButtonAndDialogue';
 import PublicImageUpload from '../ui/imageUpload/PublicImageUpload';
+import LoadingText from '../ui/loading/LoadingText';
 import { ScrollShadow } from 'heroui-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import StateAnimatedView from '../ui/StateAnimatedView';
@@ -72,7 +73,11 @@ const AllGamesPage = ({
             <ProfileInfo />
 
             <Column className='flex-1   '>
-                {!isGamesLoading && (
+                {isGamesLoading ? (
+                    <Column className='flex-1 items-center justify-center'>
+                        <LoadingText text='Loading games' />
+                    </Column>
+                ) : (
                     <ScrollShadow LinearGradientComponent={LinearGradient} color="rgb(30, 30, 30)" className='h-full'>
                         <ScrollView className='h-full'>
 

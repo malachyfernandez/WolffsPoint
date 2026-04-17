@@ -58,7 +58,7 @@ const TownSquareThreadListView = ({
                                 scrollEventThrottle={16}
                             >
                                 <Column className='items-center justify-center py-24' gap={1}>
-                                    <LoadingText text='Loading threads' delayMs={2000} />
+                                    <LoadingText text='Loading threads' />
                                 </Column>
                             </ScrollView>
                         </ScrollShadow>

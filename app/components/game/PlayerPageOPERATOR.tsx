@@ -58,6 +58,8 @@ const PlayerPageOPERATOR = ({ currentUserId, gameId }: PlayerPageOPERATORProps) 
     const [isPlayerTableBeingEdited, setIsPlayerTableBeingEdited] = useState(false);
     const [isDaysTableBeingEdited, setIsDaysTableBeingEdited] = useState(false);
     const [daysTableWidth, setDaysTableWidth] = useState(320); // default width
+    const [isPlayerTableColumnsReady, setIsPlayerTableColumnsReady] = useState(false);
+    const [isDaysTableColumnsReady, setIsDaysTableColumnsReady] = useState(false);
 
     // Get selected day index for DaysTable
     const [selectedDayIndex] = useUserList<number>({
@@ -79,17 +81,17 @@ const PlayerPageOPERATOR = ({ currentUserId, gameId }: PlayerPageOPERATORProps) 
         }
     }, [isSyncing, hasInitiallyLoaded]);
 
-    if (isSyncing || !hasInitiallyLoaded) {
-        return (
-            <Column className='min-h-[760px] items-center justify-center'>
-                <LoadingText text='Loading players' delayMs={1500} />
-            </Column>
-        );
-    }
+    const areAllColumnsReady = isPlayerTableColumnsReady && isDaysTableColumnsReady;
+    const showLoading = isSyncing || !hasInitiallyLoaded || !areAllColumnsReady;
 
     return (
         <>
-            <Animated.View entering={FadeIn.duration(300)} className='min-h-[760px]'>
+            {showLoading && (
+                <Column className='min-h-[760px] items-center justify-center'>
+                    <LoadingText text='Loading players' />
+                </Column>
+            )}
+            <Animated.View entering={FadeIn.duration(300)} className={`min-h-[760px] ${showLoading ? 'opacity-0' : ''}`}>
 
 
                 {users.length > 0 ? (
@@ -111,6 +113,7 @@ const PlayerPageOPERATOR = ({ currentUserId, gameId }: PlayerPageOPERATORProps) 
                                                 isBeingEdited={isPlayerTableBeingEdited}
                                                 setIsBeingEdited={setIsPlayerTableBeingEdited}
                                                 dayDatesArray={fixedDayDatesArray}
+                                                onColumnsReady={setIsPlayerTableColumnsReady}
                                             />
                                         </Row>
                                     </Column>
@@ -134,6 +137,7 @@ const PlayerPageOPERATOR = ({ currentUserId, gameId }: PlayerPageOPERATORProps) 
                                                 onWidthChange={(width) => {
                                                     setDaysTableWidth(width);
                                                 }}
+                                                onColumnsReady={setIsDaysTableColumnsReady}
                                             />
                                         </Row>
                                     </Column>

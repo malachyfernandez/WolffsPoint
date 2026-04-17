@@ -58,7 +58,7 @@ const PhoneBookPagePLAYER = ({ gameId, currentUserId, currentEmail }: PhoneBookP
     if (isLoading) {
         return (
             <Column className='flex-1 min-h-[760px] items-center justify-center'>
-                <LoadingText text='Loading phone book' delayMs={1500} />
+                <LoadingText text='Loading phone book' />
             </Column>
         );
     }

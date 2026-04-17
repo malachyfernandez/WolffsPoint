@@ -47,7 +47,7 @@ const RolesPageOPERATOR = ({ currentUserId, gameId }: RolesPageOPERATORProps) =>
     if (isSyncing || !hasInitiallyLoaded) {
         return (
             <Column className='min-h-[760px] items-center justify-center'>
-                <LoadingText text='Loading roles' delayMs={1500} />
+                <LoadingText text='Loading roles' />
             </Column>
         );
     }

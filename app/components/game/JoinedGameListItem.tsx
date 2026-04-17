@@ -1,8 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import AppButton from '../ui/buttons/AppButton';
 import PoppinsText from '../ui/text/PoppinsText';
 import ListRow from '../ui/lists/ListRow';
 import { useUserListGet } from 'hooks/useUserListGet';
+import JoinedGameOptionsDialog from './JoinedGameOptionsDialog';
+import { MoreVertical } from 'lucide-react-native';
+import Row from '../layout/Row';
 
 interface JoinedGameListItemProps {
     game: string;
@@ -13,6 +16,8 @@ interface JoinedGameListItemProps {
 }
 
 const JoinedGameListItem = ({ game, onLeave, className, setActiveGameId, index }: JoinedGameListItemProps) => {
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
+
     const gameInfo = useUserListGet({
         key: "games",
         filterFor: game,
@@ -20,7 +25,7 @@ const JoinedGameListItem = ({ game, onLeave, className, setActiveGameId, index }
 
     const GameName = gameInfo?.[0]?.value?.name
     const GameID = gameInfo?.[0]?.value?.id
-    
+
     const displayName = GameName || 'Unknown Game'
     const displayId = GameID || game
     const isGameDeleted = !GameName && !GameID
@@ -29,30 +34,45 @@ const JoinedGameListItem = ({ game, onLeave, className, setActiveGameId, index }
         setActiveGameId(game)
     }
 
+    const handleMenuPress = () => {
+        setIsDialogOpen(true);
+    }
+
     // if index = 0 add border-top
     const borderClass = index === 0 ? 'border-t' : '';
 
-
     return (
         <>
-            <ListRow className={`justify-between items-center ${className || ''} ${borderClass}`} onPress={handleSetActiveGameId}>
-                <PoppinsText className='text-text-inverted' >
-                    {`${displayName} (${displayId})`}
-                    {isGameDeleted && (
-                        <PoppinsText className="text-text-inverted text-sm">
-                            {' - (this game might have been deleted)'}
-                        </PoppinsText>
-                    )}
-                </PoppinsText>
+            <Row gap={0} className='items-center'>
+                <ListRow className={`justify-between items-center ${className || ''} ${borderClass}`} onPress={handleSetActiveGameId}>
+                    <PoppinsText className='text-text-inverted' >
+                        {`${displayName} (${displayId})`}
+                        {isGameDeleted && (
+                            <PoppinsText className="text-text-inverted text-sm">
+                                {' - (this game might have been deleted)'}
+                            </PoppinsText>
+                        )}
+                    </PoppinsText>
 
-            </ListRow>
-            {/* <AppButton
-                variant="green"
-                className="h-12 w-40"
-                onPress={onLeave}
-            >
-                <PoppinsText weight='medium' color="white">Leave</PoppinsText>
-            </AppButton> */}
+
+                </ListRow>
+                <AppButton
+                    variant="none"
+                    className="w-12 h-12 hover:bg-accent/20 items-center justify-center"
+                    onPress={handleMenuPress}
+                >
+                    <MoreVertical size={20} color="white" />
+                </AppButton>
+
+            </Row>
+            <JoinedGameOptionsDialog
+                gameId={game}
+                gameName={displayName}
+                isOpen={isDialogOpen}
+                onOpenChange={setIsDialogOpen}
+                onLeave={onLeave}
+                onArchive={() => { }}
+            />
         </>
     );
 };

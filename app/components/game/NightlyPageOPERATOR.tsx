@@ -120,6 +120,8 @@ const NightlyPageOPERATOR = ({ currentUserId: _currentUserId, gameId }: NightlyP
     const [isPlayerTableBeingEdited, setIsPlayerTableBeingEdited] = useState(false);
     const [isDaysTableBeingEdited, setIsDaysTableBeingEdited] = useState(false);
     const [daysTableWidth, setDaysTableWidth] = useState(320); // default width
+    const [isPlayerTableColumnsReady, setIsPlayerTableColumnsReady] = useState(false);
+    const [isDaysTableColumnsReady, setIsDaysTableColumnsReady] = useState(false);
 
     const updateMorningMessage = (dayIndex: number, userIndex: number, value: string) => {
         const user = users[userIndex];
@@ -176,16 +178,17 @@ const NightlyPageOPERATOR = ({ currentUserId: _currentUserId, gameId }: NightlyP
         setDoSync(true);
     };
 
-    if (isSyncing || !hasInitiallyLoaded) {
-        return (
-            <Column className='min-h-[760px] items-center justify-center'>
-                <LoadingText text='Loading nightly data' delayMs={1500} />
-            </Column>
-        );
-    }
+    const areAllColumnsReady = isPlayerTableColumnsReady && isDaysTableColumnsReady;
+    const showLoading = isSyncing || !hasInitiallyLoaded || !areAllColumnsReady;
 
     return (
-        <Column className='min-h-[760px]'>
+        <>
+            {showLoading && (
+                <Column className='min-h-[760px] items-center justify-center'>
+                    <LoadingText text='Loading nightly data' />
+                </Column>
+            )}
+            <Column className={`min-h-[760px] ${showLoading ? 'opacity-0' : ''}`}>
             {users.length > 0 ? (
                 <Animated.View entering={FadeIn.duration(300)}>
                     <Column>
@@ -215,6 +218,7 @@ const NightlyPageOPERATOR = ({ currentUserId: _currentUserId, gameId }: NightlyP
                                                 setIsBeingEdited={setIsPlayerTableBeingEdited}
                                                 dayDatesArray={fixedDayDatesArray}
                                                 updatePlayerLivingState={updatePlayerLivingState}
+                                                onColumnsReady={setIsPlayerTableColumnsReady}
                                             />
                                         </Row>
                                     </Column>
@@ -241,6 +245,7 @@ const NightlyPageOPERATOR = ({ currentUserId: _currentUserId, gameId }: NightlyP
                                                 }}
                                                 morningMessagesList={morningMessagesList.value || {}}
                                                 updateMorningMessage={updateMorningMessage}
+                                                onColumnsReady={setIsDaysTableColumnsReady}
                                             />
                                         </Row>
                                     </Column>
@@ -265,6 +270,7 @@ const NightlyPageOPERATOR = ({ currentUserId: _currentUserId, gameId }: NightlyP
                 </Row>
             )}
         </Column>
+        </>
     );
 };
 

@@ -34,7 +34,7 @@ const RuleBookPagePLAYER = ({ gameId }: RuleBookPagePLAYERProps) => {
     if (isLoading) {
         return (
             <Column className='flex-1 min-h-[760px] items-center justify-center'>
-                <LoadingText text='Loading rule book' delayMs={1500} />
+                <LoadingText text='Loading rule book' />
             </Column>
         );
     }

@@ -86,7 +86,7 @@ const PlayerAccessGate = ({ gameId, currentUserId, children }: PlayerAccessGateP
         return (
             <Animated.View entering={FadeInUp.duration(300)}>
                 <Column className='rounded-xl border border-subtle-border bg-white p-4'>
-                    <LoadingText text='Loading your account information' delayMs={2000} />
+                    <LoadingText text='Loading your account information' />
                 </Column>
             </Animated.View>
         );
@@ -96,7 +96,7 @@ const PlayerAccessGate = ({ gameId, currentUserId, children }: PlayerAccessGateP
         return (
             <Animated.View entering={FadeInUp.duration(300)}>
                 <Column className='rounded-xl border border-subtle-border bg-white p-4'>
-                    <LoadingText text='Loading your account information' delayMs={2000} />
+                    <LoadingText text='Loading your account information' />
                 </Column>
             </Animated.View>
         );

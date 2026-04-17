@@ -21,9 +21,10 @@ interface DaysTableProps {
     className?: string;
     onLayout?: (event: any) => void;
     onWidthChange?: (width: number) => void;
+    onColumnsReady?: (ready: boolean) => void;
 }
 
-const DaysTable = ({ gameId, dayNumber, dayCount, isBeingEdited, setIsBeingEdited, className, onLayout, onWidthChange }: DaysTableProps) => {
+const DaysTable = ({ gameId, dayNumber, dayCount, isBeingEdited, setIsBeingEdited, className, onLayout, onWidthChange, onColumnsReady }: DaysTableProps) => {
     const { executeCommand } = useUndoRedo();
     const [editingRow, setEditingRow] = useState<'title' | number | null>(null);
     const tableRef = useRef<any>(null);
@@ -95,6 +96,16 @@ const DaysTable = ({ gameId, dayNumber, dayCount, isBeingEdited, setIsBeingEdite
             columnSizes: overrides?.columnSizes ?? columnSizes.value,
         });
     }, [columnSizes.value, targetDayCount, userTable?.value, userTableColumnVisibility?.value, userTableTitle?.value]);
+
+    // Track when column data is ready (only check isSyncing, not value presence)
+    const areColumnsReady = !userTable?.state?.isSyncing 
+        && !userTableTitle?.state?.isSyncing 
+        && !userTableColumnVisibility?.state?.isSyncing
+        && !columnSizes?.state?.isSyncing;
+
+    useEffect(() => {
+        onColumnsReady?.(areColumnsReady);
+    }, [areColumnsReady, onColumnsReady]);
 
     // Normalization effect - only runs when data is synced and stable
     useEffect(() => {
@@ -430,6 +441,7 @@ const DaysTable = ({ gameId, dayNumber, dayCount, isBeingEdited, setIsBeingEdite
                                 isEditing={editingRow === index}
                                 dayBaseColumnWidths={dayBaseColumnWidths}
                                 extraDayColumnWidths={extraDayColumnWidths}
+                                users={users}
                             />
                         ))}
                     </Column>

@@ -19,6 +19,7 @@ interface NightlyPlayerTableProps {
     className?: string;
     dayDatesArray: Date[];
     updatePlayerLivingState: (userIndex: number, livingState: 'alive' | 'dead') => void;
+    onColumnsReady?: (ready: boolean) => void;
 }
 
 const NightlyPlayerTable = ({ 
@@ -29,7 +30,8 @@ const NightlyPlayerTable = ({
     setIsBeingEdited, 
     className, 
     dayDatesArray,
-    updatePlayerLivingState
+    updatePlayerLivingState,
+    onColumnsReady
 }: NightlyPlayerTableProps) => {
     const { executeCommand } = useUndoRedo();
     const [editingRow, setEditingRow] = useState<'title' | number | null>(null);
@@ -58,6 +60,14 @@ const NightlyPlayerTable = ({
         privacy: "PUBLIC",
         defaultValue: 0,
     });
+
+    // Track when column data is ready (only check isSyncing)
+    const areColumnsReady = !userTable?.state?.isSyncing 
+        && !selectedDayIndex?.state?.isSyncing;
+
+    useEffect(() => {
+        onColumnsReady?.(areColumnsReady);
+    }, [areColumnsReady, onColumnsReady]);
 
     useEffect(() => {
         if (!doSync) return;

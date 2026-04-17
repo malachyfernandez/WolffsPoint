@@ -27,6 +27,7 @@ interface NightlyDaysTableProps {
     onWidthChange?: (width: number) => void;
     morningMessagesList: Record<string, string[]>;
     updateMorningMessage: (dayIndex: number, userIndex: number, value: string) => void;
+    onColumnsReady?: (ready: boolean) => void;
 }
 
 const NightlyDaysTable = ({
@@ -38,7 +39,8 @@ const NightlyDaysTable = ({
     onLayout,
     onWidthChange,
     morningMessagesList,
-    updateMorningMessage
+    updateMorningMessage,
+    onColumnsReady
 }: NightlyDaysTableProps) => {
     const { executeCommand } = useUndoRedo();
     const [editingRow, setEditingRow] = useState<'title' | number | null>(null);
@@ -75,6 +77,13 @@ const NightlyDaysTable = ({
         key: getNightlyPageColumnSizesKey(gameId),
         defaultValue: defaultNightlyPageColumnSizes,
     });
+
+    // Track when column data is ready (only check isSyncing, not value presence)
+    const areColumnsReady = !columnSizes?.state?.isSyncing;
+
+    useEffect(() => {
+        onColumnsReady?.(areColumnsReady);
+    }, [areColumnsReady, onColumnsReady]);
 
     // Calculate column widths based on sizes
     const columnWidths = {

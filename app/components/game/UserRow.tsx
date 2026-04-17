@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import PoppinsText from '../ui/text/PoppinsText';
 import InlineEditableText from '../ui/forms/InlineEditableText';
 import Column from '../layout/Column';
@@ -39,12 +39,34 @@ interface UserRowProps {
     onEditEnd?: () => void;
     isEditing?: boolean;
     gameId: string;
+    extraUserColumnWidths?: number[];
 }
 
 
-const UserRow = ({ user, index, isLast, setLivingState, setExtraColumnValue, userTableColumnVisibility, onEditStart, onEditEnd, isEditing, gameId }: UserRowProps) => {
+const UserRow = ({ 
+    user, 
+    index, 
+    isLast, 
+    setLivingState,
+    onEditStart, 
+    onEditEnd, 
+    isEditing, 
+    gameId,
+    setExtraColumnValue,
+    userTableColumnVisibility,
+    extraUserColumnWidths
+}: UserRowProps) => {
     const [editingColumns, setEditingColumns] = useState<Record<number, boolean>>({});
     const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const hasMounted = useRef(false);
+
+    useEffect(() => {
+        // Mark as mounted after initial render to enable animations for add/remove
+        const timer = setTimeout(() => {
+            hasMounted.current = true;
+        }, 500);
+        return () => clearTimeout(timer);
+    }, []);
 
     const toggleLivingState = () => {
         const newLivingState = user.playerData.livingState === 'alive' ? 'dead' : 'alive';
@@ -139,23 +161,26 @@ const UserRow = ({ user, index, isLast, setLivingState, setExtraColumnValue, use
                     const visibleIndex = visibleColumns.indexOf(column);
                     const isLastVisibleColumn = visibleIndex === visibleColumns.length - 1;
 
+                    const columnWidth = extraUserColumnWidths?.[columnIndex] ?? 112;
+
                     return (
                         <Animated.View
                             className={`${editingColumns[columnIndex] ? 'z-50' : ''}`}
                             key={columnIndex}
                             entering={
-                                FadeInDown.duration(100).easing(Easing.ease)
+                                hasMounted.current ? FadeInDown.duration(100).easing(Easing.ease) : undefined
                             }
                             exiting={
-                                FadeOutUp.duration(100).easing(Easing.ease)
+                                hasMounted.current ? FadeOutUp.duration(100).easing(Easing.ease) : undefined
                             }
                         >
-                            <Column className={`w-28 h-full border border-subtle-border items-center justify-center ${isLast && isLastVisibleColumn ? 'rounded-br-lg' : ''} `}>
+                            <Column className={`h-full border border-subtle-border items-center justify-center ${isLast && isLastVisibleColumn ? 'rounded-br-lg' : ''} `} style={{ width: columnWidth }}>
                                 <InlineEditableText
                                     value={column}
                                     onChange={(newValue) => setExtraColumnValue?.(index, columnIndex, newValue)}
                                     placeholder='UNSET'
-                                    className='w-20 text-center text-nowrap overflow-hidden'
+                                    className='text-center text-nowrap overflow-hidden'
+                                    style={{ width: columnWidth - 32 }}
                                     weight='medium'
                                     onEditStart={() => handleColumnEditStart(columnIndex)}
                                     onEditEnd={() => handleColumnEditEnd(columnIndex)}

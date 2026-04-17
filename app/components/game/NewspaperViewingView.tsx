@@ -48,7 +48,7 @@ const NewspaperViewingView = ({ itemId }: NewspaperViewingViewProps) => {
     if (isLoading) {
         return (
             <Column className='items-center justify-center py-24'>
-                <LoadingText text='Loading newspaper' delayMs={1500} />
+                <LoadingText text='Loading newspaper' />
             </Column>
         );
     }
