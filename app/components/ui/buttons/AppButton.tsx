@@ -58,15 +58,17 @@ import React, { useState } from 'react';
 import { TouchableOpacity } from 'react-native';
 import Row from '../../layout/Row';
 import { BlurView } from 'expo-blur';
+import GuildedButton from './GuildedButton';
 
 interface AppButtonProps {
     children: React.ReactNode;
-    variant?: 'outline-alt' | 'outline' | 'outline-accent' | 'outline-invert' | 'filled' | 'grey' | 'accent' | 'red' | 'none' | 'black' | 'green';
+    variant?: 'outline-alt' | 'outline' | 'outline-accent' | 'outline-invert' | 'filled' | 'grey' | 'accent' | 'secondary' | 'red' | 'none' | 'black' | 'green';
     className?: string;
     onPress?: () => void;
     dropShadow?: boolean;
     disabled?: boolean;
     blurred?: boolean;
+    guildedHeight?: number;
 }
 
 const AppButton = ({
@@ -76,9 +78,36 @@ const AppButton = ({
     onPress,
     dropShadow = true,
     disabled = false,
-    blurred = false
+    blurred = false,
+    guildedHeight = 48,
 }: AppButtonProps) => {
     const [isPressed, setIsPressed] = useState(false);
+
+    if (variant === 'accent' || variant === 'secondary') {
+        const isSecondary = variant === 'secondary';
+        const buttonContent = (
+            <GuildedButton
+                onPress={onPress}
+                disabled={disabled}
+                className={className}
+                height={guildedHeight}
+                contentPaddingX={15}
+                contentPaddingY={0}
+                background={isSecondary ? 'inner-background' : '#2f2f2f'}
+                variant={isSecondary ? 'silver' : 'gold'}
+            >
+                <Row className="items-center justify-center w-full h-full" pointerEvents="none">
+                    {children}
+                </Row>
+            </GuildedButton>
+        );
+
+        return blurred ? (
+            <BlurView intensity={20} className='rounded'>
+                {buttonContent}
+            </BlurView>
+        ) : buttonContent;
+    }
 
     const baseStyles = 'h-12 flex-row items-center justify-center rounded gap-2 overflow-hidden';
     let extraStyles = '';
@@ -109,9 +138,6 @@ const AppButton = ({
         const bg = 'bg-none';
         extraStyles = bg;
         pressedStyles = 'brightness-100';
-    } else if (variant === 'accent') {
-        const bg = 'bg-accent';
-        extraStyles = `${bg} group hover:bg-accent-hover active:brightness-75`;
     } else if (variant === 'green') {
         const bg = 'bg-accent';
         extraStyles = `${bg} group hover:bg-accent-hover active:brightness-75`;

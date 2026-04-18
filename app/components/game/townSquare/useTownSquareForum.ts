@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useUserListGet } from '../../../../hooks/useUserListGet';
 import { useUserListRemove } from '../../../../hooks/useUserListRemove';
 import { useUserListSet } from '../../../../hooks/useUserListSet';
@@ -9,6 +9,7 @@ import { createClientId, getGameScopedKey } from '../../../../utils/multiplayer'
 import {
     ComposerSubmitPayload,
     ReplyViewModel,
+    TownSquareReadState,
     buildReplyTree,
     getCommentBodyMarkdown,
     getPostBodyMarkdown,
@@ -43,7 +44,7 @@ export const useTownSquareForum = ({ currentProfile, gameId, selectedPostId }: U
 
     const isLoading = posts === undefined || comments === undefined;
 
-    const [readState, setReadState] = useUserVariable<Record<string, number>>({
+    const [readState, setReadState] = useUserVariable<TownSquareReadState>({
         defaultValue: {},
         key: readStateKey,
     });
@@ -72,8 +73,9 @@ export const useTownSquareForum = ({ currentProfile, gameId, selectedPostId }: U
                 const plainText = post.plainText?.trim() || stripMarkdownSyntax(bodyMarkdownResolved);
                 const matchingReplies = replies.filter((reply) => reply.postId === post.postId);
                 const latestReplyAt = matchingReplies.reduce((maxValue, reply) => Math.max(maxValue, reply.createdAt), post.createdAt);
-                const readAt = readState.value[post.postId] ?? 0;
-                const isUnread = matchingReplies.some((reply) => reply.createdAt > readAt);
+                const threadReadState = readState.value[post.postId];
+                const lastReadAt = threadReadState?.lastReadAt ?? 0;
+                const isUnread = matchingReplies.some((reply) => reply.createdAt > lastReadAt);
 
                 return {
                     ...post,
@@ -104,14 +106,32 @@ export const useTownSquareForum = ({ currentProfile, gameId, selectedPostId }: U
         return buildReplyTree(selectedThreadReplies);
     }, [selectedThreadReplies]);
 
-    const markThreadRead = (postId: string) => {
-        setReadState({
-            ...readState.value,
-            [postId]: Date.now(),
-        });
-    };
+    const markThreadReadWithCount = useCallback((postId: string, replyCount: number) => {
+        const currentReadState = readState.value ?? {};
+        const existingThreadState = currentReadState[postId];
 
-    const createThread = ({ markdown, plainText, title }: ComposerSubmitPayload) => {
+        if (existingThreadState?.replyCount === replyCount) {
+            return;
+        }
+
+        setReadState({
+            ...currentReadState,
+            [postId]: {
+                replyCount,
+                lastReadAt: Date.now(),
+            },
+        });
+    }, [readState.value, setReadState]);
+
+    const markThreadRead = useCallback((postId: string) => {
+        const replyCount = replies.filter((reply) => reply.postId === postId).length;
+        markThreadReadWithCount(postId, replyCount);
+    }, [markThreadReadWithCount, replies]);
+
+    const createThread = (
+        { markdown, plainText, title }: ComposerSubmitPayload,
+        postType: 'thread' | 'announcement' = 'thread',
+    ) => {
         const postId = createClientId('post');
         const postValue: TownSquarePost = {
             authorUserId: currentProfile.userId,
@@ -121,7 +141,18 @@ export const useTownSquareForum = ({ currentProfile, gameId, selectedPostId }: U
             markdown,
             plainText,
             postId,
+            postType,
             title,
+        };
+
+        // Auto-mark the new thread as read so creator doesn't see "New" pill
+        const currentReadState = readState.value ?? {};
+        const updatedReadState = {
+            ...currentReadState,
+            [postId]: {
+                replyCount: 0,
+                lastReadAt: Date.now(),
+            },
         };
 
         executeCommand({
@@ -134,6 +165,7 @@ export const useTownSquareForum = ({ currentProfile, gameId, selectedPostId }: U
                     sortKey: 'createdAt',
                     value: postValue,
                 });
+                setReadState(createUndoSnapshot(updatedReadState));
             },
             description: 'Create Town Square Thread',
             undoAction: () => {
@@ -141,6 +173,7 @@ export const useTownSquareForum = ({ currentProfile, gameId, selectedPostId }: U
                     itemId: postId,
                     key: postKey,
                 });
+                setReadState(createUndoSnapshot(currentReadState));
             },
         });
     };
@@ -158,9 +191,13 @@ export const useTownSquareForum = ({ currentProfile, gameId, selectedPostId }: U
     }) => {
         const commentId = createClientId('comment');
         const previousReadState = createUndoSnapshot(readState.value);
+        const currentThreadState = readState.value[postId];
         const nextReadState = createUndoSnapshot({
             ...previousReadState,
-            [postId]: Date.now(),
+            [postId]: {
+                replyCount: (currentThreadState?.replyCount ?? 0) + 1, // Optimistically increment reply count
+                lastReadAt: Date.now(),
+            },
         });
         const commentValue: TownSquareComment = {
             authorUserId: currentProfile.userId,
@@ -364,13 +401,20 @@ export const useTownSquareForum = ({ currentProfile, gameId, selectedPostId }: U
         });
     };
 
+    const createAnnouncement = (payload: ComposerSubmitPayload) => {
+        return createThread(payload, 'announcement');
+    };
+
     return {
+        createAnnouncement,
         createReply,
         createThread,
         deleteReply,
         deleteThread,
         isLoading,
         markThreadRead,
+        markThreadReadWithCount,
+        readState: readState.value ?? {},
         replies,
         selectedThread,
         selectedThreadReplyTree,

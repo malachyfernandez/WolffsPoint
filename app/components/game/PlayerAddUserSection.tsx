@@ -28,13 +28,13 @@ const PlayerAddUserSection = ({ gameId, removeBottomSpace = false }: PlayerAddUs
     return (
         <>
             {users.length > 0 ? (
-                <AppButton variant="filled" className='w-40 h-8 ml-4 -mt-6' onPress={handleOpenDialog}>
+                <AppButton variant="accent" className='w-40 ml-4 -mt-6' guildedHeight={40} onPress={handleOpenDialog}>
                     <PoppinsText weight='bold' className='text-white text-xl'>+</PoppinsText>
                     <PoppinsText weight='bold' className='text-white'>Add Player</PoppinsText>
                 </AppButton>
             ) : (
                 <Row className={`items-center justify-center ${removeBottomSpace ? '-mb-6' : ''}`}>
-                    <AppButton variant="filled" className='w-40 h-8' onPress={handleOpenDialog}>
+                    <AppButton variant="accent" className='w-40' guildedHeight={40} onPress={handleOpenDialog}>
                         <PoppinsText weight='bold' className='text-white text-xl'>+</PoppinsText>
                         <PoppinsText weight='bold' className='text-white'>Add Player</PoppinsText>
                     </AppButton>

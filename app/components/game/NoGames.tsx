@@ -13,9 +13,9 @@ const NoGames = ({ joinGame }: NoGamesProps) => {
         <Column className='w-full items-center h-full justify-center'>
 
             
-                <SadEmoji size={100} lineWidth={1} />
+                <SadEmoji size={100} lineWidth={1} color={"white"}/>
             
-            <PoppinsText >You dont have any games right now</PoppinsText>
+            <PoppinsText color='white' >You dont have any games right now</PoppinsText>
             <JoinGameButton onJoin={joinGame}/>
         </Column>
     );

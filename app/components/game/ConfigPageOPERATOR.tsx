@@ -16,6 +16,7 @@ import WakeUpTimeConfigItem from './config/WakeUpTimeConfigItem';
 import DaysPerGameDayConfigItem from './config/DaysPerGameDayConfigItem';
 import RuleBookPageOPERATOR from './RuleBookPageOPERATOR';
 import PhoneBookPageOPERATOR from './PhoneBookPageOPERATOR';
+import RemoveGameButton from './RemoveGameButton';
 
 interface ConfigPageOPERATORProps {
     gameId: string;
@@ -130,6 +131,8 @@ const ConfigPageOPERATOR = ({ gameId, currentUserId }: ConfigPageOPERATORProps) 
                             <WakeUpTimeConfigItem gameId={gameId} />
                             <DaysPerGameDayConfigItem gameId={gameId} />
                         </Column>
+
+                        <RemoveGameButton gameId={gameId} />
                     </Column>
                 </LayoutStateAnimatedView.Option>
 

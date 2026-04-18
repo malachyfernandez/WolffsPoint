@@ -7,7 +7,7 @@ import MarkdownEditorDialog from './MarkdownEditorDialog';
 import { useTownSquareAuthorIdentity } from './townSquare/TownSquareAuthorIdentity';
 import TownSquareThreadDetailView from './townSquare/TownSquareThreadDetailView';
 import TownSquareThreadListView from './townSquare/TownSquareThreadListView';
-import { truncateText } from './townSquare/townSquareUtils';
+import { ThreadViewModel, truncateText } from './townSquare/townSquareUtils';
 import { useTownSquareForum } from './townSquare/useTownSquareForum';
 
 interface TownSquarePagePLAYERProps {
@@ -19,6 +19,7 @@ type TownSquareScreenState = 'list' | 'thread';
 
 const TownSquarePagePLAYER = ({ gameId, currentProfile }: TownSquarePagePLAYERProps) => {
     const [isThreadComposerOpen, setIsThreadComposerOpen] = useState(false);
+    const [isAnnouncementComposerOpen, setIsAnnouncementComposerOpen] = useState(false);
     const [isThreadEditComposerOpen, setIsThreadEditComposerOpen] = useState(false);
     const [isReplyComposerOpen, setIsReplyComposerOpen] = useState(false);
     const [selectedPostId, setSelectedPostId] = useState('');
@@ -29,12 +30,14 @@ const TownSquarePagePLAYER = ({ gameId, currentProfile }: TownSquarePagePLAYERPr
 
     const listScrollRef = useRef<ScrollView | null>(null);
     const {
+        createAnnouncement,
         createReply,
         createThread,
         deleteReply,
         deleteThread,
         isLoading,
-        markThreadRead,
+        markThreadReadWithCount,
+        readState,
         replies,
         selectedThread,
         selectedThreadReplyTree,
@@ -82,13 +85,13 @@ const TownSquarePagePLAYER = ({ gameId, currentProfile }: TownSquarePagePLAYERPr
         userId: selectedReplyTarget?.authorUserId ?? currentProfile.userId,
     });
 
-    const openThread = (postId: string) => {
-        setSelectedPostId(postId);
+    const openThread = (thread: ThreadViewModel) => {
+        setSelectedPostId(thread.postId);
         setExpandedBranchIds({});
         setEditingReplyId(null);
         setIsThreadEditComposerOpen(false);
         setReplyTargetCommentId(null);
-        markThreadRead(postId);
+        markThreadReadWithCount(thread.postId, thread.replyCount);
     };
 
     const closeThread = () => {
@@ -112,8 +115,10 @@ const TownSquarePagePLAYER = ({ gameId, currentProfile }: TownSquarePagePLAYERPr
                     <TownSquareThreadListView
                         isLoading={isLoading}
                         listScrollRef={listScrollRef}
+                        onNewAnnouncement={() => setIsAnnouncementComposerOpen(true)}
                         onNewThread={() => setIsThreadComposerOpen(true)}
-                        onOpenThread={(thread) => openThread(thread.postId)}
+                        onOpenThread={openThread}
+                        readStateSnapshot={readState}
                         onScrollYChange={setThreadListScrollY}
                         threads={threads}
                     />
@@ -155,6 +160,7 @@ const TownSquarePagePLAYER = ({ gameId, currentProfile }: TownSquarePagePLAYERPr
                                     setReplyTargetCommentId(null);
                                     setIsReplyComposerOpen(true);
                                 }}
+                                onThreadViewed={markThreadReadWithCount}
                                 replyTree={selectedThreadReplyTree}
                                 selectedThread={selectedThread}
                             />
@@ -166,6 +172,7 @@ const TownSquarePagePLAYER = ({ gameId, currentProfile }: TownSquarePagePLAYERPr
             </LayoutStateAnimatedView.Container>
 
             <MarkdownEditorDialog
+                dialogSubtext='Everyone can reply'
                 includeTitle={true}
                 isOpen={isThreadComposerOpen}
                 onOpenChange={setIsThreadComposerOpen}
@@ -173,6 +180,17 @@ const TownSquarePagePLAYER = ({ gameId, currentProfile }: TownSquarePagePLAYERPr
                 onSubmit={createThread}
                 submitLabel='Publish'
                 title='Create thread'
+            />
+
+            <MarkdownEditorDialog
+                dialogSubtext='Just You; No Replies'
+                includeTitle={true}
+                isOpen={isAnnouncementComposerOpen}
+                onOpenChange={setIsAnnouncementComposerOpen}
+                requireMarkdown={true}
+                onSubmit={createAnnouncement}
+                submitLabel='Publish'
+                title='Create announcement'
             />
 
             <MarkdownEditorDialog

@@ -1,17 +1,5 @@
-import React, { useMemo, useState } from 'react';
-import { Pressable } from 'react-native';
-import { useUserListGet } from '../../../hooks/useUserListGet';
-import { useUserListSet } from '../../../hooks/useUserListSet';
-import { TownSquarePost } from '../../../types/multiplayer';
-import { createClientId, getGameScopedKey } from '../../../utils/multiplayer';
-import Column from '../layout/Column';
-import Row from '../layout/Row';
-import PoppinsText from '../ui/text/PoppinsText';
-import AppButton from '../ui/buttons/AppButton';
-import MarkdownRenderer from '../ui/markdown/MarkdownRenderer';
-import MarkdownEditorDialog from './MarkdownEditorDialog';
-import TownSquarePostDialog from './TownSquarePostDialog';
-import { TownSquareAuthorAvatar, TownSquareAuthorName } from './townSquare/TownSquareAuthorIdentity';
+import React, { useMemo } from 'react';
+import TownSquarePagePLAYER from './TownSquarePagePLAYER';
 
 interface TownSquarePageOPERATORProps {
     gameId: string;
@@ -19,103 +7,21 @@ interface TownSquarePageOPERATORProps {
 }
 
 const TownSquarePageOPERATOR = ({ gameId, currentUserId }: TownSquarePageOPERATORProps) => {
-    const [isComposeDialogOpen, setIsComposeDialogOpen] = useState(false);
-    const [selectedPostId, setSelectedPostId] = useState<string>('');
-    const setPost = useUserListSet<TownSquarePost>();
-    const postKey = getGameScopedKey('townSquarePosts', gameId);
-    const posts = useUserListGet<TownSquarePost>({
-        key: postKey,
-        returnTop: 200,
-    });
+    const operatorProfile = useMemo(() => ({
+        bioMarkdown: 'Game operator account',
+        claimedAt: 0,
+        discord: '',
+        email: 'operator@game.local',
+        gameId,
+        inGameName: 'Game Operator',
+        instagram: '',
+        otherContact: '',
+        phoneNumber: '',
+        profileImageUrl: '',
+        userId: currentUserId,
+    }), [currentUserId, gameId]);
 
-    const sortedPosts = useMemo(() => {
-        return [...(posts ?? [])].sort((left, right) => (right.value.createdAt ?? 0) - (left.value.createdAt ?? 0));
-    }, [posts]);
-
-    const selectedPost = sortedPosts.find((post) => post.value.postId === selectedPostId)?.value ?? null;
-
-    return (
-        <Column gap={4}>
-            <Row className='justify-between items-center'>
-                <Column gap={0}>
-                    <PoppinsText weight='medium'>Town Square</PoppinsText>
-                    <PoppinsText varient='subtext'>Markdown posts and comments for everyone in the game.</PoppinsText>
-                </Column>
-                <AppButton variant='accent' className='w-36' onPress={() => setIsComposeDialogOpen(true)}>
-                    <PoppinsText weight='medium' color='white'>New post</PoppinsText>
-                </AppButton>
-            </Row>
-            <Column gap={3}>
-                {sortedPosts.length > 0 ? sortedPosts.map((post) => (
-                    <Pressable key={post.value.postId} onPress={() => setSelectedPostId(post.value.postId)}>
-                        <Column className='rounded-xl border border-subtle-border bg-white p-4' gap={3}>
-                            <Row className='items-center gap-3'>
-                                <TownSquareAuthorAvatar gameId={post.value.gameId} size={48} userId={post.value.authorUserId} />
-                                <Column gap={0}>
-                                    <TownSquareAuthorName gameId={post.value.gameId} userId={post.value.authorUserId} weight='medium' />
-                                    <PoppinsText varient='subtext'>{new Date(post.value.createdAt).toLocaleString()}</PoppinsText>
-                                </Column>
-                            </Row>
-                            <MarkdownRenderer markdown={post.value.markdown} />
-                        </Column>
-                    </Pressable>
-                )) : (
-                    <Column className='rounded-xl border border-subtle-border bg-white p-4'>
-                        <PoppinsText varient='subtext'>No posts yet. Start the conversation.</PoppinsText>
-                    </Column>
-                )}
-            </Column>
-            <MarkdownEditorDialog
-                isOpen={isComposeDialogOpen}
-                onOpenChange={setIsComposeDialogOpen}
-                title='New Town Square Post'
-                submitLabel='Post'
-                requireMarkdown={true}
-                onSubmit={({ markdown, plainText }) => {
-                    const postId = createClientId('post');
-                    setPost({
-                        key: postKey,
-                        itemId: postId,
-                        value: {
-                            gameId,
-                            postId,
-                            authorUserId: currentUserId,
-                            bodyMarkdown: markdown,
-                            markdown,
-                            plainText,
-                            createdAt: Date.now(),
-                        },
-                        privacy: 'PUBLIC',
-                        searchKeys: ['title', 'plainText', 'markdown'],
-                        sortKey: 'createdAt',
-                    });
-                }}
-            />
-            <TownSquarePostDialog
-                gameId={gameId}
-                isOpen={selectedPost !== null}
-                onOpenChange={(open) => {
-                    if (!open) {
-                        setSelectedPostId('');
-                    }
-                }}
-                post={selectedPost}
-                currentProfile={{
-                    gameId,
-                    email: 'operator@game.local',
-                    userId: currentUserId,
-                    inGameName: 'Game Operator',
-                    profileImageUrl: '',
-                    phoneNumber: '',
-                    instagram: '',
-                    discord: '',
-                    otherContact: '',
-                    bioMarkdown: 'Game operator account',
-                    claimedAt: Date.now(),
-                }}
-            />
-        </Column>
-    );
+    return <TownSquarePagePLAYER currentProfile={operatorProfile} gameId={gameId} />;
 };
 
 export default TownSquarePageOPERATOR;

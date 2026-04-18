@@ -197,7 +197,7 @@ const NightlyPageOPERATOR = ({ currentUserId: _currentUserId, gameId }: NightlyP
                                 <PoppinsText weight='medium'>Player submissions</PoppinsText>
                                 <PoppinsText varient='subtext'>{voteCount}/{users.length} voted, {actionCount}/{users.length} submitted actions</PoppinsText>
                             </Column>
-                            <AppButton variant='filled' className='w-48' onPress={() => setIsCertificationDialogOpen(true)}>
+                            <AppButton variant='accent' className='w-48' onPress={() => setIsCertificationDialogOpen(true)}>
                                 <PoppinsText weight='medium' color='white'>Review / Certify</PoppinsText>
                             </AppButton>
                         </Row>

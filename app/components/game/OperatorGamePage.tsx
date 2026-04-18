@@ -9,7 +9,6 @@ import TownSquarePagePLAYER from './TownSquarePagePLAYER';
 import NewspaperPageOPERATOR from './NewspaperPageOPERATOR';
 import ConfigPageOPERATOR from './ConfigPageOPERATOR';
 import GameTabBar, { GameTabDefinition } from './GameTabBar';
-import RemoveGameButton from './RemoveGameButton';
 import GameUserIcon from '../ui/icons/UserIcon';
 import PaperContainer from '../ui/PaperContainer';
 import { PlayerProfile } from '../../../types/multiplayer';
@@ -49,7 +48,7 @@ const OperatorGamePage = ({ gameId, currentUserId }: OperatorGamePageProps) => {
     };
 
     return (
-        <Column gap={1}>
+        <Column gap={0}>
             <GameTabBar activeTab={activeTab} onTabPress={setActiveTab} tabs={operatorTabs} />
             <PaperContainer>
                 <Animated.View entering={FadeIn.duration(300)} className='w-full'>
@@ -61,7 +60,6 @@ const OperatorGamePage = ({ gameId, currentUserId }: OperatorGamePageProps) => {
                     {activeTab === 'rulebook' && <ConfigPageOPERATOR gameId={gameId} currentUserId={currentUserId} />}
                 </Animated.View>
             </PaperContainer>
-            <RemoveGameButton gameId={gameId} />
         </Column>
     );
 };

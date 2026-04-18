@@ -4,12 +4,14 @@ import Row from '../layout/Row';
 import PoppinsText from '../ui/text/PoppinsText';
 import AppButton from '../ui/buttons/AppButton';
 import MarkdownRenderer from '../ui/markdown/MarkdownRenderer';
+import PlaceholderCard from '../ui/PlaceholderCard';
 import { useSharedListValue } from '../../../hooks/useSharedListValue';
+import { useUserVariableGet } from '../../../hooks/useUserVariableGet';
 import { PlayerProfile } from '../../../types/multiplayer';
 import { RoleTableItem } from '../../../types/roleTable';
 import { UserTableItem } from '../../../types/playerTable';
-import { getContextualDayRangeLabel, getCurrentPlayableDayIndex, parseStoredDayDates } from '../../../utils/multiplayer';
-import { ChevronLeft, ChevronRight, Eye } from 'lucide-react-native';
+import { getContextualDayRangeLabel, getCurrentPlayableDayIndex, getGameScopedKey, normalizeGameSchedule, parseStoredDayDates, defaultGameSchedule, formatTimeLabel, formatContextualDateLabel, isDayReleasedAtTime } from '../../../utils/multiplayer';
+import { ChevronLeft, ChevronRight, Eye, Sun } from 'lucide-react-native';
 import { Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import YourEyesOnlyDayContentPLAYER from './YourEyesOnlyDayContentPLAYER';
@@ -32,11 +34,29 @@ const YourEyesOnlyPagePLAYER = ({ gameId, currentEmail, matchingPlayer, currentP
     const { value: dayDateStrings } = useSharedListValue<string[]>({ key: 'dayDatesArray', itemId: gameId, defaultValue: [] });
     const { value: numberOfRealDaysPerInGameDay } = useSharedListValue<number>({ key: 'numberOfRealDaysPerInGameDay', itemId: gameId, defaultValue: 2 });
     const roleTable = useSharedListValue<RoleTableItem[]>({ key: 'roleTable', itemId: gameId, defaultValue: [] });
+    const scheduleRecords = useUserVariableGet({ key: getGameScopedKey('gameSchedule', gameId), returnTop: 1 });
+    const [now, setNow] = useState(() => new Date());
     const { width } = useWindowDimensions();
 
     const dayDates = useMemo(() => parseStoredDayDates(dayDateStrings), [dayDateStrings]);
     const currentDayIndex = useMemo(() => getCurrentPlayableDayIndex(dayDates), [dayDates]);
-    const [selectedDayIndex, setSelectedDayIndex] = useState(currentDayIndex);
+    const [selectedDayIndex, setSelectedDayIndex] = useState(() => getCurrentPlayableDayIndex(parseStoredDayDates(dayDateStrings)));
+    const schedule = normalizeGameSchedule(scheduleRecords?.[0]?.value ?? defaultGameSchedule);
+    // Content is released if:
+    // 1. It's a previous day (selectedDayIndex < currentDayIndex) - always released
+    // 2. It's the current/future day - only blocked on the START DATE until wake-up time
+    const selectedDayStartDate = dayDates[selectedDayIndex];
+    const isPreviousDay = selectedDayIndex < currentDayIndex;
+    const isStartOfSelectedDay = selectedDayStartDate ? new Date(now).setHours(0,0,0,0) === new Date(selectedDayStartDate).setHours(0,0,0,0) : false;
+    const hasWokenUp = useMemo(() => {
+        if (isPreviousDay) return true; // Previous days are always released
+        if (!selectedDayStartDate) return false;
+        // For current/future days, only apply wake-up time on the start date itself
+        if (!isStartOfSelectedDay) return true; // Not the start date, so released
+        // It's the start date - check if wake-up time has passed
+        return isDayReleasedAtTime(selectedDayStartDate, schedule.wakeUpTime, now);
+    }, [isPreviousDay, selectedDayStartDate, isStartOfSelectedDay, schedule.wakeUpTime, now]);
+    const releaseDateLabel = useMemo(() => selectedDayStartDate ? formatContextualDateLabel(selectedDayStartDate, undefined, now, 'lower') : '', [selectedDayStartDate, now]);
     const selectedDayRangeLabel = useMemo(() => getContextualDayRangeLabel(dayDates, selectedDayIndex, numberOfRealDaysPerInGameDay), [selectedDayIndex, dayDates, numberOfRealDaysPerInGameDay]);
     const previousDayLabel = useMemo(() => selectedDayIndex > 0 ? getContextualDayRangeLabel(dayDates, selectedDayIndex - 1, numberOfRealDaysPerInGameDay) : '', [dayDates, numberOfRealDaysPerInGameDay, selectedDayIndex]);
     const nextDayLabel = useMemo(() => selectedDayIndex < currentDayIndex ? getContextualDayRangeLabel(dayDates, selectedDayIndex + 1, numberOfRealDaysPerInGameDay) : '', [currentDayIndex, dayDates, numberOfRealDaysPerInGameDay, selectedDayIndex]);
@@ -64,10 +84,15 @@ const YourEyesOnlyPagePLAYER = ({ gameId, currentEmail, matchingPlayer, currentP
     }, [currentDayIndex, dayDates.length]);
 
     useEffect(() => {
+        const intervalId = setInterval(() => {
+            setNow(new Date());
+        }, 60000); // Update every minute
+
         return () => {
             if (leavingTimeoutRef.current) {
                 clearTimeout(leavingTimeoutRef.current);
             }
+            clearInterval(intervalId);
         };
     }, []);
 
@@ -224,12 +249,26 @@ const YourEyesOnlyPagePLAYER = ({ gameId, currentEmail, matchingPlayer, currentP
                         ) : null}
 
                         <Animated.View key={`selected-${selectedDayIndex}`} style={enteringStyle}>
-                            <YourEyesOnlyDayContentPLAYER
-                                gameId={gameId}
-                                currentEmail={currentEmail}
-                                currentUserId={currentProfile.userId}
-                                dayIndex={selectedDayIndex}
-                            />
+                            {hasWokenUp ? (
+                                <YourEyesOnlyDayContentPLAYER
+                                    gameId={gameId}
+                                    currentEmail={currentEmail}
+                                    currentUserId={currentProfile.userId}
+                                    dayIndex={selectedDayIndex}
+                                />
+                            ) : (
+                                <PlaceholderCard>
+                                    <Column className='items-center' gap={3}>
+                                        <Sun size={48} color='rgb(46, 41, 37)' />
+                                        <PoppinsText weight='bold' className='text-xl text-center'>
+                                            Not yet released
+                                        </PoppinsText>
+                                        <PoppinsText varient='subtext' className='text-center'>
+                                            Day content will be available {releaseDateLabel || 'soon'} at {formatTimeLabel(schedule.wakeUpTime)}.
+                                        </PoppinsText>
+                                    </Column>
+                                </PlaceholderCard>
+                            )}
                         </Animated.View>
                     </View>
                 </Column>
@@ -241,22 +280,22 @@ const YourEyesOnlyPagePLAYER = ({ gameId, currentEmail, matchingPlayer, currentP
                     className='z-50 items-center pt-10'
                     pointerEvents={overlayOpacity.value < 0.5 ? 'none' : 'auto'}
                 >
-                    <Column className='rounded-3xl bg-text/5 px-8 py-8 max-w-md' gap={5}>
+                    <PlaceholderCard>
                         <Column className='items-center' gap={3}>
                             <Eye size={48} color='rgb(46, 41, 37)' />
                             <PoppinsText weight='bold' className='text-xl text-center'>
                                 Are you alone?
                             </PoppinsText>
                             <PoppinsText varient='subtext' className='text-center'>
-                                This page contains private information. Please confirm you are in a secure location before proceeding.
+                                We don't want anyone peaking!
                             </PoppinsText>
                         </Column>
                         <Row className='justify-center'>
-                            <AppButton variant='black' className='px-6 py-3' onPress={handleConfirmAlone}>
+                            <AppButton variant='accent' className='w-44' onPress={handleConfirmAlone}>
                                 <PoppinsText weight='medium' color='white'>I am alone</PoppinsText>
                             </AppButton>
                         </Row>
-                    </Column>
+                    </PlaceholderCard>
                 </Animated.View>
             )}
         </Column>

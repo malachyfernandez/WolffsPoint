@@ -35,6 +35,7 @@ export type TownSquarePost = {
     bodyHtml?: string;
     plainText?: string;
     createdAt: number;
+    postType?: 'thread' | 'announcement';
 };
 
 export type TownSquareComment = {

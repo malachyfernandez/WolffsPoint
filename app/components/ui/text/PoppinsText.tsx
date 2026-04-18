@@ -36,7 +36,7 @@ const PoppinsText = ({
 
 
     if (varient === 'subtext') {
-        className += ' text-sm opacity-70';
+        className += ' text-xs opacity-70';
     }
 
     if (varient === 'cardHeader') {

@@ -9,13 +9,13 @@ import Row from '../layout/Row';
 
 interface JoinedGameListItemProps {
     game: string;
-    onLeave: () => void;
+    onArchive: () => void;
     className?: string;
     setActiveGameId: (gameId: string) => void;
     index: number;
 }
 
-const JoinedGameListItem = ({ game, onLeave, className, setActiveGameId, index }: JoinedGameListItemProps) => {
+const JoinedGameListItem = ({ game, onArchive, className, setActiveGameId, index }: JoinedGameListItemProps) => {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
 
     const gameInfo = useUserListGet({
@@ -70,8 +70,7 @@ const JoinedGameListItem = ({ game, onLeave, className, setActiveGameId, index }
                 gameName={displayName}
                 isOpen={isDialogOpen}
                 onOpenChange={setIsDialogOpen}
-                onLeave={onLeave}
-                onArchive={() => { }}
+                onArchive={onArchive}
             />
         </>
     );

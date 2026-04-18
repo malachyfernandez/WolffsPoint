@@ -120,7 +120,7 @@ const PlayerAccessGate = ({ gameId, currentUserId, children }: PlayerAccessGateP
                     <PoppinsText weight='medium'>Claim your player profile</PoppinsText>
                     <PoppinsText varient='subtext'>You matched the email {matchingPlayer.email}. Finish your in-game profile to enter the player tabs.</PoppinsText>
                     <Row>
-                        <AppButton variant='black' className='w-44' onPress={() => setIsProfileDialogOpen(true)}>
+                        <AppButton variant='accent' className='w-44' onPress={() => setIsProfileDialogOpen(true)}>
                             <PoppinsText weight='medium' color='white'>Set up profile</PoppinsText>
                         </AppButton>
                     </Row>

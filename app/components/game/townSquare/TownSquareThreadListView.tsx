@@ -2,21 +2,24 @@ import React, { RefObject, useMemo } from 'react';
 import { ScrollView } from 'react-native';
 import { ScrollShadow } from 'heroui-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Plus } from 'lucide-react-native';
 import StateAnimatedView from '../../ui/StateAnimatedView';
 import Column from '../../layout/Column';
 import Row from '../../layout/Row';
 import AppButton from '../../ui/buttons/AppButton';
 import PoppinsText from '../../ui/text/PoppinsText';
 import LoadingText from '../../ui/loading/LoadingText';
-import { ThreadViewModel } from './townSquareUtils';
+import { ThreadViewModel, TownSquareReadState } from './townSquareUtils';
 import TownSquareThreadListItem from './TownSquareThreadListItem';
 
 interface TownSquareThreadListViewProps {
     isLoading: boolean;
     listScrollRef: RefObject<ScrollView | null>;
+    onNewAnnouncement: () => void;
     onNewThread: () => void;
     onOpenThread: (thread: ThreadViewModel) => void;
     onScrollYChange: (scrollY: number) => void;
+    readStateSnapshot: TownSquareReadState;
     threads: ThreadViewModel[];
 }
 
@@ -25,9 +28,11 @@ const fadeIn = { opacity: [0, 1] as [number, number], duration: 300 };
 const TownSquareThreadListView = ({
     isLoading,
     listScrollRef,
+    onNewAnnouncement,
     onNewThread,
     onOpenThread,
     onScrollYChange,
+    readStateSnapshot,
     threads,
 }: TownSquareThreadListViewProps) => {
     const hasLoaded = useMemo(() => !isLoading, [isLoading]);
@@ -36,11 +41,25 @@ const TownSquareThreadListView = ({
         <Column className='flex-1 px-4 py-4' gap={5}>
             <Row className='items-start justify-between gap-4'>
                 <Column gap={1}>
-                    <PoppinsText weight='bold' className='text-3xl leading-10'>Town Square</PoppinsText>
+                    <PoppinsText weight='bold' className='text-3xl hidden md:block leading-10'>Town Square</PoppinsText>
                 </Column>
-                <AppButton variant='filled' className='w-36' onPress={onNewThread}>
-                    <PoppinsText weight='medium' color='white'>New thread</PoppinsText>
-                </AppButton>
+                <Row className='items-center gap-2'>
+                    <AppButton variant='secondary' className='px-0' onPress={onNewAnnouncement}>
+                        <Row className='items-center gap-2' gap={3}>
+                            <Plus size={20} color='black' />
+                            <Column className='items-start' gap={0}>
+                                <PoppinsText weight='medium' className='-mb-1'>Announcement</PoppinsText>
+                                <PoppinsText varient='subtext'>Just You; No Replies</PoppinsText>
+                            </Column>
+                        </Row>
+                    </AppButton>
+                    <AppButton variant='accent' className='px-0' onPress={onNewThread}>
+                        <Row className='items-center gap-2' gap={2}>
+                            <Plus size={20} color='white' />
+                            <PoppinsText weight='medium' color='white'>Thread</PoppinsText>
+                        </Row>
+                    </AppButton>
+                </Row>
             </Row>
 
             <Column className='flex-1' gap={3}>
@@ -80,6 +99,7 @@ const TownSquareThreadListView = ({
                                                 index={index}
                                                 isLast={index === threads.length - 1}
                                                 onPress={() => onOpenThread(thread)}
+                                                readStateSnapshot={readStateSnapshot}
                                                 thread={thread}
                                             />
                                         ))}

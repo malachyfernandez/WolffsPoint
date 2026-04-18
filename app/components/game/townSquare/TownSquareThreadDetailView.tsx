@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Pressable, ScrollView } from 'react-native';
 import { ChevronLeft } from 'lucide-react-native';
 import { ScrollShadow } from 'heroui-native';
@@ -23,6 +23,7 @@ interface TownSquareThreadDetailViewProps {
     onExpandBranch: (branchId: string) => void;
     onReplyToThread: () => void;
     onReplyToComment: (reply: ReplyTreeNode) => void;
+    onThreadViewed?: (postId: string, replyCount: number) => void;
     replyTree: ReplyTreeNode[];
     selectedThread: ThreadViewModel;
 }
@@ -38,10 +39,17 @@ const TownSquareThreadDetailView = ({
     onExpandBranch,
     onReplyToComment,
     onReplyToThread,
+    onThreadViewed,
     replyTree,
     selectedThread,
 }: TownSquareThreadDetailViewProps) => {
     const isOwnThread = selectedThread.authorUserId === currentUserId;
+    const isAnnouncement = selectedThread.postType === 'announcement';
+
+    // Mark thread as read with current reply count when viewed
+    useEffect(() => {
+        onThreadViewed?.(selectedThread.postId, selectedThread.replyCount);
+    }, [selectedThread.postId, selectedThread.replyCount, onThreadViewed]);
 
     return (
         <Column className='flex-1 px-6 py-6' gap={5}>
@@ -68,7 +76,11 @@ const TownSquareThreadDetailView = ({
                             <MarkdownRenderer markdown={selectedThread.bodyMarkdownResolved} />
 
                             <Row className='items-center justify-between gap-3 border-b border-border/20 pb-4'>
-                                <PoppinsText varient='subtext'>{`${selectedThread.replyCount} repl${selectedThread.replyCount === 1 ? 'y' : 'ies'}`}</PoppinsText>
+                                {isAnnouncement ? (
+                                    <PoppinsText weight='medium' className='text-accent'>Announcement</PoppinsText>
+                                ) : (
+                                    <PoppinsText varient='subtext'>{`${selectedThread.replyCount} repl${selectedThread.replyCount === 1 ? 'y' : 'ies'}`}</PoppinsText>
+                                )}
                                 <Row className='items-center gap-3'>
                                     {isOwnThread ? (
                                         <>
@@ -80,36 +92,40 @@ const TownSquareThreadDetailView = ({
                                             </Pressable>
                                         </>
                                     ) : null}
-                                    <AppButton variant='outline' className='w-36' onPress={onReplyToThread}>
-                                        <PoppinsText weight='medium'>Reply</PoppinsText>
-                                    </AppButton>
+                                    {!isAnnouncement && (
+                                        <AppButton variant='outline' className='w-36' onPress={onReplyToThread}>
+                                            <PoppinsText weight='medium'>Reply</PoppinsText>
+                                        </AppButton>
+                                    )}
                                 </Row>
                             </Row>
                         </Column>
 
-                        <Column gap={4}>
-                            <Row className='items-center justify-between'>
-                                <PoppinsText weight='medium' className='text-2xl'>Replies</PoppinsText>
-                            </Row>
+                        {!isAnnouncement && (
+                            <Column gap={4}>
+                                <Row className='items-center justify-between'>
+                                    <PoppinsText weight='medium' className='text-2xl'>Replies</PoppinsText>
+                                </Row>
 
-                            {replyTree.length > 0 ? (
-                                <TownSquareReplyBranch
-                                    currentUserId={currentUserId}
-                                    depth={0}
-                                    expandedBranchIds={expandedBranchIds}
-                                    onDeleteReply={onDeleteReply}
-                                    onEditReply={onEditReply}
-                                    nodes={replyTree}
-                                    onExpandBranch={onExpandBranch}
-                                    onReply={onReplyToComment}
-                                />
-                            ) : (
-                                <Column className='py-8' gap={1}>
-                                    <PoppinsText weight='medium'>No replies yet</PoppinsText>
-                                    <PoppinsText varient='subtext'>Be the first person to answer this thread.</PoppinsText>
-                                </Column>
-                            )}
-                        </Column>
+                                {replyTree.length > 0 ? (
+                                    <TownSquareReplyBranch
+                                        currentUserId={currentUserId}
+                                        depth={0}
+                                        expandedBranchIds={expandedBranchIds}
+                                        onDeleteReply={onDeleteReply}
+                                        onEditReply={onEditReply}
+                                        nodes={replyTree}
+                                        onExpandBranch={onExpandBranch}
+                                        onReply={onReplyToComment}
+                                    />
+                                ) : (
+                                    <Column className='py-8' gap={1}>
+                                        <PoppinsText weight='medium'>No replies yet</PoppinsText>
+                                        <PoppinsText varient='subtext'>Be the first person to answer this thread.</PoppinsText>
+                                    </Column>
+                                )}
+                            </Column>
+                        )}
                     </Column>
                 </ScrollView>
             </ScrollShadow>

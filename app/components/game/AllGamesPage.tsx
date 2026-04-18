@@ -38,6 +38,16 @@ const AllGamesPage = ({
         defaultValue: [],
     });
 
+    const [archivedGames] = useUserVariable<string[]>({
+        key: "archivedGames",
+        defaultValue: [],
+    });
+
+    // Filter out archived games from the joined games list
+    const activeJoinedGames = (gamesTheyJoined.value || []).filter(
+        gameId => !(archivedGames.value || []).includes(gameId)
+    );
+
     const joinGame = (gameId: string) => {
         const updatedGamesTheyJoined = gamesTheyJoined.value.includes(gameId)
             ? gamesTheyJoined.value
@@ -62,7 +72,7 @@ const AllGamesPage = ({
 
     useSyncUserData(userData.value, setUserData);
 
-    const hasJoinedAGame = (gamesTheyJoined?.value.length ? true : false);
+    const hasJoinedAGame = (activeJoinedGames.length ? true : false);
     const hasMadeAGame = (myGames?.length ? true : false);
 
     const isGamesPageEmpty = !hasJoinedAGame && !hasMadeAGame;
@@ -83,7 +93,7 @@ const AllGamesPage = ({
 
                             {!isGamesPageEmpty ? (
                                 <GameList
-                                    gamesTheyJoined={gamesTheyJoined.value}
+                                    gamesTheyJoined={activeJoinedGames}
                                     setGamesTheyJoined={setGamesTheyJoined}
                                     myGames={myGames}
                                     hasJoinedAGame={hasJoinedAGame}

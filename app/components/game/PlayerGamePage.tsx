@@ -31,7 +31,7 @@ const PlayerGamePage = ({ gameId, currentUserId }: PlayerGamePageProps) => {
     return (
         <PlayerAccessGate gameId={gameId} currentUserId={currentUserId}>
             {({ currentEmail, matchingPlayer, profile }) => (
-                <Column gap={1}>
+                <Column gap={0}>
                     <GameTabBar activeTab={activeTab} onTabPress={setActiveTab} tabs={playerTabs} />
                     <PaperContainer>
                         {activeTab === 'townSquare' && <TownSquarePagePLAYER gameId={gameId} currentProfile={profile} />}

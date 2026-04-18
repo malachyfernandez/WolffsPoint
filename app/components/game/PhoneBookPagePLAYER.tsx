@@ -133,7 +133,7 @@ const PhoneBookHeader = ({ onEditProfile }: { onEditProfile: () => void }) => {
                 <PoppinsText weight='bold' className='text-xl'>Phone Book</PoppinsText>
                 <PoppinsText varient='subtext'>All players in the game.</PoppinsText>
             </Column>
-            <AppButton variant='black' className='w-36' onPress={onEditProfile}>
+            <AppButton variant='accent' className='w-40' onPress={onEditProfile}>
                 <PoppinsText weight='medium' color='white'>Edit profile</PoppinsText>
             </AppButton>
         </Row>

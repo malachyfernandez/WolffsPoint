@@ -4,15 +4,17 @@ import Row from '../layout/Row';
 import PoppinsText from '../ui/text/PoppinsText';
 import MarkdownRenderer from '../ui/markdown/MarkdownRenderer';
 import { useSharedListValue } from '../../../hooks/useSharedListValue';
-import { PlayerProfile } from '../../../types/multiplayer';
+import { useUserVariableGet } from '../../../hooks/useUserVariableGet';
+import { PlayerProfile, GameSchedule } from '../../../types/multiplayer';
 import { RoleTableItem } from '../../../types/roleTable';
 import { UserTableItem } from '../../../types/playerTable';
-import { getContextualDayRangeLabel, getCurrentPlayableDayIndex, parseStoredDayDates } from '../../../utils/multiplayer';
-import { ChevronLeft, ChevronRight } from 'lucide-react-native';
+import { getContextualDayRangeLabel, getCurrentPlayableDayIndex, getGameScopedKey, normalizeGameSchedule, parseStoredDayDates, defaultGameSchedule, formatTimeLabel, formatContextualDateLabel, isDayReleasedAtTime } from '../../../utils/multiplayer';
+import { ChevronLeft, ChevronRight, Newspaper } from 'lucide-react-native';
 import { Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import YourEyesOnlyDayContentPLAYER from './YourEyesOnlyDayContentPLAYER';
 import NewspaperDayView from './NewspaperDayView';
+import PlaceholderCard from '../ui/PlaceholderCard';
 
 interface YourEyesOnlyPagePLAYERProps {
     gameId: string;
@@ -27,18 +29,47 @@ const YourEyesOnlyPagePLAYER = ({ gameId, currentEmail, matchingPlayer, currentP
     const { value: dayDateStrings } = useSharedListValue<string[]>({ key: 'dayDatesArray', itemId: gameId, defaultValue: [] });
     const { value: numberOfRealDaysPerInGameDay } = useSharedListValue<number>({ key: 'numberOfRealDaysPerInGameDay', itemId: gameId, defaultValue: 2 });
     const roleTable = useSharedListValue<RoleTableItem[]>({ key: 'roleTable', itemId: gameId, defaultValue: [] });
+    const scheduleRecords = useUserVariableGet({ key: getGameScopedKey('gameSchedule', gameId), returnTop: 1 });
+    const [now, setNow] = useState(() => new Date());
     const { width } = useWindowDimensions();
 
     const dayDates = useMemo(() => parseStoredDayDates(dayDateStrings), [dayDateStrings]);
     const currentDayIndex = useMemo(() => getCurrentPlayableDayIndex(dayDates), [dayDates]);
-    const [selectedDayIndex, setSelectedDayIndex] = useState(currentDayIndex);
+    const [selectedDayIndex, setSelectedDayIndex] = useState(() => getCurrentPlayableDayIndex(parseStoredDayDates(dayDateStrings)));
+    const [leavingDayIndex, setLeavingDayIndex] = useState<number | null>(null);
+    const schedule = normalizeGameSchedule(scheduleRecords?.[0]?.value ?? defaultGameSchedule);
+    // Content is released if:
+    // 1. It's a previous day (selectedDayIndex < currentDayIndex) - always released
+    // 2. It's the current/future day - only blocked on the START DATE until wake-up time
+    const selectedDayStartDate = dayDates[selectedDayIndex];
+    const isPreviousDay = selectedDayIndex < currentDayIndex;
+    const isStartOfSelectedDay = selectedDayStartDate ? new Date(now).setHours(0,0,0,0) === new Date(selectedDayStartDate).setHours(0,0,0,0) : false;
+    const hasNewspaperReleased = useMemo(() => {
+        if (isPreviousDay) return true; // Previous days are always released
+        if (!selectedDayStartDate) return false;
+        // For current/future days, only apply wake-up time on the start date itself
+        if (!isStartOfSelectedDay) return true; // Not the start date, so released
+        // It's the start date - check if wake-up time has passed
+        return isDayReleasedAtTime(selectedDayStartDate, schedule.wakeUpTime, now);
+    }, [isPreviousDay, selectedDayStartDate, isStartOfSelectedDay, schedule.wakeUpTime, now]);
+    const hasLeavingDayReleased = useMemo(() => {
+        const leavingDayStartDateLocal = leavingDayIndex != null ? dayDates[leavingDayIndex] : null;
+        if (leavingDayIndex == null || !leavingDayStartDateLocal) return true;
+        const isLeavingDayPreviousLocal = leavingDayIndex < currentDayIndex;
+        if (isLeavingDayPreviousLocal) return true; // Previous days are always released
+        const isStartOfLeavingDayLocal = new Date(now).setHours(0,0,0,0) === new Date(leavingDayStartDateLocal).setHours(0,0,0,0);
+        // For current/future days, only apply wake-up time on the start date itself
+        if (!isStartOfLeavingDayLocal) return true; // Not the start date, so released
+        // It's the start date - check if wake-up time has passed
+        return isDayReleasedAtTime(leavingDayStartDateLocal, schedule.wakeUpTime, now);
+    }, [leavingDayIndex, dayDates, currentDayIndex, schedule.wakeUpTime, now]);
+    const releaseDateLabel = useMemo(() => selectedDayStartDate ? formatContextualDateLabel(selectedDayStartDate, undefined, now, 'lower') : '', [selectedDayStartDate, now]);
     const selectedDayRangeLabel = useMemo(() => getContextualDayRangeLabel(dayDates, selectedDayIndex, numberOfRealDaysPerInGameDay), [selectedDayIndex, dayDates, numberOfRealDaysPerInGameDay]);
     const previousDayLabel = useMemo(() => selectedDayIndex > 0 ? getContextualDayRangeLabel(dayDates, selectedDayIndex - 1, numberOfRealDaysPerInGameDay) : '', [dayDates, numberOfRealDaysPerInGameDay, selectedDayIndex]);
     const nextDayLabel = useMemo(() => selectedDayIndex < currentDayIndex ? getContextualDayRangeLabel(dayDates, selectedDayIndex + 1, numberOfRealDaysPerInGameDay) : '', [currentDayIndex, dayDates, numberOfRealDaysPerInGameDay, selectedDayIndex]);
     const roleData = roleTable.value.find((roleItem) => roleItem.role === matchingPlayer.role);
     const slideDistance = useMemo(() => Math.min(Math.max(width * 0.12, 24), 72), [width]);
     const transitionDuration = 240;
-    const [leavingDayIndex, setLeavingDayIndex] = useState<number | null>(null);
     const previousDayIndexRef = useRef<number | null>(null);
     const leavingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const hasInitializedSelectedDayRef = useRef(false);
@@ -61,10 +92,15 @@ const YourEyesOnlyPagePLAYER = ({ gameId, currentEmail, matchingPlayer, currentP
     }, [currentDayIndex, dayDates.length]);
 
     useEffect(() => {
+        const intervalId = setInterval(() => {
+            setNow(new Date());
+        }, 60000); // Update every minute
+
         return () => {
             if (leavingTimeoutRef.current) {
                 clearTimeout(leavingTimeoutRef.current);
             }
+            clearInterval(intervalId);
         };
     }, []);
 
@@ -178,12 +214,40 @@ const YourEyesOnlyPagePLAYER = ({ gameId, currentEmail, matchingPlayer, currentP
                             pointerEvents='none'
                             style={[styles.animatedContentOverlay, leavingStyle]}
                         >
-                            <NewspaperDayView gameId={gameId} dayIndex={leavingDayIndex} isLeaving />
+                            {hasLeavingDayReleased ? (
+                                <NewspaperDayView gameId={gameId} dayIndex={leavingDayIndex} isLeaving />
+                            ) : (
+                                <PlaceholderCard>
+                                    <Column className='items-center' gap={3}>
+                                        <Newspaper size={48} color='rgb(46, 41, 37)' />
+                                        <PoppinsText weight='bold' className='text-xl text-center'>
+                                            Not yet released
+                                        </PoppinsText>
+                                        <PoppinsText varient='subtext' className='text-center'>
+                                            The newspaper will be available at {formatTimeLabel(schedule.wakeUpTime)}.
+                                        </PoppinsText>
+                                    </Column>
+                                </PlaceholderCard>
+                            )}
                         </Animated.View>
                     ) : null}
 
                     <Animated.View key={`selected-${selectedDayIndex}`} style={enteringStyle}>
-                        <NewspaperDayView gameId={gameId} dayIndex={selectedDayIndex} />
+                        {hasNewspaperReleased ? (
+                            <NewspaperDayView gameId={gameId} dayIndex={selectedDayIndex} />
+                        ) : (
+                            <PlaceholderCard>
+                                <Column className='items-center' gap={3}>
+                                    <Newspaper size={48} color='rgb(46, 41, 37)' />
+                                    <PoppinsText weight='bold' className='text-xl text-center'>
+                                        Not yet released
+                                    </PoppinsText>
+                                    <PoppinsText varient='subtext' className='text-center'>
+                                        The newspaper will be available {releaseDateLabel || 'soon'} at {formatTimeLabel(schedule.wakeUpTime)}.
+                                    </PoppinsText>
+                                </Column>
+                            </PlaceholderCard>
+                        )}
                     </Animated.View>
                 </View>
             </Column>

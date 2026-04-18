@@ -20,6 +20,15 @@ export type ThreadViewModel = TownSquarePost & {
     isUnread: boolean;
 };
 
+export type ThreadReadState = {
+    replyCount: number;
+    lastReadAt: number;
+};
+
+export type TownSquareReadState = Record<string, ThreadReadState>;
+
+export const getTownSquareReadStateKey = (gameId: string): string => `townSquareReadState-${gameId}`;
+
 export type ReplyViewModel = TownSquareComment & {
     bodyMarkdownResolved: string;
     plainTextResolved: string;

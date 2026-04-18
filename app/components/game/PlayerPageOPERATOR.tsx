@@ -81,7 +81,7 @@ const PlayerPageOPERATOR = ({ currentUserId, gameId }: PlayerPageOPERATORProps) 
         }
     }, [isSyncing, hasInitiallyLoaded]);
 
-    const areAllColumnsReady = isPlayerTableColumnsReady && isDaysTableColumnsReady;
+    const areAllColumnsReady = users.length === 0 || (isPlayerTableColumnsReady && isDaysTableColumnsReady);
     const showLoading = isSyncing || !hasInitiallyLoaded || !areAllColumnsReady;
 
     return (
