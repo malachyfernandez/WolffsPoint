@@ -103,14 +103,14 @@ const RolesPageOPERATOR = ({ currentUserId, gameId }: RolesPageOPERATORProps) =>
                                 </Row>
                             </ScrollView>
                         </ScrollShadow>
-                        <AppButton variant="accent" className='w-40 ml-4 -mt-6' guildedHeight={40} onPress={UNDOABLEaddRole}>
+                        <AppButton variant="accent" className='w-40 ml-4 -mt-6' onPress={UNDOABLEaddRole}>
                             <PoppinsText weight='bold' className='text-white text-xl'>+</PoppinsText>
                             <PoppinsText weight='bold' className='text-white'>Add Role</PoppinsText>
                         </AppButton>
                     </Column>
                 ) : (
                     <Row className='items-center justify-center'>
-                        <AppButton variant="accent" className='w-40' guildedHeight={40} onPress={UNDOABLEaddRole}>
+                        <AppButton variant="accent" className='w-40' onPress={UNDOABLEaddRole}>
                             <PoppinsText weight='bold' className='text-white text-xl'>+</PoppinsText>
                             <PoppinsText weight='bold' className='text-white'>Add Role</PoppinsText>
                         </AppButton>

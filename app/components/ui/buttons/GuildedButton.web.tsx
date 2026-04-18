@@ -374,7 +374,10 @@ export default function GuildedButton({
             ? {}
             : {
                   backgroundColor: resolvedCenterBackgroundFrom,
-                  backgroundImage: `linear-gradient(to bottom, ${resolvedCenterBackgroundFrom}, ${resolvedCenterBackgroundTo})`,
+                  backgroundImage:
+                      resolvedCenterBackgroundFrom === resolvedCenterBackgroundTo
+                          ? 'none'
+                          : `linear-gradient(to bottom, ${resolvedCenterBackgroundFrom}, ${resolvedCenterBackgroundTo})`,
               }),
     };
 

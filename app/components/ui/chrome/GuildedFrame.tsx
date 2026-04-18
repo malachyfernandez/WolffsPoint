@@ -1,0 +1,37 @@
+import React from 'react';
+import { View } from 'react-native';
+import Column from '../../layout/Column';
+
+interface GuildedFrameProps {
+    children: React.ReactNode;
+    className?: string;
+    contentClassName?: string;
+    backgroundToken?: string;
+    showTexture?: boolean;
+}
+
+const GuildedFrame = ({ children, className = '', contentClassName = '' }: GuildedFrameProps) => {
+    return (
+        <Column className={`w-full relative bg-inner-background outline-accent outline-2 outline-offset-2 rounded-xl ${className}`.trim()}>
+            <View
+                style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    borderRadius: 12,
+                    opacity: 0.5,
+                    // @ts-ignore: RN types don't know about web CSS
+                    backgroundImage: "url('https://dydrl5o9tb.ufs.sh/f/6bPCFkuBjl92dnXGroFLInwCTmuU48v7QcbPaXDEgKZzYeBq')",
+                    backgroundRepeat: 'repeat',
+                    backgroundSize: '642px 642px',
+                    mixBlendMode: 'multiply',
+                }}
+            />
+            <Column className={`w-full bg-none rounded-xl m-0 ${contentClassName}`.trim()}>{children}</Column>
+        </Column>
+    );
+};
+
+export default GuildedFrame;

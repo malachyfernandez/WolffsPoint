@@ -68,7 +68,6 @@ interface AppButtonProps {
     dropShadow?: boolean;
     disabled?: boolean;
     blurred?: boolean;
-    guildedHeight?: number;
 }
 
 const AppButton = ({
@@ -79,7 +78,6 @@ const AppButton = ({
     dropShadow = true,
     disabled = false,
     blurred = false,
-    guildedHeight = 48,
 }: AppButtonProps) => {
     const [isPressed, setIsPressed] = useState(false);
 
@@ -90,7 +88,7 @@ const AppButton = ({
                 onPress={onPress}
                 disabled={disabled}
                 className={className}
-                height={guildedHeight}
+                height={48}
                 contentPaddingX={15}
                 contentPaddingY={0}
                 background={isSecondary ? 'inner-background' : '#2f2f2f'}

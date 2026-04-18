@@ -85,8 +85,8 @@ const NewWolffspointButtonAndDialogue = ({ onCreate }: NewWolffspointButtonAndDi
 
         <ConvexDialog.Root isOpen={isHeroDialogOpen} onOpenChange={setIsHeroDialogOpen}>
             <ConvexDialog.Trigger asChild>
-                <AppButton variant="outline-invert" className="h-12 w-40 shrink">
-                    <PoppinsText weight='medium' className='text-white'>New WolffsPoint</PoppinsText>
+                <AppButton variant="secondary" className="w-40 shrink">
+                    <PoppinsText weight='medium'>New WolffsPoint</PoppinsText>
                 </AppButton>
             </ConvexDialog.Trigger>
             <ConvexDialog.Portal>

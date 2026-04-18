@@ -287,7 +287,7 @@ const YourEyesOnlyPagePLAYER = ({ gameId, currentEmail, matchingPlayer, currentP
                                 Are you alone?
                             </PoppinsText>
                             <PoppinsText varient='subtext' className='text-center'>
-                                We don't want anyone peaking!
+                                We don&apos;t want anyone peaking!
                             </PoppinsText>
                         </Column>
                         <Row className='justify-center'>
