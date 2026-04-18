@@ -1,10 +1,11 @@
 import React from 'react';
-import { ScrollView } from 'react-native';
+import { ScrollView, View } from 'react-native';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
 import MarkdownRenderer from '../ui/markdown/MarkdownRenderer';
 import FontText from '../ui/text/FontText';
 import LoadingText from '../ui/loading/LoadingText';
+import PressLogo from '../ui/icons/Press';
 import { useUserListGet } from 'hooks/useUserListGet';
 import { ScrollShadow } from 'heroui-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -51,6 +52,9 @@ const NewspaperViewingView = ({ dayIndex, gameId, ownerUserId }: NewspaperViewin
         <ScrollShadow LinearGradientComponent={LinearGradient} className='w-full'>
             <ScrollView horizontal={true} className='w-full'>
                 <Column gap={4} className='w-[950px]'>
+                <View className='items-center justify-center px-8'>
+                <PressLogo width="100%" />
+                </View>
                     <Row gap={4} className='w-full p-4'>
                         {newspaperColumns.map((columnMarkdown, columnIndex) => (
                             <Column

@@ -4,6 +4,7 @@ import Column from '../layout/Column';
 import NewspaperViewingView from './NewspaperViewingView';
 import NewspaperPreviousDayVoteSummary from './NewspaperPreviousDayVoteSummary';
 import NewspaperViewingHeader from './NewspaperViewingHeader';
+import PressLogo from '../ui/icons/Press';
 
 interface NewspaperDayViewProps {
     gameId: string;
@@ -32,6 +33,7 @@ const NewspaperDayView = ({ gameId, dayIndex, ownerUserId, isLeaving }: Newspape
 
     return (
         <Column gap={4} className="w-full">
+            
             <NewspaperViewingHeader />
             {shouldAnimate ? (
                 <Animated.View entering={FadeIn.duration(400)}>

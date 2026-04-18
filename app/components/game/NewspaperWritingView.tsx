@@ -12,6 +12,7 @@ import NewspaperColumnEmptyState from './newspaperPageOperator/NewspaperColumnEm
 import NewspaperColumnFooter from './newspaperPageOperator/NewspaperColumnFooter';
 import NewspaperColumnHeader from './newspaperPageOperator/NewspaperColumnHeader';
 import NewspaperPageHeader from './newspaperPageOperator/NewspaperPageHeader';
+import PressLogo from '../ui/icons/Press';
 import { Usepaper } from 'types/usepaper';
 
 interface NewspaperWritingViewProps {
@@ -97,6 +98,9 @@ const NewspaperWritingView = ({ gameId }: NewspaperWritingViewProps) => {
             <ScrollShadow LinearGradientComponent={LinearGradient} className='w-full'>
                 <ScrollView horizontal={true} className='w-full'>
                     <Column gap={4} className='w-[950px]'>
+                        <View className='items-center justify-center px-8'>
+                            <PressLogo width="100%" />
+                        </View>
                         <NewspaperPageHeader onAddColumn={addColumn} />
                         <View className='w-full'>
                             <Row gap={0} className='w-full rounded-xl border-2 border-border items-stretch overflow-hidden'>
