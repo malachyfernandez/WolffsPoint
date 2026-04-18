@@ -273,7 +273,7 @@ const FontDateInput = ({
                     color: 'text',
                     ...style
                 }}
-                placeholderTextColor="#9CA3AF"
+                placeholderTextColor="#0006"
                 value={getDisplayValue(inputValue)}
                 onChangeText={handleChangeText}
                 placeholder={placeholder}

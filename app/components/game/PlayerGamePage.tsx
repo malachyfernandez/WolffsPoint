@@ -11,6 +11,7 @@ import TownSquareIcon from '../ui/icons/TownSquare';
 import NewspaperIcon from '../ui/icons/Newspaper';
 import HomeIcon from '../ui/icons/Home';
 import RuleBookIcon from '../ui/icons/RuleBook';
+import YourEyeIcon from '../ui/icons/YourEye';
 import PhoneBookIcon from '../ui/icons/PhoneBook';
 import PaperContainer from '../ui/PaperContainer';
 
@@ -24,7 +25,7 @@ interface PlayerGamePageProps {
 const playerTabs: GameTabDefinition<PlayerTab>[] = [
     { label: 'Town Square', condensedLabel: 'Town Sq', value: 'townSquare', icon: <TownSquareIcon /> },
     { label: 'Newspaper', condensedLabel: 'News', value: 'newspaper', icon: <NewspaperIcon /> },
-    { label: 'Your Eyes Only', condensedLabel: 'Your Eyes Only', value: 'eyesOnly', icon: <HomeIcon /> },
+    { label: 'Your Eyes Only', condensedLabel: 'Your Eyes Only', value: 'eyesOnly', icon: <YourEyeIcon /> },
     { label: 'Rule Book', condensedLabel: 'Rule Bk', value: 'ruleBook', icon: <RuleBookIcon /> },
     { label: 'Phone Book', condensedLabel: 'Phone Bk', value: 'phoneBook', icon: <PhoneBookIcon /> },
 ];

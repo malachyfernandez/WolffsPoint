@@ -2,6 +2,8 @@ import React, { createContext, useContext, useEffect, useMemo, useState } from '
 import {
     Image,
     LayoutChangeEvent,
+    Linking,
+    Pressable,
     View,
     useWindowDimensions,
 } from 'react-native';
@@ -40,6 +42,7 @@ type MarkdownInlineSegment =
     | { type: 'italic'; text: string }
     | { type: 'code'; text: string }
     | { type: 'image'; alt: string; url: string }
+    | { type: 'link'; text: string; url: string }
     | { type: 'input'; label: string; rawType: string; inputKind: MarkdownInputKind };
 
 type PlayerDropdownOption = AppDropdownOption & {
@@ -80,7 +83,7 @@ export const MarkdownRendererInputDataProvider = ({
 };
 
 const MARKDOWN_INPUT_FINDER = /\/\[[\s\S]*?\]\//;
-const INLINE_SEGMENT_REGEX = /(\/\[[\s\S]*?\]\/|\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`|!\[[^\]]*\]\([^)]*\))/g;
+const INLINE_SEGMENT_REGEX = /(\/\[[\s\S]*?\]\/|\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`|!\[[^\]]*\]\([^)]*\)|\[[^\]]+\]\([^)]+\))/g;
 
 const MarkdownImage = ({ url, alt, viewHeightImages, removeImageBorders }: { url: string; alt: string; viewHeightImages?: number; removeImageBorders?: boolean }) => {
     const { height: windowHeight } = useWindowDimensions();
@@ -239,6 +242,19 @@ const parseInlineSegments = (text: string): MarkdownInlineSegment[] => {
                 }
             }
 
+            if (part.startsWith('[') && part.includes('](') && part.endsWith(')')) {
+                const textMatch = part.match(/^\[([^\]]+)\]/);
+                const urlMatch = part.match(/\]\(([^)]+)\)$/);
+
+                if (textMatch && urlMatch) {
+                    return {
+                        type: 'link',
+                        text: textMatch[1],
+                        url: urlMatch[1],
+                    };
+                }
+            }
+
             return { type: 'text', text: part };
         });
 };
@@ -341,6 +357,17 @@ const InlineMarkdownWithInputs = ({
                     );
                 }
 
+                if (segment.type === 'link') {
+                    const normalizedUrl = segment.url.match(/^https?:\/\//) ? segment.url : `https://${segment.url}`;
+                    return (
+                        <Pressable key={`${keyPrefix}-link-${index}`} onPress={() => Linking.openURL(normalizedUrl)}>
+                            <FontText weight='medium' className='text-primary underline'>
+                                {segment.text}
+                            </FontText>
+                        </Pressable>
+                    );
+                }
+
                 if (segment.type === 'input') {
                     return (
                         <MarkdownInputField
@@ -394,7 +421,7 @@ const InlineMarkdownWithInputs = ({
 
 const renderInlineMarkdown = (text: string, keyPrefix: string) => {
     return text
-        .split(/(\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`|!\[[^\]]*\]\([^)]*\))/g)
+        .split(/(\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`|!\[[^\]]*\]\([^)]*\)|\[[^\]]+\]\([^)]+\))/g)
         .filter((part) => part.length > 0)
         .map((part, index) => {
             if (part.startsWith('**') && part.endsWith('**')) {
@@ -434,6 +461,23 @@ const renderInlineMarkdown = (text: string, keyPrefix: string) => {
                             resizeMode='contain'
                             className='rounded-lg my-2'
                         />
+                    );
+                }
+            }
+
+            if (part.startsWith('[') && part.includes('](') && part.endsWith(')')) {
+                const textMatch = part.match(/^\[([^\]]+)\]/);
+                const urlMatch = part.match(/\]\(([^)]+)\)$/);
+
+                if (textMatch && urlMatch) {
+                    const url = urlMatch[1];
+                    const normalizedUrl = url.match(/^https?:\/\//) ? url : `https://${url}`;
+                    return (
+                        <Pressable key={`${keyPrefix}-link-${index}`} onPress={() => Linking.openURL(normalizedUrl)}>
+                            <FontText weight='medium' className='text-primary underline'>
+                                {textMatch[1]}
+                            </FontText>
+                        </Pressable>
                     );
                 }
             }

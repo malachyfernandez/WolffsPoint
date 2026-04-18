@@ -26,14 +26,14 @@ const IslandTabBackground = ({ isActive, isCondensed = false }: IslandTabBackgro
     }, []);
 
     const { width, height } = dimensions;
-    
+
     const R = 20;
     const T = 5;
     const pw = 140;
     const ph = 22;
-    
+
     let pathD = "";
-    
+
     if (width > 0 && height > 0) {
         const cw = width / 2;
         const xL = T;
@@ -42,9 +42,9 @@ const IslandTabBackground = ({ isActive, isCondensed = false }: IslandTabBackgro
         if (isCondensed) {
             // Condensed: Split bowl with flat plateau in middle (10% of width, min 0)
             const plateauWidth = Math.max(width * 0.8 - 80, 0);
-            const yApex = T; 
-            const yShoulder = yApex + R; 
-            const yBase = height + T; 
+            const yApex = T;
+            const yShoulder = yApex + R;
+            const yBase = height + T;
             const halfPlateau = plateauWidth / 2;
 
             pathD = `
@@ -63,24 +63,24 @@ const IslandTabBackground = ({ isActive, isCondensed = false }: IslandTabBackgro
             `;
         } else {
             // Expanded: Full 9-part island with raised platform
-            const yApex = T; 
-            const yPlatform = yApex + R; 
-            const yShoulder = yPlatform + ph; 
+            const yApex = T;
+            const yPlatform = yApex + R;
+            const yShoulder = yPlatform + ph;
             const yBase = height + T;
 
             pathD = `
                 M ${xL} ${yBase}
                 L ${xL} ${yShoulder + R}
                 A ${R} ${R} 0 0 1 ${xL + R} ${yShoulder}
-                L ${cw - pw/2} ${yShoulder}
-                A ${R} ${R} 0 0 0 ${cw - pw/2 + R} ${yShoulder - R}
-                L ${cw - pw/2 + R} ${yPlatform}
+                L ${cw - pw / 2} ${yShoulder}
+                A ${R} ${R} 0 0 0 ${cw - pw / 2 + R} ${yShoulder - R}
+                L ${cw - pw / 2 + R} ${yPlatform}
                 L ${cw - R} ${yPlatform}
                 A ${R} ${R} 0 0 1 ${cw} ${yApex}
                 A ${R} ${R} 0 0 1 ${cw + R} ${yPlatform}
-                L ${cw + pw/2 - R} ${yPlatform}
-                L ${cw + pw/2 - R} ${yShoulder - R}
-                A ${R} ${R} 0 0 0 ${cw + pw/2} ${yShoulder}
+                L ${cw + pw / 2 - R} ${yPlatform}
+                L ${cw + pw / 2 - R} ${yShoulder - R}
+                A ${R} ${R} 0 0 0 ${cw + pw / 2} ${yShoulder}
                 L ${xR - R} ${yShoulder}
                 A ${R} ${R} 0 0 1 ${xR} ${yShoulder + R}
                 L ${xR} ${yBase}
@@ -115,15 +115,15 @@ const IslandTabBackground = ({ isActive, isCondensed = false }: IslandTabBackgro
                     <path d={pathD} stroke="url(#island-inner)" strokeWidth="2" fill="none" strokeLinejoin="round" />
 
                     <g clipPath="url(#island-clip)">
-                        <path 
-                            d={pathD} 
-                            fill={isActive ? 'var(--active-surface-bg)' : '#383838'} 
-                            style={{ transition: 'fill 0.2s ease' }} 
+                        <path
+                            d={pathD}
+                            fill={isActive ? 'var(--active-surface-bg)' : '#383838'}
+                            style={{ transition: 'fill 0.2s ease' }}
                         />
-                        <path 
-                            d={pathD} 
-                            fill="url(#island-tex)" 
-                            style={{ mixBlendMode: 'multiply', opacity: isActive ? 0.42 : 0, transition: 'opacity 0.2s ease' }} 
+                        <path
+                            d={pathD}
+                            fill="url(#island-tex)"
+                            style={{ mixBlendMode: 'multiply', opacity: isActive ? 0.42 : 0, transition: 'opacity 0.2s ease' }}
                         />
                         {isActive && (
                             <path d={pathD} stroke="rgba(255, 255, 255, 0.24)" strokeWidth="2" transform="translate(0, 1)" fill="none" />
@@ -343,6 +343,16 @@ const gameTabBarCSS = `
     text-transform: uppercase;
     margin-top: -0px;
 }
+
+/* Larger text for center tab in full island mode */
+.guilded-game-tab-wrap.is-expanded-island .guilded-game-tab-label {
+    margin-top: 5px;
+    font-size: 12px;
+}
+
+.guilded-game-tab-wrap.is-expanded-island .guilded-game-tab-icon {
+    margin-top: 10px;
+}
 `;
 
 function cloneTabIcon(icon: React.ReactNode, color: string, size: number, strokeWidth: number) {
@@ -404,7 +414,7 @@ const GameTabBar = <TTab extends string>({
                     return (
                         <div
                             key={tab.value}
-                            className={`guilded-game-tab-wrap ${isActive ? 'is-active' : ''} ${isCenter ? 'is-center' : ''} ${isCenter && useCondensedIsland ? 'is-condensed-island' : ''}`.trim()}
+                            className={`guilded-game-tab-wrap ${isActive ? 'is-active' : ''} ${isCenter ? 'is-center' : ''} ${isCenter && useCondensedIsland ? 'is-condensed-island' : ''} ${isCenter && !useCondensedIsland ? 'is-expanded-island' : ''}`.trim()}
                             style={{ '--tab-flex': tabFlex } as React.CSSProperties & Record<string, string>}
                         >
                             <button
