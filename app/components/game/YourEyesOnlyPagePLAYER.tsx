@@ -4,9 +4,10 @@ import Row from '../layout/Row';
 import FontText from '../ui/text/FontText';
 import AppButton from '../ui/buttons/AppButton';
 import MarkdownRenderer from '../ui/markdown/MarkdownRenderer';
+import { useGameOperatorUserId } from '../../../hooks/useGameOperatorUserId';
 import PlaceholderCard from '../ui/PlaceholderCard';
 import { useSharedListValue } from '../../../hooks/useSharedListValue';
-import { useUserVariableGet } from '../../../hooks/useUserVariableGet';
+import { useSharedVariableValue } from '../../../hooks/useSharedVariableValue';
 import { PlayerProfile } from '../../../types/multiplayer';
 import { RoleTableItem } from '../../../types/roleTable';
 import { UserTableItem } from '../../../types/playerTable';
@@ -31,17 +32,19 @@ const YourEyesOnlyPagePLAYER = ({ gameId, currentEmail, matchingPlayer, currentP
     const overlayTranslateY = useSharedValue(0);
     const contentOpacity = useSharedValue(0);
     const contentTranslateY = useSharedValue(20);
-    const { value: dayDateStrings } = useSharedListValue<string[]>({ key: 'dayDatesArray', itemId: gameId, defaultValue: [] });
-    const { value: numberOfRealDaysPerInGameDay } = useSharedListValue<number>({ key: 'numberOfRealDaysPerInGameDay', itemId: gameId, defaultValue: 2 });
-    const roleTable = useSharedListValue<RoleTableItem[]>({ key: 'roleTable', itemId: gameId, defaultValue: [] });
-    const scheduleRecords = useUserVariableGet({ key: getGameScopedKey('gameSchedule', gameId), returnTop: 1 });
+    const { operatorUserId } = useGameOperatorUserId(gameId);
+    const operatorUserIds = operatorUserId ? [operatorUserId] : undefined;
+    const { value: dayDateStrings } = useSharedListValue<string[]>({ key: 'dayDatesArray', itemId: gameId, defaultValue: [], userIds: operatorUserIds });
+    const { value: numberOfRealDaysPerInGameDay } = useSharedListValue<number>({ key: 'numberOfRealDaysPerInGameDay', itemId: gameId, defaultValue: 2, userIds: operatorUserIds });
+    const roleTable = useSharedListValue<RoleTableItem[]>({ key: 'roleTable', itemId: gameId, defaultValue: [], userIds: operatorUserIds });
+    const scheduleRecord = useSharedVariableValue({ key: getGameScopedKey('gameSchedule', gameId), defaultValue: defaultGameSchedule, userIds: operatorUserIds });
     const [now, setNow] = useState(() => new Date());
     const { width } = useWindowDimensions();
 
     const dayDates = useMemo(() => parseStoredDayDates(dayDateStrings), [dayDateStrings]);
     const currentDayIndex = useMemo(() => getCurrentPlayableDayIndex(dayDates), [dayDates]);
     const [selectedDayIndex, setSelectedDayIndex] = useState(() => getCurrentPlayableDayIndex(parseStoredDayDates(dayDateStrings)));
-    const schedule = normalizeGameSchedule(scheduleRecords?.[0]?.value ?? defaultGameSchedule);
+    const schedule = normalizeGameSchedule(scheduleRecord.value ?? defaultGameSchedule);
     // Content is released if:
     // 1. It's a previous day (selectedDayIndex < currentDayIndex) - always released
     // 2. It's the current/future day - only blocked on the START DATE until wake-up time

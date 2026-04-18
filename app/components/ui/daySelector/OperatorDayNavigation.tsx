@@ -3,55 +3,73 @@ import { Pressable, View } from 'react-native';
 import Column from '../../layout/Column';
 import Row from '../../layout/Row';
 import FontText from '../text/FontText';
-import { useUserList } from 'hooks/useUserList';
+import { useUserListSet } from '../../../../hooks/useUserListSet';
+import { useSharedListValue } from '../../../../hooks/useSharedListValue';
 import { ChevronLeft, ChevronRight } from 'lucide-react-native';
 import { getContextualDayRangeLabel, parseStoredDayDates } from '../../../../utils/multiplayer';
 
 interface OperatorDayNavigationProps {
     gameId: string;
+    ownerUserId?: string;
+    selectedDayIndex?: number;
+    onSelectedDayIndexChange?: (dayIndex: number) => void;
 }
 
-
-const OperatorDayNavigation = ({ gameId }: OperatorDayNavigationProps) => {
+const OperatorDayNavigation = ({ gameId, ownerUserId, selectedDayIndex: controlledSelectedDayIndex, onSelectedDayIndexChange }: OperatorDayNavigationProps) => {
     
-    // Get the current day key from shared state
-    const [selectedDayIndex, setSelectedDayIndex] = useUserList<number>({
-        key: "selectedDayIndex",
+    const setSelectedDayIndex = useUserListSet<number>();
+    const { value: selectedDayIndex } = useSharedListValue<number>({
+        key: 'selectedDayIndex',
         itemId: gameId,
-        privacy: "PUBLIC",
         defaultValue: 0,
+        userIds: ownerUserId ? [ownerUserId] : undefined,
     });
 
-    const [dayDateStrings] = useUserList<string[]>({
-        key: "dayDatesArray",
+    const { value: dayDateStrings } = useSharedListValue<string[]>({
+        key: 'dayDatesArray',
         itemId: gameId,
-        privacy: "PUBLIC",
         defaultValue: [],
+        userIds: ownerUserId ? [ownerUserId] : undefined,
     });
 
-    const [numberOfRealDaysPerInGameDay] = useUserList<number>({
-        key: "numberOfRealDaysPerInGameDay",
+    const { value: numberOfRealDaysPerInGameDay } = useSharedListValue<number>({
+        key: 'numberOfRealDaysPerInGameDay',
         itemId: gameId,
-        privacy: "PUBLIC",
         defaultValue: 2,
+        userIds: ownerUserId ? [ownerUserId] : undefined,
     });
 
-    const dayDates = useMemo(() => parseStoredDayDates(dayDateStrings.value), [dayDateStrings.value]);
+    const resolvedSelectedDayIndex = controlledSelectedDayIndex ?? selectedDayIndex;
+
+    const dayDates = useMemo(() => parseStoredDayDates(dayDateStrings), [dayDateStrings]);
     const totalDays = dayDates.length;
-    const selectedDayRangeLabel = useMemo(() => getContextualDayRangeLabel(dayDates, selectedDayIndex.value, numberOfRealDaysPerInGameDay.value), [selectedDayIndex.value, dayDates, numberOfRealDaysPerInGameDay.value]);
-    const previousDayLabel = useMemo(() => selectedDayIndex.value > 0 ? getContextualDayRangeLabel(dayDates, selectedDayIndex.value - 1, numberOfRealDaysPerInGameDay.value) : '', [dayDates, numberOfRealDaysPerInGameDay.value, selectedDayIndex.value]);
-    const nextDayLabel = useMemo(() => selectedDayIndex.value < totalDays - 1 ? getContextualDayRangeLabel(dayDates, selectedDayIndex.value + 1, numberOfRealDaysPerInGameDay.value) : '', [selectedDayIndex.value, totalDays, dayDates, numberOfRealDaysPerInGameDay.value]);
+    const selectedDayRangeLabel = useMemo(() => getContextualDayRangeLabel(dayDates, resolvedSelectedDayIndex, numberOfRealDaysPerInGameDay), [resolvedSelectedDayIndex, dayDates, numberOfRealDaysPerInGameDay]);
+    const previousDayLabel = useMemo(() => resolvedSelectedDayIndex > 0 ? getContextualDayRangeLabel(dayDates, resolvedSelectedDayIndex - 1, numberOfRealDaysPerInGameDay) : '', [dayDates, numberOfRealDaysPerInGameDay, resolvedSelectedDayIndex]);
+    const nextDayLabel = useMemo(() => resolvedSelectedDayIndex < totalDays - 1 ? getContextualDayRangeLabel(dayDates, resolvedSelectedDayIndex + 1, numberOfRealDaysPerInGameDay) : '', [resolvedSelectedDayIndex, totalDays, dayDates, numberOfRealDaysPerInGameDay]);
+    const setResolvedSelectedDayIndex = (dayIndex: number) => {
+        if (onSelectedDayIndexChange) {
+            onSelectedDayIndexChange(dayIndex);
+            return;
+        }
+
+        void setSelectedDayIndex({
+            key: 'selectedDayIndex',
+            itemId: gameId,
+            value: dayIndex,
+            privacy: 'PUBLIC',
+        });
+    };
     
 
     const handlePreviousDay = () => {
-        if (selectedDayIndex.value > 0) {
-            setSelectedDayIndex(selectedDayIndex.value - 1);
+        if (resolvedSelectedDayIndex > 0) {
+            setResolvedSelectedDayIndex(resolvedSelectedDayIndex - 1);
         }
     };
 
     const handleNextDay = () => {
-        if (selectedDayIndex.value < totalDays - 1) {
-            setSelectedDayIndex(selectedDayIndex.value + 1);
+        if (resolvedSelectedDayIndex < totalDays - 1) {
+            setResolvedSelectedDayIndex(resolvedSelectedDayIndex + 1);
         }
     };
 
@@ -61,8 +79,8 @@ const OperatorDayNavigation = ({ gameId }: OperatorDayNavigationProps) => {
                 <Row className='items-start justify-between gap-4'>
                     <Pressable
                         onPress={handlePreviousDay}
-                        disabled={selectedDayIndex.value <= 0}
-                        className={`w-20 items-center ${selectedDayIndex.value <= 0 ? 'opacity-30' : ''}`}
+                        disabled={resolvedSelectedDayIndex <= 0}
+                        className={`w-20 items-center ${resolvedSelectedDayIndex <= 0 ? 'opacity-30' : ''}`}
                     >
                         <ChevronLeft size={28} color='rgb(46, 41, 37)' />
                         <FontText variant='subtext' className='text-center text-xs'>
@@ -75,14 +93,14 @@ const OperatorDayNavigation = ({ gameId }: OperatorDayNavigationProps) => {
                             {selectedDayRangeLabel || 'Select a day'}
                         </FontText>
                         <FontText variant='subtext' className='text-xs text-center'>
-                            Day {selectedDayIndex.value + 1}
+                            Day {resolvedSelectedDayIndex + 1}
                         </FontText>
                     </Column>
 
                     <Pressable
                         onPress={handleNextDay}
-                        disabled={selectedDayIndex.value >= totalDays - 1}
-                        className={`w-20 items-center ${selectedDayIndex.value >= totalDays - 1 ? 'opacity-30' : ''}`}
+                        disabled={resolvedSelectedDayIndex >= totalDays - 1}
+                        className={`w-20 items-center ${resolvedSelectedDayIndex >= totalDays - 1 ? 'opacity-30' : ''}`}
                     >
                         <ChevronRight size={28} color='rgb(46, 41, 37)' />
                         <FontText variant='subtext' className='text-center text-xs'>

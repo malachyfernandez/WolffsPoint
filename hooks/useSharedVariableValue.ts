@@ -1,18 +1,16 @@
 import { useMemo } from 'react';
-import { useUserListGet } from './useUserListGet';
+import { useUserVariableGet } from './useUserVariableGet';
 
-export const useSharedListValue = <T,>({
+export const useSharedVariableValue = <T,>({
     key,
-    itemId,
     defaultValue,
     userIds,
 }: {
     key: string;
-    itemId: string;
     defaultValue: T;
     userIds?: string[];
 }) => {
-    const records = useUserListGet<T>({ key, itemId, userIds, returnTop: 1 });
+    const records = useUserVariableGet<T>({ key, userIds, returnTop: 1 });
 
     return useMemo(() => {
         const record = records?.[0];

@@ -2,9 +2,9 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
 import FontText from '../ui/text/FontText';
-import MarkdownRenderer from '../ui/markdown/MarkdownRenderer';
+import { useGameOperatorUserId } from '../../../hooks/useGameOperatorUserId';
 import { useSharedListValue } from '../../../hooks/useSharedListValue';
-import { useUserVariableGet } from '../../../hooks/useUserVariableGet';
+import { useSharedVariableValue } from '../../../hooks/useSharedVariableValue';
 import { PlayerProfile, GameSchedule } from '../../../types/multiplayer';
 import { RoleTableItem } from '../../../types/roleTable';
 import { UserTableItem } from '../../../types/playerTable';
@@ -12,7 +12,6 @@ import { getContextualDayRangeLabel, getCurrentPlayableDayIndex, getGameScopedKe
 import { ChevronLeft, ChevronRight, Newspaper } from 'lucide-react-native';
 import { Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
-import YourEyesOnlyDayContentPLAYER from './YourEyesOnlyDayContentPLAYER';
 import NewspaperDayView from './NewspaperDayView';
 import PlaceholderCard from '../ui/PlaceholderCard';
 import LoadingContainer from '../ui/loading/LoadingContainer';
@@ -31,10 +30,12 @@ type AnimationDirection = 'left' | 'right';
 const TILE_SIZE = 600;
 
 const YourEyesOnlyPagePLAYER = ({ gameId, currentEmail, matchingPlayer, currentProfile }: YourEyesOnlyPagePLAYERProps) => {
-    const { value: dayDateStrings } = useSharedListValue<string[]>({ key: 'dayDatesArray', itemId: gameId, defaultValue: [] });
-    const { value: numberOfRealDaysPerInGameDay } = useSharedListValue<number>({ key: 'numberOfRealDaysPerInGameDay', itemId: gameId, defaultValue: 2 });
-    const roleTable = useSharedListValue<RoleTableItem[]>({ key: 'roleTable', itemId: gameId, defaultValue: [] });
-    const scheduleRecords = useUserVariableGet({ key: getGameScopedKey('gameSchedule', gameId), returnTop: 1 });
+    const { operatorUserId } = useGameOperatorUserId(gameId);
+    const operatorUserIds = operatorUserId ? [operatorUserId] : undefined;
+    const { value: dayDateStrings } = useSharedListValue<string[]>({ key: 'dayDatesArray', itemId: gameId, defaultValue: [], userIds: operatorUserIds });
+    const { value: numberOfRealDaysPerInGameDay } = useSharedListValue<number>({ key: 'numberOfRealDaysPerInGameDay', itemId: gameId, defaultValue: 2, userIds: operatorUserIds });
+    const roleTable = useSharedListValue<RoleTableItem[]>({ key: 'roleTable', itemId: gameId, defaultValue: [], userIds: operatorUserIds });
+    const scheduleRecord = useSharedVariableValue<GameSchedule>({ key: getGameScopedKey('gameSchedule', gameId), defaultValue: defaultGameSchedule, userIds: operatorUserIds });
     const [now, setNow] = useState(() => new Date());
     const { width } = useWindowDimensions();
 
@@ -51,7 +52,7 @@ const YourEyesOnlyPagePLAYER = ({ gameId, currentEmail, matchingPlayer, currentP
         dayIndex: leavingDayIndex ?? 0,
         disabled: leavingDayIndex === null,
     });
-    const schedule = normalizeGameSchedule(scheduleRecords?.[0]?.value ?? defaultGameSchedule);
+    const schedule = normalizeGameSchedule(scheduleRecord.value ?? defaultGameSchedule);
     // Content is released if:
     // 1. It's a previous day (selectedDayIndex < currentDayIndex) - always released
     // 2. It's the current/future day - only blocked on the START DATE until wake-up time
@@ -179,7 +180,7 @@ const YourEyesOnlyPagePLAYER = ({ gameId, currentEmail, matchingPlayer, currentP
 
     return (
         <LoadingContainer
-            dependencies={[scheduleRecords]}
+            dependencies={[scheduleRecord.record]}
             loadingText='Loading newspaper'
             className='flex-1 min-h-[760px] pb-8'
         >

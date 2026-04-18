@@ -5,9 +5,10 @@ import FontText from '../ui/text/FontText';
 import AppDropdown from '../ui/forms/AppDropdown';
 import MarkdownRenderer, { MarkdownRendererInputDataProvider } from '../ui/markdown/MarkdownRenderer';
 import ChainWraper from './ChainWraper';
+import { useGameOperatorUserId } from '../../../hooks/useGameOperatorUserId';
 import { useSharedListValue } from '../../../hooks/useSharedListValue';
+import { useSharedVariableValue } from '../../../hooks/useSharedVariableValue';
 import { useUserVariable } from '../../../hooks/useUserVariable';
-import { useUserVariableGet } from '../../../hooks/useUserVariableGet';
 import { PlayerNightSubmission } from '../../../types/multiplayer';
 import { RoleTableItem } from '../../../types/roleTable';
 import { UserTableItem } from '../../../types/playerTable';
@@ -21,20 +22,21 @@ interface YourEyesOnlyDayContentPLAYERProps {
 }
 
 const YourEyesOnlyDayContentPLAYER = ({ gameId, currentEmail, currentUserId, dayIndex }: YourEyesOnlyDayContentPLAYERProps) => {
-    const { value: userTable } = useSharedListValue<UserTableItem[]>({ key: 'userTable', itemId: gameId, defaultValue: [] });
-    const { value: morningMessagesList } = useSharedListValue<Record<string, string[]>>({ key: 'morningMessagesList', itemId: gameId, defaultValue: {} });
-    const { value: dayDateStrings } = useSharedListValue<string[]>({ key: 'dayDatesArray', itemId: gameId, defaultValue: [] });
-    const { value: numberOfRealDaysPerInGameDay } = useSharedListValue<number>({ key: 'numberOfRealDaysPerInGameDay', itemId: gameId, defaultValue: 2 });
-    const roleTable = useSharedListValue<RoleTableItem[]>({ key: 'roleTable', itemId: gameId, defaultValue: [] });
-    const scheduleRecords = useUserVariableGet({ key: getGameScopedKey('gameSchedule', gameId), returnTop: 1 });
+    const { operatorUserId } = useGameOperatorUserId(gameId);
+    const operatorUserIds = operatorUserId ? [operatorUserId] : [];
+    const { value: userTable } = useSharedListValue<UserTableItem[]>({ key: 'userTable', itemId: gameId, defaultValue: [], userIds: operatorUserIds });
+    const { value: morningMessagesList } = useSharedListValue<Record<string, string[]>>({ key: 'morningMessagesList', itemId: gameId, defaultValue: {}, userIds: operatorUserIds });
+    const { value: dayDateStrings } = useSharedListValue<string[]>({ key: 'dayDatesArray', itemId: gameId, defaultValue: [], userIds: operatorUserIds });
+    const { value: numberOfRealDaysPerInGameDay } = useSharedListValue<number>({ key: 'numberOfRealDaysPerInGameDay', itemId: gameId, defaultValue: 2, userIds: operatorUserIds });
+    const roleTable = useSharedListValue<RoleTableItem[]>({ key: 'roleTable', itemId: gameId, defaultValue: [], userIds: operatorUserIds });
+    const scheduleRecord = useSharedVariableValue({ key: getGameScopedKey('gameSchedule', gameId), defaultValue: defaultGameSchedule, userIds: operatorUserIds });
     const [now, setNow] = useState(() => new Date());
 
     const dayDates = useMemo(() => parseStoredDayDates(dayDateStrings), [dayDateStrings]);
     const currentDayIndex = useMemo(() => getCurrentPlayableDayIndex(dayDates), [dayDates]);
-    const schedule = normalizeGameSchedule(scheduleRecords?.[0]?.value ?? defaultGameSchedule);
+    const schedule = normalizeGameSchedule(scheduleRecord.value ?? defaultGameSchedule);
     const selectedDayEndDate = useMemo(() => getDayEndDate(dayDates, dayIndex, numberOfRealDaysPerInGameDay), [dayDates, dayIndex, numberOfRealDaysPerInGameDay]);
     const selectedMorningDayIndex = dayIndex - 1;
-    const selectedMorningReleaseDate = useMemo(() => selectedMorningDayIndex >= 0 ? getDayReleaseDate(dayDates, selectedMorningDayIndex, schedule.wakeUpTime) : null, [dayDates, schedule.wakeUpTime, selectedMorningDayIndex]);
     const hasSelectedMorning = selectedMorningDayIndex >= 0 && isDayContentReleased(dayDates, selectedMorningDayIndex, schedule.wakeUpTime, now);
     const matchingPlayer = useMemo(() => userTable.find((user) => user.email === currentEmail), [currentEmail, userTable]);
     const roleData = roleTable.value.find((roleItem) => roleItem.role === matchingPlayer?.role);

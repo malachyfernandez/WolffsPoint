@@ -8,6 +8,7 @@ import FontText from '../ui/text/FontText';
 import LoadingText from '../ui/loading/LoadingText';
 import AppButton from '../ui/buttons/AppButton';
 import PlayerProfileDialog from './PlayerProfileDialogNEW';
+ import { useGameOperatorUserId } from '../../../hooks/useGameOperatorUserId';
 import { UserTableItem } from '../../../types/playerTable';
 import { PlayerProfile } from '../../../types/multiplayer';
 import { getGameScopedKey } from '../../../utils/multiplayer';
@@ -31,6 +32,7 @@ interface PlayerAccessGateProps {
 
 const PlayerAccessGate = ({ gameId, currentUserId, children }: PlayerAccessGateProps) => {
     const [isProfileDialogOpen, setIsProfileDialogOpen] = useState(false);
+    const { operatorUserId, isLoading: isOperatorLoading } = useGameOperatorUserId(gameId);
     const [userData] = useUserVariable<UserData>({
         key: 'userData',
         defaultValue: { name: '', email: '', userId: '' },
@@ -40,6 +42,7 @@ const PlayerAccessGate = ({ gameId, currentUserId, children }: PlayerAccessGateP
         key: 'userTable',
         itemId: gameId,
         defaultValue: [],
+        userIds: operatorUserId ? [operatorUserId] : undefined,
     });
 
     const currentEmail = userData.value.email ?? '';
@@ -76,10 +79,10 @@ const PlayerAccessGate = ({ gameId, currentUserId, children }: PlayerAccessGateP
     // Check if all major data has finished loading (not syncing during initial load)
     const hasLoaded = useMemo(() => {
         const userDataLoaded = !userData.state.isSyncing;
-        const userTableLoaded = !isUserTableLoading;
+        const userTableLoaded = !isOperatorLoading && !isUserTableLoading;
         const profileLoaded = !profile.state.isSyncing;
         return userDataLoaded && userTableLoaded && profileLoaded;
-    }, [userData.state.isSyncing, isUserTableLoading, profile.state.isSyncing]);
+    }, [userData.state.isSyncing, isOperatorLoading, isUserTableLoading, profile.state.isSyncing]);
 
     // Show loading state while syncing for the first time
     if (!hasLoaded) {

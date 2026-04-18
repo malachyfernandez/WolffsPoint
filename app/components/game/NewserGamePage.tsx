@@ -6,7 +6,7 @@ import RuleBookPagePLAYER from './RuleBookPagePLAYER';
 import PhoneBookPagePLAYER from './PhoneBookPagePLAYER';
 import PaperContainer from '../ui/PaperContainer';
 import ParticipantAccessGate from './ParticipantAccessGate';
-import NewspaperPageOPERATOR from './NewspaperPageOPERATOR';
+import NewspaperPageNEWSER from './NewspaperPageNEWSER';
 import TownSquareIcon from '../ui/icons/TownSquare';
 import NewspaperIcon from '../ui/icons/Newspaper';
 import RuleBookIcon from '../ui/icons/RuleBook';
@@ -36,7 +36,7 @@ const NewserGamePage = ({ gameId, currentUserId }: NewserGamePageProps) => {
                     <GameTabBar activeTab={activeTab} onTabPress={setActiveTab} tabs={newserTabs} />
                     <PaperContainer>
                         {activeTab === 'townSquare' && <TownSquarePagePLAYER gameId={gameId} currentProfile={profile} />}
-                        {activeTab === 'newspaper' && <NewspaperPageOPERATOR currentUserId={currentUserId} gameId={gameId} mode='newser' />}
+                        {activeTab === 'newspaper' && <NewspaperPageNEWSER currentUserId={currentUserId} gameId={gameId} />}
                         {activeTab === 'ruleBook' && <RuleBookPagePLAYER gameId={gameId} />}
                         {activeTab === 'phoneBook' && (
                             <PhoneBookPagePLAYER
