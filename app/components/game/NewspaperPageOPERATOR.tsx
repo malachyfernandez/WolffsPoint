@@ -260,7 +260,7 @@ const NewspaperPageOPERATOR = ({ currentUserId, gameId, mode = 'operator' }: New
 
     const renderViewingContent = (dayIndex: number, ownerUserId: string, isLeaving: boolean = false) => {
         return (
-            <View className='py-4' style={{
+            <View className='py-4 rounded-2xl' style={{
                 // @ts-ignore: web-only CSS
                 backgroundImage: "url('https://d9tic9wqq4.ufs.sh/f/e3bq9j1bOXyi6QFuqBSV3IcVxmF4QjUoPvCOdS2HLawpi0Ey')",
                 backgroundRepeat: 'repeat',

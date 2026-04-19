@@ -233,7 +233,7 @@ const YourEyesOnlyPagePLAYER = ({ gameId, currentEmail, matchingPlayer, currentP
                         </Pressable>
                     </Row>
 
-                    <View className='py-4' style={[styles.animatedContentContainer, {
+                    <View className='py-4 rounded-2xl' style={[styles.animatedContentContainer, {
                         // @ts-ignore: web-only CSS
                         backgroundImage: "url('https://d9tic9wqq4.ufs.sh/f/e3bq9j1bOXyi6QFuqBSV3IcVxmF4QjUoPvCOdS2HLawpi0Ey')",
                         backgroundRepeat: 'repeat',
