@@ -178,8 +178,9 @@ const NightlyPageOPERATOR = ({ currentUserId: _currentUserId, gameId }: NightlyP
         setDoSync(true);
     };
 
-    const areAllColumnsReady = isPlayerTableColumnsReady && isDaysTableColumnsReady;
-    const showLoading = isSyncing || !hasInitiallyLoaded || !areAllColumnsReady;
+    const areAllColumnsReady = users.length === 0 || (isPlayerTableColumnsReady && isDaysTableColumnsReady);
+    // Only show loading on initial load, not when syncing after
+    const showLoading = !hasInitiallyLoaded || !areAllColumnsReady;
 
     return (
         <>

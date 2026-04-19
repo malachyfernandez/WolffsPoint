@@ -43,7 +43,7 @@ const RuleBookPagePLAYER = ({ gameId }: RuleBookPagePLAYERProps) => {
 
     return (
         <Animated.View entering={FadeIn.duration(300)} className='flex-1 min-h-[760px]'>
-            <Column className='flex-1' gap={4}>
+            <Column className='flex-1 p-4' gap={4}>
                 <Column gap={2}>
                     <PoppinsText weight='bold' className='text-xl'>Rule Book</PoppinsText>
                     {ruleBookMarkdown.trim().length > 0 ? (

@@ -9,6 +9,7 @@ import TownSquareThreadDetailView from './townSquare/TownSquareThreadDetailView'
 import TownSquareThreadListView from './townSquare/TownSquareThreadListView';
 import { ThreadViewModel, truncateText } from './townSquare/townSquareUtils';
 import { useTownSquareForum } from './townSquare/useTownSquareForum';
+import LoadingContainer from '../ui/loading/LoadingContainer';
 
 interface TownSquarePagePLAYERProps {
     gameId: string;
@@ -109,7 +110,12 @@ const TownSquarePagePLAYER = ({ gameId, currentProfile }: TownSquarePagePLAYERPr
             : undefined;
 
     return (
-        <Column className='flex-1 min-h-[760px]' gap={0}>
+        <LoadingContainer
+            dependencies={[]}
+            loadingText='Loading Town Square'
+            className='flex-1 min-h-[760px]'
+        >
+        <Column className='flex-1' gap={0}>
             <LayoutStateAnimatedView.Container stateVar={activeScreen} className='flex-1'>
                 <LayoutStateAnimatedView.Option page={1} stateValue='list'>
                     <TownSquareThreadListView
@@ -271,6 +277,7 @@ const TownSquarePagePLAYER = ({ gameId, currentProfile }: TownSquarePagePLAYERPr
                 title='Edit reply'
             />
         </Column>
+        </LoadingContainer>
     );
 };
 

@@ -15,6 +15,7 @@ import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-na
 import YourEyesOnlyDayContentPLAYER from './YourEyesOnlyDayContentPLAYER';
 import NewspaperDayView from './NewspaperDayView';
 import PlaceholderCard from '../ui/PlaceholderCard';
+import LoadingContainer from '../ui/loading/LoadingContainer';
 
 interface YourEyesOnlyPagePLAYERProps {
     gameId: string;
@@ -162,7 +163,12 @@ const YourEyesOnlyPagePLAYER = ({ gameId, currentEmail, matchingPlayer, currentP
     });
 
     return (
-        <Column className='flex-1 min-h-[760px] pb-8' gap={7}>
+        <LoadingContainer
+            dependencies={[scheduleRecords]}
+            loadingText='Loading newspaper'
+            className='flex-1 min-h-[760px] pb-8'
+        >
+            <Column className='flex-1' gap={7}>
 
 
             <Column className='border-y border-border/15 py-5' gap={5}>
@@ -252,6 +258,7 @@ const YourEyesOnlyPagePLAYER = ({ gameId, currentEmail, matchingPlayer, currentP
                 </View>
             </Column>
         </Column>
+        </LoadingContainer>
     );
 };
 

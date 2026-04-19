@@ -98,7 +98,7 @@ const NightlyDayUserRow = ({
                             className="text-center text-nowrap overflow-hidden"
                             style={{ width: columnWidths.vote - 16 }}
                         >
-                            {dayData.vote ? resolvedVoteName : 'Vote'}
+                            {dayData.vote ? resolvedVoteName : 'No Vote...'}
                         </PoppinsText>
                     </Pressable>
                 </Column>
@@ -110,23 +110,55 @@ const NightlyDayUserRow = ({
                     </Pressable>
                 </Column>
                 <Column gap={0} className={`h-full border border-subtle-border items-center justify-center ${isLast ? 'rounded-br-lg' : ''}`} style={{ width: columnWidths.morningMessage }}>
-                    <Pressable onPress={() => setIsMessageDialogOpen(true)} style={{ width: columnWidths.morningMessage - 8 }} className='h-full items-center justify-center'>
-                        <PoppinsText
-                            weight='medium'
-                            className='text-center text-nowrap overflow-hidden'
-                            style={{
-                                width: columnWidths.morningMessage - 8,
-                                textDecorationLine: 'underline',
-                                textDecorationStyle: 'dotted',
-                            }}
-                        >
-                            {getCurrentMorningMessage() ? (
+                    {getCurrentMorningMessage() ? (
+                        <Pressable onPress={() => setIsMessageDialogOpen(true)} style={{ width: columnWidths.morningMessage - 8 }} className='h-full items-center justify-center'>
+                            <PoppinsText
+                                weight='medium'
+                                className='text-center text-nowrap overflow-hidden'
+                                style={{
+                                    width: columnWidths.morningMessage - 8,
+                                    textDecorationLine: 'underline',
+                                    textDecorationStyle: 'dotted',
+                                }}
+                            >
                                 <PoppinsText className="text-center">{getMorningMessagePreview()}</PoppinsText>
-                            ) : (
-                                <PoppinsText className="opacity-50">No morning message...</PoppinsText>
-                            )}
-                        </PoppinsText>
-                    </Pressable>
+                            </PoppinsText>
+                        </Pressable>
+                    ) : morningMessagesList[user.email]?.[dayNumber - 1] ? (
+                        <Pressable 
+                            onPress={() => {
+                                const yesterdayMessage = morningMessagesList[user.email]?.[dayNumber - 1];
+                                if (yesterdayMessage) {
+                                    updateMorningMessage(dayNumber, index, yesterdayMessage);
+                                }
+                            }} 
+                            style={{ width: columnWidths.morningMessage - 8 }} 
+                            className='h-full items-center justify-center px-2'
+                        >
+                            <PoppinsText 
+                                weight='medium' 
+                                className='text-center text-nowrap bg-text rounded-full max-w-42 px-2 py-1 overflow-hidden'
+                                color='white'
+                                style={{ width: columnWidths.morningMessage - 8 }}
+                            >
+                                Import Yesterday's
+                            </PoppinsText>
+                        </Pressable>
+                    ) : (
+                        <Pressable 
+                            onPress={() => setIsMessageDialogOpen(true)} 
+                            style={{ width: columnWidths.morningMessage - 8 }} 
+                            className='h-full items-center justify-center'
+                        >
+                            <PoppinsText 
+                                weight='medium' 
+                                className='text-center text-nowrap overflow-hidden opacity-50'
+                                style={{ width: columnWidths.morningMessage - 8 }}
+                            >
+                                No morning message...
+                            </PoppinsText>
+                        </Pressable>
+                    )}
                 </Column>
             </Row>
             <MarkdownEditorDialog

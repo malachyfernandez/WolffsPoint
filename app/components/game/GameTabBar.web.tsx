@@ -34,6 +34,7 @@ const gameTabBarCSS = `
 }
 
 .guilded-game-tab-wrap {
+    margin-bottom: -12px;
     --tab-surface-radius: 20px;
     --tab-t-out: 1px;
     --tab-t-mid: 3px;
@@ -54,7 +55,7 @@ const gameTabBarCSS = `
 }
 
 .guilded-game-tab-wrap:not(.is-active):hover {
-    transform: translateY(4px);
+    transform: translateY(2px);
     filter: drop-shadow(0px 6px 9px rgba(0, 0, 0, 0.2));
 }
 
@@ -108,7 +109,7 @@ const gameTabBarCSS = `
     align-items: center;
     justify-content: center;
     gap: 3px;
-    margin-top: 0;
+    
     padding: 0px 4px calc(14px + var(--tab-bottom-extension));
     border-radius: var(--tab-surface-radius) var(--tab-surface-radius) 0 0;
     background-color: #2f2f2f;
@@ -156,6 +157,7 @@ const gameTabBarCSS = `
     align-items: center;
     justify-content: center;
     line-height: 0;
+    margin-top: -12px;
 }
 
 .guilded-game-tab-label {

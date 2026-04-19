@@ -40,10 +40,11 @@ const TownSquareThreadListView = ({
     return (
         <Column className='flex-1 px-4 py-4' gap={5}>
             <Row className='items-start justify-between gap-4'>
-                <Column gap={1}>
-                    <PoppinsText weight='bold' className='text-3xl hidden md:block leading-10'>Town Square</PoppinsText>
+                <Column gap={0} className='hidden sm:flex grow'>
+                    <PoppinsText weight='bold' className='text-2xl leading-10'>Town Square</PoppinsText>
+                    <PoppinsText varient='subtext'>Anyone can speak their mind</PoppinsText>
                 </Column>
-                <Row className='items-center gap-2'>
+                <Row className='justify-between sm:justify-end flex-1 items-center gap-2'>
                     <AppButton variant='secondary' className='px-0' onPress={onNewAnnouncement}>
                         <Row className='items-center gap-2' gap={3}>
                             <Plus size={20} color='black' />

@@ -2,6 +2,8 @@ import React from 'react';
 import { useCSSVariable } from 'uniwind';
 import { guildedButtonRingPresets } from '../buttons/GuildedButton.shared';
 
+const gradientBlur = 5;
+
 interface GuildedFrameProps {
     children: React.ReactNode;
     className?: string;
@@ -39,7 +41,7 @@ const guildedFrameCSS = `
     display: block;
     width: 100%;
     padding: calc(var(--t-out) + var(--t-mid) + var(--t-in));
-    background: linear-gradient(to top right, var(--ring-outer-dark) 50%, var(--ring-outer-light) 50%);
+    background: linear-gradient(to top right, var(--ring-outer-dark) ${50 - gradientBlur}%, var(--ring-outer-light) ${50 + gradientBlur}%);
     --offset: 0px;
     --offset-right: 100%;
     --rad: var(--r);
@@ -89,7 +91,7 @@ const guildedFrameCSS = `
     content: "";
     position: absolute;
     inset: calc(var(--t-out) + var(--t-mid));
-    background: linear-gradient(to top right, var(--ring-inner-light) 50%, var(--ring-inner-dark) 50%);
+    background: linear-gradient(to top right, var(--ring-inner-light) ${50 - gradientBlur}%, var(--ring-inner-dark) ${50 + gradientBlur}%);
     z-index: 0;
     --t-total: calc(var(--t-out) + var(--t-mid));
     --offset: calc(-1 * var(--t-total));

@@ -8,6 +8,8 @@ import {
     guildedButtonRingPresets,
 } from './GuildedButton.shared';
 
+const gradientBlur = 5;
+
 const guildedButtonCSS = `
 .guilded-button-root {
     display: inline-flex;
@@ -130,7 +132,7 @@ const guildedButtonCSS = `
     width: fit-content;
     max-width: max-content;
     padding: calc(var(--t-out) + var(--t-mid) + var(--t-in));
-    background: linear-gradient(to top right, var(--ring-outer-dark) 50%, var(--ring-outer-light) 50%);
+    background: linear-gradient(to top right, var(--ring-outer-dark) ${50 - gradientBlur}%, var(--ring-outer-light) ${50 + gradientBlur}%);
     --offset: 0px;
     --offset-right: 100%;
     --rad: var(--r);
@@ -179,7 +181,7 @@ const guildedButtonCSS = `
     content: "";
     position: absolute;
     inset: calc(var(--t-out) + var(--t-mid));
-    background: linear-gradient(to top right, var(--ring-inner-light) 50%, var(--ring-inner-dark) 50%);
+    background: linear-gradient(to top right, var(--ring-inner-light) ${50 - gradientBlur}%, var(--ring-inner-dark) ${50 + gradientBlur}%);
     z-index: 0;
     --t-total: calc(var(--t-out) + var(--t-mid));
     --offset: calc(-1 * var(--t-total));

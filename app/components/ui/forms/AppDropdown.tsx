@@ -28,6 +28,8 @@ interface AppDropdownProps {
     emptyStateClassName?: string;
     isInDialog?: boolean;
     disabled?: boolean;
+    allowUnselect?: boolean;
+    unselectLabel?: string;
 }
 
 interface WebDropdownMenuPosition {
@@ -54,6 +56,8 @@ const AppDropdown = ({
     emptyStateClassName = '',
     isInDialog = false,
     disabled = false,
+    allowUnselect = true,
+    unselectLabel = '— None —',
 }: AppDropdownProps) => {
     const [isOpen, setIsOpen] = useState(false);
     const [selectedValue, setSelectedValue] = useState(value ?? '');
@@ -177,8 +181,17 @@ const AppDropdown = ({
         };
     }, [closeDropdown, isInDialog, isOpen, updateWebMenuPosition]);
 
-    const dropdownList = options.length ? (
+    const dropdownList = options.length || allowUnselect ? (
         <Column gap={1} className='w-full'>
+            {allowUnselect && (
+                <AppDropdownItem
+                    className={itemClassName}
+                    isSelected={selectedValue === ''}
+                    label={unselectLabel}
+                    onSelect={() => handleValueChange('')}
+                    selectedClassName={selectedItemClassName}
+                />
+            )}
             {options.map((option) => (
                 <AppDropdownItem
                     key={option.value}
@@ -194,8 +207,17 @@ const AppDropdown = ({
         <AppDropdownEmptyState className={emptyStateClassName} text={emptyText} />
     );
 
-    const dialogDropdownList = options.length ? (
+    const dialogDropdownList = options.length || allowUnselect ? (
         <Column gap={1} className='w-full'>
+            {allowUnselect && (
+                <AppDropdownItem
+                    className={itemClassName}
+                    isSelected={selectedValue === ''}
+                    label={unselectLabel}
+                    onSelect={() => handleValueChange('')}
+                    selectedClassName={selectedItemClassName || 'bg-accent'}
+                />
+            )}
             {options.map((option) => (
                 <AppDropdownItem
                     key={option.value}

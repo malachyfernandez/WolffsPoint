@@ -48,6 +48,8 @@ export const useTownSquareAuthorIdentity = ({ gameId, userId }: { gameId: string
         userIds: [userId],
     });
 
+    const isLoading = playerProfiles === undefined || userDatas === undefined || customUserInfos === undefined;
+
     return useMemo(() => {
         const profile = playerProfiles?.[0]?.value;
         const customUserInfo = customUserInfos?.[0]?.value;
@@ -68,8 +70,9 @@ export const useTownSquareAuthorIdentity = ({ gameId, userId }: { gameId: string
             fallbackLabel,
             imageUrl: profile?.profileImageUrl?.trim() || customUserInfo?.photoUrl?.trim() || '',
             inGameName,
+            isLoading,
         };
-    }, [customUserInfos, playerProfiles, userDatas]);
+    }, [customUserInfos, playerProfiles, userDatas, isLoading]);
 };
 
 interface TownSquareAuthorNameProps {
@@ -89,7 +92,15 @@ export const TownSquareAuthorName = ({
     varient,
     weight,
 }: TownSquareAuthorNameProps) => {
-    const { displayName } = useTownSquareAuthorIdentity({ gameId, userId });
+    const { displayName, isLoading } = useTownSquareAuthorIdentity({ gameId, userId });
+
+    if (isLoading) {
+        return (
+            <PoppinsText className={className} color={color} varient={varient} weight={weight}>
+                ...
+            </PoppinsText>
+        );
+    }
 
     return (
         <PoppinsText className={className} color={color} varient={varient} weight={weight}>
@@ -105,7 +116,11 @@ interface TownSquareAuthorAvatarProps {
 }
 
 export const TownSquareAuthorAvatar = ({ gameId, size, userId }: TownSquareAuthorAvatarProps) => {
-    const { fallbackInitials, imageUrl } = useTownSquareAuthorIdentity({ gameId, userId });
+    const { fallbackInitials, imageUrl, isLoading } = useTownSquareAuthorIdentity({ gameId, userId });
+
+    if (isLoading) {
+        return <TownSquareAvatar fallbackLabel='...' size={size} uri='' />;
+    }
 
     return <TownSquareAvatar fallbackLabel={fallbackInitials} size={size} uri={imageUrl} />;
 };

@@ -92,6 +92,9 @@ const NightlyDaysTable = ({
         morningMessage: getWidthForColumnSize(112, columnSizes.value.morningMessage),
     };
 
+    // Wait for column widths to be ready before rendering to prevent flicker
+    const areColumnWidthsReady = columnWidths.vote > 0 && columnWidths.action > 0 && columnWidths.morningMessage > 0;
+
     // Handle column size changes
     const setColumnSize = (columnKey: 'vote' | 'action' | 'morningMessage', size: ColumnSizeOption) => {
         const currentSizes = columnSizes.value ?? defaultNightlyPageColumnSizes;
@@ -249,38 +252,41 @@ const NightlyDaysTable = ({
 
     return (
         <Column gap={0} onLayout={onLayout} ref={tableRef}>
-            <Row gap={0}>
-                <Column gap={0} className={`border-border border-2 rounded w-min ${className || ''}`}>
-                    <NightlyDayTitleRow
-                        onEditStart={() => handleRowEditStart('title')}
-                        onEditEnd={handleRowEditEnd}
-                        isEditing={editingRow === 'title'}
-                        columnWidths={columnWidths}
-                        columnSizes={columnSizes.value}
-                        onSetColumnSize={setColumnSize}
-                    />
-
-                    {users.map((user, index) => (
-                        <Animated.View key={index} entering={FadeIn.duration(300).delay(index * 50)}>
-                            <NightlyDayUserRow
-                                user={user}
-                                index={index}
-                                isLast={index === users.length - 1}
-                                dayNumber={dayNumber}
-                                setVoteValue={UNDOABLEsetVoteValue}
-                                setActionValue={UNDOABLEsetActionValue}
-                                updateMorningMessage={UNDOABLEupdateMorningMessage}
-                                onEditStart={() => handleRowEditStart(index)}
-                                onEditEnd={handleRowEditEnd}
-                                isEditing={editingRow === index}
-                                morningMessagesList={morningMessagesList}
-                                columnWidths={columnWidths}
-                                users={users}
-                            />
-                        </Animated.View>
-                    ))}
-                </Column>
-            </Row>
+            { !areColumnWidthsReady ? (
+                <Row gap={0} className='h-12 w-min bg-text/5' />
+            ) : (
+                <Row gap={0}>
+                    <Column gap={0} className={`border-border border-2 rounded w-min ${className || ''}`}>
+                        <NightlyDayTitleRow
+                            onEditStart={() => handleRowEditStart('title')}
+                            onEditEnd={handleRowEditEnd}
+                            isEditing={editingRow === 'title'}
+                            columnWidths={columnWidths}
+                            columnSizes={columnSizes.value}
+                            onSetColumnSize={setColumnSize}
+                        />
+                        {users.map((user, index) => (
+                            <Animated.View key={index} entering={FadeIn.duration(300).delay(index * 50)}>
+                                <NightlyDayUserRow
+                                    user={user}
+                                    index={index}
+                                    isLast={index === users.length - 1}
+                                    dayNumber={dayNumber}
+                                    setVoteValue={UNDOABLEsetVoteValue}
+                                    setActionValue={UNDOABLEsetActionValue}
+                                    updateMorningMessage={UNDOABLEupdateMorningMessage}
+                                    onEditStart={() => handleRowEditStart(index)}
+                                    onEditEnd={handleRowEditEnd}
+                                    isEditing={editingRow === index}
+                                    morningMessagesList={morningMessagesList}
+                                    columnWidths={columnWidths}
+                                    users={users}
+                                />
+                            </Animated.View>
+                        ))}
+                    </Column>
+                </Row>
+            )}
         </Column>
     );
 };

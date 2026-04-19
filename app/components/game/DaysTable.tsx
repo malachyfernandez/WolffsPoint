@@ -446,7 +446,7 @@ const DaysTable = ({ gameId, dayNumber, dayCount, isBeingEdited, setIsBeingEdite
                         ))}
                     </Column>
                     <Row className='w-12 h-12 bg-light items-center justify-center -z-10'>
-                        <AppButton variant="filled" className='h-8 w-8' onPress={UNDOABLEaddDayColumn}>
+                        <AppButton variant="filled" className='h-8! w-8' onPress={UNDOABLEaddDayColumn}>
                             <PoppinsText weight='bold' color='white' className='text-xl mt-[-0.1rem]'>+</PoppinsText>
                         </AppButton>
                     </Row>
