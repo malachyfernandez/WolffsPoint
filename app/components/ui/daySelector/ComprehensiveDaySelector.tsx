@@ -175,7 +175,7 @@ const ComprehensiveDaySelector = ({ gameId, showAddButton = false, showInitialSe
                 >
                     <Row className='h-6' gap={1}>
                         {showAddButton && (
-                            <AppButton variant="accent" className='max-w-6 min-w-6 max-h-6 ml-1 rounded-full' onPress={handleAddNewDay}>
+                            <AppButton variant="filled" className='h-6 w-6 min-w-6 ml-1 rounded-md' onPress={handleAddNewDay}>
                                 <PoppinsText weight="bold" className='text-white'>+</PoppinsText>
                             </AppButton>
                         )}

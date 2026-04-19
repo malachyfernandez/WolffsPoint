@@ -15,7 +15,7 @@ const baseContentClassName = 'w-full mx-auto max-w-2xl max-h-[90vh] bg-transpare
 
 const renderWrappedContent = (children: React.ReactNode, className?: string, props?: any) => (
     <Dialog.Content className={`${className || ''} ${baseContentClassName}`.trim()} {...props}>
-        <GuildedFrame contentClassName='overflow-hidden' backgroundToken='inner-background'>
+        <GuildedFrame contentClassName='overflow-hidden p-5' backgroundToken='inner-background'>
             {children}
         </GuildedFrame>
     </Dialog.Content>

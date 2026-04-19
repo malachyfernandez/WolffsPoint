@@ -8,7 +8,7 @@ interface NewspaperAddColumnButtonProps {
 
 const NewspaperAddColumnButton = ({ onPress }: NewspaperAddColumnButtonProps) => {
     return (
-        <AppButton variant='accent' className='w-40' onPress={onPress}>
+        <AppButton variant='filled' className='w-40' onPress={onPress}>
             <PoppinsText weight='bold' className='text-white text-xl'>+</PoppinsText>
             <PoppinsText weight='bold' className='text-white'>Add Column</PoppinsText>
         </AppButton>

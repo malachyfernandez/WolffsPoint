@@ -62,7 +62,7 @@ import GuildedButton from './GuildedButton';
 
 interface AppButtonProps {
     children: React.ReactNode;
-    variant?: 'outline-alt' | 'outline' | 'outline-accent' | 'outline-invert' | 'filled' | 'grey' | 'accent' | 'secondary' | 'red' | 'none' | 'black' | 'green';
+    variant?: 'outline-alt' | 'outline' | 'outline-accent' | 'outline-accent-light' | 'outline-invert' | 'filled' | 'grey' | 'accent' | 'secondary' | 'red' | 'none' | 'black' | 'green';
     className?: string;
     onPress?: () => void;
     dropShadow?: boolean;
@@ -115,19 +115,23 @@ const AppButton = ({
     if (variant === 'outline-alt') {
         const bg = 'bg-none';
         extraStyles = `border-2 border-border ${bg} group hover:bg-border`;
-        
+
     } else if (variant === 'outline') {
         const bg = 'bg-none';
         extraStyles = `border-2 border-border ${bg} group hover:bg-border/10`;
-        
+
     } else if (variant === 'outline-accent') {
         const bg = 'bg-none';
         extraStyles = `border-2 border-accent ${bg} group hover:bg-accent/10`;
-        
+
+    } else if (variant === 'outline-accent-light') {
+        const bg = 'bg-none';
+        extraStyles = `border-2 border-accent-light ${bg} group hover:bg-accent-light/10`;
+
     } else if (variant === 'outline-invert') {
         const bg = 'bg-none';
         extraStyles = `border-2 border-text-inverted ${bg} group hover:bg-text-inverted/10`;
-        
+
     } else if (variant === 'grey') {
         const bg = 'bg-[#374559ae]';
         extraStyles = bg;
@@ -153,7 +157,7 @@ const AppButton = ({
         extraStyles = `${bg} group hover:brightness-150 active:brightness-50`;
     }
 
-    
+
 
     const buttonContent = (
         <TouchableOpacity
@@ -167,7 +171,7 @@ const AppButton = ({
             <Row className="items-center justify-center w-full h-full" pointerEvents='none'>
                 {children}
             </Row>
-            
+
         </TouchableOpacity>
     );
 

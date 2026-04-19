@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Plus } from 'lucide-react-native';
 import { useUserList } from 'hooks/useUserList';
 import Row from '../layout/Row';
 import AppButton from '../ui/buttons/AppButton';
@@ -25,18 +26,25 @@ const PlayerAddUserSection = ({ gameId, removeBottomSpace = false }: PlayerAddUs
         setIsAddUserDialogOpen(true);
     };
 
+    const buttonContent = (
+        <Row className='items-center gap-2' gap={2}>
+            <Plus size={20} color='white' />
+            <PoppinsText weight='medium' color='white'>Add Player</PoppinsText>
+        </Row>
+    );
+
     return (
         <>
             {users.length > 0 ? (
-                <AppButton variant="accent" className='w-40 ml-4 -mt-6' onPress={handleOpenDialog}>
-                    <PoppinsText weight='bold' className='text-white text-xl'>+</PoppinsText>
-                    <PoppinsText weight='bold' className='text-white'>Add Player</PoppinsText>
-                </AppButton>
+                <Row className='ml-4 -mt-4'>
+                    <AppButton variant="accent" onPress={handleOpenDialog}>
+                        {buttonContent}
+                    </AppButton>
+                </Row>
             ) : (
                 <Row className={`items-center justify-center ${removeBottomSpace ? '-mb-6' : ''}`}>
-                    <AppButton variant="accent" className='w-40' onPress={handleOpenDialog}>
-                        <PoppinsText weight='bold' className='text-white text-xl'>+</PoppinsText>
-                        <PoppinsText weight='bold' className='text-white'>Add Player</PoppinsText>
+                    <AppButton variant="accent" onPress={handleOpenDialog}>
+                        {buttonContent}
                     </AppButton>
                 </Row>
             )}

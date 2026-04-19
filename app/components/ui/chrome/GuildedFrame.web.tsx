@@ -19,12 +19,12 @@ const guildedFrameCSS = `
 
 .guilded-frame-shadow {
     --r: 20px;
-    --t-out: 2px;
-    --t-mid: 6px;
-    --t-in: 2px;
-    --out-y: 3px;
-    --out-blur: 12px;
-    --out-alpha: 0.22;
+    --t-out: 1px;
+    --t-mid: 3px;
+    --t-in: 1px;
+    --out-y: 6px;
+    --out-blur: 18px;
+    --out-alpha: 0.18;
     --in-y: 1px;
     --in-blur: 10px;
     --in-alpha: 0.18;

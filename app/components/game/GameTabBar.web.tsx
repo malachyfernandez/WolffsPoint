@@ -14,10 +14,13 @@ interface GameTabBarProps<TTab extends string> {
     activeTab: TTab;
     onTabPress: (tab: TTab) => void;
     tabs: GameTabDefinition<TTab>[];
+    activeTabIndent?: number;
 }
 
 const gameTabBarCSS = `
 .guilded-game-tab-bar {
+    --tab-bottom-extension: 28px;
+    --tab-bottom-buffer: 22px;
     position: relative;
     z-index: 0;
     display: flex;
@@ -25,16 +28,16 @@ const gameTabBarCSS = `
     align-items: flex-end;
     gap: 4px;
     padding: 0 8px;
-    margin-bottom: -32px;
+    margin-bottom: calc(-32px - var(--tab-bottom-extension) - var(--tab-bottom-buffer));
     box-sizing: border-box;
     overflow: visible;
 }
 
 .guilded-game-tab-wrap {
     --tab-surface-radius: 20px;
-    --tab-t-out: 2px;
-    --tab-t-mid: 6px;
-    --tab-t-in: 2px;
+    --tab-t-out: 1px;
+    --tab-t-mid: 3px;
+    --tab-t-in: 1px;
     position: relative;
     flex: var(--tab-flex, 1) 1 0%;
     min-width: 0;
@@ -42,10 +45,11 @@ const gameTabBarCSS = `
     filter: drop-shadow(0px 5px 8px rgba(0, 0, 0, 0.18));
     transition: transform 0.2s ease, filter 0.2s ease;
     z-index: 0;
+    padding-bottom: var(--tab-bottom-buffer);
 }
 
 .guilded-game-tab-wrap.is-active {
-    transform: translateY(18px);
+    transform: translateY(var(--active-indent, 18px));
     filter: drop-shadow(0px 6px 9px rgba(0, 0, 0, 0.2));
 }
 
@@ -98,13 +102,13 @@ const gameTabBarCSS = `
 .guilded-game-tab-surface {
     position: relative;
     display: flex;
-    min-height: 82px;
+    min-height: calc(82px + var(--tab-bottom-extension));
     width: 100%;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     gap: 6px;
-    padding: 10px 4px 14px;
+    padding: 10px 4px calc(14px + var(--tab-bottom-extension));
     border-radius: var(--tab-surface-radius) var(--tab-surface-radius) 0 0;
     background-color: #2f2f2f;
     color: var(--tab-text-inactive);
@@ -177,7 +181,7 @@ function cloneTabIcon(icon: React.ReactNode, color: string) {
     });
 }
 
-const GameTabBar = <TTab extends string>({ activeTab, onTabPress, tabs }: GameTabBarProps<TTab>) => {
+const GameTabBar = <TTab extends string>({ activeTab, onTabPress, tabs, activeTabIndent = 10 }: GameTabBarProps<TTab>) => {
     const { width } = useWindowDimensions();
     const hasTrueMiddle = tabs.length % 2 === 1;
     const centerIndex = Math.floor(tabs.length / 2);
@@ -201,6 +205,7 @@ const GameTabBar = <TTab extends string>({ activeTab, onTabPress, tabs }: GameTa
                         '--tab-text-active': textColor,
                         '--tab-text-inactive': goldPalette.middle,
                         '--active-surface-bg': innerBackground,
+                        '--active-indent': `${activeTabIndent}px`,
                     } as React.CSSProperties & Record<string, string>
                 }
             >

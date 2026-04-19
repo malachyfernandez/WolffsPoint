@@ -48,7 +48,7 @@ const OperatorGamePage = ({ gameId, currentUserId }: OperatorGamePageProps) => {
     };
 
     return (
-        <Column gap={0}>
+        <Column gap={7}>
             <GameTabBar activeTab={activeTab} onTabPress={setActiveTab} tabs={operatorTabs} />
             <PaperContainer>
                 <Animated.View entering={FadeIn.duration(300)} className='w-full'>
