@@ -5,7 +5,7 @@ import { useToast } from '../../../../contexts/ToastContext';
 import { useUserListSet } from 'hooks/useUserListSet';
 import { buildViewOnlyDocumentUrl } from '../../../../utils/buildViewOnlyDocumentUrl';
 import AppButton from './AppButton';
-import PoppinsText from '../text/PoppinsText';
+import FontText from '../text/FontText';
 
 interface ShareButtonProps {
     documentTitle: string;
@@ -107,12 +107,12 @@ const ShareButton = ({ documentTitle, documentId, activePage, className }: Share
             onPress={triggerShareLink}
             disabled={isSharing}
         >
-            <PoppinsText weight='medium' className='sm:hidden'>
+            <FontText weight='medium' className='sm:hidden'>
                 {isSharing ? '...' : 'Share'}
-            </PoppinsText>
-            <PoppinsText weight='medium' className='hidden sm:block'>
+            </FontText>
+            <FontText weight='medium' className='hidden sm:block'>
                 {isSharing ? 'Sharing...' : 'Share Link'}
-            </PoppinsText>
+            </FontText>
         </AppButton>
     );
 };

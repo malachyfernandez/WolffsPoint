@@ -1,6 +1,6 @@
 import React from 'react';
 import { View } from 'react-native';
-import PoppinsText from '../../text/PoppinsText';
+import FontText from '../../text/FontText';
 
 interface AppDropdownEmptyStateProps {
     className?: string;
@@ -10,9 +10,9 @@ interface AppDropdownEmptyStateProps {
 const AppDropdownEmptyState = ({ className = '', text }: AppDropdownEmptyStateProps) => {
     return (
         <View className='px-4 py-4'>
-            <PoppinsText varient='subtext' className={`text-center opacity-60 ${className}`.trim()}>
+            <FontText variant='subtext' className={`text-center opacity-60 ${className}`.trim()}>
                 {text}
-            </PoppinsText>
+            </FontText>
         </View>
     );
 };

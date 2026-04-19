@@ -4,7 +4,7 @@ import ConvexDialog from '../ui/dialog/ConvexDialog';
 import DialogHeader from '../ui/dialog/DialogHeader';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
-import PoppinsText from '../ui/text/PoppinsText';
+import FontText from '../ui/text/FontText';
 import AppButton from '../ui/buttons/AppButton';
 import DisableableButton from '../ui/buttons/DisableableButton';
 import ActionPills from './ActionPills';
@@ -69,9 +69,9 @@ const ActionEditorDialog = ({
                     <Column className="p-5 pt-4" gap={4}>
                         {/* Text Input for editing */}
                         <Column gap={1}>
-                            <PoppinsText weight="medium" className="text-sm opacity-70">
+                            <FontText weight="medium" className="text-sm opacity-70">
                                 Action Text
-                            </PoppinsText>
+                            </FontText>
                             <TextInput
                                 value={draftAction}
                                 onChangeText={setDraftAction}
@@ -81,16 +81,16 @@ const ActionEditorDialog = ({
                                 className="bg-background border-2 border-border rounded-lg p-3 text-text font-poppins"
                                 style={{ fontFamily: 'Poppins-Regular' }}
                             />
-                            <PoppinsText className="text-xs opacity-50">
+                            <FontText className="text-xs opacity-50">
                                 Use • to separate multiple actions. Use : to separate label from value.
-                            </PoppinsText>
+                            </FontText>
                         </Column>
 
                         {/* Live Preview */}
                         <Column gap={1} className="flex-1">
-                            <PoppinsText weight="medium" className="text-sm opacity-70">
+                            <FontText weight="medium" className="text-sm opacity-70">
                                 Preview
-                            </PoppinsText>
+                            </FontText>
                             <View className="bg-background border-2 border-border rounded-lg p-3 flex-1 min-h-[80px]">
                                 <ScrollShadow
                                     LinearGradientComponent={LinearGradient}
@@ -104,7 +104,7 @@ const ActionEditorDialog = ({
                         {/* Action Buttons */}
                         <Row className="justify-end gap-3 pt-2">
                             <AppButton variant="outline" onPress={handleCancel} className="w-32 h-12">
-                                <PoppinsText>Cancel</PoppinsText>
+                                <FontText>Cancel</FontText>
                             </AppButton>
                             <DisableableButton
                                 isEnabled={hasUnsavedChanges}

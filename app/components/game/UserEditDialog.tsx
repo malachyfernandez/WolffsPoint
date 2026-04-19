@@ -2,8 +2,8 @@ import React, { useEffect, useState } from 'react';
 import ConvexDialog from '../ui/dialog/ConvexDialog';
 import Column from '../layout/Column';
 import AppButton from '../ui/buttons/AppButton';
-import PoppinsText from '../ui/text/PoppinsText';
-import PoppinsTextInput from '../ui/forms/PoppinsTextInput';
+import FontText from '../ui/text/FontText';
+import FontTextInput from '../ui/forms/FontTextInput';
 import AppDropdown from '../ui/forms/AppDropdown';
 import DialogHeader from '../ui/dialog/DialogHeader';
 import { View, Text } from 'react-native';
@@ -165,23 +165,23 @@ const UserEditDialog = ({
                             subtext={`Set the user details`}
                         />
                         <Column gap={2}>
-                            <PoppinsText weight='medium'>Real Name</PoppinsText>
-                            <PoppinsTextInput
+                            <FontText weight='medium'>Real Name</FontText>
+                            <FontTextInput
                                 placeholder="Enter real name..."
                                 className="w-full border border-subtle-border p-2"
                                 value={realName}
                                 onChangeText={setRealName}
                             />
 
-                            <PoppinsText weight='medium'>Email</PoppinsText>
-                            <PoppinsTextInput
+                            <FontText weight='medium'>Email</FontText>
+                            <FontTextInput
                                 placeholder="Enter email..."
                                 className="w-full border border-subtle-border p-2"
                                 value={email}
                                 onChangeText={setEmail}
                             />
 
-                            <PoppinsText weight='medium'>Role</PoppinsText>
+                            <FontText weight='medium'>Role</FontText>
                             <AppDropdown
                                 options={roleOptions}
                                 value={role}
@@ -197,20 +197,20 @@ const UserEditDialog = ({
                                 <Row className='w-min max-w-full'>
                                 {isUniqueEmail && isValidEmail ? (
                                     <AppButton className='max-w-[30vw] w-48 h-10' variant='black' onPress={handleSubmit}>
-                                        <PoppinsText color='white' weight='medium'>Save</PoppinsText>
+                                        <FontText color='white' weight='medium'>Save</FontText>
                                     </AppButton> 
                                 ) : (
                                     <StatusButton className='max-w-[30vw]  w-48 h-10' buttonText='Save' buttonAltText='Valid email required' />
-                                    // <PoppinsText weight='medium'>Email already exists!</PoppinsText>
+                                    // <FontText weight='medium'>Email already exists!</FontText>
                                 )}
                                     
                                     <AppButton className='max-w-[30vw] w-48 h-10' variant='outline' onPress={handleCancel}>
-                                        <PoppinsText color='black' weight='medium'>Cancel</PoppinsText>
+                                        <FontText color='black' weight='medium'>Cancel</FontText>
                                     </AppButton>
                                 </Row>
 
                                 <AppButton className='w-full h-10' variant='red' onPress={handleDeleteUser}>
-                                    <PoppinsText color='red' weight='medium'>Delete User</PoppinsText>
+                                    <FontText color='red' weight='medium'>Delete User</FontText>
                                 </AppButton>
                             </Column>
                         </Column>

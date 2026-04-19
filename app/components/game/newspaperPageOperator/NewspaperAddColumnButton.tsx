@@ -1,6 +1,6 @@
 import React from 'react';
 import AppButton from '../../ui/buttons/AppButton';
-import PoppinsText from '../../ui/text/PoppinsText';
+import FontText from '../../ui/text/FontText';
 
 interface NewspaperAddColumnButtonProps {
     onPress: () => void;
@@ -9,8 +9,8 @@ interface NewspaperAddColumnButtonProps {
 const NewspaperAddColumnButton = ({ onPress }: NewspaperAddColumnButtonProps) => {
     return (
         <AppButton variant='filled' className='w-40' onPress={onPress}>
-            <PoppinsText weight='bold' className='text-white text-xl'>+</PoppinsText>
-            <PoppinsText weight='bold' className='text-white'>Add Column</PoppinsText>
+            <FontText weight='bold' className='text-white text-xl'>+</FontText>
+            <FontText weight='bold' className='text-white'>Add Column</FontText>
         </AppButton>
     );
 };

@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
-import PoppinsText from '../ui/text/PoppinsText';
+import FontText from '../ui/text/FontText';
 import MarkdownRenderer from '../ui/markdown/MarkdownRenderer';
 import { useSharedListValue } from '../../../hooks/useSharedListValue';
 import { useUserVariableGet } from '../../../hooks/useUserVariableGet';
@@ -16,6 +16,7 @@ import YourEyesOnlyDayContentPLAYER from './YourEyesOnlyDayContentPLAYER';
 import NewspaperDayView from './NewspaperDayView';
 import PlaceholderCard from '../ui/PlaceholderCard';
 import LoadingContainer from '../ui/loading/LoadingContainer';
+import { useNewspaperDayOwner } from './useNewspaperDayOwner';
 
 interface YourEyesOnlyPagePLAYERProps {
     gameId: string;
@@ -25,6 +26,9 @@ interface YourEyesOnlyPagePLAYERProps {
 }
 
 type AnimationDirection = 'left' | 'right';
+
+// Configurable tile size for the paper background texture (in pixels)
+const TILE_SIZE = 600;
 
 const YourEyesOnlyPagePLAYER = ({ gameId, currentEmail, matchingPlayer, currentProfile }: YourEyesOnlyPagePLAYERProps) => {
     const { value: dayDateStrings } = useSharedListValue<string[]>({ key: 'dayDatesArray', itemId: gameId, defaultValue: [] });
@@ -38,6 +42,15 @@ const YourEyesOnlyPagePLAYER = ({ gameId, currentEmail, matchingPlayer, currentP
     const currentDayIndex = useMemo(() => getCurrentPlayableDayIndex(dayDates), [dayDates]);
     const [selectedDayIndex, setSelectedDayIndex] = useState(() => getCurrentPlayableDayIndex(parseStoredDayDates(dayDateStrings)));
     const [leavingDayIndex, setLeavingDayIndex] = useState<number | null>(null);
+    const selectedDayOwner = useNewspaperDayOwner({
+        gameId,
+        dayIndex: selectedDayIndex,
+    });
+    const leavingDayOwner = useNewspaperDayOwner({
+        gameId,
+        dayIndex: leavingDayIndex ?? 0,
+        disabled: leavingDayIndex === null,
+    });
     const schedule = normalizeGameSchedule(scheduleRecords?.[0]?.value ?? defaultGameSchedule);
     // Content is released if:
     // 1. It's a previous day (selectedDayIndex < currentDayIndex) - always released
@@ -162,102 +175,115 @@ const YourEyesOnlyPagePLAYER = ({ gameId, currentEmail, matchingPlayer, currentP
         };
     });
 
+    const isOwnershipLoading = selectedDayOwner.isLoading || (leavingDayIndex !== null && leavingDayOwner.isLoading);
+
     return (
         <LoadingContainer
             dependencies={[scheduleRecords]}
             loadingText='Loading newspaper'
             className='flex-1 min-h-[760px] pb-8'
         >
-            <Column className='flex-1' gap={7}>
+            {isOwnershipLoading ? (
+                <Column className='flex-1 items-center justify-center'>
+                    <FontText variant='subtext'>Loading newspaper…</FontText>
+                </Column>
+            ) : (
+                <Column className='flex-1' gap={7}>
 
 
-            <Column className='border-y border-border/15 py-5' gap={5}>
-                <Row className='items-start justify-between gap-4'>
-                    <Pressable
-                        onPress={() => {
-                            if (selectedDayIndex > 0) {
-                                setSelectedDayIndex(selectedDayIndex - 1);
-                            }
-                        }}
-                        disabled={selectedDayIndex <= 0}
-                        className={`w-20 items-center ${selectedDayIndex <= 0 ? 'opacity-30' : ''}`}
-                    >
-                        <ChevronLeft size={28} color='rgb(46, 41, 37)' />
-                        <PoppinsText varient='subtext' className='text-center text-xs'>
-                            {previousDayLabel || ' '}
-                        </PoppinsText>
-                    </Pressable>
-
-                    <Column className='flex-1 items-center pt-1' gap={1}>
-                        <PoppinsText weight='medium' className='text-center'>
-                            {selectedDayRangeLabel || 'Current game day'}
-                        </PoppinsText>
-                        <PoppinsText varient='subtext' className='text-xs text-center'>
-                            Day {selectedDayIndex + 1}
-                        </PoppinsText>
-                    </Column>
-
-                    <Pressable
-                        onPress={() => {
-                            if (selectedDayIndex < currentDayIndex) {
-                                setSelectedDayIndex(selectedDayIndex + 1);
-                            }
-                        }}
-                        disabled={selectedDayIndex >= currentDayIndex}
-                        className={`w-20 items-center ${selectedDayIndex >= currentDayIndex ? 'opacity-30' : ''}`}
-                    >
-                        <ChevronRight size={28} color='rgb(46, 41, 37)' />
-                        <PoppinsText varient='subtext' className='text-center text-xs'>
-                            {nextDayLabel || ' '}
-                        </PoppinsText>
-                    </Pressable>
-                </Row>
-
-                <View style={styles.animatedContentContainer}>
-                    {leavingDayIndex != null ? (
-                        <Animated.View
-                            key={`leaving-${leavingDayIndex}`}
-                            pointerEvents='none'
-                            style={[styles.animatedContentOverlay, leavingStyle]}
+                <Column className='border-y border-border/15 py-5' gap={5}>
+                    <Row className='items-start justify-between gap-4'>
+                        <Pressable
+                            onPress={() => {
+                                if (selectedDayIndex > 0) {
+                                    setSelectedDayIndex(selectedDayIndex - 1);
+                                }
+                            }}
+                            disabled={selectedDayIndex <= 0}
+                            className={`w-20 items-center ${selectedDayIndex <= 0 ? 'opacity-30' : ''}`}
                         >
-                            {hasLeavingDayReleased ? (
-                                <NewspaperDayView gameId={gameId} dayIndex={leavingDayIndex} isLeaving />
+                            <ChevronLeft size={28} color='rgb(46, 41, 37)' />
+                            <FontText variant='subtext' className='text-center text-xs'>
+                                {previousDayLabel || ' '}
+                            </FontText>
+                        </Pressable>
+
+                        <Column className='flex-1 items-center pt-1' gap={1}>
+                            <FontText weight='medium' className='text-center'>
+                                {selectedDayRangeLabel || 'Current game day'}
+                            </FontText>
+                            <FontText variant='subtext' className='text-xs text-center'>
+                                Day {selectedDayIndex + 1}
+                            </FontText>
+                        </Column>
+
+                        <Pressable
+                            onPress={() => {
+                                if (selectedDayIndex < currentDayIndex) {
+                                    setSelectedDayIndex(selectedDayIndex + 1);
+                                }
+                            }}
+                            disabled={selectedDayIndex >= currentDayIndex}
+                            className={`w-20 items-center ${selectedDayIndex >= currentDayIndex ? 'opacity-30' : ''}`}
+                        >
+                            <ChevronRight size={28} color='rgb(46, 41, 37)' />
+                            <FontText variant='subtext' className='text-center text-xs'>
+                                {nextDayLabel || ' '}
+                            </FontText>
+                        </Pressable>
+                    </Row>
+
+                    <View className='py-4' style={[styles.animatedContentContainer, {
+                        // @ts-ignore: web-only CSS
+                        backgroundImage: "url('https://d9tic9wqq4.ufs.sh/f/e3bq9j1bOXyi6QFuqBSV3IcVxmF4QjUoPvCOdS2HLawpi0Ey')",
+                        backgroundRepeat: 'repeat',
+                        backgroundSize: `${TILE_SIZE}px ${TILE_SIZE}px`,
+                    }]}>
+                        {leavingDayIndex != null ? (
+                            <Animated.View
+                                key={`leaving-${leavingDayIndex}`}
+                                pointerEvents='none'
+                                style={[styles.animatedContentOverlay, leavingStyle]}
+                            >
+                                {hasLeavingDayReleased ? (
+                                    <NewspaperDayView gameId={gameId} dayIndex={leavingDayIndex} ownerUserId={leavingDayOwner.ownerUserId} isLeaving />
+                                ) : (
+                                    <PlaceholderCard>
+                                        <Column className='items-center' gap={3}>
+                                            <Newspaper size={48} color='rgb(46, 41, 37)' />
+                                            <FontText weight='bold' className='text-xl text-center'>
+                                                Not yet released
+                                            </FontText>
+                                            <FontText variant='subtext' className='text-center'>
+                                                The newspaper will be available at {formatTimeLabel(schedule.wakeUpTime)}.
+                                            </FontText>
+                                        </Column>
+                                    </PlaceholderCard>
+                                )}
+                            </Animated.View>
+                        ) : null}
+
+                        <Animated.View key={`selected-${selectedDayIndex}`} style={enteringStyle}>
+                            {hasNewspaperReleased ? (
+                                <NewspaperDayView gameId={gameId} dayIndex={selectedDayIndex} ownerUserId={selectedDayOwner.ownerUserId} />
                             ) : (
                                 <PlaceholderCard>
                                     <Column className='items-center' gap={3}>
                                         <Newspaper size={48} color='rgb(46, 41, 37)' />
-                                        <PoppinsText weight='bold' className='text-xl text-center'>
+                                        <FontText weight='bold' className='text-xl text-center'>
                                             Not yet released
-                                        </PoppinsText>
-                                        <PoppinsText varient='subtext' className='text-center'>
-                                            The newspaper will be available at {formatTimeLabel(schedule.wakeUpTime)}.
-                                        </PoppinsText>
+                                        </FontText>
+                                        <FontText variant='subtext' className='text-center'>
+                                            The newspaper will be available {releaseDateLabel || 'soon'} at {formatTimeLabel(schedule.wakeUpTime)}.
+                                        </FontText>
                                     </Column>
                                 </PlaceholderCard>
                             )}
                         </Animated.View>
-                    ) : null}
-
-                    <Animated.View key={`selected-${selectedDayIndex}`} style={enteringStyle}>
-                        {hasNewspaperReleased ? (
-                            <NewspaperDayView gameId={gameId} dayIndex={selectedDayIndex} />
-                        ) : (
-                            <PlaceholderCard>
-                                <Column className='items-center' gap={3}>
-                                    <Newspaper size={48} color='rgb(46, 41, 37)' />
-                                    <PoppinsText weight='bold' className='text-xl text-center'>
-                                        Not yet released
-                                    </PoppinsText>
-                                    <PoppinsText varient='subtext' className='text-center'>
-                                        The newspaper will be available {releaseDateLabel || 'soon'} at {formatTimeLabel(schedule.wakeUpTime)}.
-                                    </PoppinsText>
-                                </Column>
-                            </PlaceholderCard>
-                        )}
-                    </Animated.View>
-                </View>
+                    </View>
+                </Column>
             </Column>
-        </Column>
+            )}
         </LoadingContainer>
     );
 };

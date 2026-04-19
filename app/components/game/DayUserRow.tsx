@@ -3,7 +3,7 @@ import { Pressable, View } from 'react-native';
 import InlineEditableText from '../ui/forms/InlineEditableText';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
-import PoppinsText from '../ui/text/PoppinsText';
+import FontText from '../ui/text/FontText';
 import Animated, { Easing, FadeInDown, FadeOutUp } from 'react-native-reanimated';
 import { UserTableItem } from '../../../types/playerTable';
 import { getPlayerActionSummary } from '../../../utils/multiplayer';
@@ -80,13 +80,13 @@ const DayUserRow = ({ user, index, isLast, dayNumber, setVoteValue, setActionVal
         <Row gap={0} className={` h-12 w-min ${isEditing ? 'z-50' : ''}`}>
             <Column className={`h-full border border-subtle-border items-center justify-center z-10 ${isLast ? 'rounded-bl-lg' : ''}`} style={{ width: dayBaseColumnWidths.vote }}>
                 <Pressable onPress={handleVotePress} className="w-full h-full items-center justify-center px-1">
-                    <PoppinsText
+                    <FontText
                         weight="medium"
                         className="text-center text-nowrap overflow-hidden"
                         style={{ width: dayBaseColumnWidths.vote - 16 }}
                     >
                         {dayData.vote ? resolvedVoteName : 'Vote'}
-                    </PoppinsText>
+                    </FontText>
                 </Pressable>
             </Column>
             <Column gap={0} className={`h-full border border-subtle-border items-center justify-center z-20`} style={{ width: dayBaseColumnWidths.action }}>

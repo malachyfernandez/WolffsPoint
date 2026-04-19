@@ -1,6 +1,6 @@
 import React from 'react';
 import { View } from 'react-native';
-import PoppinsText from '../ui/text/PoppinsText';
+import FontText from '../ui/text/FontText';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
 
@@ -41,13 +41,13 @@ const ActionPill = ({ label, value }: ActionPill) => {
         <View className="bg-text rounded-full px-3 py-1.5">
             <Column gap={0} className="items-center">
                 {label ? (
-                    <PoppinsText color="white" className="text-xs text-center opacity-70 leading-none">
+                    <FontText color="white" className="text-xs text-center opacity-70 leading-none">
                         {label}
-                    </PoppinsText>
+                    </FontText>
                 ) : null}
-                <PoppinsText color="white" weight="medium" className="text-sm text-center leading-none">
+                <FontText color="white" weight="medium" className="text-sm text-center leading-none">
                     {value}
-                </PoppinsText>
+                </FontText>
             </Column>
         </View>
     );
@@ -58,9 +58,9 @@ export const ActionPills = ({ actionText, maxWidth }: ActionPillsProps) => {
 
     if (pills.length === 0) {
         return (
-            <PoppinsText className="opacity-50 text-center">
+            <FontText className="opacity-50 text-center">
                 No action...
-            </PoppinsText>
+            </FontText>
         );
     }
 

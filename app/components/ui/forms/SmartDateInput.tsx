@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import PoppinsDateInput from './PoppinsDateInput';
+import FontDateInput from './FontDateInput';
 
 interface SmartDateInputProps {
     placeholder?: string;
@@ -26,7 +26,7 @@ const SmartDateInput = ({
     };
 
     return (
-        <PoppinsDateInput
+        <FontDateInput
             placeholder={placeholder}
             className={className}
             value={value}

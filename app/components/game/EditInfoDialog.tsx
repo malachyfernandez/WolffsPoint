@@ -2,8 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { View } from 'react-native';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
-import PoppinsText from '../ui/text/PoppinsText';
-import PoppinsTextInput from '../ui/forms/PoppinsTextInput';
+import FontText from '../ui/text/FontText';
+import FontTextInput from '../ui/forms/FontTextInput';
 import AppButton from '../ui/buttons/AppButton';
 import ProfilePhotoCircle from '../ui/profile/ProfilePhotoCircle';
 import ConvexDialog from '../ui/dialog/ConvexDialog';
@@ -88,7 +88,7 @@ const EditInfoDialog = ({
 
                             {/* Profile Photo */}
                             <Column gap={2} className="w-full items-center">
-                                <PoppinsText weight="medium">Profile Photo</PoppinsText>
+                                <FontText weight="medium">Profile Photo</FontText>
                                 <ProfilePhotoCircle
                                     imageUrl={photoUrl}
                                     onImageChange={handlePhotoChange}
@@ -98,13 +98,13 @@ const EditInfoDialog = ({
 
                             {/* Name Input with Reset */}
                             <Column gap={2}>
-                                <PoppinsText weight="medium">Name</PoppinsText>
+                                <FontText weight="medium">Name</FontText>
                                 <Row className="w-full">
-                                    <PoppinsTextInput
+                                    <FontTextInput
                                         value={name}
                                         onChangeText={setName}
                                         placeholder="Enter your name"
-                                        varient="styled"
+                                        variant="styled"
                                         className="w-full"
                                     />
 
@@ -113,9 +113,9 @@ const EditInfoDialog = ({
                                         className="h-12 px-3"
                                         onPress={handleResetName}
                                     >
-                                        <PoppinsText color="black" weight="medium">
+                                        <FontText color="black" weight="medium">
                                             Reset
-                                        </PoppinsText>
+                                        </FontText>
                                     </AppButton>
                                 </Row>
                             </Column>
@@ -129,18 +129,18 @@ const EditInfoDialog = ({
                                     onPress={handleCancel}
                                     className="w-32"
                                 >
-                                    <PoppinsText color="black" weight="medium">
+                                    <FontText color="black" weight="medium">
                                         Cancel
-                                    </PoppinsText>
+                                    </FontText>
                                 </AppButton>
                                 <AppButton
                                     variant="filled"
                                     onPress={handleSave}
                                     className="w-32"
                                 >
-                                    <PoppinsText color="white" weight="medium">
+                                    <FontText color="white" weight="medium">
                                         Save
-                                    </PoppinsText>
+                                    </FontText>
                                 </AppButton>
                             </Row>
                         </Column>

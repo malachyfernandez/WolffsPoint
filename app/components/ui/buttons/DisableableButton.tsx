@@ -1,7 +1,7 @@
 import React from 'react';
 import { View } from 'react-native';
 import AppButton from './AppButton';
-import PoppinsText from '../text/PoppinsText';
+import FontText from '../text/FontText';
 import StatusButton from '../StatusButton';
 
 interface DisableableButtonProps {
@@ -27,9 +27,9 @@ const DisableableButton = ({
             variant={enabledVariant} 
             onPress={onPress}
         >
-            <PoppinsText color={enabledVariant === 'outline' || enabledVariant === 'outline-alt' ? 'black' : 'white'} weight='medium'>
+            <FontText color={enabledVariant === 'outline' || enabledVariant === 'outline-alt' ? 'black' : 'white'} weight='medium'>
                 {enabledText}
-            </PoppinsText>
+            </FontText>
         </AppButton>
     ) : (
         <StatusButton 

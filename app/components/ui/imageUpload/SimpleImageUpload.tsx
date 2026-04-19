@@ -4,7 +4,7 @@ import { ActivityIndicator, Platform } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { api } from '../../../../convex/_generated/api';
 import AppButton from '../buttons/AppButton';
-import PoppinsText from '../text/PoppinsText';
+import FontText from '../text/FontText';
 import { prepareImageForUpload, prepareWebFileForUpload, UploadThingReactNativeFile } from '../../../../utils/imageCompression';
 
 type UrlSetter = (url: string) => void;
@@ -221,9 +221,9 @@ const SimpleImageUpload = ({
             {isUploading ? (
                 <ActivityIndicator color='white' />
             ) : (
-                <PoppinsText weight='medium' color={variant === 'outline' ? 'black' : 'white'}>
+                <FontText weight='medium' color={variant === 'outline' ? 'black' : 'white'}>
                     {buttonLabel}
-                </PoppinsText>
+                </FontText>
             )}
         </AppButton>
     );

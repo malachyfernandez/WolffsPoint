@@ -2,7 +2,7 @@ import React from 'react';
 import Column from './Column';
 import Row from './Row';
 import AppButton from '../ui/buttons/AppButton';
-import PoppinsText from '../ui/text/PoppinsText';
+import FontText from '../ui/text/FontText';
 import { HomeIcon } from '../ui/icons/HomeIcon';
 import { TouchableOpacity } from 'react-native';
 import { useUserListGet } from '../../../hooks/useUserListGet';
@@ -35,7 +35,7 @@ const TopSiteBar = ({ className = '' }: TopSiteBarProps) => {
         <Column className={className}>
             <Row className='justify-end items-center h-24 w-fit px-4 top-0 right-0'>
                 {/* <TouchableOpacity onPress={() => { setActiveGameId(''); }}>
-                    <PoppinsText weight='bold' className='text-lg'>{isInAGame ? "< WolffsPoint" : "WolffsPoint"}</PoppinsText>
+                    <FontText weight='bold' className='text-lg'>{isInAGame ? "< WolffsPoint" : "WolffsPoint"}</FontText>
                 </TouchableOpacity> */}
 
                 {/* spacer */}
@@ -48,7 +48,7 @@ const TopSiteBar = ({ className = '' }: TopSiteBarProps) => {
                                 <>
                                     <BlurView intensity={20} className='rounded'>
                                         <CopyableText.Container className='bg-outer-background/20 p-2 rounded'>
-                                            <PoppinsText varient='lowercaseCardHeader' className='opacity-100 text-text-inverted'>Code:</PoppinsText>
+                                            <FontText variant='lowercaseCardHeader' className='opacity-100 text-text-inverted'>Code:</FontText>
                                             <CopyableText text={gameJoinCode} className='opacity-100' color='text-inverted' />
                                         </CopyableText.Container>
                                     </BlurView>

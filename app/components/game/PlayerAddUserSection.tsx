@@ -3,7 +3,7 @@ import { Plus } from 'lucide-react-native';
 import { useUserList } from 'hooks/useUserList';
 import Row from '../layout/Row';
 import AppButton from '../ui/buttons/AppButton';
-import PoppinsText from '../ui/text/PoppinsText';
+import FontText from '../ui/text/FontText';
 import UserAddDialog from './UserAddDialog';
 import { UserTableItem } from 'types/playerTable';
 
@@ -29,7 +29,7 @@ const PlayerAddUserSection = ({ gameId, removeBottomSpace = false }: PlayerAddUs
     const buttonContent = (
         <Row className='items-center gap-2' gap={2}>
             <Plus size={20} color='white' />
-            <PoppinsText weight='medium' color='white'>Add Player</PoppinsText>
+            <FontText weight='medium' color='white'>Add Player</FontText>
         </Row>
     );
 

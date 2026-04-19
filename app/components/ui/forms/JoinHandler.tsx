@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import AppButton from '../buttons/AppButton';
-import PoppinsText from '../text/PoppinsText';
+import FontText from '../text/FontText';
 import { useUserListGet } from 'hooks/useUserListGet';
 import ConvexDialog from '../dialog/ConvexDialog';
 import { Dialog } from 'heroui-native/dialog';
@@ -58,15 +58,15 @@ const JoinHandler = ({
         <>
             {doesGameExist ?
                 <AppButton variant="filled" className="h-10 w-20" onPress={joinGame}>
-                    <PoppinsText weight='medium' color='white'>{'Join'}</PoppinsText>
+                    <FontText weight='medium' color='white'>{'Join'}</FontText>
                 </AppButton>
                 
                 // <AppButton variant="filled" className="h-10 w-20" onPress={() => onJoin(gameCode)}>
-                //     <PoppinsText weight='medium' color='white'>{'Join'}</PoppinsText>
+                //     <FontText weight='medium' color='white'>{'Join'}</FontText>
                 // </AppButton>
                 :
                 <AppButton variant="grey" className="h-10 w-20" onPress={setInvalid} >
-                    <PoppinsText weight='medium' color='white'>{innerText}</PoppinsText>
+                    <FontText weight='medium' color='white'>{innerText}</FontText>
                 </AppButton>
             }
         </>

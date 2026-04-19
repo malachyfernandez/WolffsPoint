@@ -3,7 +3,7 @@ import { Pressable, View } from 'react-native';
 import { ChevronRight } from 'lucide-react-native';
 import Column from '../../layout/Column';
 import Row from '../../layout/Row';
-import PoppinsText from '../../ui/text/PoppinsText';
+import FontText from '../../ui/text/FontText';
 import { TownSquareAuthorAvatar, TownSquareAuthorName } from './TownSquareAuthorIdentity';
 import { ThreadViewModel, TownSquareReadState, formatTimestamp } from './townSquareUtils';
 
@@ -29,37 +29,37 @@ const TownSquareThreadListItem = ({ index, isLast, onPress, readStateSnapshot, t
                     <Column gap={0}>
                         <Row className='items-start justify-between gap-3'>
                             <Row className='flex-1 items-center gap-2'>
-                                <PoppinsText weight={isNeverViewed ? 'bold' : 'medium'} className='text-xl leading-8'>
+                                <FontText weight={isNeverViewed ? 'bold' : 'medium'} className='text-xl leading-8'>
                                     {thread.titleResolved}
-                                </PoppinsText>
+                                </FontText>
                                 {isNeverViewed && (
                                     <View className='px-1.5 py-0.5 bg-red-500 rounded-full'>
-                                        <PoppinsText weight='medium' className='text-xs text-white'>New</PoppinsText>
+                                        <FontText weight='medium' className='text-xs text-white'>New</FontText>
                                     </View>
                                 )}
                             </Row>
-                            <PoppinsText varient='subtext'>{formatTimestamp(thread.createdAt)}</PoppinsText>
+                            <FontText variant='subtext'>{formatTimestamp(thread.createdAt)}</FontText>
                         </Row>
                         <TownSquareAuthorName gameId={thread.gameId} userId={thread.authorUserId} varient='subtext' />
                     </Column>
                     <Column  gap={2}>
-                        <PoppinsText weight='medium'>{thread.previewText || 'Open the thread to read the full post.'}</PoppinsText>
+                        <FontText weight='medium'>{thread.previewText || 'Open the thread to read the full post.'}</FontText>
 
                         <Row className='items-center gap-2'>
                             {thread.postType === 'announcement' ? (
-                                <PoppinsText varient='subtext' className='bg-text/10 px-3 py-1 rounded-full'>
+                                <FontText variant='subtext' className='bg-text/10 px-3 py-1 rounded-full'>
                                     Announcement
-                                </PoppinsText>
+                                </FontText>
                             ) : (
                                 <>
-                                    <PoppinsText varient='subtext' className='text-accent'>
+                                    <FontText variant='subtext' className='text-accent'>
                                         {`${thread.replyCount} repl${thread.replyCount === 1 ? 'y' : 'ies'}`}
-                                    </PoppinsText>
+                                    </FontText>
                                     {hasNewReplies && (
                                         <View className='px-1.5 py-0.5 bg-accent rounded-full'>
-                                            <PoppinsText weight='medium' className='text-xs text-white'>
+                                            <FontText weight='medium' className='text-xs text-white'>
                                                 {`${newReplyCount} New`}
-                                            </PoppinsText>
+                                            </FontText>
                                         </View>
                                     )}
                                 </>

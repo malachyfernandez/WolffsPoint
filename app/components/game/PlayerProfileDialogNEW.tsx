@@ -7,8 +7,8 @@ import DialogHeader from '../ui/dialog/DialogHeader';
 import UnsavedChangesDialog from '../ui/dialog/UnsavedChangesDialog';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
-import PoppinsText from '../ui/text/PoppinsText';
-import PoppinsTextInput from '../ui/forms/PoppinsTextInput';
+import FontText from '../ui/text/FontText';
+import FontTextInput from '../ui/forms/FontTextInput';
 import AppButton from '../ui/buttons/AppButton';
 import ImageUploadDialog from '../ui/dialog/ImageUploadDialog';
 import { PlayerProfile } from '../../../types/multiplayer';
@@ -199,7 +199,7 @@ const PlayerProfileDialogNEW = ({
                     <ConvexDialog.Overlay />
                     <ConvexDialog.Content className='max-w-6xl max-h-[92vh]'>
                         <Pressable onPress={handleAttemptClose} className='absolute right-4 top-4 z-10 h-10 w-10 bg-accent-hover rounded-full items-center justify-center'>
-                            <PoppinsText color='rgb(246, 238, 219)' weight='bold' className='text-xl'>×</PoppinsText>
+                            <FontText color='rgb(246, 238, 219)' weight='bold' className='text-xl'>×</FontText>
                         </Pressable>
                         <DialogHeader text={title} subtext='This is what everyone in the game will see.' />
 
@@ -208,8 +208,8 @@ const PlayerProfileDialogNEW = ({
                                 <ScrollView className='flex-1'>
                                     <Column className='px-5 pb-2' gap={6}>
                                         <Column gap={1}>
-                                            <PoppinsText weight='medium'>In-game name</PoppinsText>
-                                            <PoppinsTextInput
+                                            <FontText weight='medium'>In-game name</FontText>
+                                            <FontTextInput
                                                 className='w-full rounded-xl border border-subtle-border px-4 py-3'
                                                 placeholder='The name everyone knows you by'
                                                 value={draft.inGameName}
@@ -219,7 +219,7 @@ const PlayerProfileDialogNEW = ({
 
                                         <Row className='items-start gap-4'>
                                             <Column className='w-[126px] shrink-0' gap={2}>
-                                                <PoppinsText weight='medium'>Profile picture</PoppinsText>
+                                                <FontText weight='medium'>Profile picture</FontText>
                                                 <Pressable
                                                     onPress={() => setImageDialogMode('profile')}
                                                     className='items-center rounded-3xl border border-subtle-border bg-text/5 h-20 hover:brightness-90 hover:bg-text/10 overflow-hidden'
@@ -232,7 +232,7 @@ const PlayerProfileDialogNEW = ({
                                             </Column>
 
                                             <Column className='flex-1' gap={2}>
-                                                <PoppinsText weight='medium'>Socials</PoppinsText>
+                                                <FontText weight='medium'>Socials</FontText>
                                                 <Pressable
                                                     onPress={() => setIsSocialsDialogOpen(true)}
                                                     className='rounded-3xl border border-subtle-border bg-text/5 h-20 overflow-hidden brightness-95 hover:brightness-90 hover:bg-text/10'
@@ -257,7 +257,7 @@ const PlayerProfileDialogNEW = ({
 
                                                 {/* LEFT SIDE: EDITOR */}
                                                 <Column className='flex-1 min-w-[220px]' gap={1}>
-                                                    <PoppinsText weight='medium'>Bio</PoppinsText>
+                                                    <FontText weight='medium'>Bio</FontText>
                                                     <TownSquareComposerToolbar
                                                         onBold={() => runBioUpdate((value, range) => wrapSelection(value, range, '**', '**', 'bold text'))}
                                                         onItalic={() => runBioUpdate((value, range) => wrapSelection(value, range, '*', '*', 'italic text'))}
@@ -278,7 +278,7 @@ const PlayerProfileDialogNEW = ({
 
                                                 {/* RIGHT SIDE: FULL PREVIEW */}
                                                 <Column className='flex-1 min-w-[220px] hidden sm:flex' gap={2}>
-                                                    <PoppinsText weight='medium'>Preview</PoppinsText>
+                                                    <FontText weight='medium'>Preview</FontText>
                                                     <ScrollShadow LinearGradientComponent={LinearGradient} className='min-h-[120px] max-h-[220px] rounded-3xl'>
                                                         <ScrollView className='flex-1'>
                                                             <PlayerProfilePreviewCard
@@ -299,7 +299,7 @@ const PlayerProfileDialogNEW = ({
 
                             <Row className='justify-end gap-3 px-5 pb-5'>
                                 <AppButton variant='outline' className='w-36' onPress={handleAttemptClose}>
-                                    <PoppinsText weight='medium'>Cancel</PoppinsText>
+                                    <FontText weight='medium'>Cancel</FontText>
                                 </AppButton>
                                 <AppButton
                                     variant='black'
@@ -307,7 +307,7 @@ const PlayerProfileDialogNEW = ({
                                     onPress={handleSave}
                                     disabled={!canSave || !hasUnsavedChanges}
                                 >
-                                    <PoppinsText weight='medium' color='white'>{saveLabel}</PoppinsText>
+                                    <FontText weight='medium' color='white'>{saveLabel}</FontText>
                                 </AppButton>
                             </Row>
                         </Column>
@@ -434,7 +434,7 @@ const SocialsDialog = ({ isOpen, onOpenChange, onSave, initialSocials }: Socials
                 <ConvexDialog.Overlay />
                 <ConvexDialog.Content className='p-1 max-w-5xl max-h-[80vh]'>
                     <Pressable onPress={handleAttemptClose} className='absolute right-4 top-4 z-10 h-10 w-10 bg-accent-hover rounded-full items-center justify-center'>
-                        <PoppinsText color='rgb(246, 238, 219)' weight='bold' className='text-xl'>×</PoppinsText>
+                        <FontText color='rgb(246, 238, 219)' weight='bold' className='text-xl'>×</FontText>
                     </Pressable>
                     <DialogHeader text='Socials' />
 
@@ -445,8 +445,8 @@ const SocialsDialog = ({ isOpen, onOpenChange, onSave, initialSocials }: Socials
                                     <Column className='flex-1 min-w-0 gap-4'>
                                         <Row className='gap-4'>
                                             <Column className='flex-1 min-w-0 gap={1}'>
-                                                <PoppinsText weight='medium'>Phone number</PoppinsText>
-                                                <PoppinsTextInput
+                                                <FontText weight='medium'>Phone number</FontText>
+                                                <FontTextInput
                                                     className='w-full rounded-xl border border-subtle-border px-4 py-3'
                                                     value={draft.phoneNumber}
                                                     onChangeText={(value) => setDraft((current) => ({ ...current, phoneNumber: value }))}
@@ -455,8 +455,8 @@ const SocialsDialog = ({ isOpen, onOpenChange, onSave, initialSocials }: Socials
                                             </Column>
 
                                             <Column className='flex-1 min-w-0 gap={1}'>
-                                                <PoppinsText weight='medium'>Instagram</PoppinsText>
-                                                <PoppinsTextInput
+                                                <FontText weight='medium'>Instagram</FontText>
+                                                <FontTextInput
                                                     className='w-full rounded-xl border border-subtle-border px-4 py-3'
                                                     value={draft.instagram}
                                                     onChangeText={(value) => setDraft((current) => ({ ...current, instagram: value }))}
@@ -467,8 +467,8 @@ const SocialsDialog = ({ isOpen, onOpenChange, onSave, initialSocials }: Socials
 
                                         <Row className='gap-4'>
                                             <Column className='flex-1 min-w-0 gap={1}'>
-                                                <PoppinsText weight='medium'>Discord</PoppinsText>
-                                                <PoppinsTextInput
+                                                <FontText weight='medium'>Discord</FontText>
+                                                <FontTextInput
                                                     className='w-full rounded-xl border border-subtle-border px-4 py-3'
                                                     value={draft.discord}
                                                     onChangeText={(value) => setDraft((current) => ({ ...current, discord: value }))}
@@ -477,8 +477,8 @@ const SocialsDialog = ({ isOpen, onOpenChange, onSave, initialSocials }: Socials
                                             </Column>
 
                                             <Column className='flex-1 min-w-0 gap={1}'>
-                                                <PoppinsText weight='medium'>Anything else</PoppinsText>
-                                                <PoppinsTextInput
+                                                <FontText weight='medium'>Anything else</FontText>
+                                                <FontTextInput
                                                     className='w-full rounded-xl border border-subtle-border px-4 py-3'
                                                     value={draft.otherContact}
                                                     onChangeText={(value) => setDraft((current) => ({ ...current, otherContact: value }))}
@@ -489,7 +489,7 @@ const SocialsDialog = ({ isOpen, onOpenChange, onSave, initialSocials }: Socials
                                     </Column>
 
                                     <Column className='w-full shrink-0 gap={1}'>
-                                        <PoppinsText weight='medium'>Preview</PoppinsText>
+                                        <FontText weight='medium'>Preview</FontText>
                                         <Column className='rounded-3xl border border-subtle-border bg-text/5 p-4'>
                                             <PlayerProfileContactInfo
                                                 profile={previewProfile}
@@ -503,10 +503,10 @@ const SocialsDialog = ({ isOpen, onOpenChange, onSave, initialSocials }: Socials
 
                         <Row className='justify-end gap-3 px-5 pb-5'>
                             <AppButton variant='outline' className='w-36' onPress={handleAttemptClose}>
-                                <PoppinsText weight='medium'>Cancel</PoppinsText>
+                                <FontText weight='medium'>Cancel</FontText>
                             </AppButton>
                             <AppButton variant='black' className='w-40' onPress={handleSave} disabled={!hasUnsavedChanges}>
-                                <PoppinsText weight='medium' color='white'>Save</PoppinsText>
+                                <FontText weight='medium' color='white'>Save</FontText>
                             </AppButton>
                         </Row>
                     </Column>

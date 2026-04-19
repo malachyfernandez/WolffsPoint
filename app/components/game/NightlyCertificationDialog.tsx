@@ -4,7 +4,7 @@ import ConvexDialog from '../ui/dialog/ConvexDialog';
 import DialogHeader from '../ui/dialog/DialogHeader';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
-import PoppinsText from '../ui/text/PoppinsText';
+import FontText from '../ui/text/FontText';
 import AppButton from '../ui/buttons/AppButton';
 import { PlayerNightSubmission } from '../../../types/multiplayer';
 import { UserTableItem } from '../../../types/playerTable';
@@ -32,17 +32,17 @@ const NightlyCertificationDialog = ({ isOpen, onOpenChange, users, submissionsBy
                     <ScrollView className='p-4'>
                         <Column gap={2}>
                             <Row className='border-b border-subtle-border pb-2'>
-                                <PoppinsText weight='medium' className='flex-1'>Player</PoppinsText>
-                                <PoppinsText weight='medium' className='flex-1'>Vote</PoppinsText>
-                                <PoppinsText weight='medium' className='flex-1'>Action</PoppinsText>
+                                <FontText weight='medium' className='flex-1'>Player</FontText>
+                                <FontText weight='medium' className='flex-1'>Vote</FontText>
+                                <FontText weight='medium' className='flex-1'>Action</FontText>
                             </Row>
                             {users.map((user) => {
                                 const submission = submissionsByEmail[user.email];
                                 return (
                                     <Row key={user.email} className='border-b border-subtle-border py-2'>
-                                        <PoppinsText className='flex-1'>{user.realName || user.email}</PoppinsText>
-                                        <PoppinsText className='flex-1'>{submission?.vote || '—'}</PoppinsText>
-                                        <PoppinsText className='flex-1'>{getPlayerActionSummary(submission?.action) || '—'}</PoppinsText>
+                                        <FontText className='flex-1'>{user.realName || user.email}</FontText>
+                                        <FontText className='flex-1'>{submission?.vote || '—'}</FontText>
+                                        <FontText className='flex-1'>{getPlayerActionSummary(submission?.action) || '—'}</FontText>
                                     </Row>
                                 );
                             })}
@@ -50,7 +50,7 @@ const NightlyCertificationDialog = ({ isOpen, onOpenChange, users, submissionsBy
                     </ScrollView>
                     <Row className='justify-end gap-3 px-4 pb-4'>
                         <AppButton variant='outline' className='w-32' onPress={() => onOpenChange(false)}>
-                            <PoppinsText weight='medium'>Close</PoppinsText>
+                            <FontText weight='medium'>Close</FontText>
                         </AppButton>
                         <AppButton
                             variant='black'
@@ -60,7 +60,7 @@ const NightlyCertificationDialog = ({ isOpen, onOpenChange, users, submissionsBy
                                 onOpenChange(false);
                             }}
                         >
-                            <PoppinsText weight='medium' color='white'>Certify Results</PoppinsText>
+                            <FontText weight='medium' color='white'>Certify Results</FontText>
                         </AppButton>
                     </Row>
                 </ConvexDialog.Content>

@@ -3,8 +3,8 @@ import ConvexDialog from '../ui/dialog/ConvexDialog';
 import Column from '../layout/Column';
 
 import AppButton from '../ui/buttons/AppButton';
-import PoppinsText from '../ui/text/PoppinsText';
-import PoppinsTextInput from '../ui/forms/PoppinsTextInput';
+import FontText from '../ui/text/FontText';
+import FontTextInput from '../ui/forms/FontTextInput';
 import DialogHeader from '../ui/dialog/DialogHeader';
 import SmartDateInput from '../ui/forms/SmartDateInput';
 import StatusButton from '../ui/StatusButton';
@@ -86,7 +86,7 @@ const NewWolffspointButtonAndDialogue = ({ onCreate }: NewWolffspointButtonAndDi
         <ConvexDialog.Root isOpen={isHeroDialogOpen} onOpenChange={setIsHeroDialogOpen}>
             <ConvexDialog.Trigger asChild>
                 <AppButton variant="secondary" className="w-40 shrink">
-                    <PoppinsText weight='medium'>New WolffsPoint</PoppinsText>
+                    <FontText weight='medium'>New WolffsPoint</FontText>
                 </AppButton>
             </ConvexDialog.Trigger>
             <ConvexDialog.Portal>
@@ -104,10 +104,10 @@ const NewWolffspointButtonAndDialogue = ({ onCreate }: NewWolffspointButtonAndDi
 
                         <Column >
                             <Column gap={2}>
-                                <PoppinsText>Title:</PoppinsText>
+                                <FontText>Title:</FontText>
 
                                 {/* EXAMPLE USING TEXT INPUT */}
-                                <PoppinsTextInput
+                                <FontTextInput
                                     placeholder="WolffsPoint"
                                     className="w-full border border-subtle-border p-2"
                                     value={input}
@@ -117,7 +117,7 @@ const NewWolffspointButtonAndDialogue = ({ onCreate }: NewWolffspointButtonAndDi
                         </Column>
                         <Column gap={2}>
 
-                            <PoppinsText>Day 1 of Your Game</PoppinsText>
+                            <FontText>Day 1 of Your Game</FontText>
 
                             {/* EXAMPLE USING TEXT INPUT */}
                             <SmartDateInput
@@ -133,7 +133,7 @@ const NewWolffspointButtonAndDialogue = ({ onCreate }: NewWolffspointButtonAndDi
 {/* <View></View> */}
                         {isDateValid ? (
                             <AppButton className='w-34' variant='black' onPress={submitForum}>
-                                <PoppinsText color='white' weight='medium'>Create</PoppinsText>
+                                <FontText color='white' weight='medium'>Create</FontText>
                             </AppButton>
                         ) : (
                             <StatusButton buttonText="Create" className='w-34' buttonAltText="Invalid Date" />

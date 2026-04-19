@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import AppButton from '../ui/buttons/AppButton';
-import PoppinsText from '../ui/text/PoppinsText';
+import FontText from '../ui/text/FontText';
 import ListRow from '../ui/lists/ListRow';
 import { useUserListGet } from 'hooks/useUserListGet';
 import JoinedGameOptionsDialog from './JoinedGameOptionsDialog';
@@ -45,14 +45,14 @@ const JoinedGameListItem = ({ game, onArchive, className, setActiveGameId, index
         <>
             <Row gap={0} className='items-center'>
                 <ListRow className={`justify-between items-center ${className || ''} ${borderClass}`} onPress={handleSetActiveGameId}>
-                    <PoppinsText className='text-text-inverted' >
+                    <FontText className='text-text-inverted' >
                         {`${displayName} (${displayId})`}
                         {isGameDeleted && (
-                            <PoppinsText className="text-text-inverted text-sm">
+                            <FontText className="text-text-inverted text-sm">
                                 {' - (this game might have been deleted)'}
-                            </PoppinsText>
+                            </FontText>
                         )}
-                    </PoppinsText>
+                    </FontText>
 
 
                 </ListRow>

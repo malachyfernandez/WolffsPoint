@@ -4,23 +4,29 @@ import { useFonts } from 'expo-font';
 
 type FontWeight = 'regular' | 'medium' | 'bold';
 
-interface PoppinsTextInputProps extends TextInputProps {
+interface FontTextInputProps extends TextInputProps {
     className?: string;
     weight?: FontWeight;
     style?: TextStyle;
     autoGrow?: boolean;
-    varient?: 'default' | 'styled';
+    variant?: 'default' | 'styled';
     onKeyDown?: React.KeyboardEventHandler<HTMLTextAreaElement>;
     onSubmitEditing?: (event: any) => void;
     submitBehavior?: 'submit' | 'newline';
 }
 
-const PoppinsTextInput = ({
+const WEIGHT_MAP: Record<FontWeight, '400' | '500' | '700'> = {
+    regular: '400',
+    medium: '500',
+    bold: '700',
+};
+
+const FontTextInput = ({
     className = '',
     weight = 'regular',
     style,
     autoGrow = false,
-    varient = 'default',
+    variant = 'default',
     onChangeText,
     value,
     placeholder,
@@ -28,11 +34,9 @@ const PoppinsTextInput = ({
     onSubmitEditing,
     submitBehavior,
     ...props
-}: PoppinsTextInputProps) => {
+}: FontTextInputProps) => {
     const [fontsLoaded] = useFonts({
-        'Poppins-Regular': require('../../../../assets/fonts/Poppins/Poppins-Regular.ttf'),
-        'Poppins-Medium': require('../../../../assets/fonts/Poppins/Poppins-Medium.ttf'),
-        'Poppins-Bold': require('../../../../assets/fonts/Poppins/Poppins-Bold.ttf'),
+        'LibreBaskerville': require('../../../../assets/fonts/Libre_Baskerville/LibreBaskerville-VariableFont_wght.ttf'),
     });
     const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
@@ -45,19 +49,8 @@ const PoppinsTextInput = ({
         textarea.style.height = `${textarea.scrollHeight}px`;
     }, []);
 
-    const getFontFamily = () => {
-        switch (weight) {
-            case 'medium':
-                return 'Poppins-Medium';
-            case 'bold':
-                return 'Poppins-Bold';
-            default:
-                return 'Poppins-Regular';
-        }
-    };
-
     const getVariantClasses = () => {
-        switch (varient) {
+        switch (variant) {
             case 'styled':
                 return 'border-b-2 border-text/50 px-2 bg-text/5';
             default:
@@ -107,7 +100,12 @@ const PoppinsTextInput = ({
                 }}
                 rows={1}
                 className={`${className} ${getVariantClasses()} focus:outline-none rounded resize-none overflow-hidden`}
-                style={{ fontFamily: fontsLoaded ? getFontFamily() : undefined, ...(style as React.CSSProperties), minHeight: 44 }}
+                style={{
+                    fontFamily: fontsLoaded ? 'LibreBaskerville' : undefined,
+                    fontWeight: WEIGHT_MAP[weight] as '400' | '500' | '700',
+                    ...(style as React.CSSProperties),
+                    minHeight: 44
+                }}
             />
         );
     }
@@ -115,7 +113,12 @@ const PoppinsTextInput = ({
     return (
         <TextInput
             className={`${className} ${getVariantClasses()} focus:outline-none rounded`}
-            style={{ fontFamily: fontsLoaded ? getFontFamily() : undefined, color: 'text', ...style }}
+            style={{
+                fontFamily: fontsLoaded ? 'LibreBaskerville' : undefined,
+                fontWeight: WEIGHT_MAP[weight] as '400' | '500' | '700',
+                color: 'text',
+                ...style
+            }}
             placeholderTextColor="rgb(0 0 0 / 0.3)"
             value={value}
             placeholder={placeholder}
@@ -125,4 +128,4 @@ const PoppinsTextInput = ({
     );
 };
 
-export default PoppinsTextInput;
+export default FontTextInput;

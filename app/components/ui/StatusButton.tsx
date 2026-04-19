@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { View } from 'react-native';
 import AppButton from './buttons/AppButton';
-import PoppinsText from './text/PoppinsText';
+import FontText from './text/FontText';
 
 interface StatusButtonProps {
   buttonText: string;
@@ -47,7 +47,7 @@ export default function StatusButton({ buttonText, buttonAltText, className }: S
   return (
     <View className={`transition-all ${className || ''}`} style={{ transform: [{ translateX: shakeOffset }] }}>
       <AppButton variant="grey" className={`h-10 w-28 ${className || ''}`} onPress={buttonPress}>
-        <PoppinsText weight='medium' color='white'>{trueButtonText}</PoppinsText>
+        <FontText weight='medium' color='white'>{trueButtonText}</FontText>
       </AppButton>
     </View>
   );

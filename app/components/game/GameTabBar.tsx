@@ -16,6 +16,8 @@ interface GameTabBarProps<TTab extends string> {
     activeTab: TTab;
     onTabPress: (tab: TTab) => void;
     tabs: GameTabDefinition<TTab>[];
+    iconSize?: number;
+    iconStrokeWidth?: number;
 }
 
 const SvgTabContainer = ({ text, isHighlighted, onPress }: { text: string; isHighlighted: boolean; onPress: () => void }) => {
@@ -38,7 +40,7 @@ const SvgTabContainer = ({ text, isHighlighted, onPress }: { text: string; isHig
     );
 };
 
-const GameTabBar = <TTab extends string>({ activeTab, onTabPress, tabs }: GameTabBarProps<TTab>) => {
+const GameTabBar = <TTab extends string>({ activeTab, onTabPress, tabs, iconSize = 26, iconStrokeWidth = 0 }: GameTabBarProps<TTab>) => {
     const { width } = useWindowDimensions();
     const hasTrueMiddle = tabs.length % 2 === 1;
     const centerIndex = Math.floor(tabs.length / 2);

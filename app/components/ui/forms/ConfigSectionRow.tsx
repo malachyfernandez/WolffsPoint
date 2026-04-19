@@ -1,7 +1,7 @@
 import React from 'react';
 import Column from '../../layout/Column';
 import Row from '../../layout/Row';
-import PoppinsText from '../text/PoppinsText';
+import FontText from '../text/FontText';
 
 interface ConfigSectionRowProps {
     title: string;
@@ -18,8 +18,8 @@ const ConfigSectionRow = ({ title, subtext, children, showDivider = true }: Conf
     return (
         <Row className={`items-center justify-between gap-4 py-4 ${showDivider ? 'border-b border-border/15' : ''}`} style={{ flexWrap: 'wrap' }}>
             <Column className='min-w-[220px] flex-1' gap={1}>
-                <PoppinsText weight='medium'>{title}</PoppinsText>
-                <PoppinsText varient='subtext'>{subtext}</PoppinsText>
+                <FontText weight='medium'>{title}</FontText>
+                <FontText variant='subtext'>{subtext}</FontText>
             </Column>
             {children}
         </Row>

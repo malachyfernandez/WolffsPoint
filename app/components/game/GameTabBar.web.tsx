@@ -15,6 +15,8 @@ interface GameTabBarProps<TTab extends string> {
     onTabPress: (tab: TTab) => void;
     tabs: GameTabDefinition<TTab>[];
     activeTabIndent?: number;
+    iconSize?: number;
+    iconStrokeWidth?: number;
 }
 
 const gameTabBarCSS = `
@@ -166,25 +168,38 @@ const gameTabBarCSS = `
     overflow: visible;
     text-overflow: clip;
     white-space: nowrap;
-    font-size: 12px;
+    font-size: 8px;
     line-height: 1.15;
-    font-weight: 600;
-    letter-spacing: 0.01em;
+    font-weight: 1000;
+    letter-spacing: 0.05em;
     text-align: center;
+    font-family: 'LibreBaskerville', serif;
+    text-transform: uppercase;
+    margin-top: -0px;
 }
 `;
 
-function cloneTabIcon(icon: React.ReactNode, color: string) {
+function cloneTabIcon(icon: React.ReactNode, color: string, size: number, strokeWidth: number) {
     if (!React.isValidElement(icon)) {
         return icon;
     }
 
     return React.cloneElement(icon as ReactElement<any>, {
         color,
+        width: size,
+        height: size,
+        strokeWidth,
     });
 }
 
-const GameTabBar = <TTab extends string>({ activeTab, onTabPress, tabs, activeTabIndent = 5 }: GameTabBarProps<TTab>) => {
+const GameTabBar = <TTab extends string>({ 
+    activeTab, 
+    onTabPress, 
+    tabs, 
+    activeTabIndent = 5,
+    iconSize = 30,
+    iconStrokeWidth = 0,
+}: GameTabBarProps<TTab>) => {
     const { width } = useWindowDimensions();
     const hasTrueMiddle = tabs.length % 2 === 1;
     const centerIndex = Math.floor(tabs.length / 2);
@@ -235,7 +250,7 @@ const GameTabBar = <TTab extends string>({ activeTab, onTabPress, tabs, activeTa
                                         <div className="guilded-game-tab-inner">
                                             <div className="guilded-game-tab-surface">
                                                 <div className="guilded-game-tab-texture" />
-                                                <div className="guilded-game-tab-icon">{cloneTabIcon(tab.icon, iconColor)}</div>
+                                                <div className="guilded-game-tab-icon">{cloneTabIcon(tab.icon, iconColor, iconSize, iconStrokeWidth)}</div>
                                                 <span className="guilded-game-tab-label">{label}</span>
                                             </div>
                                         </div>

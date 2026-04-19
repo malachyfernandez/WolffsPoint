@@ -1,5 +1,5 @@
 import React from 'react';
-import PoppinsNumberInput from './PoppinsNumberInput';
+import FontNumberInput from './FontNumberInput';
 
 interface SmartNumberInputProps {
     placeholder?: string;
@@ -26,7 +26,7 @@ const SmartNumberInput = ({
     };
 
     return (
-        <PoppinsNumberInput
+        <FontNumberInput
             placeholder={placeholder}
             className={className}
             value={value}

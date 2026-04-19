@@ -4,8 +4,8 @@ import ConvexDialog from '../ui/dialog/ConvexDialog';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
 import AppButton from '../ui/buttons/AppButton';
-import PoppinsText from '../ui/text/PoppinsText';
-import PoppinsTextInput from '../ui/forms/PoppinsTextInput';
+import FontText from '../ui/text/FontText';
+import FontTextInput from '../ui/forms/FontTextInput';
 import DialogHeader from '../ui/dialog/DialogHeader';
 import SmartDateInput from '../ui/forms/SmartDateInput';
 import StatusButton from '../ui/StatusButton';
@@ -99,7 +99,7 @@ const DaySelectionDialog = ({ isOpen, onOpenChange, index, dayDate, buttonLabel,
                         {showCurrentDayIndicator && (
                             <View className='w-1.5 h-1.5 bg-red-500 rounded-full' />
                         )}
-                        <PoppinsText className='text-white'>{buttonLabel || `${dayDate.getMonth() + 1}/${dayDate.getDate()}`}</PoppinsText>
+                        <FontText className='text-white'>{buttonLabel || `${dayDate.getMonth() + 1}/${dayDate.getDate()}`}</FontText>
                     </Row>
                 </AppButton>
             </ConvexDialog.Trigger>
@@ -115,7 +115,7 @@ const DaySelectionDialog = ({ isOpen, onOpenChange, index, dayDate, buttonLabel,
                             subtext={followingDateMinusOne ? `Between ${previousDatePlusOne.getMonth() + 1}/${previousDatePlusOne.getDate()} and ${followingDateMinusOne.getMonth() + 1}/${followingDateMinusOne.getDate()}` : `After ${previousDatePlusOne.getMonth() + 1}/${previousDatePlusOne.getDate()}`}
                         />
                         <Column gap={2}>
-                            {/* <PoppinsText>Day 1 of Your Game</PoppinsText> */}
+                            {/* <FontText>Day 1 of Your Game</FontText> */}
                             <SmartDateInput
                                 placeholder="MM/DD/YYYY"
                                 className="w-full border border-subtle-border p-2"
@@ -130,7 +130,7 @@ const DaySelectionDialog = ({ isOpen, onOpenChange, index, dayDate, buttonLabel,
                         {isDateValid ? (
                             <>
                                 <AppButton className='w-34 h-10' variant='black' onPress={submitForum}>
-                                    <PoppinsText color='white' weight='medium'>Change</PoppinsText>
+                                    <FontText color='white' weight='medium'>Change</FontText>
                                 </AppButton>
                             </>
                         ) : (

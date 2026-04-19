@@ -3,7 +3,7 @@ import { Pressable } from 'react-native';
 import { ChevronLeft } from 'lucide-react-native';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
-import PoppinsText from '../ui/text/PoppinsText';
+import FontText from '../ui/text/FontText';
 import MarkdownRenderer from '../ui/markdown/MarkdownRenderer';
 import { useUserVariable } from '../../../hooks/useUserVariable';
 import { getGameScopedKey } from '../../../utils/multiplayer';
@@ -33,13 +33,13 @@ const RuleBookPageOPERATOR = ({ gameId, onBack }: RuleBookPageOPERATORProps) => 
             <Pressable onPress={onBack} className='self-start py-1'>
                 <Row className='items-center gap-2'>
                     <ChevronLeft size={20} color='rgb(46, 41, 37)' />
-                    <PoppinsText weight='medium'>Config</PoppinsText>
+                    <FontText weight='medium'>Config</FontText>
                 </Row>
             </Pressable>
 
             <Column className='border-y border-border/15 py-5' gap={5}>
                 <Column gap={2}>
-                    <PoppinsText weight='bold' className='text-xl'>Rule Book</PoppinsText>
+                    <FontText weight='bold' className='text-xl'>Rule Book</FontText>
                     <Pressable 
                     onPress={() => setIsEditDialogOpen(true)}
                         className='flex-1 min-h-[220px] rounded-3xl bg-text/5 p-4'
@@ -48,7 +48,7 @@ const RuleBookPageOPERATOR = ({ gameId, onBack }: RuleBookPageOPERATORProps) => 
                             <MarkdownRenderer markdown={ruleBookData.value.content} />
                         ) : (
                             <Column className='min-h-[180px] items-center justify-center'>
-                                <PoppinsText varient='subtext'>No rule book written yet. Tap to edit.</PoppinsText>
+                                <FontText variant='subtext'>No rule book written yet. Tap to edit.</FontText>
                             </Column>
                         )}
                     </Pressable>

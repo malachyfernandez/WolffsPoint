@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Animated, { FadeIn } from 'react-native-reanimated';
-import PoppinsText from '../ui/text/PoppinsText';
+import FontText from '../ui/text/FontText';
 import LoadingText from '../ui/loading/LoadingText';
 import { useUserList } from 'hooks/useUserList';
 import { useUserVariableGet } from 'hooks/useUserVariableGet';
@@ -195,11 +195,11 @@ const NightlyPageOPERATOR = ({ currentUserId: _currentUserId, gameId }: NightlyP
                     <Column>
                         <Row className='justify-between items-center mb-4'>
                             <Column gap={0}>
-                                <PoppinsText weight='medium'>Player submissions</PoppinsText>
-                                <PoppinsText varient='subtext'>{voteCount}/{users.length} voted, {actionCount}/{users.length} submitted actions</PoppinsText>
+                                <FontText weight='medium'>Player submissions</FontText>
+                                <FontText variant='subtext'>{voteCount}/{users.length} voted, {actionCount}/{users.length} submitted actions</FontText>
                             </Column>
                             <AppButton variant='accent' className='w-48' onPress={() => setIsCertificationDialogOpen(true)}>
-                                <PoppinsText weight='medium' color='white'>Review / Certify</PoppinsText>
+                                <FontText weight='medium' color='white'>Review / Certify</FontText>
                             </AppButton>
                         </Row>
 
@@ -265,9 +265,9 @@ const NightlyPageOPERATOR = ({ currentUserId: _currentUserId, gameId }: NightlyP
                 </Animated.View>
             ) : (
                 <Row className='items-center justify-center'>
-                    <PoppinsText weight='medium' className='text-center text-gray-500'>
+                    <FontText weight='medium' className='text-center text-gray-500'>
                         No players available. Add players in the Players tab first.
-                    </PoppinsText>
+                    </FontText>
                 </Row>
             )}
         </Column>

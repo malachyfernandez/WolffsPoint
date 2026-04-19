@@ -7,7 +7,7 @@ import Column from '../../layout/Column';
 import Row from '../../layout/Row';
 import AppButton from '../../ui/buttons/AppButton';
 import MarkdownRenderer from '../../ui/markdown/MarkdownRenderer';
-import PoppinsText from '../../ui/text/PoppinsText';
+import FontText from '../../ui/text/FontText';
 import { TownSquareAuthorAvatar, TownSquareAuthorName } from './TownSquareAuthorIdentity';
 import TownSquareReplyBranch from './TownSquareReplyBranch';
 import { ReplyTreeNode, ThreadViewModel, formatTimestamp } from './townSquareUtils';
@@ -56,7 +56,7 @@ const TownSquareThreadDetailView = ({
             <Pressable onPress={onBack} className='self-start py-1'>
                 <Row className='items-center gap-2'>
                     <ChevronLeft size={20} color='rgb(46, 41, 37)' />
-                    <PoppinsText weight='medium'>Town Square</PoppinsText>
+                    <FontText weight='medium'>Town Square</FontText>
                 </Row>
             </Pressable>
 
@@ -67,9 +67,9 @@ const TownSquareThreadDetailView = ({
                             <Row className='items-start gap-4'>
                                 <TownSquareAuthorAvatar gameId={selectedThread.gameId} size={60} userId={selectedThread.authorUserId} />
                                 <Column className='flex-1' gap={1}>
-                                    <PoppinsText weight='bold' className='text-4xl leading-10'>{selectedThread.titleResolved}</PoppinsText>
+                                    <FontText weight='bold' className='text-4xl leading-10'>{selectedThread.titleResolved}</FontText>
                                     <TownSquareAuthorName gameId={selectedThread.gameId} userId={selectedThread.authorUserId} />
-                                    <PoppinsText varient='subtext'>{formatTimestamp(selectedThread.createdAt)}</PoppinsText>
+                                    <FontText variant='subtext'>{formatTimestamp(selectedThread.createdAt)}</FontText>
                                 </Column>
                             </Row>
 
@@ -77,24 +77,24 @@ const TownSquareThreadDetailView = ({
 
                             <Row className='items-center justify-between gap-3 border-b border-border/20 pb-4'>
                                 {isAnnouncement ? (
-                                    <PoppinsText weight='medium' className='text-accent'>Announcement</PoppinsText>
+                                    <FontText weight='medium' className='text-accent'>Announcement</FontText>
                                 ) : (
-                                    <PoppinsText varient='subtext'>{`${selectedThread.replyCount} repl${selectedThread.replyCount === 1 ? 'y' : 'ies'}`}</PoppinsText>
+                                    <FontText variant='subtext'>{`${selectedThread.replyCount} repl${selectedThread.replyCount === 1 ? 'y' : 'ies'}`}</FontText>
                                 )}
                                 <Row className='items-center gap-3'>
                                     {isOwnThread ? (
                                         <>
                                             <Pressable onPress={onEditThread}>
-                                                <PoppinsText weight='medium' className='text-accent'>Edit</PoppinsText>
+                                                <FontText weight='medium' className='text-accent'>Edit</FontText>
                                             </Pressable>
                                             <Pressable onPress={onDeleteThread}>
-                                                <PoppinsText weight='medium' className='text-red-500'>Delete</PoppinsText>
+                                                <FontText weight='medium' className='text-red-500'>Delete</FontText>
                                             </Pressable>
                                         </>
                                     ) : null}
                                     {!isAnnouncement && (
                                         <AppButton variant='outline' className='w-36' onPress={onReplyToThread}>
-                                            <PoppinsText weight='medium'>Reply</PoppinsText>
+                                            <FontText weight='medium'>Reply</FontText>
                                         </AppButton>
                                     )}
                                 </Row>
@@ -104,7 +104,7 @@ const TownSquareThreadDetailView = ({
                         {!isAnnouncement && (
                             <Column gap={4}>
                                 <Row className='items-center justify-between'>
-                                    <PoppinsText weight='medium' className='text-2xl'>Replies</PoppinsText>
+                                    <FontText weight='medium' className='text-2xl'>Replies</FontText>
                                 </Row>
 
                                 {replyTree.length > 0 ? (
@@ -120,8 +120,8 @@ const TownSquareThreadDetailView = ({
                                     />
                                 ) : (
                                     <Column className='py-8' gap={1}>
-                                        <PoppinsText weight='medium'>No replies yet</PoppinsText>
-                                        <PoppinsText varient='subtext'>Be the first person to answer this thread.</PoppinsText>
+                                        <FontText weight='medium'>No replies yet</FontText>
+                                        <FontText variant='subtext'>Be the first person to answer this thread.</FontText>
                                     </Column>
                                 )}
                             </Column>

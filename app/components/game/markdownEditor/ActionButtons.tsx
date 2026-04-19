@@ -2,7 +2,7 @@ import React from 'react';
 import Row from '../../layout/Row';
 import AppButton from '../../ui/buttons/AppButton';
 import DisableableButton from '../../ui/buttons/DisableableButton';
-import PoppinsText from '../../ui/text/PoppinsText';
+import FontText from '../../ui/text/FontText';
 
 interface ActionButtonsProps {
     canSubmit: boolean;
@@ -20,7 +20,7 @@ export function ActionButtons({
     return (
         <Row className='justify-end gap-3 pt-1'>
             <AppButton variant='outline' className='w-32' onPress={onCancel}>
-                <PoppinsText weight='medium'>Cancel</PoppinsText>
+                <FontText weight='medium'>Cancel</FontText>
             </AppButton>
             <DisableableButton
                 isEnabled={canSubmit}

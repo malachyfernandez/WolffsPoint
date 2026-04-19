@@ -4,7 +4,7 @@ import ConvexDialog from './ConvexDialog';
 import Column from '../../layout/Column';
 import Row from '../../layout/Row';
 import AppButton from '../buttons/AppButton';
-import PoppinsText from '../text/PoppinsText';
+import FontText from '../text/FontText';
 import DialogHeader from './DialogHeader';
 import DisableableButton from '../buttons/DisableableButton';
 import ImagePreview from './ImagePreview';
@@ -147,7 +147,7 @@ const ImageUploadDialog = ({
                                 className='w-xs h-12'
                             />
                             <AppButton className='w-32' variant='outline' onPress={handleCancel}>
-                                <PoppinsText color='black' weight='medium'>Cancel</PoppinsText>
+                                <FontText color='black' weight='medium'>Cancel</FontText>
                             </AppButton>
                         </Row>
                     </Column>

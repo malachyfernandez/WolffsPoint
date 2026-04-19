@@ -1,7 +1,7 @@
 import React, { forwardRef } from 'react';
 import { Platform, Pressable } from 'react-native';
 import { ChevronDown } from 'lucide-react-native';
-import PoppinsText from '../../text/PoppinsText';
+import FontText from '../../text/FontText';
 
 interface AppDropdownTriggerProps {
     className?: string;
@@ -49,9 +49,9 @@ const AppDropdownTrigger = forwardRef<any, AppDropdownTriggerProps>(
                         className: `w-full flex items-center justify-between rounded border border-subtle-border bg-background px-3 py-3 text-left ${className}`.trim(),
                     },
                     <>
-                        <PoppinsText weight='medium' className={isPlaceholder ? 'opacity-60' : ''}>
+                        <FontText weight='medium' className={isPlaceholder ? 'opacity-60' : ''}>
                             {label}
-                        </PoppinsText>
+                        </FontText>
                         <ChevronDown size={18} color='rgb(46, 41, 37)' />
                     </>
                 )
@@ -60,9 +60,9 @@ const AppDropdownTrigger = forwardRef<any, AppDropdownTriggerProps>(
 
         return (
             <Pressable ref={ref} onPress={onPress} className={`w-full flex-row items-center justify-between rounded border border-subtle-border bg-background px-3 py-3 ${className}`.trim()} {...props}>
-                <PoppinsText weight='medium' className={isPlaceholder ? 'opacity-60' : ''}>
+                <FontText weight='medium' className={isPlaceholder ? 'opacity-60' : ''}>
                     {label}
-                </PoppinsText>
+                </FontText>
                 <ChevronDown size={18} color='rgb(46, 41, 37)' />
             </Pressable>
         );

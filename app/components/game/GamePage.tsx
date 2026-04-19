@@ -2,13 +2,16 @@ import React, { useState } from 'react';
 import Column from '../layout/Column';
 import { Platform, View } from 'react-native';
 import { useUserListGet } from 'hooks/useUserListGet';
+import { useUserVariableGet } from 'hooks/useUserVariableGet';
 import { ScrollShadow } from 'heroui-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import OperatorGamePage from './OperatorGamePage';
+import NewserGamePage from './NewserGamePage';
 import PlayerGamePage from './PlayerGamePage';
-import PoppinsText from '../ui/text/PoppinsText';
+import FontText from '../ui/text/FontText';
 import WolffspointIcon from '../icons/WolffspointIcon';
 import Animated, { runOnJS, useAnimatedScrollHandler } from 'react-native-reanimated';
+import { NewserAssignment, PublicUserData, getNewserAssignmentKey, resolveValidNewserAssignment } from '../../../utils/newspaperControl';
 
 interface GamePageProps {
     gameId: string;
@@ -28,22 +31,48 @@ const GamePage = ({ gameId, currentUserId }: GamePageProps) => {
             runOnJS(updateScrollAmount)(nextScrollAmount);
         },
     });
-    
+
     const ownedGameRows = useUserListGet({
         key: 'games',
         itemId: gameId,
         userIds: [currentUserId],
     });
 
-    if (ownedGameRows === undefined) {
+    const gameRows = useUserListGet({
+        key: 'games',
+        itemId: gameId,
+        returnTop: 1,
+    });
+
+    const operatorUserId = gameRows?.[0]?.userToken ?? '';
+
+    const userDataRecords = useUserVariableGet<PublicUserData>({
+        key: 'userData',
+        returnTop: 500,
+    });
+
+    const newserAssignmentRecords = useUserVariableGet<NewserAssignment>({
+        key: getNewserAssignmentKey(gameId),
+        userIds: operatorUserId ? [operatorUserId] : undefined,
+        returnTop: 1,
+    });
+
+    if (ownedGameRows === undefined || gameRows === undefined || userDataRecords === undefined || newserAssignmentRecords === undefined) {
         return (
             <Column className='w-full h-full items-center justify-center'>
-                <PoppinsText>Loading game…</PoppinsText>
+                <FontText>Loading game…</FontText>
             </Column>
         );
     }
 
     const isOperator = (ownedGameRows?.length ?? 0) > 0;
+
+    const validNewser = resolveValidNewserAssignment({
+        assignment: newserAssignmentRecords?.[0]?.value,
+        userDatas: userDataRecords.map((record) => record.value),
+    });
+
+    const isNewser = !isOperator && validNewser?.userId === currentUserId;
 
     // Calculate blur amount based on scroll (0px blur at top, 8px blur when scrolled 100px)
     const blurAmount = Math.min(Math.max((scrollAmount / 100) * 8, 0), 8);
@@ -64,6 +93,8 @@ const GamePage = ({ gameId, currentUserId }: GamePageProps) => {
                     <View className="w-full max-w-[1000px] mx-auto pt-60">
                         {isOperator ? (
                             <OperatorGamePage currentUserId={currentUserId} gameId={gameId} />
+                        ) : isNewser ? (
+                            <NewserGamePage currentUserId={currentUserId} gameId={gameId} />
                         ) : (
                             <PlayerGamePage currentUserId={currentUserId} gameId={gameId} />
                         )}

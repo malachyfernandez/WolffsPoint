@@ -2,7 +2,7 @@ import React from 'react';
 import Column from '../../layout/Column';
 import Row from '../../layout/Row';
 import AppButton from '../buttons/AppButton';
-import PoppinsText from '../text/PoppinsText';
+import FontText from '../text/FontText';
 import ConvexDialog from './ConvexDialog';
 import DialogHeader from './DialogHeader';
 
@@ -21,15 +21,15 @@ const UnsavedChangesDialog = ({ isOpen, onOpenChange, onStay, onLeave }: Unsaved
                 <ConvexDialog.Content className='max-w-md p-6'>
                     <DialogHeader text="Unsaved Changes" />
                     <Column gap={4} className='pt-4'>
-                        <PoppinsText className='text-center'>
+                        <FontText className='text-center'>
                             You have unsaved changes. Are you sure you want to leave without saving?
-                        </PoppinsText>
+                        </FontText>
                         <Row className='justify-center gap-4 pt-4'>
                             <AppButton variant='outline' className='w-24' onPress={onStay}>
-                                <PoppinsText weight='medium'>Stay</PoppinsText>
+                                <FontText weight='medium'>Stay</FontText>
                             </AppButton>
                             <AppButton variant='filled' className='w-24' onPress={onLeave}>
-                                <PoppinsText weight='medium' color='white'>Leave</PoppinsText>
+                                <FontText weight='medium' color='white'>Leave</FontText>
                             </AppButton>
                         </Row>
                     </Column>

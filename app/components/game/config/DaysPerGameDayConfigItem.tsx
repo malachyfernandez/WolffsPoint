@@ -1,8 +1,8 @@
 import React from 'react';
 import { useUserList } from '../../../../hooks/useUserList';
 import ConfigSectionRow from '../../ui/forms/ConfigSectionRow';
-import PoppinsNumberInput from '../../ui/forms/PoppinsNumberInput';
-import PoppinsText from '../../ui/text/PoppinsText';
+import FontNumberInput from '../../ui/forms/FontNumberInput';
+import FontText from '../../ui/text/FontText';
 import Row from '../../layout/Row';
 
 interface DaysPerGameDayConfigItemProps {
@@ -28,7 +28,7 @@ const DaysPerGameDayConfigItem = ({ gameId }: DaysPerGameDayConfigItemProps) => 
             showDivider={false}
         >
             <Row className='items-center gap-3'>
-                <PoppinsNumberInput
+                <FontNumberInput
                     value={numberOfRealDaysPerInGameDay.value}
                     onChangeText={(displayValue, isValid, numericValue) => {
                         if (isValid && numericValue !== null) {
@@ -41,7 +41,7 @@ const DaysPerGameDayConfigItem = ({ gameId }: DaysPerGameDayConfigItemProps) => 
                     useDefaultStyling={true}
                     className='border-border/15 bg-text/5'
                 />
-                <PoppinsText varient='subtext'>days</PoppinsText>
+                <FontText variant='subtext'>days</FontText>
             </Row>
         </ConfigSectionRow>
     );

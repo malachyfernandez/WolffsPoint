@@ -1,6 +1,6 @@
 import React from 'react';
 import { Platform, Pressable } from 'react-native';
-import PoppinsText from '../../text/PoppinsText';
+import FontText from '../../text/FontText';
 
 interface AppDropdownItemProps {
     className?: string;
@@ -47,18 +47,18 @@ const AppDropdownItem = ({ className = '', isSelected, label, onSelect, selected
                 {
                     className: `w-full rounded px-3 py-3 text-left ${stateClassName} ${className}`.trim(),
                 },
-                <PoppinsText weight={isSelected ? 'medium' : 'regular'}>
+                <FontText weight={isSelected ? 'medium' : 'regular'}>
                     {label}
-                </PoppinsText>
+                </FontText>
             )
         );
     }
 
     return (
         <Pressable className={`w-full rounded px-3 py-3 ${stateClassName} ${className}`.trim()} onPress={onSelect}>
-            <PoppinsText weight={isSelected ? 'medium' : 'regular'}>
+            <FontText weight={isSelected ? 'medium' : 'regular'}>
                 {label}
-            </PoppinsText>
+            </FontText>
         </Pressable>
     );
 };

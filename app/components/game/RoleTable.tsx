@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import PoppinsText from '../ui/text/PoppinsText';
+import FontText from '../ui/text/FontText';
 import { useUserList } from 'hooks/useUserList';
 import Column from '../layout/Column';
 import AppButton from '../ui/buttons/AppButton';
@@ -145,16 +145,16 @@ const RoleTable = ({ gameId, doSync, setDoSync, isBeingEdited, setIsBeingEdited,
                     {/* Title Row */}
                     <Row gap={0} className={`h-12 w-min bg-background border-b-2 border-border rounded-t-lg`}>
                         <Column className='w-32 h-full items-center justify-center'>
-                            <PoppinsText weight='medium' className='text-center'>Role</PoppinsText>
+                            <FontText weight='medium' className='text-center'>Role</FontText>
                         </Column>
                         <Column className='w-24 h-full items-center justify-center'>
-                            <PoppinsText weight='medium' className='text-center'>Votes?</PoppinsText>
+                            <FontText weight='medium' className='text-center'>Votes?</FontText>
                         </Column>
                         <Column className='w-64 h-full items-center justify-center'>
-                            <PoppinsText weight='medium' className='text-center'>Role Message</PoppinsText>
+                            <FontText weight='medium' className='text-center'>Role Message</FontText>
                         </Column>
                         <Column className='w-64 h-full items-center justify-center'>
-                            <PoppinsText weight='medium' className='text-center'>About Role</PoppinsText>
+                            <FontText weight='medium' className='text-center'>About Role</FontText>
                         </Column>
                         {/* <Column className='w-12 h-full items-center justify-center'> */}
                             

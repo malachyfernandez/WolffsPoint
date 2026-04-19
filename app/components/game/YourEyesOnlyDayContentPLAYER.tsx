@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
-import PoppinsText from '../ui/text/PoppinsText';
+import FontText from '../ui/text/FontText';
 import AppDropdown from '../ui/forms/AppDropdown';
 import MarkdownRenderer, { MarkdownRendererInputDataProvider } from '../ui/markdown/MarkdownRenderer';
 import ChainWraper from './ChainWraper';
@@ -114,7 +114,7 @@ const YourEyesOnlyDayContentPLAYER = ({ gameId, currentEmail, currentUserId, day
             <Column className='items-center w-full m-auto rounded max-w-lg p-4 bg-text/5' gap={2}>
                 {(selectedMorningDayIndex >= 0 && hasSelectedMorning && currentMorningMessage) ? (
                     <>
-                        <PoppinsText varient='cardHeader' className='text-center'>Last Night:</PoppinsText>
+                        <FontText variant='cardHeader' className='text-center'>Last Night:</FontText>
                         <MarkdownRenderer
                             markdown={currentMorningMessage}
                             textAlign='center'
@@ -122,29 +122,29 @@ const YourEyesOnlyDayContentPLAYER = ({ gameId, currentEmail, currentUserId, day
                         />
                     </>
                 ) : (
-                    <PoppinsText varient='cardHeader' className='text-center'>No updates from last night</PoppinsText>
+                    <FontText variant='cardHeader' className='text-center'>No updates from last night</FontText>
                 )}
             </Column>
 
             <Column className='items-center' gap={1}>
-                <PoppinsText weight='bold' className='text-lg tracking-[0.45em]'>{primaryLabel}</PoppinsText>
-                <PoppinsText weight='bold' className='text-5xl leading-14'>{primaryCountdown}</PoppinsText>
-                <PoppinsText varient='subtext'>
+                <FontText weight='bold' className='text-lg tracking-[0.45em]'>{primaryLabel}</FontText>
+                <FontText weight='bold' className='text-5xl leading-14'>{primaryCountdown}</FontText>
+                <FontText variant='subtext'>
                     {primaryLabel === 'VOTE'
                         ? `Voting due ${primaryDateLabel} at ${formatTimeLabel(primaryTimeLabel)}.`
                         : `Actions due ${primaryDateLabel} at ${formatTimeLabel(primaryTimeLabel)}.`}
-                </PoppinsText>
-                <PoppinsText varient='subtext'>
+                </FontText>
+                <FontText variant='subtext'>
                     {secondaryIsLocked
                         ? `${secondaryLabel} due ${secondaryDateLabel} at ${formatTimeLabel(secondaryTimeLabel)}.`
                         : `${secondaryLabel} due in ${formatRelativeDuration(secondaryDeadline, now)} (${formatTimeLabel(secondaryTimeLabel)}).`}
-                </PoppinsText>
+                </FontText>
             </Column>
 
             <Row className='items-start gap-6' style={{ flexWrap: 'wrap' }}>
                 <ChainWraper className='min-w-[240px] flex-1' isDisabled={isVoteLocked && roleData?.doesRoleVote !== false}>
                     <Column gap={3}>
-                        <PoppinsText weight='medium' className='text-sm tracking-[0.24em] uppercase opacity-60'>Vote</PoppinsText>
+                        <FontText weight='medium' className='text-sm tracking-[0.24em] uppercase opacity-60'>Vote</FontText>
                         <AppDropdown
                             options={voteOptions}
                             value={submission.value.vote}
@@ -165,16 +165,16 @@ const YourEyesOnlyDayContentPLAYER = ({ gameId, currentEmail, currentUserId, day
                             disabled={isVoteLocked || roleData?.doesRoleVote === false}
                         />
                         {roleData?.doesRoleVote === false ? (
-                            <PoppinsText varient='subtext'>This role doesn&apos;t submit a vote.</PoppinsText>
+                            <FontText variant='subtext'>This role doesn&apos;t submit a vote.</FontText>
                         ) : isVoteLocked ? (
-                            <PoppinsText varient='subtext'>Saved vote: {submission.value.vote || 'No vote submitted.'}</PoppinsText>
+                            <FontText variant='subtext'>Saved vote: {submission.value.vote || 'No vote submitted.'}</FontText>
                         ) : null}
                     </Column>
                 </ChainWraper>
 
                 <ChainWraper className='min-w-[320px] flex-1' isDisabled={isActionLocked}>
                     <Column gap={3}>
-                        <PoppinsText weight='medium' className='text-sm tracking-[0.24em] uppercase opacity-60'>Action</PoppinsText>
+                        <FontText weight='medium' className='text-sm tracking-[0.24em] uppercase opacity-60'>Action</FontText>
                         <MarkdownRendererInputDataProvider playerOptions={playerOptions} roleOptions={roleOptions}>
                             {roleData?.roleMessage?.trim().length ? (
                                 <MarkdownRenderer
@@ -189,14 +189,14 @@ const YourEyesOnlyDayContentPLAYER = ({ gameId, currentEmail, currentUserId, day
                                     } : undefined}
                                 />
                             ) : (
-                                <PoppinsText varient='subtext'>The operator has not written your role action instructions yet.</PoppinsText>
+                                <FontText variant='subtext'>The operator has not written your role action instructions yet.</FontText>
                             )}
                         </MarkdownRendererInputDataProvider>
 
                         {isActionLocked ? (
-                            <PoppinsText varient='subtext'>The action window has closed for this day.</PoppinsText>
+                            <FontText variant='subtext'>The action window has closed for this day.</FontText>
                         ) : currentActionSummary.trim().length > 0 ? (
-                            <PoppinsText varient='subtext'>Current action: {currentActionSummary}</PoppinsText>
+                            <FontText variant='subtext'>Current action: {currentActionSummary}</FontText>
                         ) : null}
                     </Column>
                 </ChainWraper>

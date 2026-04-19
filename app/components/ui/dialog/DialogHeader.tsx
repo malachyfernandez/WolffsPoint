@@ -1,6 +1,6 @@
 import React from 'react';
 import Column from '../../layout/Column';
-import PoppinsText from '../text/PoppinsText';
+import FontText from '../text/FontText';
 
 interface DialogHeaderProps {
     text: string;
@@ -10,10 +10,10 @@ interface DialogHeaderProps {
 
 const DialogHeader = ({ text, subtext, className }: DialogHeaderProps) => {
     return (
-        <Column gap={0} className={`bg-accent p-4 items-center -m-5 rounded-t-sm mb-0 ${className || ''}`}>
-            <PoppinsText weight='medium' color='white'>{text}</PoppinsText>
+        <Column gap={0} className={`bg-text p-4 items-center -m-5 rounded-t-sm mb-0 ${className || ''}`}>
+            <FontText weight='medium' color='white'>{text}</FontText>
             {subtext && (
-                <PoppinsText varient='subtext' weight='medium' color='white'>{subtext}</PoppinsText>
+                <FontText variant='subtext' weight='medium' color='white'>{subtext}</FontText>
             )}
         </Column>
     );

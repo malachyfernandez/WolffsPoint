@@ -1,7 +1,7 @@
 import React from 'react';
 import Column from '../../layout/Column';
-import PoppinsText from '../../ui/text/PoppinsText';
-import PoppinsTextInput from '../../ui/forms/PoppinsTextInput';
+import FontText from '../../ui/text/FontText';
+import FontTextInput from '../../ui/forms/FontTextInput';
 
 interface TitleInputSectionProps {
     label: string;
@@ -18,8 +18,8 @@ export function TitleInputSection({
 }: TitleInputSectionProps) {
     return (
         <Column gap={1}>
-            <PoppinsText weight='medium'>{label}</PoppinsText>
-            <PoppinsTextInput
+            <FontText weight='medium'>{label}</FontText>
+            <FontTextInput
                 className='w-full rounded-xl border border-subtle-border px-4 py-3'
                 placeholder={placeholder}
                 value={value}

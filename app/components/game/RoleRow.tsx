@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import PoppinsText from '../ui/text/PoppinsText';
+import FontText from '../ui/text/FontText';
 import InlineEditableText from '../ui/forms/InlineEditableText';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
@@ -65,7 +65,7 @@ const RoleRow = ({ gameId, role, index, isLast, setRoleName, setDoesRoleVote, se
                 </Column>
                 <Column className={`w-64 h-full border border-subtle-border items-center justify-center`}>
                     <Pressable onPress={() => setIsRoleMessageDialogOpen(true)} className='w-60 h-full items-center justify-center'>
-                        <PoppinsText 
+                        <FontText 
                             weight='medium' 
                             className='text-center text-nowrap overflow-hidden w-60'
                             style={{
@@ -74,16 +74,16 @@ const RoleRow = ({ gameId, role, index, isLast, setRoleName, setDoesRoleVote, se
                             }}
                         >
                             {role.roleMessage ? (
-                                <PoppinsText className="text-center">{role.roleMessage.slice(0, 30)}{role.roleMessage.length > 30 ? '...' : ''}</PoppinsText>
+                                <FontText className="text-center">{role.roleMessage.slice(0, 30)}{role.roleMessage.length > 30 ? '...' : ''}</FontText>
                             ) : (
-                                <PoppinsText className="opacity-50">Role message...</PoppinsText>
+                                <FontText className="opacity-50">Role message...</FontText>
                             )}
-                        </PoppinsText>
+                        </FontText>
                     </Pressable>
                 </Column>
                 <Column className={`w-64 h-full border border-subtle-border items-center justify-center ${isLast ? 'rounded-br-lg' : ''}`}>
                     <Pressable onPress={() => setIsAboutRoleDialogOpen(true)} className='w-full h-full items-center justify-center'>
-                        <PoppinsText 
+                        <FontText 
                             weight='medium' 
                             className='text-center text-nowrap overflow-hidden w-60'
                             style={{
@@ -92,16 +92,16 @@ const RoleRow = ({ gameId, role, index, isLast, setRoleName, setDoesRoleVote, se
                             }}
                         >
                             {role.aboutRole ? (
-                                <PoppinsText className="text-center">{role.aboutRole.slice(0, 30)}{role.aboutRole.length > 30 ? '...' : ''}</PoppinsText>
+                                <FontText className="text-center">{role.aboutRole.slice(0, 30)}{role.aboutRole.length > 30 ? '...' : ''}</FontText>
                             ) : (
-                                <PoppinsText className="opacity-50">About role...</PoppinsText>
+                                <FontText className="opacity-50">About role...</FontText>
                             )}
-                        </PoppinsText>
+                        </FontText>
                     </Pressable>
                 </Column>
                 <Column className={`w-0 h-12 items-center justify-center`}>
                     <AppButton variant="filled" className='w-8 max-h-8' onPress={() => onDeleteRole(index)}>
-                        <PoppinsText weight='bold' color='white' className='text-xl mt-[-0.1rem]'>-</PoppinsText>
+                        <FontText weight='bold' color='white' className='text-xl mt-[-0.1rem]'>-</FontText>
                     </AppButton>
                 </Column>
             </Row>

@@ -1,7 +1,7 @@
 import React from 'react';
 import { TextInput } from 'react-native';
 import Column from '../../layout/Column';
-import PoppinsText from '../../ui/text/PoppinsText';
+import FontText from '../../ui/text/FontText';
 import { SelectionRange } from './townSquareUtils';
 
 interface TownSquareComposerEditorPaneProps {
@@ -13,7 +13,7 @@ interface TownSquareComposerEditorPaneProps {
 const TownSquareComposerEditorPane = ({ onBodyChange, onSelectionChange, value }: TownSquareComposerEditorPaneProps) => {
     return (
         <Column className='min-w-0' gap={2}>
-            {/* <PoppinsText weight='medium'>Body</PoppinsText> */}
+            {/* <FontText weight='medium'>Body</FontText> */}
             <TextInput
                 multiline={true}
                 className='min-h-[50vh] min-w-0 rounded-[24px] bg-text/10 overflow-hidden p-4 text-base text-text'

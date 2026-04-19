@@ -3,7 +3,7 @@ import { useUserVariable } from '../../../../hooks/useUserVariable';
 import { GameSchedule } from '../../../../types/multiplayer';
 import { getGameScopedKey, normalizeGameSchedule, defaultGameSchedule, formatTimeLabel } from '../../../../utils/multiplayer';
 import ConfigSectionRow from '../../ui/forms/ConfigSectionRow';
-import PoppinsTimeInput from '../../ui/forms/PoppinsTimeInput';
+import FontTimeInput from '../../ui/forms/FontTimeInput';
 
 interface WakeUpTimeConfigItemProps {
     gameId: string;
@@ -27,7 +27,7 @@ const WakeUpTimeConfigItem = ({ gameId }: WakeUpTimeConfigItemProps) => {
             title='Wake up time'
             subtext={`Morning messages and the newspaper unlock at ${formatTimeLabel(schedule.wakeUpTime)}.`}
         >
-            <PoppinsTimeInput
+            <FontTimeInput
                 value={schedule.wakeUpTime}
                 onChangeText={(value) => setGameSchedule({
                     ...schedule,

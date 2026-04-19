@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
-import PoppinsText from '../ui/text/PoppinsText';
+import FontText from '../ui/text/FontText';
 import AppButton from '../ui/buttons/AppButton';
 import JoinedGameListItem from './JoinedGameListItem';
 import ArchivedGamesDialog from './ArchivedGamesDialog';
@@ -23,7 +23,7 @@ const JoinedGames = ({ gamesTheyJoined, setGamesTheyJoined, setActiveGameId, arc
 
     return (
         <Column>
-            <PoppinsText weight='bold' className='text-text-inverted'>Joined Games</PoppinsText>
+            <FontText weight='bold' className='text-text-inverted'>Joined Games</FontText>
 
             <Column gap={0}>
                 {gamesTheyJoined.map((game, index) => (
@@ -46,9 +46,9 @@ const JoinedGames = ({ gamesTheyJoined, setGamesTheyJoined, setActiveGameId, arc
                             className="px-6 py-2 rounded-full"
                             onPress={() => setIsArchivedDialogOpen(true)}
                         >
-                            <PoppinsText weight='medium' color='white'>
+                            <FontText weight='medium' color='white'>
                                 {archivedCount} archived
-                            </PoppinsText>
+                            </FontText>
                         </AppButton>
                     </Row>
                 )}

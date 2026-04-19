@@ -1,6 +1,6 @@
 import React from 'react';
 import { TouchableOpacity, View } from 'react-native';
-import PoppinsText from '../ui/text/PoppinsText';
+import FontText from '../ui/text/FontText';
 import { ReactElement } from 'react';
 import { useCSSVariable } from 'uniwind';
 
@@ -33,9 +33,9 @@ const MiddleNavTab = ({ text, children, isLast = false, isInvisible = false, isH
     >
       {clonedChildren}
       {isHighlighted ? (
-        <PoppinsText className='text-xs shrink-0' color='text' weight='medium'>{text}</PoppinsText>
+        <FontText className='text-xs shrink-0' color='text' weight='medium'>{text}</FontText>
       ) : (
-        <PoppinsText className='text-xs shrink-0' color='accent' weight='medium'>{text}</PoppinsText>
+        <FontText className='text-xs shrink-0' color='accent' weight='medium'>{text}</FontText>
       )}
     </TouchableOpacity>
   );

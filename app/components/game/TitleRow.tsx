@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import PoppinsText from '../ui/text/PoppinsText';
+import FontText from '../ui/text/FontText';
 import InlineEditableText from '../ui/forms/InlineEditableText';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
@@ -47,10 +47,10 @@ const TitleRow = ({ userTableTitle, userTableColumnVisibility, setColumnTitle, s
         <>
             <Row gap={0} className={`h-12 w-min bg-background border-b-2 border-border rounded-t-lg ${isEditing ? 'z-50' : ''}`}>
                 <Column className='w-12 h-full items-center justify-center'>
-                    <PoppinsText weight='medium' className='text-center'>D/A</PoppinsText>
+                    <FontText weight='medium' className='text-center'>D/A</FontText>
                 </Column>
                 <Column gap={0} className='w-28 h-full items-center justify-center'>
-                    <PoppinsText weight='medium' className='text-center'>Player</PoppinsText>
+                    <FontText weight='medium' className='text-center'>Player</FontText>
                 </Column>
                 {titles.extraUserColumns.map((columnTitle, index) => {
                     if (!visibility.extraUserColumns[index]) return null;
@@ -71,7 +71,7 @@ const TitleRow = ({ userTableTitle, userTableColumnVisibility, setColumnTitle, s
                                 onEditEnd={() => handleColumnEditEnd(index)}
                             />
                             <AppButton variant="grey" className='w-6 max-h-6 mr-[0.4rem] ml-0' onPress={() => setActiveMenu(index)}>
-                                <PoppinsText weight='bold' color='white' className='text-lg mt-[-0.1rem]'>⋯</PoppinsText>
+                                <FontText weight='bold' color='white' className='text-lg mt-[-0.1rem]'>⋯</FontText>
                             </AppButton>
                         </Row>
                     );

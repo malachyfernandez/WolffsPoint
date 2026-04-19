@@ -5,8 +5,8 @@ import DialogHeader from '../../ui/dialog/DialogHeader';
 import Column from '../../layout/Column';
 import Row from '../../layout/Row';
 import AppButton from '../../ui/buttons/AppButton';
-import PoppinsText from '../../ui/text/PoppinsText';
-import PoppinsTextInput from '../../ui/forms/PoppinsTextInput';
+import FontText from '../../ui/text/FontText';
+import FontTextInput from '../../ui/forms/FontTextInput';
 
 interface TownSquareLinkDialogProps {
     isOpen: boolean;
@@ -42,8 +42,8 @@ const TownSquareLinkDialog = ({ isOpen, onInsert, onOpenChange, selectedText }: 
                     <DialogHeader text='Insert link' />
                     <Column className='p-5' gap={4}>
                         <Column gap={1}>
-                            <PoppinsText weight='medium'>Link text</PoppinsText>
-                            <PoppinsTextInput
+                            <FontText weight='medium'>Link text</FontText>
+                            <FontTextInput
                                 className='w-full rounded-xl border border-subtle-border px-4 py-3'
                                 placeholder='Read more'
                                 value={label}
@@ -51,8 +51,8 @@ const TownSquareLinkDialog = ({ isOpen, onInsert, onOpenChange, selectedText }: 
                             />
                         </Column>
                         <Column gap={1}>
-                            <PoppinsText weight='medium'>Link URL</PoppinsText>
-                            <PoppinsTextInput
+                            <FontText weight='medium'>Link URL</FontText>
+                            <FontTextInput
                                 className='w-full rounded-xl border border-subtle-border px-4 py-3'
                                 placeholder='https://example.com'
                                 value={url}
@@ -61,7 +61,7 @@ const TownSquareLinkDialog = ({ isOpen, onInsert, onOpenChange, selectedText }: 
                         </Column>
                         <Row className='justify-end gap-3'>
                             <AppButton variant='outline' className='w-32' onPress={() => onOpenChange(false)}>
-                                <PoppinsText weight='medium'>Cancel</PoppinsText>
+                                <FontText weight='medium'>Cancel</FontText>
                             </AppButton>
                             <AppButton
                                 variant='green'
@@ -76,7 +76,7 @@ const TownSquareLinkDialog = ({ isOpen, onInsert, onOpenChange, selectedText }: 
                                     onOpenChange(false);
                                 }}
                             >
-                                <PoppinsText weight='medium' color='white'>Insert link</PoppinsText>
+                                <FontText weight='medium' color='white'>Insert link</FontText>
                             </AppButton>
                         </Row>
                     </Column>

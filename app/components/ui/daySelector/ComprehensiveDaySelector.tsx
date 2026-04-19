@@ -3,7 +3,7 @@ import { ScrollView, View } from 'react-native';
 import Column from '../../layout/Column';
 import Row from '../../layout/Row';
 import AppButton from '../buttons/AppButton';
-import PoppinsText from '../text/PoppinsText';
+import FontText from '../text/FontText';
 import { useUserList } from 'hooks/useUserList';
 import { ScrollShadow } from 'heroui-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -176,7 +176,7 @@ const ComprehensiveDaySelector = ({ gameId, showAddButton = false, showInitialSe
                     <Row className='h-6' gap={1}>
                         {showAddButton && (
                             <AppButton variant="filled" className='h-6! w-6 min-w-6 mx-1 rounded-full' onPress={handleAddNewDay}>
-                                <PoppinsText weight="bold" className='text-white'>+</PoppinsText>
+                                <FontText weight="bold" className='text-white'>+</FontText>
                             </AppButton>
                         )}
                         {fixedDayDatesArray.slice().reverse().map((date, reverseIndex) => {

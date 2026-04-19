@@ -9,7 +9,7 @@ import { getGameScopedKey } from '../../../utils/multiplayer';
 import { useTownSquareAuthorIdentity } from './townSquare/TownSquareAuthorIdentity';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
-import PoppinsText from '../ui/text/PoppinsText';
+import FontText from '../ui/text/FontText';
 import MarkdownRenderer from '../ui/markdown/MarkdownRenderer';
 import PlayerProfilePreviewCard from './PlayerProfilePreviewCard';
 
@@ -26,7 +26,7 @@ const PhoneBookPageOPERATOR = ({ gameId, currentUserId, onBack }: PhoneBookPageO
             <Pressable onPress={onBack} className='self-start py-1'>
                 <Row className='items-center gap-2'>
                     <ChevronLeft size={20} color='rgb(46, 41, 37)' />
-                    <PoppinsText weight='medium'>Config</PoppinsText>
+                    <FontText weight='medium'>Config</FontText>
                 </Row>
             </Pressable>
 
@@ -40,8 +40,8 @@ const PhoneBookPageOPERATOR = ({ gameId, currentUserId, onBack }: PhoneBookPageO
 const PhoneBookHeader = () => {
     return (
         <Column gap={0}>
-            <PoppinsText weight='bold' className='text-xl'>Phone Book</PoppinsText>
-            <PoppinsText varient='subtext'>All players in the game.</PoppinsText>
+            <FontText weight='bold' className='text-xl'>Phone Book</FontText>
+            <FontText variant='subtext'>All players in the game.</FontText>
         </Column>
     );
 };
@@ -53,7 +53,7 @@ const PhoneBookGrid = ({ gameId, currentUserId }: { gameId: string; currentUserI
     if (allPlayers.length === 0) {
         return (
             <Column className='bg-text/5 rounded-3xl p-8 items-center'>
-                <PoppinsText varient='subtext' className='text-center'>No players in this game yet.</PoppinsText>
+                <FontText variant='subtext' className='text-center'>No players in this game yet.</FontText>
             </Column>
         );
     }

@@ -3,7 +3,7 @@ import ConvexDialog from '../ui/dialog/ConvexDialog';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
 import AppButton from '../ui/buttons/AppButton';
-import PoppinsText from '../ui/text/PoppinsText';
+import FontText from '../ui/text/FontText';
 import DialogHeader from '../ui/dialog/DialogHeader';
 import { useUserListGet } from 'hooks/useUserListGet';
 import { useTownSquareAuthorIdentity } from './townSquare/TownSquareAuthorIdentity';
@@ -69,15 +69,15 @@ const JoinedGameOptionsDialog = ({
                         <Column gap={3}>
                             <Row className="items-center gap-3">
                                 <Hash size={18} color="rgb(150, 150, 150)" />
-                                <PoppinsText varient="subtext">Game ID: {gameId}</PoppinsText>
+                                <FontText variant="subtext">Game ID: {gameId}</FontText>
                             </Row>
 
                             {gameData?.description && (
-                                <PoppinsText varient="subtext">{gameData.description}</PoppinsText>
+                                <FontText variant="subtext">{gameData.description}</FontText>
                             )}
 
                             <Column gap={2} className="mt-1">
-                                <PoppinsText weight="medium">Operator</PoppinsText>
+                                <FontText weight="medium">Operator</FontText>
                                 {gameOwnerId ? (
                                     <Row className="items-center gap-3">
                                         <TownSquareAuthorAvatar
@@ -86,16 +86,16 @@ const JoinedGameOptionsDialog = ({
                                             size={40}
                                         />
                                         <Column>
-                                            <PoppinsText weight="medium">
+                                            <FontText weight="medium">
                                                 {operatorIdentity.displayName}
-                                            </PoppinsText>
-                                            <PoppinsText varient="subtext">
+                                            </FontText>
+                                            <FontText variant="subtext">
                                                 {operatorIdentity.fallbackLabel}
-                                            </PoppinsText>
+                                            </FontText>
                                         </Column>
                                     </Row>
                                 ) : (
-                                    <PoppinsText varient="subtext">Operator information unavailable</PoppinsText>
+                                    <FontText variant="subtext">Operator information unavailable</FontText>
                                 )}
                             </Column>
                         </Column>
@@ -107,9 +107,9 @@ const JoinedGameOptionsDialog = ({
                         >
                             <Row className="items-center gap-3">
                                 <Archive size={20} color="white" />
-                                <PoppinsText weight="medium" color="white">
+                                <FontText weight="medium" color="white">
                                     Archive Game
-                                </PoppinsText>
+                                </FontText>
                             </Row>
                         </AppButton>
                     </Column>

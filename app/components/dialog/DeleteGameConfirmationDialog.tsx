@@ -1,7 +1,7 @@
 import React from 'react';
 import { View } from 'react-native';
 import AppButton from '../ui/buttons/AppButton';
-import PoppinsText from '../ui/text/PoppinsText';
+import FontText from '../ui/text/FontText';
 import ConvexDialog from '../ui/dialog/ConvexDialog';
 import DialogHeader from '../ui/dialog/DialogHeader';
 import Column from '../layout/Column';
@@ -23,9 +23,9 @@ const DeleteGameConfirmationDialog = ({ isOpen, onOpenChange, onConfirm }: Delet
                         <DialogHeader text='Delete Game' subtext='This action cannot be undone' />
 
                         <Column className='pt-5 px-5 pb-5' gap={4}>
-                            <PoppinsText className='text-center'>
+                            <FontText className='text-center'>
                                 Are you sure you want to delete this game? All game data will be permanently removed.
-                            </PoppinsText>
+                            </FontText>
 
                             <View className='flex-row gap-3 mt-4'>
                                 <AppButton
@@ -33,18 +33,18 @@ const DeleteGameConfirmationDialog = ({ isOpen, onOpenChange, onConfirm }: Delet
                                     className='flex-1 h-12'
                                     onPress={() => onOpenChange(false)}
                                 >
-                                    <PoppinsText weight='medium'>
+                                    <FontText weight='medium'>
                                         Cancel
-                                    </PoppinsText>
+                                    </FontText>
                                 </AppButton>
                                 <AppButton
                                     variant='red'
                                     className='flex-1 h-12'
                                     onPress={onConfirm}
                                 >
-                                    <PoppinsText weight='medium' color='red'>
+                                    <FontText weight='medium' color='red'>
                                         Delete Game
-                                    </PoppinsText>
+                                    </FontText>
                                 </AppButton>
                             </View>
                         </Column>

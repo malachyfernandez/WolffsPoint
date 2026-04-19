@@ -3,8 +3,8 @@ import { Image, ScrollView, View } from 'react-native';
 import ConvexDialog from '../ui/dialog/ConvexDialog';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
-import PoppinsText from '../ui/text/PoppinsText';
-import PoppinsTextInput from '../ui/forms/PoppinsTextInput';
+import FontText from '../ui/text/FontText';
+import FontTextInput from '../ui/forms/FontTextInput';
 import AppButton from '../ui/buttons/AppButton';
 import DialogHeader from '../ui/dialog/DialogHeader';
 import SimpleImageUpload from '../ui/imageUpload/SimpleImageUpload';
@@ -57,8 +57,8 @@ const PlayerProfileDialog = ({
                         <Row className='w-full gap-4 p-4 items-start'>
                             <Column className='flex-1' gap={3}>
                                 <Column gap={1}>
-                                    <PoppinsText weight='medium'>In-game name</PoppinsText>
-                                    <PoppinsTextInput
+                                    <FontText weight='medium'>In-game name</FontText>
+                                    <FontTextInput
                                         className='w-full border border-subtle-border p-3'
                                         value={draft.inGameName}
                                         onChangeText={(value) => setDraft((current) => ({ ...current, inGameName: value }))}
@@ -66,8 +66,8 @@ const PlayerProfileDialog = ({
                                     />
                                 </Column>
                                 <Column gap={1}>
-                                    <PoppinsText weight='medium'>Phone number</PoppinsText>
-                                    <PoppinsTextInput
+                                    <FontText weight='medium'>Phone number</FontText>
+                                    <FontTextInput
                                         className='w-full border border-subtle-border p-3'
                                         value={draft.phoneNumber}
                                         onChangeText={(value) => setDraft((current) => ({ ...current, phoneNumber: value }))}
@@ -75,8 +75,8 @@ const PlayerProfileDialog = ({
                                     />
                                 </Column>
                                 <Column gap={1}>
-                                    <PoppinsText weight='medium'>Instagram</PoppinsText>
-                                    <PoppinsTextInput
+                                    <FontText weight='medium'>Instagram</FontText>
+                                    <FontTextInput
                                         className='w-full border border-subtle-border p-3'
                                         value={draft.instagram}
                                         onChangeText={(value) => setDraft((current) => ({ ...current, instagram: value }))}
@@ -84,8 +84,8 @@ const PlayerProfileDialog = ({
                                     />
                                 </Column>
                                 <Column gap={1}>
-                                    <PoppinsText weight='medium'>Discord</PoppinsText>
-                                    <PoppinsTextInput
+                                    <FontText weight='medium'>Discord</FontText>
+                                    <FontTextInput
                                         className='w-full border border-subtle-border p-3'
                                         value={draft.discord}
                                         onChangeText={(value) => setDraft((current) => ({ ...current, discord: value }))}
@@ -93,8 +93,8 @@ const PlayerProfileDialog = ({
                                     />
                                 </Column>
                                 <Column gap={1}>
-                                    <PoppinsText weight='medium'>Anything else</PoppinsText>
-                                    <PoppinsTextInput
+                                    <FontText weight='medium'>Anything else</FontText>
+                                    <FontTextInput
                                         className='w-full border border-subtle-border p-3'
                                         value={draft.otherContact}
                                         onChangeText={(value) => setDraft((current) => ({ ...current, otherContact: value }))}
@@ -102,12 +102,12 @@ const PlayerProfileDialog = ({
                                     />
                                 </Column>
                                 <Column gap={2}>
-                                    <PoppinsText weight='medium'>Profile picture</PoppinsText>
+                                    <FontText weight='medium'>Profile picture</FontText>
                                     {draft.profileImageUrl ? (
                                         <Image source={{ uri: draft.profileImageUrl }} className='w-28 h-28 rounded-xl border border-subtle-border bg-white' />
                                     ) : (
                                         <View className='w-28 h-28 rounded-xl border border-dashed border-subtle-border items-center justify-center bg-white'>
-                                            <PoppinsText varient='subtext'>No image</PoppinsText>
+                                            <FontText variant='subtext'>No image</FontText>
                                         </View>
                                     )}
                                     <SimpleImageUpload onUpload={(url) => setDraft((current) => ({ ...current, profileImageUrl: url }))} />
@@ -115,8 +115,8 @@ const PlayerProfileDialog = ({
                             </Column>
                             <Column className='flex-1 h-full' gap={3}>
                                 <Column gap={1}>
-                                    <PoppinsText weight='medium'>Bio</PoppinsText>
-                                    <PoppinsTextInput
+                                    <FontText weight='medium'>Bio</FontText>
+                                    <FontTextInput
                                         className='w-full min-h-[220px] border border-subtle-border p-3'
                                         value={draft.bioMarkdown}
                                         onChangeText={(value) => setDraft((current) => ({ ...current, bioMarkdown: value }))}
@@ -126,18 +126,18 @@ const PlayerProfileDialog = ({
                                     />
                                 </Column>
                                 <Column className='rounded-xl border border-subtle-border bg-white p-3 min-h-[220px]' gap={2}>
-                                    <PoppinsText weight='medium'>Preview</PoppinsText>
+                                    <FontText weight='medium'>Preview</FontText>
                                     {draft.bioMarkdown.trim().length > 0 ? (
                                         <MarkdownRenderer markdown={draft.bioMarkdown} />
                                     ) : (
-                                        <PoppinsText varient='subtext'>Your bio preview shows up here.</PoppinsText>
+                                        <FontText variant='subtext'>Your bio preview shows up here.</FontText>
                                     )}
                                 </Column>
                             </Column>
                         </Row>
                         <Row className='justify-end gap-3 px-4 pb-4'>
                             <AppButton variant='outline' className='w-36' onPress={() => onOpenChange(false)}>
-                                <PoppinsText weight='medium'>Cancel</PoppinsText>
+                                <FontText weight='medium'>Cancel</FontText>
                             </AppButton>
                             <AppButton
                                 variant='black'
@@ -155,7 +155,7 @@ const PlayerProfileDialog = ({
                                 }}
                                 disabled={!canSave}
                             >
-                                <PoppinsText weight='medium' color='white'>{saveLabel}</PoppinsText>
+                                <FontText weight='medium' color='white'>{saveLabel}</FontText>
                             </AppButton>
                         </Row>
                     </ScrollView>

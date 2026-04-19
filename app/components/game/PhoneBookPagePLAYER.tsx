@@ -10,7 +10,7 @@ import { getGameScopedKey } from '../../../utils/multiplayer';
 import { useTownSquareAuthorIdentity } from './townSquare/TownSquareAuthorIdentity';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
-import PoppinsText from '../ui/text/PoppinsText';
+import FontText from '../ui/text/FontText';
 import LoadingText from '../ui/loading/LoadingText';
 import AppButton from '../ui/buttons/AppButton';
 import MarkdownRenderer from '../ui/markdown/MarkdownRenderer';
@@ -106,18 +106,18 @@ const MyProfileCard = ({ profile, onPress }: { profile: PlayerProfile; onPress: 
                     />
                 ) : (
                     <View className="w-16 h-16 rounded-xl border border-subtle-border bg-white items-center justify-center">
-                        <PoppinsText weight='bold' className='text-lg'>{initials}</PoppinsText>
+                        <FontText weight='bold' className='text-lg'>{initials}</FontText>
                     </View>
                 )}
                 <Column className="flex-1">
-                    <PoppinsText weight='medium' className='text-lg'>{displayName}</PoppinsText>
+                    <FontText weight='medium' className='text-lg'>{displayName}</FontText>
                     {profile.bioMarkdown?.trim() ? (
                         <MarkdownRenderer
                             markdown={profile.bioMarkdown}
                             className="text-sm opacity-75"
                         />
                     ) : (
-                        <PoppinsText varient='subtext' className='text-sm'>Tap to edit your profile</PoppinsText>
+                        <FontText variant='subtext' className='text-sm'>Tap to edit your profile</FontText>
                     )}
                 </Column>
             </Row>
@@ -130,11 +130,11 @@ const PhoneBookHeader = ({ onEditProfile }: { onEditProfile: () => void }) => {
     return (
         <Row className='justify-between items-center'>
             <Column gap={0}>
-                <PoppinsText weight='bold' className='text-xl'>Phone Book</PoppinsText>
-                <PoppinsText varient='subtext'>All players in the game.</PoppinsText>
+                <FontText weight='bold' className='text-xl'>Phone Book</FontText>
+                <FontText variant='subtext'>All players in the game.</FontText>
             </Column>
             <AppButton variant='accent' className='w-40' onPress={onEditProfile}>
-                <PoppinsText weight='medium' color='white'>Edit profile</PoppinsText>
+                <FontText weight='medium' color='white'>Edit profile</FontText>
             </AppButton>
         </Row>
     );
@@ -148,7 +148,7 @@ const PhoneBookGrid = ({ gameId }: { gameId: string }) => {
         return (
             <Animated.View entering={FadeIn.duration(300)}>
                 <Column className='bg-text/5 rounded-3xl p-8 items-center'>
-                    <PoppinsText varient='subtext' className='text-center'>No players in this game yet.</PoppinsText>
+                    <FontText variant='subtext' className='text-center'>No players in this game yet.</FontText>
                 </Column>
             </Animated.View>
         );

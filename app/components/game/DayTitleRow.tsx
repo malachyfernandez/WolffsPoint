@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import PoppinsText from '../ui/text/PoppinsText';
+import FontText from '../ui/text/FontText';
 import InlineEditableText from '../ui/forms/InlineEditableText';
 import Row from '../layout/Row';
 import AppButton from '../ui/buttons/AppButton';
@@ -59,15 +59,15 @@ const DayTitleRow = ({ userTableTitle, userTableColumnVisibility, setColumnTitle
         <>
             <Row gap={0} className={`h-12 w-min bg-background border-b-2 border-border rounded-t-lg ${isEditing ? 'z-50' : ''}`}>
                 <Row className='h-full items-center justify-center px-2' gap={0} style={{ width: dayBaseColumnWidths.vote }}>
-                    <PoppinsText weight='medium' className='text-center' style={{ width: getInnerTextWidth(dayBaseColumnWidths.vote) }}>Vote</PoppinsText>
+                    <FontText weight='medium' className='text-center' style={{ width: getInnerTextWidth(dayBaseColumnWidths.vote) }}>Vote</FontText>
                     <AppButton variant="grey" className='w-6 max-h-6 mr-[0.4rem] ml-0' onPress={() => setActiveMenu({ type: 'base', column: 'vote' })}>
-                        <PoppinsText weight='bold' color='white' className='text-lg mt-[-0.1rem]'>⋯</PoppinsText>
+                        <FontText weight='bold' color='white' className='text-lg mt-[-0.1rem]'>⋯</FontText>
                     </AppButton>
                 </Row>
                 <Row gap={0} className='h-full items-center justify-center px-2' style={{ width: dayBaseColumnWidths.action }}>
-                    <PoppinsText weight='medium' className='text-center' style={{ width: getInnerTextWidth(dayBaseColumnWidths.action) }}>Action</PoppinsText>
+                    <FontText weight='medium' className='text-center' style={{ width: getInnerTextWidth(dayBaseColumnWidths.action) }}>Action</FontText>
                     <AppButton variant="grey" className='w-6 max-h-6 mr-[0.4rem] ml-0' onPress={() => setActiveMenu({ type: 'base', column: 'action' })}>
-                        <PoppinsText weight='bold' color='white' className='text-lg mt-[-0.1rem]'>⋯</PoppinsText>
+                        <FontText weight='bold' color='white' className='text-lg mt-[-0.1rem]'>⋯</FontText>
                     </AppButton>
                 </Row>
                 {titles.extraDayColumns.map((columnTitle, index) => {
@@ -89,7 +89,7 @@ const DayTitleRow = ({ userTableTitle, userTableColumnVisibility, setColumnTitle
                                 onEditEnd={() => handleColumnEditEnd(index)}
                             />
                             <AppButton variant="grey" className='w-6 max-h-6 mr-[0.4rem] ml-0' onPress={() => setActiveMenu({ type: 'extra', index })}>
-                                <PoppinsText weight='bold' color='white' className='text-lg mt-[-0.1rem]'>⋯</PoppinsText>
+                                <FontText weight='bold' color='white' className='text-lg mt-[-0.1rem]'>⋯</FontText>
                             </AppButton>
                         </Row>
                     );

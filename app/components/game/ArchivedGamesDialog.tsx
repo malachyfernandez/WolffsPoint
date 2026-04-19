@@ -3,7 +3,7 @@ import ConvexDialog from '../ui/dialog/ConvexDialog';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
 import AppButton from '../ui/buttons/AppButton';
-import PoppinsText from '../ui/text/PoppinsText';
+import FontText from '../ui/text/FontText';
 import DialogHeader from '../ui/dialog/DialogHeader';
 import { useUserVariable } from 'hooks/useUserVariable';
 import { useUserListGet } from 'hooks/useUserListGet';
@@ -57,7 +57,7 @@ const ArchivedGamesDialog = ({ isOpen, onOpenChange, setActiveGameId, textClassN
 
                         <Column gap={0}>
                             {archivedGameIds.length === 0 ? (
-                                <PoppinsText varient="subtext">No archived games</PoppinsText>
+                                <FontText variant="subtext">No archived games</FontText>
                             ) : (
                                 archivedGameIds.map((gameId, index) => (
                                     <ArchivedGameRow
@@ -106,14 +106,14 @@ const ArchivedGameRow = ({ gameId, index, onUnarchive, onPress, textClassName }:
                 className={`justify-between items-center flex-1 ${borderClass}`}
                 onPress={onPress}
             >
-                <PoppinsText className={textClassName || "text-text-inverted"}>
+                <FontText className={textClassName || "text-text-inverted"}>
                     {`${displayName} (${displayId})`}
                     {isGameDeleted && (
-                        <PoppinsText className={`${textClassName || "text-text-inverted"} text-sm`}>
+                        <FontText className={`${textClassName || "text-text-inverted"} text-sm`}>
                             {' - (this game might have been deleted)'}
-                        </PoppinsText>
+                        </FontText>
                     )}
-                </PoppinsText>
+                </FontText>
             </ListRow>
 
             <AppButton
@@ -121,7 +121,7 @@ const ArchivedGameRow = ({ gameId, index, onUnarchive, onPress, textClassName }:
                 className="h-10 px-3"
                 onPress={onUnarchive}
             >
-                <PoppinsText weight="medium" color="white">Unarchive</PoppinsText>
+                <FontText weight="medium" color="white">Unarchive</FontText>
             </AppButton>
         </Row>
     );

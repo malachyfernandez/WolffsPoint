@@ -3,7 +3,7 @@ import { useUserVariable } from '../../../../hooks/useUserVariable';
 import { GameSchedule } from '../../../../types/multiplayer';
 import { getGameScopedKey, normalizeGameSchedule, defaultGameSchedule, formatTimeLabel } from '../../../../utils/multiplayer';
 import ConfigSectionRow from '../../ui/forms/ConfigSectionRow';
-import PoppinsTimeInput from '../../ui/forms/PoppinsTimeInput';
+import FontTimeInput from '../../ui/forms/FontTimeInput';
 
 interface VoteDeadlineConfigItemProps {
     gameId: string;
@@ -27,7 +27,7 @@ const VoteDeadlineConfigItem = ({ gameId }: VoteDeadlineConfigItemProps) => {
             title='Vote deadline'
             subtext={`Players can submit votes until ${formatTimeLabel(schedule.voteDeadlineTime ?? defaultGameSchedule.voteDeadlineTime ?? '22:00')}.`}
         >
-            <PoppinsTimeInput
+            <FontTimeInput
                 value={schedule.voteDeadlineTime}
                 onChangeText={(value) => setGameSchedule({
                     ...schedule,

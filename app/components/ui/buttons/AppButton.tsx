@@ -7,22 +7,22 @@
  * @example Basic Usage
  * ```tsx
  * <AppButton onPress={handlePress}>
- *   <PoppinsText>Click me</PoppinsText>
+ *   <FontText>Click me</FontText>
  * </AppButton>
  * ```
  * 
  * @example Different Variants
  * ```tsx
  * <AppButton variant="outline" onPress={handleCancel}>
- *   <PoppinsText>Cancel</PoppinsText>
+ *   <FontText>Cancel</FontText>
  * </AppButton>
  * 
  * <AppButton variant="accent" onPress={handleSubmit}>
- *   <PoppinsText color="white">Submit</PoppinsText>
+ *   <FontText color="white">Submit</FontText>
  * </AppButton>
  * 
  * <AppButton variant="grey" onPress={handleDelete}>
- *   <PoppinsText color="white">Delete</PoppinsText>
+ *   <FontText color="white">Delete</FontText>
  * </AppButton>
  * ```
  * 

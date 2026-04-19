@@ -3,7 +3,7 @@ import { ScrollView, Pressable } from 'react-native';
 import { ChevronUp, ChevronDown } from 'lucide-react-native';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
-import PoppinsText from '../ui/text/PoppinsText';
+import FontText from '../ui/text/FontText';
 import MarkdownRenderer from '../ui/markdown/MarkdownRenderer';
 import AppButton from '../ui/buttons/AppButton';
 import { useUserVariable } from '../../../hooks/useUserVariable';
@@ -152,15 +152,15 @@ const RuleBookRoleDescriptions = ({ gameId }: RuleBookRoleDescriptionsProps) => 
     return (
         <>
             <Column gap={2}>
-                <PoppinsText weight='bold' className='text-xl'>Role Descriptions</PoppinsText>
+                <FontText weight='bold' className='text-xl'>Role Descriptions</FontText>
                 {/* <ScrollView> */}
                     <Column gap={4}>
                         {orderedRoles.map((role, index) => (
                             <Row key={roles.indexOf(role)} className='items-stretch gap-2'>
                                 <Column className='flex-1 gap-2'>
-                                    {/* <PoppinsText weight='bold' className='text-lg'>
+                                    {/* <FontText weight='bold' className='text-lg'>
                                         {role.role}
-                                    </PoppinsText> */}
+                                    </FontText> */}
                                     <Pressable 
                                         onPress={() => setEditingRoleIndex(roles.indexOf(role))}
                                         className='w-full min-h-[160px] rounded-xl bg-text/10 p-4 hover:bg-text/5 justify-center'

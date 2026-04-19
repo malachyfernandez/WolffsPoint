@@ -4,7 +4,7 @@ import ConvexDialog from '../ui/dialog/ConvexDialog';
 import DialogHeader from '../ui/dialog/DialogHeader';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
-import PoppinsText from '../ui/text/PoppinsText';
+import FontText from '../ui/text/FontText';
 import AppButton from '../ui/buttons/AppButton';
 import DisableableButton from '../ui/buttons/DisableableButton';
 import { UserTableItem } from '../../../types/playerTable';
@@ -80,9 +80,9 @@ const VoteEditorDialog = ({
                     <Column className="p-5 pt-4" gap={4}>
                         {/* Email Input */}
                         <Column gap={1}>
-                            <PoppinsText weight="medium" className="text-sm opacity-70">
+                            <FontText weight="medium" className="text-sm opacity-70">
                                 Player Email
-                            </PoppinsText>
+                            </FontText>
                             <TextInput
                                 value={draftVote}
                                 onChangeText={setDraftVote}
@@ -96,20 +96,20 @@ const VoteEditorDialog = ({
 
                         {/* Live Preview */}
                         <Column gap={1}>
-                            <PoppinsText weight="medium" className="text-sm opacity-70">
+                            <FontText weight="medium" className="text-sm opacity-70">
                                 Resolved Name
-                            </PoppinsText>
+                            </FontText>
                             <View className="bg-text border-2 border-border rounded-lg p-3">
-                                <PoppinsText color="white" weight="medium" className="text-center">
+                                <FontText color="white" weight="medium" className="text-center">
                                     {resolvedName}
-                                </PoppinsText>
+                                </FontText>
                             </View>
                         </Column>
 
                         {/* Action Buttons */}
                         <Row className="justify-end gap-3 pt-2">
                             <AppButton variant="outline" onPress={handleCancel} className="w-32 h-12">
-                                <PoppinsText>Cancel</PoppinsText>
+                                <FontText>Cancel</FontText>
                             </AppButton>
                             <DisableableButton
                                 isEnabled={hasUnsavedChanges}

@@ -2,7 +2,7 @@ import React from 'react';
 import { View } from 'react-native';
 import Row from '../layout/Row';
 import AppButton from '../ui/buttons/AppButton';
-import PoppinsText from '../ui/text/PoppinsText';
+import FontText from '../ui/text/FontText';
 import SimpleImageUpload from '../ui/imageUpload/SimpleImageUpload';
 
 interface ImageUploadButtonRowProps {
@@ -34,7 +34,7 @@ const ImageUploadButtonRow = ({
                     variant='outline' 
                     onPress={onToggleUrlInput}
                 >
-                    <PoppinsText color='black' weight='medium'>{urlButtonText}</PoppinsText>
+                    <FontText color='black' weight='medium'>{urlButtonText}</FontText>
                 </AppButton>
             )}
             <SimpleImageUpload

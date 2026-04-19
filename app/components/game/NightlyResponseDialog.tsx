@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import ConvexDialog from '../ui/dialog/ConvexDialog';
 import Column from '../layout/Column';
 import AppButton from '../ui/buttons/AppButton';
-import PoppinsText from '../ui/text/PoppinsText';
-import PoppinsTextInput from '../ui/forms/PoppinsTextInput';
+import FontText from '../ui/text/FontText';
+import FontTextInput from '../ui/forms/FontTextInput';
 import DialogHeader from '../ui/dialog/DialogHeader';
 import { View } from 'react-native';
 
@@ -59,7 +59,7 @@ const NightlyResponseDialog = ({
                             subtext={`Set the nightly response for ${userName} on Day ${dayIndex + 1}`}
                         />
                         <Column gap={2}>
-                            <PoppinsTextInput
+                            <FontTextInput
                                 placeholder="Enter nightly response..."
                                 className="w-full border border-subtle-border p-2"
                                 value={response}
@@ -72,10 +72,10 @@ const NightlyResponseDialog = ({
 
                         <Column gap={2}>
                             <AppButton className='w-34 h-10' variant='black' onPress={handleSubmit}>
-                                <PoppinsText color='white' weight='medium'>Save</PoppinsText>
+                                <FontText color='white' weight='medium'>Save</FontText>
                             </AppButton>
                             <AppButton className='w-34 h-10' variant='outline' onPress={handleCancel}>
-                                <PoppinsText color='black' weight='medium'>Cancel</PoppinsText>
+                                <FontText color='black' weight='medium'>Cancel</FontText>
                             </AppButton>
                         </Column>
                     </Column>

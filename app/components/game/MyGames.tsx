@@ -1,6 +1,6 @@
 import React from 'react';
 import Column from '../layout/Column';
-import PoppinsText from '../ui/text/PoppinsText';
+import FontText from '../ui/text/FontText';
 import MyGameListItem from './MyGameListItem';
 
 import { UserListRecord } from 'hooks/useUserList';
@@ -14,7 +14,7 @@ interface MyGamesProps {
 const MyGames = ({ myGames, setActiveGameId }: MyGamesProps) => {
     return (
         <Column>
-            <PoppinsText weight='bold' className='text-text-inverted'>My Games</PoppinsText>
+            <FontText weight='bold' className='text-text-inverted'>My Games</FontText>
             <Column gap={0}>
                 {myGames?.map((game, index) => (
                     <MyGameListItem

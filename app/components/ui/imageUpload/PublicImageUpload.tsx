@@ -54,7 +54,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { api } from '../../../../convex/_generated/api';
 import Column from '../../layout/Column';
 import AppButton from '../buttons/AppButton';
-import PoppinsText from '../text/PoppinsText';
+import FontText from '../text/FontText';
 import { prepareImageForUpload, prepareWebFileForUpload, UploadThingReactNativeFile } from '../../../../utils/imageCompression';
 
 type UrlSetter = Dispatch<SetStateAction<string>>;
@@ -271,31 +271,31 @@ const PublicImageUpload = ({
     return (
         <Column className='w-full p-4 border-b border-subtle-border bg-light/30'>
             <Column gap={3}>
-                <PoppinsText weight='medium'>Public image upload</PoppinsText>
+                <FontText weight='medium'>Public image upload</FontText>
 
                 <AppButton variant='green' className='w-40' onPress={handleUpload}>
                     {isUploading ? (
                         <ActivityIndicator color='white' />
                     ) : (
-                        <PoppinsText weight='medium' color='white'>
+                        <FontText weight='medium' color='white'>
                             {buttonLabel}
-                        </PoppinsText>
+                        </FontText>
                     )}
                 </AppButton>
 
                 {isUploading ? (
-                    <PoppinsText varient='subtext'>Uploading image...</PoppinsText>
+                    <FontText variant='subtext'>Uploading image...</FontText>
                 ) : null}
 
                 {errorMessage ? (
-                    <PoppinsText className='text-red-500'>{errorMessage}</PoppinsText>
+                    <FontText className='text-red-500'>{errorMessage}</FontText>
                 ) : null}
 
                 {url ? (
                     <Column gap={2}>
-                        <PoppinsText varient='subtext'>
+                        <FontText variant='subtext'>
                             {url}
-                        </PoppinsText>
+                        </FontText>
 
                         <View className='w-full h-56 overflow-hidden rounded-lg border border-subtle-border bg-background'>
                             <Image
@@ -306,7 +306,7 @@ const PublicImageUpload = ({
                         </View>
                     </Column>
                 ) : (
-                    <PoppinsText varient='subtext'>{emptyLabel}</PoppinsText>
+                    <FontText variant='subtext'>{emptyLabel}</FontText>
                 )}
             </Column>
         </Column>

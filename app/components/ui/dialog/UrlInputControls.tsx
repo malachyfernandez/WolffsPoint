@@ -8,8 +8,8 @@ import Animated, {
 } from 'react-native-reanimated';
 import Row from '../../layout/Row';
 import AppButton from '../buttons/AppButton';
-import PoppinsText from '../text/PoppinsText';
-import PoppinsTextInput from '../forms/PoppinsTextInput';
+import FontText from '../text/FontText';
+import FontTextInput from '../forms/FontTextInput';
 import ImageUploadButtonRow from '../../game/ImageUploadButtonRow';
 
 interface UrlInputControlsProps {
@@ -43,22 +43,22 @@ const UrlInputControls = ({
                 key="url-input"
                 className='bg-background/95 border border-subtle-border rounded-lg p-3 shadow-lg w-full'
             >
-                <PoppinsText weight='medium' className='mb-2'>Image URL:</PoppinsText>
+                <FontText weight='medium' className='mb-2'>Image URL:</FontText>
                 {urlError ? (
-                    <PoppinsText color='red' className='mb-2 text-sm'>{urlError}</PoppinsText>
+                    <FontText color='red' className='mb-2 text-sm'>{urlError}</FontText>
                 ) : null}
                 <Row className='gap-2'>
-                    <PoppinsTextInput
+                    <FontTextInput
                         placeholder='Enter image URL here...'
                         className='flex-1 border border-subtle-border p-2 bg-inner-background'
                         value={urlInput}
                         onChangeText={onUrlInputChange}
                     />
                     <AppButton className='w-16 h-8' variant='accent' onPress={onUrlSubmit}>
-                        <PoppinsText color='white' weight='medium'>Add</PoppinsText>
+                        <FontText color='white' weight='medium'>Add</FontText>
                     </AppButton>
                     <AppButton className='w-16 h-8' variant='outline' onPress={onCancelUrlInput}>
-                        <PoppinsText color='black' weight='medium'>✕</PoppinsText>
+                        <FontText color='black' weight='medium'>✕</FontText>
                     </AppButton>
                 </Row>
             </Animated.View>

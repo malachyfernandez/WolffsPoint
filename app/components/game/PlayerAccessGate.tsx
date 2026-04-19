@@ -4,7 +4,7 @@ import { useSharedListValue } from '../../../hooks/useSharedListValue';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
-import PoppinsText from '../ui/text/PoppinsText';
+import FontText from '../ui/text/FontText';
 import LoadingText from '../ui/loading/LoadingText';
 import AppButton from '../ui/buttons/AppButton';
 import PlayerProfileDialog from './PlayerProfileDialogNEW';
@@ -106,8 +106,8 @@ const PlayerAccessGate = ({ gameId, currentUserId, children }: PlayerAccessGateP
         return (
             <Animated.View entering={FadeInUp.duration(300)}>
                 <Column className='rounded-xl border border-subtle-border bg-white p-4' gap={3}>
-                    <PoppinsText weight='medium'>You are not on this game&apos;s player list.</PoppinsText>
-                    <PoppinsText varient='subtext'>The operator needs to add {currentEmail} to the players table before you can enter.</PoppinsText>
+                    <FontText weight='medium'>You are not on this game&apos;s player list.</FontText>
+                    <FontText variant='subtext'>The operator needs to add {currentEmail} to the players table before you can enter.</FontText>
                 </Column>
             </Animated.View>
         );
@@ -117,11 +117,11 @@ const PlayerAccessGate = ({ gameId, currentUserId, children }: PlayerAccessGateP
         return (
             <Animated.View entering={FadeInUp.duration(300)}>
                 <Column className='rounded-xl border border-subtle-border bg-white p-4' gap={3}>
-                    <PoppinsText weight='medium'>Claim your player profile</PoppinsText>
-                    <PoppinsText varient='subtext'>You matched the email {matchingPlayer.email}. Finish your in-game profile to enter the player tabs.</PoppinsText>
+                    <FontText weight='medium'>Claim your player profile</FontText>
+                    <FontText variant='subtext'>You matched the email {matchingPlayer.email}. Finish your in-game profile to enter the player tabs.</FontText>
                     <Row>
                         <AppButton variant='accent' className='w-44' onPress={() => setIsProfileDialogOpen(true)}>
-                            <PoppinsText weight='medium' color='white'>Set up profile</PoppinsText>
+                            <FontText weight='medium' color='white'>Set up profile</FontText>
                         </AppButton>
                     </Row>
                 </Column>

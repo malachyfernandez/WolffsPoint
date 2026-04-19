@@ -4,8 +4,8 @@ import ConvexDialog from '../ui/dialog/ConvexDialog';
 import Column from '../layout/Column';
 import { View } from 'react-native';
 import AppButton from '../ui/buttons/AppButton';
-import PoppinsText from '../ui/text/PoppinsText';
-import PoppinsTextInput from '../ui/forms/PoppinsTextInput';
+import FontText from '../ui/text/FontText';
+import FontTextInput from '../ui/forms/FontTextInput';
 import JoinHandler from '../ui/forms/JoinHandler';
 import DialogHeader from '../ui/dialog/DialogHeader';
 
@@ -32,7 +32,7 @@ const JoinGameButton = ({ onJoin }: JoinGameButtonProps) => {
             <ConvexDialog.Root isOpen={isHeroDialogOpen} onOpenChange={setIsHeroDialogOpen}>
                 <ConvexDialog.Trigger asChild>
                     <AppButton variant="accent" className="h-12 w-40 shrink">
-                        <PoppinsText weight='medium' color="white">Join a Game</PoppinsText>
+                        <FontText weight='medium' color="white">Join a Game</FontText>
                     </AppButton>
                 </ConvexDialog.Trigger>
                 <ConvexDialog.Portal>
@@ -48,7 +48,7 @@ const JoinGameButton = ({ onJoin }: JoinGameButtonProps) => {
                                 subtext="Enter a game code to join."
                             />
 
-                            <PoppinsTextInput
+                            <FontTextInput
                                 placeholder="Enter game code"
                                 className="w-full border border-subtle-border p-2"
                                 value={gameCode}

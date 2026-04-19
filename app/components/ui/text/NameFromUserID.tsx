@@ -1,5 +1,5 @@
 import React from 'react';
-import PoppinsText from './PoppinsText';
+import FontText from './FontText';
 import { useUserVariableGet } from 'hooks/useUserVariableGet';
 
 interface NameFromUserIDProps {
@@ -16,7 +16,7 @@ const NameFromUserID = ({ userid }: NameFromUserIDProps) => {
     const email = userDatas?.[0]?.value?.email;
     
     return (
-        <PoppinsText className='text-sm opacity-50'>{email}</PoppinsText>
+        <FontText className='text-sm opacity-50'>{email}</FontText>
     );
 }
 

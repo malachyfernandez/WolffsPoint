@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import PoppinsText from '../ui/text/PoppinsText';
+import FontText from '../ui/text/FontText';
 import InlineEditableText from '../ui/forms/InlineEditableText';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
@@ -123,7 +123,7 @@ const UserRow = ({
                 </Column>
                 <Column gap={0} className='w-28 h-full border border-subtle-border items-center justify-center'>
                     <Pressable onPress={() => setIsDialogOpen(true)} className='w-28 h-full items-center justify-center'>
-                        <PoppinsText
+                        <FontText
                             weight='medium'
                             className='text-center text-nowrap overflow-hidden w-28'
                             style={{
@@ -132,11 +132,11 @@ const UserRow = ({
                             }}
                         >
                             {user.realName || (
-                                <PoppinsText className="opacity-50">No Name</PoppinsText>
+                                <FontText className="opacity-50">No Name</FontText>
                             )}
-                        </PoppinsText>
-                        <PoppinsText
-                            varient='subtext'
+                        </FontText>
+                        <FontText
+                            variant='subtext'
                             className='text-center text-nowrap overflow-hidden w-28'
                             style={{
                                 textDecorationLine: 'underline',
@@ -144,13 +144,13 @@ const UserRow = ({
                             }}
                         >
                             {user.role === "UNSET" ? (
-                                <PoppinsText className="opacity-50">UNSET</PoppinsText>
+                                <FontText className="opacity-50">UNSET</FontText>
                             ) : user.role ? (
                                 user.role
                             ) : (
-                                <PoppinsText className="opacity-50">No role</PoppinsText>
+                                <FontText className="opacity-50">No role</FontText>
                             )}
-                        </PoppinsText>
+                        </FontText>
                     </Pressable>
                 </Column>
 

@@ -8,7 +8,7 @@ import ConvexDialog from '../ui/dialog/ConvexDialog';
 import DialogHeader from '../ui/dialog/DialogHeader';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
-import PoppinsText from '../ui/text/PoppinsText';
+import FontText from '../ui/text/FontText';
 import MarkdownRenderer from '../ui/markdown/MarkdownRenderer';
 import AppButton from '../ui/buttons/AppButton';
 import MarkdownEditorDialog from './MarkdownEditorDialog';
@@ -57,16 +57,16 @@ const TownSquarePostDialog = ({ gameId, isOpen, onOpenChange, post, currentProfi
                                     <TownSquareAuthorAvatar gameId={post.gameId} size={48} userId={post.authorUserId} />
                                     <Column gap={0}>
                                         <TownSquareAuthorName gameId={post.gameId} userId={post.authorUserId} weight='medium' />
-                                        <PoppinsText varient='subtext'>{new Date(post.createdAt).toLocaleString()}</PoppinsText>
+                                        <FontText variant='subtext'>{new Date(post.createdAt).toLocaleString()}</FontText>
                                     </Column>
                                 </Row>
                                 <Column className='rounded-xl border border-subtle-border bg-white p-4'>
                                     <MarkdownRenderer markdown={post.markdown} />
                                 </Column>
                                 <Row className='justify-between items-center'>
-                                    <PoppinsText weight='medium'>Comments</PoppinsText>
+                                    <FontText weight='medium'>Comments</FontText>
                                     <AppButton variant='accent' className='w-40' onPress={() => setIsCommentDialogOpen(true)}>
-                                        <PoppinsText weight='medium' color='white'>Add comment</PoppinsText>
+                                        <FontText weight='medium' color='white'>Add comment</FontText>
                                     </AppButton>
                                 </Row>
                                 <Column gap={3}>
@@ -76,13 +76,13 @@ const TownSquarePostDialog = ({ gameId, isOpen, onOpenChange, post, currentProfi
                                             <Column className='flex-1' gap={1}>
                                                 <Row className='justify-between'>
                                                     <TownSquareAuthorName gameId={comment.value.gameId} userId={comment.value.authorUserId} weight='medium' />
-                                                    <PoppinsText varient='subtext'>{new Date(comment.value.createdAt).toLocaleString()}</PoppinsText>
+                                                    <FontText variant='subtext'>{new Date(comment.value.createdAt).toLocaleString()}</FontText>
                                                 </Row>
                                                 <MarkdownRenderer markdown={comment.value.markdown} />
                                             </Column>
                                         </Row>
                                     )) : (
-                                        <PoppinsText varient='subtext'>No comments yet.</PoppinsText>
+                                        <FontText variant='subtext'>No comments yet.</FontText>
                                     )}
                                 </Column>
                             </Column>

@@ -9,8 +9,8 @@ import { UserTableItem } from '../../../../types/playerTable';
 import Column from '../../layout/Column';
 import Row from '../../layout/Row';
 import AppDropdown, { AppDropdownOption } from '../forms/AppDropdown';
-import PoppinsTextInput from '../forms/PoppinsTextInput';
-import PoppinsText from '../text/PoppinsText';
+import FontTextInput from '../forms/FontTextInput';
+import FontText from '../text/FontText';
 
 interface MarkdownRendererProps {
     markdown: string;
@@ -147,9 +147,9 @@ const MarkdownImage = ({ url, alt, viewHeightImages, removeImageBorders }: { url
                 />
             </View>
             {alt && alt !== 'IMAGE1' && (
-                <PoppinsText className='mt-2 text-center text-muted' style={{ fontSize: 12 }}>
+                <FontText className='mt-2 text-center text-muted' style={{ fontSize: 12 }}>
                     {alt}
-                </PoppinsText>
+                </FontText>
             )}
         </View>
     );
@@ -274,7 +274,7 @@ const MarkdownInputField = ({
     return (
         <Column className='my-1 min-w-[220px] max-w-full flex-1' gap={1}>
             {input.inputKind === 'text' ? (
-                <PoppinsTextInput
+                <FontTextInput
                     value={value ?? ''}
                     onChangeText={onChange}
                     editable={!disabled}
@@ -373,7 +373,7 @@ const InlineMarkdownWithInputs = ({
                             : defaultWeight;
 
                 return (
-                    <PoppinsText
+                    <FontText
                         key={`${keyPrefix}-text-${index}`}
                         weight={segmentWeight}
                         className={textClassName}
@@ -385,7 +385,7 @@ const InlineMarkdownWithInputs = ({
                         }}
                     >
                         {segment.text}
-                    </PoppinsText>
+                    </FontText>
                 );
             })}
         </View>
@@ -399,25 +399,25 @@ const renderInlineMarkdown = (text: string, keyPrefix: string) => {
         .map((part, index) => {
             if (part.startsWith('**') && part.endsWith('**')) {
                 return (
-                    <PoppinsText key={`${keyPrefix}-bold-${index}`} weight='bold'>
+                    <FontText key={`${keyPrefix}-bold-${index}`} weight='bold'>
                         {part.slice(2, -2)}
-                    </PoppinsText>
+                    </FontText>
                 );
             }
 
             if (part.startsWith('*') && part.endsWith('*')) {
                 return (
-                    <PoppinsText key={`${keyPrefix}-italic-${index}`} style={{ fontStyle: 'italic' }}>
+                    <FontText key={`${keyPrefix}-italic-${index}`} style={{ fontStyle: 'italic' }}>
                         {part.slice(1, -1)}
-                    </PoppinsText>
+                    </FontText>
                 );
             }
 
             if (part.startsWith('`') && part.endsWith('`')) {
                 return (
-                    <PoppinsText key={`${keyPrefix}-code-${index}`} weight='medium' style={{ backgroundColor: '#efe5c8' }}>
+                    <FontText key={`${keyPrefix}-code-${index}`} weight='medium' style={{ backgroundColor: '#efe5c8' }}>
                         {part.slice(1, -1)}
-                    </PoppinsText>
+                    </FontText>
                 );
             }
 
@@ -439,9 +439,9 @@ const renderInlineMarkdown = (text: string, keyPrefix: string) => {
             }
 
             return (
-                <PoppinsText key={`${keyPrefix}-text-${index}`}>
+                <FontText key={`${keyPrefix}-text-${index}`}>
                     {part}
-                </PoppinsText>
+                </FontText>
             );
         });
 };
@@ -594,14 +594,14 @@ const MarkdownRendererContent = ({
                     }
 
                     return (
-                        <PoppinsText
+                        <FontText
                             key={`heading-${index}`}
                             weight='bold'
                             className={sizeClassName}
                             style={{ textAlign }}
                         >
                             {renderInlineMarkdown(block.text, `heading-${index}`)}
-                        </PoppinsText>
+                        </FontText>
                     );
                 }
 
@@ -621,9 +621,9 @@ const MarkdownRendererContent = ({
                                     isInDialog={isInDialog}
                                 />
                             ) : (
-                                <PoppinsText style={{ textAlign, lineHeight: 24, fontStyle: 'italic' }}>
+                                <FontText style={{ textAlign, lineHeight: 24, fontStyle: 'italic' }}>
                                     {renderInlineMarkdown(block.text, `quote-${index}`)}
-                                </PoppinsText>
+                                </FontText>
                             )}
                         </Column>
                     );
@@ -634,9 +634,9 @@ const MarkdownRendererContent = ({
                         <Column key={`list-${index}`} gap={2}>
                             {block.items.map((item, itemIndex) => (
                                 <Row key={`list-item-${index}-${itemIndex}`} className='items-start' gap={2}>
-                                    <PoppinsText weight='bold' className='pt-[0.1rem]'>
+                                    <FontText weight='bold' className='pt-[0.1rem]'>
                                         {block.ordered ? `${itemIndex + 1}.` : '•'}
-                                    </PoppinsText>
+                                    </FontText>
                                     <View className='flex-1'>
                                         {containsInputs ? (
                                             <InlineMarkdownWithInputs
@@ -651,9 +651,9 @@ const MarkdownRendererContent = ({
                                                 isInDialog={isInDialog}
                                             />
                                         ) : (
-                                            <PoppinsText style={{ textAlign, lineHeight: 24 }}>
+                                            <FontText style={{ textAlign, lineHeight: 24 }}>
                                                 {renderInlineMarkdown(item, `list-${index}-${itemIndex}`)}
-                                            </PoppinsText>
+                                            </FontText>
                                         )}
                                     </View>
                                 </Row>
@@ -684,9 +684,9 @@ const MarkdownRendererContent = ({
                                     isInDialog={isInDialog}
                                 />
                             ) : (
-                                <PoppinsText style={{ textAlign, lineHeight: 24 }}>
+                                <FontText style={{ textAlign, lineHeight: 24 }}>
                                     {renderInlineMarkdown(block.text, `paragraph-${index}`)}
-                                </PoppinsText>
+                                </FontText>
                             )}
                         </View>
                     );

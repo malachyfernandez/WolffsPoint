@@ -2,19 +2,17 @@ import React, { useRef } from 'react';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import Column from '../layout/Column';
 import NewspaperViewingView from './NewspaperViewingView';
+import NewspaperPreviousDayVoteSummary from './NewspaperPreviousDayVoteSummary';
 import NewspaperViewingHeader from './NewspaperViewingHeader';
 
 interface NewspaperDayViewProps {
     gameId: string;
     dayIndex: number;
+    ownerUserId: string;
     isLeaving?: boolean;
 }
 
-const getNewspaperKey = (dayIndex: number) => {
-    return `day-${dayIndex}`;
-};
-
-const NewspaperDayView = ({ gameId, dayIndex, isLeaving }: NewspaperDayViewProps) => {
+const NewspaperDayView = ({ gameId, dayIndex, ownerUserId, isLeaving }: NewspaperDayViewProps) => {
     const hasAnimatedRef = useRef(false);
 
     // Only animate on first load, never on subsequent transitions
@@ -26,7 +24,10 @@ const NewspaperDayView = ({ gameId, dayIndex, isLeaving }: NewspaperDayViewProps
     }
 
     const newspaperContent = (
-        <NewspaperViewingView itemId={`${gameId}-${getNewspaperKey(dayIndex)}`} />
+        <Column gap={0}>
+            <NewspaperViewingView dayIndex={dayIndex} gameId={gameId} ownerUserId={ownerUserId} />
+            <NewspaperPreviousDayVoteSummary dayIndex={dayIndex} gameId={gameId} />
+        </Column>
     );
 
     return (

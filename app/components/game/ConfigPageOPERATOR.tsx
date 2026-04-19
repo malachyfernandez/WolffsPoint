@@ -4,7 +4,7 @@ import { ChevronRight } from 'lucide-react-native';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
 import LayoutStateAnimatedView, { fromRight } from '../ui/LayoutStateAnimatedView';
-import PoppinsText from '../ui/text/PoppinsText';
+import FontText from '../ui/text/FontText';
 import { useUserVariable } from '../../../hooks/useUserVariable';
 import { useUserList } from '../../../hooks/useUserList';
 import { RuleBookData } from '../../../types/ruleBook';
@@ -14,6 +14,7 @@ import ActionDeadlineConfigItem from './config/ActionDeadlineConfigItem';
 import VoteDeadlineConfigItem from './config/VoteDeadlineConfigItem';
 import WakeUpTimeConfigItem from './config/WakeUpTimeConfigItem';
 import DaysPerGameDayConfigItem from './config/DaysPerGameDayConfigItem';
+import NewserConfigItem from './config/NewserConfigItem';
 import RuleBookPageOPERATOR from './RuleBookPageOPERATOR';
 import PhoneBookPageOPERATOR from './PhoneBookPageOPERATOR';
 import RemoveGameButton from './RemoveGameButton';
@@ -67,11 +68,11 @@ const RuleBookPreviewCard = ({ gameId, onPress }: RuleBookPreviewCardProps) => {
             <Row className='items-start gap-3'>
                 
                 <Column className='flex-1' gap={1}>
-                    <PoppinsText weight='medium'>Rule book</PoppinsText>
-                    <PoppinsText varient='subtext'>{previewText}</PoppinsText>
-                    <PoppinsText varient='subtext'>
+                    <FontText weight='medium'>Rule book</FontText>
+                    <FontText variant='subtext'>{previewText}</FontText>
+                    <FontText variant='subtext'>
                         {visibleRoleDescriptionCount} role description{visibleRoleDescriptionCount === 1 ? '' : 's'}
-                    </PoppinsText>
+                    </FontText>
                 </Column>
                 <ChevronRight size={20} color='rgb(46, 41, 37)' className='mt-1' />
             </Row>
@@ -99,10 +100,10 @@ const PhoneBookPreviewCard = ({ gameId, currentUserId, onPress }: PhoneBookPrevi
             <Row className='items-start gap-3'>
                 
                 <Column className='flex-1' gap={1}>
-                    <PoppinsText weight='medium'>Phone book</PoppinsText>
-                    <PoppinsText varient='subtext'>
+                    <FontText weight='medium'>Phone book</FontText>
+                    <FontText variant='subtext'>
                         {playerCount} player{playerCount === 1 ? '' : 's'} in the game
-                    </PoppinsText>
+                    </FontText>
                 </Column>
                 <ChevronRight size={20} color='rgb(46, 41, 37)' className='mt-1' />
             </Row>
@@ -130,6 +131,7 @@ const ConfigPageOPERATOR = ({ gameId, currentUserId }: ConfigPageOPERATORProps) 
                             <VoteDeadlineConfigItem gameId={gameId} />
                             <WakeUpTimeConfigItem gameId={gameId} />
                             <DaysPerGameDayConfigItem gameId={gameId} />
+                            <NewserConfigItem gameId={gameId} />
                         </Column>
 
                         <RemoveGameButton gameId={gameId} />

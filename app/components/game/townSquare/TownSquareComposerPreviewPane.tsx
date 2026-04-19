@@ -4,7 +4,7 @@ import { ScrollShadow } from 'heroui-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Column from '../../layout/Column';
 import MarkdownRenderer from '../../ui/markdown/MarkdownRenderer';
-import PoppinsText from '../../ui/text/PoppinsText';
+import FontText from '../../ui/text/FontText';
 
 interface TownSquareComposerPreviewPaneProps {
     includeTitle: boolean;
@@ -17,22 +17,22 @@ interface TownSquareComposerPreviewPaneProps {
 const TownSquareComposerPreviewPane = ({ includeTitle, markdown, markdownInputState, setMarkdownInputState, title }: TownSquareComposerPreviewPaneProps) => {
     return (
         <Column className='flex-1 min-w-0' gap={2}>
-            {/* <PoppinsText weight='medium'>Preview</PoppinsText> */}
+            {/* <FontText weight='medium'>Preview</FontText> */}
             <ScrollShadow LinearGradientComponent={LinearGradient} className='h-[52vh] flex-1'>
                 <ScrollView className='h-[52vh] flex-1 rounded-[24px] border border-subtle-border px-4 py-4'>
                     <Column gap={3}>
                         {includeTitle && title.trim() ? (
-                            <PoppinsText weight='bold' className='text-2xl leading-8'>
+                            <FontText weight='bold' className='text-2xl leading-8'>
                                 {title.trim()}
-                            </PoppinsText>
+                            </FontText>
                         ) : null}
 
                         {markdown.trim() ? (
                             <MarkdownRenderer markdown={markdown.trim()} state={markdownInputState} setState={setMarkdownInputState} isInDialog={true} />
                         ) : (
                             <Column className='py-12' gap={1}>
-                                <PoppinsText weight='medium'>Nothing to preview yet</PoppinsText>
-                                <PoppinsText varient='subtext'>Start typing in the Editing tab.</PoppinsText>
+                                <FontText weight='medium'>Nothing to preview yet</FontText>
+                                <FontText variant='subtext'>Start typing in the Editing tab.</FontText>
                             </Column>
                         )}
                     </Column>

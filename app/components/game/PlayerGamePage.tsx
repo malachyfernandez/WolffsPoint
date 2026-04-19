@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { BookUser, Eye, MessageSquare, Newspaper, Phone } from 'lucide-react-native';
 import Column from '../layout/Column';
 import GameTabBar, { GameTabDefinition } from './GameTabBar';
 import TownSquarePagePLAYER from './TownSquarePagePLAYER';
@@ -8,6 +7,11 @@ import RuleBookPagePLAYER from './RuleBookPagePLAYER';
 import YourEyesOnlyPagePLAYER from './YourEyesOnlyPagePLAYER';
 import PhoneBookPagePLAYER from './PhoneBookPagePLAYER';
 import PlayerAccessGate from './PlayerAccessGate';
+import TownSquareIcon from '../ui/icons/TownSquare';
+import NewspaperIcon from '../ui/icons/Newspaper';
+import HomeIcon from '../ui/icons/Home';
+import RuleBookIcon from '../ui/icons/RuleBook';
+import PhoneBookIcon from '../ui/icons/PhoneBook';
 import PaperContainer from '../ui/PaperContainer';
 
 export type PlayerTab = 'townSquare' | 'newspaper' | 'ruleBook' | 'eyesOnly' | 'phoneBook';
@@ -18,11 +22,11 @@ interface PlayerGamePageProps {
 }
 
 const playerTabs: GameTabDefinition<PlayerTab>[] = [
-    { label: 'Town Square', condensedLabel: 'Town Sq', value: 'townSquare', icon: <MessageSquare size={20} /> },
-    { label: 'Newspaper', condensedLabel: 'News', value: 'newspaper', icon: <Newspaper size={20} /> },
-    { label: 'Your Eyes Only', condensedLabel: 'Your Eyes Only', value: 'eyesOnly', icon: <Eye size={20} /> },
-    { label: 'Rule Book', condensedLabel: 'Rule Bk', value: 'ruleBook', icon: <BookUser size={20} /> },
-    { label: 'Phone Book', condensedLabel: 'Phone Bk', value: 'phoneBook', icon: <Phone size={20} /> },
+    { label: 'Town Square', condensedLabel: 'Town Sq', value: 'townSquare', icon: <TownSquareIcon /> },
+    { label: 'Newspaper', condensedLabel: 'News', value: 'newspaper', icon: <NewspaperIcon /> },
+    { label: 'Your Eyes Only', condensedLabel: 'Your Eyes Only', value: 'eyesOnly', icon: <HomeIcon /> },
+    { label: 'Rule Book', condensedLabel: 'Rule Bk', value: 'ruleBook', icon: <RuleBookIcon /> },
+    { label: 'Phone Book', condensedLabel: 'Phone Bk', value: 'phoneBook', icon: <PhoneBookIcon /> },
 ];
 
 const PlayerGamePage = ({ gameId, currentUserId }: PlayerGamePageProps) => {

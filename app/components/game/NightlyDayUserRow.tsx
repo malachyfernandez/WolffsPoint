@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import PoppinsText from '../ui/text/PoppinsText';
+import FontText from '../ui/text/FontText';
 import InlineEditableText from '../ui/forms/InlineEditableText';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
@@ -93,13 +93,13 @@ const NightlyDayUserRow = ({
             <Row gap={0} className={` h-12 w-min ${isEditing ? 'z-50' : ''}`}>
                 <Column className={`h-full border border-subtle-border items-center justify-center z-10`} style={{ width: columnWidths.vote }}>
                     <Pressable onPress={handleVotePress} className="w-full h-full items-center justify-center px-1">
-                        <PoppinsText
+                        <FontText
                             weight="medium"
                             className="text-center text-nowrap overflow-hidden"
                             style={{ width: columnWidths.vote - 16 }}
                         >
                             {dayData.vote ? resolvedVoteName : 'No Vote...'}
-                        </PoppinsText>
+                        </FontText>
                     </Pressable>
                 </Column>
                 <Column gap={0} className={`h-full border border-subtle-border items-center justify-center z-20`} style={{ width: columnWidths.action }}>
@@ -112,7 +112,7 @@ const NightlyDayUserRow = ({
                 <Column gap={0} className={`h-full border border-subtle-border items-center justify-center ${isLast ? 'rounded-br-lg' : ''}`} style={{ width: columnWidths.morningMessage }}>
                     {getCurrentMorningMessage() ? (
                         <Pressable onPress={() => setIsMessageDialogOpen(true)} style={{ width: columnWidths.morningMessage - 8 }} className='h-full items-center justify-center'>
-                            <PoppinsText
+                            <FontText
                                 weight='medium'
                                 className='text-center text-nowrap overflow-hidden'
                                 style={{
@@ -121,8 +121,8 @@ const NightlyDayUserRow = ({
                                     textDecorationStyle: 'dotted',
                                 }}
                             >
-                                <PoppinsText className="text-center">{getMorningMessagePreview()}</PoppinsText>
-                            </PoppinsText>
+                                <FontText className="text-center">{getMorningMessagePreview()}</FontText>
+                            </FontText>
                         </Pressable>
                     ) : morningMessagesList[user.email]?.[dayNumber - 1] ? (
                         <Pressable 
@@ -135,14 +135,14 @@ const NightlyDayUserRow = ({
                             style={{ width: columnWidths.morningMessage - 8 }} 
                             className='h-full items-center justify-center px-2'
                         >
-                            <PoppinsText 
+                            <FontText 
                                 weight='medium' 
                                 className='text-center text-nowrap bg-text rounded-full max-w-42 px-2 py-1 overflow-hidden'
                                 color='white'
                                 style={{ width: columnWidths.morningMessage - 8 }}
                             >
                                 Import Yesterday's
-                            </PoppinsText>
+                            </FontText>
                         </Pressable>
                     ) : (
                         <Pressable 
@@ -150,13 +150,13 @@ const NightlyDayUserRow = ({
                             style={{ width: columnWidths.morningMessage - 8 }} 
                             className='h-full items-center justify-center'
                         >
-                            <PoppinsText 
+                            <FontText 
                                 weight='medium' 
                                 className='text-center text-nowrap overflow-hidden opacity-50'
                                 style={{ width: columnWidths.morningMessage - 8 }}
                             >
                                 No morning message...
-                            </PoppinsText>
+                            </FontText>
                         </Pressable>
                     )}
                 </Column>

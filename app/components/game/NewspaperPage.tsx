@@ -3,13 +3,13 @@ import { View, ScrollView } from 'react-native';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
 import AppButton from '../ui/buttons/AppButton';
-import PoppinsText from '../ui/text/PoppinsText';
+import FontText from '../ui/text/FontText';
 import NewspaperWritingView from './NewspaperWritingView';
 import { useUserList } from 'hooks/useUserList';
 import { ScrollShadow } from 'heroui-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import DaySelectionDialog from './DaySelectionDialog';
-import PoppinsNumberInput from '../ui/forms/PoppinsNumberInput';
+import FontNumberInput from '../ui/forms/FontNumberInput';
 
 interface NewspaperPageProps {
     gameId: string;
@@ -105,11 +105,11 @@ const NewspaperPage = ({ gameId }: NewspaperPageProps) => {
                                 {/* spacer to align with content */}
                             </Row>
                             <Row className='items-center justify-between px-4'>
-                                <PoppinsText weight='bold' className='text-lg'>
+                                <FontText weight='bold' className='text-lg'>
                                     Day {selectedDayIndex.value + 1}
-                                </PoppinsText>
+                                </FontText>
                                 <Row gap={2}>
-                                    <PoppinsNumberInput
+                                    <FontNumberInput
                                         value={numberOfRealDaysPerInGameDay.value}
                                         onChangeText={(displayValue, isValid, numericValue) => {
                                             if (isValid && numericValue !== null) {
@@ -121,7 +121,7 @@ const NewspaperPage = ({ gameId }: NewspaperPageProps) => {
                                         inline={true}
                                         useDefaultStyling={true}
                                     />
-                                    <PoppinsText className='text-muted'>days/game day</PoppinsText>
+                                    <FontText className='text-muted'>days/game day</FontText>
                                 </Row>
                             </Row>
                         </Column>
@@ -149,12 +149,12 @@ const NewspaperPage = ({ gameId }: NewspaperPageProps) => {
                                                     className='w-16 max-h-6'
                                                     onPress={() => setSelectedDayIndex(index)}
                                                 >
-                                                    <PoppinsText className='text-white'>{fixedDayDatesArray[index].getMonth() + 1}/{fixedDayDatesArray[index].getDate()}</PoppinsText>
+                                                    <FontText className='text-white'>{fixedDayDatesArray[index].getMonth() + 1}/{fixedDayDatesArray[index].getDate()}</FontText>
                                                 </AppButton>
                                             )
                                         ))}
                                         <AppButton variant="accent" className='max-w-6 min-w-6 max-h-6 ml-1 rounded-full' onPress={addNewDay}>
-                                            <PoppinsText weight="bold" className='text-white'>+</PoppinsText>
+                                            <FontText weight="bold" className='text-white'>+</FontText>
                                         </AppButton>
                                     </Row>
                                 </ScrollView>

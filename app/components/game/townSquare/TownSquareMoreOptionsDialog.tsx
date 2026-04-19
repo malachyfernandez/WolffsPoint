@@ -4,7 +4,7 @@ import ConvexDialog from '../../ui/dialog/ConvexDialog';
 import DialogHeader from '../../ui/dialog/DialogHeader';
 import Column from '../../layout/Column';
 import AppButton from '../../ui/buttons/AppButton';
-import PoppinsText from '../../ui/text/PoppinsText';
+import FontText from '../../ui/text/FontText';
 import { MoreComposerAction } from './townSquareUtils';
 
 interface TownSquareMoreOptionsDialogProps {
@@ -43,7 +43,7 @@ const TownSquareMoreOptionsDialog = ({ isOpen, onOpenChange, onSelectAction }: T
                                     onOpenChange(false);
                                 }}
                             >
-                                <PoppinsText weight='medium'>{option.label}</PoppinsText>
+                                <FontText weight='medium'>{option.label}</FontText>
                             </AppButton>
                         ))}
                     </Column>

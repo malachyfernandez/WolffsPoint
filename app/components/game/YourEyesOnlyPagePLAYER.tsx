@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
-import PoppinsText from '../ui/text/PoppinsText';
+import FontText from '../ui/text/FontText';
 import AppButton from '../ui/buttons/AppButton';
 import MarkdownRenderer from '../ui/markdown/MarkdownRenderer';
 import PlaceholderCard from '../ui/PlaceholderCard';
@@ -184,7 +184,7 @@ const YourEyesOnlyPagePLAYER = ({ gameId, currentEmail, matchingPlayer, currentP
                     />
                 ) : (
                     <Column className='items-center py-6'>
-                        <PoppinsText varient='subtext'>The operator has not written this role&apos;s about section yet.</PoppinsText>
+                        <FontText variant='subtext'>The operator has not written this role&apos;s about section yet.</FontText>
                     </Column>
                 )}
             </Animated.View>
@@ -202,18 +202,18 @@ const YourEyesOnlyPagePLAYER = ({ gameId, currentEmail, matchingPlayer, currentP
                             className={`w-20 items-center ${selectedDayIndex <= 0 ? 'opacity-30' : ''}`}
                         >
                             <ChevronLeft size={28} color='rgb(46, 41, 37)' />
-                            <PoppinsText varient='subtext' className='text-center text-xs'>
+                            <FontText variant='subtext' className='text-center text-xs'>
                                 {previousDayLabel || ' '}
-                            </PoppinsText>
+                            </FontText>
                         </Pressable>
 
                         <Column className='flex-1 items-center pt-1' gap={1}>
-                            <PoppinsText weight='medium' className='text-center'>
+                            <FontText weight='medium' className='text-center'>
                                 {selectedDayRangeLabel || 'Current game day'}
-                            </PoppinsText>
-                            <PoppinsText varient='subtext' className='text-xs text-center'>
+                            </FontText>
+                            <FontText variant='subtext' className='text-xs text-center'>
                                 Day {selectedDayIndex + 1}
-                            </PoppinsText>
+                            </FontText>
                         </Column>
 
                         <Pressable
@@ -226,9 +226,9 @@ const YourEyesOnlyPagePLAYER = ({ gameId, currentEmail, matchingPlayer, currentP
                             className={`w-20 items-center ${selectedDayIndex >= currentDayIndex ? 'opacity-30' : ''}`}
                         >
                             <ChevronRight size={28} color='rgb(46, 41, 37)' />
-                            <PoppinsText varient='subtext' className='text-center text-xs'>
+                            <FontText variant='subtext' className='text-center text-xs'>
                                 {nextDayLabel || ' '}
-                            </PoppinsText>
+                            </FontText>
                         </Pressable>
                     </Row>
 
@@ -260,12 +260,12 @@ const YourEyesOnlyPagePLAYER = ({ gameId, currentEmail, matchingPlayer, currentP
                                 <PlaceholderCard>
                                     <Column className='items-center' gap={3}>
                                         <Sun size={48} color='rgb(46, 41, 37)' />
-                                        <PoppinsText weight='bold' className='text-xl text-center'>
+                                        <FontText weight='bold' className='text-xl text-center'>
                                             Not yet released
-                                        </PoppinsText>
-                                        <PoppinsText varient='subtext' className='text-center'>
+                                        </FontText>
+                                        <FontText variant='subtext' className='text-center'>
                                             Day content will be available {releaseDateLabel || 'soon'} at {formatTimeLabel(schedule.wakeUpTime)}.
-                                        </PoppinsText>
+                                        </FontText>
                                     </Column>
                                 </PlaceholderCard>
                             )}
@@ -283,16 +283,16 @@ const YourEyesOnlyPagePLAYER = ({ gameId, currentEmail, matchingPlayer, currentP
                     <PlaceholderCard>
                         <Column className='items-center' gap={3}>
                             <Eye size={48} color='rgb(46, 41, 37)' />
-                            <PoppinsText weight='bold' className='text-xl text-center'>
+                            <FontText weight='bold' className='text-xl text-center'>
                                 Are you alone?
-                            </PoppinsText>
-                            <PoppinsText varient='subtext' className='text-center'>
+                            </FontText>
+                            <FontText variant='subtext' className='text-center'>
                                 We don&apos;t want anyone peaking!
-                            </PoppinsText>
+                            </FontText>
                         </Column>
                         <Row className='justify-center'>
                             <AppButton variant='accent' className='w-44' onPress={handleConfirmAlone}>
-                                <PoppinsText weight='medium' color='white'>I am alone</PoppinsText>
+                                <FontText weight='medium' color='white'>I am alone</FontText>
                             </AppButton>
                         </Row>
                     </PlaceholderCard>

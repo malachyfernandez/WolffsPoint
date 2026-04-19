@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import Animated, { FadeIn } from 'react-native-reanimated';
-import { MessageSquare, Newspaper, ScrollText, Shield, Users } from 'lucide-react-native';
 import Column from '../layout/Column';
 import PlayerPageOPERATOR from './PlayerPageOPERATOR';
 import RolesPageOPERATOR from './RolesPageOPERATOR';
@@ -9,7 +8,12 @@ import TownSquarePagePLAYER from './TownSquarePagePLAYER';
 import NewspaperPageOPERATOR from './NewspaperPageOPERATOR';
 import ConfigPageOPERATOR from './ConfigPageOPERATOR';
 import GameTabBar, { GameTabDefinition } from './GameTabBar';
-import GameUserIcon from '../ui/icons/UserIcon';
+import PlayersIcon from '../ui/icons/Players';
+import RolesIcon from '../ui/icons/Roles';
+import NightlyIcon from '../ui/icons/Nightly';
+import TownSquareIcon from '../ui/icons/TownSquare';
+import NewspaperIcon from '../ui/icons/Newspaper';
+import ConfigIcon from '../ui/icons/Config';
 import PaperContainer from '../ui/PaperContainer';
 import { PlayerProfile } from '../../../types/multiplayer';
 
@@ -21,12 +25,12 @@ interface OperatorGamePageProps {
 }
 
 const operatorTabs: GameTabDefinition<OperatorTab>[] = [
-    { label: 'Players', condensedLabel: 'Players', value: 'players', icon: <GameUserIcon /> },
-    { label: 'Roles', condensedLabel: 'Roles', value: 'config', icon: <Shield size={20} /> },
-    { label: 'Nightly', condensedLabel: 'Nightly', value: 'nightly', icon: <Users size={20} /> },
-    { label: 'Town Square', condensedLabel: 'Town Sq', value: 'forum', icon: <MessageSquare size={20} /> },
-    { label: 'Newspaper', condensedLabel: 'News', value: 'newspaper', icon: <Newspaper size={20} /> },
-    { label: 'Config', condensedLabel: 'Config', value: 'rulebook', icon: <ScrollText size={20} /> },
+    { label: 'Players', condensedLabel: 'Players', value: 'players', icon: <PlayersIcon /> },
+    { label: 'Roles', condensedLabel: 'Roles', value: 'config', icon: <RolesIcon /> },
+    { label: 'Nightly', condensedLabel: 'Nightly', value: 'nightly', icon: <NightlyIcon /> },
+    { label: 'Town Square', condensedLabel: 'Town Sq', value: 'forum', icon: <TownSquareIcon /> },
+    { label: 'Newspaper', condensedLabel: 'News', value: 'newspaper', icon: <NewspaperIcon /> },
+    { label: 'Config', condensedLabel: 'Config', value: 'rulebook', icon: <ConfigIcon /> },
 ];
 
 const OperatorGamePage = ({ gameId, currentUserId }: OperatorGamePageProps) => {

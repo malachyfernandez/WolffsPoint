@@ -5,7 +5,7 @@ import DialogHeader from '../ui/dialog/DialogHeader';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
 import AppButton from '../ui/buttons/AppButton';
-import PoppinsText from '../ui/text/PoppinsText';
+import FontText from '../ui/text/FontText';
 import { ColumnSizeOption } from './playerTableColumnSizing';
 
 interface ColumnActionsDialogProps {
@@ -46,12 +46,12 @@ const ColumnActionsDialog = ({ isOpen, onOpenChange, title, selectedSize, onSele
                                 }}
                             >
                                 <Row className='w-full items-center justify-between'>
-                                    <PoppinsText color={selectedSize === option.value ? 'white' : 'black'} weight='medium'>
+                                    <FontText color={selectedSize === option.value ? 'white' : 'black'} weight='medium'>
                                         {option.label}
-                                    </PoppinsText>
-                                    <PoppinsText color={selectedSize === option.value ? 'white' : 'black'} className={selectedSize === option.value ? 'opacity-80' : 'opacity-50'}>
+                                    </FontText>
+                                    <FontText color={selectedSize === option.value ? 'white' : 'black'} className={selectedSize === option.value ? 'opacity-80' : 'opacity-50'}>
                                         {option.description}
-                                    </PoppinsText>
+                                    </FontText>
                                 </Row>
                             </AppButton>
                         ))}
@@ -65,7 +65,7 @@ const ColumnActionsDialog = ({ isOpen, onOpenChange, title, selectedSize, onSele
                                     onOpenChange(false);
                                 }}
                             >
-                                <PoppinsText weight='medium' color='red'>Delete Column</PoppinsText>
+                                <FontText weight='medium' color='red'>Delete Column</FontText>
                             </AppButton>
                         ) : null}
                     </Column>

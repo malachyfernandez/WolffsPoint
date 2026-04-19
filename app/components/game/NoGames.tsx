@@ -1,7 +1,7 @@
 import React from 'react';
 import Column from '../layout/Column';
 import { SadEmoji } from '../ui/icons/SadEmoji';
-import PoppinsText from '../ui/text/PoppinsText';
+import FontText from '../ui/text/FontText';
 import JoinGameButton from './JoinGameButton';
 
 interface NoGamesProps {
@@ -15,7 +15,7 @@ const NoGames = ({ joinGame }: NoGamesProps) => {
             
                 <SadEmoji size={100} lineWidth={1} color={"white"}/>
             
-            <PoppinsText color='white' >You dont have any games right now</PoppinsText>
+            <FontText color='white' >You dont have any games right now</FontText>
             <JoinGameButton onJoin={joinGame}/>
         </Column>
     );

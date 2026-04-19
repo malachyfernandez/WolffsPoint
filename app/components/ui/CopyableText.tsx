@@ -7,7 +7,7 @@ import {
     ZoomIn,
     ZoomOut,
 } from 'react-native-reanimated';
-import PoppinsText from '../ui/text/PoppinsText';
+import FontText from '../ui/text/FontText';
 import Row from '../layout/Row';
 import Column from '../layout/Column';
 import StateAnimatedView from '../ui/StateAnimatedView';
@@ -57,9 +57,9 @@ const CopyableText = ({ text, prefix = '', className = '', copyText = 'Copied', 
     const content = (
         <Row className={`items-center justify-center w-fit ${className}`} gap={1}>
             <View className="items-center">
-                <PoppinsText varient='cardHeader' style={{ color: 'transparent' }}>
+                <FontText variant='cardHeader' style={{ color: 'transparent' }}>
                     {fullText}
-                </PoppinsText>
+                </FontText>
 
 
 
@@ -70,9 +70,9 @@ const CopyableText = ({ text, prefix = '', className = '', copyText = 'Copied', 
                             onValue={FadeIn.duration(100)}
                             onNotValue={FadeOut.duration(100)}
                         >
-                            <PoppinsText varient='lowercaseCardHeader' className='opacity-100' style={{ color: resolvedColor }}>
+                            <FontText variant='lowercaseCardHeader' className='opacity-100' style={{ color: resolvedColor }}>
                                 {fullText}
-                            </PoppinsText>
+                            </FontText>
                         </StateAnimatedView.Option>
 
                         <StateAnimatedView.Option
@@ -81,9 +81,9 @@ const CopyableText = ({ text, prefix = '', className = '', copyText = 'Copied', 
                             onNotValue={ZoomOut.duration(150)}
                         >
 
-                            <PoppinsText varient='cardHeader' className='opacity-100' style={{ color: resolvedColor }}>
+                            <FontText variant='cardHeader' className='opacity-100' style={{ color: resolvedColor }}>
                                 {copyText}
-                            </PoppinsText>
+                            </FontText>
 
                         </StateAnimatedView.Option>
                     </StateAnimatedView.Container>

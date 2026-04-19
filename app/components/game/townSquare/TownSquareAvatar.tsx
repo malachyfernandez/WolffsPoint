@@ -1,6 +1,6 @@
 import React from 'react';
 import { Image, View } from 'react-native';
-import PoppinsText from '../../ui/text/PoppinsText';
+import FontText from '../../ui/text/FontText';
 
 interface TownSquareAvatarProps {
     fallbackLabel?: string;
@@ -16,7 +16,7 @@ const TownSquareAvatar = ({ fallbackLabel, size = 52, uri }: TownSquareAvatarPro
             ) : (
                 <View className='h-full w-full items-center justify-center bg-border/10'>
                     {fallbackLabel ? (
-                        <PoppinsText weight='medium'>{fallbackLabel}</PoppinsText>
+                        <FontText weight='medium'>{fallbackLabel}</FontText>
                     ) : null}
                 </View>
             )}

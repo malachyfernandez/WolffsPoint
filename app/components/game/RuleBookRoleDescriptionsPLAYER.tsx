@@ -1,7 +1,7 @@
 import React from 'react';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
-import PoppinsText from '../ui/text/PoppinsText';
+import FontText from '../ui/text/FontText';
 import MarkdownRenderer from '../ui/markdown/MarkdownRenderer';
 import { useUserListGet } from '../../../hooks/useUserListGet';
 import { useUserVariableGet } from '../../../hooks/useUserVariableGet';
@@ -67,7 +67,7 @@ const RuleBookRoleDescriptionsPLAYER = ({ gameId }: RuleBookRoleDescriptionsPLAY
 
     return (
         <Column gap={2}>
-            <PoppinsText weight='bold' className='text-xl'>Role Descriptions</PoppinsText>
+            <FontText weight='bold' className='text-xl'>Role Descriptions</FontText>
             <Column gap={4}>
                 {orderedRoles.map((role) => (
                     <Row key={roles.indexOf(role)} className='items-start gap-2'>

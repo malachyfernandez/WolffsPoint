@@ -59,7 +59,7 @@ export default function HomeScreen() {
                   className="w-[80vw] max-w-96"
                 />
                 <Column gap={8} className="items-center">
-                  {/* <PoppinsText className="text-2xl font-bold text-center" color="white">Welcome to Example Project</PoppinsText> */}
+                  {/* <FontText className="text-2xl font-bold text-center" color="white">Welcome to Example Project</FontText> */}
                   {/* <AuthButton
             authFlow={startAppleFlow}
             buttonText="Continue with Apple"

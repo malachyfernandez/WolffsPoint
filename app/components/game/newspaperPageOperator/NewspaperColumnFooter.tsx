@@ -1,11 +1,11 @@
 import React from 'react';
 import Row from '../../layout/Row';
-import PoppinsText from '../../ui/text/PoppinsText';
+import FontText from '../../ui/text/FontText';
 
 const NewspaperColumnFooter = () => {
     return (
         <Row className='items-center justify-between border-t border-border pt-3' gap={2}>
-            <PoppinsText varient='subtext'>Tap column to edit</PoppinsText>
+            <FontText variant='subtext'>Tap column to edit</FontText>
         </Row>
     );
 };

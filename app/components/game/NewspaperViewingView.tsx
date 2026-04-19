@@ -3,43 +3,29 @@ import { ScrollView } from 'react-native';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
 import MarkdownRenderer from '../ui/markdown/MarkdownRenderer';
-import PoppinsText from '../ui/text/PoppinsText';
+import FontText from '../ui/text/FontText';
 import LoadingText from '../ui/loading/LoadingText';
 import { useUserListGet } from 'hooks/useUserListGet';
 import { ScrollShadow } from 'heroui-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Usepaper } from 'types/usepaper';
+import { getNewspaperDayItemId } from '../../../utils/newspaperControl';
 
 interface NewspaperViewingViewProps {
-    itemId: string;
+    dayIndex: number;
+    gameId: string;
+    ownerUserId: string;
 }
-
-const defaultUsepaper: Usepaper = {
-    columns: [],
-};
 
 const minimumUsepaper: Usepaper = {
     columns: ['', ''],
 };
 
-const NewspaperViewingView = ({ itemId }: NewspaperViewingViewProps) => {
-    // Extract base gameId from day-specific ID (e.g., "JfsX3u79-day-1" -> "JfsX3u79")
-    const baseGameId = itemId.split('-day-')[0];
-
-    // Get the operator userId for this game (using base gameId)
-    const gameRows = useUserListGet<string[]>({
-        key: "games",
-        itemId: baseGameId,
-        returnTop: 1,
-    });
-
-    const operatorUserId = gameRows?.[0]?.userToken;
-
-    // Get the operator's newspaper data (using full day-specific itemId)
+const NewspaperViewingView = ({ dayIndex, gameId, ownerUserId }: NewspaperViewingViewProps) => {
     const usepaperRecords = useUserListGet<Usepaper>({
         key: 'usepaper',
-        itemId: itemId,
-        userIds: operatorUserId ? [operatorUserId] : [],
+        itemId: getNewspaperDayItemId(gameId, dayIndex),
+        userIds: ownerUserId ? [ownerUserId] : [''],
         returnTop: 1,
     });
 
@@ -75,9 +61,9 @@ const NewspaperViewingView = ({ itemId }: NewspaperViewingViewProps) => {
                                 {columnMarkdown.trim().length > 0 ? (
                                     <MarkdownRenderer markdown={columnMarkdown} textAlign='justify' />
                                 ) : (
-                                    <PoppinsText varient='subtext' className='text-muted text-center'>
+                                    <FontText variant='subtext' className='text-muted text-center'>
                                         Empty column
-                                    </PoppinsText>
+                                    </FontText>
                                 )}
                             </Column>
                         ))}

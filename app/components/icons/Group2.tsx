@@ -3,7 +3,6 @@ import Svg, { Path, Circle } from "react-native-svg";
 import type { SvgProps } from "react-native-svg";
 const SvgGroup2 = (props: SvgProps) => (
   <Svg
-    xmlns="http://www.w3.org/2000/svg"
     width={154}
     height={60}
     fill="none"

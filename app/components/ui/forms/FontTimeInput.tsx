@@ -2,9 +2,9 @@ import React, { useMemo } from 'react';
 import Column from '../../layout/Column';
 import Row from '../../layout/Row';
 import AppDropdown, { AppDropdownOption } from './AppDropdown';
-import PoppinsText from '../text/PoppinsText';
+import FontText from '../text/FontText';
 
-interface PoppinsTimeInputProps {
+interface FontTimeInputProps {
     value?: string;
     onChangeText: (value: string) => void;
     className?: string;
@@ -67,7 +67,7 @@ const toCanonicalTime = (hour12: string, minute: string, period: string) => {
     return `${`${hour24}`.padStart(2, '0')}:${`${parsedMinute}`.padStart(2, '0')}`;
 };
 
-const PoppinsTimeInput = ({ value = '08:00', onChangeText, className = '' }: PoppinsTimeInputProps) => {
+const FontTimeInput = ({ value = '08:00', onChangeText, className = '' }: FontTimeInputProps) => {
     const timeParts = useMemo(() => getTimeParts(value), [value]);
 
     return (
@@ -80,7 +80,7 @@ const PoppinsTimeInput = ({ value = '08:00', onChangeText, className = '' }: Pop
                     triggerClassName='min-w-[86px] rounded-2xl border border-border/15 bg-text/5 px-3 py-3'
                     contentClassName='border border-border/15'
                 />
-                <PoppinsText weight='medium' className='opacity-40'>:</PoppinsText>
+                <FontText weight='medium' className='opacity-40'>:</FontText>
                 <AppDropdown
                     options={MINUTE_OPTIONS}
                     value={timeParts.minute}
@@ -96,9 +96,9 @@ const PoppinsTimeInput = ({ value = '08:00', onChangeText, className = '' }: Pop
                     contentClassName='border border-border/15'
                 />
             </Row>
-            <PoppinsText varient='subtext'>Stored as {value}</PoppinsText>
+            <FontText variant='subtext'>Stored as {value}</FontText>
         </Column>
     );
 };
 
-export default PoppinsTimeInput;
+export default FontTimeInput;

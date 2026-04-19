@@ -1,7 +1,7 @@
 import React from 'react';
 
 import AppButton from './AppButton';
-import PoppinsText from '../text/PoppinsText';
+import FontText from '../text/FontText';
 
 type PageState = "Profile" | "Following" | "Feed";
 
@@ -13,9 +13,9 @@ interface NavButtonProps {
 
 const NavButton = ({ buttonID, pageState, setPageState }: NavButtonProps) => (
     <AppButton variant="grey" className="w-20%" onPress={() => setPageState(buttonID)}>
-        <PoppinsText weight={pageState === buttonID ? 'bold' : 'regular'}>
+        <FontText weight={pageState === buttonID ? 'bold' : 'regular'}>
             {buttonID}
-        </PoppinsText>
+        </FontText>
     </AppButton>
 );
 

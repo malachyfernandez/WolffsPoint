@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import ConvexDialog from '../ui/dialog/ConvexDialog';
 import Column from '../layout/Column';
 import AppButton from '../ui/buttons/AppButton';
-import PoppinsText from '../ui/text/PoppinsText';
-import PoppinsNumberInput from '../ui/forms/PoppinsNumberInput';
+import FontText from '../ui/text/FontText';
+import FontNumberInput from '../ui/forms/FontNumberInput';
 import DialogHeader from '../ui/dialog/DialogHeader';
 import { View, Text } from 'react-native';
 
@@ -50,8 +50,8 @@ const DaysPerGameDayDialog = ({ isOpen, onOpenChange, currentValue, onPress, set
                             subtext="Configure days per game day"
                         />
                         <Column gap={2}>
-                            <PoppinsText weight='medium'>Days per game day</PoppinsText>
-                            <PoppinsNumberInput
+                            <FontText weight='medium'>Days per game day</FontText>
+                            <FontNumberInput
                                 value={currentValue}
                                 onChangeText={(displayValue, isValid, numericValue) => {
                                     setDaysValue(displayValue);
@@ -64,10 +64,10 @@ const DaysPerGameDayDialog = ({ isOpen, onOpenChange, currentValue, onPress, set
 
                         <Column gap={2}>
                             <AppButton className='w-34 h-10' variant='black' onPress={handleSubmit}>
-                                <PoppinsText color='white' weight='medium'>Save</PoppinsText>
+                                <FontText color='white' weight='medium'>Save</FontText>
                             </AppButton>
                             <AppButton className='w-34 h-10' variant='outline' onPress={handleCancel}>
-                                <PoppinsText color='black' weight='medium'>Cancel</PoppinsText>
+                                <FontText color='black' weight='medium'>Cancel</FontText>
                             </AppButton>
                         </Column>
                     </Column>

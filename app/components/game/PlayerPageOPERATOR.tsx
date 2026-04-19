@@ -151,7 +151,7 @@ const PlayerPageOPERATOR = ({ currentUserId, gameId }: PlayerPageOPERATORProps) 
                     </Column>
                 ) : (
 
-                    // <PoppinsText>Hellow</PoppinsText>
+                    // <FontText>Hellow</FontText>
                     <PlayerAddUserSection gameId={gameId} removeBottomSpace />
                 )}
             </Animated.View>

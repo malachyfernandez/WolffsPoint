@@ -3,7 +3,7 @@ import { useUserList } from 'hooks/useUserList';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
 import AppButton from '../ui/buttons/AppButton';
-import PoppinsText from '../ui/text/PoppinsText';
+import FontText from '../ui/text/FontText';
 import { ScrollShadow } from 'heroui-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ScrollView } from 'react-native';
@@ -108,12 +108,12 @@ const PlayerDaysSection = ({ gameId, addNewDay }: PlayerDaysSectionProps) => {
                                         className='min-w-28 px-2 max-h-6'
                                         onPress={() => setSelectedDayIndex(index)}
                                     >
-                                        <PoppinsText className='text-white'>{label}</PoppinsText>
+                                        <FontText className='text-white'>{label}</FontText>
                                     </AppButton>
                                 );
                             })}
                             <AppButton variant="accent" className='max-w-6 min-w-6 max-h-6 ml-1 rounded-full' onPress={handleAddNewDay}>
-                                <PoppinsText weight="bold" className='text-white'>+</PoppinsText>
+                                <FontText weight="bold" className='text-white'>+</FontText>
                             </AppButton>
                         </Row>
                     </ScrollView>

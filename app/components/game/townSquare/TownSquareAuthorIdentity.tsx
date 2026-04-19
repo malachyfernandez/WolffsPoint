@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { useUserVariableGet } from '../../../../hooks/useUserVariableGet';
 import { PlayerProfile } from '../../../../types/multiplayer';
 import { getGameScopedKey } from '../../../../utils/multiplayer';
-import PoppinsText from '../../ui/text/PoppinsText';
+import FontText from '../../ui/text/FontText';
 import TownSquareAvatar from './TownSquareAvatar';
 
 type PublicCustomUserInfo = {
@@ -96,16 +96,16 @@ export const TownSquareAuthorName = ({
 
     if (isLoading) {
         return (
-            <PoppinsText className={className} color={color} varient={varient} weight={weight}>
+            <FontText className={className} color={color} variant={varient} weight={weight}>
                 ...
-            </PoppinsText>
+            </FontText>
         );
     }
 
     return (
-        <PoppinsText className={className} color={color} varient={varient} weight={weight}>
+        <FontText className={className} color={color} variant={varient} weight={weight}>
             {displayName}
-        </PoppinsText>
+        </FontText>
     );
 };
 

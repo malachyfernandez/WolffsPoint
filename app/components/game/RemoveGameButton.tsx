@@ -3,7 +3,7 @@ import { View } from 'react-native';
 import AppButton from '../ui/buttons/AppButton';
 import { useUserListRemove } from 'hooks/useUserListRemove';
 import { useUserVariable } from 'hooks/useUserVariable';
-import PoppinsText from '../ui/text/PoppinsText';
+import FontText from '../ui/text/FontText';
 import DeleteGameConfirmationDialog from '../dialog/DeleteGameConfirmationDialog';
 
 interface RemoveGameButtonProps {
@@ -40,9 +40,9 @@ const RemoveGameButton = ({ gameId, className }: RemoveGameButtonProps) => {
                 className='h-12 max-w-96 w-full'
                 onPress={() => setIsOpen(true)}
             >
-                <PoppinsText weight='medium' color='red'>
+                <FontText weight='medium' color='red'>
                     Delete Game
-                </PoppinsText>
+                </FontText>
             </AppButton>
         </View>
     );

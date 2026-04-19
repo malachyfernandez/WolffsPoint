@@ -4,8 +4,8 @@ import Column from '../layout/Column';
 import Animated from 'react-native-reanimated';
 import { FadeInRight, FadeOutRight } from 'react-native-reanimated';
 import AppButton from '../ui/buttons/AppButton';
-import PoppinsText from '../ui/text/PoppinsText';
-import PoppinsTextInput from '../ui/forms/PoppinsTextInput';
+import FontText from '../ui/text/FontText';
+import FontTextInput from '../ui/forms/FontTextInput';
 import SmartDateInput from '../ui/forms/SmartDateInput';
 import SmartNumberInput from '../ui/forms/SmartNumberInput';
 import StatusButton from '../ui/StatusButton';
@@ -94,7 +94,7 @@ const ChangeDateInfo = ({ gameId, isGettingStarted }: ChangeDateInfoProps) => {
         <ConvexDialog.Root isOpen={isHeroDialogOpen} onOpenChange={setIsHeroDialogOpen}>
             <ConvexDialog.Trigger asChild>
                 <AppButton variant="accent" className="h-12 w-40 shrink">
-                    <PoppinsText weight='medium' color="white">{isGettingStarted ? 'Get Started' : 'Change'}</PoppinsText>
+                    <FontText weight='medium' color="white">{isGettingStarted ? 'Get Started' : 'Change'}</FontText>
                 </AppButton>
             </ConvexDialog.Trigger>
             <ConvexDialog.Portal>
@@ -112,7 +112,7 @@ const ChangeDateInfo = ({ gameId, isGettingStarted }: ChangeDateInfoProps) => {
 
                         <Column gap={2}>
 
-                            <PoppinsText>Starting Date:</PoppinsText>
+                            <FontText>Starting Date:</FontText>
 
                             {/* EXAMPLE USING TEXT INPUT */}
                             <SmartDateInput
@@ -126,7 +126,7 @@ const ChangeDateInfo = ({ gameId, isGettingStarted }: ChangeDateInfoProps) => {
 
                         </Column>
                         <Column gap={2}>
-                            <PoppinsText>Real Days per In-Game Day</PoppinsText>
+                            <FontText>Real Days per In-Game Day</FontText>
                             <SmartNumberInput
                                 placeholder="Enter number"
                                 className="w-full border border-subtle-border p-2"
@@ -143,7 +143,7 @@ const ChangeDateInfo = ({ gameId, isGettingStarted }: ChangeDateInfoProps) => {
                                 (
                                     hasChanged ? (
                                         <AppButton variant="filled" className="h-10 w-20" onPress={formSubmit}>
-                                            <PoppinsText weight='medium' color='white'>Save</PoppinsText>
+                                            <FontText weight='medium' color='white'>Save</FontText>
                                         </AppButton>
                                     ) : (
                                         <StatusButton buttonText="Save" buttonAltText="Unchanged" />

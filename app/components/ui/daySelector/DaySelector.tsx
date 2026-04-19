@@ -3,7 +3,7 @@ import { ScrollView } from 'react-native';
 import Column from '../../layout/Column';
 import Row from '../../layout/Row';
 import AppButton from '../buttons/AppButton';
-import PoppinsText from '../text/PoppinsText';
+import FontText from '../text/FontText';
 import { useUserList } from 'hooks/useUserList';
 import { ScrollShadow } from 'heroui-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -120,13 +120,13 @@ const DaySelector = ({ gameId, className = '', showAddButton = false }: DaySelec
                                                     className='w-16 max-h-6'
                                                     onPress={() => setSelectedDayIndex(index)}
                                                 >
-                                                    <PoppinsText className='text-white'>{fixedDayDatesArray[index].getMonth() + 1}/{fixedDayDatesArray[index].getDate()}</PoppinsText>
+                                                    <FontText className='text-white'>{fixedDayDatesArray[index].getMonth() + 1}/{fixedDayDatesArray[index].getDate()}</FontText>
                                                 </AppButton>
                                             )
                                         ))}
                                         {showAddButton && (
                                             <AppButton variant="filled" className='h-6 w-6 min-w-6 ml-1 rounded-md' onPress={addNewDay}>
-                                                <PoppinsText weight="bold" className='text-white'>+</PoppinsText>
+                                                <FontText weight="bold" className='text-white'>+</FontText>
                                             </AppButton>
                                         )}
                                     </Row>

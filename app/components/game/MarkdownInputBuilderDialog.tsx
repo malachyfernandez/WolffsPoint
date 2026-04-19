@@ -5,8 +5,8 @@ import DialogHeader from '../ui/dialog/DialogHeader';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
 import AppButton from '../ui/buttons/AppButton';
-import PoppinsText from '../ui/text/PoppinsText';
-import PoppinsTextInput from '../ui/forms/PoppinsTextInput';
+import FontText from '../ui/text/FontText';
+import FontTextInput from '../ui/forms/FontTextInput';
 import AppDropdown, { AppDropdownOption } from '../ui/forms/AppDropdown';
 import MarkdownRenderer from '../ui/markdown/MarkdownRenderer';
 
@@ -62,8 +62,8 @@ const MarkdownInputBuilderDialog = ({ isOpen, onInsert, onOpenChange, selectedTe
                     <DialogHeader text='Insert input' />
                     <Column className='p-5' gap={4}>
                         <Column gap={1}>
-                            <PoppinsText weight='medium'>Label</PoppinsText>
-                            <PoppinsTextInput
+                            <FontText weight='medium'>Label</FontText>
+                            <FontTextInput
                                 className='w-full rounded-xl border border-subtle-border px-4 py-3'
                                 placeholder='Killing'
                                 value={label}
@@ -72,7 +72,7 @@ const MarkdownInputBuilderDialog = ({ isOpen, onInsert, onOpenChange, selectedTe
                         </Column>
 
                         <Column gap={1}>
-                            <PoppinsText weight='medium'>Input type</PoppinsText>
+                            <FontText weight='medium'>Input type</FontText>
                             <AppDropdown
                                 options={INPUT_TYPE_OPTIONS}
                                 value={inputType}
@@ -85,7 +85,7 @@ const MarkdownInputBuilderDialog = ({ isOpen, onInsert, onOpenChange, selectedTe
                         </Column>
 
                         <Column gap={2}>
-                            <PoppinsText weight='medium'>Preview</PoppinsText>
+                            <FontText weight='medium'>Preview</FontText>
                             <Column className='rounded-xl bg-transparent px-0 py-0' gap={2}>
                                 {previewMarkdown ? (
                                     <MarkdownRenderer
@@ -95,14 +95,14 @@ const MarkdownInputBuilderDialog = ({ isOpen, onInsert, onOpenChange, selectedTe
                                         isInDialog={true}
                                     />
                                 ) : (
-                                    <PoppinsText varient='subtext'>Add a label to preview the input.</PoppinsText>
+                                    <FontText variant='subtext'>Add a label to preview the input.</FontText>
                                 )}
                             </Column>
                         </Column>
 
                         <Row className='justify-end gap-3'>
                             <AppButton variant='outline' className='w-32' onPress={() => onOpenChange(false)}>
-                                <PoppinsText weight='medium'>Cancel</PoppinsText>
+                                <FontText weight='medium'>Cancel</FontText>
                             </AppButton>
                             <AppButton
                                 variant='filled'
@@ -117,7 +117,7 @@ const MarkdownInputBuilderDialog = ({ isOpen, onInsert, onOpenChange, selectedTe
                                     onOpenChange(false);
                                 }}
                             >
-                                <PoppinsText weight='medium' color='white'>Insert input</PoppinsText>
+                                <FontText weight='medium' color='white'>Insert input</FontText>
                             </AppButton>
                         </Row>
                     </Column>

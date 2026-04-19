@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState, useRef } from 'react';
-import PoppinsText from '../ui/text/PoppinsText';
+import FontText from '../ui/text/FontText';
 import { useUserList } from 'hooks/useUserList';
 import { useUserVariable } from 'hooks/useUserVariable';
 import Column from '../layout/Column';
@@ -447,7 +447,7 @@ const DaysTable = ({ gameId, dayNumber, dayCount, isBeingEdited, setIsBeingEdite
                     </Column>
                     <Row className='w-12 h-12 bg-light items-center justify-center -z-10'>
                         <AppButton variant="filled" className='h-8! w-8' onPress={UNDOABLEaddDayColumn}>
-                            <PoppinsText weight='bold' color='white' className='text-xl mt-[-0.1rem]'>+</PoppinsText>
+                            <FontText weight='bold' color='white' className='text-xl mt-[-0.1rem]'>+</FontText>
                         </AppButton>
                     </Row>
 

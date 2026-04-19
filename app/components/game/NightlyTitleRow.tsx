@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import PoppinsText from '../ui/text/PoppinsText';
+import FontText from '../ui/text/FontText';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
 
@@ -13,10 +13,10 @@ const NightlyTitleRow = ({ onEditStart, onEditEnd, isEditing }: NightlyTitleRowP
     return (
         <Row gap={0} className={`h-12 w-min bg-background border-b-2 border-border rounded-t-lg ${isEditing ? 'z-50' : ''}`}>
             <Column className='w-12 h-full items-center justify-center'>
-                <PoppinsText weight='medium' className='text-center'>D/A</PoppinsText>
+                <FontText weight='medium' className='text-center'>D/A</FontText>
             </Column>
             <Column gap={0} className='w-28 h-full items-center justify-center'>
-                <PoppinsText weight='medium' className='text-center'>Player</PoppinsText>
+                <FontText weight='medium' className='text-center'>Player</FontText>
             </Column>
         </Row>
     );

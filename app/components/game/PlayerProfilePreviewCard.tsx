@@ -6,7 +6,7 @@ import { PlayerProfile } from '../../../types/multiplayer';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
 import MarkdownRenderer from '../ui/markdown/MarkdownRenderer';
-import PoppinsText from '../ui/text/PoppinsText';
+import FontText from '../ui/text/FontText';
 
 interface PlayerProfilePreviewCardProps {
     displayName: string;
@@ -102,7 +102,7 @@ export const PlayerProfileAvatar = ({ imageUrl, initials, isLoading }: { imageUr
 
     return (
         <View className='h-24 w-24 items-center justify-center rounded-2xl border border-subtle-border bg-white'>
-            <PoppinsText weight='bold' className='text-2xl'>{initials}</PoppinsText>
+            <FontText weight='bold' className='text-2xl'>{initials}</FontText>
         </View>
     );
 };
@@ -117,7 +117,7 @@ export const PlayerProfileContactInfo = ({
     const visibleRows = typeof maxItems === 'number' ? rows.slice(0, maxItems) : rows;
 
     if (visibleRows.length === 0) {
-        return emptyText ? <PoppinsText varient='subtext'>{emptyText}</PoppinsText> : null;
+        return emptyText ? <FontText variant='subtext'>{emptyText}</FontText> : null;
     }
 
     return (
@@ -125,7 +125,7 @@ export const PlayerProfileContactInfo = ({
             {visibleRows.map((row) => (
                 <Row key={row.key} className='items-center gap-2'>
                     {row.icon}
-                    <PoppinsText varient='subtext' className='flex-1'>{row.value}</PoppinsText>
+                    <FontText variant='subtext' className='flex-1'>{row.value}</FontText>
                 </Row>
             ))}
         </Column>
@@ -149,9 +149,9 @@ const PlayerProfilePreviewCard = ({
             <Column className='items-center gap-3'>
                 <PlayerProfileAvatar imageUrl={imageUrl} initials={initials} isLoading={isLoading} />
                 <Column className='w-full items-center gap-2'>
-                    <PoppinsText weight='medium' className='text-lg text-center'>
+                    <FontText weight='medium' className='text-lg text-center'>
                         {displayName}
-                    </PoppinsText>
+                    </FontText>
                     {trimmedBioMarkdown.length > 0 ? (
                         <MarkdownRenderer
                             markdown={trimmedBioMarkdown}
@@ -159,9 +159,9 @@ const PlayerProfilePreviewCard = ({
                             className='w-full'
                         />
                     ) : (
-                        <PoppinsText varient='subtext' className='text-center'>
+                        <FontText variant='subtext' className='text-center'>
                             {emptyBioLabel}
-                        </PoppinsText>
+                        </FontText>
                     )}
                 </Column>
             </Column>

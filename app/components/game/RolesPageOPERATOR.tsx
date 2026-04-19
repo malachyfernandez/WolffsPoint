@@ -6,7 +6,7 @@ import Column from '../layout/Column';
 import Row from '../layout/Row';
 import RoleTable from './RoleTable';
 import AppButton from '../ui/buttons/AppButton';
-import PoppinsText from '../ui/text/PoppinsText';
+import FontText from '../ui/text/FontText';
 import LoadingText from '../ui/loading/LoadingText';
 import { useUserList } from '../../../hooks/useUserList';
 import { useUndoRedo, useCreateUndoSnapshot } from '../../../hooks/useUndoRedo';
@@ -108,10 +108,10 @@ const RolesPageOPERATOR = ({ currentUserId, gameId }: RolesPageOPERATORProps) =>
                             <AppButton variant="accent" onPress={UNDOABLEaddRole}>
                                 <Row className='items-center gap-2' gap={2}>
                                     <Plus size={20} color='white' />
-                                    <PoppinsText weight='medium' color='white'>Add Role</PoppinsText>
+                                    <FontText weight='medium' color='white'>Add Role</FontText>
                                 </Row>
-                                {/* <PoppinsText weight='bold' className='text-white text-xl'>+</PoppinsText>
-                                <PoppinsText weight='bold' className='text-white'>Add Role</PoppinsText> */}
+                                {/* <FontText weight='bold' className='text-white text-xl'>+</FontText>
+                                <FontText weight='bold' className='text-white'>Add Role</FontText> */}
                             </AppButton>
                         </Row>
                     </Column>
@@ -120,7 +120,7 @@ const RolesPageOPERATOR = ({ currentUserId, gameId }: RolesPageOPERATORProps) =>
                         <AppButton variant="accent" onPress={UNDOABLEaddRole}>
                             <Row className='items-center gap-2' gap={2}>
                                 <Plus size={20} color='white' />
-                                <PoppinsText weight='medium' color='white'>Add Role</PoppinsText>
+                                <FontText weight='medium' color='white'>Add Role</FontText>
                             </Row>
                         </AppButton>
                     </Row>

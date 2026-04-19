@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import PoppinsText from '../ui/text/PoppinsText';
+import FontText from '../ui/text/FontText';
 
 interface BackgroundPreviewProps {
     imageUrl?: string;
@@ -24,9 +24,9 @@ const BackgroundPreview = ({ imageUrl }: BackgroundPreviewProps) => {
                     />
                 </>
             ) : (
-                <PoppinsText varient='subtext' className='text-muted text-center mb-4'>
+                <FontText variant='subtext' className='text-muted text-center mb-4'>
                     No image selected yet
-                </PoppinsText>
+                </FontText>
             )}
         </>
     );

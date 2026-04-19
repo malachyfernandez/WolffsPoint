@@ -8,7 +8,7 @@ import AppDropdownEmptyState from './dropdown/AppDropdownEmptyState';
 import AppDropdownItem from './dropdown/AppDropdownItem';
 import AppDropdownMenu from './dropdown/AppDropdownMenu';
 import AppDropdownTrigger from './dropdown/AppDropdownTrigger';
-import PoppinsText from '../text/PoppinsText';
+import FontText from '../text/FontText';
 
 export interface AppDropdownOption {
     value: string;
@@ -336,9 +336,9 @@ const AppDropdown = ({
     return (
         <Popover isOpen={isOpen} onOpenChange={setIsOpen}>
             <Popover.Trigger className={`w-full flex-row items-center justify-between rounded border border-subtle-border bg-background px-3 py-3 ${triggerClassName} ${disabled ? 'opacity-60' : ''}`.trim()} isDisabled={disabled}>
-                <PoppinsText weight='medium' className={!selectedOption ? 'opacity-60' : ''}>
+                <FontText weight='medium' className={!selectedOption ? 'opacity-60' : ''}>
                     {selectedOption?.label ?? placeholder}
-                </PoppinsText>
+                </FontText>
                 <ChevronDown size={18} color='rgb(46, 41, 37)' />
             </Popover.Trigger>
             <Popover.Portal>

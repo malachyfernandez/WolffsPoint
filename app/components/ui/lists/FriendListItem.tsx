@@ -1,5 +1,5 @@
 import React from 'react';
-import PoppinsText from '../text/PoppinsText';
+import FontText from '../text/FontText';
 import { useUserVariableGet } from 'hooks/useUserVariableGet';
 import Column from '../../layout/Column';
 import Row from '../../layout/Row';
@@ -23,17 +23,17 @@ const FriendListItem = ({ friend }: FriendListItemProps) => {
         <Column gap={1}>
             {email && (
                 <Row>
-                    <PoppinsText weight='bold'>{email}</PoppinsText>
+                    <FontText weight='bold'>{email}</FontText>
                 </Row>
             )}
             {name && (
                 <Row>
-                    <PoppinsText>{name}</PoppinsText>
+                    <FontText>{name}</FontText>
                 </Row>
             )}
             {userId && (
                 <Row>
-                    <PoppinsText className='text-sm opacity-50'>{`User ID: ${userId}`}</PoppinsText>
+                    <FontText className='text-sm opacity-50'>{`User ID: ${userId}`}</FontText>
                 </Row>
             )}
             

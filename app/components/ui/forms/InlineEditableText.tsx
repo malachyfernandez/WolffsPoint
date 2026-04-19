@@ -3,7 +3,7 @@ import { TextInput, Text, TextStyle, Pressable } from 'react-native';
 import { useFonts } from 'expo-font';
 
 type FontWeight = 'regular' | 'medium' | 'bold';
-type PoppinsTextVarient = 'default' | 'heading' | 'subtext';
+type FontTextVarient = 'default' | 'heading' | 'subtext';
 type TextColor = 'black' | 'white';
 
 interface InlineEditableTextProps {
@@ -11,7 +11,7 @@ interface InlineEditableTextProps {
     onChange: (newValue: string) => void;
     className?: string;
     weight?: FontWeight;
-    varient?: PoppinsTextVarient;
+    varient?: FontTextVarient;
     color?: TextColor;
     style?: TextStyle;
     placeholder?: string;

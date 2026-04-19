@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import Animated, { FadeIn } from 'react-native-reanimated';
-import PoppinsText from '../ui/text/PoppinsText';
+import FontText from '../ui/text/FontText';
 import { useUserList } from 'hooks/useUserList';
 import Column from '../layout/Column';
 import AppButton from '../ui/buttons/AppButton';

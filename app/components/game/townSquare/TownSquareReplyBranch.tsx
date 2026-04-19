@@ -3,7 +3,7 @@ import { Pressable } from 'react-native';
 import Column from '../../layout/Column';
 import Row from '../../layout/Row';
 import MarkdownRenderer from '../../ui/markdown/MarkdownRenderer';
-import PoppinsText from '../../ui/text/PoppinsText';
+import FontText from '../../ui/text/FontText';
 import { TownSquareAuthorAvatar, TownSquareAuthorName } from './TownSquareAuthorIdentity';
 import { ReplyTreeNode, formatTimestamp } from './townSquareUtils';
 
@@ -46,20 +46,20 @@ const TownSquareReplyBranch = ({
                             <Column className='flex-1' gap={2}>
                                 <Row className='items-center justify-between gap-3'>
                                     <TownSquareAuthorName gameId={node.gameId} userId={node.authorUserId} weight='medium' />
-                                    <PoppinsText varient='subtext'>{formatTimestamp(node.createdAt)}</PoppinsText>
+                                    <FontText variant='subtext'>{formatTimestamp(node.createdAt)}</FontText>
                                 </Row>
                                 <MarkdownRenderer markdown={node.bodyMarkdownResolved} />
                                 <Row className='items-center gap-4'>
                                     <Pressable onPress={() => onReply(node)}>
-                                        <PoppinsText weight='medium' className='text-accent'>Reply</PoppinsText>
+                                        <FontText weight='medium' className='text-accent'>Reply</FontText>
                                     </Pressable>
                                     {isOwnReply ? (
                                         <>
                                             <Pressable onPress={() => onEditReply(node)}>
-                                                <PoppinsText weight='medium' className='text-accent'>Edit</PoppinsText>
+                                                <FontText weight='medium' className='text-accent'>Edit</FontText>
                                             </Pressable>
                                             <Pressable onPress={() => onDeleteReply(node)}>
-                                                <PoppinsText weight='medium' className='text-red-500'>Delete</PoppinsText>
+                                                <FontText weight='medium' className='text-red-500'>Delete</FontText>
                                             </Pressable>
                                         </>
                                     ) : null}
@@ -82,9 +82,9 @@ const TownSquareReplyBranch = ({
 
                         {hiddenChildrenCount > 0 ? (
                             <Pressable onPress={() => onExpandBranch(branchId)} style={{ marginLeft: depth * 24 + 58 }}>
-                                <PoppinsText weight='medium' className='text-accent'>
+                                <FontText weight='medium' className='text-accent'>
                                     {`See all ${hiddenChildrenCount} repl${hiddenChildrenCount === 1 ? 'y' : 'ies'}`}
-                                </PoppinsText>
+                                </FontText>
                             </Pressable>
                         ) : null}
                     </Column>

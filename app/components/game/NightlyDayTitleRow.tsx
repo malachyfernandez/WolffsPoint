@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import PoppinsText from '../ui/text/PoppinsText';
+import FontText from '../ui/text/FontText';
 import Row from '../layout/Row';
 import AppButton from '../ui/buttons/AppButton';
 import ColumnActionsDialog from './ColumnActionsDialog';
@@ -47,21 +47,21 @@ const NightlyDayTitleRow = ({
         <>
             <Row gap={0} className={`h-12 w-min bg-background border-b-2 border-border rounded-t-lg ${isEditing ? 'z-50' : ''}`}>
                 <Row className='h-full items-center justify-center px-2' gap={0} style={{ width: columnWidths.vote }}>
-                    <PoppinsText weight='medium' className='text-center' style={{ width: getInnerTextWidth(columnWidths.vote) }}>Vote</PoppinsText>
+                    <FontText weight='medium' className='text-center' style={{ width: getInnerTextWidth(columnWidths.vote) }}>Vote</FontText>
                     <AppButton variant="grey" className='w-6 max-h-6 mr-[0.4rem] ml-0' onPress={() => setActiveMenu({ column: 'vote' })}>
-                        <PoppinsText weight='bold' color='white' className='text-lg mt-[-0.1rem]'>⋯</PoppinsText>
+                        <FontText weight='bold' color='white' className='text-lg mt-[-0.1rem]'>⋯</FontText>
                     </AppButton>
                 </Row>
                 <Row gap={0} className='h-full items-center justify-center px-2' style={{ width: columnWidths.action }}>
-                    <PoppinsText weight='medium' className='text-center' style={{ width: getInnerTextWidth(columnWidths.action) }}>Action</PoppinsText>
+                    <FontText weight='medium' className='text-center' style={{ width: getInnerTextWidth(columnWidths.action) }}>Action</FontText>
                     <AppButton variant="grey" className='w-6 max-h-6 mr-[0.4rem] ml-0' onPress={() => setActiveMenu({ column: 'action' })}>
-                        <PoppinsText weight='bold' color='white' className='text-lg mt-[-0.1rem]'>⋯</PoppinsText>
+                        <FontText weight='bold' color='white' className='text-lg mt-[-0.1rem]'>⋯</FontText>
                     </AppButton>
                 </Row>
                 <Row gap={0} className='h-full items-center justify-center px-2' style={{ width: columnWidths.morningMessage }}>
-                    <PoppinsText weight='medium' className='text-center' style={{ width: getInnerTextWidth(columnWidths.morningMessage) }}>Morning Message (Tomorrow)</PoppinsText>
+                    <FontText weight='medium' className='text-center' style={{ width: getInnerTextWidth(columnWidths.morningMessage) }}>Morning Message (Tomorrow)</FontText>
                     <AppButton variant="grey" className='w-6 max-h-6 mr-[0.4rem] ml-0' onPress={() => setActiveMenu({ column: 'morningMessage' })}>
-                        <PoppinsText weight='bold' color='white' className='text-lg mt-[-0.1rem]'>⋯</PoppinsText>
+                        <FontText weight='bold' color='white' className='text-lg mt-[-0.1rem]'>⋯</FontText>
                     </AppButton>
                 </Row>
             </Row>

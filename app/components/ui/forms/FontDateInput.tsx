@@ -6,6 +6,12 @@ type FontWeight = 'regular' | 'medium' | 'bold';
 
 type DateBoundary = Date | string | undefined;
 
+const WEIGHT_MAP: Record<FontWeight, '400' | '500' | '700'> = {
+    regular: '400',
+    medium: '500',
+    bold: '700',
+};
+
 const normalizeBoundary = (boundary?: DateBoundary) => {
     if (!boundary) return undefined;
     const date = boundary instanceof Date ? boundary : new Date(boundary);
@@ -55,7 +61,7 @@ const formatBoundaryLabel = (boundary?: Date) => {
     return `${month}/${day}/${year}`;
 };
 
-interface PoppinsDateInputProps extends Omit<TextInputProps, 'value' | 'onChangeText'> {
+interface FontDateInputProps extends Omit<TextInputProps, 'value' | 'onChangeText'> {
     className?: string;
     weight?: FontWeight;
     style?: TextStyle;
@@ -68,37 +74,24 @@ interface PoppinsDateInputProps extends Omit<TextInputProps, 'value' | 'onChange
 
 const MONTH_NAMES = ['', 'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
-const PoppinsDateInput = ({ 
-    className = '', 
-    weight = 'regular', 
+const FontDateInput = ({
+    className = '',
+    weight = 'regular',
     style,
     value = '',
     onChangeText,
     placeholder = "MM/DD/YYYY",
     earliestDate,
     latestDate,
-    ...props 
-}: PoppinsDateInputProps) => {
+    ...props
+}: FontDateInputProps) => {
     const [fontsLoaded] = useFonts({
-        'Poppins-Regular': require('../../../../assets/fonts/Poppins/Poppins-Regular.ttf'),
-        'Poppins-Medium': require('../../../../assets/fonts/Poppins/Poppins-Medium.ttf'),
-        'Poppins-Bold': require('../../../../assets/fonts/Poppins/Poppins-Bold.ttf'),
+        'LibreBaskerville': require('../../../../assets/fonts/Libre_Baskerville/LibreBaskerville-VariableFont_wght.ttf'),
     });
 
     const toRawDigits = (input?: string): string => (input ?? '').replace(/\D/g, '').slice(0, 8);
 
     const [inputValue, setInputValue] = useState(() => toRawDigits(value));
-
-    const getFontFamily = () => {
-        switch (weight) {
-            case 'medium':
-                return 'Poppins-Medium';
-            case 'bold':
-                return 'Poppins-Bold';
-            default:
-                return 'Poppins-Regular';
-        }
-    };
 
     useEffect(() => {
         setInputValue(toRawDigits(value));
@@ -272,9 +265,14 @@ const PoppinsDateInput = ({
 
     return (
         <View className="w-full">
-            <TextInput 
+            <TextInput
                 className={`${className} focus:outline-none rounded ${showError ? 'border-red-500' : ''}`}
-                style={{ fontFamily: fontsLoaded ? getFontFamily() : undefined, color: 'text', ...style }}
+                style={{
+                    fontFamily: fontsLoaded ? 'LibreBaskerville' : undefined,
+                    fontWeight: WEIGHT_MAP[weight] as '400' | '500' | '700',
+                    color: 'text',
+                    ...style
+                }}
                 placeholderTextColor="#9CA3AF"
                 value={getDisplayValue(inputValue)}
                 onChangeText={handleChangeText}
@@ -284,7 +282,13 @@ const PoppinsDateInput = ({
                 {...props}
             />
             {helperText.length > 0 && (
-                <Text className={`text-sm mt-1 ${showValidationError ? 'text-red-500' : 'text-gray-600'}`} style={{ fontFamily: fontsLoaded ? 'Poppins-Regular' : undefined }}>
+                <Text
+                    className={`text-sm mt-1 ${showValidationError ? 'text-red-500' : 'text-gray-600'}`}
+                    style={{
+                        fontFamily: fontsLoaded ? 'LibreBaskerville' : undefined,
+                        fontWeight: '400'
+                    }}
+                >
                     {helperText}
                 </Text>
             )}
@@ -292,4 +296,4 @@ const PoppinsDateInput = ({
     );
 };
 
-export default PoppinsDateInput;
+export default FontDateInput;

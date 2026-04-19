@@ -3,7 +3,7 @@ import { Button } from 'heroui-native/button';
 import { Dialog } from 'heroui-native/dialog';
 import { ScrollView, View } from 'react-native';
 import Column from './layout/Column';
-import PoppinsText from './ui/text/PoppinsText';
+import FontText from './ui/text/FontText';
 import { useUserVariable } from 'hooks/useUserVariable';
 import { useUserListGet } from 'hooks/useUserListGet';
 import { useUserListSet } from 'hooks/useUserListSet';
@@ -12,7 +12,7 @@ import TopSiteBar from './layout/TopSiteBar';
 import AllGamesPage from './game/AllGamesPage';
 import GamePage from './game/GamePage';
 import LayoutStateAnimatedView, { fromBottom } from './ui/LayoutStateAnimatedView';
-import PoppinsTextInput from './ui/forms/PoppinsTextInput';
+import FontTextInput from './ui/forms/FontTextInput';
 import JoinHandler from './ui/forms/JoinHandler';
 import { ScrollShadow } from 'heroui-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -93,7 +93,7 @@ const MainPage: React.FC<MainPageProps> = ({
 
 
                 {isActiveGameLoading ? (
-                    <PoppinsText>Loading</PoppinsText>
+                    <FontText>Loading</FontText>
                 ) : (
                     <LayoutStateAnimatedView.Container stateVar={currentScreen} className='flex-1'>
                         <LayoutStateAnimatedView.Option page={1} stateValue='allGames'>

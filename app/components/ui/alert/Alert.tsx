@@ -4,7 +4,7 @@ import ConvexDialog from '../dialog/ConvexDialog';
 import Column from '../../layout/Column';
 import Row from '../../layout/Row';
 import AppButton from '../buttons/AppButton';
-import PoppinsText from '../text/PoppinsText';
+import FontText from '../text/FontText';
 
 export interface AlertButton {
     text: string;
@@ -39,13 +39,13 @@ const Alert = ({
                 <ConvexDialog.Overlay />
                 <ConvexDialog.Content className={className}>
                     <Column gap={4}>
-                        <PoppinsText weight='bold' className='text-lg text-center'>
+                        <FontText weight='bold' className='text-lg text-center'>
                             {title}
-                        </PoppinsText>
+                        </FontText>
                         {message && (
-                            <PoppinsText className='text-center text-muted'>
+                            <FontText className='text-center text-muted'>
                                 {message}
-                            </PoppinsText>
+                            </FontText>
                         )}
                         <Row gap={3} className='justify-center'>
                             {buttons.map((button, index) => (
@@ -55,12 +55,12 @@ const Alert = ({
                                     variant={button.variant || 'black'}
                                     onPress={button.onPress}
                                 >
-                                    <PoppinsText 
+                                    <FontText 
                                         color={button.variant === 'outline' ? 'black' : 'white'} 
                                         weight='medium'
                                     >
                                         {button.text}
-                                    </PoppinsText>
+                                    </FontText>
                                 </AppButton>
                             ))}
                         </Row>

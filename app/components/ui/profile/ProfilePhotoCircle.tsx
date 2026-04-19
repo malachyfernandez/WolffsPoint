@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Image } from 'react-native';
 import Row from '../../layout/Row';
 import AppButton from '../buttons/AppButton';
-import PoppinsText from '../text/PoppinsText';
+import FontText from '../text/FontText';
 import ImageUploadDialog from '../dialog/ImageUploadDialog';
 
 interface ProfilePhotoCircleProps {
@@ -41,13 +41,13 @@ const ProfilePhotoCircle = ({
                         />
                     ) : (
                         <View className="w-full h-full items-center justify-center bg-border/10">
-                            <PoppinsText 
+                            <FontText 
                                 weight="medium" 
                                 className="text-text/50"
                                 style={{ fontSize: size / 3 }}
                             >
                                 {imageUrl ? '' : '?'}
-                            </PoppinsText>
+                            </FontText>
                         </View>
                     )}
                 </View>
@@ -58,9 +58,9 @@ const ProfilePhotoCircle = ({
                     className="h-8 px-3"
                     onPress={() => setIsImageDialogOpen(true)}
                 >
-                    <PoppinsText color="black" weight="medium" className="text-sm">
+                    <FontText color="black" weight="medium" className="text-sm">
                         Change
-                    </PoppinsText>
+                    </FontText>
                 </AppButton>
             </Row>
 

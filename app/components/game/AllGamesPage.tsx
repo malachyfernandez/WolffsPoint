@@ -16,7 +16,7 @@ import { ScrollShadow } from 'heroui-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import StateAnimatedView from '../ui/StateAnimatedView';
 import Row from '../layout/Row';
-import PoppinsText from '../ui/text/PoppinsText';
+import FontText from '../ui/text/FontText';
 import ProfileInfo from './ProfileInfo';
 
 interface AllGamesPageProps {

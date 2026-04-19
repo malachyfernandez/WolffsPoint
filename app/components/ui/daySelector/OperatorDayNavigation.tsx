@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { Pressable, View } from 'react-native';
 import Column from '../../layout/Column';
 import Row from '../../layout/Row';
-import PoppinsText from '../text/PoppinsText';
+import FontText from '../text/FontText';
 import { useUserList } from 'hooks/useUserList';
 import { ChevronLeft, ChevronRight } from 'lucide-react-native';
 import { getContextualDayRangeLabel, parseStoredDayDates } from '../../../../utils/multiplayer';
@@ -65,18 +65,18 @@ const OperatorDayNavigation = ({ gameId }: OperatorDayNavigationProps) => {
                         className={`w-20 items-center ${selectedDayIndex.value <= 0 ? 'opacity-30' : ''}`}
                     >
                         <ChevronLeft size={28} color='rgb(46, 41, 37)' />
-                        <PoppinsText varient='subtext' className='text-center text-xs'>
+                        <FontText variant='subtext' className='text-center text-xs'>
                             {previousDayLabel || ' '}
-                        </PoppinsText>
+                        </FontText>
                     </Pressable>
 
                     <Column className='flex-1 items-center pt-1' gap={1}>
-                        <PoppinsText weight='medium' className='text-center'>
+                        <FontText weight='medium' className='text-center'>
                             {selectedDayRangeLabel || 'Select a day'}
-                        </PoppinsText>
-                        <PoppinsText varient='subtext' className='text-xs text-center'>
+                        </FontText>
+                        <FontText variant='subtext' className='text-xs text-center'>
                             Day {selectedDayIndex.value + 1}
-                        </PoppinsText>
+                        </FontText>
                     </Column>
 
                     <Pressable
@@ -85,9 +85,9 @@ const OperatorDayNavigation = ({ gameId }: OperatorDayNavigationProps) => {
                         className={`w-20 items-center ${selectedDayIndex.value >= totalDays - 1 ? 'opacity-30' : ''}`}
                     >
                         <ChevronRight size={28} color='rgb(46, 41, 37)' />
-                        <PoppinsText varient='subtext' className='text-center text-xs'>
+                        <FontText variant='subtext' className='text-center text-xs'>
                             {nextDayLabel || ' '}
-                        </PoppinsText>
+                        </FontText>
                     </Pressable>
                 </Row>
             </View>

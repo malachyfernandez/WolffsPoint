@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, withDelay } from 'react-native-reanimated';
-import PoppinsText from '../text/PoppinsText';
+import FontText from '../text/FontText';
 
 interface LoadingTextProps {
     text: string;
@@ -40,9 +40,9 @@ const LoadingText = ({
 
     return (
         <Animated.View style={animatedStyle}>
-            <PoppinsText weight='medium'>
+            <FontText weight='medium'>
                 {text}{dotsText}
-            </PoppinsText>
+            </FontText>
         </Animated.View>
     );
 };

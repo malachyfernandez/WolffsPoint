@@ -1,5 +1,5 @@
 import React from 'react';
-import PoppinsText from '../ui/text/PoppinsText';
+import FontText from '../ui/text/FontText';
 import ListRow from '../ui/lists/ListRow';
 
 import { UserListRecord } from 'hooks/useUserList';
@@ -21,9 +21,9 @@ const MyGameListItem = ({ game, index, setActiveGameId }: MyGameListItemProps) =
     return (
 
         <ListRow className={`justify-between ${borderClass}`} onPress={handleSetActiveGameId}>
-            <PoppinsText className='text-text-inverted'>{game.value.name}</PoppinsText>
-            <PoppinsText className='text-text-inverted'>{game.value.description}</PoppinsText>
-            <PoppinsText className='text-text-inverted'>{game.value.id}</PoppinsText>
+            <FontText className='text-text-inverted'>{game.value.name}</FontText>
+            <FontText className='text-text-inverted'>{game.value.description}</FontText>
+            <FontText className='text-text-inverted'>{game.value.id}</FontText>
         </ListRow>
     );
 };
