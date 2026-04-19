@@ -26,10 +26,11 @@ const PoppinsText = ({
     onLayout
 }: PoppinsTextProps) => {
     const [fontsLoaded] = useFonts({
-        'Poppins-Regular': require('../../../../assets/fonts/Poppins/Poppins-Regular.ttf'),
-        'Poppins-Medium': require('../../../../assets/fonts/Poppins/Poppins-Medium.ttf'),
-        'Poppins-Bold': require('../../../../assets/fonts/Poppins/Poppins-Bold.ttf'),
+        'Poppins-Regular': require('../../../../assets/fonts/Libre_Baskerville/LibreBaskerville-VariableFont_wght.ttf'), 
+        'Poppins-Medium': require('../../../../assets/fonts/Libre_Baskerville/LibreBaskerville-VariableFont_wght.ttf'),
+        'Poppins-Bold': require('../../../../assets/fonts/Libre_Baskerville/LibreBaskerville-VariableFont_wght.ttf'),
     });
+    
 
     const resolvedColor = String(useCSSVariable(`--color-${color}`) || color);
 
