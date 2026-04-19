@@ -13,6 +13,7 @@ import { useUndoRedo, useCreateUndoSnapshot } from '../../../hooks/useUndoRedo';
 import { getGameScopedKey } from '../../../utils/multiplayer';
 import { RoleTableItem } from '../../../types/roleTable';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
+import { Plus } from 'lucide-react-native';
 
 interface RolesPageOPERATORProps {
     currentUserId: string;
@@ -22,7 +23,7 @@ interface RolesPageOPERATORProps {
 const RolesPageOPERATOR = ({ currentUserId, gameId }: RolesPageOPERATORProps) => {
     const { executeCommand } = useUndoRedo();
     const createUndoSnapshot = useCreateUndoSnapshot();
-    
+
     const [roleTable, setRoleTable] = useUserList<RoleTableItem[]>({
         key: "roleTable",
         itemId: gameId,
@@ -66,7 +67,7 @@ const RolesPageOPERATOR = ({ currentUserId, gameId }: RolesPageOPERATORProps) =>
 
     const UNDOABLEaddRole = () => {
         const previousRoleTable = createUndoSnapshot(roleTable?.value ?? []);
-        
+
         executeCommand({
             action: addRole,
             undoAction: () => {
@@ -103,16 +104,24 @@ const RolesPageOPERATOR = ({ currentUserId, gameId }: RolesPageOPERATORProps) =>
                                 </Row>
                             </ScrollView>
                         </ScrollShadow>
-                        <AppButton variant="filled" className='w-40 ml-4 mt-3' onPress={UNDOABLEaddRole}>
-                            <PoppinsText weight='bold' className='text-white text-xl'>+</PoppinsText>
-                            <PoppinsText weight='bold' className='text-white'>Add Role</PoppinsText>
-                        </AppButton>
+                        <Row className='ml-4 -mt-6'>
+                            <AppButton variant="accent" onPress={UNDOABLEaddRole}>
+                                <Row className='items-center gap-2' gap={2}>
+                                    <Plus size={20} color='white' />
+                                    <PoppinsText weight='medium' color='white'>Add Role</PoppinsText>
+                                </Row>
+                                {/* <PoppinsText weight='bold' className='text-white text-xl'>+</PoppinsText>
+                                <PoppinsText weight='bold' className='text-white'>Add Role</PoppinsText> */}
+                            </AppButton>
+                        </Row>
                     </Column>
                 ) : (
                     <Row className='items-center justify-center'>
-                        <AppButton variant="filled" className='w-40' onPress={UNDOABLEaddRole}>
-                            <PoppinsText weight='bold' className='text-white text-xl'>+</PoppinsText>
-                            <PoppinsText weight='bold' className='text-white'>Add Role</PoppinsText>
+                        <AppButton variant="accent" onPress={UNDOABLEaddRole}>
+                            <Row className='items-center gap-2' gap={2}>
+                                <Plus size={20} color='white' />
+                                <PoppinsText weight='medium' color='white'>Add Role</PoppinsText>
+                            </Row>
                         </AppButton>
                     </Row>
                 )}

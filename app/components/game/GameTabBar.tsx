@@ -42,7 +42,7 @@ const GameTabBar = <TTab extends string>({ activeTab, onTabPress, tabs }: GameTa
     const { width } = useWindowDimensions();
     const hasTrueMiddle = tabs.length % 2 === 1;
     const centerIndex = Math.floor(tabs.length / 2);
-    const useCondensed = width < 600; // Switch to condensed text on narrow screens
+    const useCondensed = width < 650; // Switch to condensed text on narrow screens
     
     return (
         <Row gap={1} className='px-4'>

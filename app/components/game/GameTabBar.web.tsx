@@ -107,8 +107,9 @@ const gameTabBarCSS = `
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 6px;
-    padding: 10px 4px calc(14px + var(--tab-bottom-extension));
+    gap: 3px;
+    margin-top: 0;
+    padding: 0px 4px calc(14px + var(--tab-bottom-extension));
     border-radius: var(--tab-surface-radius) var(--tab-surface-radius) 0 0;
     background-color: #2f2f2f;
     color: var(--tab-text-inactive);
@@ -181,7 +182,7 @@ function cloneTabIcon(icon: React.ReactNode, color: string) {
     });
 }
 
-const GameTabBar = <TTab extends string>({ activeTab, onTabPress, tabs, activeTabIndent = 10 }: GameTabBarProps<TTab>) => {
+const GameTabBar = <TTab extends string>({ activeTab, onTabPress, tabs, activeTabIndent = 5 }: GameTabBarProps<TTab>) => {
     const { width } = useWindowDimensions();
     const hasTrueMiddle = tabs.length % 2 === 1;
     const centerIndex = Math.floor(tabs.length / 2);

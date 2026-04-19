@@ -29,7 +29,7 @@ const MiddleNavTab = ({ text, children, isLast = false, isInvisible = false, isH
   return (
     <TouchableOpacity
       onPress={onPress}
-      className={`h-12 justify-center flex-3 border-accent border-t-2 border-x-2 rounded-t-4xl rounded-b-[1px] flex-col items-center gap-0 box-border ${isHighlighted ? 'bg-accent' : 'bg-none hover:bg-accent/20'} ${isInvisible ? 'opacity-0' : 'opacity-100'} min-w-0`}
+      className={`h-12 //HERE justify-center flex-3 border-accent border-t-2 border-x-2 rounded-t-4xl rounded-b-[1px] flex-col items-center gap-0 box-border ${isHighlighted ? 'bg-accent' : 'bg-none hover:bg-accent/20'} ${isInvisible ? 'opacity-0' : 'opacity-100'} min-w-0`}
     >
       {clonedChildren}
       {isHighlighted ? (
