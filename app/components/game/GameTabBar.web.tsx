@@ -40,17 +40,22 @@ const IslandTabBackground = ({ isActive, isCondensed = false }: IslandTabBackgro
         const xR = width - T;
 
         if (isCondensed) {
-            // Condensed: Simple flat plateau with semi-circle dome
+            // Condensed: Split bowl with flat plateau in middle (10% of width, min 0)
+            const plateauWidth = Math.max(width * 0.8 - 80, 0);
             const yApex = T; 
             const yShoulder = yApex + R; 
             const yBase = height + T; 
+            const halfPlateau = plateauWidth / 2;
 
             pathD = `
                 M ${xL} ${yBase}
                 L ${xL} ${yShoulder + R}
                 A ${R} ${R} 0 0 1 ${xL + R} ${yShoulder}
-                L ${cw - R} ${yShoulder}
-                A ${R} ${R} 0 0 1 ${cw + R} ${yShoulder}
+                L ${cw - halfPlateau - R} ${yShoulder}
+                A ${R} ${R} 0 0 1 ${cw - halfPlateau} ${yShoulder - R}
+                L ${cw - halfPlateau} ${yShoulder - R}
+                L ${cw + halfPlateau} ${yShoulder - R}
+                A ${R} ${R} 0 0 1 ${cw + halfPlateau + R} ${yShoulder}
                 L ${xR - R} ${yShoulder}
                 A ${R} ${R} 0 0 1 ${xR} ${yShoulder + R}
                 L ${xR} ${yBase}
@@ -269,13 +274,12 @@ const gameTabBarCSS = `
     color: var(--tab-text-active);
 }
 
-/* Move center tab up as a whole element */
-.guilded-game-tab-wrap.is-center {
+/* Move center tab up as a whole element (only for full 9-part island) */
+.guilded-game-tab-wrap.is-center:not(.is-condensed-island) {
     transform: translateY(-13px);
 }
 
-/* Move center tab up as a whole element */
-.guilded-game-tab-wrap.is-center:hover {
+.guilded-game-tab-wrap.is-center:not(.is-condensed-island):hover {
     transform: translateY(-11px);
 }
 
@@ -366,6 +370,7 @@ const GameTabBar = <TTab extends string>({
     const hasTrueMiddle = tabs.length % 2 === 1;
     const centerIndex = Math.floor(tabs.length / 2);
     const useCondensed = width < 600;
+    const useCondensedIsland = width < 800;
     const goldPalette = guildedButtonRingPresets.gold;
     const textColor = String(useCSSVariable('--color-text') || '#1a1a1a');
     const innerBackground = String(useCSSVariable('--color-inner-background') || 'rgb(165, 159, 150)');
@@ -399,7 +404,7 @@ const GameTabBar = <TTab extends string>({
                     return (
                         <div
                             key={tab.value}
-                            className={`guilded-game-tab-wrap ${isActive ? 'is-active' : ''} ${isCenter ? 'is-center' : ''}`.trim()}
+                            className={`guilded-game-tab-wrap ${isActive ? 'is-active' : ''} ${isCenter ? 'is-center' : ''} ${isCenter && useCondensedIsland ? 'is-condensed-island' : ''}`.trim()}
                             style={{ '--tab-flex': tabFlex } as React.CSSProperties & Record<string, string>}
                         >
                             <button
@@ -410,7 +415,7 @@ const GameTabBar = <TTab extends string>({
                             >
                                 {isCenter ? (
                                     <div className="guilded-island-surface">
-                                        <IslandTabBackground isActive={isActive} isCondensed={useCondensed} />
+                                        <IslandTabBackground isActive={isActive} isCondensed={useCondensedIsland} />
                                         <div className="guilded-game-tab-icon">{cloneTabIcon(tab.icon, iconColor, iconSize, iconStrokeWidth)}</div>
                                         <span className="guilded-game-tab-label">{label}</span>
                                     </div>
