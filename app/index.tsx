@@ -40,6 +40,10 @@ export default function HomeScreen() {
   const hasEmail = !!user?.primaryEmailAddress?.emailAddress;
   const needsReload = isClerkLoaded && waited && !hasEmail;
 
+  console.log("[HomeScreen] isClerkLoaded:", isClerkLoaded, "| waited:", waited, "| hasEmail:", hasEmail, "| needsReload:", needsReload);
+  console.log("[HomeScreen] user:", user);
+  console.log("[HomeScreen] emailAddress:", user?.primaryEmailAddress?.emailAddress);
+
   const handleReload = () => {
     if (typeof window !== "undefined") {
       window.location.reload();

@@ -34,6 +34,10 @@ const ProfileInfo = () => {
     const displayEmail = userData?.value?.email || 'Not available';
     const displayUserId = userData?.value?.userId || 'Not available';
 
+    console.log("[ProfileInfo] userData:", userData);
+    console.log("[ProfileInfo] userData.value:", userData?.value);
+    console.log("[ProfileInfo] displayEmail:", displayEmail);
+
     const handleSignOut = async () => {
         try {
             await signOut();
