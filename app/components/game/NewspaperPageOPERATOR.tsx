@@ -10,6 +10,8 @@ import NewspaperWritingView from './NewspaperWritingView';
 import { useUserList } from 'hooks/useUserList';
 import { useUserListGet } from 'hooks/useUserListGet';
 import { useUserListSet } from 'hooks/useUserListSet';
+import { useGameOperatorUserId } from '../../../hooks/useGameOperatorUserId';
+import { useSharedListValue } from '../../../hooks/useSharedListValue';
 import OperatorDayNavigation from '../ui/daySelector/OperatorDayNavigation';
 import NewspaperDayView from './NewspaperDayView';
 import { Usepaper } from '../../../types/usepaper';
@@ -19,7 +21,6 @@ import { NewspaperControlState, getNewspaperControlKey, getNewspaperDayControlIt
 interface NewspaperPageOPERATORProps {
     currentUserId: string;
     gameId: string;
-    mode?: 'operator' | 'newser';
 }
 
 type AnimationDirection = 'left' | 'right';
@@ -30,26 +31,33 @@ const minimumUsepaper: Usepaper = {
     columns: ['', ''],
 };
 
-const NewspaperPageOPERATOR = ({ currentUserId, gameId, mode = 'operator' }: NewspaperPageOPERATORProps) => {
-    const [activeTab, setActiveTab] = useState<'writing' | 'viewing'>(mode === 'operator' ? 'viewing' : 'writing');
+const NewspaperPageOPERATOR = ({ currentUserId, gameId }: NewspaperPageOPERATORProps) => {
+    const [activeTab, setActiveTab] = useState<'writing' | 'viewing'>('viewing');
+    const [selectedDayIndex, setSelectedDayIndex] = useState(0);
     const { width } = useWindowDimensions();
+    const { operatorUserId, isLoading: isOperatorLoading } = useGameOperatorUserId(gameId);
 
-    // Get the current day key from shared state
-    const [selectedDayIndex] = useUserList<number>({
-        key: 'selectedDayIndex',
+    // Get operator's day dates to know how many days are available
+    const { value: operatorDayDates, isLoading: isDayDatesLoading } = useSharedListValue<string[]>({
+        key: 'dayDatesArray',
         itemId: gameId,
-        privacy: 'PUBLIC',
-        defaultValue: 0,
+        defaultValue: [],
+        userIds: operatorUserId ? [operatorUserId] : undefined,
     });
 
-    // Track if we're still loading/syncing to prevent animation on default->real value transition
-    const isSyncing = selectedDayIndex.state?.isSyncing ?? true;
+    // Get operator's selected day index to seed local state
+    const { value: operatorSelectedDayIndex, isLoading: isSelectedDayLoading } = useSharedListValue<number>({
+        key: 'selectedDayIndex',
+        itemId: gameId,
+        defaultValue: 0,
+        userIds: operatorUserId ? [operatorUserId] : undefined,
+    });
 
-    const currentDayItemId = getNewspaperDayItemId(gameId, selectedDayIndex.value);
+    const totalDays = operatorDayDates.length;
+    const currentDayItemId = getNewspaperDayItemId(gameId, selectedDayIndex);
     const selectedDayOwner = useNewspaperDayOwner({
         gameId,
-        dayIndex: selectedDayIndex.value,
-        disabled: mode !== 'operator',
+        dayIndex: selectedDayIndex,
     });
 
     // Animation state
@@ -59,11 +67,12 @@ const NewspaperPageOPERATOR = ({ currentUserId, gameId, mode = 'operator' }: New
     const previousDayIndexRef = useRef<number | null>(null);
     const leavingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const hasInitializedSelectedDayRef = useRef(false);
+    const hasSeededSelectedDayRef = useRef(false);
     const [isInitialLoadComplete, setIsInitialLoadComplete] = useState(false);
     const leavingDayOwner = useNewspaperDayOwner({
         gameId,
         dayIndex: leavingDayIndex ?? 0,
-        disabled: mode !== 'operator' || leavingDayIndex === null,
+        disabled: leavingDayIndex === null,
     });
     const [, setOperatorUsepaper] = useUserList<Usepaper>({
         key: 'usepaper',
@@ -71,6 +80,7 @@ const NewspaperPageOPERATOR = ({ currentUserId, gameId, mode = 'operator' }: New
         privacy: 'PUBLIC',
         defaultValue: minimumUsepaper,
     });
+    const setOperatorSelectedDayIndex = useUserListSet<number>();
     const setNewspaperControl = useUserListSet<NewspaperControlState>();
     const selectedNewserUsepaper = useUserListGet<Usepaper>({
         key: 'usepaper',
@@ -84,20 +94,45 @@ const NewspaperPageOPERATOR = ({ currentUserId, gameId, mode = 'operator' }: New
     const leavingOpacity = useSharedValue(1);
     const leavingTranslateX = useSharedValue(0);
 
-    // Don't render any day navigation or content until data is loaded
-    const isOwnershipLoading = mode === 'operator' && (selectedDayOwner.isLoading || (leavingDayIndex !== null && leavingDayOwner.isLoading));
-    const isReady = isInitialLoadComplete && !isSyncing && !isOwnershipLoading;
-
+    // Seed local selected day from operator's stored value
     useEffect(() => {
-        // Wait until syncing is complete AND we have a value before initializing
-        if (!hasInitializedSelectedDayRef.current && !isSyncing && selectedDayIndex.value !== undefined) {
-            hasInitializedSelectedDayRef.current = true;
-            // Set previousDayIndexRef so animation effect doesn't trigger on initial load
-            previousDayIndexRef.current = selectedDayIndex.value;
-            setIsInitialLoadComplete(true);
+        if (isOperatorLoading || isDayDatesLoading || isSelectedDayLoading) {
             return;
         }
-    }, [selectedDayIndex.value, isSyncing]);
+
+        const maxDayIndex = Math.max(totalDays - 1, 0);
+        if (!hasSeededSelectedDayRef.current) {
+            hasSeededSelectedDayRef.current = true;
+            setSelectedDayIndex(Math.min(operatorSelectedDayIndex, maxDayIndex));
+            return;
+        }
+
+        setSelectedDayIndex((currentValue) => Math.min(currentValue, maxDayIndex));
+    }, [isDayDatesLoading, isOperatorLoading, isSelectedDayLoading, operatorSelectedDayIndex, totalDays]);
+
+    // Write selected day back to operator's data
+    const handleSelectedDayIndexChange = (dayIndex: number) => {
+        setSelectedDayIndex(dayIndex);
+        // Also write to operator's user list so newser can read it
+        void setOperatorSelectedDayIndex({
+            key: 'selectedDayIndex',
+            itemId: gameId,
+            value: dayIndex,
+            privacy: 'PUBLIC',
+        });
+    };
+
+    // Don't render any day navigation or content until data is loaded
+    const isOwnershipLoading = selectedDayOwner.isLoading || (leavingDayIndex !== null && leavingDayOwner.isLoading);
+    const isReady = isInitialLoadComplete && !isOwnershipLoading;
+
+    useEffect(() => {
+        if (!hasInitializedSelectedDayRef.current && !isOperatorLoading && !isDayDatesLoading && !isSelectedDayLoading) {
+            hasInitializedSelectedDayRef.current = true;
+            previousDayIndexRef.current = selectedDayIndex;
+            setIsInitialLoadComplete(true);
+        }
+    }, [isDayDatesLoading, isOperatorLoading, isSelectedDayLoading, selectedDayIndex]);
 
     useEffect(() => {
         return () => {
@@ -116,7 +151,7 @@ const NewspaperPageOPERATOR = ({ currentUserId, gameId, mode = 'operator' }: New
         const previousDayIndex = previousDayIndexRef.current;
 
         if (previousDayIndex == null) {
-            previousDayIndexRef.current = selectedDayIndex.value;
+            previousDayIndexRef.current = selectedDayIndex;
             enteringOpacity.value = 1;
             enteringTranslateX.value = 0;
             leavingOpacity.value = 0;
@@ -124,7 +159,7 @@ const NewspaperPageOPERATOR = ({ currentUserId, gameId, mode = 'operator' }: New
             return;
         }
 
-        if (previousDayIndex === selectedDayIndex.value) {
+        if (previousDayIndex === selectedDayIndex) {
             return;
         }
 
@@ -132,7 +167,7 @@ const NewspaperPageOPERATOR = ({ currentUserId, gameId, mode = 'operator' }: New
             clearTimeout(leavingTimeoutRef.current);
         }
 
-        const direction: AnimationDirection = selectedDayIndex.value > previousDayIndex ? 'left' : 'right';
+        const direction: AnimationDirection = selectedDayIndex > previousDayIndex ? 'left' : 'right';
         const enteringStartX = direction === 'left' ? slideDistance : -slideDistance;
         const leavingEndX = direction === 'left' ? -slideDistance : slideDistance;
 
@@ -152,8 +187,8 @@ const NewspaperPageOPERATOR = ({ currentUserId, gameId, mode = 'operator' }: New
             setLeavingDayIndex(null);
         }, transitionDuration);
 
-        previousDayIndexRef.current = selectedDayIndex.value;
-    }, [enteringOpacity, enteringTranslateX, leavingOpacity, leavingTranslateX, isInitialLoadComplete, selectedDayIndex.value, slideDistance]);
+        previousDayIndexRef.current = selectedDayIndex;
+    }, [enteringOpacity, enteringTranslateX, leavingOpacity, leavingTranslateX, isInitialLoadComplete, selectedDayIndex, slideDistance]);
 
     const enteringStyle = useAnimatedStyle(() => {
         return {
@@ -175,9 +210,9 @@ const NewspaperPageOPERATOR = ({ currentUserId, gameId, mode = 'operator' }: New
         }
     };
 
-    const selectedOwnerUserId = mode === 'operator' ? selectedDayOwner.ownerUserId : currentUserId;
-    const leavingOwnerUserId = mode === 'operator' ? leavingDayOwner.ownerUserId : currentUserId;
-    const operatorHasControl = mode === 'operator' && selectedOwnerUserId === currentUserId;
+    const selectedOwnerUserId = selectedDayOwner.ownerUserId;
+    const leavingOwnerUserId = leavingDayOwner.ownerUserId;
+    const operatorHasControl = selectedOwnerUserId === currentUserId;
     const selectedNewserUsepaperValue = selectedNewserUsepaper?.[0]?.value?.columns?.length
         ? selectedNewserUsepaper[0].value
         : minimumUsepaper;
@@ -185,7 +220,7 @@ const NewspaperPageOPERATOR = ({ currentUserId, gameId, mode = 'operator' }: New
     const writeControlState = (ownerType: 'newser' | 'operator', ownerUserId: string) => {
         return setNewspaperControl({
             key: getNewspaperControlKey(gameId),
-            itemId: getNewspaperDayControlItemId(selectedDayIndex.value),
+            itemId: getNewspaperDayControlItemId(selectedDayIndex),
             value: {
                 ownerType,
                 ownerUserId,
@@ -279,36 +314,15 @@ const NewspaperPageOPERATOR = ({ currentUserId, gameId, mode = 'operator' }: New
         );
     }
 
-    if (mode === 'newser') {
-        return (
-            <Column gap={4}>
-                <View className='mt-2 -mb-2 w-full'>
-                    <OperatorDayNavigation gameId={gameId} />
-                </View>
-                <Column className='max-w-[950px] w-full'>
-                    <View style={styles.animatedContentContainer}>
-                        {leavingDayIndex != null ? (
-                            <Animated.View
-                                key={`leaving-${leavingDayIndex}`}
-                                pointerEvents='none'
-                                style={[styles.animatedContentOverlay, leavingStyle]}
-                            >
-                                <NewspaperWritingView gameId={getNewspaperDayItemId(gameId, leavingDayIndex)} />
-                            </Animated.View>
-                        ) : null}
-                        <Animated.View entering={isInitialLoadComplete ? FadeIn.duration(300) : undefined} key={`selected-${selectedDayIndex.value}`} style={enteringStyle}>
-                            <NewspaperWritingView gameId={currentDayItemId} />
-                        </Animated.View>
-                    </View>
-                </Column>
-            </Column>
-        );
-    }
-
     return (
         <Column gap={4}>
             <View className='mt-2 -mb-2 w-full'>
-                <OperatorDayNavigation gameId={gameId} />
+                <OperatorDayNavigation
+                    gameId={gameId}
+                    ownerUserId={operatorUserId}
+                    selectedDayIndex={selectedDayIndex}
+                    onSelectedDayIndexChange={handleSelectedDayIndexChange}
+                />
             </View>
 
             <View className='relative'>
@@ -360,14 +374,14 @@ const NewspaperPageOPERATOR = ({ currentUserId, gameId, mode = 'operator' }: New
                         </Animated.View>
                     ) : null}
 
-                    <Animated.View entering={isInitialLoadComplete ? FadeIn.duration(300) : undefined} key={`selected-${selectedDayIndex.value}`} style={enteringStyle}>
+                    <Animated.View entering={isInitialLoadComplete ? FadeIn.duration(300) : undefined} key={`selected-${selectedDayIndex}`} style={enteringStyle}>
                         <Tabs value={activeTab} onValueChange={handleTabChange} className='flex-1'>
                             <Tabs.Content value='viewing' className='flex-1'>
-                                {renderViewingContent(selectedDayIndex.value, selectedOwnerUserId)}
+                                {renderViewingContent(selectedDayIndex, selectedOwnerUserId)}
                             </Tabs.Content>
                             <Tabs.Content value='writing' className='flex-1'>
                                 {renderOperatorWritingContent({
-                                    dayIndex: selectedDayIndex.value,
+                                    dayIndex: selectedDayIndex,
                                     hasControl: operatorHasControl,
                                 })}
                             </Tabs.Content>
