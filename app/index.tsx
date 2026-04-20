@@ -1,7 +1,7 @@
 import { Platform, View } from "react-native";
 import { SafeAreaListener, SafeAreaView } from "react-native-safe-area-context";
 import React, { useEffect, useState } from "react";
-import { SignedIn, SignedOut, useOAuth, useUser } from "@clerk/clerk-expo";
+import { SignedIn, SignedOut, useClerk, useOAuth, useUser } from "@clerk/clerk-expo";
 import * as AuthSession from "expo-auth-session";
 import * as WebBrowser from "expo-web-browser";
 import { Uniwind } from "uniwind";
@@ -30,6 +30,7 @@ WebBrowser.maybeCompleteAuthSession();
 export default function HomeScreen() {
   useWarmUpBrowser();
   const { user, isLoaded: isClerkLoaded } = useUser();
+  const clerk = useClerk();
   const [waited, setWaited] = useState(false);
 
   useEffect(() => {
@@ -51,14 +52,18 @@ export default function HomeScreen() {
   };
 
   const { startOAuthFlow: startGoogleFlow } = useOAuth({ strategy: "oauth_google" });
-  const authFlow = () =>
-    startGoogleFlow(
-      Platform.OS === "web"
-        ? {
-            redirectUrl: AuthSession.makeRedirectUri({ path: "auth/callback" }),
-          }
-        : undefined,
-    );
+  const authFlow = async () => {
+    if (Platform.OS === "web") {
+      // Open in new tab instead of popup
+      const redirectUrl = AuthSession.makeRedirectUri({ path: "auth/callback" });
+      const signInUrl = clerk.buildSignInUrl({
+        redirectUrl,
+      });
+      window.open(signInUrl, "_blank");
+      return { createdSessionId: undefined, setActive: undefined };
+    }
+    return startGoogleFlow();
+  };
 
   return (
     <SafeAreaListener
