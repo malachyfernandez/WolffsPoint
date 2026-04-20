@@ -1,7 +1,108 @@
-import React, { ReactElement } from 'react';
+import React, { ReactElement, useState, useRef, useEffect } from 'react';
 import { useWindowDimensions } from 'react-native';
 import { useCSSVariable } from 'uniwind';
 import { guildedButtonRingPresets } from '../ui/buttons/GuildedButton.shared';
+
+// --- ISLAND TAB SVG BACKGROUND ---
+const IslandTabBackground = ({ isActive }: { isActive: boolean }) => {
+    const containerRef = useRef<HTMLDivElement>(null);
+    const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+
+    useEffect(() => {
+        if (!containerRef.current) return;
+        const observer = new ResizeObserver((entries) => {
+            setDimensions({
+                width: entries[0].contentRect.width,
+                height: entries[0].contentRect.height,
+            });
+        });
+        observer.observe(containerRef.current);
+        return () => observer.disconnect();
+    }, []);
+
+    const { width, height } = dimensions;
+    
+    const R = 20;
+    const T = 5;
+    const pw = 140;
+    const ph = 22;
+    
+    let pathD = "";
+    
+    if (width > 0 && height > 0) {
+        const cw = width / 2;
+        const yApex = T; 
+        const yPlatform = yApex + R; 
+        const yShoulder = yPlatform + ph; 
+        const yBase = height + T;
+        const xL = T;
+        const xR = width - T;
+
+        pathD = `
+            M ${xL} ${yBase}
+            L ${xL} ${yShoulder + R}
+            A ${R} ${R} 0 0 1 ${xL + R} ${yShoulder}
+            L ${cw - pw/2} ${yShoulder}
+            A ${R} ${R} 0 0 0 ${cw - pw/2 + R} ${yShoulder - R}
+            L ${cw - pw/2 + R} ${yPlatform}
+            L ${cw - R} ${yPlatform}
+            A ${R} ${R} 0 0 1 ${cw} ${yApex}
+            A ${R} ${R} 0 0 1 ${cw + R} ${yPlatform}
+            L ${cw + pw/2 - R} ${yPlatform}
+            L ${cw + pw/2 - R} ${yShoulder - R}
+            A ${R} ${R} 0 0 0 ${cw + pw/2} ${yShoulder}
+            L ${xR - R} ${yShoulder}
+            A ${R} ${R} 0 0 1 ${xR} ${yShoulder + R}
+            L ${xR} ${yBase}
+            Z
+        `;
+    }
+
+    return (
+        <div ref={containerRef} style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}>
+            {width > 0 && height > 0 && (
+                <svg width="100%" height="100%" viewBox={`0 0 ${width} ${height}`}>
+                    <defs>
+                        <linearGradient id="island-outer" x1="0" y1="1" x2="1" y2="0">
+                            <stop offset="26%" stopColor="var(--ring-outer-dark)" />
+                            <stop offset="100%" stopColor="var(--ring-outer-light)" />
+                        </linearGradient>
+                        <linearGradient id="island-inner" x1="0" y1="1" x2="1" y2="0">
+                            <stop offset="22%" stopColor="var(--ring-inner-light)" />
+                            <stop offset="100%" stopColor="var(--ring-inner-dark)" />
+                        </linearGradient>
+                        <clipPath id="island-clip">
+                            <path d={pathD} />
+                        </clipPath>
+                        <pattern id="island-tex" patternUnits="userSpaceOnUse" width="642" height="642">
+                            <image href="https://dydrl5o9tb.ufs.sh/f/6bPCFkuBjl92dnXGroFLInwCTmuU48v7QcbPaXDEgKZzYeBq" width="642" height="642" />
+                        </pattern>
+                    </defs>
+
+                    <path d={pathD} stroke="url(#island-outer)" strokeWidth="10" fill="none" strokeLinejoin="round" />
+                    <path d={pathD} stroke="var(--ring-middle)" strokeWidth="8" fill="none" strokeLinejoin="round" />
+                    <path d={pathD} stroke="url(#island-inner)" strokeWidth="2" fill="none" strokeLinejoin="round" />
+
+                    <g clipPath="url(#island-clip)">
+                        <path 
+                            d={pathD} 
+                            fill={isActive ? 'var(--active-surface-bg)' : '#383838'} 
+                            style={{ transition: 'fill 0.2s ease' }} 
+                        />
+                        <path 
+                            d={pathD} 
+                            fill="url(#island-tex)" 
+                            style={{ mixBlendMode: 'multiply', opacity: isActive ? 0.42 : 0, transition: 'opacity 0.2s ease' }} 
+                        />
+                        {isActive && (
+                            <path d={pathD} stroke="rgba(255, 255, 255, 0.24)" strokeWidth="2" transform="translate(0, 1)" fill="none" />
+                        )}
+                    </g>
+                </svg>
+            )}
+        </div>
+    );
+};
 
 export type GameTabDefinition<TTab extends string> = {
     label: string;
@@ -23,6 +124,8 @@ const gameTabBarCSS = `
 .guilded-game-tab-bar {
     --tab-bottom-extension: 28px;
     --tab-bottom-buffer: 22px;
+    --center-platform-width: 140px;
+    --center-platform-height: 22px;
     position: relative;
     z-index: 0;
     display: flex;
@@ -111,7 +214,6 @@ const gameTabBarCSS = `
     align-items: center;
     justify-content: center;
     gap: 3px;
-    
     padding: 0px 4px calc(14px + var(--tab-bottom-extension));
     border-radius: var(--tab-surface-radius) var(--tab-surface-radius) 0 0;
     background-color: #2f2f2f;
@@ -120,6 +222,40 @@ const gameTabBarCSS = `
     box-sizing: border-box;
     overflow: visible;
 }
+
+/* Container to hold the text/icon over the absolute SVG */
+.guilded-island-surface {
+    position: relative;
+    display: flex;
+    min-height: calc(82px + var(--tab-bottom-extension) + var(--center-platform-height));
+    width: 100%;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    padding: 0px 4px calc(14px + var(--tab-bottom-extension));
+    color: var(--tab-text-inactive);
+    transition: color 0.2s ease;
+    box-sizing: border-box;
+}
+
+.guilded-game-tab-wrap.is-active .guilded-island-surface {
+    color: var(--tab-text-active);
+}
+
+/* Move center tab up as a whole element */
+.guilded-game-tab-wrap.is-center {
+    transform: translateY(-13px);
+}
+
+/* Move center tab up as a whole element */
+.guilded-game-tab-wrap.is-center:hover {
+    transform: translateY(-11px);
+}
+
+/* --------------------------------------------------------
+   NORMAL TAB STYLES
+-------------------------------------------------------- */
 
 .guilded-game-tab-wrap.is-active .guilded-game-tab-surface {
     background-color: var(--active-surface-bg);
@@ -192,10 +328,10 @@ function cloneTabIcon(icon: React.ReactNode, color: string, size: number, stroke
     });
 }
 
-const GameTabBar = <TTab extends string>({ 
-    activeTab, 
-    onTabPress, 
-    tabs, 
+const GameTabBar = <TTab extends string>({
+    activeTab,
+    onTabPress,
+    tabs,
     activeTabIndent = 5,
     iconSize = 30,
     iconStrokeWidth = 0,
@@ -228,15 +364,16 @@ const GameTabBar = <TTab extends string>({
                 }
             >
                 {tabs.map((tab, index) => {
+                    const isCenter = hasTrueMiddle && index === centerIndex;
                     const isActive = activeTab === tab.value;
-                    const tabFlex = hasTrueMiddle && index === centerIndex ? '1.35' : '1';
+                    const tabFlex = isCenter ? '1.35' : '1';
                     const label = useCondensed ? tab.condensedLabel : tab.label;
                     const iconColor = isActive ? textColor : goldPalette.middle;
 
                     return (
                         <div
                             key={tab.value}
-                            className={`guilded-game-tab-wrap ${isActive ? 'is-active' : ''}`.trim()}
+                            className={`guilded-game-tab-wrap ${isActive ? 'is-active' : ''} ${isCenter ? 'is-center' : ''}`.trim()}
                             style={{ '--tab-flex': tabFlex } as React.CSSProperties & Record<string, string>}
                         >
                             <button
@@ -245,17 +382,25 @@ const GameTabBar = <TTab extends string>({
                                 onClick={() => onTabPress(tab.value)}
                                 aria-pressed={isActive}
                             >
-                                <div className="guilded-game-tab-outer">
-                                    <div className="guilded-game-tab-middle">
-                                        <div className="guilded-game-tab-inner">
-                                            <div className="guilded-game-tab-surface">
-                                                <div className="guilded-game-tab-texture" />
-                                                <div className="guilded-game-tab-icon">{cloneTabIcon(tab.icon, iconColor, iconSize, iconStrokeWidth)}</div>
-                                                <span className="guilded-game-tab-label">{label}</span>
+                                {isCenter ? (
+                                    <div className="guilded-island-surface">
+                                        <IslandTabBackground isActive={isActive} />
+                                        <div className="guilded-game-tab-icon">{cloneTabIcon(tab.icon, iconColor, iconSize, iconStrokeWidth)}</div>
+                                        <span className="guilded-game-tab-label">{label}</span>
+                                    </div>
+                                ) : (
+                                    <div className="guilded-game-tab-outer">
+                                        <div className="guilded-game-tab-middle">
+                                            <div className="guilded-game-tab-inner">
+                                                <div className="guilded-game-tab-surface">
+                                                    <div className="guilded-game-tab-texture" />
+                                                    <div className="guilded-game-tab-icon">{cloneTabIcon(tab.icon, iconColor, iconSize, iconStrokeWidth)}</div>
+                                                    <span className="guilded-game-tab-label">{label}</span>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
+                                )}
                             </button>
                         </div>
                     );

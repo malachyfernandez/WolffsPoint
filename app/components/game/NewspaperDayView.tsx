@@ -31,7 +31,7 @@ const NewspaperDayView = ({ gameId, dayIndex, ownerUserId, isLeaving }: Newspape
     );
 
     return (
-        <Column gap={4}>
+        <Column gap={4} className="w-full">
             <NewspaperViewingHeader />
             {shouldAnimate ? (
                 <Animated.View entering={FadeIn.duration(400)}>

@@ -9,7 +9,7 @@ interface NewspaperPageHeaderProps {
 
 const NewspaperPageHeader = ({ onAddColumn }: NewspaperPageHeaderProps) => {
     return (
-        <Row className='items-center justify-between flex-wrap' gap={3}>
+        <Row className='w-full items-center justify-between flex-wrap' gap={3}>
             <NewspaperPageTitle />
             <NewspaperAddColumnButton onPress={onAddColumn} />
         </Row>
