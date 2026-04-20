@@ -7,7 +7,7 @@ import { useUserVariable } from 'hooks/useUserVariable';
 
 import { UserListRecord } from 'hooks/useUserList';
 import { GameInfo } from 'types/games';
-
+import LoadingContainer from '../ui/loading/LoadingContainer';
 
 
 interface GameListProps {
@@ -25,25 +25,27 @@ const GameList = ({ gamesTheyJoined, setGamesTheyJoined, myGames, hasJoinedAGame
         defaultValue: [],
     });
     return (
-        <Column className='p-6' gap={6}>
+        <LoadingContainer dependencies={[archivedGames]} loadingText="Loading games">
+            <Column className='py-6 px-4 sm:px-6' gap={6}>
 
-            {(hasJoinedAGame || (archivedGames.value?.length || 0) > 0) && (
-                <JoinedGames
-                    gamesTheyJoined={gamesTheyJoined}
-                    setGamesTheyJoined={setGamesTheyJoined}
-                    setActiveGameId={setActiveGameId}
-                    archivedGames={archivedGames}
-                    setArchivedGames={setArchivedGames}
-                />
-            )}
+                {(hasJoinedAGame || (archivedGames.value?.length || 0) > 0) && (
+                    <JoinedGames
+                        gamesTheyJoined={gamesTheyJoined}
+                        setGamesTheyJoined={setGamesTheyJoined}
+                        setActiveGameId={setActiveGameId}
+                        archivedGames={archivedGames}
+                        setArchivedGames={setArchivedGames}
+                    />
+                )}
 
-            {hasMadeAGame && (
-                <MyGames
-                    myGames={myGames}
-                    setActiveGameId={setActiveGameId}
-                />
-            )}
-        </Column>
+                {hasMadeAGame && (
+                    <MyGames
+                        myGames={myGames}
+                        setActiveGameId={setActiveGameId}
+                    />
+                )}
+            </Column>
+        </LoadingContainer>
     );
 };
 

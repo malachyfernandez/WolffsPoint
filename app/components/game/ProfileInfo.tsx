@@ -8,6 +8,7 @@ import { useUserVariable } from 'hooks/useUserVariable';
 import { UserData } from 'types/common';
 import EditInfoDialog from './EditInfoDialog';
 import { useClerk } from '@clerk/clerk-expo';
+import LoadingContainer from '../ui/loading/LoadingContainer';
 
 interface CustomUserInfo {
     name?: string;
@@ -51,7 +52,8 @@ const ProfileInfo = () => {
     };
 
     return (
-        <>
+        <LoadingContainer dependencies={[userData, customUserInfo]} loadingText="Loading profile...">
+        
             <Column className='pt-5 px-5 pb-5' gap={6}>
                 <Column gap={3} className='w-full items-center'>
                     <Row className='items-center' gap={4}>
@@ -108,7 +110,8 @@ const ProfileInfo = () => {
                     email: userData?.value?.email,
                 }}
             />
-        </>
+        
+        </LoadingContainer>
     );
 };
 

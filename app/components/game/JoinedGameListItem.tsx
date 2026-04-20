@@ -6,6 +6,7 @@ import { useUserListGet } from 'hooks/useUserListGet';
 import JoinedGameOptionsDialog from './JoinedGameOptionsDialog';
 import { MoreVertical } from 'lucide-react-native';
 import Row from '../layout/Row';
+import LoadingContainer from '../ui/loading/LoadingContainer';
 
 interface JoinedGameListItemProps {
     game: string;
@@ -42,7 +43,8 @@ const JoinedGameListItem = ({ game, onArchive, className, setActiveGameId, index
     const borderClass = index === 0 ? 'border-t' : '';
 
     return (
-        <>
+
+        <LoadingContainer dependencies={[gameInfo]} loadingText="Loading games">
             <Row gap={0} className='items-center'>
                 <ListRow className={`justify-between items-center ${className || ''} ${borderClass}`} onPress={handleSetActiveGameId}>
                     <FontText className='text-text-inverted' >
@@ -72,7 +74,8 @@ const JoinedGameListItem = ({ game, onArchive, className, setActiveGameId, index
                 onOpenChange={setIsDialogOpen}
                 onArchive={onArchive}
             />
-        </>
+        </LoadingContainer>
+
     );
 };
 

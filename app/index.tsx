@@ -2,6 +2,7 @@ import { Platform, View } from "react-native";
 import { SafeAreaListener, SafeAreaView } from "react-native-safe-area-context";
 import React, { useEffect, useState } from "react";
 import { SignedIn, SignedOut, useClerk, useOAuth, useUser } from "@clerk/clerk-expo";
+import { useConvexAuth } from "convex/react";
 import * as AuthSession from "expo-auth-session";
 import * as WebBrowser from "expo-web-browser";
 import { Uniwind } from "uniwind";
@@ -30,6 +31,7 @@ WebBrowser.maybeCompleteAuthSession();
 export default function HomeScreen() {
   useWarmUpBrowser();
   const { user, isLoaded: isClerkLoaded } = useUser();
+  const { isLoading: isConvexAuthLoading, isAuthenticated: isConvexAuthenticated } = useConvexAuth();
   const clerk = useClerk();
   const [waited, setWaited] = useState(false);
 
@@ -41,9 +43,11 @@ export default function HomeScreen() {
   const hasEmail = !!user?.primaryEmailAddress?.emailAddress;
   const needsReload = isClerkLoaded && waited && !hasEmail;
 
-  console.log("[HomeScreen] isClerkLoaded:", isClerkLoaded, "| waited:", waited, "| hasEmail:", hasEmail, "| needsReload:", needsReload);
-  console.log("[HomeScreen] user:", user);
-  console.log("[HomeScreen] emailAddress:", user?.primaryEmailAddress?.emailAddress);
+  // Wait for Convex auth after Clerk sign-in (for new-tab auth flow)
+  const isAuthSyncing = isClerkLoaded && !isConvexAuthLoading && !isConvexAuthenticated;
+
+  console.log("[HomeScreen] Clerk loaded:", isClerkLoaded, "| Convex loading:", isConvexAuthLoading, "| Convex auth:", isConvexAuthenticated, "| isAuthSyncing:", isAuthSyncing);
+  console.log("[HomeScreen] needsReload:", needsReload, "| hasEmail:", hasEmail);
 
   const handleReload = () => {
     if (typeof window !== "undefined") {
@@ -75,13 +79,13 @@ export default function HomeScreen() {
         <SafeAreaView className="flex-1">
           <View className="w-full h-full items-center justify-center">
             <SignedIn>
-              {needsReload ? (
+              {needsReload || isAuthSyncing ? (
                 <View className="items-center justify-center">
                   <GuildedButton
                     onPress={handleReload}
                     variant="gold"
                   >
-                    Enter
+                    {isAuthSyncing ? "Loading..." : "Enter"}
                   </GuildedButton>
                 </View>
               ) : (
