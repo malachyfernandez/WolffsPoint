@@ -4,7 +4,12 @@ import { useCSSVariable } from 'uniwind';
 import { guildedButtonRingPresets } from '../ui/buttons/GuildedButton.shared';
 
 // --- ISLAND TAB SVG BACKGROUND ---
-const IslandTabBackground = ({ isActive }: { isActive: boolean }) => {
+interface IslandTabBackgroundProps {
+    isActive: boolean;
+    isCondensed?: boolean;
+}
+
+const IslandTabBackground = ({ isActive, isCondensed = false }: IslandTabBackgroundProps) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
 
@@ -31,31 +36,52 @@ const IslandTabBackground = ({ isActive }: { isActive: boolean }) => {
     
     if (width > 0 && height > 0) {
         const cw = width / 2;
-        const yApex = T; 
-        const yPlatform = yApex + R; 
-        const yShoulder = yPlatform + ph; 
-        const yBase = height + T;
         const xL = T;
         const xR = width - T;
 
-        pathD = `
-            M ${xL} ${yBase}
-            L ${xL} ${yShoulder + R}
-            A ${R} ${R} 0 0 1 ${xL + R} ${yShoulder}
-            L ${cw - pw/2} ${yShoulder}
-            A ${R} ${R} 0 0 0 ${cw - pw/2 + R} ${yShoulder - R}
-            L ${cw - pw/2 + R} ${yPlatform}
-            L ${cw - R} ${yPlatform}
-            A ${R} ${R} 0 0 1 ${cw} ${yApex}
-            A ${R} ${R} 0 0 1 ${cw + R} ${yPlatform}
-            L ${cw + pw/2 - R} ${yPlatform}
-            L ${cw + pw/2 - R} ${yShoulder - R}
-            A ${R} ${R} 0 0 0 ${cw + pw/2} ${yShoulder}
-            L ${xR - R} ${yShoulder}
-            A ${R} ${R} 0 0 1 ${xR} ${yShoulder + R}
-            L ${xR} ${yBase}
-            Z
-        `;
+        if (isCondensed) {
+            // Condensed: Simple flat plateau with semi-circle dome
+            const yApex = T; 
+            const yShoulder = yApex + R; 
+            const yBase = height + T; 
+
+            pathD = `
+                M ${xL} ${yBase}
+                L ${xL} ${yShoulder + R}
+                A ${R} ${R} 0 0 1 ${xL + R} ${yShoulder}
+                L ${cw - R} ${yShoulder}
+                A ${R} ${R} 0 0 1 ${cw + R} ${yShoulder}
+                L ${xR - R} ${yShoulder}
+                A ${R} ${R} 0 0 1 ${xR} ${yShoulder + R}
+                L ${xR} ${yBase}
+                Z
+            `;
+        } else {
+            // Expanded: Full 9-part island with raised platform
+            const yApex = T; 
+            const yPlatform = yApex + R; 
+            const yShoulder = yPlatform + ph; 
+            const yBase = height + T;
+
+            pathD = `
+                M ${xL} ${yBase}
+                L ${xL} ${yShoulder + R}
+                A ${R} ${R} 0 0 1 ${xL + R} ${yShoulder}
+                L ${cw - pw/2} ${yShoulder}
+                A ${R} ${R} 0 0 0 ${cw - pw/2 + R} ${yShoulder - R}
+                L ${cw - pw/2 + R} ${yPlatform}
+                L ${cw - R} ${yPlatform}
+                A ${R} ${R} 0 0 1 ${cw} ${yApex}
+                A ${R} ${R} 0 0 1 ${cw + R} ${yPlatform}
+                L ${cw + pw/2 - R} ${yPlatform}
+                L ${cw + pw/2 - R} ${yShoulder - R}
+                A ${R} ${R} 0 0 0 ${cw + pw/2} ${yShoulder}
+                L ${xR - R} ${yShoulder}
+                A ${R} ${R} 0 0 1 ${xR} ${yShoulder + R}
+                L ${xR} ${yBase}
+                Z
+            `;
+        }
     }
 
     return (
@@ -384,7 +410,7 @@ const GameTabBar = <TTab extends string>({
                             >
                                 {isCenter ? (
                                     <div className="guilded-island-surface">
-                                        <IslandTabBackground isActive={isActive} />
+                                        <IslandTabBackground isActive={isActive} isCondensed={useCondensed} />
                                         <div className="guilded-game-tab-icon">{cloneTabIcon(tab.icon, iconColor, iconSize, iconStrokeWidth)}</div>
                                         <span className="guilded-game-tab-label">{label}</span>
                                     </div>
