@@ -1,7 +1,7 @@
 import { Platform, View } from "react-native";
 import { SafeAreaListener, SafeAreaView } from "react-native-safe-area-context";
-import React, { useEffect } from "react";
-import { SignedIn, SignedOut, useOAuth } from "@clerk/clerk-expo";
+import React, { useEffect, useState } from "react";
+import { SignedIn, SignedOut, useOAuth, useUser } from "@clerk/clerk-expo";
 import * as AuthSession from "expo-auth-session";
 import * as WebBrowser from "expo-web-browser";
 import { Uniwind } from "uniwind";
@@ -10,6 +10,7 @@ import AuthButton from "./components/ui/buttons/AuthButton";
 import Column from "./components/layout/Column";
 import MainPage from "./components/MainPage";
 import DialogHeader from "./components/ui/dialog/DialogHeader";
+import GuildedButton from "./components/ui/buttons/GuildedButton";
 
 const useWarmUpBrowser = () => {
   useEffect(() => {
@@ -26,6 +27,22 @@ WebBrowser.maybeCompleteAuthSession();
 // ============================================================================
 export default function HomeScreen() {
   useWarmUpBrowser();
+  const { user, isLoaded: isClerkLoaded } = useUser();
+  const [waited, setWaited] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setWaited(true), 1000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const hasEmail = !!user?.primaryEmailAddress?.emailAddress;
+  const needsReload = isClerkLoaded && waited && !hasEmail;
+
+  const handleReload = () => {
+    if (typeof window !== "undefined") {
+      window.location.reload();
+    }
+  };
 
   const { startOAuthFlow: startGoogleFlow } = useOAuth({ strategy: "oauth_google" });
   const authFlow = () =>
@@ -47,7 +64,18 @@ export default function HomeScreen() {
         <SafeAreaView className="flex-1">
           <View className="w-full h-full items-center justify-center">
             <SignedIn>
-              <MainPage />
+              {needsReload ? (
+                <View className="items-center justify-center">
+                  <GuildedButton
+                    onPress={handleReload}
+                    variant="gold"
+                  >
+                    Enter
+                  </GuildedButton>
+                </View>
+              ) : (
+                <MainPage />
+              )}
             </SignedIn>
 
             <SignedOut>
