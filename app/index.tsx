@@ -11,6 +11,8 @@ import Column from "./components/layout/Column";
 import MainPage from "./components/MainPage";
 import DialogHeader from "./components/ui/dialog/DialogHeader";
 import GuildedButton from "./components/ui/buttons/GuildedButton";
+import GuildedFrame from "./components/ui/chrome/GuildedFrame";
+import FontText from "./components/ui/text/FontText";
 
 const useWarmUpBrowser = () => {
   useEffect(() => {
@@ -79,25 +81,23 @@ export default function HomeScreen() {
             </SignedIn>
 
             <SignedOut>
-
-              <Column className="w-[80vw] p-6 max-w-96 bg-text border-4 border-accent items-center" gap={6}>
-                <DialogHeader
-                  text="Welcome to Wolffspoint"
-                  subtext="Sign in with Google to join."
-                  className="w-[80vw] max-w-96"
-                />
-                <Column gap={8} className="items-center">
-                  {/* <FontText className="text-2xl font-bold text-center" color="white">Welcome to Example Project</FontText> */}
-                  {/* <AuthButton
-            authFlow={startAppleFlow}
-            buttonText="Continue with Apple"
-          /> */}
-                  <AuthButton
-                    authFlow={authFlow}
-                    buttonText="Sign in with Google"
-                  />
+              <GuildedFrame className="w-[80vw] max-w-96" contentClassName="p-6" backgroundToken="inner-background">
+                <Column className="items-center" gap={6}>
+                  {/* <DialogHeader
+                    text="Welcome to Wolffspoint"
+                    subtext=""
+                    className="w-full"
+                  /> */}
+                  <FontText className="text-2xl font-bold text-center mt-4" color="text">Welcome to Wolffspoint</FontText>
+                  <FontText className="text-lg text-center" color="text">Sign in with Google to join.</FontText>
+                  <Column gap={8} className="items-center mb-4">
+                    <AuthButton
+                      authFlow={authFlow}
+                      buttonText="Sign in with Google"
+                    />
+                  </Column>
                 </Column>
-              </Column>
+              </GuildedFrame>
             </SignedOut>
           </View>
         </SafeAreaView>

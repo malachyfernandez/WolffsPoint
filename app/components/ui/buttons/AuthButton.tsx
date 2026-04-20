@@ -1,6 +1,8 @@
 import React from 'react';
 import { useState } from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
+import AppButton from './AppButton';
+import FontText from '../text/FontText';
 
 
 
@@ -52,18 +54,21 @@ const AuthButton = ({
     };
 
     return (
-        <TouchableOpacity
+        <AppButton variant='accent' onPress={() => handleLogin(authFlow)} className='p-4 !h-14 justify-center items-center'>
+            {/* <TouchableOpacity
             onPress={() => handleLogin(authFlow)}
-            className="bg-white w-64 py-4 rounded-full active:opacity-80 flex-row justify-center items-center"
+            className="bg-text w-64 py-4 rounded-full active:opacity-80 flex-row justify-center items-center"
             // disable when auth is loading
             disabled={isAuthLoading}
         >
             <Text
-                className="text-slate-900 font-bold text-lg"
+                className="text-text-inverted font-bold text-lg"
             >
                 {isAuthLoading ? "Loading..." : buttonText}
             </Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
+        <FontText color='white' weight='bold'>{buttonText}</FontText>
+        </AppButton>
     );
 };
 
