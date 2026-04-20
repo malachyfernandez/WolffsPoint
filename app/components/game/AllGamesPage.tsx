@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useWindowDimensions } from 'react-native';
 
 import { useUserVariable } from 'hooks/useUserVariable';
 import { useSyncUserData } from 'hooks/useSyncUserData';
@@ -30,7 +31,7 @@ const AllGamesPage = ({
     setActiveGameId,
     myGames,
 }: AllGamesPageProps) => {
-
+    const { width } = useWindowDimensions();
     const [uploadedImageUrl, setUploadedImageUrl] = useState('');
 
     const [gamesTheyJoined, setGamesTheyJoined] = useUserVariable<string[]>({
@@ -113,12 +114,13 @@ const AllGamesPage = ({
             </Column>
 
             {/* bottom bar */}
-            <Column className='h-24'>
+            <Column>
+                
                 <BottomBar>
-                    <NewWolffspointButtonAndDialogue onCreate={setActiveGameId} />
+                    <NewWolffspointButtonAndDialogue onCreate={setActiveGameId} condensed={width < 450}/>
                     <StateAnimatedView.Container stateVar={!isGamesPageEmpty}>
                         <StateAnimatedView.Option stateValue={true}>
-                            <JoinGameButton onJoin={joinGame} />
+                            <JoinGameButton onJoin={joinGame} condensed={width < 400}/>
                         </StateAnimatedView.Option>
                         <StateAnimatedView.Option stateValue={false}>
                             {/* Empty state - no button shown */}

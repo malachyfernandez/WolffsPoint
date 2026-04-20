@@ -12,9 +12,10 @@ import { useUserListSet } from 'hooks/useUserListSet';
 
 interface NewWolffspointButtonAndDialogueProps {
     onCreate?: (gameId: string) => void;
+    condensed?: boolean;
 }
 
-const NewWolffspointButtonAndDialogue = ({ onCreate }: NewWolffspointButtonAndDialogueProps) => {
+const NewWolffspointButtonAndDialogue = ({ onCreate, condensed }: NewWolffspointButtonAndDialogueProps) => {
     const [isHeroDialogOpen, setIsHeroDialogOpen] = useState(false);
     const [input, setInput] = useState('');
 
@@ -85,8 +86,8 @@ const NewWolffspointButtonAndDialogue = ({ onCreate }: NewWolffspointButtonAndDi
 
         <ConvexDialog.Root isOpen={isHeroDialogOpen} onOpenChange={setIsHeroDialogOpen}>
             <ConvexDialog.Trigger asChild>
-                <AppButton variant="secondary" className="w-40 shrink">
-                    <FontText weight='medium'>New WolffsPoint</FontText>
+                <AppButton variant="secondary" className={condensed ? "w-24 shrink" : "w-40 shrink"}>
+                    <FontText weight='medium'>{condensed ? 'New WP' : 'New WolffsPoint'}</FontText>
                 </AppButton>
             </ConvexDialog.Trigger>
             <ConvexDialog.Portal>

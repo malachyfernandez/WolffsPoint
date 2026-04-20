@@ -11,9 +11,10 @@ import DialogHeader from '../ui/dialog/DialogHeader';
 
 interface JoinGameButtonProps {
     onJoin?: (gameId: string) => void;
+    condensed?: boolean;
 }
 
-const JoinGameButton = ({ onJoin }: JoinGameButtonProps) => {
+const JoinGameButton = ({ onJoin, condensed }: JoinGameButtonProps) => {
     const [isHeroDialogOpen, setIsHeroDialogOpen] = useState(false);
     const [gameCode, setGameCode] = useState('');
 
@@ -31,7 +32,7 @@ const JoinGameButton = ({ onJoin }: JoinGameButtonProps) => {
         <View>
             <ConvexDialog.Root isOpen={isHeroDialogOpen} onOpenChange={setIsHeroDialogOpen}>
                 <ConvexDialog.Trigger asChild>
-                    <AppButton variant="accent" className="h-12 w-40 shrink">
+                    <AppButton variant="accent" className={condensed ? "h-12 w-36 shrink" : "h-12 w-40 shrink"}>
                         <FontText weight='medium' color="white">Join a Game</FontText>
                     </AppButton>
                 </ConvexDialog.Trigger>
