@@ -7,7 +7,7 @@ interface PaperContainerProps {
 
 const PaperContainer = ({ children }: PaperContainerProps) => {
     return (
-        <GuildedFrame className='z-1' contentClassName='p-4' backgroundToken='inner-background'>
+        <GuildedFrame className='z-1' contentClassName='py-4 px-2 sm:px-4' backgroundToken='inner-background'>
             {children}
         </GuildedFrame>
     );

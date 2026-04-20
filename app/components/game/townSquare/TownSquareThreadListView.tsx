@@ -1,5 +1,5 @@
 import React, { RefObject, useMemo } from 'react';
-import { ScrollView } from 'react-native';
+import { ScrollView, useWindowDimensions } from 'react-native';
 import { ScrollShadow } from 'heroui-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Plus } from 'lucide-react-native';
@@ -36,31 +36,58 @@ const TownSquareThreadListView = ({
     threads,
 }: TownSquareThreadListViewProps) => {
     const hasLoaded = useMemo(() => !isLoading, [isLoading]);
+    const { width } = useWindowDimensions();
+    const isLargeScreen = width >= 400;
 
     return (
-        <Column className='flex-1 px-4 py-4' gap={5}>
+        <Column className='flex-1 px-0sm:px-4 py-4' gap={5}>
             <Row className='items-start justify-between gap-4'>
                 <Column gap={0} className='hidden sm:flex grow'>
                     <FontText weight='bold' className='text-2xl leading-10'>Town Square</FontText>
                     <FontText variant='subtext'>Anyone can speak their mind</FontText>
                 </Column>
-                <Row className='justify-between sm:justify-end flex-1 items-center gap-2'>
-                    <AppButton variant='secondary' className='px-0' onPress={onNewAnnouncement}>
-                        <Row className='items-center gap-2' gap={3}>
-                            <Plus size={20} color='black' />
-                            <Column className='items-start' gap={0}>
-                                <FontText weight='medium' className='-mb-1'>Announcement</FontText>
-                                <FontText variant='subtext'>Just You; No Replies</FontText>
-                            </Column>
-                        </Row>
-                    </AppButton>
-                    <AppButton variant='accent' className='px-0' onPress={onNewThread}>
-                        <Row className='items-center gap-2' gap={2}>
-                            <Plus size={20} color='white' />
-                            <FontText weight='medium' color='white'>Thread</FontText>
-                        </Row>
-                    </AppButton>
-                </Row>
+
+                {isLargeScreen ? (
+                    // IF screen is 500 or larger, show this
+                    <Row className='justify-between sm:justify-end flex-1 items-center gap-2'>
+                        <AppButton variant='secondary' className='px-0' onPress={onNewAnnouncement}>
+                            <Row className='items-center gap-2' gap={3}>
+                                <Plus size={20} color='black' />
+                                <Column className='items-start' gap={0}>
+                                    <FontText weight='medium' className='-mb-1'>Announcement</FontText>
+                                    <FontText variant='subtext'>Just You; No Replies</FontText>
+                                </Column>
+                            </Row>
+                        </AppButton>
+                        <AppButton variant='accent' className='px-0' onPress={onNewThread}>
+                            <Row className='items-center gap-2' gap={2}>
+                                <Plus size={20} color='white' />
+                                <FontText weight='medium' color='white'>Thread</FontText>
+                            </Row>
+                        </AppButton>
+                    </Row>
+                ) : (
+                    // IF screen is 500 or smaller, show this
+                    <Column className='justify-between sm:justify-end flex-1 items-center gap-2' gap={0}>
+                        <AppButton variant='accent' className='px-0 w-full' onPress={onNewThread}>
+                            <Row className='items-center gap-2' gap={2}>
+                                <Plus size={20} color='white' />
+                                <FontText weight='medium' color='white'>Thread</FontText>
+                            </Row>
+                        </AppButton>
+
+                        <AppButton variant='secondary' className='px-0 w-full' onPress={onNewAnnouncement}>
+                            <Row className='items-center gap-2' gap={3}>
+                                <Plus size={20} color='black' />
+                                <Column className='items-start' gap={0}>
+                                    <FontText weight='medium' className='-mb-1'>Announcement</FontText>
+                                    <FontText variant='subtext'>Just You; No Replies</FontText>
+                                </Column>
+                            </Row>
+                        </AppButton>
+
+                    </Column>
+                )}
             </Row>
 
             <Column className='flex-1' gap={3}>

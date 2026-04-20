@@ -294,6 +294,10 @@ function hasUtilityClass(className: string, patterns: RegExp[]) {
     return patterns.some((pattern) => pattern.test(className));
 }
 
+function hasFullWidthUtility(className: string) {
+    return /\bw-full\b/.test(className);
+}
+
 export default function GuildedButton({
     children,
     onPress,
@@ -336,6 +340,7 @@ export default function GuildedButton({
     const resolvedInnerHeight = getGuildedInnerHeight(height, totalThickness);
 
     const hasWidthUtility = hasUtilityClass(className, [/\bw-/, /\bmin-w-/, /\bmax-w-/]);
+    const shouldFillWidth = hasFullWidthUtility(className);
     const hasHeightUtility = hasUtilityClass(className, [/\bh-/, /\bmin-h-/, /\bmax-h-/]);
     const hasBackgroundUtility = hasUtilityClass(className, [/\bbg-/, /\bfrom-/, /\bto-/]);
 
@@ -360,6 +365,13 @@ export default function GuildedButton({
         '--ring-inner-light': ringPalette.innerLight,
         '--ring-inner-dark': ringPalette.innerDark,
     } as React.CSSProperties & Record<string, string>;
+
+    const outerWidthStyle: React.CSSProperties = shouldFillWidth
+        ? {
+              width: '100%',
+              maxWidth: '100%',
+          }
+        : {};
 
     const innerBoxStyle: React.CSSProperties = {
         ...(width !== undefined
@@ -391,12 +403,13 @@ export default function GuildedButton({
                 tabIndex={disabled ? -1 : 0}
                 aria-disabled={disabled || undefined}
                 className={`guilded-button-root ${disabled ? 'is-disabled' : ''} ${rootClassName}`.trim()}
+                style={outerWidthStyle}
                 onClick={disabled ? undefined : onPress}
                 onKeyDown={handleKeyDown}
             >
-                <div className="guilded-button-place">
-                    <div className="guilded-button-shadow-wrapper" style={cssVariables}>
-                        <div className="guilded-button-frame">
+                <div className="guilded-button-place" style={outerWidthStyle}>
+                    <div className="guilded-button-shadow-wrapper" style={{ ...cssVariables, ...outerWidthStyle }}>
+                        <div className="guilded-button-frame" style={outerWidthStyle}>
                             <div className={`guilded-button-inner-box ${className}`.trim()} style={innerBoxStyle}>
                                 <div className="guilded-button-content">{children}</div>
                             </div>

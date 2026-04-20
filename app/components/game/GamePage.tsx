@@ -86,7 +86,7 @@ const GamePage = ({ gameId, currentUserId }: GamePageProps) => {
             </View>
             <ScrollShadow LinearGradientComponent={LinearGradient} color="rgb(30, 30, 30)">
                 <Animated.ScrollView 
-                    className='p-6 h-screen w-full'
+                    className='p-6 px-2 sm:px-6 h-screen w-full'
                     onScroll={handleScroll}
                     scrollEventThrottle={16}
                 >
