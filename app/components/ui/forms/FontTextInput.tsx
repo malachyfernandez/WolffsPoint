@@ -112,11 +112,11 @@ const FontTextInput = ({
 
     return (
         <TextInput
-            className={`${className} ${getVariantClasses()} focus:outline-none rounded`}
+            className={`${className} ${getVariantClasses()} text-text focus:outline-none rounded`}
             style={{
                 fontFamily: fontsLoaded ? 'LibreBaskerville' : undefined,
                 fontWeight: WEIGHT_MAP[weight] as '400' | '500' | '700',
-                color: 'text',
+                // color: 'black',
                 ...style
             }}
             placeholderTextColor="rgb(0 0 0 / 0.3)"

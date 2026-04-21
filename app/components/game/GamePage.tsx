@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import Column from '../layout/Column';
-import { Platform, View } from 'react-native';
+import { Platform, View, useWindowDimensions } from 'react-native';
 import { useUserListGet } from 'hooks/useUserListGet';
 import { useUserVariableGet } from 'hooks/useUserVariableGet';
 import { ScrollShadow } from 'heroui-native';
@@ -20,6 +20,7 @@ interface GamePageProps {
 
 const GamePage = ({ gameId, currentUserId }: GamePageProps) => {
     const [scrollAmount, setScrollAmount] = useState(0);
+    const { width: screenWidth } = useWindowDimensions();
 
     const updateScrollAmount = (nextScrollAmount: number) => {
         setScrollAmount(nextScrollAmount);
@@ -76,12 +77,14 @@ const GamePage = ({ gameId, currentUserId }: GamePageProps) => {
 
     // Calculate blur amount based on scroll (0px blur at top, 8px blur when scrolled 100px)
     const blurAmount = Math.min(Math.max((scrollAmount / 100) * 8, 0), 8);
+    const logoWidth = Math.min(screenWidth * 1.07, 460);
+    const logoHeight = (logoWidth / 522) * 183;
 
     return (
         <Column className='gap-4 w-full h-screen'>
             <View className='absolute top-20 w-full items-center'>
                 <View style={Platform.OS === 'web' ? { filter: `blur(${blurAmount}px)` } : undefined}>
-                    <WolffspointIcon />
+                    <WolffspointIcon width={logoWidth} height={logoHeight} />
                 </View>
             </View>
             <ScrollShadow LinearGradientComponent={LinearGradient} color="rgb(30, 30, 30)">

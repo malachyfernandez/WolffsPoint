@@ -111,7 +111,7 @@ const NewserConfigItem = ({ gameId }: NewserConfigItemProps) => {
                 <FontText variant='subtext'>{statusText}</FontText>
                 <Row className='gap-3 items-center'>
                     <AppButton
-                        variant='accent'
+                        variant='filled'
                         className='min-w-[150px]'
                         disabled={!hasUnsavedChanges || !isValidEmail(normalizedDraftEmail)}
                         onPress={saveAssignment}

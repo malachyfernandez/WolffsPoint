@@ -45,7 +45,7 @@ function WebThemeColorSync() {
 
     html.style.backgroundColor = themeColor;
     body.style.backgroundColor = themeColor;
-    html.style.colorScheme = "dark";
+    html.style.colorScheme = "light";
 
     const upsertMeta = (name: string, content: string) => {
       let meta = document.querySelector(`meta[name="${name}"]`) as HTMLMetaElement | null;
@@ -73,10 +73,45 @@ function WebThemeColorSync() {
     const restoreThemeColor = upsertMeta("theme-color", themeColor);
     const restoreAppleStatusBar = upsertMeta("apple-mobile-web-app-status-bar-style", "black-translucent");
 
+    // Inject favicon links
+    const upsertLink = (rel: string, href: string, type?: string, sizes?: string) => {
+      let link = document.querySelector(`link[rel="${rel}"]`) as HTMLLinkElement | null;
+      const created = !link;
+      const previousHref = link?.href;
+      const previousType = link?.type;
+      const previousSizes = link?.sizes?.toString();
+
+      if (!link) {
+        link = document.createElement("link");
+        link.rel = rel;
+        document.head.appendChild(link);
+      }
+
+      link.href = href;
+      if (type) link.type = type;
+      if (sizes) link.sizes = sizes;
+
+      return () => {
+        if (!link) return;
+        if (created) {
+          link.remove();
+          return;
+        }
+        link.href = previousHref ?? "";
+        link.type = previousType ?? "";
+        if (sizes) link.sizes = previousSizes ?? "";
+      };
+    };
+
+    const restoreFavicon = upsertLink("icon", "/favicon.svg", "image/svg+xml");
+    const restoreFaviconPng = upsertLink("shortcut icon", "/favicon.png", "image/png");
+
     return () => {
       document.title = previousTitle;
       restoreThemeColor();
       restoreAppleStatusBar();
+      restoreFavicon();
+      restoreFaviconPng();
       html.style.backgroundColor = previousHtmlBackgroundColor;
       body.style.backgroundColor = previousBodyBackgroundColor;
       html.style.colorScheme = previousColorScheme;

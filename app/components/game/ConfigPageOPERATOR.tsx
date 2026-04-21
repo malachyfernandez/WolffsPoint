@@ -15,6 +15,7 @@ import VoteDeadlineConfigItem from './config/VoteDeadlineConfigItem';
 import WakeUpTimeConfigItem from './config/WakeUpTimeConfigItem';
 import DaysPerGameDayConfigItem from './config/DaysPerGameDayConfigItem';
 import NewserConfigItem from './config/NewserConfigItem';
+import GameNameConfigItem from './config/GameNameConfigItem';
 import RuleBookPageOPERATOR from './RuleBookPageOPERATOR';
 import PhoneBookPageOPERATOR from './PhoneBookPageOPERATOR';
 import RemoveGameButton from './RemoveGameButton';
@@ -132,6 +133,7 @@ const ConfigPageOPERATOR = ({ gameId, currentUserId }: ConfigPageOPERATORProps) 
                             <WakeUpTimeConfigItem gameId={gameId} />
                             <DaysPerGameDayConfigItem gameId={gameId} />
                             <NewserConfigItem gameId={gameId} />
+                            <GameNameConfigItem gameId={gameId} />
                         </Column>
 
                         <RemoveGameButton gameId={gameId} />
