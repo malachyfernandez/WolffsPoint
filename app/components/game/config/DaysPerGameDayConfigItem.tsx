@@ -25,7 +25,7 @@ const DaysPerGameDayConfigItem = ({ gameId }: DaysPerGameDayConfigItemProps) => 
         <ConfigSectionRow
             title='Days per game day'
             subtext='Controls how many real-world days each in-game day spans by default.'
-            showDivider={false}
+            showDivider={true}
         >
             <Row className='gap-4 items-center'>
                 <FontNumberInput
