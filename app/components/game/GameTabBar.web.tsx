@@ -353,6 +353,19 @@ const gameTabBarCSS = `
 .guilded-game-tab-wrap.is-expanded-island .guilded-game-tab-icon {
     margin-top: 10px;
 }
+
+/* Allow text wrapping for center nav tab only */
+.guilded-game-tab-wrap.is-center .guilded-game-tab-label {
+    white-space: normal;
+    word-wrap: break-word;
+}
+
+/* Decrease font size for non-center tabs on small screens */
+@media (max-width: 380px) {
+    .guilded-game-tab-wrap:not(.is-center) .guilded-game-tab-label {
+        font-size: 7px;
+    }
+}
 `;
 
 function cloneTabIcon(icon: React.ReactNode, color: string, size: number, strokeWidth: number) {
