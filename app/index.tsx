@@ -46,9 +46,6 @@ export default function HomeScreen() {
   // Wait for Convex auth after Clerk sign-in (for new-tab auth flow)
   const isAuthSyncing = isClerkLoaded && !isConvexAuthLoading && !isConvexAuthenticated;
 
-  console.log("[HomeScreen] Clerk loaded:", isClerkLoaded, "| Convex loading:", isConvexAuthLoading, "| Convex auth:", isConvexAuthenticated, "| isAuthSyncing:", isAuthSyncing);
-  console.log("[HomeScreen] needsReload:", needsReload, "| hasEmail:", hasEmail);
-
   const handleReload = () => {
     if (typeof window !== "undefined") {
       window.location.reload();
