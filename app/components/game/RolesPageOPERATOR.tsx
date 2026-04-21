@@ -117,7 +117,7 @@ const RolesPageOPERATOR = ({ currentUserId, gameId }: RolesPageOPERATORProps) =>
                     </Column>
                 ) : (
                     <Row className='gap-4 w-full items-center justify-center'>
-                        <AppButton variant="accent" className='w-full sm:w-36' onPress={UNDOABLEaddRole}>
+                        <AppButton variant="accent" className='w-36' onPress={UNDOABLEaddRole}>
                             <Row className='gap-2 items-center'>
                                 <Plus size={20} color='white' />
                                 <FontText weight='medium' color='white'>Add Role</FontText>
