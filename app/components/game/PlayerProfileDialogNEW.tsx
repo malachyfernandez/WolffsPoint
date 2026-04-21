@@ -432,7 +432,7 @@ const SocialsDialog = ({ isOpen, onOpenChange, onSave, initialSocials }: Socials
             </ConvexDialog.Trigger>
             <ConvexDialog.Portal>
                 <ConvexDialog.Overlay />
-                <ConvexDialog.Content className='p-1 max-w-5xl max-h-[80vh]'>
+                <ConvexDialog.Content className='p-1 max-w-2xl max-h-[80vh]'>
                     <Pressable onPress={handleAttemptClose} className='absolute right-0 top-0 z-10 h-10 w-10 bg-text-inverted/10 hover:bg-text-inverted/15 rounded-full items-center justify-center'>
                         <FontText color='rgb(246, 238, 219)' weight='bold' className='text-xl'>×</FontText>
                     </Pressable>
@@ -441,7 +441,7 @@ const SocialsDialog = ({ isOpen, onOpenChange, onSave, initialSocials }: Socials
                     <Column className='gap-4 flex-1 min-h-0 pt-5'>
                         <ScrollShadow LinearGradientComponent={LinearGradient} className='flex-1 min-h-0'>
                             <ScrollView className='flex-1'>
-                                <Column className='gap-4 items-start px-5 pb-2'>
+                                <Column className='gap-4 items-start px-2 sm:px-5 pb-2'>
                                     <Column className='gap-4 flex-1 min-w-0'>
                                         <Row className='gap-4'>
                                             <Column className='gap-1 flex-1 min-w-0'>
@@ -501,11 +501,11 @@ const SocialsDialog = ({ isOpen, onOpenChange, onSave, initialSocials }: Socials
                             </ScrollView>
                         </ScrollShadow>
 
-                        <Row className='gap-4 justify-end px-5 pb-5'>
-                            <AppButton variant='outline' className='w-36' onPress={handleAttemptClose}>
+                        <Row className='gap-4 justify-end flex-wrap px-2 sm:px-5 pb-5'>
+                            <AppButton variant='outline' className='w-24 sm:w-36' onPress={handleAttemptClose}>
                                 <FontText weight='medium'>Cancel</FontText>
                             </AppButton>
-                            <AppButton variant='black' className='w-40' onPress={handleSave} disabled={!hasUnsavedChanges}>
+                            <AppButton variant='black' className='w-30 sm:w-40' onPress={handleSave} disabled={!hasUnsavedChanges}>
                                 <FontText weight='medium' color='white'>Save</FontText>
                             </AppButton>
                         </Row>

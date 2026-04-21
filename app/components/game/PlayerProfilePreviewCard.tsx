@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { Image, View } from 'react-native';
-import { AtSign, MessageSquare, Phone } from 'lucide-react-native';
+import { Phone } from 'lucide-react-native';
 import { PlayerProfile } from '../../../types/multiplayer';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
 import MarkdownRenderer from '../ui/markdown/MarkdownRenderer';
 import FontText from '../ui/text/FontText';
+import { InstagramIcon } from '../icons/InstagramIcon';
+import { DiscordIcon } from '../icons/DiscordIcon';
 
 interface PlayerProfilePreviewCardProps {
     displayName: string;
@@ -50,14 +52,14 @@ const getContactRows = (profile?: PlayerProfile | null) => {
             ? {
                 key: 'instagram',
                 value: profile.instagram,
-                icon: <AtSign size={16} className={iconClassName} />,
+                icon: <InstagramIcon size={16} color="#666" />,
             }
             : null,
         profile.discord?.trim().length > 0
             ? {
                 key: 'discord',
                 value: profile.discord,
-                icon: <MessageSquare size={16} className={iconClassName} />,
+                icon: <DiscordIcon size={16} color="#666" />,
             }
             : null,
         profile.otherContact?.trim().length > 0
