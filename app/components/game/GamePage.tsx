@@ -9,6 +9,7 @@ import OperatorGamePage from './OperatorGamePage';
 import NewserGamePage from './NewserGamePage';
 import PlayerGamePage from './PlayerGamePage';
 import FontText from '../ui/text/FontText';
+import LoadingText from '../ui/loading/LoadingText';
 import WolffspointIcon from '../icons/WolffspointIcon';
 import Animated, { runOnJS, useAnimatedScrollHandler } from 'react-native-reanimated';
 import { NewserAssignment, PublicUserData, getNewserAssignmentKey, resolveValidNewserAssignment } from '../../../utils/newspaperControl';
@@ -61,7 +62,7 @@ const GamePage = ({ gameId, currentUserId }: GamePageProps) => {
     if (ownedGameRows === undefined || gameRows === undefined || userDataRecords === undefined || newserAssignmentRecords === undefined) {
         return (
             <Column className='gap-4 w-full h-full items-center justify-center'>
-                <FontText>Loading game…</FontText>
+                <LoadingText text='Loading game' />
             </Column>
         );
     }

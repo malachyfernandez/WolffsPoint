@@ -10,7 +10,7 @@ interface LoadingTextProps {
 
 const LoadingText = ({
     text,
-    delayMs = 2000,
+    delayMs = 1000,
     fadeDuration = 300,
 }: LoadingTextProps) => {
     const [dots, setDots] = useState(1);
@@ -40,7 +40,7 @@ const LoadingText = ({
 
     return (
         <Animated.View style={animatedStyle}>
-            <FontText weight='medium'>
+            <FontText weight='medium' className='bg-text-inverted/20 p-4 rounded-2xl'>
                 {text}{dotsText}
             </FontText>
         </Animated.View>

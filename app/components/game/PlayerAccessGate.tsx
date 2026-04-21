@@ -1,4 +1,5 @@
 import React, { ReactNode, useMemo, useState } from 'react';
+import { View } from 'react-native';
 import { useUserVariable } from '../../../hooks/useUserVariable';
 import { useSharedListValue } from '../../../hooks/useSharedListValue';
 import Animated, { FadeInUp } from 'react-native-reanimated';
@@ -87,21 +88,19 @@ const PlayerAccessGate = ({ gameId, currentUserId, children }: PlayerAccessGateP
     // Show loading state while syncing for the first time
     if (!hasLoaded) {
         return (
-            <Animated.View entering={FadeInUp.duration(300)}>
-                <Column className='gap-4 rounded-xl border border-subtle-border bg-white p-4'>
-                    <LoadingText text='Loading your account information' />
-                </Column>
-            </Animated.View>
+            <LoadingText text='Loading your account information' />
         );
     }
 
     if (!currentEmail.trim()) {
         return (
-            <Animated.View entering={FadeInUp.duration(300)}>
-                <Column className='gap-4 rounded-xl border border-subtle-border bg-white p-4'>
-                    <LoadingText text='Loading your account information' />
-                </Column>
-            </Animated.View>
+            <View>
+                <Animated.View entering={FadeInUp.duration(300)}>
+                    <Column className='gap-4 rounded-xl border border-subtle-border bg-white p-4'>
+                        <LoadingText text='Loading your account information' />
+                    </Column>
+                </Animated.View>
+            </View>
         );
     }
 
