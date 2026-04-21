@@ -197,16 +197,16 @@ const PlayerProfileDialogNEW = ({
                 </ConvexDialog.Trigger>
                 <ConvexDialog.Portal>
                     <ConvexDialog.Overlay />
-                    <ConvexDialog.Content className='max-w-6xl max-h-[92vh]'>
+                    <ConvexDialog.Content className='max-w-6xl max-h-[72vh]'>
                         <Pressable onPress={handleAttemptClose} className='absolute right-4 top-4 z-10 h-10 w-10 bg-accent-hover rounded-full items-center justify-center'>
                             <FontText color='rgb(246, 238, 219)' weight='bold' className='text-xl'>×</FontText>
                         </Pressable>
-                        <DialogHeader text={title} subtext='This is what everyone in the game will see.' />
+                        <DialogHeader text={title} subtext='This is what everyone sees' />
 
-                        <Column className='gap-4 flex-1 min-h-0 pt-5 -mx-5'>
+                        <Column className='gap-4 flex-1 max-h-[70vh] min-h-0 sm:pt-5 -mx-5'>
                             <ScrollShadow LinearGradientComponent={LinearGradient} className='flex-1 min-h-0'>
                                 <ScrollView className='flex-1'>
-                                    <Column className='gap-6 px-5 pb-2'>
+                                    <Column className='gap-6 px-2 sm:px-5 pb-2'>
                                         <Column className='gap-1'>
                                             <FontText weight='medium'>In-game name</FontText>
                                             <FontTextInput
@@ -297,13 +297,13 @@ const PlayerProfileDialogNEW = ({
                                 </ScrollView>
                             </ScrollShadow>
 
-                            <Row className='gap-4 justify-end px-5 pb-5'>
-                                <AppButton variant='outline' className='w-36' onPress={handleAttemptClose}>
+                            <Row className='gap-4 justify-end pt-1 px-5 pb-5'>
+                                <AppButton variant='outline' className='w-20 sm:w-36' onPress={handleAttemptClose}>
                                     <FontText weight='medium'>Cancel</FontText>
                                 </AppButton>
                                 <AppButton
                                     variant='black'
-                                    className='w-40'
+                                    className='w-28 sm:w-40'
                                     onPress={handleSave}
                                     disabled={!canSave || !hasUnsavedChanges}
                                 >
