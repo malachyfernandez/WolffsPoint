@@ -290,7 +290,7 @@ const YourEyesOnlyPagePLAYER = ({ gameId, currentEmail, matchingPlayer, currentP
                                 Are you alone?
                             </FontText>
                             <FontText variant='subtext' className='text-center'>
-                                We don&apos;t want anyone peaking!
+                                We don&apos;t want anyone peeking!
                             </FontText>
                         </Column>
                         <Row className='gap-4 justify-center'>
