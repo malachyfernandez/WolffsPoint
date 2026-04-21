@@ -78,13 +78,16 @@ const GamePage = ({ gameId, currentUserId }: GamePageProps) => {
 
     // Calculate blur amount based on scroll (0px blur at top, 8px blur when scrolled 100px)
     const blurAmount = Math.min(Math.max((scrollAmount / 100) * 8, 0), 8);
-    const logoWidth = Math.min(screenWidth * 1.07, 460);
+    const logoWidth = Math.min(screenWidth * .97, 760);
     const logoHeight = (logoWidth / 522) * 183;
+    const baseHeight = 183;
+    // const translateY = (logoHeight - baseHeight) / 2;
+    const translateY = -(logoWidth/9) + 100;
 
     return (
         <Column className='gap-4 w-full h-screen'>
             <View className='absolute top-20 w-full items-center'>
-                <View style={Platform.OS === 'web' ? { filter: `blur(${blurAmount}px)` } : undefined}>
+                <View style={Platform.OS === 'web' ? { width: logoWidth, height: logoHeight, filter: `blur(${blurAmount}px)`, transform: `translateY(${translateY}px)` } : undefined}>
                     <WolffspointIcon width={logoWidth} height={logoHeight} />
                 </View>
             </View>
