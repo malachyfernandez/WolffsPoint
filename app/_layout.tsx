@@ -29,6 +29,10 @@ function WebThemeColorSync() {
   useEffect(() => {
     if (typeof document === "undefined") return;
 
+    // Set page title
+    const previousTitle = document.title;
+    document.title = "WolffsPoint";
+
     const themeColor = getComputedStyle(document.documentElement)
       .getPropertyValue("--color-outer-background")
       .trim() || "rgb(30, 30, 30)";
@@ -70,6 +74,7 @@ function WebThemeColorSync() {
     const restoreAppleStatusBar = upsertMeta("apple-mobile-web-app-status-bar-style", "black-translucent");
 
     return () => {
+      document.title = previousTitle;
       restoreThemeColor();
       restoreAppleStatusBar();
       html.style.backgroundColor = previousHtmlBackgroundColor;
