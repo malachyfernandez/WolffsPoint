@@ -16,8 +16,8 @@ interface ConfigSectionRowProps {
  */
 const ConfigSectionRow = ({ title, subtext, children, showDivider = true }: ConfigSectionRowProps) => {
     return (
-        <Row className={`items-center justify-between gap-4 py-4 ${showDivider ? 'border-b border-border/15' : ''}`} style={{ flexWrap: 'wrap' }}>
-            <Column className='min-w-[220px] flex-1' gap={1}>
+        <Row className={`gap-4 items-center justify-between py-4 ${showDivider ? 'border-b border-border/15' : ''}`} style={{ flexWrap: 'wrap' }}>
+            <Column className='gap-1 min-w-[220px] flex-1'>
                 <FontText weight='medium'>{title}</FontText>
                 <FontText variant='subtext'>{subtext}</FontText>
             </Column>

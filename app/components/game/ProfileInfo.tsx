@@ -54,9 +54,9 @@ const ProfileInfo = () => {
     return (
         <LoadingContainer dependencies={[userData, customUserInfo]} loadingText="Loading profile...">
         
-            <Column className='pt-5 px-5 pb-5' gap={6}>
-                <Column gap={3} className='w-full items-center'>
-                    <Row className='items-center' gap={4}>
+            <Column className='gap-6 pt-5 px-5 pb-5'>
+                <Column className='gap-3 w-full items-center'>
+                    <Row className='gap-4 items-center'>
                         <FontText className='text-base text-text-inverted border-r border-subtle-border pr-4'>
                             {displayName}
                         </FontText>
@@ -66,7 +66,7 @@ const ProfileInfo = () => {
                         </FontText>
                     </Row>
 
-                    <Column className='px-4'>
+                    <Column className='gap-4 px-4'>
                         <FontText variant='subtext' className='text-xs text-text-inverted font-mono'>
                             {displayUserId}
                         </FontText>

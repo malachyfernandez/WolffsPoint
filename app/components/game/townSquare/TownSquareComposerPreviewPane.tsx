@@ -16,11 +16,11 @@ interface TownSquareComposerPreviewPaneProps {
 
 const TownSquareComposerPreviewPane = ({ includeTitle, markdown, markdownInputState, setMarkdownInputState, title }: TownSquareComposerPreviewPaneProps) => {
     return (
-        <Column className='flex-1 min-w-0' gap={2}>
+        <Column className='gap-2 flex-1 min-w-0'>
             {/* <FontText weight='medium'>Preview</FontText> */}
             <ScrollShadow LinearGradientComponent={LinearGradient} className='h-[52vh] flex-1'>
                 <ScrollView className='h-[52vh] flex-1 rounded-[24px] border border-subtle-border px-4 py-4'>
-                    <Column gap={3}>
+                    <Column className='gap-3'>
                         {includeTitle && title.trim() ? (
                             <FontText weight='bold' className='text-2xl leading-8'>
                                 {title.trim()}
@@ -30,7 +30,7 @@ const TownSquareComposerPreviewPane = ({ includeTitle, markdown, markdownInputSt
                         {markdown.trim() ? (
                             <MarkdownRenderer markdown={markdown.trim()} state={markdownInputState} setState={setMarkdownInputState} isInDialog={true} />
                         ) : (
-                            <Column className='py-12' gap={1}>
+                            <Column className='gap-1 py-12'>
                                 <FontText weight='medium'>Nothing to preview yet</FontText>
                                 <FontText variant='subtext'>Start typing in the Editing tab.</FontText>
                             </Column>

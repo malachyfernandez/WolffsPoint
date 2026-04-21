@@ -66,11 +66,11 @@ const NightlyUserRow = ({
 
     return (
         <>
-            <Row gap={0} className={` h-12 w-min ${isEditing ? 'z-50' : ''}`}>
-                <Column className={`w-12 h-full border border-subtle-border items-center justify-center ${isLast ? 'rounded-bl-lg' : ''}`}>
+            <Row className={`gap-0 h-12 w-min ${isEditing ? 'z-50' : ''}`}>
+                <Column className={`gap-4 w-12 h-full border border-subtle-border items-center justify-center ${isLast ? 'rounded-bl-lg' : ''}`}>
                     <CustomCheckbox checked={isDead} onChange={toggleLivingState} />
                 </Column>
-                <Column gap={0} className={`w-28 h-full border border-subtle-border items-center justify-center ${isLast ? 'rounded-br-lg' : ''}`}>
+                <Column className={`gap-0 w-28 h-full border border-subtle-border items-center justify-center ${isLast ? 'rounded-br-lg' : ''}`}>
                     <Pressable onPress={() => setIsDialogOpen(true)} className='w-28 h-full items-center justify-center'>
                         <FontText
                             weight='medium'

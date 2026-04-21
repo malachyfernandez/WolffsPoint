@@ -47,7 +47,7 @@ const ForegroundControls = ({
                 {urlError ? (
                     <FontText color='red' className='mb-2 text-sm'>{urlError}</FontText>
                 ) : null}
-                <Row className='gap-2'>
+                <Row className='gap-4'>
                     <FontTextInput
                         placeholder='https://example.com/image.jpg'
                         className='flex-1 border border-subtle-border p-2 bg-inner-background'

@@ -97,14 +97,14 @@ const NewWolffspointButtonAndDialogue = ({ onCreate, condensed }: NewWolffspoint
 
                     <ConvexDialog.Close iconProps={{ color: 'rgb(246, 238, 219)' }} className="w-10 h-10 bg-accent-hover absolute right-4 top-4 z-10" />
 
-                    <Column>
+                    <Column className='gap-4'>
                         <DialogHeader
                             text="Let's get some basics setup"
                             subtext="You can change this later."
                         />
 
-                        <Column >
-                            <Column gap={2}>
+                        <Column  className='gap-4'>
+                            <Column className='gap-2'>
                                 <FontText>Title:</FontText>
 
                                 {/* EXAMPLE USING TEXT INPUT */}
@@ -116,7 +116,7 @@ const NewWolffspointButtonAndDialogue = ({ onCreate, condensed }: NewWolffspoint
                                 />
                             </Column>
                         </Column>
-                        <Column gap={2}>
+                        <Column className='gap-2'>
 
                             <FontText>Day 1 of Your Game</FontText>
 

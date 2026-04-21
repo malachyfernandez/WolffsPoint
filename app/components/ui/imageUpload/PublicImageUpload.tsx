@@ -269,8 +269,8 @@ const PublicImageUpload = ({
     };
 
     return (
-        <Column className='w-full p-4 border-b border-subtle-border bg-light/30'>
-            <Column gap={3}>
+        <Column className='gap-4 w-full p-4 border-b border-subtle-border bg-light/30'>
+            <Column className='gap-3'>
                 <FontText weight='medium'>Public image upload</FontText>
 
                 <AppButton variant='green' className='w-40' onPress={handleUpload}>
@@ -292,7 +292,7 @@ const PublicImageUpload = ({
                 ) : null}
 
                 {url ? (
-                    <Column gap={2}>
+                    <Column className='gap-2'>
                         <FontText variant='subtext'>
                             {url}
                         </FontText>

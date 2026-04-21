@@ -166,14 +166,14 @@ const ComprehensiveDaySelector = ({ gameId, showAddButton = false, showInitialSe
     };
 
     return (
-        <Column>
+        <Column className='gap-4'>
             <ScrollShadow LinearGradientComponent={LinearGradient} className='mr-1 pr-1 max-w-min -mb-3 -mt-1'>
                 <ScrollView
                     ref={scrollViewRef}
                     horizontal={true}
                     className='px-1 m-0 h-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]'
                 >
-                    <Row className='h-6' gap={1}>
+                    <Row className='gap-1 h-6'>
                         {showAddButton && (
                             <AppButton variant="filled" className='h-6! w-6 min-w-6 mx-1 rounded-full' onPress={handleAddNewDay}>
                                 <FontText weight="bold" className='text-white'>+</FontText>

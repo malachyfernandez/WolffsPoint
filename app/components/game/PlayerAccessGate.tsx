@@ -88,7 +88,7 @@ const PlayerAccessGate = ({ gameId, currentUserId, children }: PlayerAccessGateP
     if (!hasLoaded) {
         return (
             <Animated.View entering={FadeInUp.duration(300)}>
-                <Column className='rounded-xl border border-subtle-border bg-white p-4'>
+                <Column className='gap-4 rounded-xl border border-subtle-border bg-white p-4'>
                     <LoadingText text='Loading your account information' />
                 </Column>
             </Animated.View>
@@ -98,7 +98,7 @@ const PlayerAccessGate = ({ gameId, currentUserId, children }: PlayerAccessGateP
     if (!currentEmail.trim()) {
         return (
             <Animated.View entering={FadeInUp.duration(300)}>
-                <Column className='rounded-xl border border-subtle-border bg-white p-4'>
+                <Column className='gap-4 rounded-xl border border-subtle-border bg-white p-4'>
                     <LoadingText text='Loading your account information' />
                 </Column>
             </Animated.View>
@@ -108,7 +108,7 @@ const PlayerAccessGate = ({ gameId, currentUserId, children }: PlayerAccessGateP
     if (!matchingPlayer) {
         return (
             <Animated.View entering={FadeInUp.duration(300)}>
-                <Column className='rounded-xl border border-subtle-border bg-white p-4' gap={3}>
+                <Column className='gap-3 rounded-xl border border-subtle-border bg-white p-4'>
                     <FontText weight='medium'>You are not on this game&apos;s player list.</FontText>
                     <FontText variant='subtext'>The operator needs to add {currentEmail} to the players table before you can enter.</FontText>
                 </Column>
@@ -119,10 +119,10 @@ const PlayerAccessGate = ({ gameId, currentUserId, children }: PlayerAccessGateP
     if (profile.value.inGameName.trim().length === 0) {
         return (
             <Animated.View entering={FadeInUp.duration(300)}>
-                <Column className='rounded-xl border border-subtle-border bg-white p-4' gap={3}>
+                <Column className='gap-3 rounded-xl border border-subtle-border bg-white p-4'>
                     <FontText weight='medium'>Claim your player profile</FontText>
                     <FontText variant='subtext'>You matched the email {matchingPlayer.email}. Finish your in-game profile to enter the player tabs.</FontText>
-                    <Row>
+                    <Row className='gap-4'>
                         <AppButton variant='accent' className='w-44' onPress={() => setIsProfileDialogOpen(true)}>
                             <FontText weight='medium' color='white'>Set up profile</FontText>
                         </AppButton>

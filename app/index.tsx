@@ -95,7 +95,7 @@ export default function HomeScreen() {
 
             <SignedOut>
               <GuildedFrame className="w-[80vw] max-w-96" contentClassName="p-6" backgroundToken="inner-background">
-                <Column className="items-center" gap={6}>
+                <Column className="gap-6 items-center">
                   {/* <DialogHeader
                     text="Welcome to Wolffspoint"
                     subtext=""
@@ -103,7 +103,7 @@ export default function HomeScreen() {
                   /> */}
                   <FontText className="text-2xl font-bold text-center mt-4" color="text">Welcome to Wolffspoint</FontText>
                   <FontText className="text-lg text-center" color="text">Sign in with Google to join.</FontText>
-                  <Column gap={8} className="items-center mb-4">
+                  <Column className="gap-8 items-center mb-4">
                     <AuthButton
                       authFlow={authFlow}
                       buttonText="Sign in with Google"

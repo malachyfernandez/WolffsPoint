@@ -83,7 +83,7 @@ const LoadingContainer = ({
 
     if (isLoading) {
         return (
-            <Column className={`items-center justify-center ${className}`} gap={7}>
+            <Column className={`gap-7 items-center justify-center ${className}`}>
                 <LoadingText text={loadingText} delayMs={loadingDelayMs} />
             </Column>
         );

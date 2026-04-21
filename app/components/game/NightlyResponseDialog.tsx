@@ -53,12 +53,12 @@ const NightlyResponseDialog = ({
                 <ConvexDialog.Content>
                     <ConvexDialog.Close iconProps={{ color: 'rgb(246, 238, 219)' }} className="w-10 h-10 bg-accent-hover absolute right-4 top-4 z-10" />
 
-                    <Column>
+                    <Column className='gap-4'>
                         <DialogHeader
                             text={`${userName} Nightly Response`}
                             subtext={`Set the nightly response for ${userName} on Day ${dayIndex + 1}`}
                         />
-                        <Column gap={2}>
+                        <Column className='gap-2'>
                             <FontTextInput
                                 placeholder="Enter nightly response..."
                                 className="w-full border border-subtle-border p-2"
@@ -70,7 +70,7 @@ const NightlyResponseDialog = ({
                             />
                         </Column>
 
-                        <Column gap={2}>
+                        <Column className='gap-2'>
                             <AppButton className='w-34 h-10' variant='black' onPress={handleSubmit}>
                                 <FontText color='white' weight='medium'>Save</FontText>
                             </AppButton>

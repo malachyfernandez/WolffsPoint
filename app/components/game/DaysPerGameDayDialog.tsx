@@ -44,12 +44,12 @@ const DaysPerGameDayDialog = ({ isOpen, onOpenChange, currentValue, onPress, set
                 <ConvexDialog.Content>
                     <ConvexDialog.Close iconProps={{ color: 'rgb(246, 238, 219)' }} className="w-10 h-10 bg-accent-hover absolute right-4 top-4 z-10" />
 
-                    <Column>
+                    <Column className='gap-4'>
                         <DialogHeader
                             text="Game Settings"
                             subtext="Configure days per game day"
                         />
-                        <Column gap={2}>
+                        <Column className='gap-2'>
                             <FontText weight='medium'>Days per game day</FontText>
                             <FontNumberInput
                                 value={currentValue}
@@ -62,7 +62,7 @@ const DaysPerGameDayDialog = ({ isOpen, onOpenChange, currentValue, onPress, set
                             />
                         </Column>
 
-                        <Column gap={2}>
+                        <Column className='gap-2'>
                             <AppButton className='w-34 h-10' variant='black' onPress={handleSubmit}>
                                 <FontText color='white' weight='medium'>Save</FontText>
                             </AppButton>

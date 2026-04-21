@@ -95,9 +95,9 @@ const NightlyPlayerTable = ({
     };
 
     return (
-        <Column gap={0}>
-            <Row gap={0}>
-                <Column gap={0} className={`border-border border-2 rounded w-min ${className || ''}`}>
+        <Column className='gap-0'>
+            <Row className='gap-0'>
+                <Column className={`gap-0 border-border border-2 rounded w-min ${className || ''}`}>
                     <NightlyTitleRow
                         onEditStart={() => handleRowEditStart('title')}
                         onEditEnd={handleRowEditEnd}

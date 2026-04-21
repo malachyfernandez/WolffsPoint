@@ -121,9 +121,9 @@ export const PlayerProfileContactInfo = ({
     }
 
     return (
-        <Column className={`gap-2 ${className}`.trim()}>
+        <Column className={`gap-4 ${className}`.trim()}>
             {visibleRows.map((row) => (
-                <Row key={row.key} className='items-center gap-2'>
+                <Row key={row.key} className='gap-4 items-center'>
                     {row.icon}
                     <FontText variant='subtext' className='flex-1'>{row.value}</FontText>
                 </Row>
@@ -145,10 +145,10 @@ const PlayerProfilePreviewCard = ({
     const trimmedBioMarkdown = bioMarkdown.trim();
 
     return (
-        <Column className={`flex-1 rounded-3xl bg-text/5 p-6 gap-4 ${className}`.trim()}>
-            <Column className='items-center gap-3'>
+        <Column className={`gap-4 flex-1 rounded-3xl bg-text/5 p-6 ${className}`.trim()}>
+            <Column className='gap-4 items-center'>
                 <PlayerProfileAvatar imageUrl={imageUrl} initials={initials} isLoading={isLoading} />
-                <Column className='w-full items-center gap-2'>
+                <Column className='gap-4 w-full items-center'>
                     <FontText weight='medium' className='text-lg text-center'>
                         {displayName}
                     </FontText>

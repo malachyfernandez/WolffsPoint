@@ -92,14 +92,14 @@ const DaySelector = ({ gameId, className = '', showAddButton = false }: DaySelec
     const currentDayKey = getDayKey(selectedDayIndex.value);
 
     return (
-        <Column className={className}>
+        <Column className={`gap-4 ${className ?? ''}`.trim()}>
             <ScrollShadow LinearGradientComponent={LinearGradient} className='mr-1 pt-1'>
                 <ScrollView horizontal={true} className='px-1 py-5'>
-                    <Row className='items-center justify-center w-full'>
-                        <Column className='max-w-min'>
+                    <Row className='gap-4 items-center justify-center w-full'>
+                        <Column className='gap-4 max-w-min'>
                             <ScrollShadow LinearGradientComponent={LinearGradient} className='mr-1 pr-1 max-w-min'>
                                 <ScrollView horizontal={true} className='px-1 m-0 h-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]'>
-                                    <Row className='h-6' gap={1}>
+                                    <Row className='gap-1 h-6'>
                                         {fixedDayDatesArray.map((date, index) => (
                                             selectedDayIndex.value === index ? (
                                                 <DaySelectionDialog

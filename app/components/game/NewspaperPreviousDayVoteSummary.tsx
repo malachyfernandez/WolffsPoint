@@ -65,10 +65,10 @@ const VoteSummaryRow = ({
     const avatarFallback = resolvedUserId ? identity.fallbackInitials : getInitials(fallbackName);
 
     return (
-        <Column gap={2} className='w-full'>
-            <Row className='items-center gap-3'>
+        <Column className='gap-2 w-full'>
+            <Row className='gap-4 items-center'>
                 <TownSquareAvatar fallbackLabel={avatarFallback} size={44} uri={avatarUri} />
-                <Row className='flex-1 items-center justify-between gap-3'>
+                <Row className='gap-4 flex-1 items-center justify-between'>
                     <View className='flex-1 h-5 rounded-full bg-border/10 overflow-hidden'>
                         <View className='h-full rounded-full bg-text/80' style={{ width: `${widthPercent}%` }} />
                     </View>
@@ -154,12 +154,12 @@ const NewspaperPreviousDayVoteSummary = ({ gameId, dayIndex }: NewspaperPrevious
     }
 
     return (
-        <Column className='w-full border-t border-border/15 p-4' gap={4}>
-            <Column gap={1}>
+        <Column className='gap-4 w-full border-t border-border/15 p-4'>
+            <Column className='gap-1'>
                 <FontText weight='bold' className='text-lg'>Previous Day Vote</FontText>
                 <FontText variant='subtext'>Certified results from Day {dayIndex}.</FontText>
             </Column>
-            <Column gap={4}>
+            <Column className='gap-4'>
                 {voteRows.map(({ player, voteCount }) => (
                     <VoteSummaryRow
                         key={player.email}

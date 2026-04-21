@@ -12,8 +12,8 @@ interface PlaceholderCardProps {
  */
 const PlaceholderCard = ({ children }: PlaceholderCardProps) => {
     return (
-        <Column className='items-center justify-center py-16' gap={5}>
-            <Column className='rounded-3xl bg-text/5 px-16 py-8 max-w-md items-center' gap={5}>
+        <Column className='gap-5 items-center justify-center py-16'>
+            <Column className='gap-5 rounded-3xl bg-text/5 px-16 py-8 max-w-md items-center'>
                 {children}
             </Column>
         </Column>

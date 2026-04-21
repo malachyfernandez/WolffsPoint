@@ -25,14 +25,14 @@ const NewspaperDayView = ({ gameId, dayIndex, ownerUserId, isLeaving }: Newspape
     }
 
     const newspaperContent = (
-        <Column gap={0}>
+        <Column className='gap-0'>
             <NewspaperViewingView dayIndex={dayIndex} gameId={gameId} ownerUserId={ownerUserId} />
             <NewspaperPreviousDayVoteSummary dayIndex={dayIndex} gameId={gameId} />
         </Column>
     );
 
     return (
-        <Column gap={4} className="w-full">
+        <Column className="gap-4 w-full">
             
             <NewspaperViewingHeader />
             {shouldAnimate ? (

@@ -23,12 +23,12 @@ const TownSquareThreadListItem = ({ index, isLast, onPress, readStateSnapshot, t
     const hasNewReplies = !isNeverViewed && newReplyCount > 0;
     return (
         <Pressable onPress={onPress}>
-            <Row className={`items-start gap-4 px-1 py-5 ${!isLast || index === 0 ? 'border-b border-border/20' : ''}`}>
+            <Row className={`gap-4 items-start px-1 py-5 ${!isLast || index === 0 ? 'border-b border-border/20' : ''}`}>
                 <TownSquareAuthorAvatar gameId={thread.gameId} userId={thread.authorUserId} />
-                <Column className='flex-1'>
-                    <Column gap={0}>
-                        <Row className='items-start justify-between gap-3'>
-                            <Row className='flex-1 items-center gap-2'>
+                <Column className='gap-4 flex-1'>
+                    <Column className='gap-0'>
+                        <Row className='gap-4 items-start justify-between'>
+                            <Row className='gap-4 flex-1 items-center'>
                                 <FontText weight={isNeverViewed ? 'bold' : 'medium'} className='text-xl leading-8'>
                                     {thread.titleResolved}
                                 </FontText>
@@ -38,14 +38,15 @@ const TownSquareThreadListItem = ({ index, isLast, onPress, readStateSnapshot, t
                                     </View>
                                 )}
                             </Row>
-                            <FontText variant='subtext'>{formatTimestamp(thread.createdAt)}</FontText>
+                            <FontText variant='subtext' className='hidden md:flex'>{formatTimestamp(thread.createdAt)}</FontText>
+                            {/* HERE */}
                         </Row>
                         <TownSquareAuthorName gameId={thread.gameId} userId={thread.authorUserId} varient='subtext' />
                     </Column>
-                    <Column  gap={2}>
+                    <Column className='gap-2'>
                         <FontText weight='medium'>{thread.previewText || 'Open the thread to read the full post.'}</FontText>
 
-                        <Row className='items-center gap-2'>
+                        <Row className='gap-4 items-center'>
                             {thread.postType === 'announcement' ? (
                                 <FontText variant='subtext' className='bg-text/10 px-3 py-1 rounded-full'>
                                     Announcement
@@ -53,7 +54,7 @@ const TownSquareThreadListItem = ({ index, isLast, onPress, readStateSnapshot, t
                             ) : (
                                 <>
                                     <FontText variant='subtext' className='text-accent'>
-                                        {`${thread.replyCount} repl${thread.replyCount === 1 ? 'y' : 'ies'}`}
+                                        {`${thread.replyCount} repl${thread.replyCount === 1 ? 'y' : 'ies'} `}
                                     </FontText>
                                     {hasNewReplies && (
                                         <View className='px-1.5 py-0.5 bg-accent rounded-full'>
@@ -62,6 +63,7 @@ const TownSquareThreadListItem = ({ index, isLast, onPress, readStateSnapshot, t
                                             </FontText>
                                         </View>
                                     )}
+                                    <FontText variant='subtext' className='md:hidden'>{formatTimestamp(thread.createdAt)}</FontText>
                                 </>
                             )}
                         </Row>

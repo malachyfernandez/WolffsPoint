@@ -26,7 +26,7 @@ const TownSquareComposerToolbar = ({
 }: TownSquareComposerToolbarProps) => {
     return (
         <>
-            <Row className='bg-accent flex-wrap gap-y-0'>
+            <Row className='gap-2 flex-wrap'>
                 <TownSquareToolbarButtonGroup>
 
                     <TownSquareToolbarButton isFirst={true} onPress={onBold}>

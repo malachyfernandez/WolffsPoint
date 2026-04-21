@@ -1,5 +1,5 @@
-import React from 'react';
-import { Pressable } from 'react-native';
+import React, { useMemo } from 'react';
+import { Pressable, useWindowDimensions } from 'react-native';
 import Column from '../../layout/Column';
 import Row from '../../layout/Row';
 import MarkdownRenderer from '../../ui/markdown/MarkdownRenderer';
@@ -28,10 +28,13 @@ const TownSquareReplyBranch = ({
     onExpandBranch,
     onReply,
 }: TownSquareReplyBranchProps) => {
+    const { width: screenWidth } = useWindowDimensions();
+    const indentSize = useMemo(() => (screenWidth < 450 ? 16 : 24), [screenWidth]);
+
     const visibleCount = depth === 0 ? 2 : depth === 1 ? 1 : 0;
 
     return (
-        <Column gap={4}>
+        <Column className='gap-4'>
             {nodes.map((node) => {
                 const branchId = node.commentId;
                 const isExpanded = expandedBranchIds[branchId] === true;
@@ -40,26 +43,26 @@ const TownSquareReplyBranch = ({
                 const hiddenChildrenCount = Math.max(0, node.children.length - visibleChildren.length);
 
                 return (
-                    <Column key={node.commentId} gap={3} style={{ marginLeft: depth * 24 }}>
-                        <Row className='items-start gap-3 border-l-[1px] border-border/25 pl-4'>
+                    <Column key={node.commentId} className='gap-3'>
+                        <Row className='gap-4 items-start border-l-[1px] border-border/25 pl-4' style={{ marginLeft: depth * indentSize }}>
                             <TownSquareAuthorAvatar gameId={node.gameId} size={42} userId={node.authorUserId} />
-                            <Column className='flex-1' gap={2}>
-                                <Row className='items-center justify-between gap-3'>
+                            <Column className='gap-2 flex-1'>
+                                <Column className='gap-4 gap-y-1 flex-col sm:flex-row flex-wrap sm:items-center sm:justify-between'>
                                     <TownSquareAuthorName gameId={node.gameId} userId={node.authorUserId} weight='medium' />
                                     <FontText variant='subtext'>{formatTimestamp(node.createdAt)}</FontText>
-                                </Row>
+                                </Column>
                                 <MarkdownRenderer markdown={node.bodyMarkdownResolved} />
-                                <Row className='items-center gap-4'>
+                                <Row className='gap-4 items-center flex-wrap gap-y-1'>
                                     <Pressable onPress={() => onReply(node)}>
-                                        <FontText weight='medium' className='text-accent'>Reply</FontText>
+                                        <FontText weight='bold' className='text-accent'>Reply</FontText>
                                     </Pressable>
                                     {isOwnReply ? (
                                         <>
                                             <Pressable onPress={() => onEditReply(node)}>
-                                                <FontText weight='medium' className='text-accent'>Edit</FontText>
+                                                <FontText weight='bold' className='text-accent'>Edit</FontText>
                                             </Pressable>
                                             <Pressable onPress={() => onDeleteReply(node)}>
-                                                <FontText weight='medium' className='text-red-500'>Delete</FontText>
+                                                <FontText weight='bold' className='text-red-500'>Delete</FontText>
                                             </Pressable>
                                         </>
                                     ) : null}
@@ -81,8 +84,8 @@ const TownSquareReplyBranch = ({
                         ) : null}
 
                         {hiddenChildrenCount > 0 ? (
-                            <Pressable onPress={() => onExpandBranch(branchId)} style={{ marginLeft: depth * 24 + 58 }}>
-                                <FontText weight='medium' className='text-accent'>
+                            <Pressable onPress={() => onExpandBranch(branchId)} style={{ marginLeft: depth * indentSize + 18 }}>
+                                <FontText weight='bold' className='text-accent'>
                                     {`See all ${hiddenChildrenCount} repl${hiddenChildrenCount === 1 ? 'y' : 'ies'}`}
                                 </FontText>
                             </Pressable>

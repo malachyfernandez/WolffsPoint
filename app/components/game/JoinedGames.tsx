@@ -22,10 +22,10 @@ const JoinedGames = ({ gamesTheyJoined, setGamesTheyJoined, setActiveGameId, arc
     const archivedCount = archivedGames.value?.length || 0;
 
     return (
-        <Column>
+        <Column className='gap-4'>
             <FontText weight='bold' className='text-text-inverted'>Joined Games</FontText>
 
-            <Column gap={0}>
+            <Column className='gap-0'>
                 {gamesTheyJoined.map((game, index) => (
                     <JoinedGameListItem
                         key={game}
@@ -40,7 +40,7 @@ const JoinedGames = ({ gamesTheyJoined, setGamesTheyJoined, setActiveGameId, arc
                 ))}
 
                 {archivedCount > 0 && (
-                    <Row className='justify-center mt-3'>
+                    <Row className='gap-4 justify-center mt-3'>
                         <AppButton
                             variant="grey"
                             className="px-6 py-2 rounded-full"

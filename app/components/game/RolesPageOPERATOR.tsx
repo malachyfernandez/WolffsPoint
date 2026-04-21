@@ -47,7 +47,7 @@ const RolesPageOPERATOR = ({ currentUserId, gameId }: RolesPageOPERATORProps) =>
 
     if (isSyncing || !hasInitiallyLoaded) {
         return (
-            <Column className='min-h-[760px] items-center justify-center'>
+            <Column className='gap-4 min-h-[760px] items-center justify-center'>
                 <LoadingText text='Loading roles' />
             </Column>
         );
@@ -80,17 +80,17 @@ const RolesPageOPERATOR = ({ currentUserId, gameId }: RolesPageOPERATORProps) =>
 
     return (
         <Animated.View entering={FadeIn.duration(300)} className='min-h-[760px]'>
-            <Column>
+            <Column className='gap-4'>
                 {visibleRoles.length > 0 ? (
-                    <Column>
+                    <Column className='gap-4'>
                         <ScrollShadow LinearGradientComponent={LinearGradient} className='mr-1'>
                             <ScrollView horizontal={true} className='px-1 py-5'>
-                                <Row>
-                                    <Column gap={1}>
-                                        <Row className='h-6'>
+                                <Row className='gap-4'>
+                                    <Column className='gap-1'>
+                                        <Row className='gap-4 h-6'>
                                             {/* spacer to align with table */}
                                         </Row>
-                                        <Row className={isRoleTableBeingEdited ? 'z-50' : ''}>
+                                        <Row className={`gap-4 ${isRoleTableBeingEdited ? 'z-50' : '' ?? ''}`.trim()}>
                                             <RoleTable
                                                 gameId={gameId}
                                                 doSync={doSync}
@@ -104,9 +104,9 @@ const RolesPageOPERATOR = ({ currentUserId, gameId }: RolesPageOPERATORProps) =>
                                 </Row>
                             </ScrollView>
                         </ScrollShadow>
-                        <Row className='ml-4 -mt-6'>
+                        <Row className='gap-4 ml-4 -mt-6'>
                             <AppButton variant="accent" onPress={UNDOABLEaddRole}>
-                                <Row className='items-center gap-2' gap={2}>
+                                <Row className='gap-2 items-center'>
                                     <Plus size={20} color='white' />
                                     <FontText weight='medium' color='white'>Add Role</FontText>
                                 </Row>
@@ -116,9 +116,9 @@ const RolesPageOPERATOR = ({ currentUserId, gameId }: RolesPageOPERATORProps) =>
                         </Row>
                     </Column>
                 ) : (
-                    <Row className='items-center justify-center'>
+                    <Row className='gap-4 items-center justify-center'>
                         <AppButton variant="accent" onPress={UNDOABLEaddRole}>
-                            <Row className='items-center gap-2' gap={2}>
+                            <Row className='gap-2 items-center'>
                                 <Plus size={20} color='white' />
                                 <FontText weight='medium' color='white'>Add Role</FontText>
                             </Row>

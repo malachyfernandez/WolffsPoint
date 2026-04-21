@@ -77,9 +77,9 @@ const VoteEditorDialog = ({
                     />
                     <DialogHeader text={title} subtext={dialogSubtext} />
 
-                    <Column className="p-5 pt-4" gap={4}>
+                    <Column className="gap-4 p-5 pt-4">
                         {/* Email Input */}
-                        <Column gap={1}>
+                        <Column className='gap-1'>
                             <FontText weight="medium" className="text-sm opacity-70">
                                 Player Email
                             </FontText>
@@ -95,7 +95,7 @@ const VoteEditorDialog = ({
                         </Column>
 
                         {/* Live Preview */}
-                        <Column gap={1}>
+                        <Column className='gap-1'>
                             <FontText weight="medium" className="text-sm opacity-70">
                                 Resolved Name
                             </FontText>
@@ -107,7 +107,7 @@ const VoteEditorDialog = ({
                         </Column>
 
                         {/* Action Buttons */}
-                        <Row className="justify-end gap-3 pt-2">
+                        <Row className="gap-4 justify-end pt-2">
                             <AppButton variant="outline" onPress={handleCancel} className="w-32 h-12">
                                 <FontText>Cancel</FontText>
                             </AppButton>

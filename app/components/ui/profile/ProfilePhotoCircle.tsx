@@ -24,7 +24,7 @@ const ProfilePhotoCircle = ({
 
     return (
         <>
-            <Row className="items-center gap-3" gap={10}>
+            <Row className="gap-10 items-center">
                 {/* Profile Photo Circle */}
                 <View
                     className="rounded-full overflow-hidden bg-border/20"

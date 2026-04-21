@@ -78,16 +78,16 @@ const EditInfoDialog = ({
                 <ConvexDialog.Overlay />
                 <ConvexDialog.Content>
                     <ConvexDialog.Close iconProps={{ color: 'rgb(246, 238, 219)' }} className="w-10 h-10 bg-accent-hover absolute right-4 top-4 z-10" />
-                    <Column>
+                    <Column className='gap-4'>
                         <DialogHeader
                             text="Edit Your Info"
                             subtext="Update your profile information"
                         />
-                        <Column className="p-4" gap={4}>
+                        <Column className="gap-4 p-4">
 
 
                             {/* Profile Photo */}
-                            <Column gap={2} className="w-full items-center">
+                            <Column className="gap-2 w-full items-center">
                                 <FontText weight="medium">Profile Photo</FontText>
                                 <ProfilePhotoCircle
                                     imageUrl={photoUrl}
@@ -97,9 +97,9 @@ const EditInfoDialog = ({
                             </Column>
 
                             {/* Name Input with Reset */}
-                            <Column gap={2}>
+                            <Column className='gap-2'>
                                 <FontText weight="medium">Name</FontText>
-                                <Row className="w-full">
+                                <Row className="gap-4 w-full">
                                     <FontTextInput
                                         value={name}
                                         onChangeText={setName}
@@ -123,7 +123,7 @@ const EditInfoDialog = ({
 
 
                             {/* Action Buttons */}
-                            <Row className="gap-2 pt-4 justify-end">
+                            <Row className="gap-4 pt-4 justify-end">
                                 <AppButton
                                     variant="outline"
                                     onPress={handleCancel}

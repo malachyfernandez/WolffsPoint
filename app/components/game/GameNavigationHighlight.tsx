@@ -10,7 +10,7 @@ interface GameNavigationHighlightProps {
 
 const GameNavigationHighlight = ({ activeTab }: GameNavigationHighlightProps) => {
     return (
-        <Row gap={0} className='mb-[-10px] z-20' pointerEvents="none">
+        <Row className='gap-0 mb-[-10px] z-20' pointerEvents="none">
             <NavTab text='Players' isInvisible={activeTab !== "players"} isHighlighted={true}>
                 <GameUserIcon />
             </NavTab>

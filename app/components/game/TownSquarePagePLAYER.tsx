@@ -115,7 +115,7 @@ const TownSquarePagePLAYER = ({ gameId, currentProfile }: TownSquarePagePLAYERPr
             loadingText='Loading Town Square'
             className='flex-1 min-h-[760px]'
         >
-        <Column className='flex-1' gap={0}>
+        <Column className='gap-0 flex-1'>
             <LayoutStateAnimatedView.Container stateVar={activeScreen} className='flex-1'>
                 <LayoutStateAnimatedView.Option page={1} stateValue='list'>
                     <TownSquareThreadListView
@@ -171,7 +171,7 @@ const TownSquarePagePLAYER = ({ gameId, currentProfile }: TownSquarePagePLAYERPr
                                 selectedThread={selectedThread}
                             />
                         ) : (
-                            <Column className='flex-1' />
+                            <Column className='gap-4 flex-1' />
                         )}
                     </LayoutStateAnimatedView.Option>
                 </LayoutStateAnimatedView.OptionContainer>

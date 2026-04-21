@@ -38,7 +38,7 @@ const Alert = ({
             <ConvexDialog.Portal>
                 <ConvexDialog.Overlay />
                 <ConvexDialog.Content className={className}>
-                    <Column gap={4}>
+                    <Column className='gap-4'>
                         <FontText weight='bold' className='text-lg text-center'>
                             {title}
                         </FontText>
@@ -47,7 +47,7 @@ const Alert = ({
                                 {message}
                             </FontText>
                         )}
-                        <Row gap={3} className='justify-center'>
+                        <Row className='gap-3 justify-center'>
                             {buttons.map((button, index) => (
                                 <AppButton
                                     key={index}

@@ -32,8 +32,8 @@ const TopSiteBar = ({ className = '' }: TopSiteBarProps) => {
     const isInAGame = activeGameId.value !== '';
 
     return (
-        <Column className={className}>
-            <Row className='justify-end items-center h-24 w-fit px-4 top-0 right-0'>
+        <Column className={`gap-4 ${className ?? ''}`.trim()}>
+            <Row className='gap-4 justify-end items-center h-24 w-fit px-4 top-0 right-0'>
                 {/* <TouchableOpacity onPress={() => { setActiveGameId(''); }}>
                     <FontText weight='bold' className='text-lg'>{isInAGame ? "< WolffsPoint" : "WolffsPoint"}</FontText>
                 </TouchableOpacity> */}
@@ -42,7 +42,7 @@ const TopSiteBar = ({ className = '' }: TopSiteBarProps) => {
                 <></>
                 {isInAGame && (
                     <Animated.View entering={FadeIn}>
-                        <Row className='items-center'>
+                        <Row className='gap-4 items-center'>
 
                             {gameJoinCode && (
                                 <>

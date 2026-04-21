@@ -111,15 +111,15 @@ const ImageUploadDialog = ({
                         className="w-10 h-10 bg-accent-hover absolute right-4 top-4 z-10"
                     />
 
-                    <Column>
+                    <Column className='gap-4'>
                         <DialogHeader
                             text={title}
                             subtext={subtitle}
                         />
                         
-                        <Column className='flex-1 px-0'>
+                        <Column className='gap-4 flex-1 px-0'>
                             {/* Preview Area */}
-                            <Column className='w-full h-56 overflow-hidden rounded-lg border border-subtle-border bg-background items-center justify-center relative'>
+                            <Column className='gap-4 w-full h-56 overflow-hidden rounded-lg border border-subtle-border bg-background items-center justify-center relative'>
                                 <ImagePreview imageUrl={uploadedImageUrl} />
                                 <View className='absolute top-2 items-center w-full px-4'>
                                     <UrlInputControls
@@ -137,7 +137,7 @@ const ImageUploadDialog = ({
                             </Column>
                         </Column>
 
-                        <Row gap={2} className='items-center w-full justify-center'>
+                        <Row className='gap-2 items-center w-full justify-center'>
                             <DisableableButton
                                 isEnabled={!!uploadedImageUrl}
                                 enabledText="Select Image"

@@ -4,7 +4,7 @@ import NewspaperPageTitle from './newspaperPageOperator/NewspaperPageTitle';
 
 const NewspaperViewingHeader = () => {
     return (
-        <Row className='w-full items-center justify-center flex-wrap' gap={3}>
+        <Row className='gap-3 w-full items-center justify-center flex-wrap'>
             <NewspaperPageTitle />
         </Row>
     );

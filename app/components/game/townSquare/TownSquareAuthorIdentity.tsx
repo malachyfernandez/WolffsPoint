@@ -110,17 +110,18 @@ export const TownSquareAuthorName = ({
 };
 
 interface TownSquareAuthorAvatarProps {
+    className?: string;
     gameId: string;
     size?: number;
     userId: string;
 }
 
-export const TownSquareAuthorAvatar = ({ gameId, size, userId }: TownSquareAuthorAvatarProps) => {
+export const TownSquareAuthorAvatar = ({ className, gameId, size, userId }: TownSquareAuthorAvatarProps) => {
     const { fallbackInitials, imageUrl, isLoading } = useTownSquareAuthorIdentity({ gameId, userId });
 
     if (isLoading) {
-        return <TownSquareAvatar fallbackLabel='...' size={size} uri='' />;
+        return <TownSquareAvatar className={className} fallbackLabel='...' size={size} uri='' />;
     }
 
-    return <TownSquareAvatar fallbackLabel={fallbackInitials} size={size} uri={imageUrl} />;
+    return <TownSquareAvatar className={className} fallbackLabel={fallbackInitials} size={size} uri={imageUrl} />;
 };

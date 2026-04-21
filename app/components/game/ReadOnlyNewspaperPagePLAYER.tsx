@@ -185,15 +185,15 @@ const YourEyesOnlyPagePLAYER = ({ gameId, currentEmail, matchingPlayer, currentP
             className='flex-1 min-h-[760px] pb-8'
         >
             {isOwnershipLoading ? (
-                <Column className='flex-1 items-center justify-center'>
+                <Column className='gap-4 flex-1 items-center justify-center'>
                     <FontText variant='subtext'>Loading newspaper…</FontText>
                 </Column>
             ) : (
-                <Column className='flex-1' gap={7}>
+                <Column className='gap-7 flex-1'>
 
 
-                <Column className='border-y border-border/15 py-5' gap={5}>
-                    <Row className='items-start justify-between gap-4'>
+                <Column className='gap-5 border-y border-border/15 py-5'>
+                    <Row className='gap-4 items-start justify-between'>
                         <Pressable
                             onPress={() => {
                                 if (selectedDayIndex > 0) {
@@ -209,7 +209,7 @@ const YourEyesOnlyPagePLAYER = ({ gameId, currentEmail, matchingPlayer, currentP
                             </FontText>
                         </Pressable>
 
-                        <Column className='flex-1 items-center pt-1' gap={1}>
+                        <Column className='gap-1 flex-1 items-center pt-1'>
                             <FontText weight='medium' className='text-center'>
                                 {selectedDayRangeLabel || 'Current game day'}
                             </FontText>
@@ -250,7 +250,7 @@ const YourEyesOnlyPagePLAYER = ({ gameId, currentEmail, matchingPlayer, currentP
                                     <NewspaperDayView gameId={gameId} dayIndex={leavingDayIndex} ownerUserId={leavingDayOwner.ownerUserId} isLeaving />
                                 ) : (
                                     <PlaceholderCard>
-                                        <Column className='items-center' gap={3}>
+                                        <Column className='gap-3 items-center'>
                                             <Newspaper size={48} color='rgb(46, 41, 37)' />
                                             <FontText weight='bold' className='text-xl text-center'>
                                                 Not yet released
@@ -269,7 +269,7 @@ const YourEyesOnlyPagePLAYER = ({ gameId, currentEmail, matchingPlayer, currentP
                                 <NewspaperDayView gameId={gameId} dayIndex={selectedDayIndex} ownerUserId={selectedDayOwner.ownerUserId} />
                             ) : (
                                 <PlaceholderCard>
-                                    <Column className='items-center' gap={3}>
+                                    <Column className='gap-3 items-center'>
                                         <Newspaper size={48} color='rgb(46, 41, 37)' />
                                         <FontText weight='bold' className='text-xl text-center'>
                                             Not yet released

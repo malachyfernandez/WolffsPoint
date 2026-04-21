@@ -95,20 +95,20 @@ const NewspaperPage = ({ gameId }: NewspaperPageProps) => {
     const currentDayKey = getNewspaperKey(selectedDayIndex.value);
 
     return (
-        <Column className='flex-1 w-full'>
+        <Column className='gap-4 flex-1 w-full'>
             {/* Day Selector Bar - Same as NightlyPageOPERATOR */}
             <ScrollShadow LinearGradientComponent={LinearGradient} className='mr-1 pt-1'>
                 <ScrollView horizontal={true} className='px-1 py-5'>
-                    <Row className='items-center justify-between w-full'>
-                        <Column className='flex-1'>
-                            <Row className='h-6'>
+                    <Row className='gap-4 items-center justify-between w-full'>
+                        <Column className='gap-4 flex-1'>
+                            <Row className='gap-4 h-6'>
                                 {/* spacer to align with content */}
                             </Row>
-                            <Row className='items-center justify-between px-4'>
+                            <Row className='gap-4 items-center justify-between px-4'>
                                 <FontText weight='bold' className='text-lg'>
                                     Day {selectedDayIndex.value + 1}
                                 </FontText>
-                                <Row gap={2}>
+                                <Row className='gap-2'>
                                     <FontNumberInput
                                         value={numberOfRealDaysPerInGameDay.value}
                                         onChangeText={(displayValue, isValid, numericValue) => {
@@ -125,10 +125,10 @@ const NewspaperPage = ({ gameId }: NewspaperPageProps) => {
                                 </Row>
                             </Row>
                         </Column>
-                        <Column className='max-w-min'>
+                        <Column className='gap-4 max-w-min'>
                             <ScrollShadow LinearGradientComponent={LinearGradient} className='mr-1 pr-1 max-w-min'>
                                 <ScrollView horizontal={true} className='px-1 m-0 h-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]'>
-                                    <Row className='h-6' gap={1}>
+                                    <Row className='gap-1 h-6'>
                                         {fixedDayDatesArray.map((date, index) => (
                                             selectedDayIndex.value === index ? (
                                                 <DaySelectionDialog
@@ -165,7 +165,7 @@ const NewspaperPage = ({ gameId }: NewspaperPageProps) => {
             </ScrollShadow>
 
             {/* Newspaper Content for Selected Day */}
-            <Column className='flex-1'>
+            <Column className='gap-4 flex-1'>
                 <NewspaperWritingView gameId={`${gameId}-${currentDayKey}`} />
             </Column>
         </Column>

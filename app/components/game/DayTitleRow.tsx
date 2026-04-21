@@ -57,14 +57,14 @@ const DayTitleRow = ({ userTableTitle, userTableColumnVisibility, setColumnTitle
 
     return (
         <>
-            <Row gap={0} className={`h-12 w-min bg-background border-b-2 border-border rounded-t-lg ${isEditing ? 'z-50' : ''}`}>
-                <Row className='h-full items-center justify-center px-2' gap={0} style={{ width: dayBaseColumnWidths.vote }}>
+            <Row className={`gap-0 h-12 w-min bg-background border-b-2 border-border rounded-t-lg ${isEditing ? 'z-50' : ''}`}>
+                <Row className='gap-0 h-full items-center justify-center px-2' style={{ width: dayBaseColumnWidths.vote }}>
                     <FontText weight='medium' className='text-center' style={{ width: getInnerTextWidth(dayBaseColumnWidths.vote) }}>Vote</FontText>
                     <AppButton variant="grey" className='w-6 max-h-6 mr-[0.4rem] ml-0' onPress={() => setActiveMenu({ type: 'base', column: 'vote' })}>
                         <FontText weight='bold' color='white' className='text-lg mt-[-0.1rem]'>⋯</FontText>
                     </AppButton>
                 </Row>
-                <Row gap={0} className='h-full items-center justify-center px-2' style={{ width: dayBaseColumnWidths.action }}>
+                <Row className='gap-0 h-full items-center justify-center px-2' style={{ width: dayBaseColumnWidths.action }}>
                     <FontText weight='medium' className='text-center' style={{ width: getInnerTextWidth(dayBaseColumnWidths.action) }}>Action</FontText>
                     <AppButton variant="grey" className='w-6 max-h-6 mr-[0.4rem] ml-0' onPress={() => setActiveMenu({ type: 'base', column: 'action' })}>
                         <FontText weight='bold' color='white' className='text-lg mt-[-0.1rem]'>⋯</FontText>
@@ -77,7 +77,7 @@ const DayTitleRow = ({ userTableTitle, userTableColumnVisibility, setColumnTitle
                     const textWidth = getInnerTextWidth(columnWidth);
 
                     return (
-                        <Row key={index} className={`h-full items-center justify-center px-2 ${editingColumns[index] ? 'z-50' : ''}`} gap={0} style={{ width: columnWidth }}>
+                        <Row key={index} className={`gap-0 h-full items-center justify-center px-2 ${editingColumns[index] ? 'z-50' : ''}`} style={{ width: columnWidth }}>
                             <InlineEditableText
                                 value={columnTitle}
                                 onChange={(newValue) => setColumnTitle?.(index, newValue)}

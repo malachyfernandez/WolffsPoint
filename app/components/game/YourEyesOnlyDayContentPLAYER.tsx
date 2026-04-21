@@ -112,8 +112,8 @@ const YourEyesOnlyDayContentPLAYER = ({ gameId, currentEmail, currentUserId, day
     const secondaryDateLabel = formatContextualDateLabel(secondaryDeadline, undefined, now, 'lower');
 
     return (
-        <Column gap={5}>
-            <Column className='items-center w-full m-auto rounded max-w-lg p-4 bg-text/5' gap={2}>
+        <Column className='gap-5'>
+            <Column className='gap-2 items-center w-full m-auto rounded max-w-lg p-4 bg-text/5'>
                 {(selectedMorningDayIndex >= 0 && hasSelectedMorning && currentMorningMessage) ? (
                     <>
                         <FontText variant='cardHeader' className='text-center'>Last Night:</FontText>
@@ -128,7 +128,7 @@ const YourEyesOnlyDayContentPLAYER = ({ gameId, currentEmail, currentUserId, day
                 )}
             </Column>
 
-            <Column className='items-center' gap={1}>
+            <Column className='gap-1 items-center'>
                 <FontText weight='bold' className='text-lg tracking-[0.45em]'>{primaryLabel}</FontText>
                 <FontText weight='bold' className='text-5xl leading-14'>{primaryCountdown}</FontText>
                 <FontText variant='subtext'>
@@ -143,9 +143,9 @@ const YourEyesOnlyDayContentPLAYER = ({ gameId, currentEmail, currentUserId, day
                 </FontText>
             </Column>
 
-            <Row className='items-start gap-6' style={{ flexWrap: 'wrap' }}>
+            <Row className='gap-4 items-start' style={{ flexWrap: 'wrap' }}>
                 <ChainWraper className='min-w-[240px] flex-1' isDisabled={isVoteLocked && roleData?.doesRoleVote !== false}>
-                    <Column gap={3}>
+                    <Column className='gap-3'>
                         <FontText weight='medium' className='text-sm tracking-[0.24em] uppercase opacity-60'>Vote</FontText>
                         <AppDropdown
                             options={voteOptions}
@@ -175,7 +175,7 @@ const YourEyesOnlyDayContentPLAYER = ({ gameId, currentEmail, currentUserId, day
                 </ChainWraper>
 
                 <ChainWraper className='min-w-[320px] flex-1' isDisabled={isActionLocked}>
-                    <Column gap={3}>
+                    <Column className='gap-3'>
                         <FontText weight='medium' className='text-sm tracking-[0.24em] uppercase opacity-60'>Action</FontText>
                         <MarkdownRendererInputDataProvider playerOptions={playerOptions} roleOptions={roleOptions}>
                             {roleData?.roleMessage?.trim().length ? (

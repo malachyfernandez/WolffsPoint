@@ -81,10 +81,10 @@ const PlayerDaysSection = ({ gameId, addNewDay }: PlayerDaysSectionProps) => {
 
     return (
         <>
-            <Column gap={1}>
+            <Column className='gap-1'>
                 <ScrollShadow LinearGradientComponent={LinearGradient} className='mr-1 pr-1 max-w-min'>
                     <ScrollView horizontal={true} className='px-1 m-0 h-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]' style={{ width: daysTableWidth }}>
-                        <Row className='h-6' gap={1}>
+                        <Row className='gap-1 h-6'>
                             {fixedDayDatesArray.map((date, index) => {
                                 const label = getDayRangeLabel(fixedDayDatesArray, index, numberOfRealDaysPerInGameDay.value);
 
@@ -118,7 +118,7 @@ const PlayerDaysSection = ({ gameId, addNewDay }: PlayerDaysSectionProps) => {
                         </Row>
                     </ScrollView>
                 </ScrollShadow>
-                <Row className={`${isDaysTableBeingEdited ? 'z-10' : ''} w-min max-w-min`}>
+                <Row className={`${isDaysTableBeingEdited ? 'z-10' : ''}gap-4 w-min max-w-min`}>
                     <DaysTable
                         gameId={gameId}
                         dayNumber={selectedDayIndex.value}

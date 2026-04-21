@@ -205,7 +205,7 @@ const MarkdownEditorDialog = ({
                             onInput={handleInput}
                             onMore={handleMore}
                         />
-                        <Row className='justify-end gap-3 pt-4 px-2'>
+                        <Row className='gap-4 justify-end pt-4 -mx-3 sm:mx-0'>
                             <ActionButtons
                                 canSubmit={canSubmit}
                                 submitLabel={submitLabel}

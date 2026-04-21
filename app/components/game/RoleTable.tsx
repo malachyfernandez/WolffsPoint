@@ -139,24 +139,24 @@ const RoleTable = ({ gameId, doSync, setDoSync, isBeingEdited, setIsBeingEdited,
     };
 
     return (
-        <Column gap={0}>
-            <Row gap={0}>
-                <Column gap={0} className={`border-border border-2 rounded w-min ${className || ''}`}>
+        <Column className='gap-0'>
+            <Row className='gap-0'>
+                <Column className={`gap-0 border-border border-2 rounded w-min ${className || ''}`}>
                     {/* Title Row */}
-                    <Row gap={0} className={`h-12 w-min bg-background border-b-2 border-border rounded-t-lg`}>
-                        <Column className='w-32 h-full items-center justify-center'>
+                    <Row className={`gap-0 h-12 w-min bg-background border-b-2 border-border rounded-t-lg`}>
+                        <Column className='gap-4 w-32 h-full items-center justify-center'>
                             <FontText weight='medium' className='text-center'>Role</FontText>
                         </Column>
-                        <Column className='w-24 h-full items-center justify-center'>
+                        <Column className='gap-4 w-24 h-full items-center justify-center'>
                             <FontText weight='medium' className='text-center'>Votes?</FontText>
                         </Column>
-                        <Column className='w-64 h-full items-center justify-center'>
+                        <Column className='gap-4 w-64 h-full items-center justify-center'>
                             <FontText weight='medium' className='text-center'>Role Message</FontText>
                         </Column>
-                        <Column className='w-64 h-full items-center justify-center'>
+                        <Column className='gap-4 w-64 h-full items-center justify-center'>
                             <FontText weight='medium' className='text-center'>About Role</FontText>
                         </Column>
-                        {/* <Column className='w-12 h-full items-center justify-center'> */}
+                        {/* <Column className='gap-4 w-12 h-full items-center justify-center'> */}
                             
                         {/* </Column> */}
                     </Row>

@@ -59,15 +59,15 @@ const JoinedGameOptionsDialog = ({
                         className="w-10 h-10 bg-accent-hover absolute right-4 top-4 z-10"
                     />
 
-                    <Column gap={4}>
+                    <Column className='gap-4'>
                         <DialogHeader
                             text={gameName}
                             subtext="Game Options"
                         />
 
                         {/* Game Details - displayed directly at top */}
-                        <Column gap={3}>
-                            <Row className="items-center gap-3">
+                        <Column className='gap-3'>
+                            <Row className="gap-4 items-center">
                                 <Hash size={18} color="rgb(150, 150, 150)" />
                                 <FontText variant="subtext">Game ID: {gameId}</FontText>
                             </Row>
@@ -76,16 +76,16 @@ const JoinedGameOptionsDialog = ({
                                 <FontText variant="subtext">{gameData.description}</FontText>
                             )}
 
-                            <Column gap={2} className="mt-1">
+                            <Column className="gap-2 mt-1">
                                 <FontText weight="medium">Operator</FontText>
                                 {gameOwnerId ? (
-                                    <Row className="items-center gap-3">
+                                    <Row className="gap-4 items-center">
                                         <TownSquareAuthorAvatar
                                             gameId={gameId}
                                             userId={gameOwnerId}
                                             size={40}
                                         />
-                                        <Column>
+                                        <Column className='gap-4'>
                                             <FontText weight="medium">
                                                 {operatorIdentity.displayName}
                                             </FontText>
@@ -105,7 +105,7 @@ const JoinedGameOptionsDialog = ({
                             className="h-12 w-full"
                             onPress={handleArchive}
                         >
-                            <Row className="items-center gap-3">
+                            <Row className="gap-4 items-center">
                                 <Archive size={20} color="white" />
                                 <FontText weight="medium" color="white">
                                     Archive Game

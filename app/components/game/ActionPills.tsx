@@ -39,7 +39,7 @@ export const parseActionPills = (actionText: string): ActionPill[] => {
 const ActionPill = ({ label, value }: ActionPill) => {
     return (
         <View className="bg-text rounded-full px-3 py-1.5">
-            <Column gap={0} className="items-center">
+            <Column className="gap-0 items-center">
                 {label ? (
                     <FontText color="white" className="text-xs text-center opacity-70 leading-none">
                         {label}
@@ -66,7 +66,7 @@ export const ActionPills = ({ actionText, maxWidth }: ActionPillsProps) => {
 
     // Row layout - overflow is clipped, no wrapping
     return (
-        <Row gap={2} className="items-center justify-center overflow-hidden">
+        <Row className="gap-2 items-center justify-center overflow-hidden">
             {pills.map((pill, index) => (
                 <ActionPill key={index} label={pill.label} value={pill.value} />
             ))}

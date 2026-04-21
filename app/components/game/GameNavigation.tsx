@@ -10,7 +10,7 @@ interface GameNavigationProps {
 
 const GameNavigation = ({ onTabPress }: GameNavigationProps) => {
     return (
-        <Row gap={0} className='-mb-20'>
+        <Row className='gap-0 -mb-20'>
             <NavTab text='Players' onPress={() => onTabPress('players')}>
                 <GameUserIcon />
             </NavTab>

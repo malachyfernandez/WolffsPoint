@@ -34,7 +34,7 @@ const DayButton = ({
             className='min-w-28 px-2 max-h-6'
             onPress={onPress}
         >
-            <Row className='items-center' gap={2}>
+            <Row className='gap-2 items-center'>
                 {showCurrentDayIndicator && (
                     <View className='w-1.5 h-1.5 bg-red-500 rounded-full' />
                 )}

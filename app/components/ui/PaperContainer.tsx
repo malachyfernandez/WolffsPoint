@@ -8,7 +8,7 @@ interface PaperContainerProps {
 
 const PaperContainer = ({ children }: PaperContainerProps) => {
     return (
-        <Column className='w-full relative bg-inner-background  outline-accent outline-2 outline-offset-2 rounded-xl'>
+        <Column className='gap-4 w-full relative bg-inner-background outline-accent outline-2 outline-offset-2 rounded-xl'>
             <View
                 style={{
                     position: 'absolute',
@@ -28,7 +28,7 @@ const PaperContainer = ({ children }: PaperContainerProps) => {
                 }}
             />
             <Column
-                className='w-full bg-none rounded-xl p-4 m-0'
+                className='gap-4 w-full bg-none rounded-xl p-4 m-0'
             // style={{ boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)' }}
             >
                 {children}

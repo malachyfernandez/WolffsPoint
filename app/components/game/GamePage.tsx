@@ -59,7 +59,7 @@ const GamePage = ({ gameId, currentUserId }: GamePageProps) => {
 
     if (ownedGameRows === undefined || gameRows === undefined || userDataRecords === undefined || newserAssignmentRecords === undefined) {
         return (
-            <Column className='w-full h-full items-center justify-center'>
+            <Column className='gap-4 w-full h-full items-center justify-center'>
                 <FontText>Loading game…</FontText>
             </Column>
         );
@@ -78,7 +78,7 @@ const GamePage = ({ gameId, currentUserId }: GamePageProps) => {
     const blurAmount = Math.min(Math.max((scrollAmount / 100) * 8, 0), 8);
 
     return (
-        <Column className='w-full h-screen'>
+        <Column className='gap-4 w-full h-screen'>
             <View className='absolute top-20 w-full items-center'>
                 <View style={Platform.OS === 'web' ? { filter: `blur(${blurAmount}px)` } : undefined}>
                     <WolffspointIcon />

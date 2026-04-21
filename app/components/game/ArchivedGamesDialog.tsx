@@ -49,13 +49,13 @@ const ArchivedGamesDialog = ({ isOpen, onOpenChange, setActiveGameId, textClassN
                         className="w-10 h-10 bg-accent-hover absolute right-4 top-4 z-10"
                     />
 
-                    <Column gap={4}>
+                    <Column className='gap-4'>
                         <DialogHeader
                             text="Archived Games"
                             subtext={`${archivedGameIds.length} game${archivedGameIds.length === 1 ? '' : 's'} archived`}
                         />
 
-                        <Column gap={0}>
+                        <Column className='gap-0'>
                             {archivedGameIds.length === 0 ? (
                                 <FontText variant="subtext">No archived games</FontText>
                             ) : (
@@ -101,7 +101,7 @@ const ArchivedGameRow = ({ gameId, index, onUnarchive, onPress, textClassName }:
     const borderClass = index === 0 ? 'border-t' : '';
 
     return (
-        <Row gap={0} className="items-center">
+        <Row className="gap-0 items-center">
             <ListRow
                 className={`justify-between items-center flex-1 ${borderClass}`}
                 onPress={onPress}

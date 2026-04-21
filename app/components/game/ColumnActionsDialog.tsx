@@ -34,7 +34,7 @@ const ColumnActionsDialog = ({ isOpen, onOpenChange, title, selectedSize, onSele
                 <ConvexDialog.Content className='max-w-md p-1'>
                     <ConvexDialog.Close iconProps={{ color: 'rgb(246, 238, 219)' }} className='absolute right-4 top-4 z-10 h-10 w-10 bg-accent-hover' />
                     <DialogHeader text={title} />
-                    <Column className='p-5 pt-4' gap={3}>
+                    <Column className='gap-3 p-5 pt-4'>
                         {sizeOptions.map((option) => (
                             <AppButton
                                 key={option.value}
@@ -45,7 +45,7 @@ const ColumnActionsDialog = ({ isOpen, onOpenChange, title, selectedSize, onSele
                                     onOpenChange(false);
                                 }}
                             >
-                                <Row className='w-full items-center justify-between'>
+                                <Row className='gap-4 w-full items-center justify-between'>
                                     <FontText color={selectedSize === option.value ? 'white' : 'black'} weight='medium'>
                                         {option.label}
                                     </FontText>

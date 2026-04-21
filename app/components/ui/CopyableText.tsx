@@ -55,7 +55,7 @@ const CopyableText = ({ text, prefix = '', className = '', copyText = 'Copied', 
     const fullText = `${prefix}${text}`;
 
     const content = (
-        <Row className={`items-center justify-center w-fit ${className}`} gap={1}>
+        <Row className={`gap-1 items-center justify-center w-fit ${className}`}>
             <View className="items-center">
                 <FontText variant='cardHeader' style={{ color: 'transparent' }}>
                     {fullText}
@@ -126,7 +126,7 @@ CopyableText.Container = ({ className = '', copyText = 'Copied', color, children
     return (
         <CopyableContext.Provider value={contextValue}>
             <TouchableOpacity onPress={handleCopy}>
-                <Column gap={0} className={className}>
+                <Column className={`gap-0 ${className ?? ''}`.trim()}>
                     {children}
                 </Column>
             </TouchableOpacity>

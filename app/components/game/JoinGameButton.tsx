@@ -43,7 +43,7 @@ const JoinGameButton = ({ onJoin, condensed }: JoinGameButtonProps) => {
 
                         <ConvexDialog.Close iconProps={{ color: 'rgb(246, 238, 219)' }} className="w-10 h-10 bg-accent-hover absolute right-4 top-4 z-10" />
 
-                        <Column>
+                        <Column className='gap-4'>
                             <DialogHeader
                                 text="Join a Game"
                                 subtext="Enter a game code to join."

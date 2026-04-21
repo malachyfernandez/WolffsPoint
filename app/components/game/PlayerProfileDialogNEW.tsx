@@ -203,11 +203,11 @@ const PlayerProfileDialogNEW = ({
                         </Pressable>
                         <DialogHeader text={title} subtext='This is what everyone in the game will see.' />
 
-                        <Column className='flex-1 min-h-0 pt-5 -mx-5' gap={4}>
+                        <Column className='gap-4 flex-1 min-h-0 pt-5 -mx-5'>
                             <ScrollShadow LinearGradientComponent={LinearGradient} className='flex-1 min-h-0'>
                                 <ScrollView className='flex-1'>
-                                    <Column className='px-5 pb-2' gap={6}>
-                                        <Column gap={1}>
+                                    <Column className='gap-6 px-5 pb-2'>
+                                        <Column className='gap-1'>
                                             <FontText weight='medium'>In-game name</FontText>
                                             <FontTextInput
                                                 className='w-full rounded-xl border border-subtle-border px-4 py-3'
@@ -217,8 +217,8 @@ const PlayerProfileDialogNEW = ({
                                             />
                                         </Column>
 
-                                        <Row className='items-start gap-4'>
-                                            <Column className='w-[126px] shrink-0' gap={2}>
+                                        <Row className='gap-4 items-start'>
+                                            <Column className='gap-2 w-[126px] shrink-0'>
                                                 <FontText weight='medium'>Profile picture</FontText>
                                                 <Pressable
                                                     onPress={() => setImageDialogMode('profile')}
@@ -231,7 +231,7 @@ const PlayerProfileDialogNEW = ({
                                                 </Pressable>
                                             </Column>
 
-                                            <Column className='flex-1' gap={2}>
+                                            <Column className='gap-2 flex-1'>
                                                 <FontText weight='medium'>Socials</FontText>
                                                 <Pressable
                                                     onPress={() => setIsSocialsDialogOpen(true)}
@@ -250,13 +250,13 @@ const PlayerProfileDialogNEW = ({
                                             </Column>
                                         </Row>
 
-                                        <Column gap={2} className='w-full'>
+                                        <Column className='gap-2 w-full'>
 
 
-                                            <Row className='items-start gap-4 w-full '>
+                                            <Row className='gap-4 items-start w-full'>
 
                                                 {/* LEFT SIDE: EDITOR */}
-                                                <Column className='flex-1 min-w-[220px]' gap={1}>
+                                                <Column className='gap-1 flex-1 min-w-[220px]'>
                                                     <FontText weight='medium'>Bio</FontText>
                                                     <TownSquareComposerToolbar
                                                         onBold={() => runBioUpdate((value, range) => wrapSelection(value, range, '**', '**', 'bold text'))}
@@ -277,7 +277,7 @@ const PlayerProfileDialogNEW = ({
                                                 </Column>
 
                                                 {/* RIGHT SIDE: FULL PREVIEW */}
-                                                <Column className='flex-1 min-w-[220px] hidden sm:flex' gap={2}>
+                                                <Column className='gap-2 flex-1 min-w-[220px] hidden sm:flex'>
                                                     <FontText weight='medium'>Preview</FontText>
                                                     <ScrollShadow LinearGradientComponent={LinearGradient} className='min-h-[120px] max-h-[220px] rounded-3xl'>
                                                         <ScrollView className='flex-1'>
@@ -297,7 +297,7 @@ const PlayerProfileDialogNEW = ({
                                 </ScrollView>
                             </ScrollShadow>
 
-                            <Row className='justify-end gap-3 px-5 pb-5'>
+                            <Row className='gap-4 justify-end px-5 pb-5'>
                                 <AppButton variant='outline' className='w-36' onPress={handleAttemptClose}>
                                     <FontText weight='medium'>Cancel</FontText>
                                 </AppButton>
@@ -438,13 +438,13 @@ const SocialsDialog = ({ isOpen, onOpenChange, onSave, initialSocials }: Socials
                     </Pressable>
                     <DialogHeader text='Socials' />
 
-                    <Column className='flex-1 min-h-0 pt-5' gap={4}>
+                    <Column className='gap-4 flex-1 min-h-0 pt-5'>
                         <ScrollShadow LinearGradientComponent={LinearGradient} className='flex-1 min-h-0'>
                             <ScrollView className='flex-1'>
-                                <Column className='items-start gap-4 px-5 pb-2'>
-                                    <Column className='flex-1 min-w-0 gap-4'>
+                                <Column className='gap-4 items-start px-5 pb-2'>
+                                    <Column className='gap-4 flex-1 min-w-0'>
                                         <Row className='gap-4'>
-                                            <Column className='flex-1 min-w-0 gap={1}'>
+                                            <Column className='gap-1 flex-1 min-w-0'>
                                                 <FontText weight='medium'>Phone number</FontText>
                                                 <FontTextInput
                                                     className='w-full rounded-xl border border-subtle-border px-4 py-3'
@@ -454,7 +454,7 @@ const SocialsDialog = ({ isOpen, onOpenChange, onSave, initialSocials }: Socials
                                                 />
                                             </Column>
 
-                                            <Column className='flex-1 min-w-0 gap={1}'>
+                                            <Column className='gap-1 flex-1 min-w-0'>
                                                 <FontText weight='medium'>Instagram</FontText>
                                                 <FontTextInput
                                                     className='w-full rounded-xl border border-subtle-border px-4 py-3'
@@ -466,7 +466,7 @@ const SocialsDialog = ({ isOpen, onOpenChange, onSave, initialSocials }: Socials
                                         </Row>
 
                                         <Row className='gap-4'>
-                                            <Column className='flex-1 min-w-0 gap={1}'>
+                                            <Column className='gap-1 flex-1 min-w-0'>
                                                 <FontText weight='medium'>Discord</FontText>
                                                 <FontTextInput
                                                     className='w-full rounded-xl border border-subtle-border px-4 py-3'
@@ -476,7 +476,7 @@ const SocialsDialog = ({ isOpen, onOpenChange, onSave, initialSocials }: Socials
                                                 />
                                             </Column>
 
-                                            <Column className='flex-1 min-w-0 gap={1}'>
+                                            <Column className='gap-1 flex-1 min-w-0'>
                                                 <FontText weight='medium'>Anything else</FontText>
                                                 <FontTextInput
                                                     className='w-full rounded-xl border border-subtle-border px-4 py-3'
@@ -488,9 +488,9 @@ const SocialsDialog = ({ isOpen, onOpenChange, onSave, initialSocials }: Socials
                                         </Row>
                                     </Column>
 
-                                    <Column className='w-full shrink-0 gap={1}'>
+                                    <Column className='gap-1 w-full shrink-0'>
                                         <FontText weight='medium'>Preview</FontText>
-                                        <Column className='rounded-3xl border border-subtle-border bg-text/5 p-4'>
+                                        <Column className='gap-4 rounded-3xl border border-subtle-border bg-text/5 p-4'>
                                             <PlayerProfileContactInfo
                                                 profile={previewProfile}
                                                 emptyText='No socials yet.'
@@ -501,7 +501,7 @@ const SocialsDialog = ({ isOpen, onOpenChange, onSave, initialSocials }: Socials
                             </ScrollView>
                         </ScrollShadow>
 
-                        <Row className='justify-end gap-3 px-5 pb-5'>
+                        <Row className='gap-4 justify-end px-5 pb-5'>
                             <AppButton variant='outline' className='w-36' onPress={handleAttemptClose}>
                                 <FontText weight='medium'>Cancel</FontText>
                             </AppButton>

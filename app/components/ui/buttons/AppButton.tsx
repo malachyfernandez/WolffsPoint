@@ -94,7 +94,7 @@ const AppButton = ({
                 background={isSecondary ? 'inner-background' : '#2f2f2f'}
                 variant={isSecondary ? 'silver' : 'gold'}
             >
-                <Row className="items-center justify-center w-full h-full" pointerEvents="none">
+                <Row className="gap-4 items-center justify-center w-full h-full" pointerEvents="none">
                     {children}
                 </Row>
             </GuildedButton>
@@ -168,7 +168,7 @@ const AppButton = ({
             activeOpacity={disabled ? 1 : 0.8}
             disabled={disabled}
         >
-            <Row className="items-center justify-center w-full h-full" pointerEvents='none'>
+            <Row className="gap-4 items-center justify-center w-full h-full" pointerEvents='none'>
                 {children}
             </Row>
 

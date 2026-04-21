@@ -45,7 +45,7 @@ const JoinedGameListItem = ({ game, onArchive, className, setActiveGameId, index
     return (
 
         <LoadingContainer dependencies={[gameInfo]} loadingText="Loading games">
-            <Row gap={0} className='items-center'>
+            <Row className='gap-0 items-center'>
                 <ListRow className={`justify-between items-center ${className || ''} ${borderClass}`} onPress={handleSetActiveGameId}>
                     <FontText className='text-text-inverted' >
                         {`${displayName} (${displayId})`}

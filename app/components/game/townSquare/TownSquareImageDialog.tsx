@@ -40,8 +40,8 @@ const TownSquareImageDialog = ({ isOpen, onInsert, onOpenChange }: TownSquareIma
                 <ConvexDialog.Content className='p-1 max-w-2xl'>
                     <ConvexDialog.Close iconProps={{ color: 'rgb(246, 238, 219)' }} className='absolute right-4 top-4 z-10 h-10 w-10 bg-accent-hover' />
                     <DialogHeader text='Insert image' />
-                    <Column className='p-5' gap={4}>
-                        <Column gap={1}>
+                    <Column className='gap-4 p-5'>
+                        <Column className='gap-1'>
                             <FontText weight='medium'>Image caption</FontText>
                             <FontTextInput
                                 className='w-full rounded-xl border border-subtle-border px-4 py-3'
@@ -50,11 +50,11 @@ const TownSquareImageDialog = ({ isOpen, onInsert, onOpenChange }: TownSquareIma
                                 onChangeText={setCaption}
                             />
                         </Column>
-                        <Row className='items-center justify-between gap-3'>
+                        <Row className='gap-4 items-center justify-between'>
                             <FontText variant='subtext'>{uploadedUrl ? 'Image uploaded and ready to insert.' : 'Upload an image first.'}</FontText>
                             <SimpleImageUpload buttonLabel='Upload image' className='w-40' onUpload={setUploadedUrl} />
                         </Row>
-                        <Row className='justify-end gap-3'>
+                        <Row className='gap-4 justify-end'>
                             <AppButton variant='outline' className='w-32' onPress={() => onOpenChange(false)}>
                                 <FontText weight='medium'>Cancel</FontText>
                             </AppButton>

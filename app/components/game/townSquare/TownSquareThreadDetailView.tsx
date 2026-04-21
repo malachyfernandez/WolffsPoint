@@ -52,9 +52,9 @@ const TownSquareThreadDetailView = ({
     }, [selectedThread.postId, selectedThread.replyCount, onThreadViewed]);
 
     return (
-        <Column className='flex-1 px-6 py-6' gap={5}>
+        <Column className='gap-5 flex-1 px-0 sm:px-4 py-6'>
             <Pressable onPress={onBack} className='self-start py-1'>
-                <Row className='items-center gap-2'>
+                <Row className='gap-4 items-center'>
                     <ChevronLeft size={20} color='rgb(46, 41, 37)' />
                     <FontText weight='medium'>Town Square</FontText>
                 </Row>
@@ -62,39 +62,48 @@ const TownSquareThreadDetailView = ({
 
             <ScrollShadow LinearGradientComponent={LinearGradient} className='flex-1'>
                 <ScrollView className='flex-1'>
-                    <Column gap={7}>
-                        <Column gap={4}>
-                            <Row className='items-start gap-4'>
+                    <Column className='gap-7'>
+                        <Column className='gap-4'>
+                            <Row className='sm:hidden w-full items-center'>
                                 <TownSquareAuthorAvatar gameId={selectedThread.gameId} size={60} userId={selectedThread.authorUserId} />
-                                <Column className='flex-1' gap={1}>
-                                    <FontText weight='bold' className='text-4xl leading-10'>{selectedThread.titleResolved}</FontText>
+                                <Column className='flex-1 gap-2'>
                                     <TownSquareAuthorName gameId={selectedThread.gameId} userId={selectedThread.authorUserId} />
                                     <FontText variant='subtext'>{formatTimestamp(selectedThread.createdAt)}</FontText>
+                                </Column>
+                            </Row>
+                            <Row className='gap-4 items-start'>
+                                <TownSquareAuthorAvatar gameId={selectedThread.gameId} size={60} userId={selectedThread.authorUserId} className="hidden sm:flex" />
+                                <Column className='gap-4 flex-1'>
+                                    <FontText weight='bold' className='text-3xl leading-10'>{selectedThread.titleResolved}</FontText>
+                                    <Column className='gap-1 hidden sm:flex'>
+                                        <TownSquareAuthorName gameId={selectedThread.gameId} userId={selectedThread.authorUserId} />
+                                        <FontText variant='subtext'>{formatTimestamp(selectedThread.createdAt)}</FontText>
+                                    </Column>
                                 </Column>
                             </Row>
 
                             <MarkdownRenderer markdown={selectedThread.bodyMarkdownResolved} />
 
-                            <Row className='items-center justify-between gap-3 border-b border-border/20 pb-4'>
+                            <Row className='gap-4 items-center flex-wrap justify-between border-b border-border/20 pb-4'>
                                 {isAnnouncement ? (
                                     <FontText weight='medium' className='text-accent'>Announcement</FontText>
                                 ) : (
                                     <FontText variant='subtext'>{`${selectedThread.replyCount} repl${selectedThread.replyCount === 1 ? 'y' : 'ies'}`}</FontText>
                                 )}
-                                <Row className='items-center gap-3'>
+                                <Row className='gap-4 items-center'>
                                     {isOwnThread ? (
                                         <>
                                             <Pressable onPress={onEditThread}>
-                                                <FontText weight='medium' className='text-accent'>Edit</FontText>
+                                                <FontText weight='bold' className='text-accent'>Edit</FontText>
                                             </Pressable>
                                             <Pressable onPress={onDeleteThread}>
-                                                <FontText weight='medium' className='text-red-500'>Delete</FontText>
+                                                <FontText weight='bold' className='text-red-500'>Delete</FontText>
                                             </Pressable>
                                         </>
                                     ) : null}
                                     {!isAnnouncement && (
-                                        <AppButton variant='outline' className='w-36' onPress={onReplyToThread}>
-                                            <FontText weight='medium'>Reply</FontText>
+                                        <AppButton variant='outline' className='w-20 sm:w-36' onPress={onReplyToThread}>
+                                            <FontText weight='bold'>Reply</FontText>
                                         </AppButton>
                                     )}
                                 </Row>
@@ -102,8 +111,8 @@ const TownSquareThreadDetailView = ({
                         </Column>
 
                         {!isAnnouncement && (
-                            <Column gap={4}>
-                                <Row className='items-center justify-between'>
+                            <Column className='gap-6'>
+                                <Row className='gap-4 items-center justify-between'>
                                     <FontText weight='medium' className='text-2xl'>Replies</FontText>
                                 </Row>
 
@@ -119,7 +128,7 @@ const TownSquareThreadDetailView = ({
                                         onReply={onReplyToComment}
                                     />
                                 ) : (
-                                    <Column className='py-8' gap={1}>
+                                    <Column className='gap-1 py-8'>
                                         <FontText weight='medium'>No replies yet</FontText>
                                         <FontText variant='subtext'>Be the first person to answer this thread.</FontText>
                                     </Column>

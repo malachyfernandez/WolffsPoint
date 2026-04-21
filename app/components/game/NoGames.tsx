@@ -10,7 +10,7 @@ interface NoGamesProps {
 
 const NoGames = ({ joinGame }: NoGamesProps) => {
     return (
-        <Column className='w-full items-center h-full justify-center'>
+        <Column className='gap-4 w-full items-center h-full justify-center'>
 
             
                 <SadEmoji size={100} lineWidth={1} color={"white"}/>

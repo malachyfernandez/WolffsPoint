@@ -12,7 +12,7 @@ interface GuildedFrameProps {
 
 const GuildedFrame = ({ children, className = '', contentClassName = '' }: GuildedFrameProps) => {
     return (
-        <Column className={`w-full relative bg-inner-background outline-accent outline-2 outline-offset-2 rounded-xl ${className}`.trim()}>
+        <Column className={`gap-4 w-full relative bg-inner-background outline-accent outline-2 outline-offset-2 rounded-xl ${className}`.trim()}>
             <View
                 style={{
                     position: 'absolute',
@@ -29,7 +29,7 @@ const GuildedFrame = ({ children, className = '', contentClassName = '' }: Guild
                     mixBlendMode: 'multiply',
                 }}
             />
-            <Column className={`w-full bg-none rounded-xl m-0 ${contentClassName}`.trim()}>{children}</Column>
+            <Column className={`gap-4 w-full bg-none rounded-xl m-0 ${contentClassName}`.trim()}>{children}</Column>
         </Column>
     );
 };

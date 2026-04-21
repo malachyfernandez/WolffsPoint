@@ -40,25 +40,25 @@ const NightlyDayTitleRow = ({
     const areColumnWidthsReady = columnWidths.vote > 0 && columnWidths.action > 0 && columnWidths.morningMessage > 0;
 
     if (!areColumnWidthsReady) {
-        return <Row gap={0} className='h-12 w-min bg-background border-b-2 border-border rounded-t-lg' />;
+        return <Row className='gap-0 h-12 w-min bg-background border-b-2 border-border rounded-t-lg' />;
     }
 
     return (
         <>
-            <Row gap={0} className={`h-12 w-min bg-background border-b-2 border-border rounded-t-lg ${isEditing ? 'z-50' : ''}`}>
-                <Row className='h-full items-center justify-center px-2' gap={0} style={{ width: columnWidths.vote }}>
+            <Row className={`gap-0 h-12 w-min bg-background border-b-2 border-border rounded-t-lg ${isEditing ? 'z-50' : ''}`}>
+                <Row className='gap-0 h-full items-center justify-center px-2' style={{ width: columnWidths.vote }}>
                     <FontText weight='medium' className='text-center' style={{ width: getInnerTextWidth(columnWidths.vote) }}>Vote</FontText>
                     <AppButton variant="grey" className='w-6 max-h-6 mr-[0.4rem] ml-0' onPress={() => setActiveMenu({ column: 'vote' })}>
                         <FontText weight='bold' color='white' className='text-lg mt-[-0.1rem]'>⋯</FontText>
                     </AppButton>
                 </Row>
-                <Row gap={0} className='h-full items-center justify-center px-2' style={{ width: columnWidths.action }}>
+                <Row className='gap-0 h-full items-center justify-center px-2' style={{ width: columnWidths.action }}>
                     <FontText weight='medium' className='text-center' style={{ width: getInnerTextWidth(columnWidths.action) }}>Action</FontText>
                     <AppButton variant="grey" className='w-6 max-h-6 mr-[0.4rem] ml-0' onPress={() => setActiveMenu({ column: 'action' })}>
                         <FontText weight='bold' color='white' className='text-lg mt-[-0.1rem]'>⋯</FontText>
                     </AppButton>
                 </Row>
-                <Row gap={0} className='h-full items-center justify-center px-2' style={{ width: columnWidths.morningMessage }}>
+                <Row className='gap-0 h-full items-center justify-center px-2' style={{ width: columnWidths.morningMessage }}>
                     <FontText weight='medium' className='text-center' style={{ width: getInnerTextWidth(columnWidths.morningMessage) }}>Morning Message (Tomorrow)</FontText>
                     <AppButton variant="grey" className='w-6 max-h-6 mr-[0.4rem] ml-0' onPress={() => setActiveMenu({ column: 'morningMessage' })}>
                         <FontText weight='bold' color='white' className='text-lg mt-[-0.1rem]'>⋯</FontText>

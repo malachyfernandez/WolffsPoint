@@ -185,16 +185,16 @@ const NightlyPageOPERATOR = ({ currentUserId: _currentUserId, gameId }: NightlyP
     return (
         <>
             {showLoading && (
-                <Column className='min-h-[760px] items-center justify-center'>
+                <Column className='gap-4 min-h-[760px] items-center justify-center'>
                     <LoadingText text='Loading nightly data' />
                 </Column>
             )}
-            <Column className={`min-h-[760px] ${showLoading ? 'opacity-0' : ''}`}>
+            <Column className={`gap-4 min-h-[760px] ${showLoading ? 'opacity-0' : ''}`}>
             {users.length > 0 ? (
                 <Animated.View entering={FadeIn.duration(300)}>
-                    <Column>
-                        <Row className='justify-between items-center mb-4'>
-                            <Column gap={0}>
+                    <Column className='gap-4'>
+                        <Row className='gap-4 justify-between items-center mb-4'>
+                            <Column className='gap-0'>
                                 <FontText weight='medium'>Player submissions</FontText>
                                 <FontText variant='subtext'>{voteCount}/{users.length} voted, {actionCount}/{users.length} submitted actions</FontText>
                             </Column>
@@ -205,12 +205,12 @@ const NightlyPageOPERATOR = ({ currentUserId: _currentUserId, gameId }: NightlyP
 
                         <ScrollShadow LinearGradientComponent={LinearGradient} className='mr-1 pt-1'>
                             <ScrollView horizontal={true} className='px-1 py-5'>
-                                <Row>
-                                    <Column gap={1}>
-                                        <Row className='h-6'>
+                                <Row className='gap-4'>
+                                    <Column className='gap-1'>
+                                        <Row className='gap-4 h-6'>
                                             {/* spacer to align with days table */}
                                         </Row>
-                                        <Row className={isPlayerTableBeingEdited ? 'z-50' : ''}>
+                                        <Row className={`gap-4 ${isPlayerTableBeingEdited ? 'z-50' : '' ?? ''}`.trim()}>
                                             <NightlyPlayerTable
                                                 gameId={gameId}
                                                 doSync={doSync}
@@ -223,7 +223,7 @@ const NightlyPageOPERATOR = ({ currentUserId: _currentUserId, gameId }: NightlyP
                                             />
                                         </Row>
                                     </Column>
-                                    <Column gap={1}>
+                                    <Column className='gap-1'>
                                         <View style={{ width: daysTableWidth }}>
                                             <ComprehensiveDaySelector
                                                 gameId={gameId}
@@ -231,7 +231,7 @@ const NightlyPageOPERATOR = ({ currentUserId: _currentUserId, gameId }: NightlyP
                                                 showInitialSetupDialog={true}
                                             />
                                         </View>
-                                        <Row className={`${isDaysTableBeingEdited ? 'z-10' : ''} w-min max-w-min`}>
+                                        <Row className={`${isDaysTableBeingEdited ? 'z-10' : ''}gap-4 w-min max-w-min`}>
                                             <NightlyDaysTable
                                                 gameId={gameId}
                                                 dayNumber={selectedDayIndex.value}
@@ -264,7 +264,7 @@ const NightlyPageOPERATOR = ({ currentUserId: _currentUserId, gameId }: NightlyP
                     </Column>
                 </Animated.View>
             ) : (
-                <Row className='items-center justify-center'>
+                <Row className='gap-4 items-center justify-center'>
                     <FontText weight='medium' className='text-center text-gray-500'>
                         No players available. Add players in the Players tab first.
                     </FontText>

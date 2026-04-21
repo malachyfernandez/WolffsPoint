@@ -48,7 +48,7 @@ export function PagesButton({ onPress }: PagesButtonProps) {
         style={{ shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.5, shadowRadius: 40 }}
         onPress={onPress}
     >
-            <Row gap={0}>
+            <Row className='gap-0'>
                 <Animated.View style={sidebarAnimatedStyle}>
                     <ArrowLeftIcon size={20} color="#000" />
                 </Animated.View>

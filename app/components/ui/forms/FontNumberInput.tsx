@@ -133,7 +133,7 @@ const FontNumberInput = ({
                             onChangeText={handleChangeText}
                             {...props}
                         />
-                        <Row className='h-10 overflow-visible absolute -bottom-10'>
+                        <Row className='gap-4 h-10 overflow-visible absolute -bottom-10'>
                         {helperText.length > 0 && (
                             <Text
                                 className={`text-sm text-nowrap mt-1 ${showError ? 'text-red-500' : 'text-gray-600'}`}

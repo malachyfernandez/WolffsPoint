@@ -20,19 +20,19 @@ const FriendListItem = ({ friend }: FriendListItemProps) => {
 
 
     return (
-        <Column gap={1}>
+        <Column className='gap-1'>
             {email && (
-                <Row>
+                <Row className='gap-4'>
                     <FontText weight='bold'>{email}</FontText>
                 </Row>
             )}
             {name && (
-                <Row>
+                <Row className='gap-4'>
                     <FontText>{name}</FontText>
                 </Row>
             )}
             {userId && (
-                <Row>
+                <Row className='gap-4'>
                     <FontText className='text-sm opacity-50'>{`User ID: ${userId}`}</FontText>
                 </Row>
             )}

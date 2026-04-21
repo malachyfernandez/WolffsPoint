@@ -10,7 +10,7 @@ interface NewspaperColumnHeaderProps {
 
 const NewspaperColumnHeader = ({ columnIndex, onRemove }: NewspaperColumnHeaderProps) => {
     return (
-        <Row className='h-12 items-center justify-between border-b border-border bg-background px-3' gap={2}>
+        <Row className='gap-2 h-12 items-center justify-between border-b border-border bg-background px-3'>
             <FontText weight='medium'>Column {columnIndex + 1}</FontText>
             <AppButton
                 variant='grey'

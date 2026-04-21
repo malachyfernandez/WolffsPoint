@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import Animated, { FadeIn } from 'react-native-reanimated';
-import { Image, Pressable, View } from 'react-native';
+import { Image, Pressable, View, useWindowDimensions } from 'react-native';
 import { useUserVariable } from '../../../hooks/useUserVariable';
 import { useUserVariableGet } from '../../../hooks/useUserVariableGet';
 import { useUserList } from '../../../hooks/useUserList';
@@ -55,9 +55,14 @@ const PhoneBookPagePLAYER = ({ gameId, currentUserId, currentEmail }: PhoneBookP
 
     const isLoading = myProfile.state.isSyncing;
 
+
+    const { width } = useWindowDimensions();
+    const showEditButton = width >= 410;
+
+
     if (isLoading) {
         return (
-            <Column className='flex-1 min-h-[760px] items-center justify-center'>
+            <Column className='gap-4 flex-1 min-h-[760px] items-center justify-center'>
                 <LoadingText text='Loading phone book' />
             </Column>
         );
@@ -65,7 +70,8 @@ const PhoneBookPagePLAYER = ({ gameId, currentUserId, currentEmail }: PhoneBookP
 
     return (
         <Animated.View entering={FadeIn.duration(300)} className='flex-1 min-h-[760px]'>
-            <Column className='flex-1 p-4' gap={6}>
+
+            <Column className='gap-6 flex-1 py-3 sm:px-4'>
                 <PhoneBookHeader
                     onEditProfile={() => setIsProfileDialogOpen(true)}
                 />
@@ -73,6 +79,17 @@ const PhoneBookPagePLAYER = ({ gameId, currentUserId, currentEmail }: PhoneBookP
                     profile={initialProfileValue}
                     onPress={() => setIsProfileDialogOpen(true)}
                 />
+                {!showEditButton && (
+                    <Row className='-mt-2'>
+                        <AppButton
+                            variant='accent'
+                            className='w-full'
+                            onPress={() => setIsProfileDialogOpen(true)}
+                        >
+                            <FontText weight='medium' color='white'>Edit profile</FontText>
+                        </AppButton>
+                    </Row>
+                )}
                 <PhoneBookGrid gameId={gameId} />
 
                 <PlayerProfileDialog
@@ -97,7 +114,7 @@ const MyProfileCard = ({ profile, onPress }: { profile: PlayerProfile; onPress: 
             onPress={onPress}
             className="w-full rounded-2xl border border-subtle-border bg-none p-4 hover:bg-text/5 transition-colors"
         >
-            <Row className="items-center gap-4">
+            <Row className="gap-4 items-center">
                 {profile.profileImageUrl ? (
                     <Image
                         source={{ uri: profile.profileImageUrl }}
@@ -109,7 +126,7 @@ const MyProfileCard = ({ profile, onPress }: { profile: PlayerProfile; onPress: 
                         <FontText weight='bold' className='text-lg'>{initials}</FontText>
                     </View>
                 )}
-                <Column className="flex-1">
+                <Column className="gap-4 flex-1">
                     <FontText weight='medium' className='text-lg'>{displayName}</FontText>
                     {profile.bioMarkdown?.trim() ? (
                         <MarkdownRenderer
@@ -127,15 +144,26 @@ const MyProfileCard = ({ profile, onPress }: { profile: PlayerProfile; onPress: 
 
 // Header component - just manages the header layout and button
 const PhoneBookHeader = ({ onEditProfile }: { onEditProfile: () => void }) => {
+    const { width } = useWindowDimensions();
+    const showEditButton = width >= 410;
+
     return (
-        <Row className='justify-between items-center'>
-            <Column gap={0}>
-                <FontText weight='bold' className='text-xl'>Phone Book</FontText>
-                <FontText variant='subtext'>All players in the game.</FontText>
+        <Row className='gap-4 justify-between items-center'>
+            <Column className='gap-0'>
+
+                <>
+                    <FontText weight='bold' className='text-xl'>Phone Book</FontText>
+                    <FontText variant='subtext'>All players in the game.</FontText>
+                </>
+
+
             </Column>
-            <AppButton variant='accent' className='w-40' onPress={onEditProfile}>
-                <FontText weight='medium' color='white'>Edit profile</FontText>
-            </AppButton>
+            {showEditButton && (
+                <AppButton variant='accent' className='w-40' onPress={onEditProfile}>
+                    <FontText weight='medium' color='white'>Edit profile</FontText>
+                </AppButton>
+            )}
+
         </Row>
     );
 };
@@ -147,7 +175,7 @@ const PhoneBookGrid = ({ gameId }: { gameId: string }) => {
     if (allPlayers.length === 0) {
         return (
             <Animated.View entering={FadeIn.duration(300)}>
-                <Column className='bg-text/5 rounded-3xl p-8 items-center'>
+                <Column className='gap-4 bg-text/5 rounded-3xl p-8 items-center'>
                     <FontText variant='subtext' className='text-center'>No players in this game yet.</FontText>
                 </Column>
             </Animated.View>
@@ -155,7 +183,7 @@ const PhoneBookGrid = ({ gameId }: { gameId: string }) => {
     }
 
     return (
-        <Row className='flex-wrap  gap-4'>
+        <Row className='gap-4 flex-wrap'>
             {allPlayers.map((player, index) => (
                 <View key={`${player.userId}-${player.email}`} className='flex-1 min-w-[280px]'>
                     <Animated.View entering={FadeIn.duration(300).delay(index * 50)}>

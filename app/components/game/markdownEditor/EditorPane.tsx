@@ -33,7 +33,7 @@ export function EditorPane({
     onMore,
 }: EditorPaneProps) {
     return (
-        <Column className='flex-1 min-w-0' gap={1}>
+        <Column className='gap-1 flex-1 min-w-0'>
             <TownSquareComposerToolbar
                 onBold={onBold}
                 onInput={onInput}

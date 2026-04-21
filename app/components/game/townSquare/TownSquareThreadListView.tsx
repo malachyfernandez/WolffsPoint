@@ -40,27 +40,27 @@ const TownSquareThreadListView = ({
     const isLargeScreen = width >= 400;
 
     return (
-        <Column className='flex-1 px-0sm:px-4 py-4' gap={5}>
-            <Row className='items-start justify-between gap-4'>
-                <Column gap={0} className='hidden sm:flex grow'>
+        <Column className='gap-5 flex-1 px-0 sm:px-4 py-4'>
+            <Row className='gap-4 items-start justify-between'>
+                <Column className='gap-0 hidden sm:flex grow'>
                     <FontText weight='bold' className='text-2xl leading-10'>Town Square</FontText>
                     <FontText variant='subtext'>Anyone can speak their mind</FontText>
                 </Column>
 
                 {isLargeScreen ? (
                     // IF screen is 500 or larger, show this
-                    <Row className='justify-between sm:justify-end flex-1 items-center gap-2'>
+                    <Row className='gap-4 justify-between sm:justify-end flex-1 items-center'>
                         <AppButton variant='secondary' className='px-0' onPress={onNewAnnouncement}>
-                            <Row className='items-center gap-2' gap={3}>
+                            <Row className='gap-3 items-center'>
                                 <Plus size={20} color='black' />
-                                <Column className='items-start' gap={0}>
+                                <Column className='gap-0 items-start'>
                                     <FontText weight='medium' className='-mb-1'>Announcement</FontText>
                                     <FontText variant='subtext'>Just You; No Replies</FontText>
                                 </Column>
                             </Row>
                         </AppButton>
                         <AppButton variant='accent' className='px-0' onPress={onNewThread}>
-                            <Row className='items-center gap-2' gap={2}>
+                            <Row className='gap-2 items-center'>
                                 <Plus size={20} color='white' />
                                 <FontText weight='medium' color='white'>Thread</FontText>
                             </Row>
@@ -68,18 +68,18 @@ const TownSquareThreadListView = ({
                     </Row>
                 ) : (
                     // IF screen is 500 or smaller, show this
-                    <Column className='justify-between sm:justify-end flex-1 items-center gap-2' gap={0}>
+                    <Column className='gap-0 justify-between sm:justify-end flex-1 items-center'>
                         <AppButton variant='accent' className='px-0 w-full' onPress={onNewThread}>
-                            <Row className='items-center gap-2' gap={2}>
+                            <Row className='gap-2 items-center'>
                                 <Plus size={20} color='white' />
                                 <FontText weight='medium' color='white'>Thread</FontText>
                             </Row>
                         </AppButton>
 
                         <AppButton variant='secondary' className='px-0 w-full' onPress={onNewAnnouncement}>
-                            <Row className='items-center gap-2' gap={3}>
+                            <Row className='gap-3 items-center'>
                                 <Plus size={20} color='black' />
-                                <Column className='items-start' gap={0}>
+                                <Column className='gap-0 items-start'>
                                     <FontText weight='medium' className='-mb-1'>Announcement</FontText>
                                     <FontText variant='subtext'>Just You; No Replies</FontText>
                                 </Column>
@@ -90,8 +90,8 @@ const TownSquareThreadListView = ({
                 )}
             </Row>
 
-            <Column className='flex-1' gap={3}>
-                <Row className='items-center justify-between border-b border-border/20 pb-3'>
+            <Column className='gap-3 flex-1'>
+                <Row className='gap-4 items-center justify-between border-b border-border/20 pb-3'>
                     <FontText variant='subtext'>{`${threads.length} thread${threads.length === 1 ? '' : 's'}`}</FontText>
                 </Row>
 
@@ -104,7 +104,7 @@ const TownSquareThreadListView = ({
                                 onScroll={(event) => onScrollYChange(event.nativeEvent.contentOffset.y)}
                                 scrollEventThrottle={16}
                             >
-                                <Column className='items-center justify-center py-24' gap={1}>
+                                <Column className='gap-1 items-center justify-center py-24'>
                                     <LoadingText text='Loading threads' />
                                 </Column>
                             </ScrollView>
@@ -120,7 +120,7 @@ const TownSquareThreadListView = ({
                                 scrollEventThrottle={16}
                             >
                                 {threads.length > 0 ? (
-                                    <Column gap={0}>
+                                    <Column className='gap-0'>
                                         {threads.map((thread, index) => (
                                             <TownSquareThreadListItem
                                                 key={thread.postId}
@@ -133,7 +133,7 @@ const TownSquareThreadListView = ({
                                         ))}
                                     </Column>
                                 ) : (
-                                    <Column className='items-center justify-center py-24' gap={1}>
+                                    <Column className='gap-1 items-center justify-center py-24'>
                                         <FontText weight='medium'>No threads yet</FontText>
                                         <FontText variant='subtext'>Kick things off with the first post.</FontText>
                                     </Column>

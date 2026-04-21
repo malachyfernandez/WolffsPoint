@@ -33,7 +33,7 @@ const RuleBookPagePLAYER = ({ gameId }: RuleBookPagePLAYERProps) => {
 
     if (isLoading) {
         return (
-            <Column className='flex-1 min-h-[760px] items-center justify-center'>
+            <Column className='gap-4 flex-1 min-h-[760px] items-center justify-center'>
                 <LoadingText text='Loading rule book' />
             </Column>
         );
@@ -43,8 +43,8 @@ const RuleBookPagePLAYER = ({ gameId }: RuleBookPagePLAYERProps) => {
 
     return (
         <Animated.View entering={FadeIn.duration(300)} className='flex-1 min-h-[760px]'>
-            <Column className='flex-1 p-4' gap={4}>
-                <Column gap={2}>
+            <Column className='gap-4 flex-1  py-3 sm:px-4'>
+                <Column className='gap-2'>
                     <FontText weight='bold' className='text-xl'>Rule Book</FontText>
                     {ruleBookMarkdown.trim().length > 0 ? (
                         <MarkdownRenderer markdown={ruleBookMarkdown} />

@@ -45,11 +45,11 @@ const TitleRow = ({ userTableTitle, userTableColumnVisibility, setColumnTitle, s
 
     return (
         <>
-            <Row gap={0} className={`h-12 w-min bg-background border-b-2 border-border rounded-t-lg ${isEditing ? 'z-50' : ''}`}>
-                <Column className='w-12 h-full items-center justify-center'>
+            <Row className={`gap-0 h-12 w-min bg-background border-b-2 border-border rounded-t-lg ${isEditing ? 'z-50' : ''}`}>
+                <Column className='gap-4 w-12 h-full items-center justify-center'>
                     <FontText weight='medium' className='text-center'>D/A</FontText>
                 </Column>
-                <Column gap={0} className='w-28 h-full items-center justify-center'>
+                <Column className='gap-0 w-28 h-full items-center justify-center'>
                     <FontText weight='medium' className='text-center'>Player</FontText>
                 </Column>
                 {titles.extraUserColumns.map((columnTitle, index) => {
@@ -59,7 +59,7 @@ const TitleRow = ({ userTableTitle, userTableColumnVisibility, setColumnTitle, s
                     const textWidth = getInnerTextWidth(columnWidth);
 
                     return (
-                        <Row key={index} className={`h-full items-center justify-center px-2 ${editingColumns[index] ? 'z-50' : ''}`} gap={0} style={{ width: columnWidth }}>
+                        <Row key={index} className={`gap-0 h-full items-center justify-center px-2 ${editingColumns[index] ? 'z-50' : ''}`} style={{ width: columnWidth }}>
                             <InlineEditableText
                                 value={columnTitle}
                                 onChange={(newValue) => setColumnTitle?.(index, newValue)}

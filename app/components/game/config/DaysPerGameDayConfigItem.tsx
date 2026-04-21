@@ -27,7 +27,7 @@ const DaysPerGameDayConfigItem = ({ gameId }: DaysPerGameDayConfigItemProps) => 
             subtext='Controls how many real-world days each in-game day spans by default.'
             showDivider={false}
         >
-            <Row className='items-center gap-3'>
+            <Row className='gap-4 items-center'>
                 <FontNumberInput
                     value={numberOfRealDaysPerInGameDay.value}
                     onChangeText={(displayValue, isValid, numericValue) => {

@@ -95,7 +95,7 @@ const DaySelectionDialog = ({ isOpen, onOpenChange, index, dayDate, buttonLabel,
                     className='min-w-28 px-2 max-h-6'
                     onPress={onPress}
                 >
-                    <Row className='items-center' gap={2}>
+                    <Row className='gap-2 items-center'>
                         {showCurrentDayIndicator && (
                             <View className='w-1.5 h-1.5 bg-red-500 rounded-full' />
                         )}
@@ -109,12 +109,12 @@ const DaySelectionDialog = ({ isOpen, onOpenChange, index, dayDate, buttonLabel,
                 <ConvexDialog.Content>
                     <ConvexDialog.Close iconProps={{ color: 'rgb(246, 238, 219)' }} className="w-10 h-10 bg-accent-hover absolute right-4 top-4 z-10" />
 
-                    <Column>
+                    <Column className='gap-4'>
                         <DialogHeader
                             text="SELECT DATE"
                             subtext={followingDateMinusOne ? `Between ${previousDatePlusOne.getMonth() + 1}/${previousDatePlusOne.getDate()} and ${followingDateMinusOne.getMonth() + 1}/${followingDateMinusOne.getDate()}` : `After ${previousDatePlusOne.getMonth() + 1}/${previousDatePlusOne.getDate()}`}
                         />
-                        <Column gap={2}>
+                        <Column className='gap-2'>
                             {/* <FontText>Day 1 of Your Game</FontText> */}
                             <SmartDateInput
                                 placeholder="MM/DD/YYYY"

@@ -43,12 +43,12 @@ const VoteMessageDialog = ({ isOpen, onOpenChange, roleIndex, roleName, currentM
                 <ConvexDialog.Content>
                     <ConvexDialog.Close iconProps={{ color: 'rgb(246, 238, 219)' }} className="w-10 h-10 bg-accent-hover absolute right-4 top-4 z-10" />
 
-                    <Column>
+                    <Column className='gap-4'>
                         <DialogHeader
                             text={`${roleName} Role Message`}
                             subtext={`Set the role message for ${roleName}`}
                         />
-                        <Column gap={2}>
+                        <Column className='gap-2'>
                             <FontTextInput
                                 placeholder="Enter vote message..."
                                 className="w-full border border-subtle-border p-2"
@@ -60,7 +60,7 @@ const VoteMessageDialog = ({ isOpen, onOpenChange, roleIndex, roleName, currentM
                             />
                         </Column>
 
-                        <Column gap={2}>
+                        <Column className='gap-2'>
                             <AppButton className='w-34 h-10' variant='black' onPress={handleSubmit}>
                                 <FontText color='white' weight='medium'>Save</FontText>
                             </AppButton>

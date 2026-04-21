@@ -117,11 +117,11 @@ const UserRow = ({
 
     return (
         <>
-            <Row gap={0} className={` h-12 w-min ${isEditing ? 'z-50' : ''}`}>
-                <Column className={`w-12 h-full border border-subtle-border items-center justify-center ${isLast ? 'rounded-bl-lg' : ''}`}>
+            <Row className={`gap-0 h-12 w-min ${isEditing ? 'z-50' : ''}`}>
+                <Column className={`gap-4 w-12 h-full border border-subtle-border items-center justify-center ${isLast ? 'rounded-bl-lg' : ''}`}>
                     <CustomCheckbox checked={isDead} onChange={toggleLivingState} />
                 </Column>
-                <Column gap={0} className='w-28 h-full border border-subtle-border items-center justify-center'>
+                <Column className='gap-0 w-28 h-full border border-subtle-border items-center justify-center'>
                     <Pressable onPress={() => setIsDialogOpen(true)} className='w-28 h-full items-center justify-center'>
                         <FontText
                             weight='medium'
@@ -174,7 +174,7 @@ const UserRow = ({
                                 hasMounted.current ? FadeOutUp.duration(100).easing(Easing.ease) : undefined
                             }
                         >
-                            <Column className={`h-full border border-subtle-border items-center justify-center ${isLast && isLastVisibleColumn ? 'rounded-br-lg' : ''} `} style={{ width: columnWidth }}>
+                            <Column className={`gap-4 h-full border border-subtle-border items-center justify-center ${isLast && isLastVisibleColumn ? 'rounded-br-lg' : ''}`} style={{ width: columnWidth }}>
                                 <InlineEditableText
                                     value={column}
                                     onChange={(newValue) => setExtraColumnValue?.(index, columnIndex, newValue)}

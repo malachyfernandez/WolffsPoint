@@ -159,12 +159,12 @@ const UserEditDialog = ({
                 <ConvexDialog.Content>
                     <ConvexDialog.Close iconProps={{ color: 'rgb(246, 238, 219)' }} className="w-10 h-10 bg-accent-hover absolute right-4 top-4 z-10" />
 
-                    <Column>
+                    <Column className='gap-4'>
                         <DialogHeader
                             text={`Edit User`}
                             subtext={`Set the user details`}
                         />
-                        <Column gap={2}>
+                        <Column className='gap-2'>
                             <FontText weight='medium'>Real Name</FontText>
                             <FontTextInput
                                 placeholder="Enter real name..."
@@ -192,9 +192,9 @@ const UserEditDialog = ({
                             />
                         </Column>
 
-                        <Column className='w-full items-center justify-center'>
-                            <Column className='w-min'>
-                                <Row className='w-min max-w-full'>
+                        <Column className='gap-4 w-full items-center justify-center'>
+                            <Column className='gap-4 w-min'>
+                                <Row className='gap-4 w-min max-w-full'>
                                 {isUniqueEmail && isValidEmail ? (
                                     <AppButton className='max-w-[30vw] w-48 h-10' variant='black' onPress={handleSubmit}>
                                         <FontText color='white' weight='medium'>Save</FontText>

@@ -18,8 +18,8 @@ export function ActionButtons({
     onSubmit,
 }: ActionButtonsProps) {
     return (
-        <Row className='justify-end gap-3 pt-1'>
-            <AppButton variant='outline' className='w-32' onPress={onCancel}>
+        <Row className='gap-4 justify-end pt-1'>
+            <AppButton variant='outline' className='w-20 sm:w-32' onPress={onCancel}>
                 <FontText weight='medium'>Cancel</FontText>
             </AppButton>
             <DisableableButton
@@ -27,7 +27,7 @@ export function ActionButtons({
                 enabledText={submitLabel}
                 disabledText='No Changes'
                 enabledVariant='filled'
-                className='w-40'
+                className='w-32'
                 onPress={onSubmit}
             />
         </Row>

@@ -8,7 +8,7 @@ interface BottomBarProps extends PropsWithChildren {
 
 const BottomBar = ({ children, className }: BottomBarProps) => {
     return (
-        <Row className={`p-4 -mb-1 sm:p-6 border-t w-full flex-wrap border-subtle-border justify-between ${className}`}>
+        <Row className={`gap-4 p-4 -mb-1 sm:p-6 border-t w-full flex-wrap border-subtle-border justify-between ${className}`}>
             {children}
         </Row>
     );

@@ -87,7 +87,7 @@ const PlayerPageOPERATOR = ({ currentUserId, gameId }: PlayerPageOPERATORProps) 
     return (
         <>
             {showLoading && (
-                <Column className='min-h-[760px] items-center justify-center'>
+                <Column className='gap-4 min-h-[760px] items-center justify-center'>
                     <LoadingText text='Loading players' />
                 </Column>
             )}
@@ -95,17 +95,17 @@ const PlayerPageOPERATOR = ({ currentUserId, gameId }: PlayerPageOPERATORProps) 
 
 
                 {users.length > 0 ? (
-                    <Column>
+                    <Column className='gap-4'>
 
                         <ScrollShadow LinearGradientComponent={LinearGradient} className='mr-1 pt-1'>
-                            {/* <Row > */}
+                            {/* <Row  className='gap-4'> */}
                             <ScrollView horizontal={true} className='px-1 py-5'>
-                                <Row>
-                                    <Column gap={1}>
-                                        <Row className='h-6'>
+                                <Row className='gap-4'>
+                                    <Column className='gap-1'>
+                                        <Row className='gap-4 h-6'>
                                             {/* spacer to align with days table */}
                                         </Row>
-                                        <Row className={isPlayerTableBeingEdited ? 'z-50' : ''}>
+                                        <Row className={`gap-4 ${isPlayerTableBeingEdited ? 'z-50' : '' ?? ''}`.trim()}>
                                             <PlayerTable
                                                 gameId={gameId}
                                                 doSync={doSync}
@@ -117,13 +117,13 @@ const PlayerPageOPERATOR = ({ currentUserId, gameId }: PlayerPageOPERATORProps) 
                                             />
                                         </Row>
                                     </Column>
-                                    <Column gap={1}>
+                                    <Column className='gap-1'>
                                         <View className='' style={{ width: daysTableWidth }}>
                                             <ComprehensiveDaySelector
                                                 gameId={gameId}
                                             />
                                         </View>
-                                        <Row className={`${isDaysTableBeingEdited ? 'z-10' : ''} w-min max-w-min`}>
+                                        <Row className={`${isDaysTableBeingEdited ? 'z-10' : ''}gap-4 w-min max-w-min`}>
                                             <DaysTable
                                                 gameId={gameId}
                                                 dayNumber={selectedDayIndex.value}

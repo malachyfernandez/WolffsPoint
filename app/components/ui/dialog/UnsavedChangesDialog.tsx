@@ -20,11 +20,11 @@ const UnsavedChangesDialog = ({ isOpen, onOpenChange, onStay, onLeave }: Unsaved
                 <ConvexDialog.Overlay />
                 <ConvexDialog.Content className='max-w-md p-6'>
                     <DialogHeader text="Unsaved Changes" />
-                    <Column gap={4} className='pt-4'>
+                    <Column className='gap-4 pt-4'>
                         <FontText className='text-center'>
                             You have unsaved changes. Are you sure you want to leave without saving?
                         </FontText>
-                        <Row className='justify-center gap-4 pt-4'>
+                        <Row className='gap-4 justify-center pt-4'>
                             <AppButton variant='outline' className='w-24' onPress={onStay}>
                                 <FontText weight='medium'>Stay</FontText>
                             </AppButton>

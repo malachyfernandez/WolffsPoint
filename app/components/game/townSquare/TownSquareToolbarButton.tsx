@@ -40,7 +40,7 @@ const TownSquareToolbarButton = ({
             onPressIn={() => !disabled && setIsPressed(true)}
             onPressOut={() => !disabled && setIsPressed(false)}
         >
-            <Row className='h-full w-full items-center justify-center' pointerEvents='none'>
+            <Row className='gap-4 h-full w-full items-center justify-center' pointerEvents='none'>
                 {children}
             </Row>
         </TouchableOpacity>

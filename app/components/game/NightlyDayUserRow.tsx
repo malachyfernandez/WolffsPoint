@@ -85,13 +85,13 @@ const NightlyDayUserRow = ({
     const areColumnWidthsReady = columnWidths.vote > 0 && columnWidths.action > 0 && columnWidths.morningMessage > 0;
 
     if (!areColumnWidthsReady) {
-        return <Row gap={0} className='h-12 w-min bg-text/5' />;
+        return <Row className='gap-0 h-12 w-min bg-text/5' />;
     }
 
     return (
         <>
-            <Row gap={0} className={` h-12 w-min ${isEditing ? 'z-50' : ''}`}>
-                <Column className={`h-full border border-subtle-border items-center justify-center z-10`} style={{ width: columnWidths.vote }}>
+            <Row className={`gap-0 h-12 w-min ${isEditing ? 'z-50' : ''}`}>
+                <Column className={`gap-4 h-full border border-subtle-border items-center justify-center z-10`} style={{ width: columnWidths.vote }}>
                     <Pressable onPress={handleVotePress} className="w-full h-full items-center justify-center px-1">
                         <FontText
                             weight="medium"
@@ -102,14 +102,14 @@ const NightlyDayUserRow = ({
                         </FontText>
                     </Pressable>
                 </Column>
-                <Column gap={0} className={`h-full border border-subtle-border items-center justify-center z-20`} style={{ width: columnWidths.action }}>
+                <Column className={`gap-0 h-full border border-subtle-border items-center justify-center z-20`} style={{ width: columnWidths.action }}>
                     <Pressable onPress={handleActionPress} className="w-full h-full items-center justify-center px-1">
                         <View style={{ width: columnWidths.action - 8 }}>
                             <ActionPills actionText={getPlayerActionSummary(dayData.action)} />
                         </View>
                     </Pressable>
                 </Column>
-                <Column gap={0} className={`h-full border border-subtle-border items-center justify-center ${isLast ? 'rounded-br-lg' : ''}`} style={{ width: columnWidths.morningMessage }}>
+                <Column className={`gap-0 h-full border border-subtle-border items-center justify-center ${isLast ? 'rounded-br-lg' : ''}`} style={{ width: columnWidths.morningMessage }}>
                     {getCurrentMorningMessage() ? (
                         <Pressable onPress={() => setIsMessageDialogOpen(true)} style={{ width: columnWidths.morningMessage - 8 }} className='h-full items-center justify-center'>
                             <FontText

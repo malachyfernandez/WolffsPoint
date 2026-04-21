@@ -29,16 +29,16 @@ const RuleBookPageOPERATOR = ({ gameId, onBack }: RuleBookPageOPERATORProps) => 
     });
 
     return (
-        <Column className='pb-6' gap={6}>
+        <Column className='gap-6 pb-6'>
             <Pressable onPress={onBack} className='self-start py-1'>
-                <Row className='items-center gap-2'>
+                <Row className='gap-4 items-center'>
                     <ChevronLeft size={20} color='rgb(46, 41, 37)' />
                     <FontText weight='medium'>Config</FontText>
                 </Row>
             </Pressable>
 
-            <Column className='border-y border-border/15 py-5' gap={5}>
-                <Column gap={2}>
+            <Column className='gap-5 border-y border-border/15 py-5'>
+                <Column className='gap-2'>
                     <FontText weight='bold' className='text-xl'>Rule Book</FontText>
                     <Pressable 
                     onPress={() => setIsEditDialogOpen(true)}
@@ -47,7 +47,7 @@ const RuleBookPageOPERATOR = ({ gameId, onBack }: RuleBookPageOPERATORProps) => 
                         {ruleBookData?.value?.content?.trim()?.length > 0 ? (
                             <MarkdownRenderer markdown={ruleBookData.value.content} />
                         ) : (
-                            <Column className='min-h-[180px] items-center justify-center'>
+                            <Column className='gap-4 min-h-[180px] items-center justify-center'>
                                 <FontText variant='subtext'>No rule book written yet. Tap to edit.</FontText>
                             </Column>
                         )}

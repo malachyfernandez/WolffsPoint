@@ -12,7 +12,7 @@ interface TownSquareComposerEditorPaneProps {
 
 const TownSquareComposerEditorPane = ({ onBodyChange, onSelectionChange, value }: TownSquareComposerEditorPaneProps) => {
     return (
-        <Column className='min-w-0' gap={2}>
+        <Column className='gap-2 min-w-0'>
             {/* <FontText weight='medium'>Body</FontText> */}
             <TextInput
                 multiline={true}

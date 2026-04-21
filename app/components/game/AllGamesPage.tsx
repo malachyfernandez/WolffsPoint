@@ -80,12 +80,12 @@ const AllGamesPage = ({
     const isGamesLoading = gamesTheyJoined?.state.isSyncing;
 
     return (
-        <Column className='flex-1 mt-10 max-w-[1000px] w-full mx-auto'>
+        <Column className='gap-4 flex-1 mt-10 max-w-[1000px] w-full mx-auto'>
             <ProfileInfo />
 
-            <Column className='flex-1   '>
+            <Column className='gap-4 flex-1'>
                 {isGamesLoading ? (
-                    <Column className='flex-1 items-center justify-center'>
+                    <Column className='gap-4 flex-1 items-center justify-center'>
                         <LoadingText text='Loading games' />
                     </Column>
                 ) : (
@@ -102,7 +102,7 @@ const AllGamesPage = ({
                                     setActiveGameId={setActiveGameId}
                                 />
                             ) : (
-                                <Column className='items-center justify-center flex-1'>
+                                <Column className='gap-4 items-center justify-center flex-1'>
                                     <NoGames joinGame={joinGame} />
                                 </Column>
 
@@ -114,7 +114,7 @@ const AllGamesPage = ({
             </Column>
 
             {/* bottom bar */}
-            <Column>
+            <Column className='gap-4'>
                 
                 <BottomBar>
                     <NewWolffspointButtonAndDialogue onCreate={setActiveGameId} condensed={width < 450}/>

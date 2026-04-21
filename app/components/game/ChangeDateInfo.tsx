@@ -104,13 +104,13 @@ const ChangeDateInfo = ({ gameId, isGettingStarted }: ChangeDateInfoProps) => {
 
                     <ConvexDialog.Close iconProps={{ color: 'rgb(246, 238, 219)' }} className="w-10 h-10 bg-accent-hover absolute right-4 top-4 z-10" />
 
-                    <Column>
+                    <Column className='gap-4'>
                         <DialogHeader
                             text={isGettingStarted ? "Lets get some basics setup" : "Change Date Information"}
                             subtext="This can be changed later."
                         />
 
-                        <Column gap={2}>
+                        <Column className='gap-2'>
 
                             <FontText>Starting Date:</FontText>
 
@@ -125,7 +125,7 @@ const ChangeDateInfo = ({ gameId, isGettingStarted }: ChangeDateInfoProps) => {
                             />
 
                         </Column>
-                        <Column gap={2}>
+                        <Column className='gap-2'>
                             <FontText>Real Days per In-Game Day</FontText>
                             <SmartNumberInput
                                 placeholder="Enter number"
@@ -136,7 +136,7 @@ const ChangeDateInfo = ({ gameId, isGettingStarted }: ChangeDateInfoProps) => {
                                 minValue={1}
                             />
                         </Column>
-                        <Column>
+                        <Column className='gap-4'>
 
 
                             {isFormValid ?

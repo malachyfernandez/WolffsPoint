@@ -26,7 +26,7 @@ const GameList = ({ gamesTheyJoined, setGamesTheyJoined, myGames, hasJoinedAGame
     });
     return (
         <LoadingContainer dependencies={[archivedGames]} loadingText="Loading games">
-            <Column className='py-6 px-4 sm:px-6' gap={6}>
+            <Column className='gap-6 py-6 px-4 sm:px-6'>
 
                 {(hasJoinedAGame || (archivedGames.value?.length || 0) > 0) && (
                     <JoinedGames

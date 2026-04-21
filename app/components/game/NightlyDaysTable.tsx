@@ -251,12 +251,12 @@ const NightlyDaysTable = ({
     };
 
     return (
-        <Column gap={0} onLayout={onLayout} ref={tableRef}>
+        <Column onLayout={onLayout} ref={tableRef} className='gap-0'>
             { !areColumnWidthsReady ? (
-                <Row gap={0} className='h-12 w-min bg-text/5' />
+                <Row className='gap-0 h-12 w-min bg-text/5' />
             ) : (
-                <Row gap={0}>
-                    <Column gap={0} className={`border-border border-2 rounded w-min ${className || ''}`}>
+                <Row className='gap-0'>
+                    <Column className={`gap-0 border-border border-2 rounded w-min ${className || ''}`}>
                         <NightlyDayTitleRow
                             onEditStart={() => handleRowEditStart('title')}
                             onEditEnd={handleRowEditEnd}

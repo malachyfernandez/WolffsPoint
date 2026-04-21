@@ -13,9 +13,9 @@ interface MyGamesProps {
 
 const MyGames = ({ myGames, setActiveGameId }: MyGamesProps) => {
     return (
-        <Column>
+        <Column className='gap-4'>
             <FontText weight='bold' className='text-text-inverted'>My Games</FontText>
-            <Column gap={0}>
+            <Column className='gap-0'>
                 {myGames?.map((game, index) => (
                     <MyGameListItem
                         index={index}

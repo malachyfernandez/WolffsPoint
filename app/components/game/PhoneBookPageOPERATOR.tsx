@@ -22,9 +22,9 @@ interface PhoneBookPageOPERATORProps {
 // View-only operator phonebook - no edit functionality
 const PhoneBookPageOPERATOR = ({ gameId, currentUserId, onBack }: PhoneBookPageOPERATORProps) => {
     return (
-        <Column className='pb-6' gap={6}>
+        <Column className='gap-6 pb-6'>
             <Pressable onPress={onBack} className='self-start py-1'>
-                <Row className='items-center gap-2'>
+                <Row className='gap-4 items-center'>
                     <ChevronLeft size={20} color='rgb(46, 41, 37)' />
                     <FontText weight='medium'>Config</FontText>
                 </Row>
@@ -39,7 +39,7 @@ const PhoneBookPageOPERATOR = ({ gameId, currentUserId, onBack }: PhoneBookPageO
 // Header component - just shows the title, no edit button
 const PhoneBookHeader = () => {
     return (
-        <Column gap={0}>
+        <Column className='gap-0'>
             <FontText weight='bold' className='text-xl'>Phone Book</FontText>
             <FontText variant='subtext'>All players in the game.</FontText>
         </Column>
@@ -52,14 +52,14 @@ const PhoneBookGrid = ({ gameId, currentUserId }: { gameId: string; currentUserI
 
     if (allPlayers.length === 0) {
         return (
-            <Column className='bg-text/5 rounded-3xl p-8 items-center'>
+            <Column className='gap-4 bg-text/5 rounded-3xl p-8 items-center'>
                 <FontText variant='subtext' className='text-center'>No players in this game yet.</FontText>
             </Column>
         );
     }
 
     return (
-        <Row className='flex-wrap  gap-4'>
+        <Row className='gap-4 flex-wrap'>
             {allPlayers.map((player) => (
                 <PlayerCardWithContainer 
                     key={`${player.userId}-${player.email}`} 

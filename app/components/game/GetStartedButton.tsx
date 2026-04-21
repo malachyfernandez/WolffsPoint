@@ -65,13 +65,13 @@ const GetStartedButton = ({ gameId }: GetStartedButtonProps) => {
 
                     <ConvexDialog.Close iconProps={{ color: 'rgb(246, 238, 219)' }} className="w-10 h-10 bg-accent-hover absolute right-4 top-4 z-10" />
 
-                    <Column>
+                    <Column className='gap-4'>
                         <DialogHeader
                             text="Lets get some basics setup"
                             subtext="This can be changed later."
                         />
 
-                        <Column gap={2}>
+                        <Column className='gap-2'>
 
                             <FontText>Starting Date:</FontText>
 
@@ -86,7 +86,7 @@ const GetStartedButton = ({ gameId }: GetStartedButtonProps) => {
                             />
 
                         </Column>
-                        <Column gap={2}>
+                        <Column className='gap-2'>
                             <FontText>Real Days per In-Game Day</FontText>
                             <SmartNumberInput
                                 placeholder="Enter number"
@@ -97,7 +97,7 @@ const GetStartedButton = ({ gameId }: GetStartedButtonProps) => {
                                 minValue={1}
                             />
                         </Column>
-                        <Column>
+                        <Column className='gap-4'>
 
 
                             {isFormValid ?

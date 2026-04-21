@@ -30,8 +30,8 @@ const NightlyCertificationDialog = ({ isOpen, onOpenChange, users, submissionsBy
                     <ConvexDialog.Close iconProps={{ color: 'rgb(246, 238, 219)' }} className="w-10 h-10 bg-accent-hover absolute right-4 top-4 z-10" />
                     <DialogHeader text='Nightly submissions' subtext='Review what each player submitted before you certify it into the operator table.' />
                     <ScrollView className='p-4'>
-                        <Column gap={2}>
-                            <Row className='border-b border-subtle-border pb-2'>
+                        <Column className='gap-2'>
+                            <Row className='gap-4 border-b border-subtle-border pb-2'>
                                 <FontText weight='medium' className='flex-1'>Player</FontText>
                                 <FontText weight='medium' className='flex-1'>Vote</FontText>
                                 <FontText weight='medium' className='flex-1'>Action</FontText>
@@ -39,7 +39,7 @@ const NightlyCertificationDialog = ({ isOpen, onOpenChange, users, submissionsBy
                             {users.map((user) => {
                                 const submission = submissionsByEmail[user.email];
                                 return (
-                                    <Row key={user.email} className='border-b border-subtle-border py-2'>
+                                    <Row key={user.email} className='gap-4 border-b border-subtle-border py-2'>
                                         <FontText className='flex-1'>{user.realName || user.email}</FontText>
                                         <FontText className='flex-1'>{submission?.vote || '—'}</FontText>
                                         <FontText className='flex-1'>{getPlayerActionSummary(submission?.action) || '—'}</FontText>
@@ -48,7 +48,7 @@ const NightlyCertificationDialog = ({ isOpen, onOpenChange, users, submissionsBy
                             })}
                         </Column>
                     </ScrollView>
-                    <Row className='justify-end gap-3 px-4 pb-4'>
+                    <Row className='gap-4 justify-end px-4 pb-4'>
                         <AppButton variant='outline' className='w-32' onPress={() => onOpenChange(false)}>
                             <FontText weight='medium'>Close</FontText>
                         </AppButton>

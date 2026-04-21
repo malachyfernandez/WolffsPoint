@@ -151,13 +151,13 @@ const RuleBookRoleDescriptions = ({ gameId }: RuleBookRoleDescriptionsProps) => 
 
     return (
         <>
-            <Column gap={2}>
+            <Column className='gap-2'>
                 <FontText weight='bold' className='text-xl'>Role Descriptions</FontText>
                 {/* <ScrollView> */}
-                    <Column gap={4}>
+                    <Column className='gap-4'>
                         {orderedRoles.map((role, index) => (
-                            <Row key={roles.indexOf(role)} className='items-stretch gap-2'>
-                                <Column className='flex-1 gap-2'>
+                            <Row key={roles.indexOf(role)} className='gap-4 items-stretch'>
+                                <Column className='gap-4 flex-1'>
                                     {/* <FontText weight='bold' className='text-lg'>
                                         {role.role}
                                     </FontText> */}
@@ -172,7 +172,7 @@ const RuleBookRoleDescriptions = ({ gameId }: RuleBookRoleDescriptionsProps) => 
                                         />
                                     </Pressable>
                                 </Column>
-                                <Column className='gap-1 justify-center' gap={0}>
+                                <Column className='gap-0 justify-center'>
                                     <AppButton 
                                         variant='none' 
                                         className='h-12 w-12' 

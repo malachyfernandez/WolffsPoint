@@ -288,7 +288,7 @@ const MarkdownInputField = ({
     const placeholder = input.label;
 
     return (
-        <Column className='my-1 min-w-[220px] max-w-full flex-1' gap={1}>
+        <Column className='gap-1 my-1 min-w-[220px] max-w-full flex-1'>
             {input.inputKind === 'text' ? (
                 <FontTextInput
                     value={value ?? ''}
@@ -600,7 +600,7 @@ const MarkdownRendererContent = ({
     );
 
     return (
-        <Column className={className} gap={3}>
+        <Column className={`gap-3 ${className ?? ''}`.trim()}>
             {blocks.map((block, index) => {
                 if (block.type === 'space') {
                     return <View key={`space-${index}`} className='h-2' />;
@@ -651,7 +651,7 @@ const MarkdownRendererContent = ({
 
                 if (block.type === 'quote') {
                     return (
-                        <Column key={`quote-${index}`} className='border-l-4 border-border pl-4 py-1 bg-background/30 rounded-r-lg'>
+                        <Column key={`quote-${index}`} className='gap-4 border-l-4 border-border pl-4 py-1 bg-background/30 rounded-r-lg'>
                             {containsInputs ? (
                                 <InlineMarkdownWithInputs
                                     text={block.text}
@@ -675,9 +675,9 @@ const MarkdownRendererContent = ({
 
                 if (block.type === 'list') {
                     return (
-                        <Column key={`list-${index}`} gap={2}>
+                        <Column key={`list-${index}`} className='gap-2'>
                             {block.items.map((item, itemIndex) => (
-                                <Row key={`list-item-${index}-${itemIndex}`} className='items-start' gap={2}>
+                                <Row key={`list-item-${index}-${itemIndex}`} className='gap-2 items-start'>
                                     <FontText weight='bold' className='pt-[0.1rem]'>
                                         {block.ordered ? `${itemIndex + 1}.` : '•'}
                                     </FontText>

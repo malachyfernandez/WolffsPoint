@@ -1,10 +1,10 @@
 import React, { PropsWithChildren, forwardRef } from 'react';
 import { View, Text } from 'react-native';
+import { mergeGapStyle } from './gapStyle';
 
 interface ColumnProps extends PropsWithChildren {
     className?: string;
     style?: any;
-    gap?: number;
     onLayout?: (event: any) => void;
 }
 
@@ -23,9 +23,9 @@ const normalizeChildren = (children: React.ReactNode) => {
     });
 };
 
-const Column = forwardRef<any, ColumnProps>(({ children, className, style, gap = 4, onLayout }, ref) => {
+const Column = forwardRef<any, ColumnProps>(({ children, className, style, onLayout }, ref) => {
     return (
-        <View ref={ref} className={`flex-col ${className}`} style={{ gap: gap * 4, ...style }} onLayout={onLayout}>
+        <View ref={ref} className={`flex-col ${className}`} style={mergeGapStyle(className, style)} onLayout={onLayout}>
             {normalizeChildren(children)}
         </View>
     );

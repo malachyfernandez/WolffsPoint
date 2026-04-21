@@ -182,7 +182,7 @@ const AppDropdown = ({
     }, [closeDropdown, isInDialog, isOpen, updateWebMenuPosition]);
 
     const dropdownList = options.length || allowUnselect ? (
-        <Column gap={1} className='w-full'>
+        <Column className='gap-1 w-full'>
             {allowUnselect && (
                 <AppDropdownItem
                     className={itemClassName}
@@ -208,7 +208,7 @@ const AppDropdown = ({
     );
 
     const dialogDropdownList = options.length || allowUnselect ? (
-        <Column gap={1} className='w-full'>
+        <Column className='gap-1 w-full'>
             {allowUnselect && (
                 <AppDropdownItem
                     className={itemClassName}

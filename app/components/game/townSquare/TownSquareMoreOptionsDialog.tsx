@@ -32,7 +32,7 @@ const TownSquareMoreOptionsDialog = ({ isOpen, onOpenChange, onSelectAction }: T
                 <ConvexDialog.Content className='p-1 max-w-xl'>
                     <ConvexDialog.Close iconProps={{ color: 'rgb(246, 238, 219)' }} className='absolute right-4 top-4 z-10 h-10 w-10 bg-accent-hover' />
                     <DialogHeader text='More formatting' />
-                    <Column className='p-5' gap={3}>
+                    <Column className='gap-3 p-5'>
                         {actionOptions.map((option) => (
                             <AppButton
                                 key={option.action}

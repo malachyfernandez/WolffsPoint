@@ -27,7 +27,7 @@ const PlayerAddUserSection = ({ gameId, removeBottomSpace = false }: PlayerAddUs
     };
 
     const buttonContent = (
-        <Row className='items-center gap-2' gap={2}>
+        <Row className='gap-2 items-center'>
             <Plus size={20} color='white' />
             <FontText weight='medium' color='white'>Add Player</FontText>
         </Row>
@@ -36,13 +36,13 @@ const PlayerAddUserSection = ({ gameId, removeBottomSpace = false }: PlayerAddUs
     return (
         <>
             {users.length > 0 ? (
-                <Row className='ml-4 -mt-4'>
+                <Row className='gap-4 ml-4 -mt-4'>
                     <AppButton variant="accent" onPress={handleOpenDialog}>
                         {buttonContent}
                     </AppButton>
                 </Row>
             ) : (
-                <Row className={`items-center justify-center ${removeBottomSpace ? '-mb-6' : ''}`}>
+                <Row className={`gap-4 items-center justify-center ${removeBottomSpace ? '-mb-6' : ''}`}>
                     <AppButton variant="accent" onPress={handleOpenDialog}>
                         {buttonContent}
                     </AppButton>

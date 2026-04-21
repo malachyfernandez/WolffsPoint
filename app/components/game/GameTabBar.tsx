@@ -47,7 +47,7 @@ const GameTabBar = <TTab extends string>({ activeTab, onTabPress, tabs, iconSize
     const useCondensed = width < 650; // Switch to condensed text on narrow screens
     
     return (
-        <Row gap={1} className='px-4'>
+        <Row className='gap-1 px-4'>
             {tabs.map((tab, index) => (
                 (hasTrueMiddle && index === centerIndex) ? (
                     // <SvgTabContainer

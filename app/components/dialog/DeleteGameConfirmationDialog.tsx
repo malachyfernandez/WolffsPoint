@@ -19,10 +19,10 @@ const DeleteGameConfirmationDialog = ({ isOpen, onOpenChange, onConfirm }: Delet
                 <ConvexDialog.Overlay />
                 <ConvexDialog.Content>
                     <ConvexDialog.Close iconProps={{ color: 'rgb(246, 238, 219)' }} className='w-10 h-10 bg-accent-hover absolute right-4 top-4 z-10' />
-                    <Column>
+                    <Column className='gap-4'>
                         <DialogHeader text='Delete Game' subtext='This action cannot be undone' />
 
-                        <Column className='pt-5 px-5 pb-5' gap={4}>
+                        <Column className='gap-4 pt-5 px-5 pb-5'>
                             <FontText className='text-center'>
                                 Are you sure you want to delete this game? All game data will be permanently removed.
                             </FontText>

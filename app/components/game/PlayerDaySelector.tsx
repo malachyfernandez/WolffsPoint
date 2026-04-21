@@ -17,10 +17,10 @@ interface PlayerDaySelectorProps {
 
 const PlayerDaySelector = ({ dayDates, selectedDayIndex, currentDayIndex, onSelectDay, fallbackSpanDays = 1 }: PlayerDaySelectorProps) => {
     return (
-        <Column>
+        <Column className='gap-4'>
             <ScrollShadow LinearGradientComponent={LinearGradient} className='mr-1 pr-1 max-w-min -mb-3 -mt-1'>
                 <ScrollView horizontal={true} className='px-1 m-0 h-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]'>
-                    <Row className='h-6' gap={1}>
+                    <Row className='gap-1 h-6'>
                         {dayDates.map((date, index) => {
                             const isLocked = index > currentDayIndex;
                             return (

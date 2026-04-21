@@ -52,29 +52,29 @@ const TownSquarePostDialog = ({ gameId, isOpen, onOpenChange, post, currentProfi
                         <ConvexDialog.Close iconProps={{ color: 'rgb(246, 238, 219)' }} className="w-10 h-10 bg-accent-hover absolute right-4 top-4 z-10" />
                         <DialogHeader text='Town Square Thread' />
                         <ScrollView className='p-4'>
-                            <Column gap={4}>
-                                <Row className='items-center gap-3'>
+                            <Column className='gap-4'>
+                                <Row className='gap-4 items-center'>
                                     <TownSquareAuthorAvatar gameId={post.gameId} size={48} userId={post.authorUserId} />
-                                    <Column gap={0}>
+                                    <Column className='gap-0'>
                                         <TownSquareAuthorName gameId={post.gameId} userId={post.authorUserId} weight='medium' />
                                         <FontText variant='subtext'>{new Date(post.createdAt).toLocaleString()}</FontText>
                                     </Column>
                                 </Row>
-                                <Column className='rounded-xl border border-subtle-border bg-white p-4'>
+                                <Column className='gap-4 rounded-xl border border-subtle-border bg-white p-4'>
                                     <MarkdownRenderer markdown={post.markdown} />
                                 </Column>
-                                <Row className='justify-between items-center'>
+                                <Row className='gap-4 justify-between items-center'>
                                     <FontText weight='medium'>Comments</FontText>
                                     <AppButton variant='accent' className='w-40' onPress={() => setIsCommentDialogOpen(true)}>
                                         <FontText weight='medium' color='white'>Add comment</FontText>
                                     </AppButton>
                                 </Row>
-                                <Column gap={3}>
+                                <Column className='gap-3'>
                                     {sortedComments.length > 0 ? sortedComments.map((comment) => (
-                                        <Row key={comment.value.commentId} className='items-start gap-3 rounded-xl border border-subtle-border bg-white p-3'>
+                                        <Row key={comment.value.commentId} className='gap-4 items-start rounded-xl border border-subtle-border bg-white p-3'>
                                             <TownSquareAuthorAvatar gameId={comment.value.gameId} size={40} userId={comment.value.authorUserId} />
-                                            <Column className='flex-1' gap={1}>
-                                                <Row className='justify-between'>
+                                            <Column className='gap-1 flex-1'>
+                                                <Row className='gap-4 justify-between'>
                                                     <TownSquareAuthorName gameId={comment.value.gameId} userId={comment.value.authorUserId} weight='medium' />
                                                     <FontText variant='subtext'>{new Date(comment.value.createdAt).toLocaleString()}</FontText>
                                                 </Row>

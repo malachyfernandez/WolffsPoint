@@ -39,7 +39,7 @@ export function SideBySideLayout({
     onMore,
 }: SideBySideLayoutProps) {
     return (
-        <Row className='flex-1 min-h-0 gap-4'>
+        <Row className='gap-4 flex-1 min-h-0'>
             <EditorPane
                 value={draftBody}
                 onBodyChange={onBodyChange}
@@ -53,7 +53,7 @@ export function SideBySideLayout({
                 onMore={onMore}
             />
 
-            <Column className='flex-1 min-w-0'>
+            <Column className='gap-4 flex-1 min-w-0'>
                 <PreviewPaneSideBySide
                     markdown={draftBody}
                     title={draftTitle}

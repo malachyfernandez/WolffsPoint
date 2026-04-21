@@ -74,9 +74,9 @@ const OperatorDayNavigation = ({ gameId, ownerUserId, selectedDayIndex: controll
     };
 
     return (
-        <Column className='border-b border-border/15 pb-4'>
+        <Column className='gap-4 border-b border-border/15 pb-4'>
             <View>
-                <Row className='items-start justify-between gap-4'>
+                <Row className='gap-4 items-start justify-between'>
                     <Pressable
                         onPress={handlePreviousDay}
                         disabled={resolvedSelectedDayIndex <= 0}
@@ -88,7 +88,7 @@ const OperatorDayNavigation = ({ gameId, ownerUserId, selectedDayIndex: controll
                         </FontText>
                     </Pressable>
 
-                    <Column className='flex-1 items-center pt-1' gap={1}>
+                    <Column className='gap-1 flex-1 items-center pt-1'>
                         <FontText weight='medium' className='text-center'>
                             {selectedDayRangeLabel || 'Select a day'}
                         </FontText>

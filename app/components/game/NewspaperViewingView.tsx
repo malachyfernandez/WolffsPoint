@@ -34,7 +34,7 @@ const NewspaperViewingView = ({ dayIndex, gameId, ownerUserId }: NewspaperViewin
 
     if (isLoading) {
         return (
-            <Column className='items-center justify-center py-24'>
+            <Column className='gap-4 items-center justify-center py-24'>
                 <LoadingText text='Loading newspaper' />
             </Column>
         );
@@ -51,16 +51,15 @@ const NewspaperViewingView = ({ dayIndex, gameId, ownerUserId }: NewspaperViewin
     return (
         <ScrollShadow LinearGradientComponent={LinearGradient} className='w-full'>
             <ScrollView horizontal={true} className='w-full'>
-                <Column gap={4} className='w-[950px]'>
+                <Column className='gap-4 w-[950px]'>
                 <View className='items-center justify-center px-8'>
                 <PressLogo width="100%" />
                 </View>
-                    <Row gap={4} className='w-full p-4'>
+                    <Row className='gap-4 w-full p-4'>
                         {newspaperColumns.map((columnMarkdown, columnIndex) => (
                             <Column
                                 key={columnIndex}
-                                gap={4}
-                                className='flex-1 shrink'
+                                className='gap-4 flex-1 shrink'
                             >
                                 {columnMarkdown.trim().length > 0 ? (
                                     <MarkdownRenderer markdown={columnMarkdown} textAlign='justify' />

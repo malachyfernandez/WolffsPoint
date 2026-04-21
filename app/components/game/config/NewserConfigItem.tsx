@@ -97,7 +97,7 @@ const NewserConfigItem = ({ gameId }: NewserConfigItemProps) => {
             title='Newser'
             subtext='Assign the separate email account that owns the newspaper by default. The Newser is not part of the player list, and the operator can still take control day-by-day from the newspaper page.'
         >
-            <Column className='min-w-[280px] max-w-[360px] flex-1' gap={3}>
+            <Column className='gap-3 min-w-[280px] max-w-[360px] flex-1'>
                 <FontTextInput
                     autoCapitalize='none'
                     autoCorrect={false}
@@ -109,7 +109,7 @@ const NewserConfigItem = ({ gameId }: NewserConfigItemProps) => {
                     className='w-full rounded-xl px-3 py-3'
                 />
                 <FontText variant='subtext'>{statusText}</FontText>
-                <Row className='items-center gap-3' gap={3}>
+                <Row className='gap-3 items-center'>
                     <AppButton
                         variant='accent'
                         className='min-w-[150px]'

@@ -48,7 +48,7 @@ export function TabbedLayout({
     return (
         <Tabs value={activeTab} onValueChange={onTabChange} className='flex-1'>
             <Tabs.Content value='editing' className='flex-1'>
-                <Column gap={1}>
+                <Column className='gap-1'>
                     <TownSquareComposerToolbar
                         onBold={onBold}
                         onInput={onInput}

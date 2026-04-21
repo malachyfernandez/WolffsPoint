@@ -177,7 +177,7 @@ const YourEyesOnlyPagePLAYER = ({ gameId, currentEmail, matchingPlayer, currentP
     };
 
     return (
-        <Column className='flex-1 min-h-[760px] pb-8' gap={7}>
+        <Column className='gap-7 flex-1 min-h-[760px] pb-8'>
             <Animated.View style={contentAnimatedStyle} className='gap-4'>
                 {roleData?.aboutRole?.trim().length ? (
                     <MarkdownRenderer
@@ -186,15 +186,15 @@ const YourEyesOnlyPagePLAYER = ({ gameId, currentEmail, matchingPlayer, currentP
                         viewHeightImages={30}
                     />
                 ) : (
-                    <Column className='items-center py-6'>
+                    <Column className='gap-4 items-center py-6'>
                         <FontText variant='subtext'>The operator has not written this role&apos;s about section yet.</FontText>
                     </Column>
                 )}
             </Animated.View>
 
             <Animated.View style={contentAnimatedStyle} className='border-y border-border/15 py-5'>
-                <Column gap={5}>
-                    <Row className='items-start justify-between gap-4'>
+                <Column className='gap-5'>
+                    <Row className='gap-4 items-start justify-between'>
                         <Pressable
                             onPress={() => {
                                 if (selectedDayIndex > 0) {
@@ -210,7 +210,7 @@ const YourEyesOnlyPagePLAYER = ({ gameId, currentEmail, matchingPlayer, currentP
                             </FontText>
                         </Pressable>
 
-                        <Column className='flex-1 items-center pt-1' gap={1}>
+                        <Column className='gap-1 flex-1 items-center pt-1'>
                             <FontText weight='medium' className='text-center'>
                                 {selectedDayRangeLabel || 'Current game day'}
                             </FontText>
@@ -261,7 +261,7 @@ const YourEyesOnlyPagePLAYER = ({ gameId, currentEmail, matchingPlayer, currentP
                                 />
                             ) : (
                                 <PlaceholderCard>
-                                    <Column className='items-center' gap={3}>
+                                    <Column className='gap-3 items-center'>
                                         <Sun size={48} color='rgb(46, 41, 37)' />
                                         <FontText weight='bold' className='text-xl text-center'>
                                             Not yet released
@@ -284,7 +284,7 @@ const YourEyesOnlyPagePLAYER = ({ gameId, currentEmail, matchingPlayer, currentP
                     pointerEvents={overlayOpacity.value < 0.5 ? 'none' : 'auto'}
                 >
                     <PlaceholderCard>
-                        <Column className='items-center' gap={3}>
+                        <Column className='gap-3 items-center'>
                             <Eye size={48} color='rgb(46, 41, 37)' />
                             <FontText weight='bold' className='text-xl text-center'>
                                 Are you alone?
@@ -293,7 +293,7 @@ const YourEyesOnlyPagePLAYER = ({ gameId, currentEmail, matchingPlayer, currentP
                                 We don&apos;t want anyone peaking!
                             </FontText>
                         </Column>
-                        <Row className='justify-center'>
+                        <Row className='gap-4 justify-center'>
                             <AppButton variant='accent' className='w-44' onPress={handleConfirmAlone}>
                                 <FontText weight='medium' color='white'>I am alone</FontText>
                             </AppButton>

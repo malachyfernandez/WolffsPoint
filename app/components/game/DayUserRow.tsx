@@ -77,8 +77,8 @@ const DayUserRow = ({ user, index, isLast, dayNumber, setVoteValue, setActionVal
 
 
     return (
-        <Row gap={0} className={` h-12 w-min ${isEditing ? 'z-50' : ''}`}>
-            <Column className={`h-full border border-subtle-border items-center justify-center z-10 ${isLast ? 'rounded-bl-lg' : ''}`} style={{ width: dayBaseColumnWidths.vote }}>
+        <Row className={`gap-0 h-12 w-min ${isEditing ? 'z-50' : ''}`}>
+            <Column className={`gap-4 h-full border border-subtle-border items-center justify-center z-10 ${isLast ? 'rounded-bl-lg' : ''}`} style={{ width: dayBaseColumnWidths.vote }}>
                 <Pressable onPress={handleVotePress} className="w-full h-full items-center justify-center px-1">
                     <FontText
                         weight="medium"
@@ -89,7 +89,7 @@ const DayUserRow = ({ user, index, isLast, dayNumber, setVoteValue, setActionVal
                     </FontText>
                 </Pressable>
             </Column>
-            <Column gap={0} className={`h-full border border-subtle-border items-center justify-center z-20`} style={{ width: dayBaseColumnWidths.action }}>
+            <Column className={`gap-0 h-full border border-subtle-border items-center justify-center z-20`} style={{ width: dayBaseColumnWidths.action }}>
                 <Pressable onPress={handleActionPress} className="w-full h-full items-center justify-center px-1">
                     <View style={{ width: dayBaseColumnWidths.action - 8 }}>
                         <ActionPills actionText={getPlayerActionSummary(dayData.action)} />
@@ -116,7 +116,7 @@ const DayUserRow = ({ user, index, isLast, dayNumber, setVoteValue, setActionVal
                             hasMounted.current ? FadeOutUp.duration(100).easing(Easing.ease) : undefined
                         }
                     >
-                        <Column className={`h-full border border-subtle-border items-center justify-center ${isLast && isLastVisibleColumn ? 'rounded-br-lg' : ''} `} style={{ width: columnWidth }}>
+                        <Column className={`gap-4 h-full border border-subtle-border items-center justify-center ${isLast && isLastVisibleColumn ? 'rounded-br-lg' : ''}`} style={{ width: columnWidth }}>
                             <InlineEditableText
                                 value={column}
                                 onChange={(newValue) => setExtraColumnValue?.(index, columnIndex, newValue)}

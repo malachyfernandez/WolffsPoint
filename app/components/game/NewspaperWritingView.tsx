@@ -97,18 +97,17 @@ const NewspaperWritingView = ({ gameId }: NewspaperWritingViewProps) => {
         <>
             <ScrollShadow LinearGradientComponent={LinearGradient} className='w-full'>
                 <ScrollView horizontal={true} className='w-full'>
-                    <Column gap={4} className='w-[950px]'>
+                    <Column className='gap-4 w-[950px]'>
                         <View className='items-center justify-center px-8'>
                             <PressLogo width="100%" />
                         </View>
                         <NewspaperPageHeader onAddColumn={addColumn} />
                         <View className='w-full'>
-                            <Row gap={0} className='w-full rounded-xl border-2 border-border items-stretch overflow-hidden'>
+                            <Row className='gap-0 w-full rounded-xl border-2 border-border items-stretch overflow-hidden'>
                                 {newspaperColumns.map((columnMarkdown, columnIndex) => (
                                     <Column
                                         key={columnIndex}
-                                        gap={0}
-                                        className={`flex-1 shrink bg-background ${columnIndex !== newspaperColumns.length - 1 ? 'border-r border-border' : ''}`}
+                                        className={`gap-0 flex-1 shrink bg-background ${columnIndex !== newspaperColumns.length - 1 ? 'border-r border-border' : ''}`}
                                     >
                                         <NewspaperColumnHeader
                                             columnIndex={columnIndex}
@@ -116,8 +115,8 @@ const NewspaperWritingView = ({ gameId }: NewspaperWritingViewProps) => {
                                         />
 
                                         <Pressable className='flex-1 min-h-120 p-4 bg-inner-background' onPress={() => openColumn(columnIndex)}>
-                                            <Column className='h-full justify-between' gap={4}>
-                                                <Column gap={3}>
+                                            <Column className='gap-4 h-full justify-between'>
+                                                <Column className='gap-3'>
                                                     {columnMarkdown.trim().length > 0 ? (
                                                         <MarkdownRenderer markdown={columnMarkdown} textAlign='justify' />
                                                     ) : (

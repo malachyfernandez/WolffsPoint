@@ -406,9 +406,9 @@ const DaysTable = ({ gameId, dayNumber, dayCount, isBeingEdited, setIsBeingEdite
 
     return (
         <>
-            <Column gap={0} onLayout={onLayout} ref={tableRef}>
-                <Row gap={0}>
-                    <Column gap={0} className={`border-border border-2 rounded w-min ${className || ''}`}>
+            <Column onLayout={onLayout} ref={tableRef} className='gap-0'>
+                <Row className='gap-0'>
+                    <Column className={`gap-0 border-border border-2 rounded w-min ${className || ''}`}>
                         <DayTitleRow
                             userTableTitle={userTableTitle?.value}
                             userTableColumnVisibility={userTableColumnVisibility?.value}
@@ -445,7 +445,7 @@ const DaysTable = ({ gameId, dayNumber, dayCount, isBeingEdited, setIsBeingEdite
                             />
                         ))}
                     </Column>
-                    <Row className='w-12 h-12 bg-light items-center justify-center -z-10'>
+                    <Row className='gap-4 w-12 h-12 bg-light items-center justify-center -z-10'>
                         <AppButton variant="filled" className='h-8! w-8' onPress={UNDOABLEaddDayColumn}>
                             <FontText weight='bold' color='white' className='text-xl mt-[-0.1rem]'>+</FontText>
                         </AppButton>

@@ -65,9 +65,9 @@ const RuleBookPreviewCard = ({ gameId, onPress }: RuleBookPreviewCardProps) => {
 
     return (
         <Pressable onPress={onPress} className='w-full rounded-3xl bg-text/5 px-4 py-4'>
-            <Row className='items-start gap-3'>
+            <Row className='gap-4 items-start'>
                 
-                <Column className='flex-1' gap={1}>
+                <Column className='gap-1 flex-1'>
                     <FontText weight='medium'>Rule book</FontText>
                     <FontText variant='subtext'>{previewText}</FontText>
                     <FontText variant='subtext'>
@@ -97,9 +97,9 @@ const PhoneBookPreviewCard = ({ gameId, currentUserId, onPress }: PhoneBookPrevi
 
     return (
         <Pressable onPress={onPress} className='w-full rounded-3xl bg-text/5 px-4 py-4'>
-            <Row className='items-start gap-3'>
+            <Row className='gap-4 items-start'>
                 
-                <Column className='flex-1' gap={1}>
+                <Column className='gap-1 flex-1'>
                     <FontText weight='medium'>Phone book</FontText>
                     <FontText variant='subtext'>
                         {playerCount} player{playerCount === 1 ? '' : 's'} in the game
@@ -119,14 +119,14 @@ const ConfigPageOPERATOR = ({ gameId, currentUserId }: ConfigPageOPERATORProps) 
     const [activeScreen, setActiveScreen] = useState<ConfigPageScreenState>('config');
 
     return (
-        <Column className='flex-1 min-h-[760px] p-4' gap={0}>
+        <Column className='gap-0 flex-1 min-h-[760px] p-4'>
             <LayoutStateAnimatedView.Container stateVar={activeScreen} className='flex-1'>
                 <LayoutStateAnimatedView.Option page={1} stateValue='config'>
-                    <Column className='pb-6' gap={6}>
+                    <Column className='gap-6 pb-6'>
                         <RuleBookPreviewCard gameId={gameId} onPress={() => setActiveScreen('ruleBook')} />
                         <PhoneBookPreviewCard gameId={gameId} currentUserId={currentUserId} onPress={() => setActiveScreen('phoneBook')} />
 
-                        <Column className='border-y border-border/15' gap={0}>
+                        <Column className='gap-0 border-y border-border/15'>
                             <ActionDeadlineConfigItem gameId={gameId} />
                             <VoteDeadlineConfigItem gameId={gameId} />
                             <WakeUpTimeConfigItem gameId={gameId} />

@@ -1,9 +1,9 @@
 import React, { PropsWithChildren } from 'react';
 import { View, ViewStyle, Text } from 'react-native';
+import { mergeGapStyle } from './gapStyle';
 
 interface RowProps extends PropsWithChildren {
     className?: string;
-    gap?: number;
     pointerEvents?: 'none' | 'auto' | 'box-none' | 'box-only';
     onLayout?: (event: any) => void;
     style?: ViewStyle;
@@ -24,9 +24,9 @@ const normalizeChildren = (children: React.ReactNode) => {
     });
 };
 
-const Row = ({ children, className, gap = 4, pointerEvents, onLayout, style }: RowProps) => {
+const Row = ({ children, className, pointerEvents, onLayout, style }: RowProps) => {
     return (
-        <View className={`flex-row ${className}`} style={{ gap: gap * 4, ...style }} pointerEvents={pointerEvents} onLayout={onLayout}>
+        <View className={`flex-row ${className}`} style={mergeGapStyle(className, style)} pointerEvents={pointerEvents} onLayout={onLayout}>
             {normalizeChildren(children)}
         </View>
     );

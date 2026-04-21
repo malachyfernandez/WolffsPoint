@@ -17,7 +17,7 @@ export function TitleInputSection({
     onChangeText,
 }: TitleInputSectionProps) {
     return (
-        <Column gap={1}>
+        <Column className='gap-1'>
             <FontText weight='medium'>{label}</FontText>
             <FontTextInput
                 className='w-full rounded-xl border border-subtle-border px-4 py-3'

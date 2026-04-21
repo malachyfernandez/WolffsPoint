@@ -71,8 +71,8 @@ const FontTimeInput = ({ value = '08:00', onChangeText, className = '' }: FontTi
     const timeParts = useMemo(() => getTimeParts(value), [value]);
 
     return (
-        <Column className={className} gap={2}>
-            <Row className='items-center gap-2'>
+        <Column className={`gap-2 ${className ?? ''}`.trim()}>
+            <Row className='gap-4 items-center'>
                 <AppDropdown
                     options={HOUR_OPTIONS}
                     value={timeParts.hour12}
