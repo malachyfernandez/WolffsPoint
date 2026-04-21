@@ -13,6 +13,7 @@ import { ToastProvider } from '../contexts/ToastContext';
 import { useGlobalRateLimitMonitor } from '../hooks/useRateLimitMonitor';
 import { GenerationProvider } from '../contexts/GenerationContext';
 import { WebDropdownProvider } from '../contexts/WebDropdownProvider';
+import { useEffect } from "react";
 import "../global.css";
 
 const convex = new ConvexReactClient(process.env.EXPO_PUBLIC_CONVEX_URL!);
@@ -24,12 +25,69 @@ function GlobalRateLimitMonitor() {
   return null;
 }
 
+function WebThemeColorSync() {
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+
+    const themeColor = getComputedStyle(document.documentElement)
+      .getPropertyValue("--color-outer-background")
+      .trim() || "rgb(30, 30, 30)";
+
+    const html = document.documentElement;
+    const body = document.body;
+    const previousHtmlBackgroundColor = html.style.backgroundColor;
+    const previousBodyBackgroundColor = body.style.backgroundColor;
+    const previousColorScheme = html.style.colorScheme;
+
+    html.style.backgroundColor = themeColor;
+    body.style.backgroundColor = themeColor;
+    html.style.colorScheme = "dark";
+
+    const upsertMeta = (name: string, content: string) => {
+      let meta = document.querySelector(`meta[name="${name}"]`) as HTMLMetaElement | null;
+      const created = !meta;
+      const previousContent = meta?.content;
+
+      if (!meta) {
+        meta = document.createElement("meta");
+        meta.name = name;
+        document.head.appendChild(meta);
+      }
+
+      meta.content = content;
+
+      return () => {
+        if (!meta) return;
+        if (created) {
+          meta.remove();
+          return;
+        }
+        meta.content = previousContent ?? "";
+      };
+    };
+
+    const restoreThemeColor = upsertMeta("theme-color", themeColor);
+    const restoreAppleStatusBar = upsertMeta("apple-mobile-web-app-status-bar-style", "black-translucent");
+
+    return () => {
+      restoreThemeColor();
+      restoreAppleStatusBar();
+      html.style.backgroundColor = previousHtmlBackgroundColor;
+      body.style.backgroundColor = previousBodyBackgroundColor;
+      html.style.colorScheme = previousColorScheme;
+    };
+  }, []);
+
+  return null;
+}
+
 export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <GenerationProvider>
         <ToastProvider>
           <GlobalRateLimitMonitor />
+          <WebThemeColorSync />
           <HeroUINativeProvider
             config={{
               devInfo: {
