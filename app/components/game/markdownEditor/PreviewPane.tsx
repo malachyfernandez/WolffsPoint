@@ -23,7 +23,7 @@ export function PreviewPane({
 }: PreviewPaneProps) {
     return (
         <ScrollShadow LinearGradientComponent={LinearGradient} className={className || 'flex-1'}>
-            <ScrollView className='h-[40vh] max-h-[40vh] rounded-[24px] py-4'>
+            <ScrollView className='flex-1 rounded-[24px] py-4'>
                 <TownSquareComposerPreviewPane
                     includeTitle={includeTitle}
                     markdown={markdown}

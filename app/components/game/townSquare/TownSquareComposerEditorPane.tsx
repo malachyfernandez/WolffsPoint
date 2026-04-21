@@ -1,5 +1,5 @@
 import React from 'react';
-import { TextInput } from 'react-native';
+import { TextInput, View } from 'react-native';
 import Column from '../../layout/Column';
 import FontText from '../../ui/text/FontText';
 import { SelectionRange } from './townSquareUtils';
@@ -12,11 +12,17 @@ interface TownSquareComposerEditorPaneProps {
 
 const TownSquareComposerEditorPane = ({ onBodyChange, onSelectionChange, value }: TownSquareComposerEditorPaneProps) => {
     return (
-        <Column className='gap-2 min-w-0'>
-            {/* <FontText weight='medium'>Body</FontText> */}
+        // <View className='bg-l h-full'>
+        //         <FontText weight='medium'>Body</FontText>
+        //     </View>
+        <Column className='gap-2 flex-1 grow min-w-0'>
+            {/* <View>
+                <FontText weight='medium'>Body</FontText>
+            </View> */}
+            
             <TextInput
                 multiline={true}
-                className='min-h-[50vh] min-w-0 rounded-[24px] bg-text/10 overflow-hidden p-4 text-base text-text'
+                className='min-w-0 min-h-[50vh] rounded-[24px] bg-text/10 overflow-hidden p-4 text-base text-text'
                 onChangeText={onBodyChange}
                 onSelectionChange={(event) => onSelectionChange(event.nativeEvent.selection)}
                 placeholder='Write the thread the way you want it to look.'

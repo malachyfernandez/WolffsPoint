@@ -180,7 +180,7 @@ const MarkdownEditorDialog = ({
                 </ConvexDialog.Trigger>
                 <ConvexDialog.Portal>
                     <ConvexDialog.Overlay />
-                    <ConvexDialog.Content className='max-w-6xl p-1'>
+                    <ConvexDialog.Content className='h-[80vh]'>
                         <CloseButton onPress={handleAttemptClose} />
                         <DialogHeader text={title} subtext={dialogSubtext} />
                         <MainContent

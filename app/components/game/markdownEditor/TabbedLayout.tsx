@@ -46,7 +46,7 @@ export function TabbedLayout({
     onMore,
 }: TabbedLayoutProps) {
     return (
-        <Tabs value={activeTab} onValueChange={onTabChange} className='flex-1'>
+        <Tabs value={activeTab} onValueChange={onTabChange} className='flex-1 h-full'>
             <Tabs.Content value='editing' className='flex-1'>
                 <Column className='gap-1'>
                     <TownSquareComposerToolbar
@@ -60,7 +60,7 @@ export function TabbedLayout({
                     />
                 </Column>
                 <ScrollShadow LinearGradientComponent={LinearGradient} className='flex-1'>
-                    <ScrollView className='flex-1 rounded-[24px] py-4'>
+                    <ScrollView className='flex-1 h-full rounded-[24px] py-4'>
                         <TownSquareComposerEditorPane
                             onBodyChange={onBodyChange}
                             onSelectionChange={onSelectionChange}
@@ -72,7 +72,7 @@ export function TabbedLayout({
 
             <Tabs.Content value='preview' className='flex-1'>
                 <ScrollShadow LinearGradientComponent={LinearGradient} className='flex-1'>
-                    <ScrollView className='h-[40vh] max-h-[40vh] rounded-[24px] py-4'>
+                    <ScrollView className='flex-1 rounded-[24px] py-4'>
                         <TownSquareComposerPreviewPane
                             includeTitle={includeTitle}
                             markdown={draftBody}

@@ -52,7 +52,7 @@ export function MainContent({
     onMore,
 }: MainContentProps) {
     return (
-        <Column className='gap-4 flex-1 -mx-3 sm:mx-0 pt-3 max-h-[600px] h-[60vh]'>
+        <Column className='gap-4 flex-1 min-h-0 -mx-3 sm:mx-0 pt-3'>
             {includeTitle ? (
                 <TitleInputSection
                     label={titleInputLabel}
