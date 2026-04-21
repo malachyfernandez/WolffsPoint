@@ -70,16 +70,19 @@ const UrlInputControls = ({
             entering={FadeIn.duration(100)}
             exiting={FadeOut.duration(100)}
             key="upload-buttons"
+            className='w-full items-center'
         >
-            <ImageUploadButtonRow
-                onToggleUrlInput={onToggleUrlInput}
-                onImageUpload={onImageUpload}
-                urlButtonText="Use URL"
-                uploadButtonText={hasImage ? "Change Image" : "Upload Image"}
-                uploadButtonVariant="filled"
-                urlButtonClassName="w-36 h-12"
-                uploadButtonClassName="w-36 h-12"
-            />
+            <Row className='w-full justify-center'>
+                <ImageUploadButtonRow
+                    onToggleUrlInput={onToggleUrlInput}
+                    onImageUpload={onImageUpload}
+                    urlButtonText="Use URL"
+                    uploadButtonText={hasImage ? "Change Image" : "Upload Image"}
+                    uploadButtonVariant="filled"
+                    urlButtonClassName="w-32 max-w-full shrink h-12"
+                    uploadButtonClassName="w-32 max-w-full shrink h-12"
+                />
+            </Row>
         </Animated.View>
     );
 };

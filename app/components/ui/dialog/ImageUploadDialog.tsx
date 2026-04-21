@@ -121,7 +121,7 @@ const ImageUploadDialog = ({
                             {/* Preview Area */}
                             <Column className='gap-4 w-full h-56 overflow-hidden rounded-lg border border-subtle-border bg-background items-center justify-center relative'>
                                 <ImagePreview imageUrl={uploadedImageUrl} />
-                                <View className='absolute top-2 items-center w-full px-4'>
+                                <View className='absolute top-2 items-center w-full sm:px-4'>
                                     <UrlInputControls
                                         showUrlInput={showUrlInput}
                                         urlInput={urlInput}
@@ -137,7 +137,7 @@ const ImageUploadDialog = ({
                             </Column>
                         </Column>
 
-                        <Row className='gap-2 items-center w-full bg-accent justify-center'>
+                        <Row className='gap-2 items-center w-full justify-center'>
                             <DisableableButton
                                 isEnabled={!!uploadedImageUrl}
                                 enabledText="Select Image"

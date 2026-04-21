@@ -27,7 +27,7 @@ const ImageUploadButtonRow = ({
     urlButtonClassName = 'w-24 h-8',
 }: ImageUploadButtonRowProps) => {
     return (
-        <Row className='gap-4'>
+        <Row className='gap-4 w-full items-center justify-center'>
             {showUrlButton && (
                 <AppButton 
                     className={urlButtonClassName} 
