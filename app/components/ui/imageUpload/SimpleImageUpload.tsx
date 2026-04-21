@@ -6,6 +6,7 @@ import { api } from '../../../../convex/_generated/api';
 import AppButton from '../buttons/AppButton';
 import FontText from '../text/FontText';
 import { prepareImageForUpload, prepareWebFileForUpload, UploadThingReactNativeFile } from '../../../../utils/imageCompression';
+import { useToast } from '../../../../contexts/ToastContext';
 
 type UrlSetter = (url: string) => void;
 
@@ -45,12 +46,7 @@ const withTimeout = async <T,>(promise: Promise<T>, message: string, timeoutMs: 
     ]);
 };
 
-const getUploadErrorMessage = (error: unknown) => {
-    if (error instanceof Error && error.message.trim()) {
-        return error.message;
-    }
-    return 'Image upload failed.';
-};
+const UPLOAD_FAILURE_MESSAGE = 'Image Upload Failed. If obscure file type, use .JPG or .PNG for best results';
 
 const pickWebImageFile = async () => {
     if (typeof document === 'undefined' || typeof window === 'undefined') {
@@ -131,12 +127,11 @@ const SimpleImageUpload = ({
     variant = 'accent',
 }: SimpleImageUploadProps) => {
     const [isUploading, setIsUploading] = useState(false);
-    const [errorMessage, setErrorMessage] = useState('');
+    const { showToast } = useToast();
     const generatePublicImageUploadUrl = useAction(api.uploadthing.generatePublicImageUploadUrl);
 
     const handleUpload = async () => {
         try {
-            setErrorMessage('');
 
             if (Platform.OS === 'web') {
                 const selectedFile = await pickWebImageFile();
@@ -173,7 +168,7 @@ const SimpleImageUpload = ({
             const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
             if (!permission.granted) {
-                setErrorMessage('Media library permission is required to upload an image.');
+                showToast(UPLOAD_FAILURE_MESSAGE);
                 return;
             }
 
@@ -210,7 +205,7 @@ const SimpleImageUpload = ({
 
             onUpload(publicUrl);
         } catch (error) {
-            setErrorMessage(getUploadErrorMessage(error));
+            showToast(UPLOAD_FAILURE_MESSAGE);
         } finally {
             setIsUploading(false);
         }

@@ -47,19 +47,21 @@ const UrlInputControls = ({
                 {urlError ? (
                     <FontText color='red' className='mb-2 text-sm'>{urlError}</FontText>
                 ) : null}
-                <Row className='gap-4'>
+                <Row className='gap-4 flex-wrap'>
                     <FontTextInput
                         placeholder='Enter image URL here...'
                         className='flex-1 border border-subtle-border p-2 bg-inner-background'
                         value={urlInput}
                         onChangeText={onUrlInputChange}
                     />
-                    <AppButton className='w-16 h-8' variant='accent' onPress={onUrlSubmit}>
-                        <FontText color='white' weight='medium'>Add</FontText>
-                    </AppButton>
-                    <AppButton className='w-16 h-8' variant='outline' onPress={onCancelUrlInput}>
-                        <FontText color='black' weight='medium'>✕</FontText>
-                    </AppButton>
+                    <Row className='gap-2'>
+                        <AppButton className='w-16 h-8' variant='filled' onPress={onUrlSubmit}>
+                            <FontText color='white' weight='medium'>Add</FontText>
+                        </AppButton>
+                        <AppButton className='w-16 h-8' variant='outline' onPress={onCancelUrlInput}>
+                            <FontText color='black' weight='medium'>✕</FontText>
+                        </AppButton>
+                    </Row>
                 </Row>
             </Animated.View>
         );

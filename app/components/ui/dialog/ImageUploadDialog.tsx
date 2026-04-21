@@ -9,6 +9,7 @@ import DialogHeader from './DialogHeader';
 import DisableableButton from '../buttons/DisableableButton';
 import ImagePreview from './ImagePreview';
 import UrlInputControls from './UrlInputControls';
+import { useToast } from '../../../../contexts/ToastContext';
 
 interface ImageUploadDialogProps {
     isOpen: boolean;
@@ -31,6 +32,7 @@ const ImageUploadDialog = ({
     const [showUrlInput, setShowUrlInput] = useState(false);
     const [urlInput, setUrlInput] = useState('');
     const [urlError, setUrlError] = useState('');
+    const { showToast } = useToast();
 
     const handleOpenChange = (open: boolean) => {
         if (!open) {
@@ -81,6 +83,7 @@ const ImageUploadDialog = ({
         if (trimmedUrl) {
             if (!isValidImageUrl(trimmedUrl)) {
                 setUrlError('Please enter a valid image URL (jpg, png, gif, webp, etc.)');
+                showToast('Image Upload Failed. If obscure file type, use .JPG or .PNG for best results');
                 return;
             }
             setUrlError('');
