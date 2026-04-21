@@ -27,7 +27,7 @@ const NightlyCertificationDialog = ({ isOpen, onOpenChange, users, submissionsBy
             <ConvexDialog.Portal>
                 <ConvexDialog.Overlay />
                 <ConvexDialog.Content className='p-1 h-[85vh] max-w-5xl'>
-                    <ConvexDialog.Close iconProps={{ color: 'rgb(246, 238, 219)' }} className="w-10 h-10 bg-accent-hover absolute right-4 top-4 z-10" />
+                    <ConvexDialog.Close iconProps={{ color: 'rgb(246, 238, 219)' }} className="w-10 h-10 bg-text-inverted/10 hover:bg-text-inverted/15 rounded-full absolute right-0 top-0 z-10" />
                     <DialogHeader text='Nightly submissions' subtext='Review what each player submitted before you certify it into the operator table.' />
                     <ScrollView className='sm:p-4 pt-2 pb-4'>
                         <Column className='gap-2'>

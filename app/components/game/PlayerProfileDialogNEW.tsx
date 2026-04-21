@@ -198,7 +198,7 @@ const PlayerProfileDialogNEW = ({
                 <ConvexDialog.Portal>
                     <ConvexDialog.Overlay />
                     <ConvexDialog.Content className='max-w-6xl max-h-[72vh]'>
-                        <Pressable onPress={handleAttemptClose} className='absolute right-4 top-4 z-10 h-10 w-10 bg-accent-hover rounded-full items-center justify-center'>
+                        <Pressable onPress={handleAttemptClose} className='absolute right-0 top-0 z-10 h-10 w-10 bg-text-inverted/10 hover:bg-text-inverted/15 rounded-full items-center justify-center'>
                             <FontText color='rgb(246, 238, 219)' weight='bold' className='text-xl'>×</FontText>
                         </Pressable>
                         <DialogHeader text={title} subtext='This is what everyone sees' />
@@ -433,7 +433,7 @@ const SocialsDialog = ({ isOpen, onOpenChange, onSave, initialSocials }: Socials
             <ConvexDialog.Portal>
                 <ConvexDialog.Overlay />
                 <ConvexDialog.Content className='p-1 max-w-5xl max-h-[80vh]'>
-                    <Pressable onPress={handleAttemptClose} className='absolute right-4 top-4 z-10 h-10 w-10 bg-accent-hover rounded-full items-center justify-center'>
+                    <Pressable onPress={handleAttemptClose} className='absolute right-0 top-0 z-10 h-10 w-10 bg-text-inverted/10 hover:bg-text-inverted/15 rounded-full items-center justify-center'>
                         <FontText color='rgb(246, 238, 219)' weight='bold' className='text-xl'>×</FontText>
                     </Pressable>
                     <DialogHeader text='Socials' />

@@ -32,7 +32,7 @@ const ColumnActionsDialog = ({ isOpen, onOpenChange, title, selectedSize, onSele
             <ConvexDialog.Portal>
                 <ConvexDialog.Overlay />
                 <ConvexDialog.Content className='max-w-md p-1'>
-                    <ConvexDialog.Close iconProps={{ color: 'rgb(246, 238, 219)' }} className='absolute right-4 top-4 z-10 h-10 w-10 bg-accent-hover' />
+                    <ConvexDialog.Close iconProps={{ color: 'rgb(246, 238, 219)' }} className='absolute right-0 top-0 z-10 h-10 w-10 bg-text-inverted/10 hover:bg-text-inverted/15 rounded-full' />
                     <DialogHeader text={title} />
                     <Column className='gap-3 p-5 pt-4'>
                         {sizeOptions.map((option) => (
