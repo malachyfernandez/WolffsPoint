@@ -119,7 +119,7 @@ const ConfigPageOPERATOR = ({ gameId, currentUserId }: ConfigPageOPERATORProps) 
     const [activeScreen, setActiveScreen] = useState<ConfigPageScreenState>('config');
 
     return (
-        <Column className='gap-0 flex-1 min-h-[760px] p-4'>
+        <Column className='gap-0 flex-1 min-h-[760px] py-3 sm:px-4'>
             <LayoutStateAnimatedView.Container stateVar={activeScreen} className='flex-1'>
                 <LayoutStateAnimatedView.Option page={1} stateValue='config'>
                     <Column className='gap-6 pb-6'>

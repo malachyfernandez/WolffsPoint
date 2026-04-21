@@ -29,7 +29,7 @@ const NightlyCertificationDialog = ({ isOpen, onOpenChange, users, submissionsBy
                 <ConvexDialog.Content className='p-1 h-[85vh] max-w-5xl'>
                     <ConvexDialog.Close iconProps={{ color: 'rgb(246, 238, 219)' }} className="w-10 h-10 bg-accent-hover absolute right-4 top-4 z-10" />
                     <DialogHeader text='Nightly submissions' subtext='Review what each player submitted before you certify it into the operator table.' />
-                    <ScrollView className='p-4'>
+                    <ScrollView className='sm:p-4 pt-2 pb-4'>
                         <Column className='gap-2'>
                             <Row className='gap-4 border-b border-subtle-border pb-2'>
                                 <FontText weight='medium' className='flex-1'>Player</FontText>
@@ -48,19 +48,19 @@ const NightlyCertificationDialog = ({ isOpen, onOpenChange, users, submissionsBy
                             })}
                         </Column>
                     </ScrollView>
-                    <Row className='gap-4 justify-end px-4 pb-4'>
-                        <AppButton variant='outline' className='w-32' onPress={() => onOpenChange(false)}>
+                    <Row className='gap-4 justify-end sm:px-4 pb-4 flex-wrap'>
+                        <AppButton variant='outline' className='w-20' onPress={() => onOpenChange(false)}>
                             <FontText weight='medium'>Close</FontText>
                         </AppButton>
                         <AppButton
                             variant='black'
-                            className='w-40'
+                            className='w-36'
                             onPress={() => {
                                 onCertify();
                                 onOpenChange(false);
                             }}
                         >
-                            <FontText weight='medium' color='white'>Certify Results</FontText>
+                            <FontText weight='medium' color='white'>Add To Table</FontText>
                         </AppButton>
                     </Row>
                 </ConvexDialog.Content>

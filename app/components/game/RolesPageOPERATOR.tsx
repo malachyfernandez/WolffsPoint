@@ -80,7 +80,7 @@ const RolesPageOPERATOR = ({ currentUserId, gameId }: RolesPageOPERATORProps) =>
 
     return (
         <Animated.View entering={FadeIn.duration(300)} className='min-h-[760px]'>
-            <Column className='gap-4'>
+            <Column className='gap-4 py-3 sm:px-4'>
                 {visibleRoles.length > 0 ? (
                     <Column className='gap-4'>
                         <ScrollShadow LinearGradientComponent={LinearGradient} className='mr-1'>
@@ -90,7 +90,7 @@ const RolesPageOPERATOR = ({ currentUserId, gameId }: RolesPageOPERATORProps) =>
                                         <Row className='gap-4 h-6'>
                                             {/* spacer to align with table */}
                                         </Row>
-                                        <Row className={`gap-4 ${isRoleTableBeingEdited ? 'z-50' : '' ?? ''}`.trim()}>
+                                        <Row className={`gap-4 ${isRoleTableBeingEdited ? 'z-50' : ''}`.trim()}>
                                             <RoleTable
                                                 gameId={gameId}
                                                 doSync={doSync}
@@ -104,8 +104,8 @@ const RolesPageOPERATOR = ({ currentUserId, gameId }: RolesPageOPERATORProps) =>
                                 </Row>
                             </ScrollView>
                         </ScrollShadow>
-                        <Row className='gap-4 ml-4 -mt-6'>
-                            <AppButton variant="accent" onPress={UNDOABLEaddRole}>
+                        <Row className='gap-4 sm:ml-4 -mt-2 sm:-mt-6'>
+                            <AppButton variant="accent" className='w-full sm:w-auto' onPress={UNDOABLEaddRole}>
                                 <Row className='gap-2 items-center'>
                                     <Plus size={20} color='white' />
                                     <FontText weight='medium' color='white'>Add Role</FontText>
@@ -116,8 +116,8 @@ const RolesPageOPERATOR = ({ currentUserId, gameId }: RolesPageOPERATORProps) =>
                         </Row>
                     </Column>
                 ) : (
-                    <Row className='gap-4 items-center justify-center'>
-                        <AppButton variant="accent" onPress={UNDOABLEaddRole}>
+                    <Row className='gap-4 w-full items-center justify-center'>
+                        <AppButton variant="accent" className='w-full sm:w-auto' onPress={UNDOABLEaddRole}>
                             <Row className='gap-2 items-center'>
                                 <Plus size={20} color='white' />
                                 <FontText weight='medium' color='white'>Add Role</FontText>

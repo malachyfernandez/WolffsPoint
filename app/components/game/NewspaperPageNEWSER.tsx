@@ -189,7 +189,7 @@ const NewspaperPageNEWSER = ({ currentUserId, gameId }: NewspaperPageNEWSERProps
     }
 
     return (
-        <Column className='gap-4'>
+        <Column className='gap-4 py-3 sm:px-4'>
             <View className='mt-2 -mb-2 w-full'>
                 <OperatorDayNavigation
                     gameId={gameId}
@@ -201,7 +201,7 @@ const NewspaperPageNEWSER = ({ currentUserId, gameId }: NewspaperPageNEWSERProps
 
             <View className='relative'>
                 <View className='relative'>
-                    <Column className='gap-4 p-4'>
+                    <Column className='gap-4 px-2 py-3 sm:px-4'>
                         <Tabs value={activeTab} onValueChange={handleTabChange} variant='secondary' className='flex-1'>
                             <Tabs.List>
                                 <Tabs.Indicator />
@@ -225,7 +225,7 @@ const NewspaperPageNEWSER = ({ currentUserId, gameId }: NewspaperPageNEWSERProps
                 </View>
             </View>
 
-            <Column className='gap-4 max-w-[950px] w-full'>
+            <Column className='gap-4 max-w-[950px] w-full self-center'>
                 <View style={styles.animatedContentContainer}>
                     {leavingDayIndex != null ? (
                         <Animated.View

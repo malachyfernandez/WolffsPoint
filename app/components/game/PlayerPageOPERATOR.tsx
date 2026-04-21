@@ -95,7 +95,7 @@ const PlayerPageOPERATOR = ({ currentUserId, gameId }: PlayerPageOPERATORProps) 
 
 
                 {users.length > 0 ? (
-                    <Column className='gap-4'>
+                    <Column className='gap-4 py-3 sm:px-4'>
 
                         <ScrollShadow LinearGradientComponent={LinearGradient} className='mr-1 pt-1'>
                             {/* <Row  className='gap-4'> */}
@@ -105,7 +105,7 @@ const PlayerPageOPERATOR = ({ currentUserId, gameId }: PlayerPageOPERATORProps) 
                                         <Row className='gap-4 h-6'>
                                             {/* spacer to align with days table */}
                                         </Row>
-                                        <Row className={`gap-4 ${isPlayerTableBeingEdited ? 'z-50' : '' ?? ''}`.trim()}>
+                                        <Row className={`gap-4 ${isPlayerTableBeingEdited ? 'z-50' : ''}`.trim()}>
                                             <PlayerTable
                                                 gameId={gameId}
                                                 doSync={doSync}
@@ -123,7 +123,7 @@ const PlayerPageOPERATOR = ({ currentUserId, gameId }: PlayerPageOPERATORProps) 
                                                 gameId={gameId}
                                             />
                                         </View>
-                                        <Row className={`${isDaysTableBeingEdited ? 'z-10' : ''}gap-4 w-min max-w-min`}>
+                                        <Row className={`${isDaysTableBeingEdited ? 'z-10 ' : ''}gap-4 w-min max-w-min`}>
                                             <DaysTable
                                                 gameId={gameId}
                                                 dayNumber={selectedDayIndex.value}
@@ -152,7 +152,9 @@ const PlayerPageOPERATOR = ({ currentUserId, gameId }: PlayerPageOPERATORProps) 
                 ) : (
 
                     // <FontText>Hellow</FontText>
-                    <PlayerAddUserSection gameId={gameId} removeBottomSpace />
+                    <Column className='py-3 sm:px-4'>
+                        <PlayerAddUserSection gameId={gameId} removeBottomSpace />
+                    </Column>
                 )}
             </Animated.View>
         </>

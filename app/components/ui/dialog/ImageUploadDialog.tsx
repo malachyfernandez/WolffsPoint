@@ -137,16 +137,16 @@ const ImageUploadDialog = ({
                             </Column>
                         </Column>
 
-                        <Row className='gap-2 items-center w-full justify-center'>
+                        <Row className='gap-2 items-center w-full bg-accent justify-center'>
                             <DisableableButton
                                 isEnabled={!!uploadedImageUrl}
                                 enabledText="Select Image"
                                 disabledText="No image selected"
                                 onPress={handleSelect}
                                 enabledVariant="filled"
-                                className='w-xs h-12'
+                                className='max-w-xs w-full flex-1 h-12'
                             />
-                            <AppButton className='w-32' variant='outline' onPress={handleCancel}>
+                            <AppButton className='max-w-32 w-full flex-1' variant='outline' onPress={handleCancel}>
                                 <FontText color='black' weight='medium'>Cancel</FontText>
                             </AppButton>
                         </Row>

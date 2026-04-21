@@ -12,7 +12,7 @@ import AppButton from '../ui/buttons/AppButton';
 import Row from '../layout/Row';
 import { ScrollShadow } from 'heroui-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ScrollView, View } from 'react-native';
+import { ScrollView, View, useWindowDimensions } from 'react-native';
 import ComprehensiveDaySelector from '../ui/daySelector/ComprehensiveDaySelector';
 import NightlyCertificationDialog from './NightlyCertificationDialog';
 import { getGameScopedKey, hasPlayerActionContent } from '../../../utils/multiplayer';
@@ -25,6 +25,7 @@ interface NightlyPageOPERATORProps {
 
 const NightlyPageOPERATOR = ({ currentUserId: _currentUserId, gameId }: NightlyPageOPERATORProps) => {
     const [isCertificationDialogOpen, setIsCertificationDialogOpen] = useState(false);
+    const { width } = useWindowDimensions();
 
     // Shared user table (same as players tab)
     const [userTable, setUserTable] = useUserList<UserTableItem[]>({
@@ -181,6 +182,7 @@ const NightlyPageOPERATOR = ({ currentUserId: _currentUserId, gameId }: NightlyP
     const areAllColumnsReady = users.length === 0 || (isPlayerTableColumnsReady && isDaysTableColumnsReady);
     // Only show loading on initial load, not when syncing after
     const showLoading = !hasInitiallyLoaded || !areAllColumnsReady;
+    const showInlineReviewButton = width >= 440;
 
     return (
         <>
@@ -189,19 +191,31 @@ const NightlyPageOPERATOR = ({ currentUserId: _currentUserId, gameId }: NightlyP
                     <LoadingText text='Loading nightly data' />
                 </Column>
             )}
-            <Column className={`gap-4 min-h-[760px] ${showLoading ? 'opacity-0' : ''}`}>
+            <Column className={`gap-4 min-h-[760px] py-3 sm:px-4 ${showLoading ? 'opacity-0' : ''}`}>
             {users.length > 0 ? (
                 <Animated.View entering={FadeIn.duration(300)}>
                     <Column className='gap-4'>
-                        <Row className='gap-4 justify-between items-center mb-4'>
-                            <Column className='gap-0'>
-                                <FontText weight='medium'>Player submissions</FontText>
-                                <FontText variant='subtext'>{voteCount}/{users.length} voted, {actionCount}/{users.length} submitted actions</FontText>
+                        {showInlineReviewButton ? (
+                            <Row className='gap-4 justify-between items-center mb-4'>
+                                <Column className='gap-0 flex-1'>
+                                    <FontText weight='medium'>Player submissions</FontText>
+                                    <FontText variant='subtext'>{voteCount}/{users.length} voted, {actionCount}/{users.length} submitted actions</FontText>
+                                </Column>
+                                <AppButton variant='accent' className='w-48' onPress={() => setIsCertificationDialogOpen(true)}>
+                                    <FontText weight='medium' color='white'>Review / Certify</FontText>
+                                </AppButton>
+                            </Row>
+                        ) : (
+                            <Column className='gap-3 mb-2'>
+                                <Column className='gap-0'>
+                                    <FontText weight='medium'>Player submissions</FontText>
+                                    <FontText variant='subtext'>{voteCount}/{users.length} voted, {actionCount}/{users.length} submitted actions</FontText>
+                                </Column>
+                                <AppButton variant='accent' className='w-full' onPress={() => setIsCertificationDialogOpen(true)}>
+                                    <FontText weight='medium' color='white'>Review / Certify</FontText>
+                                </AppButton>
                             </Column>
-                            <AppButton variant='accent' className='w-48' onPress={() => setIsCertificationDialogOpen(true)}>
-                                <FontText weight='medium' color='white'>Review / Certify</FontText>
-                            </AppButton>
-                        </Row>
+                        )}
 
                         <ScrollShadow LinearGradientComponent={LinearGradient} className='mr-1 pt-1'>
                             <ScrollView horizontal={true} className='px-1 py-5'>
@@ -210,7 +224,7 @@ const NightlyPageOPERATOR = ({ currentUserId: _currentUserId, gameId }: NightlyP
                                         <Row className='gap-4 h-6'>
                                             {/* spacer to align with days table */}
                                         </Row>
-                                        <Row className={`gap-4 ${isPlayerTableBeingEdited ? 'z-50' : '' ?? ''}`.trim()}>
+                                        <Row className={`gap-4 ${isPlayerTableBeingEdited ? 'z-50' : ''}`.trim()}>
                                             <NightlyPlayerTable
                                                 gameId={gameId}
                                                 doSync={doSync}
@@ -231,7 +245,7 @@ const NightlyPageOPERATOR = ({ currentUserId: _currentUserId, gameId }: NightlyP
                                                 showInitialSetupDialog={true}
                                             />
                                         </View>
-                                        <Row className={`${isDaysTableBeingEdited ? 'z-10' : ''}gap-4 w-min max-w-min`}>
+                                        <Row className={`${isDaysTableBeingEdited ? 'z-10 ' : ''}gap-4 w-min max-w-min`}>
                                             <NightlyDaysTable
                                                 gameId={gameId}
                                                 dayNumber={selectedDayIndex.value}
