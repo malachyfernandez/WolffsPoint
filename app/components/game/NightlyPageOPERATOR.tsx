@@ -219,7 +219,7 @@ const NightlyPageOPERATOR = ({ currentUserId: _currentUserId, gameId }: NightlyP
                         <ShadowScrollView direction='horizontal' className='mr-1 pt-1' scrollViewClassName='px-1 py-5' horizontal>
                                 <Row className='gap-4'>
                                     <Column className='gap-1'>
-                                        <Row className='gap-4 h-6'>
+                                        <Row className='gap-4 h-9'>
                                             {/* spacer to align with days table */}
                                         </Row>
                                         <Row className={`gap-4 ${isPlayerTableBeingEdited ? 'z-50' : ''}`.trim()}>
@@ -235,7 +235,7 @@ const NightlyPageOPERATOR = ({ currentUserId: _currentUserId, gameId }: NightlyP
                                             />
                                         </Row>
                                     </Column>
-                                    <Column className='gap-1'>
+                                    <Column className='gap-0'>
                                         <View style={{ width: daysTableWidth }}>
                                             <ComprehensiveDaySelector
                                                 gameId={gameId}
