@@ -20,6 +20,11 @@ interface UserData {
     userId: string;
 }
 
+interface CustomUserInfo {
+    name?: string;
+    photoUrl?: string;
+}
+
 interface PlayerAccessGateProps {
     gameId: string;
     currentUserId: string;
@@ -50,6 +55,12 @@ const PlayerAccessGate = ({ gameId, currentUserId, children }: PlayerAccessGateP
     const matchingPlayer = useMemo(() => {
         return userTable.find((player) => player.email.trim().toLowerCase() === currentEmail.trim().toLowerCase());
     }, [currentEmail, userTable]);
+
+    const [customUserInfo, setCustomUserInfo] = useUserVariable<CustomUserInfo>({
+        key: "customUserInfo",
+        defaultValue: { name: "", photoUrl: "" },
+        privacy: "PUBLIC",
+    });
 
     const [profile, setProfile] = useUserVariable<PlayerProfile>({
         key: getGameScopedKey('playerProfile', gameId),
@@ -82,8 +93,9 @@ const PlayerAccessGate = ({ gameId, currentUserId, children }: PlayerAccessGateP
         const userDataLoaded = !userData.state.isSyncing;
         const userTableLoaded = !isOperatorLoading && !isUserTableLoading;
         const profileLoaded = !profile.state.isSyncing;
-        return userDataLoaded && userTableLoaded && profileLoaded;
-    }, [userData.state.isSyncing, isOperatorLoading, isUserTableLoading, profile.state.isSyncing]);
+        const customUserInfoLoaded = !customUserInfo.state.isSyncing;
+        return userDataLoaded && userTableLoaded && profileLoaded && customUserInfoLoaded;
+    }, [userData.state.isSyncing, isOperatorLoading, isUserTableLoading, profile.state.isSyncing, customUserInfo.state.isSyncing]);
 
     // Show loading state while syncing for the first time
     if (!hasLoaded) {
@@ -134,6 +146,8 @@ const PlayerAccessGate = ({ gameId, currentUserId, children }: PlayerAccessGateP
                     onSave={setProfile}
                     title='Claim your player profile'
                     saveLabel='Enter game'
+                    operatorRealName={matchingPlayer.realName}
+                    onSaveCustomUserInfo={setCustomUserInfo}
                 />
             </Animated.View>
         );

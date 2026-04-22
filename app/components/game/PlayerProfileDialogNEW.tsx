@@ -34,6 +34,8 @@ interface PlayerProfileDialogNEWProps {
     onSave: (profile: PlayerProfile) => void;
     title: string;
     saveLabel?: string;
+    operatorRealName?: string;
+    onSaveCustomUserInfo?: (info: { name: string }) => void;
 }
 
 interface SocialsData {
@@ -71,9 +73,12 @@ const PlayerProfileDialogNEW = ({
     onSave,
     title,
     saveLabel = 'Save profile',
+    operatorRealName,
+    onSaveCustomUserInfo,
 }: PlayerProfileDialogNEWProps) => {
     // Main profile state
     const [draft, setDraft] = useState<PlayerProfile>(initialValue);
+    const [realName, setRealName] = useState(operatorRealName || '');
     const [bioSelection, setBioSelection] = useState<SelectionRange>(emptySelection);
     const [isSocialsDialogOpen, setIsSocialsDialogOpen] = useState(false);
     const [isMoreDialogOpen, setIsMoreDialogOpen] = useState(false);
@@ -85,9 +90,9 @@ const PlayerProfileDialogNEW = ({
 
     useEffect(() => {
         if (isOpen) {
-            const hasValueChanged = previousInitialValue === null || 
+            const hasValueChanged = previousInitialValue === null ||
                 JSON.stringify(initialValue) !== JSON.stringify(previousInitialValue);
-            
+
             if (hasValueChanged) {
                 setDraft(initialValue);
                 setBioSelection(emptySelection);
@@ -98,8 +103,11 @@ const PlayerProfileDialogNEW = ({
                 setIsLeaveConfirmDialogOpen(false);
                 setPreviousInitialValue(initialValue);
             }
+            if (operatorRealName !== undefined) {
+                setRealName(operatorRealName);
+            }
         }
-    }, [initialValue, isOpen, previousInitialValue]);
+    }, [initialValue, isOpen, previousInitialValue, operatorRealName]);
 
     // Validation
     const canSave = useMemo(() => draft.inGameName.trim().length > 0, [draft.inGameName]);
@@ -175,6 +183,9 @@ const PlayerProfileDialogNEW = ({
             inGameName: draft.inGameName.trim(),
             claimedAt: draft.claimedAt || Date.now(),
         });
+        if (onSaveCustomUserInfo) {
+            onSaveCustomUserInfo({ name: realName.trim() });
+        }
         onOpenChange(false);
     };
 
@@ -205,6 +216,17 @@ const PlayerProfileDialogNEW = ({
                         <Column className='gap-4 flex-1 max-h-[70vh] min-h-0 sm:pt-5 -mx-5'>
                             <ShadowScrollView className='flex-1 min-h-0' scrollViewClassName='flex-1'>
                                 <Column className='gap-6 px-2 sm:px-5 pb-2'>
+                                        {operatorRealName !== undefined && (
+                                            <Column className='gap-1'>
+                                                <FontText weight='medium'>Real name</FontText>
+                                                <FontTextInput
+                                                    className='w-full rounded-xl border border-subtle-border px-4 py-3'
+                                                    placeholder='The name you go by'
+                                                    value={realName}
+                                                    onChangeText={setRealName}
+                                                />
+                                            </Column>
+                                        )}
                                         <Column className='gap-1'>
                                             <FontText weight='medium'>In-game name</FontText>
                                             <FontTextInput
