@@ -8,9 +8,10 @@ interface GuildedFrameProps {
     contentClassName?: string;
     backgroundToken?: string;
     showTexture?: boolean;
+    variant?: 'gold' | 'silver';
 }
 
-const GuildedFrame = ({ children, className = '', contentClassName = '' }: GuildedFrameProps) => {
+const GuildedFrame = ({ children, className = '', contentClassName = '', variant }: GuildedFrameProps) => {
     return (
         <Column className={`gap-4 w-full relative bg-inner-background outline-accent outline-2 outline-offset-2 rounded-xl ${className}`.trim()}>
             <View

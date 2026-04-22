@@ -1,6 +1,10 @@
 import React from 'react';
 import { useCSSVariable } from 'uniwind';
-import { guildedButtonRingPresets } from '../buttons/GuildedButton.shared';
+import { useIsPlayerDead } from 'hooks/useIsPlayerDead';
+import {
+    guildedButtonRingPresets,
+    type GuildedButtonVariant,
+} from '../buttons/GuildedButton.shared';
 
 const gradientBlur = 5;
 
@@ -10,6 +14,8 @@ interface GuildedFrameProps {
     contentClassName?: string;
     backgroundToken?: string;
     showTexture?: boolean;
+    gameId?: string;
+    variant?: Exclude<GuildedButtonVariant, 'ghostly'>;
 }
 
 const guildedFrameCSS = `
@@ -178,16 +184,21 @@ const GuildedFrame = ({
     contentClassName = '',
     backgroundToken = 'inner-background',
     showTexture = true,
+    gameId,
+    variant = 'gold',
 }: GuildedFrameProps) => {
-    const goldPalette = guildedButtonRingPresets.gold;
+    const isPlayerDead = useIsPlayerDead(gameId);
+    const effectiveVariant: GuildedButtonVariant =
+        variant === 'gold' && isPlayerDead ? 'ghostly' : variant;
+    const palette = guildedButtonRingPresets[effectiveVariant];
     const surfaceBackground = String(useCSSVariable(`--color-${backgroundToken}`) || backgroundToken);
 
     const cssVariables = {
-        '--ring-outer-dark': goldPalette.outerDark,
-        '--ring-outer-light': goldPalette.outerLight,
-        '--ring-middle': goldPalette.middle,
-        '--ring-inner-light': goldPalette.innerLight,
-        '--ring-inner-dark': goldPalette.innerDark,
+        '--ring-outer-dark': palette.outerDark,
+        '--ring-outer-light': palette.outerLight,
+        '--ring-middle': palette.middle,
+        '--ring-inner-light': palette.innerLight,
+        '--ring-inner-dark': palette.innerDark,
         '--surface-bg': surfaceBackground,
     } as React.CSSProperties & Record<string, string>;
 

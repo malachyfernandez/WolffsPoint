@@ -14,6 +14,7 @@ import GamePage from './game/GamePage';
 import LayoutStateAnimatedView, { fromBottom } from './ui/LayoutStateAnimatedView';
 import FontTextInput from './ui/forms/FontTextInput';
 import JoinHandler from './ui/forms/JoinHandler';
+import FadeInAfterDelay from './ui/loading/FadeInAfterDelay';
 
 
 
@@ -93,25 +94,27 @@ const MainPage: React.FC<MainPageProps> = ({
                 {isActiveGameLoading ? (
                     <FontText>Loading</FontText>
                 ) : (
-                    <LayoutStateAnimatedView.Container stateVar={currentScreen} className='flex-1'>
-                        <LayoutStateAnimatedView.Option page={1} stateValue='allGames'>
-                            <AllGamesPage
-                                activeGameId={activeGameId.value}
-                                setActiveGameId={setActiveGameId}
-                                myGames={myGames}
-                                addNewGame={addNewGame}
-                            />
-                        </LayoutStateAnimatedView.Option>
-
-                        <LayoutStateAnimatedView.OptionContainer pushInAnimation={fromBottom} page={2}>
-                            <LayoutStateAnimatedView.Option stateValue='game'>
-                                <GamePage
-                                    gameId={activeGameId.value}
-                                    currentUserId={userId}
+                    <FadeInAfterDelay delayMs={200}>
+                        <LayoutStateAnimatedView.Container stateVar={currentScreen} className='flex-1'>
+                            <LayoutStateAnimatedView.Option page={1} stateValue='allGames'>
+                                <AllGamesPage
+                                    activeGameId={activeGameId.value}
+                                    setActiveGameId={setActiveGameId}
+                                    myGames={myGames}
+                                    addNewGame={addNewGame}
                                 />
                             </LayoutStateAnimatedView.Option>
-                        </LayoutStateAnimatedView.OptionContainer>
-                    </LayoutStateAnimatedView.Container>
+
+                            <LayoutStateAnimatedView.OptionContainer pushInAnimation={fromBottom} page={2}>
+                                <LayoutStateAnimatedView.Option stateValue='game'>
+                                    <GamePage
+                                        gameId={activeGameId.value}
+                                        currentUserId={userId}
+                                    />
+                                </LayoutStateAnimatedView.Option>
+                            </LayoutStateAnimatedView.OptionContainer>
+                        </LayoutStateAnimatedView.Container>
+                    </FadeInAfterDelay>
                 )}
 
 

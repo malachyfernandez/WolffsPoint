@@ -1,6 +1,7 @@
 import React, { ReactElement, useState, useRef, useEffect } from 'react';
 import { useWindowDimensions } from 'react-native';
 import { useCSSVariable } from 'uniwind';
+import { useIsPlayerDead } from 'hooks/useIsPlayerDead';
 import { guildedButtonRingPresets } from '../ui/buttons/GuildedButton.shared';
 
 // --- ISLAND TAB SVG BACKGROUND ---
@@ -149,6 +150,7 @@ interface GameTabBarProps<TTab extends string> {
     activeTabIndent?: number;
     iconSize?: number;
     iconStrokeWidth?: number;
+    gameId?: string;
 }
 
 const gameTabBarCSS = `
@@ -388,13 +390,15 @@ const GameTabBar = <TTab extends string>({
     activeTabIndent = 5,
     iconSize = 30,
     iconStrokeWidth = 0,
+    gameId,
 }: GameTabBarProps<TTab>) => {
     const { width } = useWindowDimensions();
     const hasTrueMiddle = tabs.length % 2 === 1;
     const centerIndex = Math.floor(tabs.length / 2);
     const useCondensed = width < 600;
     const useCondensedIsland = width < 800;
-    const goldPalette = guildedButtonRingPresets.gold;
+    const isPlayerDead = useIsPlayerDead(gameId);
+    const palette = isPlayerDead ? guildedButtonRingPresets.ghostly : guildedButtonRingPresets.gold;
     const textColor = String(useCSSVariable('--color-text') || '#1a1a1a');
     const innerBackground = String(useCSSVariable('--color-inner-background') || 'rgb(165, 159, 150)');
 
@@ -405,13 +409,13 @@ const GameTabBar = <TTab extends string>({
                 className="guilded-game-tab-bar"
                 style={
                     {
-                        '--ring-outer-dark': goldPalette.outerDark,
-                        '--ring-outer-light': goldPalette.outerLight,
-                        '--ring-middle': goldPalette.middle,
-                        '--ring-inner-light': goldPalette.innerLight,
-                        '--ring-inner-dark': goldPalette.innerDark,
+                        '--ring-outer-dark': palette.outerDark,
+                        '--ring-outer-light': palette.outerLight,
+                        '--ring-middle': palette.middle,
+                        '--ring-inner-light': palette.innerLight,
+                        '--ring-inner-dark': palette.innerDark,
                         '--tab-text-active': textColor,
-                        '--tab-text-inactive': goldPalette.middle,
+                        '--tab-text-inactive': palette.middle,
                         '--active-surface-bg': innerBackground,
                         '--active-indent': `${activeTabIndent}px`,
                     } as React.CSSProperties & Record<string, string>
@@ -422,7 +426,7 @@ const GameTabBar = <TTab extends string>({
                     const isActive = activeTab === tab.value;
                     const tabFlex = isCenter ? '1.35' : '1';
                     const label = useCondensed ? tab.condensedLabel : tab.label;
-                    const iconColor = isActive ? textColor : goldPalette.middle;
+                    const iconColor = isActive ? textColor : palette.middle;
 
                     return (
                         <div

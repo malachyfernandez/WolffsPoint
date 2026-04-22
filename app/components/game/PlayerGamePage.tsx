@@ -37,8 +37,8 @@ const PlayerGamePage = ({ gameId, currentUserId }: PlayerGamePageProps) => {
         <PlayerAccessGate gameId={gameId} currentUserId={currentUserId}>
             {({ currentEmail, matchingPlayer, profile }) => (
                 <Column className='gap-5'>
-                    <GameTabBar activeTab={activeTab} onTabPress={setActiveTab} tabs={playerTabs} />
-                    <PaperContainer>
+                    <GameTabBar activeTab={activeTab} onTabPress={setActiveTab} tabs={playerTabs} gameId={gameId} />
+                    <PaperContainer gameId={gameId}>
                         {activeTab === 'townSquare' && <TownSquarePagePLAYER gameId={gameId} currentProfile={profile} />}
                         {activeTab === 'newspaper' &&
                             <ReadOnlyNewspaperPagePLAYER

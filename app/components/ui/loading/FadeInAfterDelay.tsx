@@ -12,7 +12,7 @@ const FadeInAfterDelay = ({
     fadeDuration = 300,
     children,
 }: FadeInAfterDelayProps) => {
-    const opacity = useSharedValue(0);
+    const opacity = useSharedValue(.01);
 
     const animatedStyle = useAnimatedStyle(() => ({
         opacity: opacity.value,

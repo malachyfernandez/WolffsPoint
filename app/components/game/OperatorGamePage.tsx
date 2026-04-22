@@ -53,8 +53,8 @@ const OperatorGamePage = ({ gameId, currentUserId }: OperatorGamePageProps) => {
 
     return (
         <Column className='gap-4 w-full sm:gap-5'>
-            <GameTabBar activeTab={activeTab} onTabPress={setActiveTab} tabs={operatorTabs} />
-            <PaperContainer>
+            <GameTabBar activeTab={activeTab} onTabPress={setActiveTab} tabs={operatorTabs} gameId={gameId} />
+            <PaperContainer gameId={gameId}>
                 <Animated.View key={activeTab} entering={FadeIn.duration(300)} className='w-full min-w-0'>
                     {activeTab === 'players' && <PlayerPageOPERATOR currentUserId={currentUserId} gameId={gameId} />}
                     {activeTab === 'config' && <RolesPageOPERATOR currentUserId={currentUserId} gameId={gameId} />}

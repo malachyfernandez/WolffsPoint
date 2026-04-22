@@ -16,13 +16,14 @@ interface NewspaperViewingViewProps {
     gameId: string;
     ownerUserId: string;
     TILE_SIZE: number;
+    roundBottom?: boolean;
 }
 
 const minimumUsepaper: Usepaper = {
     columns: ['', ''],
 };
 
-const NewspaperViewingView = ({ dayIndex, gameId, ownerUserId, TILE_SIZE }: NewspaperViewingViewProps) => {
+const NewspaperViewingView = ({ dayIndex, gameId, ownerUserId, TILE_SIZE, roundBottom }: NewspaperViewingViewProps) => {
     const usepaperRecords = useUserListGet<Usepaper>({
         key: 'usepaper',
         itemId: getNewspaperDayItemId(gameId, dayIndex),
@@ -51,7 +52,7 @@ const NewspaperViewingView = ({ dayIndex, gameId, ownerUserId, TILE_SIZE }: News
     return (
         <View className=''>
             <ShadowScrollView extensionPercent={0} direction='horizontal' className='w-full' scrollViewClassName='w-full px-5' horizontal>
-                <View className='py-4 rounded-t-2xl' style={{
+                <View className={`py-4 ${roundBottom ? 'rounded-2xl' : 'rounded-t-2xl'}`} style={{
                     // @ts-ignore: web-only CSS
                     backgroundImage: "url('https://d9tic9wqq4.ufs.sh/f/e3bq9j1bOXyi6QFuqBSV3IcVxmF4QjUoPvCOdS2HLawpi0Ey')",
                     backgroundRepeat: 'repeat',

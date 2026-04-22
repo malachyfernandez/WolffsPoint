@@ -68,6 +68,7 @@ interface AppButtonProps {
     dropShadow?: boolean;
     disabled?: boolean;
     blurred?: boolean;
+    gameId?: string;
 }
 
 const AppButton = ({
@@ -78,6 +79,7 @@ const AppButton = ({
     dropShadow = true,
     disabled = false,
     blurred = false,
+    gameId,
 }: AppButtonProps) => {
     const [isPressed, setIsPressed] = useState(false);
 
@@ -93,6 +95,7 @@ const AppButton = ({
                 contentPaddingY={0}
                 background={isSecondary ? 'inner-background' : '#2f2f2f'}
                 variant={isSecondary ? 'silver' : 'gold'}
+                gameId={gameId}
             >
                 <Row className="gap-4 items-center justify-center w-full h-full" pointerEvents="none">
                     {children}
