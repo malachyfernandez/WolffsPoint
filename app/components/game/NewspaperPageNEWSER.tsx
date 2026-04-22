@@ -7,10 +7,12 @@ import NewspaperWritingView from './NewspaperWritingView';
 import OperatorDayNavigation from '../ui/daySelector/OperatorDayNavigation';
 import NewspaperDayView from './NewspaperDayView';
 import FontText from '../ui/text/FontText';
+import PlaceholderCard from '../ui/PlaceholderCard';
 import { useGameOperatorUserId } from '../../../hooks/useGameOperatorUserId';
 import { useSharedListValue } from '../../../hooks/useSharedListValue';
 import { getNewspaperDayItemId } from '../../../utils/newspaperControl';
 import { useNewspaperDayOwner } from './useNewspaperDayOwner';
+import { Newspaper } from 'lucide-react-native';
 
 interface NewspaperPageNEWSERProps {
     currentUserId: string;
@@ -238,7 +240,21 @@ const NewspaperPageNEWSER = ({ currentUserId, gameId }: NewspaperPageNEWSERProps
                                     {renderViewingContent(leavingDayIndex, leavingDayOwner.ownerUserId, true)}
                                 </Tabs.Content>
                                 <Tabs.Content value='writing' className='flex-1'>
-                                    <NewspaperWritingView gameId={getNewspaperDayItemId(gameId, leavingDayIndex)} />
+                                    {currentUserId === leavingDayOwner.ownerUserId ? (
+                                        <NewspaperWritingView gameId={getNewspaperDayItemId(gameId, leavingDayIndex)} />
+                                    ) : (
+                                        <PlaceholderCard>
+                                            <Column className='gap-3 items-center'>
+                                                <Newspaper size={48} color='rgb(46, 41, 37)' />
+                                                <FontText weight='bold' className='text-xl text-center'>
+                                                    Editing locked
+                                                </FontText>
+                                                <FontText variant='subtext' className='text-center'>
+                                                    You do not have control of today's newspaper.
+                                                </FontText>
+                                            </Column>
+                                        </PlaceholderCard>
+                                    )}
                                 </Tabs.Content>
                             </Tabs>
                         </Animated.View>
@@ -250,7 +266,21 @@ const NewspaperPageNEWSER = ({ currentUserId, gameId }: NewspaperPageNEWSERProps
                                 {renderViewingContent(selectedDayIndex, selectedDayOwner.ownerUserId)}
                             </Tabs.Content>
                             <Tabs.Content value='writing' className='flex-1'>
-                                <NewspaperWritingView gameId={currentDayItemId} />
+                                {currentUserId === selectedDayOwner.ownerUserId ? (
+                                    <NewspaperWritingView gameId={currentDayItemId} />
+                                ) : (
+                                    <PlaceholderCard>
+                                        <Column className='gap-3 items-center'>
+                                            <Newspaper size={48} color='rgb(46, 41, 37)' />
+                                            <FontText weight='bold' className='text-xl text-center'>
+                                                Editing locked
+                                            </FontText>
+                                            <FontText variant='subtext' className='text-center'>
+                                                You do not have control of today's newspaper.
+                                            </FontText>
+                                        </Column>
+                                    </PlaceholderCard>
+                                )}
                             </Tabs.Content>
                         </Tabs>
                     </Animated.View>
