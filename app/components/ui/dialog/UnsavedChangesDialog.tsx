@@ -14,7 +14,7 @@ interface UnsavedChangesDialogProps {
 }
 
 const UnsavedChangesDialog = ({ isOpen, onOpenChange, onStay, onLeave }: UnsavedChangesDialogProps) => {
-    return (
+        return (
         <ConvexDialog.Root isOpen={isOpen} onOpenChange={onOpenChange}>
             <ConvexDialog.Portal>
                 <ConvexDialog.Overlay />

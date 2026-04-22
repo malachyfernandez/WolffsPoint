@@ -14,6 +14,7 @@ import { ReplyTreeNode, ThreadViewModel, formatTimestamp } from './townSquareUti
 interface TownSquareThreadDetailViewProps {
     currentUserId: string;
     expandedBranchIds: Record<string, boolean>;
+    isPlayerDead: boolean;
     onBack: () => void;
     onDeleteReply: (reply: ReplyTreeNode) => void;
     onDeleteThread: () => void;
@@ -30,6 +31,7 @@ interface TownSquareThreadDetailViewProps {
 const TownSquareThreadDetailView = ({
     currentUserId,
     expandedBranchIds,
+    isPlayerDead,
     onBack,
     onDeleteReply,
     onDeleteThread,
@@ -91,15 +93,17 @@ const TownSquareThreadDetailView = ({
                                 <Row className='gap-4 items-center'>
                                     {isOwnThread ? (
                                         <>
-                                            <Pressable onPress={onEditThread}>
-                                                <FontText weight='bold' className='text-accent'>Edit</FontText>
-                                            </Pressable>
+                                            {!isPlayerDead && (
+                                                <Pressable onPress={onEditThread}>
+                                                    <FontText weight='bold' className='text-accent'>Edit</FontText>
+                                                </Pressable>
+                                            )}
                                             <Pressable onPress={onDeleteThread}>
                                                 <FontText weight='bold' className='text-red-500'>Delete</FontText>
                                             </Pressable>
                                         </>
                                     ) : null}
-                                    {!isAnnouncement && (
+                                    {!isPlayerDead && !isAnnouncement && (
                                         <AppButton variant='outline' className='w-20 sm:w-36' onPress={onReplyToThread}>
                                             <FontText weight='bold'>Reply</FontText>
                                         </AppButton>
@@ -119,6 +123,7 @@ const TownSquareThreadDetailView = ({
                                         currentUserId={currentUserId}
                                         depth={0}
                                         expandedBranchIds={expandedBranchIds}
+                                        isPlayerDead={isPlayerDead}
                                         onDeleteReply={onDeleteReply}
                                         onEditReply={onEditReply}
                                         nodes={replyTree}

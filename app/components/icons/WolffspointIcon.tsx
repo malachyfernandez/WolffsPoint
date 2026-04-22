@@ -1,7 +1,7 @@
 import * as React from "react"
 import Svg, { Path } from "react-native-svg"
 
-function WolffspointIcon(props) {
+function WolffspointIcon(props: any) {
   return (
     <Svg
       width={522}

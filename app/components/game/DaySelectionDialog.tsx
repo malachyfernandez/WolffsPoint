@@ -86,7 +86,7 @@ const DaySelectionDialog = ({ isOpen, onOpenChange, index, dayDate, buttonLabel,
         }
     };
 
-    return (
+        return (
         <ConvexDialog.Root isOpen={isOpen} onOpenChange={onOpenChange}>
             <ConvexDialog.Trigger asChild>
                 <AppButton

@@ -19,7 +19,7 @@ interface NightlyCertificationDialogProps {
 }
 
 const NightlyCertificationDialog = ({ isOpen, onOpenChange, users, submissionsByEmail, onCertify }: NightlyCertificationDialogProps) => {
-    return (
+        return (
         <ConvexDialog.Root isOpen={isOpen} onOpenChange={onOpenChange}>
             <ConvexDialog.Trigger asChild>
                 <View />

@@ -50,7 +50,7 @@ const MarkdownInputBuilderDialog = ({ isOpen, onInsert, onOpenChange, selectedTe
         return `/["${label.trim()}":${inputType}]/`;
     }, [inputType, label]);
 
-    return (
+        return (
         <ConvexDialog.Root isOpen={isOpen} onOpenChange={onOpenChange}>
             <ConvexDialog.Trigger asChild>
                 <View />

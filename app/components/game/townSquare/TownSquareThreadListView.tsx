@@ -13,6 +13,7 @@ import TownSquareThreadListItem from './TownSquareThreadListItem';
 
 interface TownSquareThreadListViewProps {
     isLoading: boolean;
+    isPlayerDead: boolean;
     listScrollRef: RefObject<ScrollView | null>;
     onNewAnnouncement: () => void;
     onNewThread: () => void;
@@ -26,6 +27,7 @@ const fadeIn = { opacity: [0, 1] as [number, number], duration: 300 };
 
 const TownSquareThreadListView = ({
     isLoading,
+    isPlayerDead,
     listScrollRef,
     onNewAnnouncement,
     onNewThread,
@@ -41,12 +43,12 @@ const TownSquareThreadListView = ({
     return (
         <Column className='gap-5 flex-1 px-0 sm:px-4 py-4'>
             <Row className='gap-4 items-start justify-between'>
-                <Column className='gap-0 hidden sm:flex grow'>
+                <Column className='gap-0 flex grow'>
                     <FontText weight='bold' className='text-2xl leading-10'>Town Square</FontText>
                     <FontText variant='subtext'>Anyone can speak their mind</FontText>
                 </Column>
 
-                {isLargeScreen ? (
+                {!isPlayerDead && (isLargeScreen ? (
                     // IF screen is 500 or larger, show this
                     <Row className='gap-4 justify-between sm:justify-end flex-1 items-center'>
                         <AppButton variant='secondary' className='px-0' onPress={onNewAnnouncement}>
@@ -84,9 +86,8 @@ const TownSquareThreadListView = ({
                                 </Column>
                             </Row>
                         </AppButton>
-
                     </Column>
-                )}
+                ))}
             </Row>
 
             <Column className='gap-3 flex-1'>

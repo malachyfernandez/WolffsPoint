@@ -81,7 +81,7 @@ const NewWolffspointButtonAndDialogue = ({ onCreate, condensed }: NewWolffspoint
     };
 
 
-    return (
+        return (
 
 
         <ConvexDialog.Root isOpen={isHeroDialogOpen} onOpenChange={setIsHeroDialogOpen}>

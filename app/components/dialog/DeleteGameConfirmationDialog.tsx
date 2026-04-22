@@ -13,7 +13,7 @@ interface DeleteGameConfirmationDialogProps {
 }
 
 const DeleteGameConfirmationDialog = ({ isOpen, onOpenChange, onConfirm }: DeleteGameConfirmationDialogProps) => {
-    return (
+        return (
         <ConvexDialog.Root isOpen={isOpen} onOpenChange={onOpenChange}>
             <ConvexDialog.Portal>
                 <ConvexDialog.Overlay />

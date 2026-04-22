@@ -3,6 +3,7 @@ import { ScrollView } from 'react-native';
 import LayoutStateAnimatedView, { fromRight } from '../ui/LayoutStateAnimatedView';
 import Column from '../layout/Column';
 import { PlayerProfile } from '../../../types/multiplayer';
+import { usePlayerStatus } from '../../../contexts/PlayerStatusContext';
 import MarkdownEditorDialog from './MarkdownEditorDialog';
 import { useTownSquareAuthorIdentity } from './townSquare/TownSquareAuthorIdentity';
 import TownSquareThreadDetailView from './townSquare/TownSquareThreadDetailView';
@@ -19,6 +20,7 @@ interface TownSquarePagePLAYERProps {
 type TownSquareScreenState = 'list' | 'thread';
 
 const TownSquarePagePLAYER = ({ gameId, currentProfile }: TownSquarePagePLAYERProps) => {
+    const { isPlayerDead } = usePlayerStatus();
     const [isThreadComposerOpen, setIsThreadComposerOpen] = useState(false);
     const [isAnnouncementComposerOpen, setIsAnnouncementComposerOpen] = useState(false);
     const [isThreadEditComposerOpen, setIsThreadEditComposerOpen] = useState(false);
@@ -120,6 +122,7 @@ const TownSquarePagePLAYER = ({ gameId, currentProfile }: TownSquarePagePLAYERPr
                 <LayoutStateAnimatedView.Option page={1} stateValue='list'>
                     <TownSquareThreadListView
                         isLoading={isLoading}
+                        isPlayerDead={isPlayerDead}
                         listScrollRef={listScrollRef}
                         onNewAnnouncement={() => setIsAnnouncementComposerOpen(true)}
                         onNewThread={() => setIsThreadComposerOpen(true)}
@@ -136,6 +139,7 @@ const TownSquarePagePLAYER = ({ gameId, currentProfile }: TownSquarePagePLAYERPr
                             <TownSquareThreadDetailView
                                 currentUserId={currentProfile.userId}
                                 expandedBranchIds={expandedBranchIds}
+                                isPlayerDead={isPlayerDead}
                                 onBack={closeThread}
                                 onDeleteReply={(reply) => {
                                     deleteReply(reply.commentId);
@@ -177,105 +181,109 @@ const TownSquarePagePLAYER = ({ gameId, currentProfile }: TownSquarePagePLAYERPr
                 </LayoutStateAnimatedView.OptionContainer>
             </LayoutStateAnimatedView.Container>
 
-            <MarkdownEditorDialog
-                dialogSubtext='Everyone can reply'
-                includeTitle={true}
-                isOpen={isThreadComposerOpen}
-                onOpenChange={setIsThreadComposerOpen}
-                requireMarkdown={true}
-                onSubmit={createThread}
-                submitLabel='Publish'
-                title='Create thread'
-            />
+            {!isPlayerDead && (
+                <>
+                    <MarkdownEditorDialog
+                        dialogSubtext='Everyone can reply'
+                        includeTitle={true}
+                        isOpen={isThreadComposerOpen}
+                        onOpenChange={setIsThreadComposerOpen}
+                        requireMarkdown={true}
+                        onSubmit={createThread}
+                        submitLabel='Publish'
+                        title='Create thread'
+                    />
 
-            <MarkdownEditorDialog
-                dialogSubtext='Just You; No Replies'
-                includeTitle={true}
-                isOpen={isAnnouncementComposerOpen}
-                onOpenChange={setIsAnnouncementComposerOpen}
-                requireMarkdown={true}
-                onSubmit={createAnnouncement}
-                submitLabel='Publish'
-                title='Create announcement'
-            />
+                    <MarkdownEditorDialog
+                        dialogSubtext='Just You; No Replies'
+                        includeTitle={true}
+                        isOpen={isAnnouncementComposerOpen}
+                        onOpenChange={setIsAnnouncementComposerOpen}
+                        requireMarkdown={true}
+                        onSubmit={createAnnouncement}
+                        submitLabel='Publish'
+                        title='Create announcement'
+                    />
 
-            <MarkdownEditorDialog
-                includeTitle={true}
-                initialMarkdown={selectedThread?.bodyMarkdownResolved ?? ''}
-                initialTitle={selectedThread?.title ?? ''}
-                isOpen={isThreadEditComposerOpen}
-                onOpenChange={setIsThreadEditComposerOpen}
-                requireMarkdown={true}
-                onSubmit={({ markdown, plainText, title }) => {
-                    if (!selectedThread) {
-                        return;
-                    }
+                    <MarkdownEditorDialog
+                        includeTitle={true}
+                        initialMarkdown={selectedThread?.bodyMarkdownResolved ?? ''}
+                        initialTitle={selectedThread?.title ?? ''}
+                        isOpen={isThreadEditComposerOpen}
+                        onOpenChange={setIsThreadEditComposerOpen}
+                        requireMarkdown={true}
+                        onSubmit={({ markdown, plainText, title }) => {
+                            if (!selectedThread) {
+                                return;
+                            }
 
-                    updateThread({
-                        markdown,
-                        plainText,
-                        postId: selectedThread.postId,
-                        title,
-                    });
-                }}
-                submitLabel='Save changes'
-                title='Edit thread'
-            />
+                            updateThread({
+                                markdown,
+                                plainText,
+                                postId: selectedThread.postId,
+                                title,
+                            });
+                        }}
+                        submitLabel='Save changes'
+                        title='Edit thread'
+                    />
 
-            <MarkdownEditorDialog
-                isOpen={isReplyComposerOpen}
-                onOpenChange={setIsReplyComposerOpen}
-                dialogSubtext={replyTargetLabel}
-                requireMarkdown={true}
-                onSubmit={({ markdown, plainText }) => {
-                    if (!selectedThread) {
-                        return;
-                    }
+                    <MarkdownEditorDialog
+                        isOpen={isReplyComposerOpen}
+                        onOpenChange={setIsReplyComposerOpen}
+                        dialogSubtext={replyTargetLabel}
+                        requireMarkdown={true}
+                        onSubmit={({ markdown, plainText }) => {
+                            if (!selectedThread) {
+                                return;
+                            }
 
-                    createReply({
-                        markdown,
-                        parentCommentId: replyTargetCommentId ?? undefined,
-                        plainText,
-                        postId: selectedThread.postId,
-                    });
+                            createReply({
+                                markdown,
+                                parentCommentId: replyTargetCommentId ?? undefined,
+                                plainText,
+                                postId: selectedThread.postId,
+                            });
 
-                    if (replyTargetCommentId) {
-                        setExpandedBranchIds((currentValue) => ({
-                            ...currentValue,
-                            [replyTargetCommentId]: true,
-                        }));
-                    }
+                            if (replyTargetCommentId) {
+                                setExpandedBranchIds((currentValue) => ({
+                                    ...currentValue,
+                                    [replyTargetCommentId]: true,
+                                }));
+                            }
 
-                    setReplyTargetCommentId(null);
-                }}
-                submitLabel='Post reply'
-                title='Write reply'
-            />
+                            setReplyTargetCommentId(null);
+                        }}
+                        submitLabel='Post reply'
+                        title='Write reply'
+                    />
 
-            <MarkdownEditorDialog
-                initialMarkdown={editingReply?.bodyMarkdownResolved ?? ''}
-                isOpen={editingReply !== null}
-                onOpenChange={(open) => {
-                    if (!open) {
-                        setEditingReplyId(null);
-                    }
-                }}
-                requireMarkdown={true}
-                onSubmit={({ markdown, plainText }) => {
-                    if (!editingReply) {
-                        return;
-                    }
+                    <MarkdownEditorDialog
+                        initialMarkdown={editingReply?.bodyMarkdownResolved ?? ''}
+                        isOpen={editingReply !== null}
+                        onOpenChange={(open) => {
+                            if (!open) {
+                                setEditingReplyId(null);
+                            }
+                        }}
+                        requireMarkdown={true}
+                        onSubmit={({ markdown, plainText }) => {
+                            if (!editingReply) {
+                                return;
+                            }
 
-                    updateReply({
-                        commentId: editingReply.commentId,
-                        markdown,
-                        plainText,
-                    });
-                    setEditingReplyId(null);
-                }}
-                submitLabel='Save changes'
-                title='Edit reply'
-            />
+                            updateReply({
+                                commentId: editingReply.commentId,
+                                markdown,
+                                plainText,
+                            });
+                            setEditingReplyId(null);
+                        }}
+                        submitLabel='Save changes'
+                        title='Edit reply'
+                    />
+                </>
+            )}
         </Column>
         </LoadingContainer>
     );

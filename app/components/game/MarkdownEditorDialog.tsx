@@ -172,7 +172,7 @@ const MarkdownEditorDialog = ({
     const handleInput = () => setIsInputDialogOpen(true);
     const handleMore = () => setIsMoreDialogOpen(true);
 
-    return (
+        return (
         <>
             <ConvexDialog.Root isOpen={isOpen} onOpenChange={onOpenChange}>
                 <ConvexDialog.Trigger asChild>

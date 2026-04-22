@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "baseUrl": ".",
+    "jsx": "react-jsx",
+    "lib": ["ES2020", "DOM"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "noEmit": true
+  },
+  "include": ["app/components/ui/dialog/ConvexDialog.web.tsx", "app/components/ui/chrome/DialogGuildedFrame.web.tsx", "app/components/ui/chrome/GuildedFrameCore.web.tsx", "hooks/useDialogGuildedVariant.ts", "contexts/PlayerStatusContext.tsx"],
+  "exclude": ["node_modules"]
+}

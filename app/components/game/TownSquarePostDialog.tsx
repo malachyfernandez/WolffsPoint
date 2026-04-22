@@ -36,6 +36,7 @@ const TownSquarePostDialog = ({ gameId, isOpen, onOpenChange, post, currentProfi
         return [...(comments ?? [])].sort((left, right) => (left.value.createdAt ?? 0) - (right.value.createdAt ?? 0));
     }, [comments]);
 
+    
     if (!post) {
         return null;
     }

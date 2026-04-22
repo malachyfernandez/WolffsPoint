@@ -51,7 +51,7 @@ const ActionEditorDialog = ({
         onOpenChange(false);
     };
 
-    return (
+        return (
         <ConvexDialog.Root isOpen={isOpen} onOpenChange={onOpenChange}>
             <ConvexDialog.Trigger asChild>
                 <View />

@@ -69,7 +69,7 @@ const EditInfoDialog = ({
         onClose();
     };
 
-    return (
+        return (
         <ConvexDialog.Root isOpen={isOpen} onOpenChange={onClose}>
             <ConvexDialog.Trigger asChild>
                 <View />

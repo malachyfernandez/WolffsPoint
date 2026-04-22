@@ -11,6 +11,7 @@ interface TownSquareReplyBranchProps {
     currentUserId: string;
     depth: number;
     expandedBranchIds: Record<string, boolean>;
+    isPlayerDead: boolean;
     nodes: ReplyTreeNode[];
     onDeleteReply: (reply: ReplyTreeNode) => void;
     onEditReply: (reply: ReplyTreeNode) => void;
@@ -22,6 +23,7 @@ const TownSquareReplyBranch = ({
     currentUserId,
     depth,
     expandedBranchIds,
+    isPlayerDead,
     nodes,
     onDeleteReply,
     onEditReply,
@@ -53,14 +55,18 @@ const TownSquareReplyBranch = ({
                                 </Column>
                                 <MarkdownRenderer markdown={node.bodyMarkdownResolved} />
                                 <Row className='gap-4 items-center flex-wrap gap-y-1'>
-                                    <Pressable onPress={() => onReply(node)}>
-                                        <FontText weight='bold' className='text-accent'>Reply</FontText>
-                                    </Pressable>
+                                    {!isPlayerDead && (
+                                        <Pressable onPress={() => onReply(node)}>
+                                            <FontText weight='bold' className='text-accent'>Reply</FontText>
+                                        </Pressable>
+                                    )}
                                     {isOwnReply ? (
                                         <>
-                                            <Pressable onPress={() => onEditReply(node)}>
-                                                <FontText weight='bold' className='text-accent'>Edit</FontText>
-                                            </Pressable>
+                                            {!isPlayerDead && (
+                                                <Pressable onPress={() => onEditReply(node)}>
+                                                    <FontText weight='bold' className='text-accent'>Edit</FontText>
+                                                </Pressable>
+                                            )}
                                             <Pressable onPress={() => onDeleteReply(node)}>
                                                 <FontText weight='bold' className='text-red-500'>Delete</FontText>
                                             </Pressable>
@@ -75,6 +81,7 @@ const TownSquareReplyBranch = ({
                                 currentUserId={currentUserId}
                                 depth={depth + 1}
                                 expandedBranchIds={expandedBranchIds}
+                                isPlayerDead={isPlayerDead}
                                 onDeleteReply={onDeleteReply}
                                 onEditReply={onEditReply}
                                 nodes={visibleChildren}

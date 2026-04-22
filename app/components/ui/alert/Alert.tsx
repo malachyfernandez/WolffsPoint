@@ -30,7 +30,7 @@ const Alert = ({
     buttons,
     className = 'p-6 max-w-sm mx-auto',
 }: AlertProps) => {
-    return (
+        return (
         <ConvexDialog.Root isOpen={isOpen} onOpenChange={onOpenChange}>
             <ConvexDialog.Trigger asChild>
                 <View />

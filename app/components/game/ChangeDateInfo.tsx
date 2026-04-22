@@ -89,7 +89,7 @@ const ChangeDateInfo = ({ gameId, isGettingStarted }: ChangeDateInfoProps) => {
 
     const todaysDate = new Date()
 
-    return (
+        return (
 
         <ConvexDialog.Root isOpen={isHeroDialogOpen} onOpenChange={setIsHeroDialogOpen}>
             <ConvexDialog.Trigger asChild>

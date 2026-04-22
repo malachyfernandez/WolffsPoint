@@ -189,11 +189,11 @@ const PlayerProfileDialogNEW = ({
         onOpenChange(false);
     };
 
-    return (
+        return (
         <>
-            <ConvexDialog.Root
+            <ConvexDialog.Root 
                 isOpen={isOpen}
-                onOpenChange={(open) => {
+                onOpenChange={(open: boolean) => {
                     if (open) {
                         onOpenChange(true);
                         return;
@@ -428,10 +428,10 @@ const SocialsDialog = ({ isOpen, onOpenChange, onSave, initialSocials }: Socials
         onSave(draft);
     };
 
-    return (
-        <ConvexDialog.Root
+        return (
+        <ConvexDialog.Root 
             isOpen={isOpen}
-            onOpenChange={(open) => {
+            onOpenChange={(open: boolean) => {
                 if (open) {
                     onOpenChange(true);
                     return;

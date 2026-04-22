@@ -49,7 +49,7 @@ const JoinedGameOptionsDialog = ({
         onOpenChange(false);
     };
 
-    return (
+        return (
         <ConvexDialog.Root isOpen={isOpen} onOpenChange={handleClose}>
             <ConvexDialog.Portal>
                 <ConvexDialog.Overlay />

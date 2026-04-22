@@ -30,7 +30,7 @@ const TownSquareImageDialog = ({ isOpen, onInsert, onOpenChange }: TownSquareIma
 
     const canInsert = uploadedUrl.trim().length > 0;
 
-    return (
+        return (
         <ConvexDialog.Root isOpen={isOpen} onOpenChange={onOpenChange}>
             <ConvexDialog.Trigger asChild>
                 <View />

@@ -28,7 +28,7 @@ const JoinGameButton = ({ onJoin, condensed }: JoinGameButtonProps) => {
         onJoin?.(code);
     };
 
-    return (
+        return (
         <View>
             <ConvexDialog.Root isOpen={isHeroDialogOpen} onOpenChange={setIsHeroDialogOpen}>
                 <ConvexDialog.Trigger asChild>

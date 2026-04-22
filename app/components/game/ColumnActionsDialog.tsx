@@ -24,7 +24,7 @@ const sizeOptions: { value: ColumnSizeOption; label: string; description: string
 ];
 
 const ColumnActionsDialog = ({ isOpen, onOpenChange, title, selectedSize, onSelectSize, onDelete }: ColumnActionsDialogProps) => {
-    return (
+        return (
         <ConvexDialog.Root isOpen={isOpen} onOpenChange={onOpenChange}>
             <ConvexDialog.Trigger asChild>
                 <View />

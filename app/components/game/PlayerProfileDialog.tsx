@@ -43,7 +43,7 @@ const PlayerProfileDialog = ({
 
     const canSave = useMemo(() => draft.inGameName.trim().length > 0, [draft.inGameName]);
 
-    return (
+        return (
         <ConvexDialog.Root isOpen={isOpen} onOpenChange={onOpenChange}>
             <ConvexDialog.Trigger asChild>
                 <View />

@@ -30,7 +30,7 @@ const TownSquareLinkDialog = ({ isOpen, onInsert, onOpenChange, selectedText }: 
 
     const canSubmit = url.trim().length > 0;
 
-    return (
+        return (
         <ConvexDialog.Root isOpen={isOpen} onOpenChange={onOpenChange}>
             <ConvexDialog.Trigger asChild>
                 <View />

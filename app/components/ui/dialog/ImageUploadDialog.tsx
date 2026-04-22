@@ -100,7 +100,7 @@ const ImageUploadDialog = ({
         }
     };
 
-    return (
+        return (
         <ConvexDialog.Root isOpen={isOpen} onOpenChange={handleOpenChange}>
             <ConvexDialog.Trigger asChild>
                 <View />

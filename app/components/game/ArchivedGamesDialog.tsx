@@ -39,7 +39,7 @@ const ArchivedGamesDialog = ({ isOpen, onOpenChange, setActiveGameId, textClassN
         onOpenChange(false);
     };
 
-    return (
+        return (
         <ConvexDialog.Root isOpen={isOpen} onOpenChange={onOpenChange}>
             <ConvexDialog.Portal>
                 <ConvexDialog.Overlay />

@@ -22,7 +22,7 @@ const actionOptions: { action: MoreComposerAction; label: string }[] = [
 ];
 
 const TownSquareMoreOptionsDialog = ({ isOpen, onOpenChange, onSelectAction }: TownSquareMoreOptionsDialogProps) => {
-    return (
+        return (
         <ConvexDialog.Root isOpen={isOpen} onOpenChange={onOpenChange}>
             <ConvexDialog.Trigger asChild>
                 <View />
