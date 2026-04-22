@@ -79,7 +79,7 @@ const ChainWraper = ({ children, isDisabled = false, className, style }: ChainWr
     }
 
     return (
-        <GuildedFrame variant="silver">
+        <GuildedFrame variant="silver" className={`${className}`} >
             <View className={`${className} rounded-2xl overflow-hidden`} style={[styles.container, style]} onLayout={handleLayout}>
                 <View style={isDisabled ? styles.disabledContent : undefined}>{children}</View>
 
