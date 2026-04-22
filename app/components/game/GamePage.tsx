@@ -12,6 +12,7 @@ import LoadingText from '../ui/loading/LoadingText';
 import WolffspointIcon from '../icons/WolffspointIcon';
 import Animated, { runOnJS, useAnimatedScrollHandler } from 'react-native-reanimated';
 import { NewserAssignment, PublicUserData, getNewserAssignmentKey, resolveValidNewserAssignment } from '../../../utils/newspaperControl';
+import FadeInAfterDelay from '../ui/loading/FadeInAfterDelay';
 
 interface GamePageProps {
     gameId: string;
@@ -81,13 +82,15 @@ const GamePage = ({ gameId, currentUserId }: GamePageProps) => {
     const logoHeight = (logoWidth / 522) * 183;
     const baseHeight = 183;
     // const translateY = (logoHeight - baseHeight) / 2;
-    const translateY = -(logoWidth/9) + 100;
+    const translateY = -(logoWidth / 9) + 100;
 
     return (
         <Column className='gap-4 w-full h-screen'>
             <View className='absolute top-20 w-full items-center'>
                 <View style={Platform.OS === 'web' ? { width: logoWidth, height: logoHeight, filter: `blur(${blurAmount}px)`, transform: `translateY(${translateY}px)` } : undefined}>
-                    <WolffspointIcon width={logoWidth} height={logoHeight} />
+                    <FadeInAfterDelay delayMs={200}>
+                        <WolffspointIcon width={logoWidth} height={logoHeight} />
+                    </FadeInAfterDelay>
                 </View>
             </View>
             <ShadowScrollView
@@ -98,14 +101,14 @@ const GamePage = ({ gameId, currentUserId }: GamePageProps) => {
                 scrollViewComponent={Animated.ScrollView}
             >
                 <View className="w-full max-w-[1000px] mx-auto pt-60">
-                        {isOperator ? (
-                            <OperatorGamePage currentUserId={currentUserId} gameId={gameId} />
-                        ) : isNewser ? (
-                            <NewserGamePage currentUserId={currentUserId} gameId={gameId} />
-                        ) : (
-                            <PlayerGamePage currentUserId={currentUserId} gameId={gameId} />
-                        )}
-                    </View>
+                    {isOperator ? (
+                        <OperatorGamePage currentUserId={currentUserId} gameId={gameId} />
+                    ) : isNewser ? (
+                        <NewserGamePage currentUserId={currentUserId} gameId={gameId} />
+                    ) : (
+                        <PlayerGamePage currentUserId={currentUserId} gameId={gameId} />
+                    )}
+                </View>
             </ShadowScrollView>
         </Column>
     );

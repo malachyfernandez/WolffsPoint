@@ -3,6 +3,7 @@ import { useWindowDimensions } from 'react-native';
 import { useCSSVariable } from 'uniwind';
 import { useIsPlayerDead } from 'hooks/useIsPlayerDead';
 import { guildedButtonRingPresets } from '../ui/buttons/GuildedButton.shared';
+import FadeInAfterDelay from '../ui/loading/FadeInAfterDelay';
 
 // --- ISLAND TAB SVG BACKGROUND ---
 interface IslandTabBackgroundProps {
@@ -403,7 +404,7 @@ const GameTabBar = <TTab extends string>({
     const innerBackground = String(useCSSVariable('--color-inner-background') || 'rgb(165, 159, 150)');
 
     return (
-        <>
+        <FadeInAfterDelay delayMs={200}>
             <style dangerouslySetInnerHTML={{ __html: gameTabBarCSS }} />
             <div
                 className="guilded-game-tab-bar"
@@ -464,7 +465,7 @@ const GameTabBar = <TTab extends string>({
                     );
                 })}
             </div>
-        </>
+        </FadeInAfterDelay>
     );
 };
 

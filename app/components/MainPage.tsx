@@ -94,27 +94,27 @@ const MainPage: React.FC<MainPageProps> = ({
                 {isActiveGameLoading ? (
                     <FontText>Loading</FontText>
                 ) : (
-                    <FadeInAfterDelay delayMs={200}>
-                        <LayoutStateAnimatedView.Container stateVar={currentScreen} className='flex-1'>
-                            <LayoutStateAnimatedView.Option page={1} stateValue='allGames'>
-                                <AllGamesPage
-                                    activeGameId={activeGameId.value}
-                                    setActiveGameId={setActiveGameId}
-                                    myGames={myGames}
-                                    addNewGame={addNewGame}
+
+                    <LayoutStateAnimatedView.Container stateVar={currentScreen} className='flex-1'>
+                        <LayoutStateAnimatedView.Option page={1} stateValue='allGames'>
+                            <AllGamesPage
+                                activeGameId={activeGameId.value}
+                                setActiveGameId={setActiveGameId}
+                                myGames={myGames}
+                                addNewGame={addNewGame}
+                            />
+                        </LayoutStateAnimatedView.Option>
+
+                        <LayoutStateAnimatedView.OptionContainer pushInAnimation={fromBottom} page={2}>
+                            <LayoutStateAnimatedView.Option stateValue='game'>
+                                <GamePage
+                                    gameId={activeGameId.value}
+                                    currentUserId={userId}
                                 />
                             </LayoutStateAnimatedView.Option>
+                        </LayoutStateAnimatedView.OptionContainer>
+                    </LayoutStateAnimatedView.Container>
 
-                            <LayoutStateAnimatedView.OptionContainer pushInAnimation={fromBottom} page={2}>
-                                <LayoutStateAnimatedView.Option stateValue='game'>
-                                    <GamePage
-                                        gameId={activeGameId.value}
-                                        currentUserId={userId}
-                                    />
-                                </LayoutStateAnimatedView.Option>
-                            </LayoutStateAnimatedView.OptionContainer>
-                        </LayoutStateAnimatedView.Container>
-                    </FadeInAfterDelay>
                 )}
 
 

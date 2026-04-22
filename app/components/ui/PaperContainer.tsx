@@ -4,6 +4,7 @@ import Column from '../layout/Column';
 
 interface PaperContainerProps {
     children: React.ReactNode;
+    gameId?: string;
 }
 
 const PaperContainer = ({ children }: PaperContainerProps) => {
