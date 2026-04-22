@@ -3,8 +3,7 @@ import Column from '../layout/Column';
 import { Platform, View, useWindowDimensions } from 'react-native';
 import { useUserListGet } from 'hooks/useUserListGet';
 import { useUserVariableGet } from 'hooks/useUserVariableGet';
-import { ScrollShadow } from 'heroui-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import ShadowScrollView from '../ui/ShadowScrollView';
 import OperatorGamePage from './OperatorGamePage';
 import NewserGamePage from './NewserGamePage';
 import PlayerGamePage from './PlayerGamePage';
@@ -91,13 +90,14 @@ const GamePage = ({ gameId, currentUserId }: GamePageProps) => {
                     <WolffspointIcon width={logoWidth} height={logoHeight} />
                 </View>
             </View>
-            <ScrollShadow LinearGradientComponent={LinearGradient} color="rgb(30, 30, 30)">
-                <Animated.ScrollView 
-                    className='p-6 px-2 sm:px-6 h-screen w-full'
-                    onScroll={handleScroll}
-                    scrollEventThrottle={16}
-                >
-                    <View className="w-full max-w-[1000px] mx-auto pt-60">
+            <ShadowScrollView
+                className='flex-1'
+                scrollViewClassName='p-6 px-2 sm:px-6 h-screen w-full'
+                onScroll={handleScroll}
+                scrollEventThrottle={16}
+                scrollViewComponent={Animated.ScrollView}
+            >
+                <View className="w-full max-w-[1000px] mx-auto pt-60">
                         {isOperator ? (
                             <OperatorGamePage currentUserId={currentUserId} gameId={gameId} />
                         ) : isNewser ? (
@@ -106,8 +106,7 @@ const GamePage = ({ gameId, currentUserId }: GamePageProps) => {
                             <PlayerGamePage currentUserId={currentUserId} gameId={gameId} />
                         )}
                     </View>
-                </Animated.ScrollView>
-            </ScrollShadow>
+            </ShadowScrollView>
         </Column>
     );
 };

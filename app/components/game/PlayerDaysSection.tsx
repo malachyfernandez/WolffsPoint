@@ -4,9 +4,7 @@ import Column from '../layout/Column';
 import Row from '../layout/Row';
 import AppButton from '../ui/buttons/AppButton';
 import FontText from '../ui/text/FontText';
-import { ScrollShadow } from 'heroui-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { ScrollView } from 'react-native';
+import ShadowScrollView from '../ui/ShadowScrollView';
 import DaySelectionDialog from './DaySelectionDialog';
 import ChooseDayDialog from './ChooseDayDialog';
 import DaysTable from './DaysTable';
@@ -82,8 +80,7 @@ const PlayerDaysSection = ({ gameId, addNewDay }: PlayerDaysSectionProps) => {
     return (
         <>
             <Column className='gap-1'>
-                <ScrollShadow LinearGradientComponent={LinearGradient} className='mr-1 pr-1 max-w-min'>
-                    <ScrollView horizontal={true} className='px-1 m-0 h-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]' style={{ width: daysTableWidth }}>
+                <ShadowScrollView direction='horizontal' className='mr-1 pr-1 max-w-min' scrollViewClassName='px-1 m-0 h-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]' style={{ width: daysTableWidth }} horizontal>
                         <Row className='gap-1 h-6'>
                             {fixedDayDatesArray.map((date, index) => {
                                 const label = getDayRangeLabel(fixedDayDatesArray, index, numberOfRealDaysPerInGameDay.value);
@@ -116,8 +113,7 @@ const PlayerDaysSection = ({ gameId, addNewDay }: PlayerDaysSectionProps) => {
                                 <FontText weight="bold" className='text-white'>+</FontText>
                             </AppButton>
                         </Row>
-                    </ScrollView>
-                </ScrollShadow>
+                </ShadowScrollView>
                 <Row className={`${isDaysTableBeingEdited ? 'z-10' : ''}gap-4 w-min max-w-min`}>
                     <DaysTable
                         gameId={gameId}

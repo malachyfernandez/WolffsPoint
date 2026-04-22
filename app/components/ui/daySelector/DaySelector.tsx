@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { ScrollView } from 'react-native';
 import Column from '../../layout/Column';
 import Row from '../../layout/Row';
 import AppButton from '../buttons/AppButton';
 import FontText from '../text/FontText';
 import { useUserList } from 'hooks/useUserList';
-import { ScrollShadow } from 'heroui-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import ShadowScrollView from '../../ui/ShadowScrollView';
 import DaySelectionDialog from '../../game/DaySelectionDialog';
 
 interface DaySelectorProps {
@@ -93,12 +91,10 @@ const DaySelector = ({ gameId, className = '', showAddButton = false }: DaySelec
 
     return (
         <Column className={`gap-4 ${className ?? ''}`.trim()}>
-            <ScrollShadow LinearGradientComponent={LinearGradient} className='mr-1 pt-1'>
-                <ScrollView horizontal={true} className='px-1 py-5'>
+            <ShadowScrollView direction='horizontal' className='mr-1 pt-1' scrollViewClassName='px-1 py-5' horizontal>
                     <Row className='gap-4 items-center justify-center w-full'>
                         <Column className='gap-4 max-w-min'>
-                            <ScrollShadow LinearGradientComponent={LinearGradient} className='mr-1 pr-1 max-w-min'>
-                                <ScrollView horizontal={true} className='px-1 m-0 h-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]'>
+                            <ShadowScrollView direction='horizontal' className='mr-1 pr-1 max-w-min' scrollViewClassName='px-1 m-0 h-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]' horizontal>
                                     <Row className='gap-1 h-6'>
                                         {fixedDayDatesArray.map((date, index) => (
                                             selectedDayIndex.value === index ? (
@@ -130,12 +126,10 @@ const DaySelector = ({ gameId, className = '', showAddButton = false }: DaySelec
                                             </AppButton>
                                         )}
                                     </Row>
-                                </ScrollView>
-                            </ScrollShadow>
+                            </ShadowScrollView>
                         </Column>
                     </Row>
-                </ScrollView>
-            </ScrollShadow>
+            </ShadowScrollView>
         </Column>
     );
 };

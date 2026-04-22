@@ -8,8 +8,7 @@ import FontText from '../ui/text/FontText';
 import AppButton from '../ui/buttons/AppButton';
 import DisableableButton from '../ui/buttons/DisableableButton';
 import ActionPills from './ActionPills';
-import { ScrollShadow } from 'heroui-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import ShadowScrollView from '../ui/ShadowScrollView';
 
 interface ActionEditorDialogProps {
     isOpen: boolean;
@@ -92,12 +91,9 @@ const ActionEditorDialog = ({
                                 Preview
                             </FontText>
                             <View className="bg-background border-2 border-border rounded-lg p-3 flex-1 min-h-[80px]">
-                                <ScrollShadow
-                                    LinearGradientComponent={LinearGradient}
-                                    className="h-full"
-                                >
+                                <ShadowScrollView className="h-full">
                                     <ActionPills actionText={draftAction} />
-                                </ScrollShadow>
+                                </ShadowScrollView>
                             </View>
                         </Column>
 

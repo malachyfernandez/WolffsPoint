@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { View, ScrollView } from 'react-native';
+import { View } from 'react-native';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
 import AppButton from '../ui/buttons/AppButton';
 import FontText from '../ui/text/FontText';
 import NewspaperWritingView from './NewspaperWritingView';
 import { useUserList } from 'hooks/useUserList';
-import { ScrollShadow } from 'heroui-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import ShadowScrollView from '../ui/ShadowScrollView';
 import DaySelectionDialog from './DaySelectionDialog';
 import FontNumberInput from '../ui/forms/FontNumberInput';
 
@@ -97,8 +96,7 @@ const NewspaperPage = ({ gameId }: NewspaperPageProps) => {
     return (
         <Column className='gap-4 flex-1 w-full'>
             {/* Day Selector Bar - Same as NightlyPageOPERATOR */}
-            <ScrollShadow LinearGradientComponent={LinearGradient} className='mr-1 pt-1'>
-                <ScrollView horizontal={true} className='px-1 py-5'>
+            <ShadowScrollView direction='horizontal' className='mr-1 pt-1' scrollViewClassName='px-1 py-5' horizontal>
                     <Row className='gap-4 items-center justify-between w-full'>
                         <Column className='gap-4 flex-1'>
                             <Row className='gap-4 h-6'>
@@ -126,8 +124,7 @@ const NewspaperPage = ({ gameId }: NewspaperPageProps) => {
                             </Row>
                         </Column>
                         <Column className='gap-4 max-w-min'>
-                            <ScrollShadow LinearGradientComponent={LinearGradient} className='mr-1 pr-1 max-w-min'>
-                                <ScrollView horizontal={true} className='px-1 m-0 h-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]'>
+                            <ShadowScrollView direction='horizontal' className='mr-1 pr-1 max-w-min' scrollViewClassName='px-1 m-0 h-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]' horizontal>
                                     <Row className='gap-1 h-6'>
                                         {fixedDayDatesArray.map((date, index) => (
                                             selectedDayIndex.value === index ? (
@@ -157,12 +154,10 @@ const NewspaperPage = ({ gameId }: NewspaperPageProps) => {
                                             <FontText weight="bold" className='text-white'>+</FontText>
                                         </AppButton>
                                     </Row>
-                                </ScrollView>
-                            </ScrollShadow>
+                            </ShadowScrollView>
                         </Column>
                     </Row>
-                </ScrollView>
-            </ScrollShadow>
+            </ShadowScrollView>
 
             {/* Newspaper Content for Selected Day */}
             <Column className='gap-4 flex-1'>

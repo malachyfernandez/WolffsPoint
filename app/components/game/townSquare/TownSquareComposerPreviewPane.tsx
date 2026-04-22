@@ -1,7 +1,5 @@
 import React from 'react';
-import { ScrollView } from 'react-native';
-import { ScrollShadow } from 'heroui-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import ShadowScrollView from '../../ui/ShadowScrollView';
 import Column from '../../layout/Column';
 import MarkdownRenderer from '../../ui/markdown/MarkdownRenderer';
 import FontText from '../../ui/text/FontText';
@@ -18,8 +16,7 @@ const TownSquareComposerPreviewPane = ({ includeTitle, markdown, markdownInputSt
     return (
         <Column className='gap-2 flex-1 min-w-0'>
             {/* <FontText weight='medium'>Preview</FontText> */}
-            <ScrollShadow LinearGradientComponent={LinearGradient} className='h-[52vh] flex-1'>
-                <ScrollView className='h-[52vh] flex-1 rounded-[24px] border border-subtle-border px-4 py-4'>
+            <ShadowScrollView className='h-[52vh] flex-1' scrollViewClassName='h-[52vh] flex-1 rounded-[24px] border border-subtle-border px-4 py-4'>
                     <Column className='gap-3'>
                         {includeTitle && title.trim() ? (
                             <FontText weight='bold' className='text-2xl leading-8'>
@@ -36,8 +33,7 @@ const TownSquareComposerPreviewPane = ({ includeTitle, markdown, markdownInputSt
                             </Column>
                         )}
                     </Column>
-                </ScrollView>
-            </ScrollShadow>
+            </ShadowScrollView>
         </Column>
     );
 };

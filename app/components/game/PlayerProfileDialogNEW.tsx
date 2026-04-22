@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { ScrollView, View, Pressable } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { ScrollShadow } from 'heroui-native';
+import { View, Pressable } from 'react-native';
+import ShadowScrollView from '../ui/ShadowScrollView';
 import ConvexDialog from '../ui/dialog/ConvexDialog';
 import DialogHeader from '../ui/dialog/DialogHeader';
 import UnsavedChangesDialog from '../ui/dialog/UnsavedChangesDialog';
@@ -204,9 +203,8 @@ const PlayerProfileDialogNEW = ({
                         <DialogHeader text={title} subtext='This is what everyone sees' />
 
                         <Column className='gap-4 flex-1 max-h-[70vh] min-h-0 sm:pt-5 -mx-5'>
-                            <ScrollShadow LinearGradientComponent={LinearGradient} className='flex-1 min-h-0'>
-                                <ScrollView className='flex-1'>
-                                    <Column className='gap-6 px-2 sm:px-5 pb-2'>
+                            <ShadowScrollView className='flex-1 min-h-0' scrollViewClassName='flex-1'>
+                                <Column className='gap-6 px-2 sm:px-5 pb-2'>
                                         <Column className='gap-1'>
                                             <FontText weight='medium'>In-game name</FontText>
                                             <FontTextInput
@@ -237,15 +235,13 @@ const PlayerProfileDialogNEW = ({
                                                     onPress={() => setIsSocialsDialogOpen(true)}
                                                     className='rounded-3xl border border-subtle-border bg-text/5 h-20 overflow-hidden brightness-95 hover:brightness-90 hover:bg-text/10'
                                                 >
-                                                    <ScrollShadow LinearGradientComponent={LinearGradient} className='flex-1'>
-                                                        <ScrollView className='flex-1 p-4' pointerEvents='none'>
+                                                    <ShadowScrollView className='flex-1' scrollViewClassName='flex-1 p-4' pointerEvents='none'>
                                                             <PlayerProfileContactInfo
                                                                 profile={draft}
                                                                 emptyText='No socials yet. Tap to add.'
                                                                 maxItems={4}
                                                             />
-                                                        </ScrollView>
-                                                    </ScrollShadow>
+                                                    </ShadowScrollView>
                                                 </Pressable>
                                             </Column>
                                         </Row>
@@ -265,22 +261,19 @@ const PlayerProfileDialogNEW = ({
                                                         onImage={() => setImageDialogMode('markdown')}
                                                         onMore={() => setIsMoreDialogOpen(true)}
                                                     />
-                                                    <ScrollShadow LinearGradientComponent={LinearGradient} className='min-h-[120px] max-h-[220px]'>
-                                                        <ScrollView className='rounded-[24px] py-4'>
+                                                    <ShadowScrollView className='min-h-[120px] max-h-[220px]' scrollViewClassName='rounded-[24px] py-4'>
                                                             <TownSquareComposerEditorPane
                                                                 onBodyChange={(value) => setDraft((current) => ({ ...current, bioMarkdown: value }))}
                                                                 onSelectionChange={setBioSelection}
                                                                 value={draft.bioMarkdown || ''}
                                                             />
-                                                        </ScrollView>
-                                                    </ScrollShadow>
+                                                    </ShadowScrollView>
                                                 </Column>
 
                                                 {/* RIGHT SIDE: FULL PREVIEW */}
                                                 <Column className='gap-2 flex-1 min-w-[220px] hidden sm:flex'>
                                                     <FontText weight='medium'>Preview</FontText>
-                                                    <ScrollShadow LinearGradientComponent={LinearGradient} className='min-h-[120px] max-h-[220px] rounded-3xl'>
-                                                        <ScrollView className='flex-1'>
+                                                    <ShadowScrollView className='min-h-[120px] max-h-[220px] rounded-3xl' scrollViewClassName='flex-1'>
                                                             <PlayerProfilePreviewCard
                                                                 displayName={previewName}
                                                                 bioMarkdown={draft.bioMarkdown || ''}
@@ -288,14 +281,12 @@ const PlayerProfileDialogNEW = ({
                                                                 initials={previewInitials}
                                                                 profile={draft}
                                                             />
-                                                        </ScrollView>
-                                                    </ScrollShadow>
+                                                    </ShadowScrollView>
                                                 </Column>
                                             </Row>
                                         </Column>
                                     </Column>
-                                </ScrollView>
-                            </ScrollShadow>
+                            </ShadowScrollView>
 
                             <Row className='gap-4 justify-end pt-1 px-5 pb-5'>
                                 <AppButton variant='outline' className='w-20 sm:w-36' onPress={handleAttemptClose}>
@@ -439,9 +430,8 @@ const SocialsDialog = ({ isOpen, onOpenChange, onSave, initialSocials }: Socials
                     <DialogHeader text='Socials' />
 
                     <Column className='gap-4 flex-1 min-h-0 pt-5'>
-                        <ScrollShadow LinearGradientComponent={LinearGradient} className='flex-1 min-h-0'>
-                            <ScrollView className='flex-1'>
-                                <Column className='gap-4 items-start px-2 sm:px-5 pb-2'>
+                        <ShadowScrollView className='flex-1 min-h-0' scrollViewClassName='flex-1'>
+                            <Column className='gap-4 items-start px-2 sm:px-5 pb-2'>
                                     <Column className='gap-4 flex-1 min-w-0'>
                                         <Row className='gap-4'>
                                             <Column className='gap-1 flex-1 min-w-0'>
@@ -498,8 +488,7 @@ const SocialsDialog = ({ isOpen, onOpenChange, onSave, initialSocials }: Socials
                                         </Column>
                                     </Column>
                                 </Column>
-                            </ScrollView>
-                        </ScrollShadow>
+                        </ShadowScrollView>
 
                         <Row className='gap-4 justify-end flex-wrap px-2 sm:px-5 pb-5'>
                             <AppButton variant='outline' className='w-24 sm:w-36' onPress={handleAttemptClose}>

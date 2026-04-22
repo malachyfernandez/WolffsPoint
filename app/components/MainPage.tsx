@@ -14,8 +14,6 @@ import GamePage from './game/GamePage';
 import LayoutStateAnimatedView, { fromBottom } from './ui/LayoutStateAnimatedView';
 import FontTextInput from './ui/forms/FontTextInput';
 import JoinHandler from './ui/forms/JoinHandler';
-import { ScrollShadow } from 'heroui-native';
-import { LinearGradient } from 'expo-linear-gradient';
 
 
 

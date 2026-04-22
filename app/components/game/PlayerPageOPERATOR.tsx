@@ -5,9 +5,8 @@ import Column from '../layout/Column';
 import PlayerTable from './PlayerTable';
 import { UserTableItem } from 'types/playerTable';
 import Row from '../layout/Row';
-import { ScrollShadow } from 'heroui-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { ScrollView, View } from 'react-native';
+import ShadowScrollView from '../ui/ShadowScrollView';
+import { View } from 'react-native';
 import PlayerAddUserSection from './PlayerAddUserSection';
 import ComprehensiveDaySelector from '../ui/daySelector/ComprehensiveDaySelector';
 import DaysTable from './DaysTable';
@@ -97,9 +96,7 @@ const PlayerPageOPERATOR = ({ currentUserId, gameId }: PlayerPageOPERATORProps) 
                 {users.length > 0 ? (
                     <Column className='gap-4 py-3 sm:px-4'>
 
-                        <ScrollShadow LinearGradientComponent={LinearGradient} className='mr-1 pt-1'>
-                            {/* <Row  className='gap-4'> */}
-                            <ScrollView horizontal={true} className='px-1 py-5'>
+                        <ShadowScrollView direction='horizontal' className='mr-1 pt-1' scrollViewClassName='px-1 py-5' horizontal>
                                 <Row className='gap-4'>
                                     <Column className='gap-1'>
                                         <Row className='gap-4 h-6'>
@@ -143,10 +140,7 @@ const PlayerPageOPERATOR = ({ currentUserId, gameId }: PlayerPageOPERATORProps) 
                                     </Column>
                                 </Row>
 
-                            </ScrollView>
-                            {/* </Row> */}
-
-                        </ScrollShadow>
+            </ShadowScrollView>
                         <PlayerAddUserSection gameId={gameId} />
                     </Column>
                 ) : (

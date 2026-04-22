@@ -5,7 +5,7 @@ import { useUserVariable } from 'hooks/useUserVariable';
 import { useSyncUserData } from 'hooks/useSyncUserData';
 import Column from '../layout/Column';
 import BottomBar from '../layout/BottomBar';
-import { ScrollView, View } from 'react-native';
+import { View } from 'react-native';
 import JoinGameButton from './JoinGameButton';
 import GameList from './GameList';
 import NoGames from './NoGames';
@@ -13,8 +13,7 @@ import { MyGames } from 'types/games';
 import NewWolffspointButtonAndDialogue from './NewWolffspointButtonAndDialogue';
 import PublicImageUpload from '../ui/imageUpload/PublicImageUpload';
 import LoadingText from '../ui/loading/LoadingText';
-import { ScrollShadow } from 'heroui-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import ShadowScrollView from '../ui/ShadowScrollView';
 import StateAnimatedView from '../ui/StateAnimatedView';
 import Row from '../layout/Row';
 import FontText from '../ui/text/FontText';
@@ -89,9 +88,7 @@ const AllGamesPage = ({
                         <LoadingText text='Loading games' />
                     </Column>
                 ) : (
-                    <ScrollShadow LinearGradientComponent={LinearGradient} color="rgb(30, 30, 30)" className='h-full'>
-                        <ScrollView className='h-full'>
-
+                    <ShadowScrollView className='h-full' scrollViewClassName='h-full'>
                             {!isGamesPageEmpty ? (
                                 <GameList
                                     gamesTheyJoined={activeJoinedGames}
@@ -107,8 +104,7 @@ const AllGamesPage = ({
                                 </Column>
 
                             )}
-                        </ScrollView>
-                    </ScrollShadow>
+                    </ShadowScrollView>
                 )}
 
             </Column>

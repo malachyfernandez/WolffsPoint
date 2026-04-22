@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ScrollView } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { ScrollShadow } from 'heroui-native';
+import ShadowScrollView from '../ui/ShadowScrollView';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
 import RoleTable from './RoleTable';
@@ -83,8 +81,7 @@ const RolesPageOPERATOR = ({ currentUserId, gameId }: RolesPageOPERATORProps) =>
             <Column className='gap-4 py-3 sm:px-4'>
                 {visibleRoles.length > 0 ? (
                     <Column className='gap-4'>
-                        <ScrollShadow LinearGradientComponent={LinearGradient} className='mr-1'>
-                            <ScrollView horizontal={true} className='px-1 py-5'>
+                        <ShadowScrollView direction='horizontal' className='mr-1' scrollViewClassName='px-1 py-5' horizontal>
                                 <Row className='gap-4'>
                                     <Column className='gap-1'>
                                         <Row className='gap-4 h-6'>
@@ -102,8 +99,7 @@ const RolesPageOPERATOR = ({ currentUserId, gameId }: RolesPageOPERATORProps) =>
                                         </Row>
                                     </Column>
                                 </Row>
-                            </ScrollView>
-                        </ScrollShadow>
+            </ShadowScrollView>
                         <Row className='gap-4 sm:ml-4 -mt-2 sm:-mt-6'>
                             <AppButton variant="accent" className='w-36' onPress={UNDOABLEaddRole}>
                                 <Row className='gap-2 items-center'>

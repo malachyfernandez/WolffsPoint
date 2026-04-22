@@ -1,5 +1,5 @@
 import React from 'react';
-import { ScrollView, View } from 'react-native';
+import { View } from 'react-native';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
 import MarkdownRenderer from '../ui/markdown/MarkdownRenderer';
@@ -7,8 +7,7 @@ import FontText from '../ui/text/FontText';
 import LoadingText from '../ui/loading/LoadingText';
 import PressLogo from '../ui/icons/Press';
 import { useUserListGet } from 'hooks/useUserListGet';
-import { ScrollShadow } from 'heroui-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import ShadowScrollView from '../ui/ShadowScrollView';
 import { Usepaper } from 'types/usepaper';
 import { getNewspaperDayItemId } from '../../../utils/newspaperControl';
 
@@ -49,8 +48,7 @@ const NewspaperViewingView = ({ dayIndex, gameId, ownerUserId }: NewspaperViewin
     const hasContent = newspaperColumns.some(column => column.trim().length > 0);
 
     return (
-        <ScrollShadow LinearGradientComponent={LinearGradient} className='w-full'>
-            <ScrollView horizontal={true} className='w-full'>
+        <ShadowScrollView direction='horizontal' className='w-full' scrollViewClassName='w-full' horizontal>
                 <Column className='gap-4 w-[950px]'>
                 <View className='items-center justify-center px-8'>
                 <PressLogo width="100%" />
@@ -72,8 +70,7 @@ const NewspaperViewingView = ({ dayIndex, gameId, ownerUserId }: NewspaperViewin
                         ))}
                     </Row>
                 </Column>
-            </ScrollView>
-        </ScrollShadow>
+        </ShadowScrollView>
     );
 };
 

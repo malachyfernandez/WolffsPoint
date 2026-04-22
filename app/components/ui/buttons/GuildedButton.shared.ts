@@ -5,7 +5,7 @@ export type GuildedButtonBackground =
           to?: string;
       };
 
-export type GuildedButtonVariant = 'gold' | 'silver';
+export type GuildedButtonVariant = 'gold' | 'silver' | 'ghostly';
 
 export interface GuildedButtonRingPalette {
     outerDark: string;
@@ -53,6 +53,13 @@ export const guildedButtonRingPresets: Record<GuildedButtonVariant, GuildedButto
         middle: '#aeb5bd',
         innerLight: '#818a93',
         innerDark: '#6f7780',
+    },
+    ghostly: {
+        outerDark: '#3d5266',
+        outerLight: '#d0e0ee',
+        middle: '#8ba5b8',
+        innerLight: '#5f7a8f',
+        innerDark: '#3a4d60',
     },
 };
 

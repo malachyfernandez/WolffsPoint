@@ -5,8 +5,7 @@ import Row from '../../layout/Row';
 import AppButton from '../buttons/AppButton';
 import FontText from '../text/FontText';
 import { useUserList } from 'hooks/useUserList';
-import { ScrollShadow } from 'heroui-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import ShadowScrollView from '../../ui/ShadowScrollView';
 import DaySelectionDialog from '../../game/DaySelectionDialog';
 import ChooseDayDialog from '../../game/ChooseDayDialog';
 import DayButton from './DayButton';
@@ -167,12 +166,13 @@ const ComprehensiveDaySelector = ({ gameId, showAddButton = false, showInitialSe
 
     return (
         <Column className='gap-4'>
-            <ScrollShadow LinearGradientComponent={LinearGradient} className='mr-1 pr-1 max-w-min -mb-3 -mt-1'>
-                <ScrollView
-                    ref={scrollViewRef}
-                    horizontal={true}
-                    className='px-1 m-0 h-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]'
-                >
+            <ShadowScrollView
+                direction='horizontal'
+                className='mr-1 pr-1 max-w-min -mb-3 -mt-1'
+                scrollViewClassName='px-1 m-0 h-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]'
+                ref={scrollViewRef}
+                horizontal
+            >
                     <Row className='gap-1 h-6'>
                         {showAddButton && (
                             <AppButton variant="filled" className='h-6! w-6 min-w-6 mx-1 rounded-full' onPress={handleAddNewDay}>
@@ -225,8 +225,7 @@ const ComprehensiveDaySelector = ({ gameId, showAddButton = false, showInitialSe
                             );
                         })}
                     </Row>
-                </ScrollView>
-            </ScrollShadow>
+            </ShadowScrollView>
 
             {/* ChooseDayDialog for initial setup */}
             <ChooseDayDialog

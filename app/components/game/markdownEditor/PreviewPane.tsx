@@ -1,7 +1,5 @@
 import React from 'react';
-import { ScrollView } from 'react-native';
-import { ScrollShadow } from 'heroui-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import ShadowScrollView from '../../ui/ShadowScrollView';
 import TownSquareComposerPreviewPane from '../townSquare/TownSquareComposerPreviewPane';
 
 interface PreviewPaneProps {
@@ -22,8 +20,7 @@ export function PreviewPane({
     className,
 }: PreviewPaneProps) {
     return (
-        <ScrollShadow LinearGradientComponent={LinearGradient} className={className || 'flex-1'}>
-            <ScrollView className='flex-1 rounded-[24px] py-4'>
+        <ShadowScrollView className={className || 'flex-1'} scrollViewClassName='flex-1 rounded-[24px] py-4'>
                 <TownSquareComposerPreviewPane
                     includeTitle={includeTitle}
                     markdown={markdown}
@@ -31,7 +28,6 @@ export function PreviewPane({
                     setMarkdownInputState={setInputState}
                     title={title}
                 />
-            </ScrollView>
-        </ScrollShadow>
+        </ShadowScrollView>
     );
 }

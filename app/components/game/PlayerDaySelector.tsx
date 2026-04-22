@@ -1,7 +1,5 @@
 import React from 'react';
-import { ScrollView } from 'react-native';
-import { ScrollShadow } from 'heroui-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import ShadowScrollView from '../ui/ShadowScrollView';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
 import DayButton from '../ui/daySelector/DayButton';
@@ -18,8 +16,7 @@ interface PlayerDaySelectorProps {
 const PlayerDaySelector = ({ dayDates, selectedDayIndex, currentDayIndex, onSelectDay, fallbackSpanDays = 1 }: PlayerDaySelectorProps) => {
     return (
         <Column className='gap-4'>
-            <ScrollShadow LinearGradientComponent={LinearGradient} className='mr-1 pr-1 max-w-min -mb-3 -mt-1'>
-                <ScrollView horizontal={true} className='px-1 m-0 h-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]'>
+            <ShadowScrollView direction='horizontal' className='mr-1 pr-1 max-w-min -mb-3 -mt-1' scrollViewClassName='px-1 m-0 h-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]' horizontal>
                     <Row className='gap-1 h-6'>
                         {dayDates.map((date, index) => {
                             const isLocked = index > currentDayIndex;
@@ -40,8 +37,7 @@ const PlayerDaySelector = ({ dayDates, selectedDayIndex, currentDayIndex, onSele
                             );
                         })}
                     </Row>
-                </ScrollView>
-            </ScrollShadow>
+            </ShadowScrollView>
         </Column>
     );
 };

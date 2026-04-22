@@ -10,9 +10,8 @@ import NightlyDaysTable from './NightlyDaysTable';
 import { UserTableItem } from 'types/playerTable';
 import AppButton from '../ui/buttons/AppButton';
 import Row from '../layout/Row';
-import { ScrollShadow } from 'heroui-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { ScrollView, View, useWindowDimensions } from 'react-native';
+import ShadowScrollView from '../ui/ShadowScrollView';
+import { View, useWindowDimensions } from 'react-native';
 import ComprehensiveDaySelector from '../ui/daySelector/ComprehensiveDaySelector';
 import NightlyCertificationDialog from './NightlyCertificationDialog';
 import { getGameScopedKey, hasPlayerActionContent } from '../../../utils/multiplayer';
@@ -217,8 +216,7 @@ const NightlyPageOPERATOR = ({ currentUserId: _currentUserId, gameId }: NightlyP
                             </Column>
                         )}
 
-                        <ScrollShadow LinearGradientComponent={LinearGradient} className='mr-1 pt-1'>
-                            <ScrollView horizontal={true} className='px-1 py-5'>
+                        <ShadowScrollView direction='horizontal' className='mr-1 pt-1' scrollViewClassName='px-1 py-5' horizontal>
                                 <Row className='gap-4'>
                                     <Column className='gap-1'>
                                         <Row className='gap-4 h-6'>
@@ -265,8 +263,7 @@ const NightlyPageOPERATOR = ({ currentUserId: _currentUserId, gameId }: NightlyP
                                         </Row>
                                     </Column>
                                 </Row>
-                            </ScrollView>
-                        </ScrollShadow>
+            </ShadowScrollView>
 
                         <NightlyCertificationDialog
                             isOpen={isCertificationDialogOpen}

@@ -1,7 +1,6 @@
 import React, { RefObject, useMemo } from 'react';
 import { ScrollView, useWindowDimensions } from 'react-native';
-import { ScrollShadow } from 'heroui-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import ShadowScrollView from '../../ui/ShadowScrollView';
 import { Plus } from 'lucide-react-native';
 import StateAnimatedView from '../../ui/StateAnimatedView';
 import Column from '../../layout/Column';
@@ -97,49 +96,47 @@ const TownSquareThreadListView = ({
 
                 <StateAnimatedView.Container stateVar={hasLoaded} className='flex-1'>
                     <StateAnimatedView.Option stateValue={false}>
-                        <ScrollShadow LinearGradientComponent={LinearGradient} className='flex-1'>
-                            <ScrollView
-                                ref={listScrollRef}
-                                className='flex-1'
-                                onScroll={(event) => onScrollYChange(event.nativeEvent.contentOffset.y)}
-                                scrollEventThrottle={16}
-                            >
-                                <Column className='gap-1 items-center justify-center py-24'>
-                                    <LoadingText text='Loading threads' />
-                                </Column>
-                            </ScrollView>
-                        </ScrollShadow>
+                        <ShadowScrollView
+                            className='flex-1'
+                            scrollViewClassName='flex-1'
+                            ref={listScrollRef}
+                            onScroll={(event: any) => onScrollYChange(event.nativeEvent.contentOffset.y)}
+                            scrollEventThrottle={16}
+                        >
+                            <Column className='gap-1 items-center justify-center py-24'>
+                                <LoadingText text='Loading threads' />
+                            </Column>
+                        </ShadowScrollView>
                     </StateAnimatedView.Option>
 
                     <StateAnimatedView.Option stateValue={true} onValue={fadeIn}>
-                        <ScrollShadow LinearGradientComponent={LinearGradient} className='flex-1'>
-                            <ScrollView
-                                ref={listScrollRef}
-                                className='flex-1'
-                                onScroll={(event) => onScrollYChange(event.nativeEvent.contentOffset.y)}
-                                scrollEventThrottle={16}
-                            >
-                                {threads.length > 0 ? (
-                                    <Column className='gap-0'>
-                                        {threads.map((thread, index) => (
-                                            <TownSquareThreadListItem
-                                                key={thread.postId}
-                                                index={index}
-                                                isLast={index === threads.length - 1}
-                                                onPress={() => onOpenThread(thread)}
-                                                readStateSnapshot={readStateSnapshot}
-                                                thread={thread}
-                                            />
-                                        ))}
-                                    </Column>
-                                ) : (
-                                    <Column className='gap-1 items-center justify-center py-24'>
-                                        <FontText weight='medium'>No threads yet</FontText>
-                                        <FontText variant='subtext'>Kick things off with the first post.</FontText>
-                                    </Column>
-                                )}
-                            </ScrollView>
-                        </ScrollShadow>
+                        <ShadowScrollView
+                            className='flex-1'
+                            scrollViewClassName='flex-1'
+                            ref={listScrollRef}
+                            onScroll={(event: any) => onScrollYChange(event.nativeEvent.contentOffset.y)}
+                            scrollEventThrottle={16}
+                        >
+                            {threads.length > 0 ? (
+                                <Column className='gap-0'>
+                                    {threads.map((thread, index) => (
+                                        <TownSquareThreadListItem
+                                            key={thread.postId}
+                                            index={index}
+                                            isLast={index === threads.length - 1}
+                                            onPress={() => onOpenThread(thread)}
+                                            readStateSnapshot={readStateSnapshot}
+                                            thread={thread}
+                                        />
+                                    ))}
+                                </Column>
+                            ) : (
+                                <Column className='gap-1 items-center justify-center py-24'>
+                                    <FontText weight='medium'>No threads yet</FontText>
+                                    <FontText variant='subtext'>Kick things off with the first post.</FontText>
+                                </Column>
+                            )}
+                        </ShadowScrollView>
                     </StateAnimatedView.Option>
                 </StateAnimatedView.Container>
             </Column>

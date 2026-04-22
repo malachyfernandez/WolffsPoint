@@ -1,7 +1,6 @@
 import React from 'react';
-import { ScrollView } from 'react-native';
-import { Tabs, ScrollShadow } from 'heroui-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import { Tabs } from 'heroui-native';
+import ShadowScrollView from '../../ui/ShadowScrollView';
 import Column from '../../layout/Column';
 import TownSquareComposerToolbar from '../townSquare/TownSquareComposerToolbar';
 import TownSquareComposerEditorPane from '../townSquare/TownSquareComposerEditorPane';
@@ -59,29 +58,25 @@ export function TabbedLayout({
                         showInputs={showInputs}
                     />
                 </Column>
-                <ScrollShadow LinearGradientComponent={LinearGradient} className='flex-1'>
-                    <ScrollView className='flex-1 h-full rounded-[24px] py-4'>
-                        <TownSquareComposerEditorPane
+                <ShadowScrollView className='flex-1' scrollViewClassName='flex-1 h-full py-4'>
+                    <TownSquareComposerEditorPane
                             onBodyChange={onBodyChange}
                             onSelectionChange={onSelectionChange}
                             value={draftBody}
                         />
-                    </ScrollView>
-                </ScrollShadow>
+                </ShadowScrollView>
             </Tabs.Content>
 
             <Tabs.Content value='preview' className='flex-1'>
-                <ScrollShadow LinearGradientComponent={LinearGradient} className='flex-1'>
-                    <ScrollView className='flex-1 rounded-[24px] py-4'>
-                        <TownSquareComposerPreviewPane
+                <ShadowScrollView className='flex-1' scrollViewClassName='flex-1 rounded-[24px] py-4'>
+                    <TownSquareComposerPreviewPane
                             includeTitle={includeTitle}
                             markdown={draftBody}
                             markdownInputState={previewInputState}
                             setMarkdownInputState={setPreviewInputState}
                             title={draftTitle}
                         />
-                    </ScrollView>
-                </ScrollShadow>
+                </ShadowScrollView>
             </Tabs.Content>
         </Tabs>
     );

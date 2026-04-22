@@ -1,8 +1,7 @@
 import React, { useEffect } from 'react';
-import { Pressable, ScrollView } from 'react-native';
+import { Pressable } from 'react-native';
 import { ChevronLeft } from 'lucide-react-native';
-import { ScrollShadow } from 'heroui-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import ShadowScrollView from '../../ui/ShadowScrollView';
 import Column from '../../layout/Column';
 import Row from '../../layout/Row';
 import AppButton from '../../ui/buttons/AppButton';
@@ -60,9 +59,8 @@ const TownSquareThreadDetailView = ({
                 </Row>
             </Pressable>
 
-            <ScrollShadow LinearGradientComponent={LinearGradient} className='flex-1'>
-                <ScrollView className='flex-1'>
-                    <Column className='gap-7'>
+            <ShadowScrollView className='flex-1' scrollViewClassName='flex-1'>
+                <Column className='gap-7'>
                         <Column className='gap-4'>
                             <Row className='sm:hidden w-full items-center'>
                                 <TownSquareAuthorAvatar gameId={selectedThread.gameId} size={60} userId={selectedThread.authorUserId} />
@@ -136,8 +134,7 @@ const TownSquareThreadDetailView = ({
                             </Column>
                         )}
                     </Column>
-                </ScrollView>
-            </ScrollShadow>
+            </ShadowScrollView>
         </Column>
     );
 };

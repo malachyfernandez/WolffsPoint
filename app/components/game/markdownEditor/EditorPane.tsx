@@ -1,7 +1,5 @@
 import React from 'react';
-import { ScrollView } from 'react-native';
-import { ScrollShadow } from 'heroui-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import ShadowScrollView from '../../ui/ShadowScrollView';
 import Column from '../../layout/Column';
 import TownSquareComposerToolbar from '../townSquare/TownSquareComposerToolbar';
 import TownSquareComposerEditorPane from '../townSquare/TownSquareComposerEditorPane';
@@ -43,15 +41,13 @@ export function EditorPane({
                 onMore={onMore}
                 showInputs={showInputs}
             />
-            <ScrollShadow LinearGradientComponent={LinearGradient} className='flex-1'>
-                <ScrollView className='flex-1 rounded-[24px] py-4'>
+            <ShadowScrollView className='flex-1' scrollViewClassName='flex-1 rounded-[24px] py-4'>
                     <TownSquareComposerEditorPane
                         onBodyChange={onBodyChange}
                         onSelectionChange={onSelectionChange}
                         value={value}
                     />
-                </ScrollView>
-            </ScrollShadow>
+            </ShadowScrollView>
         </Column>
     );
 }

@@ -1,12 +1,11 @@
 import React, { useState } from 'react';
-import { ScrollView, Pressable, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
 import MarkdownRenderer from '../ui/markdown/MarkdownRenderer';
 import { useUserList } from 'hooks/useUserList';
 import { createUndoSnapshot, useUndoRedo } from 'hooks/useUndoRedo';
-import { ScrollShadow } from 'heroui-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import ShadowScrollView from '../ui/ShadowScrollView';
 import MarkdownEditorDialog from './MarkdownEditorDialog';
 import NewspaperColumnEmptyState from './newspaperPageOperator/NewspaperColumnEmptyState';
 import NewspaperColumnFooter from './newspaperPageOperator/NewspaperColumnFooter';
@@ -95,8 +94,7 @@ const NewspaperWritingView = ({ gameId }: NewspaperWritingViewProps) => {
 
     return (
         <>
-            <ScrollShadow LinearGradientComponent={LinearGradient} className='w-full'>
-                <ScrollView horizontal={true} className='w-full'>
+            <ShadowScrollView direction='horizontal' className='w-full' scrollViewClassName='w-full' horizontal>
                     <Column className='gap-4 w-[950px]'>
                         <View className='items-center justify-center px-8'>
                             <PressLogo width="100%" />
@@ -132,8 +130,7 @@ const NewspaperWritingView = ({ gameId }: NewspaperWritingViewProps) => {
                             </Row>
                         </View>
                     </Column>
-                </ScrollView>
-            </ScrollShadow>
+            </ShadowScrollView>
 
             {selectedColumnIndex !== null && (
                 <MarkdownEditorDialog
