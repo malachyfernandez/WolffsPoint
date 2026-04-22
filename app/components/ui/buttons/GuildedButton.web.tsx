@@ -294,8 +294,15 @@ function hasUtilityClass(className: string, patterns: RegExp[]) {
     return patterns.some((pattern) => pattern.test(className));
 }
 
-function hasFullWidthUtility(className: string) {
-    return /\bw-full\b/.test(className);
+function extractWidthClasses(className: string): string {
+    if (!className) return '';
+    return className
+        .split(/\s+/)
+        .filter((cls) => {
+            const lastSegment = cls.split(':').pop() || '';
+            return /^(w|min-w|max-w)-/.test(lastSegment);
+        })
+        .join(' ');
 }
 
 export default function GuildedButton({
@@ -340,7 +347,6 @@ export default function GuildedButton({
     const resolvedInnerHeight = getGuildedInnerHeight(height, totalThickness);
 
     const hasWidthUtility = hasUtilityClass(className, [/\bw-/, /\bmin-w-/, /\bmax-w-/]);
-    const shouldFillWidth = hasFullWidthUtility(className);
     const hasHeightUtility = hasUtilityClass(className, [/\bh-/, /\bmin-h-/, /\bmax-h-/]);
     const hasBackgroundUtility = hasUtilityClass(className, [/\bbg-/, /\bfrom-/, /\bto-/]);
 
@@ -366,12 +372,7 @@ export default function GuildedButton({
         '--ring-inner-dark': ringPalette.innerDark,
     } as React.CSSProperties & Record<string, string>;
 
-    const outerWidthStyle: React.CSSProperties = shouldFillWidth
-        ? {
-              width: '100%',
-              maxWidth: '100%',
-          }
-        : {};
+    const widthClasses = extractWidthClasses(className);
 
     const innerBoxStyle: React.CSSProperties = {
         ...(width !== undefined
@@ -402,14 +403,13 @@ export default function GuildedButton({
                 role="button"
                 tabIndex={disabled ? -1 : 0}
                 aria-disabled={disabled || undefined}
-                className={`guilded-button-root ${disabled ? 'is-disabled' : ''} ${rootClassName}`.trim()}
-                style={outerWidthStyle}
+                className={`guilded-button-root ${disabled ? 'is-disabled' : ''} ${rootClassName} ${widthClasses}`.trim()}
                 onClick={disabled ? undefined : onPress}
                 onKeyDown={handleKeyDown}
             >
-                <div className="guilded-button-place" style={outerWidthStyle}>
-                    <div className="guilded-button-shadow-wrapper" style={{ ...cssVariables, ...outerWidthStyle }}>
-                        <div className="guilded-button-frame" style={outerWidthStyle}>
+                <div className={`guilded-button-place ${widthClasses}`.trim()}>
+                    <div className={`guilded-button-shadow-wrapper ${widthClasses}`.trim()} style={cssVariables}>
+                        <div className={`guilded-button-frame ${widthClasses}`.trim()}>
                             <div className={`guilded-button-inner-box ${className}`.trim()} style={innerBoxStyle}>
                                 <div className="guilded-button-content">{children}</div>
                             </div>

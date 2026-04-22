@@ -169,14 +169,14 @@ const NewspaperPageNEWSER = ({ currentUserId, gameId }: NewspaperPageNEWSERProps
 
     const renderViewingContent = (dayIndex: number, ownerUserId: string, isLeaving: boolean = false) => {
         return (
-            <View className='py-4 rounded-2xl' style={{
-                // @ts-ignore: web-only CSS
-                backgroundImage: "url('https://d9tic9wqq4.ufs.sh/f/e3bq9j1bOXyi6QFuqBSV3IcVxmF4QjUoPvCOdS2HLawpi0Ey')",
-                backgroundRepeat: 'repeat',
-                backgroundSize: `${TILE_SIZE}px ${TILE_SIZE}px`,
-            }}>
+            // <View className='py-4 rounded-2xl' style={{
+            //     // @ts-ignore: web-only CSS
+            //     backgroundImage: "url('https://d9tic9wqq4.ufs.sh/f/e3bq9j1bOXyi6QFuqBSV3IcVxmF4QjUoPvCOdS2HLawpi0Ey')",
+            //     backgroundRepeat: 'repeat',
+            //     backgroundSize: `${TILE_SIZE}px ${TILE_SIZE}px`,
+            // }}>
                 <NewspaperDayView gameId={gameId} dayIndex={dayIndex} ownerUserId={ownerUserId} isLeaving={isLeaving} />
-            </View>
+            // </View>
         );
     };
 
@@ -189,7 +189,7 @@ const NewspaperPageNEWSER = ({ currentUserId, gameId }: NewspaperPageNEWSERProps
     }
 
     return (
-        <Column className='gap-4 py-3 sm:px-4'>
+        <Column className='gap-4 py-3'>
             <View className='mt-2 -mb-2 w-full'>
                 <OperatorDayNavigation
                     gameId={gameId}
@@ -201,7 +201,7 @@ const NewspaperPageNEWSER = ({ currentUserId, gameId }: NewspaperPageNEWSERProps
 
             <View className='relative'>
                 <View className='relative'>
-                    <Column className='gap-4 px-2 py-3 sm:px-4'>
+                    <Column className='gap-4 px-2 py-3'>
                         <Tabs value={activeTab} onValueChange={handleTabChange} variant='secondary' className='flex-1'>
                             <Tabs.List>
                                 <Tabs.Indicator />

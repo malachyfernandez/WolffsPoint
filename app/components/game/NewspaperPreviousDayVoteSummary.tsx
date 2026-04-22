@@ -150,7 +150,12 @@ const NewspaperPreviousDayVoteSummary = ({ gameId, dayIndex }: NewspaperPrevious
     const maxVoteCount = voteRows[0]?.voteCount ?? 0;
 
     if (dayIndex <= 0 || voteRows.length === 0) {
-        return null;
+        return (
+            <Column className='gap-4 w-full border-t border-border/15 p-4'>
+                <Column className='gap-1 h-1'>
+                </Column>
+            </Column>
+        );
     }
 
     return (

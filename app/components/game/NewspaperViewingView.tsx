@@ -15,13 +15,14 @@ interface NewspaperViewingViewProps {
     dayIndex: number;
     gameId: string;
     ownerUserId: string;
+    TILE_SIZE: number;
 }
 
 const minimumUsepaper: Usepaper = {
     columns: ['', ''],
 };
 
-const NewspaperViewingView = ({ dayIndex, gameId, ownerUserId }: NewspaperViewingViewProps) => {
+const NewspaperViewingView = ({ dayIndex, gameId, ownerUserId, TILE_SIZE }: NewspaperViewingViewProps) => {
     const usepaperRecords = useUserListGet<Usepaper>({
         key: 'usepaper',
         itemId: getNewspaperDayItemId(gameId, dayIndex),
@@ -48,29 +49,38 @@ const NewspaperViewingView = ({ dayIndex, gameId, ownerUserId }: NewspaperViewin
     const hasContent = newspaperColumns.some(column => column.trim().length > 0);
 
     return (
-        <ShadowScrollView direction='horizontal' className='w-full' scrollViewClassName='w-full' horizontal>
-                <Column className='gap-4 w-[950px]'>
-                <View className='items-center justify-center px-8'>
-                <PressLogo width="100%" />
+        <View className=''>
+            <ShadowScrollView extensionPercent={0} direction='horizontal' className='w-full' scrollViewClassName='w-full px-5' horizontal>
+                <View className='py-4 rounded-t-2xl' style={{
+                    // @ts-ignore: web-only CSS
+                    backgroundImage: "url('https://d9tic9wqq4.ufs.sh/f/e3bq9j1bOXyi6QFuqBSV3IcVxmF4QjUoPvCOdS2HLawpi0Ey')",
+                    backgroundRepeat: 'repeat',
+                    backgroundSize: `${TILE_SIZE}px ${TILE_SIZE}px`,
+                }}>
+                    <Column className='gap-4 w-[910px]'>
+                        <View className='items-center justify-center px-8'>
+                            <PressLogo width="100%" />
+                        </View>
+                        <Row className='gap-4 w-full p-4'>
+                            {newspaperColumns.map((columnMarkdown, columnIndex) => (
+                                <Column
+                                    key={columnIndex}
+                                    className='gap-4 flex-1 shrink'
+                                >
+                                    {columnMarkdown.trim().length > 0 ? (
+                                        <MarkdownRenderer markdown={columnMarkdown} textAlign='justify' />
+                                    ) : (
+                                        <FontText variant='subtext' className='text-muted text-center'>
+                                            Empty column
+                                        </FontText>
+                                    )}
+                                </Column>
+                            ))}
+                        </Row>
+                    </Column>
                 </View>
-                    <Row className='gap-4 w-full p-4'>
-                        {newspaperColumns.map((columnMarkdown, columnIndex) => (
-                            <Column
-                                key={columnIndex}
-                                className='gap-4 flex-1 shrink'
-                            >
-                                {columnMarkdown.trim().length > 0 ? (
-                                    <MarkdownRenderer markdown={columnMarkdown} textAlign='justify' />
-                                ) : (
-                                    <FontText variant='subtext' className='text-muted text-center'>
-                                        Empty column
-                                    </FontText>
-                                )}
-                            </Column>
-                        ))}
-                    </Row>
-                </Column>
-        </ShadowScrollView>
+            </ShadowScrollView>
+        </View>
     );
 };
 

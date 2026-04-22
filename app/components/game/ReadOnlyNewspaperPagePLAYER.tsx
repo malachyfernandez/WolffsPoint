@@ -16,6 +16,8 @@ import NewspaperDayView from './NewspaperDayView';
 import PlaceholderCard from '../ui/PlaceholderCard';
 import LoadingContainer from '../ui/loading/LoadingContainer';
 import { useNewspaperDayOwner } from './useNewspaperDayOwner';
+import LoadingText from '../ui/loading/LoadingText';
+import FadeInAfterDelay from '../ui/loading/FadeInAfterDelay';
 
 interface YourEyesOnlyPagePLAYERProps {
     gameId: string;
@@ -58,7 +60,7 @@ const YourEyesOnlyPagePLAYER = ({ gameId, currentEmail, matchingPlayer, currentP
     // 2. It's the current/future day - only blocked on the START DATE until wake-up time
     const selectedDayStartDate = dayDates[selectedDayIndex];
     const isPreviousDay = selectedDayIndex < currentDayIndex;
-    const isStartOfSelectedDay = selectedDayStartDate ? new Date(now).setHours(0,0,0,0) === new Date(selectedDayStartDate).setHours(0,0,0,0) : false;
+    const isStartOfSelectedDay = selectedDayStartDate ? new Date(now).setHours(0, 0, 0, 0) === new Date(selectedDayStartDate).setHours(0, 0, 0, 0) : false;
     const hasNewspaperReleased = useMemo(() => {
         if (isPreviousDay) return true; // Previous days are always released
         if (!selectedDayStartDate) return false;
@@ -72,7 +74,7 @@ const YourEyesOnlyPagePLAYER = ({ gameId, currentEmail, matchingPlayer, currentP
         if (leavingDayIndex == null || !leavingDayStartDateLocal) return true;
         const isLeavingDayPreviousLocal = leavingDayIndex < currentDayIndex;
         if (isLeavingDayPreviousLocal) return true; // Previous days are always released
-        const isStartOfLeavingDayLocal = new Date(now).setHours(0,0,0,0) === new Date(leavingDayStartDateLocal).setHours(0,0,0,0);
+        const isStartOfLeavingDayLocal = new Date(now).setHours(0, 0, 0, 0) === new Date(leavingDayStartDateLocal).setHours(0, 0, 0, 0);
         // For current/future days, only apply wake-up time on the start date itself
         if (!isStartOfLeavingDayLocal) return true; // Not the start date, so released
         // It's the start date - check if wake-up time has passed
@@ -186,68 +188,90 @@ const YourEyesOnlyPagePLAYER = ({ gameId, currentEmail, matchingPlayer, currentP
         >
             {isOwnershipLoading ? (
                 <Column className='gap-4 flex-1 items-center justify-center'>
-                    <FontText variant='subtext'>Loading newspaper…</FontText>
+                    <LoadingText text='Loading newspaper' />
                 </Column>
             ) : (
                 <Column className='gap-7 flex-1'>
 
 
-                <Column className='gap-5 border-y border-border/15 py-5'>
-                    <Row className='gap-4 items-start justify-between'>
-                        <Pressable
-                            onPress={() => {
-                                if (selectedDayIndex > 0) {
-                                    setSelectedDayIndex(selectedDayIndex - 1);
-                                }
-                            }}
-                            disabled={selectedDayIndex <= 0}
-                            className={`w-20 items-center ${selectedDayIndex <= 0 ? 'opacity-30' : ''}`}
-                        >
-                            <ChevronLeft size={28} color='rgb(46, 41, 37)' />
-                            <FontText variant='subtext' className='text-center text-xs'>
-                                {previousDayLabel || ' '}
-                            </FontText>
-                        </Pressable>
+                    <Column className='gap-5 border-y border-border/15 py-5'>
+                        <Row className='gap-4 items-start justify-between'>
+                            <Pressable
+                                onPress={() => {
+                                    if (selectedDayIndex > 0) {
+                                        setSelectedDayIndex(selectedDayIndex - 1);
+                                    }
+                                }}
+                                disabled={selectedDayIndex <= 0}
+                                className={`w-20 items-center ${selectedDayIndex <= 0 ? 'opacity-30' : ''}`}
+                            >
+                                <ChevronLeft size={28} color='rgb(46, 41, 37)' />
+                                <FontText variant='subtext' className='text-center text-xs'>
+                                    {previousDayLabel || ' '}
+                                </FontText>
+                            </Pressable>
 
-                        <Column className='gap-1 flex-1 items-center pt-1'>
-                            <FontText weight='medium' className='text-center'>
-                                {selectedDayRangeLabel || 'Current game day'}
-                            </FontText>
-                            <FontText variant='subtext' className='text-xs text-center'>
-                                Day {selectedDayIndex + 1}
-                            </FontText>
-                        </Column>
+                            <Column className='gap-1 flex-1 items-center pt-1'>
+                                <FontText weight='medium' className='text-center'>
+                                    {selectedDayRangeLabel || 'Current game day'}
+                                </FontText>
+                                <FontText variant='subtext' className='text-xs text-center'>
+                                    Day {selectedDayIndex + 1}
+                                </FontText>
+                            </Column>
 
-                        <Pressable
-                            onPress={() => {
-                                if (selectedDayIndex < currentDayIndex) {
-                                    setSelectedDayIndex(selectedDayIndex + 1);
-                                }
-                            }}
-                            disabled={selectedDayIndex >= currentDayIndex}
-                            className={`w-20 items-center ${selectedDayIndex >= currentDayIndex ? 'opacity-30' : ''}`}
-                        >
-                            <ChevronRight size={28} color='rgb(46, 41, 37)' />
-                            <FontText variant='subtext' className='text-center text-xs'>
-                                {nextDayLabel || ' '}
-                            </FontText>
-                        </Pressable>
-                    </Row>
+                            <Pressable
+                                onPress={() => {
+                                    if (selectedDayIndex < currentDayIndex) {
+                                        setSelectedDayIndex(selectedDayIndex + 1);
+                                    }
+                                }}
+                                disabled={selectedDayIndex >= currentDayIndex}
+                                className={`w-20 items-center ${selectedDayIndex >= currentDayIndex ? 'opacity-30' : ''}`}
+                            >
+                                <ChevronRight size={28} color='rgb(46, 41, 37)' />
+                                <FontText variant='subtext' className='text-center text-xs'>
+                                    {nextDayLabel || ' '}
+                                </FontText>
+                            </Pressable>
+                        </Row>
 
-                    <View className='py-4 rounded-2xl' style={[styles.animatedContentContainer, {
+                        {/* <View className='py-4 rounded-2xl' style={[styles.animatedContentContainer, {
                         // @ts-ignore: web-only CSS
                         backgroundImage: "url('https://d9tic9wqq4.ufs.sh/f/e3bq9j1bOXyi6QFuqBSV3IcVxmF4QjUoPvCOdS2HLawpi0Ey')",
                         backgroundRepeat: 'repeat',
                         backgroundSize: `${TILE_SIZE}px ${TILE_SIZE}px`,
-                    }]}>
-                        {leavingDayIndex != null ? (
-                            <Animated.View
-                                key={`leaving-${leavingDayIndex}`}
-                                pointerEvents='none'
-                                style={[styles.animatedContentOverlay, leavingStyle]}
-                            >
-                                {hasLeavingDayReleased ? (
-                                    <NewspaperDayView gameId={gameId} dayIndex={leavingDayIndex} ownerUserId={leavingDayOwner.ownerUserId} isLeaving />
+                    }]}> */}
+                        <View className='px-1'>
+                            {leavingDayIndex != null ? (
+                                <Animated.View
+                                    key={`leaving-${leavingDayIndex}`}
+                                    pointerEvents='none'
+                                    style={[styles.animatedContentOverlay, leavingStyle]}
+                                >
+                                    {hasLeavingDayReleased ? (
+                                        <NewspaperDayView gameId={gameId} dayIndex={leavingDayIndex} ownerUserId={leavingDayOwner.ownerUserId} isLeaving />
+                                    ) : (
+                                        <PlaceholderCard>
+                                            <Column className='gap-3 items-center'>
+                                                <Newspaper size={48} color='rgb(46, 41, 37)' />
+                                                <FontText weight='bold' className='text-xl text-center'>
+                                                    Not yet released
+                                                </FontText>
+                                                <FontText variant='subtext' className='text-center'>
+                                                    The newspaper will be available at {formatTimeLabel(schedule.wakeUpTime)}.
+                                                </FontText>
+                                            </Column>
+                                        </PlaceholderCard>
+                                    )}
+                                </Animated.View>
+                            ) : null}
+
+                            <Animated.View key={`selected-${selectedDayIndex}`} style={enteringStyle}>
+                                {hasNewspaperReleased ? (
+                                    // <FadeInAfterDelay delayMs={1}>
+                                        <NewspaperDayView gameId={gameId} dayIndex={selectedDayIndex} ownerUserId={selectedDayOwner.ownerUserId} />
+                                    // </FadeInAfterDelay>
                                 ) : (
                                     <PlaceholderCard>
                                         <Column className='gap-3 items-center'>
@@ -256,34 +280,15 @@ const YourEyesOnlyPagePLAYER = ({ gameId, currentEmail, matchingPlayer, currentP
                                                 Not yet released
                                             </FontText>
                                             <FontText variant='subtext' className='text-center'>
-                                                The newspaper will be available at {formatTimeLabel(schedule.wakeUpTime)}.
+                                                The newspaper will be available {releaseDateLabel || 'soon'} at {formatTimeLabel(schedule.wakeUpTime)}.
                                             </FontText>
                                         </Column>
                                     </PlaceholderCard>
                                 )}
                             </Animated.View>
-                        ) : null}
-
-                        <Animated.View key={`selected-${selectedDayIndex}`} style={enteringStyle}>
-                            {hasNewspaperReleased ? (
-                                <NewspaperDayView gameId={gameId} dayIndex={selectedDayIndex} ownerUserId={selectedDayOwner.ownerUserId} />
-                            ) : (
-                                <PlaceholderCard>
-                                    <Column className='gap-3 items-center'>
-                                        <Newspaper size={48} color='rgb(46, 41, 37)' />
-                                        <FontText weight='bold' className='text-xl text-center'>
-                                            Not yet released
-                                        </FontText>
-                                        <FontText variant='subtext' className='text-center'>
-                                            The newspaper will be available {releaseDateLabel || 'soon'} at {formatTimeLabel(schedule.wakeUpTime)}.
-                                        </FontText>
-                                    </Column>
-                                </PlaceholderCard>
-                            )}
-                        </Animated.View>
-                    </View>
+                        </View>
+                    </Column>
                 </Column>
-            </Column>
             )}
         </LoadingContainer>
     );

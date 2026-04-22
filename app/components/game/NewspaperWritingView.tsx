@@ -5,6 +5,7 @@ import Row from '../layout/Row';
 import MarkdownRenderer from '../ui/markdown/MarkdownRenderer';
 import { useUserList } from 'hooks/useUserList';
 import { createUndoSnapshot, useUndoRedo } from 'hooks/useUndoRedo';
+import { useToast } from 'contexts/ToastContext';
 import ShadowScrollView from '../ui/ShadowScrollView';
 import MarkdownEditorDialog from './MarkdownEditorDialog';
 import NewspaperColumnEmptyState from './newspaperPageOperator/NewspaperColumnEmptyState';
@@ -28,6 +29,7 @@ const minimumUsepaper: Usepaper = {
 
 const NewspaperWritingView = ({ gameId }: NewspaperWritingViewProps) => {
     const { executeCommand } = useUndoRedo();
+    const { showToast } = useToast();
     const [selectedColumnIndex, setSelectedColumnIndex] = useState<number | null>(null);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
 
@@ -58,6 +60,11 @@ const NewspaperWritingView = ({ gameId }: NewspaperWritingViewProps) => {
     };
 
     const addColumn = () => {
+        if (newspaperColumns.length >= 8) {
+            showToast('Too many columns — maximum 8');
+            return;
+        }
+
         const previousUsepaper = createUndoSnapshot(resolvedUsepaper);
         const nextUsepaper = createUndoSnapshot(previousUsepaper);
 
@@ -94,8 +101,8 @@ const NewspaperWritingView = ({ gameId }: NewspaperWritingViewProps) => {
 
     return (
         <>
-            <ShadowScrollView direction='horizontal' className='w-full' scrollViewClassName='w-full' horizontal>
-                    <Column className='gap-4 w-[950px]'>
+            <ShadowScrollView direction='horizontal' extensionPercent={0} className='w-full' scrollViewClassName='w-full px-4' horizontal>
+                    <Column className='gap-4 w-[910px]'>
                         <View className='items-center justify-center px-8'>
                             <PressLogo width="100%" />
                         </View>
