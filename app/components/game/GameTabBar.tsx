@@ -19,7 +19,6 @@ interface GameTabBarProps<TTab extends string> {
     tabs: GameTabDefinition<TTab>[];
     iconSize?: number;
     iconStrokeWidth?: number;
-    gameId?: string;
 }
 
 const SvgTabContainer = ({ text, isHighlighted, onPress }: { text: string; isHighlighted: boolean; onPress: () => void }) => {

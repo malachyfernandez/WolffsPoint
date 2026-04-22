@@ -1,10 +1,7 @@
 import React from 'react';
 import { View, useWindowDimensions } from 'react-native';
-import { ConvexProvider, ConvexReactClient } from 'convex/react';
 import { Dialog } from 'heroui-native/dialog';
 import GuildedFrame from '../chrome/GuildedFrame';
-
-const DEBUG_DISABLE_NESTED_CONVEX_PROVIDER = false;
 const DEFAULT_DIALOG_MAX_WIDTH = 960;
 
 const dialogMaxWidthByToken: Record<string, number> = {
@@ -72,13 +69,7 @@ const splitHeightClasses = (className?: string) => {
     };
 };
 
-const convex = new ConvexReactClient(process.env.EXPO_PUBLIC_CONVEX_URL!);
 const basePortalClassName = 'flex-1 w-full h-full px-4 py-6 items-center justify-center';
-
-const ConvexDialogContent = ({ children }: { children: React.ReactNode }) => {
-    return <ConvexProvider client={convex}>{children}</ConvexProvider>;
-};
-
 const baseContentClassName = 'w-full self-center bg-transparent border-0 p-0 overflow-visible shadow-none';
 
 const renderWrappedContent = (children: React.ReactNode, outerClassName?: string, innerHeightClassName?: string, style?: any, props?: any) => {
@@ -118,11 +109,7 @@ const ConvexDialog = {
             style,
         ];
 
-        if (DEBUG_DISABLE_NESTED_CONVEX_PROVIDER) {
-            return renderWrappedContent(children, outerClassName, innerHeightClassName, sharedContentStyle, props);
-        }
-
-        return <ConvexDialogContent>{renderWrappedContent(children, outerClassName, innerHeightClassName, sharedContentStyle, props)}</ConvexDialogContent>;
+        return renderWrappedContent(children, outerClassName, innerHeightClassName, sharedContentStyle, props);
     },
     Close: Dialog.Close,
     Title: Dialog.Title,

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useCSSVariable } from 'uniwind';
-import { useIsPlayerDead } from 'hooks/useIsPlayerDead';
+import { usePlayerStatus } from '../../../../contexts/PlayerStatusContext';
 import {
     guildedButtonRingPresets,
     type GuildedButtonVariant,
@@ -14,7 +14,6 @@ interface GuildedFrameProps {
     contentClassName?: string;
     backgroundToken?: string;
     showTexture?: boolean;
-    gameId?: string;
     variant?: Exclude<GuildedButtonVariant, 'ghostly'>;
 }
 
@@ -184,10 +183,9 @@ const GuildedFrame = ({
     contentClassName = '',
     backgroundToken = 'inner-background',
     showTexture = true,
-    gameId,
     variant = 'gold',
 }: GuildedFrameProps) => {
-    const isPlayerDead = useIsPlayerDead(gameId);
+    const { isPlayerDead } = usePlayerStatus();
     const effectiveVariant: GuildedButtonVariant =
         variant === 'gold' && isPlayerDead ? 'ghostly' : variant;
     const palette = guildedButtonRingPresets[effectiveVariant];

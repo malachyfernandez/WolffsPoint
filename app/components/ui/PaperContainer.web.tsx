@@ -4,13 +4,12 @@ import FadeInAfterDelay from './loading/FadeInAfterDelay';
 
 interface PaperContainerProps {
     children: React.ReactNode;
-    gameId?: string;
 }
 
-const PaperContainer = ({ children, gameId }: PaperContainerProps) => {
+const PaperContainer = ({ children }: PaperContainerProps) => {
     return (
         <FadeInAfterDelay delayMs={100}>
-            <GuildedFrame className='z-1' contentClassName='py-4 px-2 sm:px-4' backgroundToken='inner-background' gameId={gameId}>
+            <GuildedFrame className='z-1' contentClassName='py-4 px-2 sm:px-4' backgroundToken='inner-background'>
                 {children}
             </GuildedFrame>
         </FadeInAfterDelay>

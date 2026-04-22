@@ -9,10 +9,11 @@ import FontText from '../ui/text/FontText';
 import LoadingText from '../ui/loading/LoadingText';
 import AppButton from '../ui/buttons/AppButton';
 import PlayerProfileDialog from './PlayerProfileDialogNEW';
- import { useGameOperatorUserId } from '../../../hooks/useGameOperatorUserId';
+import { useGameOperatorUserId } from '../../../hooks/useGameOperatorUserId';
 import { UserTableItem } from '../../../types/playerTable';
 import { PlayerProfile } from '../../../types/multiplayer';
 import { getGameScopedKey } from '../../../utils/multiplayer';
+import { PlayerStatusProvider } from '../../../contexts/PlayerStatusContext';
 
 interface UserData {
     name: string;
@@ -55,6 +56,8 @@ const PlayerAccessGate = ({ gameId, currentUserId, children }: PlayerAccessGateP
     const matchingPlayer = useMemo(() => {
         return userTable.find((player) => player.email.trim().toLowerCase() === currentEmail.trim().toLowerCase());
     }, [currentEmail, userTable]);
+
+    const isPlayerDead = matchingPlayer?.playerData?.livingState === 'dead';
 
     const [customUserInfo, setCustomUserInfo] = useUserVariable<CustomUserInfo>({
         key: "customUserInfo",
@@ -155,7 +158,7 @@ const PlayerAccessGate = ({ gameId, currentUserId, children }: PlayerAccessGateP
 
     return (
         // <Animated.View entering={FadeInUp.duration(300)} style={{ flex: 1 }}>
-        <>
+        <PlayerStatusProvider isPlayerDead={isPlayerDead}>
             {children({
                 currentEmail,
                 matchingPlayer,
@@ -169,7 +172,7 @@ const PlayerAccessGate = ({ gameId, currentUserId, children }: PlayerAccessGateP
                 onSave={setProfile}
                 title='Edit your player profile'
             />
-        </>
+        </PlayerStatusProvider>
         // </Animated.View>
     );
 };

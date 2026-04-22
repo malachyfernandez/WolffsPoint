@@ -1,6 +1,6 @@
 import React from 'react';
 import { useCSSVariable } from 'uniwind';
-import { useIsPlayerDead } from 'hooks/useIsPlayerDead';
+import { usePlayerStatus } from '../../../../contexts/PlayerStatusContext';
 import {
     getGuildedInnerHeight,
     guildedButtonDefaults,
@@ -328,9 +328,8 @@ export default function GuildedButton({
     contentPaddingX = guildedButtonDefaults.contentPaddingX,
     contentPaddingY = guildedButtonDefaults.contentPaddingY,
     background = guildedButtonDefaults.background,
-    gameId,
 }: GuildedButtonProps) {
-    const isPlayerDead = useIsPlayerDead(gameId);
+    const { isPlayerDead } = usePlayerStatus();
     const effectiveVariant: typeof variant =
         variant === 'gold' && isPlayerDead ? 'ghostly' : variant;
     const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {

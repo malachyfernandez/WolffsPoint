@@ -9,6 +9,7 @@ import AppButton from '../ui/buttons/AppButton';
 import PlayerProfileDialog from './PlayerProfileDialogNEW';
 import { PlayerProfile } from '../../../types/multiplayer';
 import { getGameScopedKey } from '../../../utils/multiplayer';
+import { PlayerStatusProvider } from '../../../contexts/PlayerStatusContext';
 
 interface UserData {
     name: string;
@@ -100,7 +101,7 @@ const ParticipantAccessGate = ({ gameId, currentUserId, children }: ParticipantA
     }
 
     return (
-        <>
+        <PlayerStatusProvider isPlayerDead={false}>
             {children({
                 currentEmail,
                 profile: initialProfileValue,
@@ -113,7 +114,7 @@ const ParticipantAccessGate = ({ gameId, currentUserId, children }: ParticipantA
                 onSave={setProfile}
                 title='Edit your profile'
             />
-        </>
+        </PlayerStatusProvider>
     );
 };
 

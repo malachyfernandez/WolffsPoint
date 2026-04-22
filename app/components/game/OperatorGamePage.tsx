@@ -16,6 +16,7 @@ import NewspaperIcon from '../ui/icons/Newspaper';
 import ConfigIcon from '../ui/icons/Config';
 import PaperContainer from '../ui/PaperContainer';
 import { PlayerProfile } from '../../../types/multiplayer';
+import { PlayerStatusProvider } from '../../../contexts/PlayerStatusContext';
 
 
 export type OperatorTab = 'players' | 'config' | 'nightly' | 'forum' | 'newspaper' | 'rulebook';
@@ -53,21 +54,23 @@ const OperatorGamePage = ({ gameId, currentUserId }: OperatorGamePageProps) => {
     };
 
     return (
-        <Column className='gap-4 w-full sm:gap-5'>
-            <GameTabBar activeTab={activeTab} onTabPress={setActiveTab} tabs={operatorTabs} />
-            <PaperContainer>
-                <Animated.View key={activeTab} entering={FadeIn.duration(300)} className='w-full min-w-0'>
+        <PlayerStatusProvider isPlayerDead={false}>
+            <Column className='gap-4 w-full sm:gap-5'>
+                <GameTabBar activeTab={activeTab} onTabPress={setActiveTab} tabs={operatorTabs} />
+                <PaperContainer>
+                    <Animated.View key={activeTab} entering={FadeIn.duration(300)} className='w-full min-w-0'>
 
-                    {activeTab === 'players' && <PlayerPageOPERATOR currentUserId={currentUserId} gameId={gameId} />}
-                    {activeTab === 'config' && <RolesPageOPERATOR currentUserId={currentUserId} gameId={gameId} />}
-                    {activeTab === 'nightly' && <NightlyPageOPERATOR currentUserId={currentUserId} gameId={gameId} />}
-                    {activeTab === 'forum' && <TownSquarePagePLAYER gameId={gameId} currentProfile={profile} />}
-                    {activeTab === 'newspaper' && <NewspaperPageOPERATOR currentUserId={currentUserId} gameId={gameId} />}
-                    {activeTab === 'rulebook' && <ConfigPageOPERATOR gameId={gameId} currentUserId={currentUserId} />}
+                        {activeTab === 'players' && <PlayerPageOPERATOR currentUserId={currentUserId} gameId={gameId} />}
+                        {activeTab === 'config' && <RolesPageOPERATOR currentUserId={currentUserId} gameId={gameId} />}
+                        {activeTab === 'nightly' && <NightlyPageOPERATOR currentUserId={currentUserId} gameId={gameId} />}
+                        {activeTab === 'forum' && <TownSquarePagePLAYER gameId={gameId} currentProfile={profile} />}
+                        {activeTab === 'newspaper' && <NewspaperPageOPERATOR currentUserId={currentUserId} gameId={gameId} />}
+                        {activeTab === 'rulebook' && <ConfigPageOPERATOR gameId={gameId} currentUserId={currentUserId} />}
 
-                </Animated.View>
-            </PaperContainer>
-        </Column>
+                    </Animated.View>
+                </PaperContainer>
+            </Column>
+        </PlayerStatusProvider>
     );
 };
 

@@ -1,10 +1,7 @@
 import React from 'react';
 import { View, useWindowDimensions } from 'react-native';
 import { Dialog } from 'heroui-native/dialog';
-import { ConvexProvider, ConvexReactClient } from 'convex/react';
-
-// Debug toggle to test nested provider behavior
-const DEBUG_DISABLE_NESTED_CONVEX_PROVIDER = false;
+import { SafeAreaView } from 'react-native-safe-area-context';
 const DEFAULT_DIALOG_MAX_WIDTH = 960;
 
 const dialogMaxWidthByToken: Record<string, number> = {
@@ -74,20 +71,6 @@ const splitHeightClasses = (className?: string) => {
 
 const basePortalClassName = 'flex-1 w-full h-full px-4 py-6 items-center justify-center';
 const baseContentClassName = 'w-full self-center bg-background rounded border-2 border-border';
-
-// Create a singleton Convex client for all dialogs
-const convex = new ConvexReactClient(process.env.EXPO_PUBLIC_CONVEX_URL!);
-
-// Wrapper component that provides Convex context to Dialog content
-const ConvexDialogContent = ({ children }: { children: React.ReactNode }) => {
-    return (
-        <ConvexProvider client={convex}>
-            {children}
-        </ConvexProvider>
-    );
-};
-
-// Enhanced Dialog components with Convex context
 const ConvexDialog = {
     Root: Dialog,
     Trigger: Dialog.Trigger,
@@ -115,25 +98,13 @@ const ConvexDialog = {
             style,
         ];
 
-        if (DEBUG_DISABLE_NESTED_CONVEX_PROVIDER) {
-            return (
-                <Dialog.Content className={`${baseContentClassName} ${outerClassName}`.trim()} style={sharedContentStyle} {...props}>
-                    <View className={`flex w-full min-h-0 max-h-full flex-col ${innerHeightClassName}`.trim()}>
-                        {children}
-                    </View>
-                </Dialog.Content>
-            );
-        } else {
-            return (
-                <ConvexDialogContent>
-                    <Dialog.Content className={`${baseContentClassName} ${outerClassName}`.trim()} style={sharedContentStyle} {...props}>
-                        <View className={`flex w-full min-h-0 max-h-full flex-col ${innerHeightClassName}`.trim()}>
-                            {children}
-                        </View>
-                    </Dialog.Content>
-                </ConvexDialogContent>
-            );
-        }
+        return (
+            <Dialog.Content className={`${baseContentClassName} ${outerClassName}`.trim()} style={sharedContentStyle} {...props}>
+                <View className={`flex w-full min-h-0 max-h-full flex-col ${innerHeightClassName}`.trim()}>
+                    {children}
+                </View>
+            </Dialog.Content>
+        );
     },
     Close: Dialog.Close,
     Title: Dialog.Title,

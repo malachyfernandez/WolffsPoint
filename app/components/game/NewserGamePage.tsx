@@ -34,8 +34,8 @@ const NewserGamePage = ({ gameId, currentUserId }: NewserGamePageProps) => {
         <ParticipantAccessGate gameId={gameId} currentUserId={currentUserId}>
             {({ currentEmail, profile }) => (
                 <Column className='gap-4 w-full sm:gap-5'>
-                    <GameTabBar activeTab={activeTab} onTabPress={setActiveTab} tabs={newserTabs} gameId={gameId} />
-                    <PaperContainer gameId={gameId}>
+                    <GameTabBar activeTab={activeTab} onTabPress={setActiveTab} tabs={newserTabs} />
+                    <PaperContainer>
                         <Animated.View key={activeTab} entering={FadeIn.duration(300)} className='w-full min-w-0'>
                             {activeTab === 'townSquare' && <TownSquarePagePLAYER gameId={gameId} currentProfile={profile} />}
                             {activeTab === 'newspaper' && <NewspaperPageNEWSER currentUserId={currentUserId} gameId={gameId} />}

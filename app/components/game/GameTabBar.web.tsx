@@ -1,7 +1,7 @@
 import React, { ReactElement, useState, useRef, useEffect } from 'react';
 import { useWindowDimensions } from 'react-native';
 import { useCSSVariable } from 'uniwind';
-import { useIsPlayerDead } from 'hooks/useIsPlayerDead';
+import { usePlayerStatus } from '../../../contexts/PlayerStatusContext';
 import { guildedButtonRingPresets } from '../ui/buttons/GuildedButton.shared';
 import FadeInAfterDelay from '../ui/loading/FadeInAfterDelay';
 
@@ -151,7 +151,6 @@ interface GameTabBarProps<TTab extends string> {
     activeTabIndent?: number;
     iconSize?: number;
     iconStrokeWidth?: number;
-    gameId?: string;
 }
 
 const gameTabBarCSS = `
@@ -391,14 +390,13 @@ const GameTabBar = <TTab extends string>({
     activeTabIndent = 5,
     iconSize = 30,
     iconStrokeWidth = 0,
-    gameId,
 }: GameTabBarProps<TTab>) => {
     const { width } = useWindowDimensions();
     const hasTrueMiddle = tabs.length % 2 === 1;
     const centerIndex = Math.floor(tabs.length / 2);
     const useCondensed = width < 600;
     const useCondensedIsland = width < 800;
-    const isPlayerDead = useIsPlayerDead(gameId);
+    const { isPlayerDead } = usePlayerStatus();
     const palette = isPlayerDead ? guildedButtonRingPresets.ghostly : guildedButtonRingPresets.gold;
     const textColor = String(useCSSVariable('--color-text') || '#1a1a1a');
     const innerBackground = String(useCSSVariable('--color-inner-background') || 'rgb(165, 159, 150)');
