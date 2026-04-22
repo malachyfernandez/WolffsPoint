@@ -98,6 +98,7 @@ const PhoneBookPagePLAYER = ({ gameId, currentUserId, currentEmail }: PhoneBookP
                     onOpenChange={setIsProfileDialogOpen}
                     onSave={setMyProfile}
                     title='Edit your profile'
+                    frameVariant='ghostly'
                 />
             </Column>
         </Animated.View>

@@ -36,6 +36,7 @@ interface PlayerProfileDialogNEWProps {
     saveLabel?: string;
     operatorRealName?: string;
     onSaveCustomUserInfo?: (info: { name: string }) => void;
+    frameVariant?: 'gold' | 'ghostly';
 }
 
 interface SocialsData {
@@ -75,6 +76,7 @@ const PlayerProfileDialogNEW = ({
     saveLabel = 'Save profile',
     operatorRealName,
     onSaveCustomUserInfo,
+    frameVariant = 'gold',
 }: PlayerProfileDialogNEWProps) => {
     // Main profile state
     const [draft, setDraft] = useState<PlayerProfile>(initialValue);
@@ -193,6 +195,7 @@ const PlayerProfileDialogNEW = ({
         <>
             <ConvexDialog.Root 
                 isOpen={isOpen}
+                frameVariant={frameVariant}
                 onOpenChange={(open: boolean) => {
                     if (open) {
                         onOpenChange(true);

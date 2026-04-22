@@ -14,8 +14,6 @@ const gradientBlur = 5;
 const guildedButtonCSS = `
 .guilded-button-root {
     display: inline-flex;
-    width: fit-content;
-    max-width: max-content;
     cursor: pointer;
     user-select: none;
     vertical-align: top;
@@ -32,7 +30,6 @@ const guildedButtonCSS = `
 
 .guilded-button-place {
     display: block;
-    width: fit-content;
     padding: 4px;
     padding-bottom: 9px;
     transition: transform 0.3s ease;
@@ -54,8 +51,6 @@ const guildedButtonCSS = `
     --in-blur: 10px;
     --in-alpha: 0.3;
     display: block;
-    width: fit-content;
-    max-width: max-content;
     filter: drop-shadow(0px var(--out-y) var(--out-blur) rgba(0, 0, 0, var(--out-alpha)));
     transition: all 0.3s ease;
 }
@@ -130,8 +125,6 @@ const guildedButtonCSS = `
 .guilded-button-frame {
     position: relative;
     display: block;
-    width: fit-content;
-    max-width: max-content;
     padding: calc(var(--t-out) + var(--t-mid) + var(--t-in));
     background: linear-gradient(to top right, var(--ring-outer-dark) ${50 - gradientBlur}%, var(--ring-outer-light) ${50 + gradientBlur}%);
     --offset: 0px;
@@ -378,6 +371,22 @@ export default function GuildedButton({
 
     const widthClasses = extractWidthClasses(className);
 
+    const rootStyle: React.CSSProperties = hasWidthUtility
+        ? { display: 'flex' }
+        : { display: 'inline-flex', width: 'fit-content', maxWidth: 'max-content' };
+
+    const placeStyle: React.CSSProperties = hasWidthUtility
+        ? {}
+        : { width: 'fit-content' };
+
+    const shadowWrapperStyle: React.CSSProperties = hasWidthUtility
+        ? cssVariables
+        : { ...cssVariables, width: 'fit-content', maxWidth: 'max-content' };
+
+    const frameStyle: React.CSSProperties = hasWidthUtility
+        ? {}
+        : { width: 'fit-content', maxWidth: 'max-content' };
+
     const innerBoxStyle: React.CSSProperties = {
         ...(width !== undefined
             ? { width: normalizeCssSize(width, 'fit-content') }
@@ -410,10 +419,11 @@ export default function GuildedButton({
                 className={`guilded-button-root ${disabled ? 'is-disabled' : ''} ${rootClassName} ${widthClasses}`.trim()}
                 onClick={disabled ? undefined : onPress}
                 onKeyDown={handleKeyDown}
+                style={rootStyle}
             >
-                <div className={`guilded-button-place ${widthClasses}`.trim()}>
-                    <div className={`guilded-button-shadow-wrapper ${widthClasses}`.trim()} style={cssVariables}>
-                        <div className={`guilded-button-frame ${widthClasses}`.trim()}>
+                <div className={`guilded-button-place ${widthClasses}`.trim()} style={placeStyle}>
+                    <div className={`guilded-button-shadow-wrapper ${widthClasses}`.trim()} style={shadowWrapperStyle}>
+                        <div className={`guilded-button-frame ${widthClasses}`.trim()} style={frameStyle}>
                             <div className={`guilded-button-inner-box ${className}`.trim()} style={innerBoxStyle}>
                                 <div className="guilded-button-content">{children}</div>
                             </div>

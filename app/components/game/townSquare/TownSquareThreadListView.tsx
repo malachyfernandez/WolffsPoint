@@ -43,32 +43,40 @@ const TownSquareThreadListView = ({
     return (
         <Column className='gap-5 flex-1 px-0 sm:px-4 py-4'>
             <Row className='gap-4 items-start justify-between'>
-                <Column className='gap-0 flex grow'>
-                    <FontText weight='bold' className='text-2xl leading-10'>Town Square</FontText>
-                    <FontText variant='subtext'>Anyone can speak their mind</FontText>
-                </Column>
+                {isPlayerDead && (
+                    <Column className='gap-0 flex grow'>
+                        <FontText weight='bold' className='text-2xl leading-10'>Shhhhhhhh</FontText>
+                        <FontText variant='subtext'>Still the Town Square, but Ghosts don't talk silly</FontText>
+                    </Column>
+                )}
 
-                {!isPlayerDead && (isLargeScreen ? (
-                    // IF screen is 500 or larger, show this
-                    <Row className='gap-4 justify-between sm:justify-end flex-1 items-center'>
-                        <AppButton variant='secondary' className='px-0' onPress={onNewAnnouncement}>
-                            <Row className='gap-3 items-center'>
-                                <Plus size={20} color='black' />
-                                <Column className='gap-0 items-start'>
-                                    <FontText weight='medium' className='-mb-1'>Announcement</FontText>
-                                    <FontText variant='subtext'>Just You; No Replies</FontText>
-                                </Column>
-                            </Row>
-                        </AppButton>
-                        <AppButton variant='accent' className='px-0' onPress={onNewThread}>
-                            <Row className='gap-2 items-center'>
-                                <Plus size={20} color='white' />
-                                <FontText weight='medium' color='white'>Thread</FontText>
-                            </Row>
-                        </AppButton>
-                    </Row>
+                {!isPlayerDead && ( isLargeScreen ? (
+                    <>
+                        <Column className='gap-0 hidden sm:flex grow'>
+                            <FontText weight='bold' className='text-2xl leading-10'>Town Square</FontText>
+                            <FontText variant='subtext'>Anyone can speak their mind</FontText>
+                        </Column>
+
+                        <Row className='gap-4 justify-between sm:justify-end flex-1 items-center'>
+                            <AppButton variant='secondary' className='px-0' onPress={onNewAnnouncement}>
+                                <Row className='gap-3 items-center'>
+                                    <Plus size={20} color='black' />
+                                    <Column className='gap-0 items-start'>
+                                        <FontText weight='medium' className='-mb-1'>Announcement</FontText>
+                                        <FontText variant='subtext'>Just You; No Replies</FontText>
+                                    </Column>
+                                </Row>
+                            </AppButton>
+                            <AppButton variant='accent' className='px-0' onPress={onNewThread}>
+                                <Row className='gap-2 items-center'>
+                                    <Plus size={20} color='white' />
+                                    <FontText weight='medium' color='white'>Thread</FontText>
+                                </Row>
+                            </AppButton>
+                        </Row>
+                    </>
                 ) : (
-                    // IF screen is 500 or smaller, show this
+                    
                     <Column className='gap-0 justify-between sm:justify-end flex-1 items-center'>
                         <AppButton variant='accent' className='px-0 w-full' onPress={onNewThread}>
                             <Row className='gap-2 items-center'>
