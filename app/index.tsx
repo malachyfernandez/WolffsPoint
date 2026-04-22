@@ -14,6 +14,7 @@ import DialogHeader from "./components/ui/dialog/DialogHeader";
 import GuildedButton from "./components/ui/buttons/GuildedButton";
 import GuildedFrame from "./components/ui/chrome/GuildedFrame";
 import FontText from "./components/ui/text/FontText";
+import FadeInAfterDelay from "./components/ui/loading/FadeInAfterDelay";
 
 const useWarmUpBrowser = () => {
   useEffect(() => {
@@ -78,12 +79,14 @@ export default function HomeScreen() {
             <SignedIn>
               {needsReload || isAuthSyncing ? (
                 <View className="items-center justify-center">
-                  <GuildedButton
-                    onPress={handleReload}
-                    variant="gold"
-                  >
-                    {isAuthSyncing ? "Loading..." : "Enter"}
-                  </GuildedButton>
+                  <FadeInAfterDelay>
+                    <GuildedButton
+                      onPress={handleReload}
+                      variant="gold"
+                    >
+                      {isAuthSyncing ? "Enter" : "Enter"}
+                    </GuildedButton>
+                  </FadeInAfterDelay>
                 </View>
               ) : (
                 <MainPage />
