@@ -83,7 +83,7 @@ const EditInfoDialog = ({
                             text="Edit Your Info"
                             subtext="Update your profile information"
                         />
-                        <Column className="gap-4 p-4">
+                        <Column className="gap-4 p-0 sm:p-4">
 
 
                             {/* Profile Photo */}
@@ -127,7 +127,7 @@ const EditInfoDialog = ({
                                 <AppButton
                                     variant="outline"
                                     onPress={handleCancel}
-                                    className="w-32"
+                                    className="w-22 sm:w-32"
                                 >
                                     <FontText color="black" weight="medium">
                                         Cancel
@@ -136,7 +136,7 @@ const EditInfoDialog = ({
                                 <AppButton
                                     variant="filled"
                                     onPress={handleSave}
-                                    className="w-32"
+                                    className="w-22 sm:w-32"
                                 >
                                     <FontText color="white" weight="medium">
                                         Save

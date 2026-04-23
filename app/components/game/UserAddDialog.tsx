@@ -153,7 +153,7 @@ const UserAddDialog = ({
                 <ConvexDialog.Content>
                     <ConvexDialog.Close iconProps={{ color: 'rgb(246, 238, 219)' }} className="w-10 h-10 bg-text-inverted/10 hover:bg-text-inverted/15 rounded-full absolute right-0 top-0 z-10" />
 
-                    <Column className='gap-4'>
+                    <Column className='gap-4 p-0 sm:p-5'>
                         <DialogHeader
                             text={`Add User`}
                             subtext={`Enter the user details`}
@@ -162,7 +162,8 @@ const UserAddDialog = ({
                             <FontText weight='medium'>Real Name</FontText>
                             <FontTextInput
                                 placeholder="Enter real name..."
-                                className="w-full border border-subtle-border p-2"
+                                variant="styled"
+                                className="w-full p-2"
                                 value={realName}
                                 onChangeText={setRealName}
                             />
@@ -170,7 +171,8 @@ const UserAddDialog = ({
                             <FontText weight='medium'>Email</FontText>
                             <FontTextInput
                                 placeholder="Enter email..."
-                                className="w-full border border-subtle-border p-2"
+                                variant="styled"
+                                className="w-full p-2"
                                 value={email}
                                 onChangeText={setEmail}
                             />
@@ -190,18 +192,18 @@ const UserAddDialog = ({
                             <Column className='gap-4 w-min'>
                                 <Row className='gap-4 w-min max-w-full'>
                                 {isUniqueEmail && isValidEmail && realName.trim() && email.trim() ? (
-                                    <AppButton className='max-w-[30vw] w-48 h-10' variant='black' onPress={handleSubmit}>
+                                    <AppButton className='w-30 sm:w-48 h-10' variant='black' onPress={handleSubmit}>
                                         <FontText color='white' weight='medium'>Add User</FontText>
                                     </AppButton> 
                                 ) : (
                                     <StatusButton 
-                                        className='max-w-[30vw]  w-48 h-10' 
+                                        className='w-30 sm:w-48 h-10' 
                                         buttonText='Add User' 
                                         buttonAltText={!isUniqueEmail ? 'Email already exists' : 'Valid email required'} 
                                     />
                                 )}
                                     
-                                    <AppButton className='max-w-[30vw] w-48 h-10' variant='outline' onPress={handleCancel}>
+                                    <AppButton className='w-24 sm:w-48 h-10' variant='outline' onPress={handleCancel}>
                                         <FontText color='black' weight='medium'>Cancel</FontText>
                                     </AppButton>
                                 </Row>

@@ -459,7 +459,7 @@ const SocialsDialog = ({ isOpen, onOpenChange, onSave, initialSocials }: Socials
 
                     <Column className='gap-4 flex-1 min-h-0 pt-5'>
                         <ShadowScrollView className='flex-1 min-h-0' scrollViewClassName='flex-1'>
-                            <Column className='gap-4 items-start px-2 sm:px-5 pb-2'>
+                            <Column className='gap-4 items-start px-0 sm:px-5 pb-2'>
                                 <Column className='gap-4 flex-1 min-w-0'>
                                     <Row className='gap-4'>
                                         <Column className='gap-1 flex-1 min-w-0'>
@@ -518,11 +518,11 @@ const SocialsDialog = ({ isOpen, onOpenChange, onSave, initialSocials }: Socials
                             </Column>
                         </ShadowScrollView>
 
-                        <Row className='gap-4 justify-end flex-wrap px-2 sm:px-5 pb-5'>
+                        <Row className='gap-4 justify-end flex-wrap px-0 sm:px-5 pb-5'>
                             <AppButton variant='outline' className='w-24 sm:w-36' onPress={handleAttemptClose}>
                                 <FontText weight='medium'>Cancel</FontText>
                             </AppButton>
-                            <AppButton variant='black' className='w-30 sm:w-40' onPress={handleSave} disabled={!hasUnsavedChanges}>
+                            <AppButton variant='black' className='w-24 sm:w-40' onPress={handleSave} disabled={!hasUnsavedChanges}>
                                 <FontText weight='medium' color='white'>Save</FontText>
                             </AppButton>
                         </Row>

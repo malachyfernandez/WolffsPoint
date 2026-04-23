@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { View, TextInput } from 'react-native';
+import { View } from 'react-native';
+import FontTextInput from '../ui/forms/FontTextInput';
 import ConvexDialog from '../ui/dialog/ConvexDialog';
 import DialogHeader from '../ui/dialog/DialogHeader';
 import Column from '../layout/Column';
@@ -77,17 +78,18 @@ const VoteEditorDialog = ({
                     />
                     <DialogHeader text={title} subtext={dialogSubtext} />
 
-                    <Column className="gap-4 p-5 pt-4">
+                    <Column className="gap-4 p-0 sm:p-5 pt-4">
                         {/* Email Input */}
                         <Column className='gap-1'>
                             <FontText weight="medium" className="text-sm opacity-70">
                                 Player Email
                             </FontText>
-                            <TextInput
+                            <FontTextInput
                                 value={draftVote}
                                 onChangeText={setDraftVote}
                                 placeholder="Enter player email..."
-                                className="bg-background border-2 border-border rounded-lg p-3 text-text font-poppins"
+                                variant="styled"
+                                className='p-2'
                                 style={{ fontFamily: 'Poppins-Regular' }}
                                 autoCapitalize="none"
                                 keyboardType="email-address"
@@ -108,12 +110,13 @@ const VoteEditorDialog = ({
 
                         {/* Action Buttons */}
                         <Row className="gap-4 justify-end pt-2">
-                            <AppButton variant="outline" onPress={handleCancel} className="w-32 h-12">
+                            <AppButton variant="outline" onPress={handleCancel} className="w-24 sm:w-32 h-12">
                                 <FontText>Cancel</FontText>
                             </AppButton>
                             <DisableableButton
                                 isEnabled={hasUnsavedChanges}
                                 enabledText="Save"
+                                className='w-24 sm:w-32'
                                 disabledText="No changes"
                                 onPress={handleSubmit}
                                 enabledVariant="filled"

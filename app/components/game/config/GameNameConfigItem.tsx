@@ -33,7 +33,7 @@ const GameNameConfigItem = ({ gameId }: GameNameConfigItemProps) => {
                 })}
                 placeholder='WolffsPoint'
                 variant='styled'
-                className='w-full min-w-[280px] max-w-[320px] p-2'
+                className='w-full min-w-[280px] max-w-[320px] p-3'
                 
             />
         </ConfigSectionRow>

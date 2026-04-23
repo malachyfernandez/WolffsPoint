@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { View, TextInput } from 'react-native';
+import { View } from 'react-native';
+import FontTextInput from '../ui/forms/FontTextInput';
 import ConvexDialog from '../ui/dialog/ConvexDialog';
 import DialogHeader from '../ui/dialog/DialogHeader';
 import Column from '../layout/Column';
@@ -65,19 +66,20 @@ const ActionEditorDialog = ({
                     />
                     <DialogHeader text={title} subtext={dialogSubtext} />
 
-                    <Column className="gap-4 p-5 pt-4">
+                    <Column className="gap-4 p-0 sm:p-5 pt-4">
                         {/* Text Input for editing */}
                         <Column className='gap-1'>
                             <FontText weight="medium" className="text-sm opacity-70">
                                 Action Text
                             </FontText>
-                            <TextInput
+                            <FontTextInput
                                 value={draftAction}
                                 onChangeText={setDraftAction}
                                 placeholder="e.g., Kill: Ty Pace • Weapon: Piano"
                                 multiline
                                 numberOfLines={3}
-                                className="bg-background border-2 border-border rounded-lg p-3 text-text font-poppins"
+                                variant="styled"
+                                className="p-2"
                                 style={{ fontFamily: 'Poppins-Regular' }}
                             />
                             <FontText className="text-xs opacity-50">
@@ -99,7 +101,7 @@ const ActionEditorDialog = ({
 
                         {/* Action Buttons */}
                         <Row className="gap-4 justify-end pt-2">
-                            <AppButton variant="outline" onPress={handleCancel} className="w-32 h-12">
+                            <AppButton variant="outline" onPress={handleCancel} className="w-22 sm:w-32 h-12">
                                 <FontText>Cancel</FontText>
                             </AppButton>
                             <DisableableButton

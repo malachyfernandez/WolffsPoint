@@ -159,7 +159,7 @@ const UserEditDialog = ({
                 <ConvexDialog.Content>
                     <ConvexDialog.Close iconProps={{ color: 'rgb(246, 238, 219)' }} className="w-10 h-10 bg-text-inverted/10 hover:bg-text-inverted/15 rounded-full absolute right-0 top-0 z-10" />
 
-                    <Column className='gap-4'>
+                    <Column className='gap-4 p-0 sm:p-5'>
                         <DialogHeader
                             text={`Edit User`}
                             subtext={`Set the user details`}
@@ -168,7 +168,8 @@ const UserEditDialog = ({
                             <FontText weight='medium'>Real Name</FontText>
                             <FontTextInput
                                 placeholder="Enter real name..."
-                                className="w-full border border-subtle-border p-2"
+                                variant="styled"
+                                className="w-full p-2"
                                 value={realName}
                                 onChangeText={setRealName}
                             />
@@ -176,7 +177,8 @@ const UserEditDialog = ({
                             <FontText weight='medium'>Email</FontText>
                             <FontTextInput
                                 placeholder="Enter email..."
-                                className="w-full border border-subtle-border p-2"
+                                variant="styled"
+                                className="w-full p-2"
                                 value={email}
                                 onChangeText={setEmail}
                             />
@@ -196,7 +198,7 @@ const UserEditDialog = ({
                             <Column className='gap-4 w-min'>
                                 <Row className='gap-4 w-min max-w-full'>
                                 {isUniqueEmail && isValidEmail ? (
-                                    <AppButton className='max-w-[30vw] w-48 h-10' variant='black' onPress={handleSubmit}>
+                                    <AppButton className='max-w-[30vw] w-22 sm:w-48 h-10' variant='black' onPress={handleSubmit}>
                                         <FontText color='white' weight='medium'>Save</FontText>
                                     </AppButton> 
                                 ) : (
@@ -204,7 +206,7 @@ const UserEditDialog = ({
                                     // <FontText weight='medium'>Email already exists!</FontText>
                                 )}
                                     
-                                    <AppButton className='max-w-[30vw] w-48 h-10' variant='outline' onPress={handleCancel}>
+                                    <AppButton className='max-w-[30vw] w-22 sm:w-48 h-10' variant='outline' onPress={handleCancel}>
                                         <FontText color='black' weight='medium'>Cancel</FontText>
                                     </AppButton>
                                 </Row>
