@@ -106,7 +106,7 @@ const DaySelectionDialog = ({ isOpen, onOpenChange, index, dayDate, buttonLabel,
             <ConvexDialog.Portal>
                 <ConvexDialog.Overlay />
 
-                <ConvexDialog.Content>
+                <ConvexDialog.Content className="max-w-xl">
                     <ConvexDialog.Close iconProps={{ color: 'rgb(246, 238, 219)' }} className="w-10 h-10 bg-text-inverted/10 hover:bg-text-inverted/15 rounded-full absolute right-0 top-0 z-10" />
 
                     <Column className='gap-4'>
