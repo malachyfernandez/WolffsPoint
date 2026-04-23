@@ -12,5 +12,6 @@ interface DialogGuildedFrameProps {
 }
 
 export default function DialogGuildedFrame(props: DialogGuildedFrameProps) {
+    console.log('[DialogGuildedFrame] variant:', props.variant);
     return <GuildedFrameCore {...props} />;
 }

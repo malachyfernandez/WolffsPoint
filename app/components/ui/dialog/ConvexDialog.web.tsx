@@ -84,6 +84,7 @@ const ConvexDialogContent = ({ children }: { children: React.ReactNode }) => {
 const baseContentClassName = 'w-full self-center bg-transparent border-0 p-0 overflow-visible shadow-none';
 
 const renderWrappedContent = (children: React.ReactNode, outerClassName?: string, innerHeightClassName?: string, style?: any, props?: any, frameVariant?: 'gold' | 'ghostly') => {
+    console.log('[renderWrappedContent] frameVariant:', frameVariant);
     return (
         <Dialog.Content className={`${baseContentClassName} ${outerClassName || ''}`.trim()} style={style} {...props}>
             <DialogGuildedFrame className='max-h-full flex flex-col' contentClassName='max-h-full min-h-0 overflow-hidden p-5 flex flex-col' backgroundToken='inner-background' variant={frameVariant || 'gold'}>
@@ -96,18 +97,23 @@ const renderWrappedContent = (children: React.ReactNode, outerClassName?: string
 };
 
 const ConvexDialog = {
-    Root: ({ frameVariant, ...props }: any) => (
-        <DialogVariantContext.Provider value={frameVariant || 'gold'}>
-            <Dialog {...props} />
-        </DialogVariantContext.Provider>
-    ),
+    Root: ({ frameVariant, ...props }: any) => {
+        console.log('[ConvexDialog.Root] frameVariant:', frameVariant);
+        return (
+            <DialogVariantContext.Provider value={frameVariant || 'gold'}>
+                <Dialog {...props} />
+            </DialogVariantContext.Provider>
+        );
+    },
     Trigger: Dialog.Trigger,
     Portal: ({ className, ...props }: any) => (
         <Dialog.Portal className={`${basePortalClassName} ${className || ''}`.trim()} {...props} />
     ),
     Overlay: ({ className, ...props }: any) => <Dialog.Overlay className={`bg-black/20 ${className || ''}`.trim()} {...props} />,
-    Content: ({ children, className, style, ...props }: any) => {
-        const frameVariant = useContext(DialogVariantContext);
+    Content: ({ children, className, style, frameVariant: contentFrameVariant, ...props }: any) => {
+        const contextFrameVariant = useContext(DialogVariantContext);
+        const frameVariant = contentFrameVariant || contextFrameVariant;
+        console.log('[ConvexDialog.Content] contentFrameVariant:', contentFrameVariant, 'context:', contextFrameVariant, 'effective:', frameVariant);
         const { height, width } = useWindowDimensions();
         const { outerClassName, innerHeightClassName } = splitHeightClasses(className);
         const targetMaxWidth = extractDialogMaxWidthFromClassName(outerClassName) ?? DEFAULT_DIALOG_MAX_WIDTH;
