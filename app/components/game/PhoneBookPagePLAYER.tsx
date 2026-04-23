@@ -17,6 +17,7 @@ import AppButton from '../ui/buttons/AppButton';
 import MarkdownRenderer from '../ui/markdown/MarkdownRenderer';
 import PlayerProfileDialog from './PlayerProfileDialogNEW';
 import PlayerProfilePreviewCard from './PlayerProfilePreviewCard';
+import ShadowScrollView from '../ui/ShadowScrollView';
 
 interface PhoneBookPagePLAYERProps {
     gameId: string;
@@ -132,10 +133,14 @@ const MyProfileCard = ({ profile, onPress }: { profile: PlayerProfile; onPress: 
                 <Column className="gap-4 flex-1">
                     <FontText weight='medium' className='text-lg'>{displayName}</FontText>
                     {profile.bioMarkdown?.trim() ? (
-                        <MarkdownRenderer
-                            markdown={profile.bioMarkdown}
-                            className="text-sm opacity-75"
-                        />
+                        <View pointerEvents='none'>
+                            <ShadowScrollView className="max-h-20">
+                                <MarkdownRenderer
+                                    markdown={profile.bioMarkdown}
+                                    className="text-sm opacity-75"
+                                />
+                            </ShadowScrollView>
+                        </View> 
                     ) : (
                         <FontText variant='subtext' className='text-sm'>Tap to edit your profile</FontText>
                     )}
