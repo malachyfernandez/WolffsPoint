@@ -185,7 +185,6 @@ export function GuildedFrameCore({
     variant,
 }: GuildedFrameCoreProps) {
     const palette = guildedButtonRingPresets[variant];
-    console.log('[GuildedFrameCore] variant:', variant, 'palette:', palette);
     const surfaceBackground = String(useCSSVariable(`--color-${backgroundToken}`) || backgroundToken);
 
     const cssVariables = {

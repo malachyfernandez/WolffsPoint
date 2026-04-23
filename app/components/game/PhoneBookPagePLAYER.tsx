@@ -4,6 +4,7 @@ import { Image, Pressable, View, useWindowDimensions } from 'react-native';
 import { useUserVariable } from '../../../hooks/useUserVariable';
 import { useUserVariableGet } from '../../../hooks/useUserVariableGet';
 import { useUserList } from '../../../hooks/useUserList';
+import { useDialogGuildedVariant } from '../../../hooks/useDialogGuildedVariant';
 import { PlayerProfile } from '../../../types/multiplayer';
 import { UserTableItem } from '../../../types/playerTable';
 import { getGameScopedKey } from '../../../utils/multiplayer';
@@ -26,6 +27,7 @@ interface PhoneBookPagePLAYERProps {
 // Simple container component - just manages the dialog and layout
 const PhoneBookPagePLAYER = ({ gameId, currentUserId, currentEmail }: PhoneBookPagePLAYERProps) => {
     const [isProfileDialogOpen, setIsProfileDialogOpen] = useState(false);
+    const frameVariant = useDialogGuildedVariant();
     const profileKey = getGameScopedKey('playerProfile', gameId);
     const [myProfile, setMyProfile] = useUserVariable<PlayerProfile>({
         key: profileKey,
@@ -98,7 +100,7 @@ const PhoneBookPagePLAYER = ({ gameId, currentUserId, currentEmail }: PhoneBookP
                     onOpenChange={setIsProfileDialogOpen}
                     onSave={setMyProfile}
                     title='Edit your profile'
-                    frameVariant='ghostly'
+                    frameVariant={frameVariant}
                 />
             </Column>
         </Animated.View>
