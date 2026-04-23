@@ -15,6 +15,7 @@ import GuildedButton from "./components/ui/buttons/GuildedButton";
 import GuildedFrame from "./components/ui/chrome/GuildedFrame";
 import FontText from "./components/ui/text/FontText";
 import FadeInAfterDelay from "./components/ui/loading/FadeInAfterDelay";
+import AppButton from "./components/ui/buttons/AppButton";
 
 const useWarmUpBrowser = () => {
   useEffect(() => {
@@ -80,12 +81,19 @@ export default function HomeScreen() {
               {needsReload || isAuthSyncing ? (
                 <View className="items-center justify-center">
                   <FadeInAfterDelay>
-                    <GuildedButton
-                      onPress={handleReload}
-                      variant="gold"
-                    >
-                      {isAuthSyncing ? "Enter" : "Enter"}
-                    </GuildedButton>
+                    <GuildedFrame className="w-[80vw] max-w-96" contentClassName="p-6" backgroundToken="inner-background">
+                      <Column className="gap-6 items-center">
+
+                        <FontText className="text-2xl font-bold text-center mt-4" color="text">Welcome to Wolffspoint</FontText>
+
+                        <Column className="gap-8 items-center mb-4">
+                          <AppButton variant="accent" className="w-36">
+                            <FontText color="white" weight="bold">{isAuthSyncing ? "Enter" : "Enter"}</FontText>
+                          </AppButton>
+                        </Column>
+                      </Column>
+                    </GuildedFrame>
+
                   </FadeInAfterDelay>
                 </View>
               ) : (
