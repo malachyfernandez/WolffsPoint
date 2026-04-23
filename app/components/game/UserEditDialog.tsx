@@ -78,7 +78,7 @@ const UserEditDialog = ({
     let emailExists;
 
     useEffect(() => {
-        emailExists = users.some((user, index) => 
+        emailExists = users.some((user, index) =>
             user.email === email.trim() && index !== userIndex
         );
         setIsUniqueEmail(!emailExists);
@@ -87,10 +87,10 @@ const UserEditDialog = ({
 
     const handleSubmit = () => {
         // Check for email uniqueness (skip if it's the same user's current email)
-        emailExists = users.some((user, index) => 
+        emailExists = users.some((user, index) =>
             user.email === email.trim() && index !== userIndex
         );
-        
+
         if (emailExists) {
             console.warn("Email already exists!");
             return;
@@ -146,7 +146,7 @@ const UserEditDialog = ({
         onOpenChange(false);
     };
 
-        return (
+    return (
         <ConvexDialog.Root isOpen={isOpen} onOpenChange={handleDialogOpenChange}>
             <ConvexDialog.Trigger asChild>
                 <View>
@@ -156,14 +156,14 @@ const UserEditDialog = ({
             <ConvexDialog.Portal>
                 <ConvexDialog.Overlay />
 
-                <ConvexDialog.Content>
+                <ConvexDialog.Content className="max-w-xl">
                     <ConvexDialog.Close iconProps={{ color: 'rgb(246, 238, 219)' }} className="w-10 h-10 bg-text-inverted/10 hover:bg-text-inverted/15 rounded-full absolute right-0 top-0 z-10" />
-
+                    <DialogHeader
+                        text={`Edit User`}
+                        subtext={`Set the user details`}
+                    />
                     <Column className='gap-4 p-0 sm:p-5'>
-                        <DialogHeader
-                            text={`Edit User`}
-                            subtext={`Set the user details`}
-                        />
+
                         <Column className='gap-2'>
                             <FontText weight='medium'>Real Name</FontText>
                             <FontTextInput
@@ -197,15 +197,15 @@ const UserEditDialog = ({
                         <Column className='gap-4 w-full items-center justify-center'>
                             <Column className='gap-4 w-min'>
                                 <Row className='gap-4 w-min max-w-full'>
-                                {isUniqueEmail && isValidEmail ? (
-                                    <AppButton className='max-w-[30vw] w-22 sm:w-48 h-10' variant='black' onPress={handleSubmit}>
-                                        <FontText color='white' weight='medium'>Save</FontText>
-                                    </AppButton> 
-                                ) : (
-                                    <StatusButton className='max-w-[30vw]  w-48 h-10' buttonText='Save' buttonAltText='Valid email required' />
-                                    // <FontText weight='medium'>Email already exists!</FontText>
-                                )}
-                                    
+                                    {isUniqueEmail && isValidEmail ? (
+                                        <AppButton className='max-w-[30vw] w-22 sm:w-48 h-10' variant='black' onPress={handleSubmit}>
+                                            <FontText color='white' weight='medium'>Save</FontText>
+                                        </AppButton>
+                                    ) : (
+                                        <StatusButton className='max-w-[30vw]  w-48 h-10' buttonText='Save' buttonAltText='Valid email required' />
+                                        // <FontText weight='medium'>Email already exists!</FontText>
+                                    )}
+
                                     <AppButton className='max-w-[30vw] w-22 sm:w-48 h-10' variant='outline' onPress={handleCancel}>
                                         <FontText color='black' weight='medium'>Cancel</FontText>
                                     </AppButton>
