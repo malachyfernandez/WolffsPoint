@@ -170,7 +170,9 @@ const YourEyesOnlyDayContentPLAYER = ({ gameId, currentEmail, currentUserId, day
 
                         </Column>
                     </ChainWraper>
-                    {roleData?.doesRoleVote === false ? (
+                    {!!submission.value.vote ? (
+                        <FontText variant='subtext'>Saved vote: {submission.value.vote}</FontText>
+                    ) : roleData?.doesRoleVote === false ? (
                         <FontText variant='subtext'>This role doesn&apos;t submit a vote.</FontText>
                     ) : isVoteLocked ? (
                         <FontText variant='subtext'>Saved vote: {submission.value.vote || 'No vote submitted.'}</FontText>
