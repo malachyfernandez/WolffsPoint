@@ -86,7 +86,7 @@ const NewWolffspointButtonAndDialogue = ({ onCreate, condensed }: NewWolffspoint
 
         <ConvexDialog.Root isOpen={isHeroDialogOpen} onOpenChange={setIsHeroDialogOpen}>
             <ConvexDialog.Trigger asChild>
-                <AppButton variant="secondary" className={condensed ? "w-24 shrink" : "w-40 shrink"}>
+                <AppButton variant="secondary" className={condensed ? "w-26 " : "w-42"}>
                     <FontText weight='medium'>{condensed ? 'New WP' : 'New WolffsPoint'}</FontText>
                 </AppButton>
             </ConvexDialog.Trigger>

@@ -114,6 +114,7 @@ const AllGamesPage = ({
                 
                 <BottomBar>
                     <NewWolffspointButtonAndDialogue onCreate={setActiveGameId} condensed={width < 450}/>
+                    
                     <StateAnimatedView.Container stateVar={!isGamesPageEmpty}>
                         <StateAnimatedView.Option stateValue={true}>
                             <JoinGameButton onJoin={joinGame} condensed={width < 400}/>
