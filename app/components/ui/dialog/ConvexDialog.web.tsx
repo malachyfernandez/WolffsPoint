@@ -1,4 +1,4 @@
-import React, { createContext, useContext } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { View, useWindowDimensions } from 'react-native';
 import { ConvexProvider, ConvexReactClient } from 'convex/react';
 import { Dialog } from 'heroui-native/dialog';
@@ -83,15 +83,41 @@ const ConvexDialogContent = ({ children }: { children: React.ReactNode }) => {
 
 const baseContentClassName = 'w-full self-center bg-transparent border-0 p-0 overflow-visible shadow-none';
 
-const renderWrappedContent = (children: React.ReactNode, outerClassName?: string, innerHeightClassName?: string, style?: any, props?: any, frameVariant?: 'gold' | 'ghostly') => {
+const WidthTrackingDialogContent = ({ children, outerClassName, innerHeightClassName, style, props, frameVariant }: any) => {
+    const { width } = useWindowDimensions();
+    const [initialWidth, setInitialWidth] = useState<number | null>(null);
+    const hasInitialized = useRef(false);
+
+    useEffect(() => {
+        if (!hasInitialized.current && initialWidth === null) {
+            setInitialWidth(width);
+            hasInitialized.current = true;
+        }
+    }, [width, initialWidth]);
+
+    const widthDelta = initialWidth !== null ? width - initialWidth : 0;
+
     return (
-        <Dialog.Content className={`${baseContentClassName} ${outerClassName || ''}`.trim()} style={style} {...props}>
+        <Dialog.Content className={`${baseContentClassName} ${outerClassName || ''}`.trim()} style={[style, { transform: `translate(${widthDelta/2}px)` }]} {...props}>
             <DialogGuildedFrame className='max-h-full flex flex-col' contentClassName='max-h-full min-h-0 overflow-hidden p-5 flex flex-col' backgroundToken='inner-background' variant={frameVariant || 'gold'}>
                 <View className={`flex w-full min-h-0 max-h-full flex-col ${innerHeightClassName || ''}`.trim()}>
                     {children}
                 </View>
             </DialogGuildedFrame>
         </Dialog.Content>
+    );
+};
+
+const renderWrappedContent = (children: React.ReactNode, outerClassName?: string, innerHeightClassName?: string, style?: any, props?: any, frameVariant?: 'gold' | 'ghostly') => {
+    return (
+        <WidthTrackingDialogContent 
+            children={children}
+            outerClassName={outerClassName}
+            innerHeightClassName={innerHeightClassName}
+            style={style}
+            props={props}
+            frameVariant={frameVariant}
+        />
     );
 };
 
