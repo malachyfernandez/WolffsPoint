@@ -8,14 +8,11 @@ import * as WebBrowser from "expo-web-browser";
 import { Uniwind } from "uniwind";
 
 import AuthButton from "./components/ui/buttons/AuthButton";
+import AuthFailureFallback from "./components/AuthFailureFallback";
 import Column from "./components/layout/Column";
 import MainPage from "./components/MainPage";
-import DialogHeader from "./components/ui/dialog/DialogHeader";
-import GuildedButton from "./components/ui/buttons/GuildedButton";
 import GuildedFrame from "./components/ui/chrome/GuildedFrame";
 import FontText from "./components/ui/text/FontText";
-import FadeInAfterDelay from "./components/ui/loading/FadeInAfterDelay";
-import AppButton from "./components/ui/buttons/AppButton";
 
 const useWarmUpBrowser = () => {
   useEffect(() => {
@@ -34,7 +31,7 @@ export default function HomeScreen() {
   useWarmUpBrowser();
   const { user, isLoaded: isClerkLoaded } = useUser();
   const { isLoading: isConvexAuthLoading, isAuthenticated: isConvexAuthenticated } = useConvexAuth();
-  const clerk = useClerk();
+  const { buildSignInUrl } = useClerk();
   const [waited, setWaited] = useState(false);
 
   useEffect(() => {
@@ -48,18 +45,12 @@ export default function HomeScreen() {
   // Wait for Convex auth after Clerk sign-in (for new-tab auth flow)
   const isAuthSyncing = isClerkLoaded && !isConvexAuthLoading && !isConvexAuthenticated;
 
-  const handleReload = () => {
-    if (typeof window !== "undefined") {
-      window.location.reload();
-    }
-  };
-
   const { startOAuthFlow: startGoogleFlow } = useOAuth({ strategy: "oauth_google" });
   const authFlow = async () => {
     if (Platform.OS === "web") {
       // Open in new tab instead of popup
       const redirectUrl = AuthSession.makeRedirectUri({ path: "auth/callback" });
-      const signInUrl = clerk.buildSignInUrl({
+      const signInUrl = buildSignInUrl({
         redirectUrl,
       });
       window.open(signInUrl, "_blank");
@@ -79,23 +70,7 @@ export default function HomeScreen() {
           <View className="w-full h-full items-center justify-center">
             <SignedIn>
               {needsReload || isAuthSyncing ? (
-                <View className="items-center justify-center">
-                  <FadeInAfterDelay>
-                    <GuildedFrame className="w-[80vw] max-w-96" contentClassName="p-6" backgroundToken="inner-background">
-                      <Column className="gap-6 items-center">
-
-                        <FontText className="text-2xl font-bold text-center mt-4" color="text">Welcome to Wolffspoint</FontText>
-
-                        <Column className="gap-8 items-center mb-4">
-                          <AppButton variant="accent" className="w-36">
-                            <FontText color="white" weight="bold">{isAuthSyncing ? "Enter" : "Enter"}</FontText>
-                          </AppButton>
-                        </Column>
-                      </Column>
-                    </GuildedFrame>
-
-                  </FadeInAfterDelay>
-                </View>
+                <AuthFailureFallback />
               ) : (
                 <MainPage />
               )}
