@@ -246,7 +246,7 @@ const PlayerProfileDialogNEW = ({
                                                 <FontText weight='medium'>Profile picture</FontText>
                                                 <Pressable
                                                     onPress={() => setImageDialogMode('profile')}
-                                                    className='items-center rounded-3xl border border-subtle-border bg-text/5 h-20 hover:brightness-90 hover:bg-text/10 overflow-hidden'
+                                                    className='items-center rounded-3xl border border-subtle-border bg-text/5 h-16 hover:brightness-90 hover:bg-text/10 overflow-hidden'
                                                 >
                                                     <PlayerProfileAvatar
                                                         imageUrl={draft.profileImageUrl || undefined}
@@ -259,7 +259,7 @@ const PlayerProfileDialogNEW = ({
                                                 <FontText weight='medium'>Socials</FontText>
                                                 <Pressable
                                                     onPress={() => setIsSocialsDialogOpen(true)}
-                                                    className='rounded-3xl border border-subtle-border bg-text/5 h-20 overflow-hidden brightness-95 hover:brightness-90 hover:bg-text/10'
+                                                    className='rounded-3xl border border-subtle-border bg-text/5 h-16 overflow-hidden brightness-95 hover:brightness-90 hover:bg-text/10'
                                                 >
                                                     <ShadowScrollView className='flex-1' scrollViewClassName='flex-1 p-4' pointerEvents='none'>
                                                         <PlayerProfileContactInfo
