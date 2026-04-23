@@ -16,7 +16,7 @@ const TownSquareComposerPreviewPane = ({ includeTitle, markdown, markdownInputSt
     return (
         <Column className='gap-2 flex-1 min-w-0'>
             {/* <FontText weight='medium'>Preview</FontText> */}
-            <ShadowScrollView className='h-[52vh] flex-1' scrollViewClassName='h-[52vh] flex-1 rounded-[24px] border border-subtle-border px-4 py-4'>
+            <ShadowScrollView className='h-[52vh] flex-1' scrollViewClassName='h-[52vh] flex-1 border border-subtle-border px-4 py-4'>
                     <Column className='gap-3'>
                         {includeTitle && title.trim() ? (
                             <FontText weight='bold' className='text-2xl leading-8'>

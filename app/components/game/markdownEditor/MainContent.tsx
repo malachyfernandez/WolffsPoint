@@ -1,4 +1,5 @@
 import React from 'react';
+import { useWindowDimensions } from 'react-native';
 import Column from '../../layout/Column';
 import { TitleInputSection } from './TitleInputSection';
 import { TabSelector } from './TabSelector';
@@ -51,6 +52,8 @@ export function MainContent({
     onInput,
     onMore,
 }: MainContentProps) {
+    const { width } = useWindowDimensions();
+    const isSideBySide = width > 800;
     return (
         <Column className='gap-4 flex-1 min-h-0 -mx-3 sm:mx-0 pt-3'>
             {includeTitle ? (
@@ -62,11 +65,11 @@ export function MainContent({
                 />
             ) : null}
 
-            {!isPreviewSideBySide ? (
+            {!isSideBySide ? (
                 <TabSelector value={activeTab} onValueChange={onTabChange} />
             ) : null}
 
-            {isPreviewSideBySide ? (
+            {isSideBySide ? (
                 <SideBySideLayout
                     draftBody={draftBody}
                     draftTitle={draftTitle}

@@ -174,7 +174,7 @@ const YourEyesOnlyDayContentPLAYER = ({ gameId, currentEmail, currentUserId, day
                     </Column>
                 </ChainWraper>
 
-                <ChainWraper className='min-w-[320px] flex-1' isDisabled={isActionLocked}>
+                <ChainWraper className='min-w-[350px] flex-1' isDisabled={isActionLocked}>
                     <Column className='gap-3'>
                         <FontText weight='medium' className='text-sm tracking-[0.24em] uppercase opacity-60'>Action</FontText>
                         <MarkdownRendererInputDataProvider playerOptions={playerOptions} roleOptions={roleOptions}>
