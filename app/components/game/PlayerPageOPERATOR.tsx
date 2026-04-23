@@ -69,7 +69,7 @@ const PlayerPageOPERATOR = ({ currentUserId, gameId }: PlayerPageOPERATORProps) 
     });
 
     // Track when all data is loaded before showing table with fade-in
-    const isSyncing = userTable?.state?.isSyncing 
+    const isSyncing = userTable?.state?.isSyncing
         || selectedDayIndex?.state?.isSyncing
         || dayDatesArray?.state?.isSyncing;
     const [hasInitiallyLoaded, setHasInitiallyLoaded] = useState(false);
@@ -97,50 +97,51 @@ const PlayerPageOPERATOR = ({ currentUserId, gameId }: PlayerPageOPERATORProps) 
                     <Column className='gap-4 py-3 sm:px-4'>
 
                         <ShadowScrollView direction='horizontal' className='mr-1 pt-1' scrollViewClassName='px-1 py-5' horizontal>
-                                <Row className='gap-4'>
-                                    <Column className='gap-1'>
-                                        <Row className='gap-4 h-9'>
-                                            {/* spacer to align with days table */}
-                                        </Row>
-                                        <Row className={`gap-4 ${isPlayerTableBeingEdited ? 'z-50' : ''}`.trim()}>
-                                            <PlayerTable
-                                                gameId={gameId}
-                                                doSync={doSync}
-                                                setDoSync={setDoSync}
-                                                isBeingEdited={isPlayerTableBeingEdited}
-                                                setIsBeingEdited={setIsPlayerTableBeingEdited}
-                                                dayDatesArray={fixedDayDatesArray}
-                                                onColumnsReady={setIsPlayerTableColumnsReady}
-                                            />
-                                        </Row>
-                                    </Column>
-                                    <Column className='gap-0'>
-                                        <View className='' style={{ width: daysTableWidth }}>
-                                            <ComprehensiveDaySelector
-                                                gameId={gameId}
-                                            />
-                                        </View>
-                                        <Row className={`${isDaysTableBeingEdited ? 'z-10 ' : ''}gap-4 w-min max-w-min`}>
-                                            <DaysTable
-                                                gameId={gameId}
-                                                dayNumber={selectedDayIndex.value}
-                                                dayCount={fixedDayDatesArray.length}
-                                                isBeingEdited={isDaysTableBeingEdited}
-                                                setIsBeingEdited={setIsDaysTableBeingEdited}
-                                                onLayout={(event) => {
-                                                    const { width } = event.nativeEvent.layout;
-                                                    setDaysTableWidth(width);
-                                                }}
-                                                onWidthChange={(width) => {
-                                                    setDaysTableWidth(width);
-                                                }}
-                                                onColumnsReady={setIsDaysTableColumnsReady}
-                                            />
-                                        </Row>
-                                    </Column>
-                                </Row>
+                            <Row className='gap-4'>
+                                <Column className='gap-1'>
+                                    <Row className='gap-4 h-9'>
+                                        {/* spacer to align with days table */}
+                                    </Row>
+                                    <Row className={`gap-4 ${isPlayerTableBeingEdited ? 'z-50' : ''}`.trim()}>
+                                        <PlayerTable
+                                            gameId={gameId}
+                                            doSync={doSync}
+                                            setDoSync={setDoSync}
+                                            isBeingEdited={isPlayerTableBeingEdited}
+                                            setIsBeingEdited={setIsPlayerTableBeingEdited}
+                                            dayDatesArray={fixedDayDatesArray}
+                                            onColumnsReady={setIsPlayerTableColumnsReady}
+                                        />
+                                    </Row>
+                                </Column>
+                                <Column className='gap-0'>
+                                    <View className='' style={{ width: daysTableWidth }}>
+                                        <ComprehensiveDaySelector
+                                            gameId={gameId}
+                                            showAddButton={true}
+                                        />
+                                    </View>
+                                    <Row className={`${isDaysTableBeingEdited ? 'z-10 ' : ''}gap-4 w-min max-w-min`}>
+                                        <DaysTable
+                                            gameId={gameId}
+                                            dayNumber={selectedDayIndex.value}
+                                            dayCount={fixedDayDatesArray.length}
+                                            isBeingEdited={isDaysTableBeingEdited}
+                                            setIsBeingEdited={setIsDaysTableBeingEdited}
+                                            onLayout={(event) => {
+                                                const { width } = event.nativeEvent.layout;
+                                                setDaysTableWidth(width);
+                                            }}
+                                            onWidthChange={(width) => {
+                                                setDaysTableWidth(width);
+                                            }}
+                                            onColumnsReady={setIsDaysTableColumnsReady}
+                                        />
+                                    </Row>
+                                </Column>
+                            </Row>
 
-            </ShadowScrollView>
+                        </ShadowScrollView>
                         <PlayerAddUserSection gameId={gameId} />
                     </Column>
                 ) : (
