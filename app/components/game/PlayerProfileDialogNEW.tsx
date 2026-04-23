@@ -191,9 +191,9 @@ const PlayerProfileDialogNEW = ({
         onOpenChange(false);
     };
 
-        return (
+    return (
         <>
-            <ConvexDialog.Root 
+            <ConvexDialog.Root
                 isOpen={isOpen}
                 frameVariant={frameVariant}
                 onOpenChange={(open: boolean) => {
@@ -216,30 +216,31 @@ const PlayerProfileDialogNEW = ({
                         </Pressable>
                         <DialogHeader text={title} subtext='This is what everyone sees' />
 
-                        <Column className='gap-4 flex-1 max-h-[70vh] min-h-0 sm:pt-5 -mx-5'>
-                            <ShadowScrollView className='flex-1 min-h-0' scrollViewClassName='flex-1'>
-                                <Column className='gap-6 px-2 sm:px-5 pb-2'>
-                                        {operatorRealName !== undefined && (
-                                            <Column className='gap-1'>
-                                                <FontText weight='medium'>Real name</FontText>
-                                                <FontTextInput
-                                                    className='w-full rounded-xl border border-subtle-border px-4 py-3'
-                                                    placeholder='The name you go by'
-                                                    value={realName}
-                                                    onChangeText={setRealName}
-                                                />
-                                            </Column>
-                                        )}
-                                        <Column className='gap-1'>
-                                            <FontText weight='medium'>In-game name</FontText>
-                                            <FontTextInput
-                                                className='w-full rounded-xl border border-subtle-border px-4 py-3'
-                                                placeholder='The name everyone knows you by'
-                                                value={draft.inGameName}
-                                                onChangeText={(value) => setDraft((current) => ({ ...current, inGameName: value }))}
-                                            />
-                                        </Column>
+                        <Column className='gap-0 flex-1 max-h-[70vh] min-h-0 sm:pt-5 -mx-5'>
 
+                            <Column className='flex-1 gap-6 px-2 sm:px-5 pb-2'>
+                                {operatorRealName !== undefined && (
+                                    <Column className='gap-1'>
+                                        <FontText weight='medium'>Real name</FontText>
+                                        <FontTextInput
+                                            className='w-full rounded-xl border border-subtle-border px-4 py-3'
+                                            placeholder='The name you go by'
+                                            value={realName}
+                                            onChangeText={setRealName}
+                                        />
+                                    </Column>
+                                )}
+                                <Column className='gap-1'>
+                                    <FontText weight='medium'>In-game name</FontText>
+                                    <FontTextInput
+                                        className='w-full rounded-xl border border-subtle-border px-4 py-3'
+                                        placeholder='The name everyone knows you by'
+                                        value={draft.inGameName}
+                                        onChangeText={(value) => setDraft((current) => ({ ...current, inGameName: value }))}
+                                    />
+                                </Column>
+                                <Row className='flex-1'>
+                                    <Column className='flex-1'>
                                         <Row className='gap-4 items-start'>
                                             <Column className='gap-2 w-[126px] shrink-0'>
                                                 <FontText weight='medium'>Profile picture</FontText>
@@ -261,59 +262,61 @@ const PlayerProfileDialogNEW = ({
                                                     className='rounded-3xl border border-subtle-border bg-text/5 h-20 overflow-hidden brightness-95 hover:brightness-90 hover:bg-text/10'
                                                 >
                                                     <ShadowScrollView className='flex-1' scrollViewClassName='flex-1 p-4' pointerEvents='none'>
-                                                            <PlayerProfileContactInfo
-                                                                profile={draft}
-                                                                emptyText='No socials yet. Tap to add.'
-                                                                maxItems={4}
-                                                            />
+                                                        <PlayerProfileContactInfo
+                                                            profile={draft}
+                                                            emptyText='No socials yet. Tap to add.'
+                                                            maxItems={4}
+                                                        />
                                                     </ShadowScrollView>
                                                 </Pressable>
                                             </Column>
                                         </Row>
 
-                                        <Column className='gap-2 w-full'>
+                                        <Column className='gap-2 flex-1 w-full'>
 
 
-                                            <Row className='gap-4 items-start w-full'>
 
-                                                {/* LEFT SIDE: EDITOR */}
-                                                <Column className='gap-1 flex-1 min-w-[220px]'>
-                                                    <FontText weight='medium'>Bio</FontText>
-                                                    <TownSquareComposerToolbar
-                                                        onBold={() => runBioUpdate((value, range) => wrapSelection(value, range, '**', '**', 'bold text'))}
-                                                        onItalic={() => runBioUpdate((value, range) => wrapSelection(value, range, '*', '*', 'italic text'))}
-                                                        onLink={() => setIsLinkDialogOpen(true)}
-                                                        onImage={() => setImageDialogMode('markdown')}
-                                                        onMore={() => setIsMoreDialogOpen(true)}
+
+                                            {/* LEFT SIDE: EDITOR */}
+                                            <Column className='gap-1 flex-1 min-w-[220px]'>
+                                                <FontText weight='medium'>Bio</FontText>
+                                                <TownSquareComposerToolbar
+                                                    onBold={() => runBioUpdate((value, range) => wrapSelection(value, range, '**', '**', 'bold text'))}
+                                                    onItalic={() => runBioUpdate((value, range) => wrapSelection(value, range, '*', '*', 'italic text'))}
+                                                    onLink={() => setIsLinkDialogOpen(true)}
+                                                    onImage={() => setImageDialogMode('markdown')}
+                                                    onMore={() => setIsMoreDialogOpen(true)}
+                                                />
+                                                <ShadowScrollView className='min-h-[120px] flex-1' scrollViewClassName='rounded-[24px] py-4'>
+                                                    <TownSquareComposerEditorPane
+                                                        onBodyChange={(value) => setDraft((current) => ({ ...current, bioMarkdown: value }))}
+                                                        onSelectionChange={setBioSelection}
+                                                        value={draft.bioMarkdown || ''}
                                                     />
-                                                    <ShadowScrollView className='min-h-[120px] max-h-[220px]' scrollViewClassName='rounded-[24px] py-4'>
-                                                            <TownSquareComposerEditorPane
-                                                                onBodyChange={(value) => setDraft((current) => ({ ...current, bioMarkdown: value }))}
-                                                                onSelectionChange={setBioSelection}
-                                                                value={draft.bioMarkdown || ''}
-                                                            />
-                                                    </ShadowScrollView>
-                                                </Column>
-
-                                                {/* RIGHT SIDE: FULL PREVIEW */}
-                                                <Column className='gap-2 flex-1 min-w-[220px] hidden sm:flex'>
-                                                    <FontText weight='medium'>Preview</FontText>
-                                                    <ShadowScrollView className='min-h-[120px] max-h-[220px] rounded-3xl' scrollViewClassName='flex-1'>
-                                                            <PlayerProfilePreviewCard
-                                                                displayName={previewName}
-                                                                bioMarkdown={draft.bioMarkdown || ''}
-                                                                imageUrl={draft.profileImageUrl || undefined}
-                                                                initials={previewInitials}
-                                                                profile={draft}
-                                                            />
-                                                    </ShadowScrollView>
-                                                </Column>
-                                            </Row>
+                                                </ShadowScrollView>
+                                            </Column>
+                                            {/* </Row> */}
                                         </Column>
                                     </Column>
-                            </ShadowScrollView>
 
-                            <Row className='gap-4 justify-end pt-1 px-5 pb-5'>
+
+                                    <Column className='gap-2 flex-1 hidden md:flex'>
+                                        <FontText weight='medium'>Preview</FontText>
+                                        <ShadowScrollView className='flex-1' scrollViewClassName='flex-1'>
+                                            <PlayerProfilePreviewCard
+                                                displayName={previewName}
+                                                bioMarkdown={draft.bioMarkdown || ''}
+                                                imageUrl={draft.profileImageUrl || undefined}
+                                                initials={previewInitials}
+                                                profile={draft}
+                                            />
+                                        </ShadowScrollView>
+                                    </Column>
+                                </Row>
+                            </Column>
+
+
+                            <Row className='gap-4 justify-end px-5'>
                                 <AppButton variant='outline' className='w-20 sm:w-36' onPress={handleAttemptClose}>
                                     <FontText weight='medium'>Cancel</FontText>
                                 </AppButton>
@@ -328,11 +331,11 @@ const PlayerProfileDialogNEW = ({
                             </Row>
                         </Column>
                     </ConvexDialog.Content>
-                </ConvexDialog.Portal>
-            </ConvexDialog.Root>
+                </ConvexDialog.Portal >
+            </ConvexDialog.Root >
 
             {/* Socials Dialog */}
-            <SocialsDialog
+            < SocialsDialog
                 isOpen={isSocialsDialogOpen}
                 onOpenChange={setIsSocialsDialogOpen}
                 onSave={handleSocialsSave}
@@ -431,8 +434,8 @@ const SocialsDialog = ({ isOpen, onOpenChange, onSave, initialSocials }: Socials
         onSave(draft);
     };
 
-        return (
-        <ConvexDialog.Root 
+    return (
+        <ConvexDialog.Root
             isOpen={isOpen}
             onOpenChange={(open: boolean) => {
                 if (open) {
@@ -457,62 +460,62 @@ const SocialsDialog = ({ isOpen, onOpenChange, onSave, initialSocials }: Socials
                     <Column className='gap-4 flex-1 min-h-0 pt-5'>
                         <ShadowScrollView className='flex-1 min-h-0' scrollViewClassName='flex-1'>
                             <Column className='gap-4 items-start px-2 sm:px-5 pb-2'>
-                                    <Column className='gap-4 flex-1 min-w-0'>
-                                        <Row className='gap-4'>
-                                            <Column className='gap-1 flex-1 min-w-0'>
-                                                <FontText weight='medium'>Phone number</FontText>
-                                                <FontTextInput
-                                                    className='w-full rounded-xl border border-subtle-border px-4 py-3'
-                                                    value={draft.phoneNumber}
-                                                    onChangeText={(value) => setDraft((current) => ({ ...current, phoneNumber: value }))}
-                                                    placeholder='Optional'
-                                                />
-                                            </Column>
-
-                                            <Column className='gap-1 flex-1 min-w-0'>
-                                                <FontText weight='medium'>Instagram</FontText>
-                                                <FontTextInput
-                                                    className='w-full rounded-xl border border-subtle-border px-4 py-3'
-                                                    value={draft.instagram}
-                                                    onChangeText={(value) => setDraft((current) => ({ ...current, instagram: value }))}
-                                                    placeholder='Optional'
-                                                />
-                                            </Column>
-                                        </Row>
-
-                                        <Row className='gap-4'>
-                                            <Column className='gap-1 flex-1 min-w-0'>
-                                                <FontText weight='medium'>Discord</FontText>
-                                                <FontTextInput
-                                                    className='w-full rounded-xl border border-subtle-border px-4 py-3'
-                                                    value={draft.discord}
-                                                    onChangeText={(value) => setDraft((current) => ({ ...current, discord: value }))}
-                                                    placeholder='Optional'
-                                                />
-                                            </Column>
-
-                                            <Column className='gap-1 flex-1 min-w-0'>
-                                                <FontText weight='medium'>Anything else</FontText>
-                                                <FontTextInput
-                                                    className='w-full rounded-xl border border-subtle-border px-4 py-3'
-                                                    value={draft.otherContact}
-                                                    onChangeText={(value) => setDraft((current) => ({ ...current, otherContact: value }))}
-                                                    placeholder='Optional'
-                                                />
-                                            </Column>
-                                        </Row>
-                                    </Column>
-
-                                    <Column className='gap-1 w-full shrink-0'>
-                                        <FontText weight='medium'>Preview</FontText>
-                                        <Column className='gap-4 rounded-3xl border border-subtle-border bg-text/5 p-4'>
-                                            <PlayerProfileContactInfo
-                                                profile={previewProfile}
-                                                emptyText='No socials yet.'
+                                <Column className='gap-4 flex-1 min-w-0'>
+                                    <Row className='gap-4'>
+                                        <Column className='gap-1 flex-1 min-w-0'>
+                                            <FontText weight='medium'>Phone number</FontText>
+                                            <FontTextInput
+                                                className='w-full rounded-xl border border-subtle-border px-4 py-3'
+                                                value={draft.phoneNumber}
+                                                onChangeText={(value) => setDraft((current) => ({ ...current, phoneNumber: value }))}
+                                                placeholder='Optional'
                                             />
                                         </Column>
+
+                                        <Column className='gap-1 flex-1 min-w-0'>
+                                            <FontText weight='medium'>Instagram</FontText>
+                                            <FontTextInput
+                                                className='w-full rounded-xl border border-subtle-border px-4 py-3'
+                                                value={draft.instagram}
+                                                onChangeText={(value) => setDraft((current) => ({ ...current, instagram: value }))}
+                                                placeholder='Optional'
+                                            />
+                                        </Column>
+                                    </Row>
+
+                                    <Row className='gap-4'>
+                                        <Column className='gap-1 flex-1 min-w-0'>
+                                            <FontText weight='medium'>Discord</FontText>
+                                            <FontTextInput
+                                                className='w-full rounded-xl border border-subtle-border px-4 py-3'
+                                                value={draft.discord}
+                                                onChangeText={(value) => setDraft((current) => ({ ...current, discord: value }))}
+                                                placeholder='Optional'
+                                            />
+                                        </Column>
+
+                                        <Column className='gap-1 flex-1 min-w-0'>
+                                            <FontText weight='medium'>Anything else</FontText>
+                                            <FontTextInput
+                                                className='w-full rounded-xl border border-subtle-border px-4 py-3'
+                                                value={draft.otherContact}
+                                                onChangeText={(value) => setDraft((current) => ({ ...current, otherContact: value }))}
+                                                placeholder='Optional'
+                                            />
+                                        </Column>
+                                    </Row>
+                                </Column>
+
+                                <Column className='gap-1 w-full shrink-0'>
+                                    <FontText weight='medium'>Preview</FontText>
+                                    <Column className='gap-4 rounded-3xl border border-subtle-border bg-text/5 p-4'>
+                                        <PlayerProfileContactInfo
+                                            profile={previewProfile}
+                                            emptyText='No socials yet.'
+                                        />
                                     </Column>
                                 </Column>
+                            </Column>
                         </ShadowScrollView>
 
                         <Row className='gap-4 justify-end flex-wrap px-2 sm:px-5 pb-5'>
