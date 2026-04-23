@@ -39,7 +39,7 @@ const ChainWraper = ({ children, isDisabled = false, className, style }: ChainWr
 
     if (!isDisabled) {
         return (
-            <View className={`${className} rounded-2xl overflow-hidden`} style={[styles.container, style]} onLayout={handleLayout}>
+            <View className={`${className} rounded-2xl`} style={[styles.container, style]} onLayout={handleLayout}>
                 <View style={isDisabled ? styles.disabledContent : undefined}>{children}</View>
 
                 {isDisabled && hasMeasuredBounds && dimensions ? (

@@ -144,64 +144,74 @@ const YourEyesOnlyDayContentPLAYER = ({ gameId, currentEmail, currentUserId, day
             </Column>
 
             <Row className='gap-4 items-start' style={{ flexWrap: 'wrap' }}>
-                <ChainWraper className='min-w-[240px] flex-1' isDisabled={isVoteLocked && roleData?.doesRoleVote !== false}>
-                    <Column className='gap-3'>
-                        <FontText weight='medium' className='text-sm tracking-[0.24em] uppercase opacity-60'>Vote</FontText>
-                        <AppDropdown
-                            options={voteOptions}
-                            value={submission.value.vote}
-                            onValueChange={(value) => {
-                                if (isVoteLocked || roleData?.doesRoleVote === false) {
-                                    return;
-                                }
+                <Column className='min-w-[300px] flex-1'>
+                    <ChainWraper className='' isDisabled={(isVoteLocked && roleData?.doesRoleVote !== false) || roleData?.doesRoleVote == false}>
+                        <Column className='gap-3'>
+                            <FontText weight='medium' className='text-sm tracking-[0.24em] uppercase opacity-60'>Vote</FontText>
+                            <AppDropdown
+                                options={voteOptions}
+                                value={submission.value.vote}
+                                onValueChange={(value) => {
+                                    if (isVoteLocked || roleData?.doesRoleVote === false) {
+                                        return;
+                                    }
 
-                                setSubmission({
-                                    ...submission.value,
-                                    vote: value,
-                                    submittedVoteAt: Date.now(),
-                                });
-                            }}
-                            placeholder={roleData?.doesRoleVote === false ? 'This role does not vote' : 'Choose a player'}
-                            triggerClassName='rounded-2xl border border-border/15 bg-none px-4 py-4'
-                            contentClassName='border border-border/15'
-                            disabled={isVoteLocked || roleData?.doesRoleVote === false}
-                        />
-                        {roleData?.doesRoleVote === false ? (
-                            <FontText variant='subtext'>This role doesn&apos;t submit a vote.</FontText>
-                        ) : isVoteLocked ? (
-                            <FontText variant='subtext'>Saved vote: {submission.value.vote || 'No vote submitted.'}</FontText>
-                        ) : null}
-                    </Column>
-                </ChainWraper>
+                                    setSubmission({
+                                        ...submission.value,
+                                        vote: value,
+                                        submittedVoteAt: Date.now(),
+                                    });
+                                }}
+                                placeholder={roleData?.doesRoleVote === false ? 'This role does not vote' : 'Choose a player'}
+                                triggerClassName='rounded-2xl border border-border/15 bg-none px-4 py-4'
+                                contentClassName='border border-border/15'
+                                disabled={isVoteLocked || roleData?.doesRoleVote === false}
+                            />
 
-                <ChainWraper className='min-w-[350px] flex-1' isDisabled={isActionLocked}>
-                    <Column className='gap-3'>
-                        <FontText weight='medium' className='text-sm tracking-[0.24em] uppercase opacity-60'>Action</FontText>
-                        <MarkdownRendererInputDataProvider playerOptions={playerOptions} roleOptions={roleOptions}>
-                            {roleData?.roleMessage?.trim().length ? (
-                                <MarkdownRenderer
-                                    markdown={roleData.roleMessage}
-                                    state={currentActionState}
-                                    setState={!isActionLocked ? (nextState) => {
-                                        setSubmission({
-                                            ...submission.value,
-                                            action: nextState,
-                                            submittedActionAt: Date.now(),
-                                        });
-                                    } : undefined}
-                                />
-                            ) : (
-                                <FontText variant='subtext'>The operator has not written your role action instructions yet.</FontText>
-                            )}
-                        </MarkdownRendererInputDataProvider>
+                        </Column>
+                    </ChainWraper>
+                    {roleData?.doesRoleVote === false ? (
+                        <FontText variant='subtext'>This role doesn&apos;t submit a vote.</FontText>
+                    ) : isVoteLocked ? (
+                        <FontText variant='subtext'>Saved vote: {submission.value.vote || 'No vote submitted.'}</FontText>
+                    ) : null}
+                </Column>
+                <Column className='min-w-[300px] flex-1'>
+                    <ChainWraper className='min-w-[300px] flex-1' isDisabled={isActionLocked}>
+                        <Column className='gap-3'>
+                            <FontText weight='medium' className='text-sm tracking-[0.24em] uppercase opacity-60'>Action</FontText>
+                            <MarkdownRendererInputDataProvider playerOptions={playerOptions} roleOptions={roleOptions}>
+                                {roleData?.roleMessage?.trim().length ? (
+                                    <MarkdownRenderer
+                                        markdown={roleData.roleMessage}
+                                        state={currentActionState}
+                                        setState={!isActionLocked ? (nextState) => {
+                                            setSubmission({
+                                                ...submission.value,
+                                                action: nextState,
+                                                submittedActionAt: Date.now(),
+                                            });
+                                        } : undefined}
+                                    />
+                                ) : (
+                                    <FontText variant='subtext'>The operator has not written your role action instructions yet.</FontText>
+                                )}
+                            </MarkdownRendererInputDataProvider>
 
-                        {isActionLocked ? (
+
+                        </Column>
+
+                    </ChainWraper>
+                    {isActionLocked ? (
+                        currentActionSummary.trim().length > 0 ? (
+                            <FontText variant='subtext'>Saved action: {currentActionSummary}</FontText>
+                        ) : (
                             <FontText variant='subtext'>The action window has closed for this day.</FontText>
-                        ) : currentActionSummary.trim().length > 0 ? (
-                            <FontText variant='subtext'>Current action: {currentActionSummary}</FontText>
-                        ) : null}
-                    </Column>
-                </ChainWraper>
+                        )
+                    ) : currentActionSummary.trim().length > 0 ? (
+                        <FontText variant='subtext'>Current action: {currentActionSummary}</FontText>
+                    ) : null}
+                </Column>
             </Row>
         </Column>
     );
