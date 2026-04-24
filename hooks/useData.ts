@@ -103,7 +103,12 @@ export function useFindListItems<T = any>(key: string, queryArgs: {
   const subId = JSON.stringify({ type: 'find-list-items', key, args });
 
   useEffect(() => {
-    return globalDataStore.register(subId, { type: 'find-list-items', key, args });
+    console.log(`[useFindListItems] Registering ${subId}`);
+    const unregister = globalDataStore.register(subId, { type: 'find-list-items', key, args });
+    return () => {
+        console.log(`[useFindListItems] Unregistering ${subId}`);
+        unregister();
+    };
   }, [subId]);
 
   const result = useSyncExternalStore(

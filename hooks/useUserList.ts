@@ -232,6 +232,14 @@ export function useUserList<T>({
   overwriteStoredPrivacy?: boolean;
   onOpStatusChange?: (info: UserListOpStatusInfo<T>) => void;
 }): [UserListResult<T>, (newValue: T) => void] {
+  // Log when this hook mounts or changes its Convex query arguments
+  useEffect(() => {
+    console.log(`[useUserList:CONVEX] Subscribing to key=${key}, itemId=${itemId}`);
+    return () => {
+      console.log(`[useUserList:CONVEX] Unsubscribing from key=${key}, itemId=${itemId}`);
+    };
+  }, [key, itemId]);
+
   const record = useQuery(api.user_lists.get, { key, itemId });
 
   const isSyncing = record === undefined;
