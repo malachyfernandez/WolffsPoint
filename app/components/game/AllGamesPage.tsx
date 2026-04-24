@@ -1,7 +1,19 @@
-import React, { useState } from 'react';
-import { useWindowDimensions } from 'react-native';
+import React, { useEffect, useState } from 'react';
 
 import { useUserVariable } from 'hooks/useUserVariable';
+
+function useWindowWidth(): number {
+    const [width, setWidth] = useState(() =>
+        typeof window !== 'undefined' ? window.innerWidth : 0
+    );
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+        const handleResize = () => setWidth(window.innerWidth);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+    return width;
+}
 import { useSyncUserData } from 'hooks/useSyncUserData';
 import Column from '../layout/Column';
 import BottomBar from '../layout/BottomBar';
@@ -30,7 +42,7 @@ const AllGamesPage = ({
     setActiveGameId,
     myGames,
 }: AllGamesPageProps) => {
-    const { width } = useWindowDimensions();
+    const width = useWindowWidth();
     const [uploadedImageUrl, setUploadedImageUrl] = useState('');
 
     const [gamesTheyJoined, setGamesTheyJoined] = useUserVariable<string[]>({
