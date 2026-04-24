@@ -6,6 +6,7 @@ import { devWarn } from "../utils/devWarnings";
 import { userVarConfig } from "../utils/userVarConfig";
 import { decodeUserValue, encodeUserValue } from "./userValueSerialization";
 import { globalRateLimitMonitor } from "./useRateLimitMonitor";
+import { deepEqual } from "../utils/deepEqual";
 
 type ObjectKeys<T> = T extends object ? Extract<keyof T, string> : never;
 type PrimitiveIndexValue = string | number | boolean;
@@ -336,6 +337,10 @@ export function useUserVariable<T>({
     const setValue = (newValue: T) => {
         // Track mutation for rate limit monitoring
         globalRateLimitMonitor.trackCall(`user_vars:${key}`);
+
+        if (deepEqual(newValue, value)) {
+            return;
+        }
 
         if (isConvexAuthLoading || !isConvexAuthenticated) {
             devWarn(

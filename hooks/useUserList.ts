@@ -5,6 +5,7 @@ import { devWarn } from "../utils/devWarnings";
 import { userVarConfig } from "../utils/userVarConfig";
 import { decodeUserValue, encodeUserValue } from "./userValueSerialization";
 import { globalRateLimitMonitor } from "./useRateLimitMonitor";
+import { deepEqual } from "../utils/deepEqual";
 
 type ObjectKeys<T> = T extends object ? Extract<keyof T, string> : never;
 type PrimitiveIndexValue = string | number | boolean;
@@ -331,6 +332,10 @@ export function useUserList<T>({
   const setValue = (newValue: T) => {
     // Track mutation for rate limit monitoring
     globalRateLimitMonitor.trackCall(`user_lists:${key}:${itemId}`);
+
+    if (deepEqual(newValue, value)) {
+      return;
+    }
 
     const startedAt = Date.now();
     const opId = (opIdRef.current += 1);
