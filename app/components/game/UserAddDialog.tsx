@@ -60,7 +60,7 @@ const UserAddDialog = ({
     };
 
     useEffect(() => {
-        const emailExists = (users ?? []).some((user) => 
+        const emailExists = (users ?? []).some((user) =>
             user.email === email.trim()
         );
         setIsUniqueEmail(!emailExists);
@@ -69,10 +69,10 @@ const UserAddDialog = ({
 
     const handleSubmit = () => {
         // Check for email uniqueness and format
-        const emailExists = (users ?? []).some((user) => 
+        const emailExists = (users ?? []).some((user) =>
             user.email === email.trim()
         );
-        
+
         if (emailExists) {
             console.warn("Email already exists!");
             return;
@@ -112,7 +112,7 @@ const UserAddDialog = ({
         setRealName('');
         setEmail('');
         setRole('');
-        
+
         onOpenChange(false);
     };
 
@@ -123,7 +123,7 @@ const UserAddDialog = ({
         onOpenChange(false);
     };
 
-        return (
+    return (
         <ConvexDialog.Root isOpen={isOpen} onOpenChange={handleDialogOpenChange}>
             <ConvexDialog.Trigger asChild>
                 <View>
@@ -133,14 +133,13 @@ const UserAddDialog = ({
             <ConvexDialog.Portal>
                 <ConvexDialog.Overlay />
 
-                <ConvexDialog.Content>
+                <ConvexDialog.Content className="max-w-xl">
                     <ConvexDialog.Close iconProps={{ color: 'rgb(246, 238, 219)' }} className="w-10 h-10 bg-text-inverted/10 hover:bg-text-inverted/15 rounded-full absolute right-0 top-0 z-10" />
-
+                    <DialogHeader
+                        text={`Add User`}
+                        subtext={`Enter the user details`}
+                    />
                     <Column className='gap-4 p-0 sm:p-5'>
-                        <DialogHeader
-                            text={`Add User`}
-                            subtext={`Enter the user details`}
-                        />
                         <Column className='gap-2'>
                             <FontText weight='medium'>Real Name</FontText>
                             <FontTextInput
@@ -174,19 +173,19 @@ const UserAddDialog = ({
                         <Column className='gap-4 w-full items-center justify-center'>
                             <Column className='gap-4 w-min'>
                                 <Row className='gap-4 w-min max-w-full'>
-                                {isUniqueEmail && isValidEmail && realName.trim() && email.trim() ? (
-                                    <AppButton className='w-30 sm:w-48 h-10' variant='black' onPress={handleSubmit}>
-                                        <FontText color='white' weight='medium'>Add User</FontText>
-                                    </AppButton> 
-                                ) : (
-                                    <StatusButton 
-                                        className='w-30 sm:w-48 h-10' 
-                                        buttonText='Add User' 
-                                        buttonAltText={!isUniqueEmail ? 'Email already exists' : 'Valid email required'} 
-                                    />
-                                )}
-                                    
-                                    <AppButton className='w-24 sm:w-48 h-10' variant='outline' onPress={handleCancel}>
+                                    {isUniqueEmail && isValidEmail && realName.trim() && email.trim() ? (
+                                        <AppButton className='w-30 sm:w-48 h-10' variant='black' onPress={handleSubmit}>
+                                            <FontText color='white' weight='medium'>Add User</FontText>
+                                        </AppButton>
+                                    ) : (
+                                        <StatusButton
+                                            className='w-30 sm:w-48 h-10'
+                                            buttonText='Add User'
+                                            buttonAltText={!isUniqueEmail ? 'Email Used' : 'Invalid'}
+                                        />
+                                    )}
+
+                                    <AppButton className='w-22 sm:w-48 h-10' variant='outline' onPress={handleCancel}>
                                         <FontText color='black' weight='medium'>Cancel</FontText>
                                     </AppButton>
                                 </Row>
