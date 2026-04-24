@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import Animated, { FadeIn } from 'react-native-reanimated';
 import Column from '../layout/Column';
 import GameTabBar, { GameTabDefinition } from './GameTabBar';
 import TownSquarePagePLAYER from './TownSquarePagePLAYER';
@@ -39,30 +40,32 @@ const PlayerGamePage = ({ gameId, currentUserId }: PlayerGamePageProps) => {
                 <Column className='gap-5'>
                     <GameTabBar activeTab={activeTab} onTabPress={setActiveTab} tabs={playerTabs} />
                     <PaperContainer>
-                        {activeTab === 'townSquare' && <TownSquarePagePLAYER gameId={gameId} currentProfile={profile} />}
-                        {activeTab === 'newspaper' &&
-                            <ReadOnlyNewspaperPagePLAYER
-                                gameId={gameId}
-                                currentEmail={currentEmail}
-                                matchingPlayer={matchingPlayer}
-                                currentProfile={profile}
-                            />}
-                        {activeTab === 'ruleBook' && <RuleBookPagePLAYER gameId={gameId} />}
-                        {activeTab === 'eyesOnly' && (
-                            <YourEyesOnlyPagePLAYER
-                                gameId={gameId}
-                                currentEmail={currentEmail}
-                                matchingPlayer={matchingPlayer}
-                                currentProfile={profile}
-                            />
-                        )}
-                        {activeTab === 'phoneBook' && (
-                            <PhoneBookPagePLAYER
-                                gameId={gameId}
-                                currentUserId={currentUserId}
-                                currentEmail={currentEmail}
-                            />
-                        )}
+                        <Animated.View key={activeTab} entering={FadeIn.duration(300)} className='w-full min-w-0'>
+                            {activeTab === 'townSquare' && <TownSquarePagePLAYER gameId={gameId} currentProfile={profile} />}
+                            {activeTab === 'newspaper' &&
+                                <ReadOnlyNewspaperPagePLAYER
+                                    gameId={gameId}
+                                    currentEmail={currentEmail}
+                                    matchingPlayer={matchingPlayer}
+                                    currentProfile={profile}
+                                />}
+                            {activeTab === 'ruleBook' && <RuleBookPagePLAYER gameId={gameId} />}
+                            {activeTab === 'eyesOnly' && (
+                                <YourEyesOnlyPagePLAYER
+                                    gameId={gameId}
+                                    currentEmail={currentEmail}
+                                    matchingPlayer={matchingPlayer}
+                                    currentProfile={profile}
+                                />
+                            )}
+                            {activeTab === 'phoneBook' && (
+                                <PhoneBookPagePLAYER
+                                    gameId={gameId}
+                                    currentUserId={currentUserId}
+                                    currentEmail={currentEmail}
+                                />
+                            )}
+                        </Animated.View>
                     </PaperContainer>
                 </Column>
             )}

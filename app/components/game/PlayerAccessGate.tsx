@@ -1,6 +1,6 @@
 import React, { ReactNode, useMemo, useState } from 'react';
 import { View } from 'react-native';
-import { useUserVariable } from '../../../hooks/useUserVariable';
+import { useValue } from '../../../hooks/useData';
 import { useSharedListValue } from '../../../hooks/useSharedListValue';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import Column from '../layout/Column';
@@ -40,8 +40,7 @@ interface PlayerAccessGateProps {
 const PlayerAccessGate = ({ gameId, currentUserId, children }: PlayerAccessGateProps) => {
     const [isProfileDialogOpen, setIsProfileDialogOpen] = useState(false);
     const { operatorUserId, isLoading: isOperatorLoading } = useGameOperatorUserId(gameId);
-    const [userData] = useUserVariable<UserData>({
-        key: 'userData',
+    const [userData] = useValue<UserData>('userData', {
         defaultValue: { name: '', email: '', userId: '' },
         privacy: 'PUBLIC',
     });
@@ -59,14 +58,12 @@ const PlayerAccessGate = ({ gameId, currentUserId, children }: PlayerAccessGateP
 
     const isPlayerDead = matchingPlayer?.playerData?.livingState === 'dead';
 
-    const [customUserInfo, setCustomUserInfo] = useUserVariable<CustomUserInfo>({
-        key: "customUserInfo",
+    const [customUserInfo, setCustomUserInfo] = useValue<CustomUserInfo>('customUserInfo', {
         defaultValue: { name: "", photoUrl: "" },
         privacy: "PUBLIC",
     });
 
-    const [profile, setProfile] = useUserVariable<PlayerProfile>({
-        key: getGameScopedKey('playerProfile', gameId),
+    const [profile, setProfile] = useValue<PlayerProfile>(getGameScopedKey('playerProfile', gameId), {
         defaultValue: {
             gameId,
             email: currentEmail,

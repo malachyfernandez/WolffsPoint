@@ -1,9 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { Image, Pressable, View, useWindowDimensions } from 'react-native';
-import { useUserVariable } from '../../../hooks/useUserVariable';
-import { useUserVariableGet } from '../../../hooks/useUserVariableGet';
-import { useUserList } from '../../../hooks/useUserList';
+import { useValue, useFindValues, useList } from '../../../hooks/useData';
 import { useDialogGuildedVariant } from '../../../hooks/useDialogGuildedVariant';
 import { PlayerProfile } from '../../../types/multiplayer';
 import { UserTableItem } from '../../../types/playerTable';
@@ -30,8 +28,7 @@ const PhoneBookPagePLAYER = ({ gameId, currentUserId, currentEmail }: PhoneBookP
     const [isProfileDialogOpen, setIsProfileDialogOpen] = useState(false);
     const frameVariant = useDialogGuildedVariant();
     const profileKey = getGameScopedKey('playerProfile', gameId);
-    const [myProfile, setMyProfile] = useUserVariable<PlayerProfile>({
-        key: profileKey,
+    const [myProfile, setMyProfile] = useValue<PlayerProfile>(profileKey, {
         defaultValue: {
             gameId,
             email: currentEmail,
@@ -225,8 +222,7 @@ const useAllPlayers = ({ gameId }: { gameId: string }) => {
 // Hook to get all profiles
 const useAllProfiles = ({ gameId }: { gameId: string }) => {
     const profileKey = getGameScopedKey('playerProfile', gameId);
-    const profiles = useUserVariableGet<PlayerProfile>({
-        key: profileKey,
+    const profiles = useFindValues<PlayerProfile>(profileKey, {
         returnTop: 200,
     });
 
@@ -235,9 +231,7 @@ const useAllProfiles = ({ gameId }: { gameId: string }) => {
 
 // Hook to get all table users  
 const useAllTableUsers = ({ gameId }: { gameId: string }) => {
-    const [userTable] = useUserList<UserTableItem[]>({
-        key: "userTable",
-        itemId: gameId,
+    const [userTable] = useList<UserTableItem[]>("userTable", gameId, {
         privacy: "PUBLIC",
     });
 
@@ -278,8 +272,7 @@ export { PlayerProfileContactInfo as PlayerContactInfo } from './PlayerProfilePr
 // Hook to get player profile
 const usePlayerProfile = ({ userId, gameId }: { userId: string; gameId: string }) => {
     const profileKey = getGameScopedKey('playerProfile', gameId);
-    const profiles = useUserVariableGet<PlayerProfile>({
-        key: profileKey,
+    const profiles = useFindValues<PlayerProfile>(profileKey, {
         userIds: [userId],
         returnTop: 1,
     });

@@ -3,8 +3,7 @@ import Column from '../layout/Column';
 import Row from '../layout/Row';
 import FontText from '../ui/text/FontText';
 import MarkdownRenderer from '../ui/markdown/MarkdownRenderer';
-import { useUserListGet } from '../../../hooks/useUserListGet';
-import { useUserVariableGet } from '../../../hooks/useUserVariableGet';
+import { useFindListItems, useFindValues } from '../../../hooks/useData';
 import { getGameScopedKey } from '../../../utils/multiplayer';
 import { RoleTableItem } from '../../../types/roleTable';
 import { RuleBookData } from '../../../types/ruleBook';
@@ -14,34 +13,31 @@ interface RuleBookRoleDescriptionsPLAYERProps {
 }
 
 const RuleBookRoleDescriptionsPLAYER = ({ gameId }: RuleBookRoleDescriptionsPLAYERProps) => {
-    const gameRows = useUserListGet({
-        key: 'games',
+    const gameRows = useFindListItems('games', {
         itemId: gameId,
         returnTop: 1,
     });
 
     const operatorUserId = gameRows?.[0]?.userToken;
 
-    const roleTableRecords = useUserListGet<RoleTableItem[]>({
-        key: "roleTable",
+    const roleTableRecords = useFindListItems<RoleTableItem[]>("roleTable", {
         itemId: gameId,
         userIds: operatorUserId ? [operatorUserId] : [],
     });
 
-    const ruleBookRecords = useUserVariableGet<RuleBookData>({
-        key: getGameScopedKey('ruleBook', gameId),
+    const ruleBookRecords = useFindValues<RuleBookData>(getGameScopedKey('ruleBook', gameId), {
         userIds: operatorUserId ? [operatorUserId] : [],
         returnTop: 1,
     });
 
-    const roles = roleTableRecords?.[0]?.value ?? [];
-    const ruleBookData = ruleBookRecords?.[0]?.value;
-    const visibleRolesWithContent = roles.filter(role => role.isVisible !== false && role.aboutRole && role.aboutRole.trim().length > 0);
+    const roles: RoleTableItem[] = roleTableRecords?.[0]?.value ?? [];
+    const ruleBookData: RuleBookData | undefined = ruleBookRecords?.[0]?.value;
+    const visibleRolesWithContent = roles.filter((role: RoleTableItem) => role.isVisible !== false && role.aboutRole && role.aboutRole.trim().length > 0);
     
     // Get ordered roles based on stored order, fallback to original order
     const getOrderedRoles = () => {
         const orderedRoleIndexes = ruleBookData?.roleOrder || [];
-        const roleMap = new Map(visibleRolesWithContent.map((role) => [roles.indexOf(role), role]));
+        const roleMap = new Map(visibleRolesWithContent.map((role: RoleTableItem) => [roles.indexOf(role), role]));
         
         const orderedRoles: RoleTableItem[] = [];
         orderedRoleIndexes.forEach((originalIndex: number) => {
@@ -49,7 +45,7 @@ const RuleBookRoleDescriptionsPLAYER = ({ gameId }: RuleBookRoleDescriptionsPLAY
             if (role) orderedRoles.push(role);
         });
         
-        visibleRolesWithContent.forEach((role) => {
+        visibleRolesWithContent.forEach((role: RoleTableItem) => {
             const originalIndex = roles.indexOf(role);
             if (!orderedRoleIndexes.includes(originalIndex)) {
                 orderedRoles.push(role);

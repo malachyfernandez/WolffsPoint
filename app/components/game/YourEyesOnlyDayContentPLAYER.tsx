@@ -8,7 +8,7 @@ import ChainWraper from './ChainWraper';
 import { useGameOperatorUserId } from '../../../hooks/useGameOperatorUserId';
 import { useSharedListValue } from '../../../hooks/useSharedListValue';
 import { useSharedVariableValue } from '../../../hooks/useSharedVariableValue';
-import { useUserVariable } from '../../../hooks/useUserVariable';
+import { useValue } from '../../../hooks/useData';
 import { PlayerNightSubmission } from '../../../types/multiplayer';
 import { RoleTableItem } from '../../../types/roleTable';
 import { UserTableItem } from '../../../types/playerTable';
@@ -51,8 +51,7 @@ const YourEyesOnlyDayContentPLAYER = ({ gameId, currentEmail, currentUserId, day
         return () => clearInterval(intervalId);
     }, []);
 
-    const [submission, setSubmission] = useUserVariable<PlayerNightSubmission>({
-        key: getGameScopedKey(`playerNightSubmission-day-${dayIndex}`, gameId),
+    const [submission, setSubmission] = useValue<PlayerNightSubmission>(getGameScopedKey(`playerNightSubmission-day-${dayIndex}`, gameId), {
         defaultValue: {
             gameId,
             gameDayId: `${gameId}-day-${dayIndex}`,
@@ -64,9 +63,6 @@ const YourEyesOnlyDayContentPLAYER = ({ gameId, currentEmail, currentUserId, day
             submittedVoteAt: null,
             submittedActionAt: null,
         },
-        privacy: 'PUBLIC',
-        filterKey: 'playerEmail',
-        searchKeys: ['playerEmail', 'vote'],
         sortKey: 'submittedActionAt',
     });
 
