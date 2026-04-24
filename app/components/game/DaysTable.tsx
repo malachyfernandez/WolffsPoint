@@ -108,25 +108,21 @@ const DaysTable = ({ gameId, dayNumber, dayCount, isBeingEdited, setIsBeingEdite
         let hasChanges = false;
 
         if (!deepEqual(currentVisibility, normalizedState.visibility)) {
-            console.log("DaysTable visibility diff:", JSON.stringify(currentVisibility), "VS", JSON.stringify(normalizedState.visibility));
             setUserTableColumnVisibility(normalizedState.visibility);
             hasChanges = true;
         }
 
         if (!deepEqual(currentUsers, normalizedState.users)) {
-            console.log("DaysTable users diff:", JSON.stringify(currentUsers), "VS", JSON.stringify(normalizedState.users));
             setUserTable(normalizedState.users);
             hasChanges = true;
         }
 
         if (!deepEqual(currentColumnSizes, normalizedState.columnSizes)) {
-            console.log("DaysTable columnSizes diff:", JSON.stringify(currentColumnSizes), "VS", JSON.stringify(normalizedState.columnSizes));
             setColumnSizes(normalizedState.columnSizes);
             hasChanges = true;
         }
 
         if (!deepEqual(currentTitles, normalizedState.titles)) {
-            console.log("DaysTable titles diff:", JSON.stringify(currentTitles), "VS", JSON.stringify(normalizedState.titles));
             setUserTableTitle(normalizedState.titles);
             hasChanges = true;
         }

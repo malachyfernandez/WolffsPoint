@@ -74,17 +74,14 @@ const PlayerTable = ({ gameId, doSync, setDoSync, isBeingEdited, setIsBeingEdite
         const currentUsers = userTable?.value ?? [];
 
         if (!deepEqual(currentTitles, normalizedState.titles)) {
-            console.log("PlayerTable titles diff:", JSON.stringify(currentTitles), "VS", JSON.stringify(normalizedState.titles));
             setUserTableTitle(normalizedState.titles);
         }
 
         if (!deepEqual(currentVisibility, normalizedState.visibility)) {
-            console.log("PlayerTable visibility diff:", JSON.stringify(currentVisibility), "VS", JSON.stringify(normalizedState.visibility));
             setUserTableColumnVisibility(normalizedState.visibility);
         }
 
         if (!deepEqual(currentUsers, normalizedState.users)) {
-            console.log("PlayerTable users diff:", JSON.stringify(currentUsers), "VS", JSON.stringify(normalizedState.users));
             setUserTable(normalizedState.users);
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
