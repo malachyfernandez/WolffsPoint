@@ -1,6 +1,6 @@
 import React, { ReactNode, useMemo, useState } from 'react';
 import Animated, { FadeInUp } from 'react-native-reanimated';
-import { useUserVariable } from '../../../hooks/useUserVariable';
+import { useValue } from '../../../hooks/useData';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
 import FontText from '../ui/text/FontText';
@@ -29,13 +29,11 @@ interface ParticipantAccessGateProps {
 
 const ParticipantAccessGate = ({ gameId, currentUserId, children }: ParticipantAccessGateProps) => {
     const [isProfileDialogOpen, setIsProfileDialogOpen] = useState(false);
-    const [userData] = useUserVariable<UserData>({
-        key: 'userData',
+    const [userData] = useValue<UserData>('userData', {
         defaultValue: { name: '', email: '', userId: '' },
         privacy: 'PUBLIC',
     });
-    const [profile, setProfile] = useUserVariable<PlayerProfile>({
-        key: getGameScopedKey('playerProfile', gameId),
+    const [profile, setProfile] = useValue<PlayerProfile>(getGameScopedKey('playerProfile', gameId), {
         defaultValue: {
             gameId,
             email: userData.value.email ?? '',

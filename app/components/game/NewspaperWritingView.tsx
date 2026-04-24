@@ -48,8 +48,8 @@ const NewspaperWritingView = ({ gameId }: NewspaperWritingViewProps) => {
         nextUsepaper.columns[columnIndex] = markdown;
 
         executeCommand({
-            action: () => setUsepaper(createUndoSnapshot(nextUsepaper)),
-            undoAction: () => setUsepaper(createUndoSnapshot(previousUsepaper)),
+            action: () => setNewspaper(createUndoSnapshot(nextUsepaper)),
+            undoAction: () => setNewspaper(createUndoSnapshot(previousUsepaper)),
             description: 'Update Newspaper Column',
         });
     };
@@ -66,8 +66,8 @@ const NewspaperWritingView = ({ gameId }: NewspaperWritingViewProps) => {
         nextUsepaper.columns.push('');
 
         executeCommand({
-            action: () => setUsepaper(createUndoSnapshot(nextUsepaper)),
-            undoAction: () => setUsepaper(createUndoSnapshot(previousUsepaper)),
+            action: () => setNewspaper(createUndoSnapshot(nextUsepaper)),
+            undoAction: () => setNewspaper(createUndoSnapshot(previousUsepaper)),
             description: 'Add Newspaper Column',
         });
     };
@@ -83,8 +83,8 @@ const NewspaperWritingView = ({ gameId }: NewspaperWritingViewProps) => {
         nextUsepaper.columns.splice(columnIndex, 1);
 
         executeCommand({
-            action: () => setUsepaper(createUndoSnapshot(nextUsepaper)),
-            undoAction: () => setUsepaper(createUndoSnapshot(previousUsepaper)),
+            action: () => setNewspaper(createUndoSnapshot(nextUsepaper)),
+            undoAction: () => setNewspaper(createUndoSnapshot(previousUsepaper)),
             description: 'Remove Newspaper Column',
         });
     };
