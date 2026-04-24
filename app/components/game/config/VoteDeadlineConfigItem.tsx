@@ -1,5 +1,5 @@
 import React from 'react';
-import { useUserVariable } from '../../../../hooks/useUserVariable';
+import { useValue } from '../../../../hooks/useData';
 import { GameSchedule } from '../../../../types/multiplayer';
 import { getGameScopedKey, normalizeGameSchedule, defaultGameSchedule, formatTimeLabel } from '../../../../utils/multiplayer';
 import ConfigSectionRow from '../../ui/forms/ConfigSectionRow';
@@ -14,8 +14,7 @@ interface VoteDeadlineConfigItemProps {
  * Allows operators to control when players can submit votes until.
  */
 const VoteDeadlineConfigItem = ({ gameId }: VoteDeadlineConfigItemProps) => {
-    const [gameSchedule, setGameSchedule] = useUserVariable<GameSchedule>({
-        key: getGameScopedKey('gameSchedule', gameId),
+    const [gameSchedule, setGameSchedule] = useValue<GameSchedule>(getGameScopedKey('gameSchedule', gameId), {
         defaultValue: defaultGameSchedule,
         privacy: 'PUBLIC',
     });

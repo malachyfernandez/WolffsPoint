@@ -5,8 +5,7 @@ import ConfigSectionRow from '../../ui/forms/ConfigSectionRow';
 import FontText from '../../ui/text/FontText';
 import FontTextInput from '../../ui/forms/FontTextInput';
 import AppButton from '../../ui/buttons/AppButton';
-import { useUserVariable } from '../../../../hooks/useUserVariable';
-import { useUserVariableGet } from '../../../../hooks/useUserVariableGet';
+import { useValue, useFindValues } from '../../../../hooks/useData';
 import { NewserAssignment, PublicUserData, getNewserAssignmentKey, resolveJoinedUserByEmail } from '../../../../utils/newspaperControl';
 
 interface NewserConfigItemProps {
@@ -28,13 +27,11 @@ const emptyAssignment: NewserAssignment = {
 };
 
 const NewserConfigItem = ({ gameId }: NewserConfigItemProps) => {
-    const [assignment, setAssignment] = useUserVariable<NewserAssignment>({
-        key: getNewserAssignmentKey(gameId),
+    const [assignment, setAssignment] = useValue<NewserAssignment>(getNewserAssignmentKey(gameId), {
         defaultValue: emptyAssignment,
         privacy: 'PUBLIC',
     });
-    const userDataRecords = useUserVariableGet<PublicUserData>({
-        key: 'userData',
+    const userDataRecords = useFindValues<PublicUserData>('userData', {
         returnTop: 500,
     });
     const [draftEmail, setDraftEmail] = useState(assignment.value.email ?? '');

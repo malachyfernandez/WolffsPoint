@@ -5,7 +5,7 @@ import Column from '../layout/Column';
 import Row from '../layout/Row';
 import FontText from '../ui/text/FontText';
 import MarkdownRenderer from '../ui/markdown/MarkdownRenderer';
-import { useUserVariable } from '../../../hooks/useUserVariable';
+import { useValue } from '../../../hooks/useData';
 import { getGameScopedKey } from '../../../utils/multiplayer';
 import MarkdownEditorDialog from './MarkdownEditorDialog';
 import RuleBookRoleDescriptions from './RuleBookRoleDescriptions';
@@ -22,8 +22,7 @@ interface RuleBookPageOPERATORProps {
  */
 const RuleBookPageOPERATOR = ({ gameId, onBack }: RuleBookPageOPERATORProps) => {
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-    const [ruleBookData, setRuleBookData] = useUserVariable<RuleBookData>({
-        key: getGameScopedKey('ruleBook', gameId),
+    const [ruleBookData, setRuleBookData] = useValue<RuleBookData>(getGameScopedKey('ruleBook', gameId), {
         defaultValue: { content: '', roleOrder: [] },
         privacy: 'PUBLIC',
     });

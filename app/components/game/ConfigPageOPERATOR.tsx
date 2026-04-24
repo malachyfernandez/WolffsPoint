@@ -5,9 +5,7 @@ import Column from '../layout/Column';
 import Row from '../layout/Row';
 import LayoutStateAnimatedView, { fromRight } from '../ui/LayoutStateAnimatedView';
 import FontText from '../ui/text/FontText';
-import { useUserVariable } from '../../../hooks/useUserVariable';
-import { useUserList } from '../../../hooks/useUserList';
-import { useList } from '../../../hooks/useData';
+import { useValue, useList } from '../../../hooks/useData';
 import { RuleBookData } from '../../../types/ruleBook';
 import { RoleTableItem } from '../../../types/roleTable';
 import { getGameScopedKey } from '../../../utils/multiplayer';
@@ -34,8 +32,7 @@ interface RuleBookPreviewCardProps {
 }
 
 const RuleBookPreviewCard = ({ gameId, onPress }: RuleBookPreviewCardProps) => {
-    const [ruleBookData] = useUserVariable<RuleBookData>({
-        key: getGameScopedKey('ruleBook', gameId),
+    const [ruleBookData] = useValue<RuleBookData>(getGameScopedKey('ruleBook', gameId), {
         defaultValue: { content: '', roleOrder: [] },
         privacy: 'PUBLIC',
     });
