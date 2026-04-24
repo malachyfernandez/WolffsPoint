@@ -31,6 +31,7 @@ class DataStore {
   }
   
   setResult(subId: SubId, result: any) {
+    console.log(`[DataStore] setResult for ${subId}`);
     this.results.set(subId, result);
     this.listeners.get(subId)?.forEach(fn => fn());
   }
@@ -99,6 +100,7 @@ function DataSubscriber({ subId, config, refCount }: { subId: SubId, config: any
   // Disable rules of hooks because config.type is completely static for a given subId.
   // A subscriber component is never re-used for a different type.
   /* eslint-disable react-hooks/rules-of-hooks */
+  console.log(`[DataProvider:DataSubscriber] Running hook for ${subId}, type=${config.type}, args=${JSON.stringify(config.args)}`);
   switch (config.type) {
     case 'variable':
       result = useUserVariable({ key: config.key, ...config.args });
@@ -110,7 +112,10 @@ function DataSubscriber({ subId, config, refCount }: { subId: SubId, config: any
       result = useUserVariableGet({ key: config.key, ...config.args });
       break;
     case 'find-list-items':
-      result = useUserListGet({ key: config.key, ...config.args });
+      // Explicitly spread query args to ensure userIds and other filters are passed
+      const listGetArgs = { key: config.key, ...config.args };
+      console.log(`[DataProvider:DataSubscriber] useUserListGet args:`, JSON.stringify(listGetArgs));
+      result = useUserListGet(listGetArgs);
       break;
     case 'value-count':
       result = useUserVariableLength({ key: config.key, ...config.args });
@@ -162,6 +167,9 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   const [subs, setSubs] = useState(() => globalDataStore.getActiveSubs());
 
   useEffect(() => {
+    // Catch any subscriptions that were added between initial render and this effect
+    setSubs(globalDataStore.getActiveSubs());
+    
     return globalDataStore.subscribeToProvider(() => {
       setSubs(globalDataStore.getActiveSubs());
     });

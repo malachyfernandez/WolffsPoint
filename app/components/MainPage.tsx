@@ -4,9 +4,7 @@ import { Dialog } from 'heroui-native/dialog';
 import { ScrollView, View } from 'react-native';
 import Column from './layout/Column';
 import FontText from './ui/text/FontText';
-import { useUserVariable } from 'hooks/useUserVariable';
-import { useUserListGet } from 'hooks/useUserListGet';
-import { useUserListSet } from 'hooks/useUserListSet';
+import { useValue, useFindListItems, useListSet } from 'hooks/useData';
 import { GameInfo } from 'types/games';
 import TopSiteBar from './layout/TopSiteBar';
 import AllGamesPage from './game/AllGamesPage';
@@ -15,6 +13,7 @@ import LayoutStateAnimatedView, { fromBottom } from './ui/LayoutStateAnimatedVie
 import FontTextInput from './ui/forms/FontTextInput';
 import JoinHandler from './ui/forms/JoinHandler';
 import FadeInAfterDelay from './ui/loading/FadeInAfterDelay';
+import prettyLog from 'utils/prettyLog';
 
 
 
@@ -36,25 +35,19 @@ const MainPage: React.FC<MainPageProps> = ({
         userId?: string
     };
 
-    const [userData, setUserData] = useUserVariable<UserData>({
-        key: "userData",
-        defaultValue: { name: "", email: "", userId: "" },
-        privacy: "PUBLIC",
-        searchKeys: ["name"],
-    });
+    const [userData, setUserData] = useValue<UserData>("userData");
 
     const userId = userData.value.userId || "";
 
-    const myGames = useUserListGet<GameInfo>({
-        key: "games",
-        userIds: [userId],
+    const userIds = useMemo(() => [userId], [userId]);
+    const myGames = useFindListItems<GameInfo>("games", {
+        userIds: userIds,
     });
 
-    const [activeGameId, setActiveGameId] = useUserVariable<string>({
-        key: "activeGameId",
-        defaultValue: "",
-    });
+    const [activeGameId, setActiveGameId] = useValue<string>("activeGameId");
 
+
+    prettyLog(activeGameId);
     const generateGameId = () => {
         const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
         let result = '';
@@ -75,12 +68,10 @@ const MainPage: React.FC<MainPageProps> = ({
                 name: "Game 1",
                 description: "Description 1",
             },
-            filterKey: "id",
-            privacy: "PUBLIC",
         });
     }
 
-    const setUserListItem = useUserListSet();
+    const setUserListItem = useListSet();
     const isInAGame = activeGameId.value !== "";
     const currentScreen: ScreenState = isInAGame ? 'game' : 'allGames';
 

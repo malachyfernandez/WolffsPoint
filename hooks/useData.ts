@@ -1,4 +1,4 @@
-import { useEffect, useSyncExternalStore } from "react";
+import { useEffect, useSyncExternalStore, useMemo } from "react";
 import { DATA_CONFIG } from "../utils/dataConfig";
 import { globalDataStore } from "../contexts/DataProvider";
 
@@ -19,21 +19,25 @@ const FALLBACK_GET = undefined;
  */
 export function useValue<T = any>(key: string, overrides: any = {}): [UserVariableResult<T>, (val: T) => void] {
   const baseConfig = DATA_CONFIG[key] || {};
-  const args = { ...baseConfig, ...overrides };
+  const args = useMemo(() => ({ ...baseConfig, ...overrides }), [JSON.stringify(baseConfig), JSON.stringify(overrides)]);
+  const subId = useMemo(() => JSON.stringify({ type: 'variable', key, args }), [key, args]);
   
-  // Stable stringified ID
-  const subId = JSON.stringify({ type: 'variable', key, args });
-
   useEffect(() => {
     return globalDataStore.register(subId, { type: 'variable', key, args });
-  }, [subId]);
+  }, [subId, key, args]);
 
   const result = useSyncExternalStore(
     (onStoreChange) => globalDataStore.subscribe(subId, onStoreChange),
     () => globalDataStore.getResult(subId)
   );
 
-  return result || [{ value: args.defaultValue, state: { isSyncing: true } }, NO_OP];
+  const finalResult = result || [{ value: args.defaultValue, state: { isSyncing: true } }, NO_OP];
+  
+  if (key === 'activeGameId' || key === 'userData') {
+      console.log(`[useValue:${key}] Returning result for ${subId}. isSyncing: ${finalResult[0].state.isSyncing}, hasResultFromStore: ${!!result}`);
+  }
+
+  return finalResult;
 }
 
 /**
@@ -41,8 +45,8 @@ export function useValue<T = any>(key: string, overrides: any = {}): [UserVariab
  */
 export function useList<T = any>(key: string, itemId: string, overrides: any = {}): [UserVariableResult<T>, (val: T) => void] {
   const baseConfig = DATA_CONFIG[key] || {};
-  const args = { ...baseConfig, ...overrides };
-  const subId = JSON.stringify({ type: 'list', key, itemId, args });
+  const args = useMemo(() => ({ ...baseConfig, ...overrides }), [JSON.stringify(baseConfig), JSON.stringify(overrides)]);
+  const subId = useMemo(() => JSON.stringify({ type: 'list', key, itemId, args }), [key, itemId, args]);
 
   useEffect(() => {
     console.log(`[useList] Registering ${subId}`);
@@ -51,7 +55,7 @@ export function useList<T = any>(key: string, itemId: string, overrides: any = {
         console.log(`[useList] Unregistering ${subId}`);
         unregister();
     };
-  }, [subId]);
+  }, [subId, key, itemId, args]);
 
   const result = useSyncExternalStore(
     (onStoreChange) => globalDataStore.subscribe(subId, onStoreChange),
@@ -72,12 +76,12 @@ export function useFindValues<T = any>(key: string, queryArgs: {
   startAfter?: number;
 } = {}) {
   const baseConfig = DATA_CONFIG[key] || {};
-  const args = { ...baseConfig, ...queryArgs };
-  const subId = JSON.stringify({ type: 'find-values', key, args });
+  const args = useMemo(() => ({ ...baseConfig, ...queryArgs }), [JSON.stringify(baseConfig), JSON.stringify(queryArgs)]);
+  const subId = useMemo(() => JSON.stringify({ type: 'find-values', key, args }), [key, args]);
 
   useEffect(() => {
     return globalDataStore.register(subId, { type: 'find-values', key, args });
-  }, [subId]);
+  }, [subId, key, args]);
 
   const result = useSyncExternalStore(
     (onStoreChange) => globalDataStore.subscribe(subId, onStoreChange),
@@ -99,8 +103,8 @@ export function useFindListItems<T = any>(key: string, queryArgs: {
   startAfter?: number;
 } = {}) {
   const baseConfig = DATA_CONFIG[key] || {};
-  const args = { ...baseConfig, ...queryArgs };
-  const subId = JSON.stringify({ type: 'find-list-items', key, args });
+  const args = useMemo(() => ({ ...baseConfig, ...queryArgs }), [JSON.stringify(baseConfig), JSON.stringify(queryArgs)]);
+  const subId = useMemo(() => JSON.stringify({ type: 'find-list-items', key, args }), [key, args]);
 
   useEffect(() => {
     console.log(`[useFindListItems] Registering ${subId}`);
@@ -109,7 +113,7 @@ export function useFindListItems<T = any>(key: string, queryArgs: {
         console.log(`[useFindListItems] Unregistering ${subId}`);
         unregister();
     };
-  }, [subId]);
+  }, [subId, key, args]);
 
   const result = useSyncExternalStore(
     (onStoreChange) => globalDataStore.subscribe(subId, onStoreChange),

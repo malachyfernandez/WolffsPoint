@@ -44,18 +44,20 @@ export const DATA_CONFIG: DataConfigType = {
     privacy: "PUBLIC",
     defaultValue: 0,
   },
-  // Add your data definitions here. Example:
-  /*
-  profile: {
+  userData: {
     type: "variable",
     privacy: "PUBLIC",
-    defaultValue: { name: "", username: "" },
-    searchKeys: ["username", "name"]
+    defaultValue: { name: "", email: "", userId: "" },
+    searchKeys: ["name"],
+  },
+  activeGameId: {
+    type: "variable",
+    privacy: "PRIVATE",
+    defaultValue: "",
   },
   games: {
     type: "list",
-    privacy: "PRIVATE",
-    defaultValue: { score: 0 },
-  }
-  */
+    privacy: "PUBLIC",
+    defaultValue: {},
+  },
 };
