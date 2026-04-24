@@ -93,23 +93,26 @@ const GamePage = ({ gameId, currentUserId }: GamePageProps) => {
                     </FadeInAfterDelay>
                 </View>
             </View>
-            <ShadowScrollView
-                className='flex-1'
-                scrollViewClassName='p-6 px-2 sm:px-6 h-screen w-full'
-                onScroll={handleScroll}
-                scrollEventThrottle={16}
-                scrollViewComponent={Animated.ScrollView}
-            >
-                <View className="w-full max-w-[1000px] mx-auto pt-60">
-                    {isOperator ? (
-                        <OperatorGamePage currentUserId={currentUserId} gameId={gameId} />
-                    ) : isNewser ? (
-                        <NewserGamePage currentUserId={currentUserId} gameId={gameId} />
-                    ) : (
-                        <PlayerGamePage currentUserId={currentUserId} gameId={gameId} />
-                    )}
-                </View>
-            </ShadowScrollView>
+            <FadeInAfterDelay delayMs={100}>
+
+                <ShadowScrollView
+                    className='flex-1'
+                    scrollViewClassName='p-6 px-2 sm:px-6 h-screen w-full'
+                    onScroll={handleScroll}
+                    scrollEventThrottle={16}
+                    scrollViewComponent={Animated.ScrollView}
+                >
+                    <View className="w-full max-w-[1000px] mx-auto pt-60">
+                        {isOperator ? (
+                            <OperatorGamePage currentUserId={currentUserId} gameId={gameId} />
+                        ) : isNewser ? (
+                            <NewserGamePage currentUserId={currentUserId} gameId={gameId} />
+                        ) : (
+                            <PlayerGamePage currentUserId={currentUserId} gameId={gameId} />
+                        )}
+                    </View>
+                </ShadowScrollView>
+            </FadeInAfterDelay>
         </Column>
     );
 };

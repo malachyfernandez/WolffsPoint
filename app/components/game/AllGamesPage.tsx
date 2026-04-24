@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 
-import { useUserVariable } from 'hooks/useUserVariable';
+import { useValue } from 'hooks/useData';
 
 function useWindowWidth(): number {
     const [width, setWidth] = useState(() =>
@@ -45,13 +45,11 @@ const AllGamesPage = ({
     const width = useWindowWidth();
     const [uploadedImageUrl, setUploadedImageUrl] = useState('');
 
-    const [gamesTheyJoined, setGamesTheyJoined] = useUserVariable<string[]>({
-        key: "gamesTheyJoined",
+    const [gamesTheyJoined, setGamesTheyJoined] = useValue<string[]>("gamesTheyJoined", {
         defaultValue: [],
     });
 
-    const [archivedGames] = useUserVariable<string[]>({
-        key: "archivedGames",
+    const [archivedGames] = useValue<string[]>("archivedGames", {
         defaultValue: [],
     });
 
@@ -75,8 +73,7 @@ const AllGamesPage = ({
         userId?: string
     };
 
-    const [userData, setUserData] = useUserVariable<UserData>({
-        key: "userData",
+    const [userData, setUserData] = useValue<UserData>("userData", {
         defaultValue: { name: "", email: "", userId: "" },
         privacy: "PUBLIC",
         searchKeys: ["name"],
