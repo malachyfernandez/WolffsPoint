@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState, useRef } from 'react';
 import FontText from '../ui/text/FontText';
-import { useUserList } from 'hooks/useUserList';
-import { useUserVariable } from 'hooks/useUserVariable';
+import { useList, useValue } from 'hooks/useData';
+import { deepEqual } from 'utils/deepEqual';
 import Column from '../layout/Column';
 import AppButton from '../ui/buttons/AppButton';
 import Row from '../layout/Row';
@@ -55,30 +55,15 @@ const DaysTable = ({ gameId, dayNumber, dayCount, isBeingEdited, setIsBeingEdite
         }
     }, [onWidthChange]);
 
-    const [userTable, setUserTable] = useUserList<UserTableItem[]>({
-        key: "userTable",
-        itemId: gameId,
-        privacy: "PUBLIC",
-    });
+    const [userTable, setUserTable] = useList<UserTableItem[]>("userTable", gameId);
 
     const users = userTable?.value ?? [];
 
-    const [userTableTitle, setUserTableTitle] = useUserList<UserTableTitle>({
-        key: "userTableTitle",
-        itemId: gameId,
-        privacy: "PUBLIC",
-    });
+    const [userTableTitle, setUserTableTitle] = useList<UserTableTitle>("userTableTitle", gameId, { privacy: "PUBLIC" });
 
-    const [userTableColumnVisibility, setUserTableColumnVisibility] = useUserList<UserTableColumnVisibility>({
-        key: "userTableColumnVisibility",
-        itemId: gameId,
-        privacy: "PUBLIC",
-    });
+    const [userTableColumnVisibility, setUserTableColumnVisibility] = useList<UserTableColumnVisibility>("userTableColumnVisibility", gameId, { privacy: "PUBLIC" });
 
-    const [columnSizes, setColumnSizes] = useUserVariable<PlayerPageColumnSizes>({
-        key: getPlayerPageColumnSizesKey(gameId),
-        defaultValue: defaultPlayerPageColumnSizes,
-    });
+    const [columnSizes, setColumnSizes] = useValue<PlayerPageColumnSizes>(getPlayerPageColumnSizesKey(gameId), { defaultValue: defaultPlayerPageColumnSizes });
 
     const targetDayCount = getTargetDayCount(userTable?.value, Math.max(dayCount, dayNumber + 1));
 
@@ -122,22 +107,26 @@ const DaysTable = ({ gameId, dayNumber, dayCount, isBeingEdited, setIsBeingEdite
 
         let hasChanges = false;
 
-        if (JSON.stringify(currentVisibility) !== JSON.stringify(normalizedState.visibility)) {
+        if (!deepEqual(currentVisibility, normalizedState.visibility)) {
+            console.log("DaysTable visibility diff:", JSON.stringify(currentVisibility), "VS", JSON.stringify(normalizedState.visibility));
             setUserTableColumnVisibility(normalizedState.visibility);
             hasChanges = true;
         }
 
-        if (JSON.stringify(currentUsers) !== JSON.stringify(normalizedState.users)) {
+        if (!deepEqual(currentUsers, normalizedState.users)) {
+            console.log("DaysTable users diff:", JSON.stringify(currentUsers), "VS", JSON.stringify(normalizedState.users));
             setUserTable(normalizedState.users);
             hasChanges = true;
         }
 
-        if (JSON.stringify(currentColumnSizes) !== JSON.stringify(normalizedState.columnSizes)) {
+        if (!deepEqual(currentColumnSizes, normalizedState.columnSizes)) {
+            console.log("DaysTable columnSizes diff:", JSON.stringify(currentColumnSizes), "VS", JSON.stringify(normalizedState.columnSizes));
             setColumnSizes(normalizedState.columnSizes);
             hasChanges = true;
         }
 
-        if (JSON.stringify(currentTitles) !== JSON.stringify(normalizedState.titles)) {
+        if (!deepEqual(currentTitles, normalizedState.titles)) {
+            console.log("DaysTable titles diff:", JSON.stringify(currentTitles), "VS", JSON.stringify(normalizedState.titles));
             setUserTableTitle(normalizedState.titles);
             hasChanges = true;
         }

@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import FontText from '../ui/text/FontText';
-import { useUserList } from 'hooks/useUserList';
-import { useUserVariable } from 'hooks/useUserVariable';
+import { useList, useValue } from 'hooks/useData';
+import { deepEqual } from 'utils/deepEqual';
 import Column from '../layout/Column';
 import AppButton from '../ui/buttons/AppButton';
 import Row from '../layout/Row';
@@ -37,26 +37,14 @@ const PlayerTable = ({ gameId, doSync, setDoSync, isBeingEdited, setIsBeingEdite
         setIsBeingEdited(false);
     };
 
-    const [userTable, setUserTable] = useUserList<UserTableItem[]>({
-        key: "userTable",
-        itemId: gameId,
-        privacy: "PUBLIC",
-    });
+    const [userTable, setUserTable] = useList<UserTableItem[]>("userTable", gameId);
     // User Row.tsx
 
     const users = userTable?.value ?? [];
 
-    const [userTableTitle, setUserTableTitle] = useUserList<UserTableTitle>({
-        key: "userTableTitle",
-        itemId: gameId,
-        privacy: "PUBLIC",
-    });
+    const [userTableTitle, setUserTableTitle] = useList<UserTableTitle>("userTableTitle", gameId, { privacy: "PUBLIC" });
 
-    const [userTableColumnVisibility, setUserTableColumnVisibility] = useUserList<UserTableColumnVisibility>({
-        key: "userTableColumnVisibility",
-        itemId: gameId,
-        privacy: "PUBLIC",
-    });
+    const [userTableColumnVisibility, setUserTableColumnVisibility] = useList<UserTableColumnVisibility>("userTableColumnVisibility", gameId, { privacy: "PUBLIC" });
 
     // Track when column data is ready (only check isSyncing, not value presence)
     const areColumnsReady = !userTable?.state?.isSyncing 
@@ -85,15 +73,18 @@ const PlayerTable = ({ gameId, doSync, setDoSync, isBeingEdited, setIsBeingEdite
         const currentVisibility = userTableColumnVisibility?.value ?? { extraUserColumns: [], extraDayColumns: [] };
         const currentUsers = userTable?.value ?? [];
 
-        if (JSON.stringify(currentTitles) !== JSON.stringify(normalizedState.titles)) {
+        if (!deepEqual(currentTitles, normalizedState.titles)) {
+            console.log("PlayerTable titles diff:", JSON.stringify(currentTitles), "VS", JSON.stringify(normalizedState.titles));
             setUserTableTitle(normalizedState.titles);
         }
 
-        if (JSON.stringify(currentVisibility) !== JSON.stringify(normalizedState.visibility)) {
+        if (!deepEqual(currentVisibility, normalizedState.visibility)) {
+            console.log("PlayerTable visibility diff:", JSON.stringify(currentVisibility), "VS", JSON.stringify(normalizedState.visibility));
             setUserTableColumnVisibility(normalizedState.visibility);
         }
 
-        if (JSON.stringify(currentUsers) !== JSON.stringify(normalizedState.users)) {
+        if (!deepEqual(currentUsers, normalizedState.users)) {
+            console.log("PlayerTable users diff:", JSON.stringify(currentUsers), "VS", JSON.stringify(normalizedState.users));
             setUserTable(normalizedState.users);
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -251,10 +242,10 @@ const PlayerTable = ({ gameId, doSync, setDoSync, isBeingEdited, setIsBeingEdite
     };
 
     // Subscribe to player page column sizes
-    const [columnSizes, setColumnSizes] = useUserVariable<PlayerPageColumnSizes>({
-        key: getPlayerPageColumnSizesKey(gameId),
-        defaultValue: defaultPlayerPageColumnSizes,
-    });
+    const [columnSizes, setColumnSizes] = useValue<PlayerPageColumnSizes>(
+        getPlayerPageColumnSizesKey(gameId),
+        { defaultValue: defaultPlayerPageColumnSizes }
+    );
 
     // Calculate extra user column widths based on sizes
     const currentTitles = userTableTitle?.value ?? { extraUserColumns: [], extraDayColumns: [] };

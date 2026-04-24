@@ -7,7 +7,7 @@ import CustomCheckbox from '../ui/CustomCheckbox';
 import Animated, { FadeInLeft, FadeInRight, FadeOutDown, FadeOutLeft, FadeOutRight, Easing, FadeInDown, FadeOutUp } from 'react-native-reanimated';
 import { Pressable, View } from 'react-native';
 import UserEditDialog from './UserEditDialog';
-import { useUserList } from 'hooks/useUserList';
+import { useList } from 'hooks/useData';
 import { UserTableItem } from 'types/playerTable';
 import { createUndoSnapshot, useUndoRedo } from 'hooks/useUndoRedo';
 
@@ -87,11 +87,7 @@ const UserRow = ({
 
 
     // GREAT UNDO EXAMPLE
-    const [userTable, setUserTable] = useUserList<UserTableItem[]>({
-        key: "userTable",
-        itemId: gameId,
-        privacy: "PUBLIC",
-    });
+    const [userTable, setUserTable] = useList<UserTableItem[]>("userTable", gameId);
     // User Row.tsx
     // UserEditDialouge.tsx
 

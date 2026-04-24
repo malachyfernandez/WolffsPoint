@@ -13,6 +13,7 @@ import { ToastProvider } from '../contexts/ToastContext';
 import { useGlobalRateLimitMonitor } from '../hooks/useRateLimitMonitor';
 import { GenerationProvider } from '../contexts/GenerationContext';
 import { WebDropdownProvider } from '../contexts/WebDropdownProvider';
+import { DataProvider } from '../contexts/DataProvider';
 import { useEffect } from "react";
 import "../global.css";
 
@@ -139,8 +140,10 @@ export default function RootLayout() {
               <ClerkLoaded>
                 <WebDropdownProvider>
                   <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
-                    <Slot />
-                    <PortalHost />
+                    <DataProvider>
+                      <Slot />
+                      <PortalHost />
+                    </DataProvider>
                   </ConvexProviderWithClerk>
                 </WebDropdownProvider>
               </ClerkLoaded>

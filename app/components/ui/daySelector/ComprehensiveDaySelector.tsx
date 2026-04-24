@@ -4,7 +4,7 @@ import Column from '../../layout/Column';
 import Row from '../../layout/Row';
 import AppButton from '../buttons/AppButton';
 import FontText from '../text/FontText';
-import { useUserList } from 'hooks/useUserList';
+import { useList } from 'hooks/useData';
 import ShadowScrollView from '../../ui/ShadowScrollView';
 import DaySelectionDialog from '../../game/DaySelectionDialog';
 import ChooseDayDialog from '../../game/ChooseDayDialog';
@@ -23,35 +23,15 @@ const ComprehensiveDaySelector = ({ gameId, showAddButton = false, showInitialSe
     const scrollViewRef = useRef<ScrollView>(null);
     
     // Shared selected day index
-    const [selectedDayIndex, setSelectedDayIndex] = useUserList<number>({
-        key: "selectedDayIndex",
-        itemId: gameId,
-        privacy: "PUBLIC",
-        defaultValue: 0,
-    });
+    const [selectedDayIndex, setSelectedDayIndex] = useList<number>("selectedDayIndex", gameId);
 
     // Number of real days per in-game day
-    const [numberOfRealDaysPerInGameDay] = useUserList<number>({
-        key: "numberOfRealDaysPerInGameDay",
-        itemId: gameId,
-        privacy: "PUBLIC",
-        defaultValue: 2,
-    });
+    const [numberOfRealDaysPerInGameDay] = useList<number>("numberOfRealDaysPerInGameDay", gameId, { privacy: "PUBLIC", defaultValue: 2 });
 
-    const [hasCompletedInitialDaySetup, setHasCompletedInitialDaySetup] = useUserList<boolean>({
-        key: "hasCompletedInitialDaySetup",
-        itemId: gameId,
-        privacy: "PUBLIC",
-        defaultValue: false,
-    });
+    const [hasCompletedInitialDaySetup, setHasCompletedInitialDaySetup] = useList<boolean>("hasCompletedInitialDaySetup", gameId, { privacy: "PUBLIC", defaultValue: false });
 
     // Shared day dates array
-    const [dayDatesArray, setDayDatesArray] = useUserList<string[]>({
-        key: "dayDatesArray",
-        itemId: gameId,
-        privacy: "PUBLIC",
-        defaultValue: [],
-    });
+    const [dayDatesArray, setDayDatesArray] = useList<string[]>("dayDatesArray", gameId);
 
     // Convert stored MM/DD/YYYY strings back to real Date objects for UI use
     const fixedDayDatesArray = parseStoredDayDates(dayDatesArray.value);

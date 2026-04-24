@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Animated, { FadeIn } from 'react-native-reanimated';
-import { useUserList } from 'hooks/useUserList';
+import { useList } from 'hooks/useData';
 import Column from '../layout/Column';
 import PlayerTable from './PlayerTable';
 import { UserTableItem } from 'types/playerTable';
@@ -31,21 +31,12 @@ const PlayerPageOPERATOR = ({ currentUserId, gameId }: PlayerPageOPERATORProps) 
     //     defaultValue: "Unset",
     // });
 
-    const [userTable] = useUserList<UserTableItem[]>({
-        key: "userTable",
-        itemId: gameId,
-        privacy: "PUBLIC",
-    });
+    const [userTable] = useList<UserTableItem[]>("userTable", gameId);
 
     const users = userTable?.value ?? [];
 
     // Get day dates for PlayerTable
-    const [dayDatesArray] = useUserList<string[]>({
-        key: "dayDatesArray",
-        itemId: gameId,
-        privacy: "PUBLIC",
-        defaultValue: [],
-    });
+    const [dayDatesArray] = useList<string[]>("dayDatesArray", gameId);
 
     // Convert stored MM/DD/YYYY strings back to real Date objects for UI use
     const fixedDayDatesArray = dayDatesArray.value.map(dateStr => {
@@ -61,12 +52,7 @@ const PlayerPageOPERATOR = ({ currentUserId, gameId }: PlayerPageOPERATORProps) 
     const [isDaysTableColumnsReady, setIsDaysTableColumnsReady] = useState(false);
 
     // Get selected day index for DaysTable
-    const [selectedDayIndex] = useUserList<number>({
-        key: "selectedDayIndex",
-        itemId: gameId,
-        privacy: "PUBLIC",
-        defaultValue: 0,
-    });
+    const [selectedDayIndex] = useList<number>("selectedDayIndex", gameId);
 
     // Track when all data is loaded before showing table with fade-in
     const isSyncing = userTable?.state?.isSyncing

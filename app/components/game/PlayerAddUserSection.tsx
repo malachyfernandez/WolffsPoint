@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Plus } from 'lucide-react-native';
-import { useUserList } from 'hooks/useUserList';
+import { useList } from 'hooks/useData';
 import Row from '../layout/Row';
 import AppButton from '../ui/buttons/AppButton';
 import FontText from '../ui/text/FontText';
@@ -13,11 +13,7 @@ interface PlayerAddUserSectionProps {
 }
 
 const PlayerAddUserSection = ({ gameId, removeBottomSpace = false }: PlayerAddUserSectionProps) => {
-    const [userTable] = useUserList<UserTableItem[]>({
-        key: 'userTable',
-        itemId: gameId,
-        privacy: 'PUBLIC',
-    });
+    const [userTable] = useList<UserTableItem[]>('userTable', gameId);
 
     const users = userTable?.value ?? [];
     const [isAddUserDialogOpen, setIsAddUserDialogOpen] = useState(false);

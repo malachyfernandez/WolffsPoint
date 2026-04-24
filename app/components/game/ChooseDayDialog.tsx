@@ -6,7 +6,7 @@ import FontText from '../ui/text/FontText';
 import FontNumberInput from '../ui/forms/FontNumberInput';
 import DialogHeader from '../ui/dialog/DialogHeader';
 import { View } from 'react-native';
-import { useUserList } from 'hooks/useUserList';
+import { useList } from 'hooks/useData';
 
 interface ChooseDayDialogProps {
     isOpen: boolean;
@@ -19,12 +19,7 @@ interface ChooseDayDialogProps {
 
 const ChooseDayDialog = ({ isOpen, onOpenChange, gameId, onSubmitDaysValue, title = 'Game Settings', subtext = 'Configure days per game day' }: ChooseDayDialogProps) => {
     // Use the same user variable system as other components
-    const [numberOfRealDaysPerInGameDay, setNumberOfRealDaysPerInGameDay] = useUserList<number>({
-        key: "numberOfRealDaysPerInGameDay",
-        itemId: gameId,
-        privacy: "PUBLIC",
-        defaultValue: 2,
-    });
+    const [numberOfRealDaysPerInGameDay, setNumberOfRealDaysPerInGameDay] = useList<number>("numberOfRealDaysPerInGameDay", gameId, { privacy: "PUBLIC", defaultValue: 2 });
 
     const [daysValue, setDaysValue] = useState(numberOfRealDaysPerInGameDay.value.toString());
 
