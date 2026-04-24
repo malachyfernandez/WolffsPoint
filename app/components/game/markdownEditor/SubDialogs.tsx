@@ -90,3 +90,4 @@ export function SubDialogs({
         </>
     );
 }
+export default SubDialogs;

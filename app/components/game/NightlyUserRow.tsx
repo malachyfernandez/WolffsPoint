@@ -6,7 +6,7 @@ import Row from '../layout/Row';
 import CustomCheckbox from '../ui/CustomCheckbox';
 import { Pressable } from 'react-native';
 import UserEditDialog from './UserEditDialog';
-import { useUserList } from 'hooks/useUserList';
+import { useList, useValue } from 'hooks/useData';
 import { UserTableItem } from 'types/playerTable';
 
 interface NightlyUserRowProps {
@@ -53,11 +53,7 @@ const NightlyUserRow = ({
 
     const isDead = user.playerData.livingState === 'dead';
 
-    const [userTable, setUserTable] = useUserList<UserTableItem[]>({
-        key: "userTable",
-        itemId: gameId,
-        privacy: "PUBLIC",
-    });
+    const [userTable, setUserTable] = useList<UserTableItem[]>("userTable", gameId, { privacy: "PUBLIC" });
 
     const deleteUser = (userIndex: number) => {
         const filteredUserTable = userTable?.value?.filter((userRow, index) => index != userIndex);

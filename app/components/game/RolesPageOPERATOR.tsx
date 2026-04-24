@@ -6,7 +6,7 @@ import RoleTable from './RoleTable';
 import AppButton from '../ui/buttons/AppButton';
 import FontText from '../ui/text/FontText';
 import LoadingText from '../ui/loading/LoadingText';
-import { useUserList } from '../../../hooks/useUserList';
+import { useList, useValue } from '../../../hooks/useData';
 import { useUndoRedo, useCreateUndoSnapshot } from '../../../hooks/useUndoRedo';
 import { getGameScopedKey } from '../../../utils/multiplayer';
 import { RoleTableItem } from '../../../types/roleTable';
@@ -22,11 +22,7 @@ const RolesPageOPERATOR = ({ currentUserId, gameId }: RolesPageOPERATORProps) =>
     const { executeCommand } = useUndoRedo();
     const createUndoSnapshot = useCreateUndoSnapshot();
 
-    const [roleTable, setRoleTable] = useUserList<RoleTableItem[]>({
-        key: "roleTable",
-        itemId: gameId,
-        privacy: "PUBLIC",
-    });
+    const [roleTable, setRoleTable] = useList<RoleTableItem[]>("roleTable", gameId, { privacy: "PUBLIC" });
 
     const roles = roleTable?.value ?? [];
     const visibleRoles = roles.filter(role => role.isVisible !== false);

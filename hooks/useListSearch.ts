@@ -1,4 +1,4 @@
-import { useUserListGet } from './useUserListGet';
+import { useFindListItems } from './useData';
 import { useEffect, useRef } from 'react';
 import { MathDocument, MathDocumentPage } from 'types/mathDocuments';
 
@@ -79,16 +79,14 @@ export function useListSearch<T = any>({
     preserveResultsDuringLoading = true,
 }: UseListSearchOptions<T>): UseListSearchResult<T> {
     // Get primary items with search functionality
-    const items = useUserListGet<T>({
-        key: searchKey,
+    const items = useFindListItems<T>(searchKey, {
         userIds,
         searchFor: searchQuery.trim() || undefined,
     });
 
     // Get additional items if specified (like pages for documents)
     const additionalItems = additionalKeys?.map(key => 
-        useUserListGet<any>({
-            key,
+        useFindListItems<any>(key, {
             userIds,
         })
     );

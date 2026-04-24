@@ -5,7 +5,7 @@ import Row from '../layout/Row';
 import AppButton from '../ui/buttons/AppButton';
 import FontText from '../ui/text/FontText';
 import NewspaperWritingView from './NewspaperWritingView';
-import { useUserList } from 'hooks/useUserList';
+import { useList, useValue } from 'hooks/useData';
 import ShadowScrollView from '../ui/ShadowScrollView';
 import DaySelectionDialog from './DaySelectionDialog';
 import FontNumberInput from '../ui/forms/FontNumberInput';
@@ -16,28 +16,13 @@ interface NewspaperPageProps {
 
 const NewspaperPage = ({ gameId }: NewspaperPageProps) => {
     // Shared selected day index (same as players tab and nightly tab)
-    const [selectedDayIndex, setSelectedDayIndex] = useUserList<number>({
-        key: "selectedDayIndex",
-        itemId: gameId,
-        privacy: "PUBLIC",
-        defaultValue: 0,
-    });
+    const [selectedDayIndex, setSelectedDayIndex] = useList<number>("selectedDayIndex", gameId, { privacy: "PUBLIC", defaultValue: 0 });
 
     // Shared number of real days per in-game day (same as players tab and nightly tab)
-    const [numberOfRealDaysPerInGameDay, setNumberOfRealDaysPerInGameDay] = useUserList<number>({
-        key: "numberOfRealDaysPerInGameDay",
-        itemId: gameId,
-        privacy: "PUBLIC",
-        defaultValue: 2,
-    });
+    const [numberOfRealDaysPerInGameDay, setNumberOfRealDaysPerInGameDay] = useList<number>("numberOfRealDaysPerInGameDay", gameId, { privacy: "PUBLIC", defaultValue: 2 });
 
     // Shared day dates array (same as players tab and nightly tab)
-    const [dayDatesArray, setDayDatesArray] = useUserList<string[]>({
-        key: "dayDatesArray",
-        itemId: gameId,
-        privacy: "PUBLIC",
-        defaultValue: [],
-    });
+    const [dayDatesArray, setDayDatesArray] = useList<string[]>("dayDatesArray", gameId, { privacy: "PUBLIC", defaultValue: [] });
 
     // Convert stored MM/DD/YYYY strings back to real Date objects for UI use
     const fixedDayDatesArray = dayDatesArray.value.map(dateStr => {

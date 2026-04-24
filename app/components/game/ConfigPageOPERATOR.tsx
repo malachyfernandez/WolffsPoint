@@ -7,6 +7,7 @@ import LayoutStateAnimatedView, { fromRight } from '../ui/LayoutStateAnimatedVie
 import FontText from '../ui/text/FontText';
 import { useUserVariable } from '../../../hooks/useUserVariable';
 import { useUserList } from '../../../hooks/useUserList';
+import { useList } from '../../../hooks/useData';
 import { RuleBookData } from '../../../types/ruleBook';
 import { RoleTableItem } from '../../../types/roleTable';
 import { getGameScopedKey } from '../../../utils/multiplayer';
@@ -38,11 +39,7 @@ const RuleBookPreviewCard = ({ gameId, onPress }: RuleBookPreviewCardProps) => {
         defaultValue: { content: '', roleOrder: [] },
         privacy: 'PUBLIC',
     });
-    const [roleTable] = useUserList<RoleTableItem[]>({
-        key: 'roleTable',
-        itemId: gameId,
-        privacy: 'PUBLIC',
-    });
+    const [roleTable] = useList<RoleTableItem[]>("roleTable", gameId, { privacy: "PUBLIC" });
 
     const previewText = React.useMemo(() => {
         const rawContent = ruleBookData?.value?.content ?? '';
@@ -88,11 +85,7 @@ interface PhoneBookPreviewCardProps {
 }
 
 const PhoneBookPreviewCard = ({ gameId, currentUserId, onPress }: PhoneBookPreviewCardProps) => {
-    const [userTable] = useUserList<any[]>({
-        key: "userTable",
-        itemId: gameId,
-        privacy: "PUBLIC",
-    });
+    const [userTable] = useList<any[]>("userTable", gameId, { privacy: "PUBLIC" });
 
     const playerCount = (userTable?.value ?? []).filter((user: any) => user.userId !== currentUserId).length;
 

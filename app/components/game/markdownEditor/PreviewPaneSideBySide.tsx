@@ -26,3 +26,4 @@ export function PreviewPaneSideBySide({
         />
     );
 }
+export default PreviewPaneSideBySide;

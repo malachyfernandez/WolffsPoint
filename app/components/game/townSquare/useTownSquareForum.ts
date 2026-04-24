@@ -1,9 +1,8 @@
 import { useCallback, useMemo } from 'react';
-import { useUserListGet } from '../../../../hooks/useUserListGet';
+import { useFindListItems, useValue } from '../../../../hooks/useData';
 import { useUserListRemove } from '../../../../hooks/useUserListRemove';
 import { useUserListSet } from '../../../../hooks/useUserListSet';
 import { useUndoRedo, createUndoSnapshot } from '../../../../hooks/useUndoRedo';
-import { useUserVariable } from '../../../../hooks/useUserVariable';
 import { PlayerProfile, TownSquareComment, TownSquarePost } from '../../../../types/multiplayer';
 import { createClientId, getGameScopedKey } from '../../../../utils/multiplayer';
 import {
@@ -32,22 +31,13 @@ export const useTownSquareForum = ({ currentProfile, gameId, selectedPostId }: U
     const commentKey = getGameScopedKey('townSquareComments', gameId);
     const readStateKey = getGameScopedKey('townSquareReadState', gameId);
 
-    const posts = useUserListGet<TownSquarePost>({
-        key: postKey,
-        returnTop: 200,
-    });
+    const posts = useFindListItems<TownSquarePost>(postKey, { returnTop: 200 });
 
-    const comments = useUserListGet<TownSquareComment>({
-        key: commentKey,
-        returnTop: 500,
-    });
+    const comments = useFindListItems<TownSquareComment>(commentKey, { returnTop: 500 });
 
     const isLoading = posts === undefined || comments === undefined;
 
-    const [readState, setReadState] = useUserVariable<TownSquareReadState>({
-        defaultValue: {},
-        key: readStateKey,
-    });
+    const [readState, setReadState] = useValue<TownSquareReadState>(readStateKey, { defaultValue: {} });
 
     const replies = useMemo(() => {
         return [...(comments ?? [])]

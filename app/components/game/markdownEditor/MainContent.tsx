@@ -109,3 +109,4 @@ export function MainContent({
         </Column>
     );
 }
+export default MainContent;

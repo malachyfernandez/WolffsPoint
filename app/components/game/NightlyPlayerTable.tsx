@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import FontText from '../ui/text/FontText';
-import { useUserList } from 'hooks/useUserList';
+import { useList, useValue } from 'hooks/useData';
 import Column from '../layout/Column';
 import AppButton from '../ui/buttons/AppButton';
 import Row from '../layout/Row';
@@ -46,17 +46,11 @@ const NightlyPlayerTable = ({
         setIsBeingEdited(false);
     };
 
-    const [userTable, setUserTable] = useUserList<UserTableItem[]>({
-        key: "userTable",
-        itemId: gameId,
-        privacy: "PUBLIC",
-    });
+    const [userTable, setUserTable] = useList<UserTableItem[]>("userTable", gameId, { privacy: "PUBLIC" });
 
     const users = userTable?.value ?? [];
 
-    const [selectedDayIndex, setSelectedDayIndex] = useUserList<number>({
-        key: "selectedDayIndex",
-        itemId: gameId,
+    const [selectedDayIndex, setSelectedDayIndex] = useList<number>("selectedDayIndex", gameId, {
         privacy: "PUBLIC",
         defaultValue: 0,
     });

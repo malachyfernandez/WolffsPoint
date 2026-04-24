@@ -52,6 +52,7 @@ class DataStore {
   }
 
   killSub(subId: SubId) {
+    console.log(`[DataProvider] killSub called for ${subId}`);
     this.configs.delete(subId);
     this.results.delete(subId);
     this.refCounts.delete(subId);
@@ -86,6 +87,11 @@ function safeStringify(obj: any) {
 }
 
 function DataSubscriber({ subId, config, refCount }: { subId: SubId, config: any, refCount: number }) {
+  useEffect(() => {
+    console.log(`[DataSubscriber] MOUNTED for ${subId}`);
+    return () => console.log(`[DataSubscriber] UNMOUNTED for ${subId}`);
+  }, [subId]);
+
   const [unloadedChanges, setUnloadedChanges] = useState(0);
 
   let result: any;
@@ -129,6 +135,7 @@ function DataSubscriber({ subId, config, refCount }: { subId: SubId, config: any
       
       // Track changes if nobody is actively listening
       if (refCount === 0) {
+        console.log(`[DataSubscriber] Result changed while refCount=0 for ${subId}. Incrementing unloadedChanges. Old: ${prevStringifiedRef.current?.substring(0, 50)}... New: ${stringified?.substring(0, 50)}...`);
         setUnloadedChanges(c => c + 1);
       }
     }
@@ -143,6 +150,7 @@ function DataSubscriber({ subId, config, refCount }: { subId: SubId, config: any
   useEffect(() => {
     const maxChanges = config.args?.unloadedChangesThreshold ?? 3;
     if (unloadedChanges > maxChanges) {
+      console.log(`[DataSubscriber] Killing sub ${subId} because unloadedChanges (${unloadedChanges}) > maxChanges (${maxChanges})`);
       globalDataStore.killSub(subId);
     }
   }, [unloadedChanges, config.args, subId]);

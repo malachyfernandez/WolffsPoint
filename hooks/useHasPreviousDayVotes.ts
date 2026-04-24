@@ -1,27 +1,23 @@
 import { useMemo } from 'react';
-import { useUserListGet } from './useUserListGet';
-import { useUserVariableGet } from './useUserVariableGet';
+import { useFindListItems, useFindValues } from './useData';
 import { PlayerNightSubmission } from '../types/multiplayer';
 import { UserTableItem } from '../types/playerTable';
 import { getGameScopedKey } from '../utils/multiplayer';
 
 export function useHasPreviousDayVotes(gameId: string, dayIndex: number): boolean | undefined {
-  const gameRows = useUserListGet({
-    key: 'games',
+  const gameRows = useFindListItems("games", {
     itemId: gameId,
     returnTop: 1,
   });
   const operatorUserId = gameRows?.[0]?.userToken ?? '';
 
-  const operatorUserTableRecords = useUserListGet<UserTableItem[]>({
-    key: 'userTable',
+  const operatorUserTableRecords = useFindListItems<UserTableItem[]>("userTable", {
     itemId: gameId,
     userIds: operatorUserId ? [operatorUserId] : undefined,
     returnTop: 1,
   });
 
-  const submissionRecords = useUserVariableGet<PlayerNightSubmission>({
-    key: getGameScopedKey(`playerNightSubmission-day-${dayIndex - 1}`, gameId),
+  const submissionRecords = useFindValues<PlayerNightSubmission>(getGameScopedKey(`playerNightSubmission-day-${dayIndex - 1}`, gameId), {
     returnTop: 200,
   });
 

@@ -18,3 +18,4 @@ export function CloseButton({ onPress }: CloseButtonProps) {
         </Pressable>
     );
 }
+export default CloseButton;

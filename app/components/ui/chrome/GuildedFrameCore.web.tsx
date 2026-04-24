@@ -212,3 +212,4 @@ export function GuildedFrameCore({
         </>
     );
 }
+export default GuildedFrameCore;

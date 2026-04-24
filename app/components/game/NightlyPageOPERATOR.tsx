@@ -2,8 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import FontText from '../ui/text/FontText';
 import LoadingText from '../ui/loading/LoadingText';
-import { useUserList } from 'hooks/useUserList';
-import { useUserVariableGet } from 'hooks/useUserVariableGet';
+import { useList, useValue, useFindValues } from 'hooks/useData';
 import Column from '../layout/Column';
 import NightlyPlayerTable from './NightlyPlayerTable';
 import NightlyDaysTable from './NightlyDaysTable';
@@ -27,47 +26,37 @@ const NightlyPageOPERATOR = ({ currentUserId: _currentUserId, gameId }: NightlyP
     const { width } = useWindowDimensions();
 
     // Shared user table (same as players tab)
-    const [userTable, setUserTable] = useUserList<UserTableItem[]>({
-        key: "userTable",
-        itemId: gameId,
-        privacy: "PUBLIC",
-    });
+    const [userTable, setUserTable] = useList<UserTableItem[]>("userTable", gameId, { privacy: "PUBLIC" });
 
     const users = userTable?.value ?? [];
 
-    const [morningMessagesList, setMorningMessagesList] = useUserList<Record<string, string[]>>({
-        key: "morningMessagesList",
-        itemId: gameId,
+    const [morningMessagesList, setMorningMessagesList] = useList<Record<string, string[]>>("morningMessagesList", gameId, {
         privacy: "PUBLIC",
         defaultValue: {},
     });
 
     // Shared selected day index (same as players tab)
-    const [selectedDayIndex] = useUserList<number>({
-        key: "selectedDayIndex",
-        itemId: gameId,
+    const [selectedDayIndex] = useList<number>("selectedDayIndex", gameId, {
         privacy: "PUBLIC",
         defaultValue: 0,
     });
 
-    const submissionRecords = useUserVariableGet<PlayerNightSubmission>({
-        key: getGameScopedKey(`playerNightSubmission-day-${selectedDayIndex.value}`, gameId),
-        returnTop: 200,
-    });
+    const submissionRecords = useFindValues<PlayerNightSubmission>(
+        getGameScopedKey(`playerNightSubmission-day-${selectedDayIndex.value}`, gameId),
+        { returnTop: 200 }
+    );
 
     const submissionsByEmail = Object.fromEntries(
         (submissionRecords ?? [])
-            .filter((record) => record.value.playerEmail.trim().length > 0)
-            .map((record) => [record.value.playerEmail, record.value])
+            .filter((record: any) => record.value.playerEmail.trim().length > 0)
+            .map((record: any) => [record.value.playerEmail, record.value])
     ) as Record<string, PlayerNightSubmission>;
 
     const voteCount = users.filter((user) => (submissionsByEmail[user.email]?.vote ?? '').trim().length > 0).length;
     const actionCount = users.filter((user) => hasPlayerActionContent(submissionsByEmail[user.email]?.action)).length;
 
     // Shared day dates array (same as players tab)
-    const [dayDatesArray] = useUserList<string[]>({
-        key: "dayDatesArray",
-        itemId: gameId,
+    const [dayDatesArray] = useList<string[]>("dayDatesArray", gameId, {
         privacy: "PUBLIC",
         defaultValue: [],
     });

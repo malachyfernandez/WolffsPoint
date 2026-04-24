@@ -81,3 +81,4 @@ export function TabbedLayout({
         </Tabs>
     );
 }
+export default TabbedLayout;

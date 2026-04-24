@@ -1,34 +1,50 @@
-# BeanJar Development Guide
+# DataProvider & Data Hooks System
 
-Quick reference for the BeanJar user data hooks.
+Quick reference for the new DataProvider system (`useValue`, `useList`, `useFindValues`, `useFindListItems`), which replaces the legacy `useUserVariable` and `useUserList` hooks.
 
-## What to use
+## Why DataProvider?
 
-- `useUserVariable`: one value per user + key.
-- `useUserList`: many items per user + key (by `itemId`).
-- `useUserVariableGet` / `useUserListGet`: read accessible records across users.
-- `useUserVariablePrivacy` / `useUserListPrivacy`: update privacy only.
-- `useUserListSet`: upsert without mounting per-item hook.
-- `useUserListRemove`: remove one list item.
+The legacy `useUserVariable` hooks created individual Convex subscriptions per component. This meant that when components unmounted and mounted (e.g., during tab navigation), the subscriptions were torn down and recreated, causing **redundant network calls** and **UI flickering** while data re-fetched.
 
-## Core patterns
+The new `DataProvider` solves this by introducing a global **Client Cache (DataStore)**:
+- Components "register" and "unregister" from the DataStore cache.
+- The DataProvider handles only *one* Convex subscription per piece of data.
+- It uses a ref-count system. Data is kept in cache as long as at least one component is registered. If no components use it, it sticks around for an "unloaded changes threshold" (to protect against quick tab-switching) before finally unsubscribing.
 
-### `useUserVariable`
+## Centralized Configuration (`utils/dataConfig.ts`)
 
-Persistent single value per user key.
+Instead of passing defaults and privacy directly to every hook invocation, everything is defined **once** in `utils/dataConfig.ts`.
 
 ```ts
-const [profile, setProfile] = useUserVariable<Profile>({
-  key: "profile", // REQUIRED: var key
-  defaultValue: { name: "", username: "" }, // create fallback
-  privacy: "PUBLIC", // access mode
-  filterKey: "username", // exact filter key
-  searchKeys: ["username", "name"], // text index keys
-  sortKey: "PROPERTY_LAST_MODIFIED", // result order key
-  overwriteStoredConfig: true, // default: keep filter/search/sort synced
-  overwriteStoredPrivacy: false, // default: keep privacy sticky
-  onOpStatusChange: (info) => {}, // op status callback
-});
+// utils/dataConfig.ts
+export const DATA_CONFIG: DataConfigType = {
+  profile: {
+    type: "variable",
+    privacy: "PUBLIC",
+    defaultValue: { name: "", username: "" },
+    searchKeys: ["username", "name"]
+  },
+  games: {
+    type: "list",
+    privacy: "PRIVATE",
+    defaultValue: { score: 0 },
+  }
+};
+```
+If a key is missing from `DATA_CONFIG`, it will fallback to empty config, but **you should add everything to `DATA_CONFIG`** for safety and app-wide consistency.
+
+---
+
+## Core Hooks (`hooks/useData.ts`)
+
+### `useValue`
+
+Persistent single value per user per key.
+
+```ts
+const [profile, setProfile] = useValue<Profile>("profile");
+// You can optionally override config locally (rarely needed)
+// const [profile, setProfile] = useValue("profile", { defaultValue: { ... } });
 ```
 
 Output:
@@ -37,180 +53,67 @@ Output:
 - `record.confirmedValue`: last server value
 - `record.state`: sync + op status metadata
 
-### `useUserList`
+### `useList`
 
-Persistent single item in a keyed list.
+Persistent single item in a keyed list. Used for accessing a specific list item via `itemId`.
 
 ```ts
-const [post, setPost] = useUserList<Post>({
-  key: "posts", // REQUIRED: list key
-  itemId: "post_123", // REQUIRED: item id
-  defaultValue: { title: "", body: "" }, // create fallback
-  privacy: "PUBLIC", // list access mode
-  filterKey: "status", // exact filter key
-  searchKeys: ["title", "body"], // text index keys
-  sortKey: "PROPERTY_LAST_MODIFIED", // result order key
-  overwriteStoredConfig: true, // default: keep filter/search/sort synced
-  overwriteStoredPrivacy: false, // default: keep privacy sticky
-  onOpStatusChange: (info) => {}, // op status callback
-});
+const [post, setPost] = useList<Post>("posts", "post_123");
 ```
 
 Output:
 - `[record, setValue]`
-- same record-state shape as `useUserVariable`
-- list uniqueness is `userToken + key + itemId`
+- same record-state shape as `useValue`
 
-### `useUserVariableGet`
+### `useFindValues`
 
-Reads accessible variable rows by key.
+Reads accessible variable rows by key across multiple users. **Requires an exact configuration of filters**.
 
 ```ts
-const profiles = useUserVariableGet<Profile>({
-  key: "profile", // REQUIRED: var key
+const profiles = useFindValues<Profile>("profile", {
   searchFor: "ali", // text search value
   filterFor: "admin", // exact filter value
-  userIds: friendIds, // user-id filter
+  userIds: friendIds, // user-id filter (IMPORTANT: Always use arrays or specific logic)
   returnTop: 10, // page size
-  startAfter: cursorId, // pagination cursor
 });
 ```
 
 Output:
 - record array or `undefined` while loading
 - includes full variable rows
-- sorting comes from stored `sortKey`
+- Cached just like single queries!
 
-### `useUserListGet`
+### `useFindListItems`
 
-Reads accessible list rows by key.
+Reads accessible list rows by key, optionally across multiple users or an entire list.
 
 ```ts
-const posts = useUserListGet<Post>({
-  key: "posts", // REQUIRED: list key
-  itemId: "post_123", // exact item id
+const posts = useFindListItems<Post>("posts", {
+  itemId: "post_123", // OPTIONAL: exact item id
   searchFor: "react", // text search value
-  filterFor: "published", // exact filter value
   userIds: friendIds, // user-id filter
   returnTop: 10, // page size
-  startAfter: cursorId, // pagination cursor
 });
 ```
 
 Output:
 - record array or `undefined` while loading
-- includes item fields plus list config fields
-- sorting comes from stored `sortKey`
+- Sorting comes from `dataConfig.ts`
 
-### `useUserVariableLength`
+### `useValueLength` & `useListLength`
 
-Exact accessible variable count for one `key + filterFor`.
+Fast count lookups leveraging Convex index bounds without downloading the actual data.
 
 ```ts
-const totalProfiles = useUserVariableLength({
-  key: "profile", // REQUIRED: var key
+const totalProfiles = useValueLength("profile", {
   filterFor: "admin", // REQUIRED: exact filter value
 });
-```
 
-Output:
-- exact count or `undefined` while loading
-- constant-time count path
-- only supports `key + filterFor`
-
-### `useUserListLength`
-
-Exact accessible list-item count for one `key + filterFor`, with optional `itemId`.
-
-```ts
-const totalComments = useUserListLength({
-  key: "comments", // REQUIRED: list key
+const totalComments = useListLength("comments", {
   filterFor: postId, // REQUIRED: exact filter value
-  itemId: "comment_123", // OPTIONAL: exact item id
+  itemId: "comment_123", // OPTIONAL
 });
 ```
-
-Output:
-- exact count or `undefined` while loading
-- constant-time count path
-- with `itemId`, counts exact `key + filterFor + itemId`
-- without `itemId`, counts exact `key + filterFor`
-- dev warning logs for shared `itemId` count shapes unless disabled in config
-
-### `useUserListSet`
-
-Upserts one list item.
-
-```ts
-const setPost = useUserListSet<Post>();
-
-setPost({
-  key: "posts", // REQUIRED: list key
-  itemId: "post_123", // REQUIRED: item id
-  value: { title: "Hi", body: "..." }, // REQUIRED: item value
-  privacy: "PUBLIC", // access mode
-  filterKey: "status", // exact filter key
-  searchKeys: ["title", "body"], // text index keys
-  sortKey: "PROPERTY_LAST_MODIFIED", // result order key
-  overwriteStoredConfig: true, // default: keep filter/search/sort synced
-  overwriteStoredPrivacy: false, // default: keep privacy sticky
-});
-```
-
-Output:
-- Convex mutation promise
-- create if missing, replace if existing
-
-### `useUserVariablePrivacy`
-
-Updates one variable privacy only.
-
-```ts
-const setPrivacy = useUserVariablePrivacy();
-
-setPrivacy({
-  key: "profile", // REQUIRED: var key
-  privacy: "PUBLIC", // REQUIRED: access mode
-});
-```
-
-Output:
-- Convex mutation promise
-- does not change stored `value`
-
-### `useUserListPrivacy`
-
-Updates privacy for one whole list.
-
-```ts
-const setListPrivacy = useUserListPrivacy();
-
-setListPrivacy({
-  key: "posts", // REQUIRED: list key
-  privacy: "PUBLIC", // REQUIRED: access mode
-});
-```
-
-Output:
-- Convex mutation promise
-- applies to all items in that list
-
-### `useUserListRemove`
-
-Removes one item row from a list.
-
-```ts
-const removePost = useUserListRemove();
-
-removePost({
-  key: "posts", // REQUIRED: list key
-  itemId: "post_123", // REQUIRED: item id
-});
-```
-
-Output:
-- Convex mutation promise
-- removes item row only (definition stays)
 
 ## Privacy model
 
@@ -219,47 +122,11 @@ Output:
 - `string[]` on hooks -> stored as `{ allowList: string[] }`.
 - Owner always has access to own records.
 
-## Config defaults (`utils/userVarConfig.ts`)
+Privacy is ideally defined in `utils/dataConfig.ts`.
 
-- `defaultTimeoutMs`: optimistic timeout default.
-- `overwriteStoredConfigOnSet`: whether normal writes re-apply filter/search/sort.
-- `overwriteStoredPrivacyOnSet`: whether normal writes re-apply privacy.
-- `defaultSortKey`: fallback sort key when omitted.
-- dev warning toggles:
-  - `devWarningsEnabled`
-  - `warnOnUserVarOpTimeout`
-  - `logOnUserVarRollback`
+## Avoiding Bugs & Best Practices
 
-## Notes that prevent bugs
-
-- `userIds` in get hooks is an explicit filter. If provided, only those users are queried.
-- For old local data, ensure friend/user lists are normalized to user-id strings.
-- `filterValue` / `searchValue` / `sortValue` are computed server-side from config + value.
-- exact fast counts are available through the dedicated `Length` hooks for `key + filterFor`, and `useUserListLength` also supports optional exact `itemId`
-
-## Undo/Redo Pattern
-
-Perfect example of implementing undo/redo with the `useUndoRedo` hook:
-
-```ts
-const { executeCommand } = useUndoRedo();
-const createUndoSnapshot = useCreateUndoSnapshot();
-
-const UNDOABLEsetUserTable = (updatedUsers: UserTableItem[]) => {
-    const previousUserTable = createUndoSnapshot(userTable?.value ?? []);
-    const nextUserTable = createUndoSnapshot(updatedUsers);
-
-    executeCommand({
-        action: () => setUserTable(createUndoSnapshot(nextUserTable)),
-        undoAction: () => setUserTable(createUndoSnapshot(previousUserTable)),
-        description: "Updated user"
-    });
-};
-```
-
-This pattern:
-1. Creates snapshots of the current and next state
-2. Wraps the state change in an undoable command
-3. Provides both action and undoAction functions
-4. Includes a descriptive message for the undo stack
-
+1. **Never pass variables through props just for performance**. It's safe to call `useValue` in 10 different child components. They all pull from the local DataStore cache instantly and only trigger one Convex backend query.
+2. **Missing Imports**. We use the exports from `hooks/useData.ts`. If `useList is not defined`, make sure you imported it from `hooks/useData`.
+3. **Array Dependencies**. When passing `userIds` to `useFindValues` or `useFindListItems`, try to memoize the array or rely on the stable cache mechanism to prevent continuous re-registration if the array reference changes every render. 
+4. **Fallback Configs**. If your data behaves weirdly (no defaults, weird privacy rules), make sure the key exists in `utils/dataConfig.ts`.

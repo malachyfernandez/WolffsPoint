@@ -1,8 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import FontText from '../ui/text/FontText';
-import { useUserList } from 'hooks/useUserList';
-import { useUserVariable } from 'hooks/useUserVariable';
+import { useList, useValue } from 'hooks/useData';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
 import NightlyDayUserRow from './NightlyDayUserRow';
@@ -73,10 +72,10 @@ const NightlyDaysTable = ({
     }, [onWidthChange]);
 
     // Subscribe to nightly page column sizes
-    const [columnSizes, setColumnSizes] = useUserVariable<NightlyPageColumnSizes>({
-        key: getNightlyPageColumnSizesKey(gameId),
-        defaultValue: defaultNightlyPageColumnSizes,
-    });
+    const [columnSizes, setColumnSizes] = useValue<NightlyPageColumnSizes>(
+        getNightlyPageColumnSizesKey(gameId),
+        { defaultValue: defaultNightlyPageColumnSizes }
+    );
 
     // Track when column data is ready (only check isSyncing, not value presence)
     const areColumnsReady = !columnSizes?.state?.isSyncing;
@@ -110,11 +109,7 @@ const NightlyDaysTable = ({
         return cleanup;
     }, [measureTableWidth, columnSizes.value.vote, columnSizes.value.action, columnSizes.value.morningMessage]);
 
-    const [userTable, setUserTable] = useUserList<UserTableItem[]>({
-        key: "userTable",
-        itemId: gameId,
-        privacy: "PUBLIC",
-    });
+    const [userTable, setUserTable] = useList<UserTableItem[]>("userTable", gameId, { privacy: "PUBLIC" });
 
     const users = userTable?.value ?? [];
 

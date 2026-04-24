@@ -1,9 +1,8 @@
 import { useMemo } from 'react';
-import { useUserListGet } from './useUserListGet';
+import { useFindListItems } from './useData';
 
 export const useGameOperatorUserId = (gameId: string) => {
-    const gameRows = useUserListGet({
-        key: 'games',
+    const gameRows = useFindListItems("games", {
         itemId: gameId,
         returnTop: 1,
     });

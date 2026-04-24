@@ -28,3 +28,4 @@ export function TitleInputSection({
         </Column>
     );
 }
+export default TitleInputSection;

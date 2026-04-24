@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useUserListGet } from './useUserListGet';
+import { useFindListItems } from './useData';
 
 export const useSharedListValue = <T,>({
     key,
@@ -12,7 +12,7 @@ export const useSharedListValue = <T,>({
     defaultValue: T;
     userIds?: string[];
 }) => {
-    const records = useUserListGet<T>({ key, itemId, userIds, returnTop: 1 });
+    const records = useFindListItems<T>(key, { itemId, userIds, returnTop: 1 });
 
     return useMemo(() => {
         const record = records?.[0];

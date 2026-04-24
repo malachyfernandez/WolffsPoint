@@ -31,3 +31,4 @@ export function PreviewPane({
         </ShadowScrollView>
     );
 }
+export default PreviewPane;

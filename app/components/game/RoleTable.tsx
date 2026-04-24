@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import FontText from '../ui/text/FontText';
-import { useUserList } from 'hooks/useUserList';
+import { useList, useValue } from 'hooks/useData';
 import Column from '../layout/Column';
 import AppButton from '../ui/buttons/AppButton';
 import Row from '../layout/Row';
@@ -32,11 +32,7 @@ const RoleTable = ({ gameId, doSync, setDoSync, isBeingEdited, setIsBeingEdited,
         setIsBeingEdited(false);
     };
 
-    const [roleTable, setRoleTable] = useUserList<RoleTableItem[]>({
-        key: "roleTable",
-        itemId: gameId,
-        privacy: "PUBLIC",
-    });
+    const [roleTable, setRoleTable] = useList<RoleTableItem[]>("roleTable", gameId, { privacy: "PUBLIC" });
 
     const roles = roleTable?.value ?? [];
     const visibleRoles = roles.filter(role => role.isVisible !== false);

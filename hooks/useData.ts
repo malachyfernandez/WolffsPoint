@@ -45,7 +45,12 @@ export function useList<T = any>(key: string, itemId: string, overrides: any = {
   const subId = JSON.stringify({ type: 'list', key, itemId, args });
 
   useEffect(() => {
-    return globalDataStore.register(subId, { type: 'list', key, itemId, args });
+    console.log(`[useList] Registering ${subId}`);
+    const unregister = globalDataStore.register(subId, { type: 'list', key, itemId, args });
+    return () => {
+        console.log(`[useList] Unregistering ${subId}`);
+        unregister();
+    };
   }, [subId]);
 
   const result = useSyncExternalStore(

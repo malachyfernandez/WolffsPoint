@@ -18,3 +18,4 @@ export function GuildedFrameCore({ children, className = '', contentClassName = 
         </View>
     );
 }
+export default GuildedFrameCore;

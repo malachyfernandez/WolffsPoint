@@ -3,7 +3,7 @@ import { Pressable, View } from 'react-native';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
 import MarkdownRenderer from '../ui/markdown/MarkdownRenderer';
-import { useUserList } from 'hooks/useUserList';
+import { useList, useValue } from 'hooks/useData';
 import { createUndoSnapshot, useUndoRedo } from 'hooks/useUndoRedo';
 import { useToast } from 'contexts/ToastContext';
 import ShadowScrollView from '../ui/ShadowScrollView';
@@ -33,15 +33,10 @@ const NewspaperWritingView = ({ gameId }: NewspaperWritingViewProps) => {
     const [selectedColumnIndex, setSelectedColumnIndex] = useState<number | null>(null);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-    const [usepaper, setUsepaper] = useUserList<Usepaper>({
-        key: 'usepaper',
-        itemId: gameId,
-        privacy: 'PUBLIC',
-        defaultValue: defaultUsepaper,
-    });
+    const [newspaper, setNewspaper] = useList<Usepaper>("newspaper", gameId, { privacy: "PUBLIC", defaultValue: minimumUsepaper });
 
-    const resolvedUsepaper = usepaper?.value?.columns?.length
-        ? usepaper.value
+    const resolvedUsepaper = newspaper?.value?.columns?.length
+        ? newspaper.value
         : minimumUsepaper;
 
     const newspaperColumns = resolvedUsepaper.columns;

@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { useUserList } from '../../../../hooks/useUserList';
+import { useList, useValue } from '../../../../hooks/useData';
 import { RoleTableItem } from '../../../../types/roleTable';
 import { UserTableItem } from '../../../../types/playerTable';
 import { MarkdownRendererInputDataProvider } from '../../ui/markdown/MarkdownRenderer';
@@ -23,16 +23,8 @@ export function InputOptionsProvider({
     showInputs,
     children,
 }: InputOptionsProviderProps) {
-    const [userTable] = useUserList<UserTableItem[]>({
-        key: 'userTable',
-        itemId: gameId || '__markdown_editor_dialog_no_game__',
-        privacy: 'PUBLIC',
-    });
-    const [roleTable] = useUserList<RoleTableItem[]>({
-        key: 'roleTable',
-        itemId: gameId || '__markdown_editor_dialog_no_game__',
-        privacy: 'PUBLIC',
-    });
+    const [userTable] = useList<UserTableItem[]>("userTable", gameId || '__markdown_editor_dialog_no_game__', { privacy: "PUBLIC" });
+    const [roleTable] = useList<RoleTableItem[]>("roleTable", gameId || '__markdown_editor_dialog_no_game__', { privacy: "PUBLIC" });
 
     const playerOptions = useMemo(() => {
         if (!showInputs) {
@@ -67,3 +59,4 @@ export function InputOptionsProvider({
         </MarkdownRendererInputDataProvider>
     );
 }
+export default InputOptionsProvider;

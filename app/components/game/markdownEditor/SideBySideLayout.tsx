@@ -65,3 +65,4 @@ export function SideBySideLayout({
         </Row>
     );
 }
+export default SideBySideLayout;

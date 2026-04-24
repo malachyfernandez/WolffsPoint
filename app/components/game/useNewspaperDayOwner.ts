@@ -1,6 +1,5 @@
 import { useMemo } from 'react';
-import { useUserListGet } from '../../../hooks/useUserListGet';
-import { useUserVariableGet } from '../../../hooks/useUserVariableGet';
+import { useFindListItems, useFindValues } from '../../../hooks/useData';
 import {
     NewserAssignment,
     NewspaperControlState,
@@ -19,23 +18,19 @@ interface UseNewspaperDayOwnerArgs {
 }
 
 export const useNewspaperDayOwner = ({ gameId, dayIndex, disabled = false }: UseNewspaperDayOwnerArgs) => {
-    const gameRows = useUserListGet({
-        key: 'games',
+    const gameRows = useFindListItems("games", {
         itemId: gameId,
         returnTop: 1,
     });
     const operatorUserId = gameRows?.[0]?.userToken ?? '';
-    const userDataRecords = useUserVariableGet<PublicUserData>({
-        key: 'userData',
+    const userDataRecords = useFindValues<PublicUserData>("userData", {
         returnTop: 500,
     });
-    const assignmentRecords = useUserVariableGet<NewserAssignment>({
-        key: getNewserAssignmentKey(gameId),
+    const assignmentRecords = useFindValues<NewserAssignment>(getNewserAssignmentKey(gameId), {
         userIds: operatorUserId ? [operatorUserId] : undefined,
         returnTop: 1,
     });
-    const controlRecords = useUserListGet<NewspaperControlState>({
-        key: getNewspaperControlKey(gameId),
+    const controlRecords = useFindListItems<NewspaperControlState>(getNewspaperControlKey(gameId), {
         itemId: getNewspaperDayControlItemId(dayIndex),
         userIds: operatorUserId ? [operatorUserId] : undefined,
         returnTop: 1,

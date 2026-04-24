@@ -7,8 +7,7 @@ import Row from '../layout/Row';
 import AppButton from '../ui/buttons/AppButton';
 import FontText from '../ui/text/FontText';
 import NewspaperWritingView from './NewspaperWritingView';
-import { useUserList } from 'hooks/useUserList';
-import { useUserListGet } from 'hooks/useUserListGet';
+import { useList, useFindListItems } from 'hooks/useData';
 import { useUserListSet } from 'hooks/useUserListSet';
 import { useGameOperatorUserId } from '../../../hooks/useGameOperatorUserId';
 import { useSharedListValue } from '../../../hooks/useSharedListValue';
@@ -74,16 +73,10 @@ const NewspaperPageOPERATOR = ({ currentUserId, gameId }: NewspaperPageOPERATORP
         dayIndex: leavingDayIndex ?? 0,
         disabled: leavingDayIndex === null,
     });
-    const [, setOperatorUsepaper] = useUserList<Usepaper>({
-        key: 'usepaper',
-        itemId: currentDayItemId,
-        privacy: 'PUBLIC',
-        defaultValue: minimumUsepaper,
-    });
+    const [, setOperatorUsepaper] = useList<Usepaper>("newspaper", currentDayItemId, { privacy: "PUBLIC", defaultValue: minimumUsepaper });
     const setOperatorSelectedDayIndex = useUserListSet<number>();
     const setNewspaperControl = useUserListSet<NewspaperControlState>();
-    const selectedNewserUsepaper = useUserListGet<Usepaper>({
-        key: 'usepaper',
+    const selectedNewserUsepaper = useFindListItems<Usepaper>("newspaper", {
         itemId: currentDayItemId,
         userIds: selectedDayOwner.validNewser?.userId ? [selectedDayOwner.validNewser.userId] : [''],
         returnTop: 1,
@@ -375,18 +368,20 @@ const NewspaperPageOPERATOR = ({ currentUserId, gameId }: NewspaperPageOPERATORP
                         </Animated.View>
                     ) : null}
 
-                    <Animated.View entering={isInitialLoadComplete ? FadeIn.duration(300) : undefined} key={`selected-${selectedDayIndex}`} style={enteringStyle}>
-                        <Tabs value={activeTab} onValueChange={handleTabChange} className='flex-1'>
-                            <Tabs.Content value='viewing' className='flex-1'>
-                                {renderViewingContent(selectedDayIndex, selectedOwnerUserId)}
-                            </Tabs.Content>
-                            <Tabs.Content value='writing' className='flex-1'>
-                                {renderOperatorWritingContent({
-                                    dayIndex: selectedDayIndex,
-                                    hasControl: operatorHasControl,
-                                })}
-                            </Tabs.Content>
-                        </Tabs>
+                    <Animated.View key={`selected-${selectedDayIndex}`} style={enteringStyle}>
+                        <Animated.View entering={isInitialLoadComplete ? FadeIn.duration(300) : undefined} className='flex-1'>
+                            <Tabs value={activeTab} onValueChange={handleTabChange} className='flex-1'>
+                                <Tabs.Content value='viewing' className='flex-1'>
+                                    {renderViewingContent(selectedDayIndex, selectedOwnerUserId)}
+                                </Tabs.Content>
+                                <Tabs.Content value='writing' className='flex-1'>
+                                    {renderOperatorWritingContent({
+                                        dayIndex: selectedDayIndex,
+                                        hasControl: operatorHasControl,
+                                    })}
+                                </Tabs.Content>
+                            </Tabs>
+                        </Animated.View>
                     </Animated.View>
                 </View>
             </Column>

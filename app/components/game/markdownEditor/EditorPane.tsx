@@ -51,3 +51,4 @@ export function EditorPane({
         </Column>
     );
 }
+export default EditorPane;

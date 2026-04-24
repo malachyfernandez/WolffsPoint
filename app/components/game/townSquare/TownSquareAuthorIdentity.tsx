@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { useUserVariableGet } from '../../../../hooks/useUserVariableGet';
+import { useFindValues } from '../../../../hooks/useData';
 import { PlayerProfile } from '../../../../types/multiplayer';
 import { getGameScopedKey } from '../../../../utils/multiplayer';
 import FontText from '../../ui/text/FontText';
@@ -32,18 +32,15 @@ const getInitials = (value: string) => {
 
 export const useTownSquareAuthorIdentity = ({ gameId, userId }: { gameId: string; userId: string }) => {
     const profileKey = getGameScopedKey('playerProfile', gameId);
-    const playerProfiles = useUserVariableGet<PlayerProfile>({
-        key: profileKey,
+    const playerProfiles = useFindValues<PlayerProfile>(profileKey, {
         returnTop: 1,
         userIds: [userId],
     });
-    const userDatas = useUserVariableGet<PublicUserData>({
-        key: 'userData',
+    const userDatas = useFindValues<PublicUserData>('userData', {
         returnTop: 1,
         userIds: [userId],
     });
-    const customUserInfos = useUserVariableGet<PublicCustomUserInfo>({
-        key: 'customUserInfo',
+    const customUserInfos = useFindValues<PublicCustomUserInfo>('customUserInfo', {
         returnTop: 1,
         userIds: [userId],
     });
@@ -125,3 +122,4 @@ export const TownSquareAuthorAvatar = ({ className, gameId, size, userId }: Town
 
     return <TownSquareAvatar className={className} fallbackLabel={fallbackInitials} size={size} uri={imageUrl} />;
 };
+export default useTownSquareAuthorIdentity;

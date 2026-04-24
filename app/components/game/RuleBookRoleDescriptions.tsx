@@ -6,8 +6,7 @@ import Row from '../layout/Row';
 import FontText from '../ui/text/FontText';
 import MarkdownRenderer from '../ui/markdown/MarkdownRenderer';
 import AppButton from '../ui/buttons/AppButton';
-import { useUserVariable } from '../../../hooks/useUserVariable';
-import { useUserList } from '../../../hooks/useUserList';
+import { useList, useValue } from '../../../hooks/useData';
 import { useUndoRedo, useCreateUndoSnapshot } from '../../../hooks/useUndoRedo';
 import { getGameScopedKey } from '../../../utils/multiplayer';
 import { RuleBookData } from '../../../types/ruleBook';
@@ -23,17 +22,12 @@ const RuleBookRoleDescriptions = ({ gameId }: RuleBookRoleDescriptionsProps) => 
     const createUndoSnapshot = useCreateUndoSnapshot();
     const [editingRoleIndex, setEditingRoleIndex] = useState<number | null>(null);
     
-    const [ruleBookData, setRuleBookData] = useUserVariable<RuleBookData>({
-        key: getGameScopedKey('ruleBook', gameId),
+    const [ruleBookData, setRuleBookData] = useValue<RuleBookData>(getGameScopedKey('ruleBook', gameId), {
         defaultValue: { content: '', roleOrder: [] },
         privacy: 'PUBLIC',
     });
 
-    const [roleTable, setRoleTable] = useUserList<RoleTableItem[]>({
-        key: "roleTable",
-        itemId: gameId,
-        privacy: "PUBLIC",
-    });
+    const [roleTable, setRoleTable] = useList<RoleTableItem[]>("roleTable", gameId, { privacy: "PUBLIC" });
 
     const roles = roleTable?.value ?? [];
     const visibleRolesWithContent = roles.filter(role => role.isVisible !== false && role.aboutRole && role.aboutRole.trim().length > 0);

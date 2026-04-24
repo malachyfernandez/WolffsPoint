@@ -33,3 +33,4 @@ export function ActionButtons({
         </Row>
     );
 }
+export default ActionButtons;

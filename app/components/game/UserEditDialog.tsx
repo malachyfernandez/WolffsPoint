@@ -7,7 +7,7 @@ import FontTextInput from '../ui/forms/FontTextInput';
 import AppDropdown from '../ui/forms/AppDropdown';
 import DialogHeader from '../ui/dialog/DialogHeader';
 import { View, Text } from 'react-native';
-import { useUserList } from 'hooks/useUserList';
+import { useList, useValue } from 'hooks/useData';
 import { RoleTableItem } from 'types/roleTable';
 import { UserTableItem } from 'types/playerTable';
 import { useCreateUndoSnapshot, useUndoRedo } from 'hooks/useUndoRedo';
@@ -41,19 +41,11 @@ const UserEditDialog = ({
     const [role, setRole] = useState(currentRole || '');
 
     // Use the same userList as PlayerTable - this is the cloud variable benefit!
-    const [userTable, setUserTable] = useUserList<UserTableItem[]>({
-        key: "userTable",
-        itemId: gameId,
-        privacy: "PUBLIC",
-    });
+    const [userTable, setUserTable] = useList<UserTableItem[]>("userTable", gameId, { privacy: "PUBLIC" });
 
     const users = userTable?.value ?? [];
 
-    const [roleTable] = useUserList<RoleTableItem[]>({
-        key: "roleTable",
-        itemId: gameId,
-        privacy: "PUBLIC",
-    });
+    const [roleTable] = useList<RoleTableItem[]>("roleTable", gameId, { privacy: "PUBLIC" });
 
     const roleOptions = (roleTable?.value ?? [])
         .filter((roleItem) => roleItem.role.trim().length > 0 && roleItem.isVisible !== false)

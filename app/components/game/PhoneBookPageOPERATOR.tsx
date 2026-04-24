@@ -1,8 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Image, Pressable, View } from 'react-native';
 import { ChevronLeft } from 'lucide-react-native';
-import { useUserVariableGet } from '../../../hooks/useUserVariableGet';
-import { useUserList } from '../../../hooks/useUserList';
+import { useFindValues, useList } from '../../../hooks/useData';
 import { PlayerProfile } from '../../../types/multiplayer';
 import { UserTableItem } from '../../../types/playerTable';
 import { getGameScopedKey } from '../../../utils/multiplayer';
@@ -131,8 +130,7 @@ const PlayerCardWithContainer = ({ userId, gameId }: { userId: string; gameId: s
 // Hook to get all profiles
 const useAllProfiles = ({ gameId }: { gameId: string }) => {
     const profileKey = getGameScopedKey('playerProfile', gameId);
-    const profiles = useUserVariableGet<PlayerProfile>({
-        key: profileKey,
+    const profiles = useFindValues<PlayerProfile>(profileKey, {
         returnTop: 200,
     });
 
@@ -141,11 +139,7 @@ const useAllProfiles = ({ gameId }: { gameId: string }) => {
 
 // Hook to get all table users  
 const useAllTableUsers = ({ gameId }: { gameId: string }) => {
-    const [userTable] = useUserList<UserTableItem[]>({
-        key: "userTable",
-        itemId: gameId,
-        privacy: "PUBLIC",
-    });
+    const [userTable] = useList<UserTableItem[]>("userTable", gameId, { privacy: "PUBLIC" });
 
     return userTable?.value || [];
 };
@@ -174,8 +168,7 @@ const PlayerCard = ({ userId, gameId }: { userId: string; gameId: string }) => {
 // Hook to get player profile
 const usePlayerProfile = ({ userId, gameId }: { userId: string; gameId: string }) => {
     const profileKey = getGameScopedKey('playerProfile', gameId);
-    const profiles = useUserVariableGet<PlayerProfile>({
-        key: profileKey,
+    const profiles = useFindValues<PlayerProfile>(profileKey, {
         userIds: [userId],
         returnTop: 1,
     });

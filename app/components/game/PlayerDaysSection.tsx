@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useUserList } from 'hooks/useUserList';
+import { useList, useValue } from 'hooks/useData';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
 import AppButton from '../ui/buttons/AppButton';
@@ -16,28 +16,11 @@ interface PlayerDaysSectionProps {
 }
 
 const PlayerDaysSection = ({ gameId, addNewDay }: PlayerDaysSectionProps) => {
-    const [selectedDayIndex, setSelectedDayIndex] = useUserList<number>({
-        key: "selectedDayIndex",
-        itemId: gameId,
-        privacy: "PUBLIC",
-        defaultValue: 0,
-    });
+    const [selectedDayIndex, setSelectedDayIndex] = useList<number>("selectedDayIndex", gameId, { privacy: "PUBLIC", defaultValue: 0 });
+    const [numberOfRealDaysPerInGameDay] = useList<number>("numberOfRealDaysPerInGameDay", gameId, { privacy: "PUBLIC", defaultValue: 2 });
+    const [dayDatesArray, setDayDatesArray] = useList<string[]>("dayDatesArray", gameId, { privacy: "PUBLIC", defaultValue: [] });
 
-    const [numberOfRealDaysPerInGameDay] = useUserList<number>({
-        key: "numberOfRealDaysPerInGameDay",
-        itemId: gameId,
-        privacy: "PUBLIC",
-        defaultValue: 2,
-    });
-
-    const [dayDatesArray, setDayDatesArray] = useUserList<string[]>({
-        key: "dayDatesArray",
-        itemId: gameId,
-        privacy: "PUBLIC",
-        defaultValue: [],
-    });
-
-    const fixedDayDatesArray = parseStoredDayDates(dayDatesArray.value);
+    const fixedDayDatesArray = parseStoredDayDates(dayDatesArray?.value ?? []);
 
     const dateToStorageString = (date: Date): string => {
         return `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`;
@@ -58,12 +41,12 @@ const PlayerDaysSection = ({ gameId, addNewDay }: PlayerDaysSectionProps) => {
             setSelectedDayIndex(fixedDayDatesArray.length - 1);
         }
 
-        if (fixedDayDatesArray.length > 0 && selectedDayIndex.value > fixedDayDatesArray.length - 1) {
+        if (fixedDayDatesArray.length > 0 && (selectedDayIndex?.value ?? 0) > fixedDayDatesArray.length - 1) {
             setSelectedDayIndex(fixedDayDatesArray.length - 1);
         }
 
         previousDayCountRef.current = fixedDayDatesArray.length;
-    }, [fixedDayDatesArray.length, selectedDayIndex.value, setSelectedDayIndex]);
+    }, [fixedDayDatesArray.length, selectedDayIndex?.value, setSelectedDayIndex]);
 
     const replaceDayDate = (index: number, replacementDate: Date) => {
         const currentDays = [...fixedDayDatesArray];
@@ -74,7 +57,7 @@ const PlayerDaysSection = ({ gameId, addNewDay }: PlayerDaysSectionProps) => {
     };
 
     const handleAddNewDay = () => {
-        addNewDay(numberOfRealDaysPerInGameDay.value);
+        addNewDay(numberOfRealDaysPerInGameDay?.value ?? 2);
     };
 
     return (
@@ -83,9 +66,9 @@ const PlayerDaysSection = ({ gameId, addNewDay }: PlayerDaysSectionProps) => {
                 <ShadowScrollView direction='horizontal' className='mr-1 pr-1 max-w-min' scrollViewClassName='px-1 m-0 h-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]' style={{ width: daysTableWidth }} horizontal>
                         <Row className='gap-1 h-6'>
                             {fixedDayDatesArray.map((date, index) => {
-                                const label = getDayRangeLabel(fixedDayDatesArray, index, numberOfRealDaysPerInGameDay.value);
+                                const label = getDayRangeLabel(fixedDayDatesArray, index, numberOfRealDaysPerInGameDay?.value ?? 2);
 
-                                return selectedDayIndex.value === index ? (
+                                return (selectedDayIndex?.value ?? 0) === index ? (
                                     <DaySelectionDialog
                                         key={index}
                                         isOpen={isDialogOpen}
@@ -117,7 +100,7 @@ const PlayerDaysSection = ({ gameId, addNewDay }: PlayerDaysSectionProps) => {
                 <Row className={`${isDaysTableBeingEdited ? 'z-10' : ''}gap-4 w-min max-w-min`}>
                     <DaysTable
                         gameId={gameId}
-                        dayNumber={selectedDayIndex.value}
+                        dayNumber={selectedDayIndex?.value ?? 0}
                         dayCount={fixedDayDatesArray.length}
                         isBeingEdited={isDaysTableBeingEdited}
                         setIsBeingEdited={setIsDaysTableBeingEdited}

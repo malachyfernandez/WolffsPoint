@@ -6,7 +6,7 @@ import MarkdownRenderer from '../ui/markdown/MarkdownRenderer';
 import FontText from '../ui/text/FontText';
 import LoadingText from '../ui/loading/LoadingText';
 import PressLogo from '../ui/icons/Press';
-import { useUserListGet } from 'hooks/useUserListGet';
+import { useFindListItems } from 'hooks/useData';
 import ShadowScrollView from '../ui/ShadowScrollView';
 import { Usepaper } from 'types/usepaper';
 import { getNewspaperDayItemId } from '../../../utils/newspaperControl';
@@ -24,8 +24,7 @@ const minimumUsepaper: Usepaper = {
 };
 
 const NewspaperViewingView = ({ dayIndex, gameId, ownerUserId, TILE_SIZE, roundBottom }: NewspaperViewingViewProps) => {
-    const usepaperRecords = useUserListGet<Usepaper>({
-        key: 'usepaper',
+    const usepaperRecords = useFindListItems<Usepaper>("newspaper", {
         itemId: getNewspaperDayItemId(gameId, dayIndex),
         userIds: ownerUserId ? [ownerUserId] : [''],
         returnTop: 1,

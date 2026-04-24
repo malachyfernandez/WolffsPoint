@@ -1,5 +1,5 @@
 import React from 'react';
-import { useUserList } from '../../../../hooks/useUserList';
+import { useList, useValue } from '../../../../hooks/useData';
 import { GameInfo } from '../../../../types/games';
 import ConfigSectionRow from '../../ui/forms/ConfigSectionRow';
 import FontTextInput from '../../ui/forms/FontTextInput';
@@ -9,9 +9,7 @@ interface GameNameConfigItemProps {
 }
 
 const GameNameConfigItem = ({ gameId }: GameNameConfigItemProps) => {
-    const [gameInfo, setGameInfo] = useUserList<GameInfo>({
-        key: 'games',
-        itemId: gameId,
+    const [gameInfo, setGameInfo] = useList<GameInfo>("games", gameId, {
         defaultValue: { id: gameId, name: 'WolffsPoint', description: '' },
         filterKey: 'id',
         privacy: 'PUBLIC',

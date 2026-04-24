@@ -149,7 +149,7 @@ const MarkdownImage = ({ url, alt, viewHeightImages, removeImageBorders }: { url
                     resizeMode='contain'
                 />
             </View>
-            {alt && alt !== 'IMAGE1' && (
+            {!!alt && alt !== 'IMAGE1' && (
                 <FontText className='mt-2 text-center text-muted' style={{ fontSize: 12 }}>
                     {alt}
                 </FontText>

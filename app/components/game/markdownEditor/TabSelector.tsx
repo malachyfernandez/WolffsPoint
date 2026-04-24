@@ -29,3 +29,4 @@ export function TabSelector({ value, onValueChange }: TabSelectorProps) {
         </Tabs>
     );
 }
+export default TabSelector;

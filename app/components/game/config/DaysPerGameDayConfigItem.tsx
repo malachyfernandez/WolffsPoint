@@ -1,5 +1,5 @@
 import React from 'react';
-import { useUserList } from '../../../../hooks/useUserList';
+import { useList, useValue } from '../../../../hooks/useData';
 import ConfigSectionRow from '../../ui/forms/ConfigSectionRow';
 import FontNumberInput from '../../ui/forms/FontNumberInput';
 import FontText from '../../ui/text/FontText';
@@ -14,12 +14,7 @@ interface DaysPerGameDayConfigItemProps {
  * Controls how many real-world days each in-game day spans by default.
  */
 const DaysPerGameDayConfigItem = ({ gameId }: DaysPerGameDayConfigItemProps) => {
-    const [numberOfRealDaysPerInGameDay, setNumberOfRealDaysPerInGameDay] = useUserList<number>({
-        key: 'numberOfRealDaysPerInGameDay',
-        itemId: gameId,
-        privacy: 'PUBLIC',
-        defaultValue: 2,
-    });
+    const [numberOfRealDaysPerInGameDay, setNumberOfRealDaysPerInGameDay] = useList<number>("numberOfRealDaysPerInGameDay", gameId, { privacy: "PUBLIC", defaultValue: 2 });
 
     return (
         <ConfigSectionRow

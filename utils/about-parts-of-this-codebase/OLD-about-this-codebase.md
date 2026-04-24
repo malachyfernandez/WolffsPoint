@@ -1,12 +1,12 @@
 # Paper Codebase Guide
 
-Welcome to Paper! This document provides a comprehensive overview of the codebase architecture, patterns, and philosophy. For detailed information about the data management system (formerly UserVariables), see [userVariables-system.md](./userVariables-system.md) and the new [migrating-to-dataprovider.md](./migrating-to-dataprovider.md).
+Welcome to Paper! This document provides a comprehensive overview of the codebase architecture, patterns, and philosophy. For detailed information about the userVariables system, see [userVariables-system.md](./userVariables-system.md).
 
 ## Table of Contents
 
 - [Architecture Overview](#architecture-overview)
 - [Component Philosophy](#component-philosophy)
-- [Data System (DataProvider)](#data-system-dataprovider)
+- [UserVariables System](#uservariables-system)
 - [Layout System](#layout-system)
 - [UI Components](#ui-components)
 - [Styling Approach](#styling-approach)
@@ -22,7 +22,7 @@ Welcome to Paper! This document provides a comprehensive overview of the codebas
 Paper is a React Native application built with a modular, component-first architecture. The app follows these key principles:
 
 1. **Component-First Design**: Everything is a component with its own state and logic
-2. **Modular Data Subscriptions**: Each component subscribes to its own data via `DataProvider` hooks, which are cached globally to avoid network churn
+2. **Modular Subscriptions**: Each component subscribes to its own userVariables
 3. **Declarative Animations**: Page transitions use a tree-based animation system
 4. **Consistent UI**: Shared components and styling across the entire app
 
@@ -45,28 +45,28 @@ We believe in componentizing as much as possible because:
 
 1. **Named JSX**: Components give your JSX meaningful names
 2. **Modular Logic**: Each component owns its state and behavior
-3. **Data Integration**: Components can independently subscribe to data without causing redundant network calls (thanks to our `DataProvider` client cache)
+3. **UserVariables Integration**: Components can independently subscribe to data
 4. **Reusability**: Components can be reused across different contexts
 5. **Testability**: Smaller components are easier to test
 
 ### Subscription Pattern
 
-**NEVER** pass persistent data through props just to avoid multiple queries. Because of our `DataProvider` architecture, multiple components subscribing to the same data will use the client-side cache and will NOT cause extra network requests. Instead:
+**NEVER** pass userVariables through props. Instead:
 
 ```tsx
-// ❌ WRONG - Passing data through props for performance (Anti-pattern)
+// ❌ WRONG - Passing userVariables through props
 <ParentComponent userData={userData} />
 <ChildComponent userData={userData} />
 
 // ✅ RIGHT - Each component subscribes independently
 function ParentComponent() {
-  const userData = useValue("userData");
+  const userData = useUserVariable({ key: "userData" });
   // ... use userData
 }
 
 function ChildComponent() {
-  const userData = useValue("userData");
-  // ... use userData independently (cached!)
+  const userData = useUserVariable({ key: "userData" });
+  // ... use userData independently
 }
 ```
 
@@ -77,7 +77,7 @@ Each component should contain its own logic for the data it manages:
 ```tsx
 // Button that manages its own table data
 function AddRowButton({ tableId }: { tableId: string }) {
-  const [tableData, setTableData] = useList("tables", tableId);
+  const [tableData, setTableData] = useUserList({ key: "tables", itemId: tableId });
   
   const handleAddRow = () => {
     const newRow = createNewRow();
@@ -89,7 +89,7 @@ function AddRowButton({ tableId }: { tableId: string }) {
 
 // Table that automatically updates when data changes
 function DataTable({ tableId }: { tableId: string }) {
-  const [tableData] = useList("tables", tableId);
+  const [tableData] = useUserList({ key: "tables", itemId: tableId });
   
   return (
     <Column>
@@ -99,12 +99,11 @@ function DataTable({ tableId }: { tableId: string }) {
 }
 ```
 
-## Data System (DataProvider)
+## UserVariables System
 
-The `DataProvider` system is the backbone of WolffsPoint's state management. It provides:
+The userVariables system is the backbone of WolffsPoint's state management. It provides:
 
-- **Persistent Storage**: Data is stored per user and automatically synced via Convex
-- **Client-Side Caching**: Eliminates redundant subscriptions and network calls when components mount/unmount or during tab transitions
+- **Persistent Storage**: Data is stored per user and automatically synced
 - **Real-time Updates**: Components automatically update when data changes
 - **Privacy Controls**: Fine-grained access control for data sharing
 - **Search & Filter**: Built-in search and filtering capabilities
@@ -120,13 +119,13 @@ We use custom layout components that provide consistent spacing and behavior:
 ```tsx
 // Column - Vertical layout with gap spacing
 <Column gap={4} className="items-center">
-  <FontText>Title</FontText>
+  <PoppinsText>Title</PoppinsText>
   <AppButton>Button</AppButton>
 </Column>
 
 // Row - Horizontal layout with gap spacing  
 <Row gap={2} className="items-center">
-  <FontText>Label</FontText>
+  <PoppinsText>Label</PoppinsText>
   <AppButton>Action</AppButton>
 </Row>
 ```
@@ -142,23 +141,23 @@ We use custom layout components that provide consistent spacing and behavior:
 
 ### Typography
 
-#### FontText
-Our primary text component with custom font integration:
+#### PoppinsText
+Our primary text component with Poppins font integration:
 
 ```tsx
-<FontText weight="medium" variant="heading" color="white">
+<PoppinsText weight="medium" variant="heading" color="white">
   Heading Text
-</FontText>
+</PoppinsText>
 
-<FontText variant="subtext">
+<PoppinsText variant="subtext">
   Secondary text with opacity
-</FontText>
+</PoppinsText>
 ```
 
 **Props:**
 - `weight`: 'regular' | 'medium' | 'bold'
 - `variant`: 'default' | 'heading' | 'subtext'
-- `color`: 'black' | 'white' | 'primary'
+- `color`: 'black' | 'white'
 
 ### Buttons
 
@@ -167,11 +166,11 @@ Versatile button component with multiple variants:
 
 ```tsx
 <AppButton variant="outline" onPress={handleCancel}>
-  <FontText>Cancel</FontText>
+  <PoppinsText>Cancel</PoppinsText>
 </AppButton>
 
 <AppButton variant="green" onPress={handleSubmit}>
-  <FontText color="white">Submit</FontText>
+  <PoppinsText color="white">Submit</PoppinsText>
 </AppButton>
 ```
 
@@ -180,15 +179,15 @@ Versatile button component with multiple variants:
 - `outline-alt`: Lighter outline variant
 - `black`: Solid dark background
 - `grey`: Solid grey background
-- `green`/`accent`: Primary accent color
+- `green`: Primary accent color
 
 ### Forms
 
-#### FontTextInput
-Styled text input with correct fonts:
+#### PoppinsTextInput
+Styled text input with Poppins font:
 
 ```tsx
-<FontTextInput
+<PoppinsTextInput
   value={text}
   onChangeText={setText}
   placeholder="Enter text..."
@@ -196,14 +195,38 @@ Styled text input with correct fonts:
 />
 ```
 
+#### SmartDateInput / SmartNumberInput
+Intelligent inputs with automatic formatting and validation.
+
+### Image Upload
+
+#### PublicImageUpload
+Complete image upload workflow with UploadThing integration:
+
+```tsx
+<PublicImageUpload
+  url={imageUrl}
+  setUrl={setImageUrl}
+  buttonLabel="Upload profile picture"
+/>
+```
+
+**Features:**
+- Media library permissions
+- Image editing
+- Upload progress
+- Error handling
+- Image preview
+
 ## Styling Approach
 
-### Tailwind
-We use Tailwind CSS for React Native:
+### Tailwind (Uniwind)
+
+We use Tailwind CSS for React Native via Uniwind:
 
 ```tsx
 <View className="flex-1 bg-background p-4">
-  <FontText className="text-text font-bold">Styled text</FontText>
+  <PoppinsText className="text-text font-bold">Styled text</PoppinsText>
 </View>
 ```
 
@@ -247,21 +270,36 @@ Our custom page transition system using a tree-based approach:
 - **Default Animation**: `fromRight` is the default (can be overridden)
 - **DOM Cleanup**: Elements are removed after animation completes
 
+**Animation Presets:**
+- `fromRight`: Enter from right, exit to left (default)
+- `fromLeft`: Enter from left, exit to right
+- `fromTop`: Enter from top, exit to bottom
+- `fromBottom`: Enter from bottom, exit to top
+
 ## State Management
 
-### DataProvider Hooks
+### UserVariables Hooks
 
-Primary hooks for state management using the centralized config `utils/dataConfig.ts`:
+Primary hooks for state management:
 
 ```tsx
-// Single value per user (reads configuration from dataConfig.ts)
-const [profile, setProfile] = useValue("profile");
+// Single value per user
+const [profile, setProfile] = useUserVariable({
+  key: "profile",
+  defaultValue: { name: "" },
+  privacy: "PUBLIC"
+});
 
 // List of items per user
-const [game, setGame] = useList("games", "game_123");
+const [games, setGames] = useUserList({
+  key: "games",
+  itemId: "game_123",
+  defaultValue: { name: "Game 1" }
+});
 
-// Read multiple users' data
-const profiles = useFindValues("profile", {
+// Read other users' data
+const profiles = useUserVariableGet({
+  key: "profile",
   userIds: friendIds
 });
 ```
@@ -299,7 +337,7 @@ const UNDOABLEsetUserTable = (updatedUsers: UserTableItem[]) => {
 - Command pattern implementation
 - Automatic snapshot creation
 - Descriptive undo messages
-- Works harmoniously with the data system
+- Works with userVariables system
 
 ## Toast Notifications
 
@@ -315,6 +353,12 @@ showToast("Operation completed successfully!");
 // User can tap to dismiss manually
 ```
 
+**Implementation:**
+- Context-based global state
+- Animated enter/exit transitions
+- Auto-dismiss after 3 seconds
+- Manual dismiss option
+
 ## Third-Party Libraries
 
 ### Core Dependencies
@@ -324,6 +368,19 @@ showToast("Operation completed successfully!");
 - **Clerk**: Authentication and user management
 - **Convex**: Backend database and real-time sync
 - **React Native Reanimated**: Advanced animations
+- **Uniwind**: Tailwind CSS for React Native
+
+### UI Libraries
+
+- **HeroUI**: Component library (used where applicable)
+- **Expo Image Picker**: Image selection
+- **UploadThing**: File upload service
+
+### Development Tools
+
+- **TypeScript**: Type safety
+- **ESLint**: Code linting
+- **Prettier**: Code formatting
 
 ## Development Patterns
 
@@ -344,9 +401,9 @@ app/
 
 ### Naming Conventions
 
-- **Components**: PascalCase (e.g., `FontText`, `AppButton`)
+- **Components**: PascalCase (e.g., `PoppinsText`, `AppButton`)
 - **Files**: Component name matches file name
-- **Hooks**: camelCase with `use` prefix (e.g., `useValue`)
+- **Hooks**: camelCase with `use` prefix (e.g., `useUserVariable`)
 - **Types**: PascalCase (e.g., `UserProfile`, `GameState`)
 
 ### Code Style
@@ -359,8 +416,31 @@ app/
 ### Testing Philosophy
 
 - **Component Isolation**: Each component should be testable independently
-- **Data Mocking**: Mock DataProvider hooks in tests
+- **UserVariables Mocking**: Mock userVariables hooks in tests
 - **Animation Testing**: Test animation logic, not visual output
+
+## Best Practices
+
+### Component Design
+
+1. **Single Responsibility**: Each component does one thing well
+2. **Props Interface**: Always define prop interfaces
+3. **Default Props**: Provide sensible defaults
+4. **Error Boundaries**: Wrap components in error boundaries where needed
+
+### UserVariables Usage
+
+1. **Direct Subscription**: Always subscribe directly in components
+2. **Privacy by Default**: Start with PRIVATE, expand as needed
+3. **Search Keys**: Define search keys for discoverable data
+4. **Filter Keys**: Use filter keys for categorization
+
+### Performance
+
+1. **Memoization**: Use React.memo for expensive components
+2. **Animation Cleanup**: Ensure animations clean up properly
+3. **Image Optimization**: Compress images before upload
+4. **Bundle Size**: Monitor and optimize import sizes
 
 ## Getting Started
 
@@ -369,32 +449,44 @@ app/
 1. Create component file in appropriate directory
 2. Add comprehensive JSDocs
 3. Define TypeScript interfaces
-4. Subscribe to data via `useValue`/`useList` directly without prop-drilling
+4. Subscribe to userVariables directly
 5. Test component independently
+6. Add to storybook/documentation if applicable
 
-### Data Integration
+### UserVariables Integration
 
-1. Define data shape, privacy, and defaults centrally in `utils/dataConfig.ts`
-2. Choose appropriate hook (`useValue` vs `useList`)
-3. Componentize freely, knowing the client cache will optimize network requests
-4. Implement optimistic updates where needed via `useUndoRedo`
+1. Determine data shape and privacy needs
+2. Choose appropriate hook (useUserVariable vs useUserList)
+3. Define search/filter keys
+4. Implement optimistic updates where needed
+5. Add undo/redo support for user actions
 
 ### Styling Guidelines
 
-1. Use Tailwind classes for all styling
+1. Use Uniwind classes for all styling
 2. Follow the established color system
 3. Use gap props for spacing in layouts
 4. **Scrolling Content**: Always wrap ScrollView in ScrollShadow for consistent visual effects
+5. Test on both iOS and Android
+6. Ensure accessibility with proper contrast ratios
 
 #### ScrollShadow Pattern
 
 For all scrollable content, use the ScrollShadow wrapper from HeroUI:
 
 ```tsx
-<ShadowScrollView>
+<ScrollShadow LinearGradientComponent={LinearGradient} className='h-full'>
+  <ScrollView className='h-full'>
     {/* Scrollable content */}
-</ShadowScrollView>
+  </ScrollView>
+</ScrollShadow>
 ```
+
+**Benefits:**
+- Consistent fade effects at scroll boundaries
+- Smooth visual transitions
+- Cross-platform compatibility
+- Automatic shadow direction based on scroll position
 
 ---
 

@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useUserVariableGet } from './useUserVariableGet';
+import { useFindValues } from './useData';
 
 export const useSharedVariableValue = <T,>({
     key,
@@ -10,7 +10,7 @@ export const useSharedVariableValue = <T,>({
     defaultValue: T;
     userIds?: string[];
 }) => {
-    const records = useUserVariableGet<T>({ key, userIds, returnTop: 1 });
+    const records = useFindValues<T>(key, { userIds, returnTop: 1 });
 
     return useMemo(() => {
         const record = records?.[0];

@@ -5,8 +5,7 @@ import Row from '../layout/Row';
 import FontText from '../ui/text/FontText';
 import TownSquareAvatar from './townSquare/TownSquareAvatar';
 import { useTownSquareAuthorIdentity } from './townSquare/TownSquareAuthorIdentity';
-import { useUserListGet } from '../../../hooks/useUserListGet';
-import { useUserVariableGet } from '../../../hooks/useUserVariableGet';
+import { useFindListItems, useFindValues } from '../../../hooks/useData';
 import { PlayerNightSubmission, PlayerProfile } from '../../../types/multiplayer';
 import { UserTableItem } from '../../../types/playerTable';
 import { getGameScopedKey } from '../../../utils/multiplayer';
@@ -81,26 +80,22 @@ const VoteSummaryRow = ({
 };
 
 const NewspaperPreviousDayVoteSummary = ({ gameId, dayIndex }: NewspaperPreviousDayVoteSummaryProps) => {
-    const gameRows = useUserListGet({
-        key: 'games',
+    const gameRows = useFindListItems("games", {
         itemId: gameId,
         returnTop: 1,
     });
     const operatorUserId = gameRows?.[0]?.userToken ?? '';
-    const operatorUserTableRecords = useUserListGet<UserTableItem[]>({
-        key: 'userTable',
+    const operatorUserTableRecords = useFindListItems<UserTableItem[]>("userTable", {
         itemId: gameId,
         userIds: operatorUserId ? [operatorUserId] : undefined,
         returnTop: 1,
     });
-    const submissionRecords = useUserVariableGet<PlayerNightSubmission>({
-        key: getGameScopedKey(`playerNightSubmission-day-${dayIndex - 1}`, gameId),
+    const submissionRecords = useFindValues<PlayerNightSubmission>(getGameScopedKey(`playerNightSubmission-day-${dayIndex - 1}`, gameId), {
         returnTop: 200,
     });
 
     // Fetch all player profiles to map email -> userId for NOT-JOINED players
-    const allProfiles = useUserVariableGet<PlayerProfile>({
-        key: getGameScopedKey('playerProfile', gameId),
+    const allProfiles = useFindValues<PlayerProfile>(getGameScopedKey('playerProfile', gameId), {
         returnTop: 200,
     });
 
