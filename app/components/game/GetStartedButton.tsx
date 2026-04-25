@@ -11,7 +11,7 @@ import SmartNumberInput from '../ui/forms/SmartNumberInput';
 import StatusButton from '../ui/StatusButton';
 import JoinHandler from '../ui/forms/JoinHandler';
 import DialogHeader from '../ui/dialog/DialogHeader';
-import { useUserList } from 'hooks/useUserList';
+import { useList } from 'hooks/useData';
 
 interface GetStartedButtonProps {
     gameId: string;
@@ -21,16 +21,9 @@ const GetStartedButton = ({ gameId }: GetStartedButtonProps) => {
     const [isHeroDialogOpen, setIsHeroDialogOpen] = useState(false);
     const [gameCode, setGameCode] = useState('');
 
-    const [startingDate, setStartingDate] = useUserList({
-        key: "startingDate",
-        itemId: gameId,
-    });
+    const [startingDate, setStartingDate] = useList("startingDate", gameId);
 
-    const [numberOfRealDaysPerInGameDay, setNumberOfRealDaysPerInGameDay] = useUserList<number>({
-        key: "numberOfRealDaysPerInGameDay",
-        itemId: gameId,
-        defaultValue: 2,
-    });
+    const [numberOfRealDaysPerInGameDay, setNumberOfRealDaysPerInGameDay] = useList<number>("numberOfRealDaysPerInGameDay", gameId);
 
 
     const formSubmit = () => {

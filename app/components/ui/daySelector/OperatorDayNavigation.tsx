@@ -3,7 +3,7 @@ import { Pressable, View } from 'react-native';
 import Column from '../../layout/Column';
 import Row from '../../layout/Row';
 import FontText from '../text/FontText';
-import { useUserListSet } from '../../../../hooks/useUserListSet';
+import { useListSet } from '../../../../hooks/useData';
 import { useSharedListValue } from '../../../../hooks/useSharedListValue';
 import { ChevronLeft, ChevronRight } from 'lucide-react-native';
 import { getContextualDayRangeLabel, parseStoredDayDates } from '../../../../utils/multiplayer';
@@ -17,7 +17,7 @@ interface OperatorDayNavigationProps {
 
 const OperatorDayNavigation = ({ gameId, ownerUserId, selectedDayIndex: controlledSelectedDayIndex, onSelectedDayIndexChange }: OperatorDayNavigationProps) => {
     
-    const setSelectedDayIndex = useUserListSet<number>();
+    const setSelectedDayIndex = useListSet<number>();
     const { value: selectedDayIndex } = useSharedListValue<number>({
         key: 'selectedDayIndex',
         itemId: gameId,

@@ -4,7 +4,7 @@ import Column from '../layout/Column';
 import Row from '../layout/Row';
 import FontText from '../ui/text/FontText';
 import AppButton from '../ui/buttons/AppButton';
-import { useUserVariable } from 'hooks/useUserVariable';
+import { useValue } from 'hooks/useData';
 import { UserData } from 'types/common';
 import EditInfoDialog from './EditInfoDialog';
 import { useClerk } from '@clerk/clerk-expo';
@@ -20,15 +20,10 @@ const ProfileInfo = () => {
     const { signOut } = useClerk();
     
     // Original Clerk data (fallback)
-    const [userData] = useUserVariable<UserData>({ key: 'userData' });
+    const [userData] = useValue<UserData>('userData');
     
     // Custom user info (separate from Clerk)
-    const [customUserInfo, setCustomUserInfo] = useUserVariable<CustomUserInfo>({
-        key: "customUserInfo",
-        defaultValue: { name: "", photoUrl: "" },
-        privacy: "PUBLIC",
-        searchKeys: ["name"],
-    });
+    const [customUserInfo, setCustomUserInfo] = useValue<CustomUserInfo>('customUserInfo');
     
     // Display custom info if available, otherwise fallback to Clerk data
     const displayName = customUserInfo.value.name || userData?.value?.name || 'Not set';

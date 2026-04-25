@@ -7,7 +7,8 @@ import { useUserListRemove } from "./useUserListRemove";
 import { useUserVariablePrivacy } from "./useUserVariablePrivacy";
 import { useUserListPrivacy } from "./useUserListPrivacy";
 
-import type { UserVariableResult } from "./useUserVariable";
+import type { UserVariableResult, UserVariableRecord } from "./useUserVariable";
+import type { UserListRecord } from "./useUserList";
 
 // Fallback states before the background subscriber mounts
 const NO_OP = () => {};
@@ -88,7 +89,7 @@ export function useFindValues<T = any>(key: string, queryArgs: {
     () => globalDataStore.getResult(subId)
   );
 
-  return result || FALLBACK_GET;
+  return (result || FALLBACK_GET) as UserVariableRecord<T>[] | undefined;
 }
 
 /**
@@ -120,7 +121,7 @@ export function useFindListItems<T = any>(key: string, queryArgs: {
     () => globalDataStore.getResult(subId)
   );
 
-  return result || FALLBACK_GET;
+  return (result || FALLBACK_GET) as UserListRecord<T>[] | undefined;
 }
 
 /**

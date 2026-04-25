@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Platform } from 'react-native';
 import { MathDocumentPage } from 'types/mathDocuments';
 import { useToast } from '../../../../contexts/ToastContext';
-import { useUserListSet } from 'hooks/useUserListSet';
+import { useListSet } from 'hooks/useData';
 import { buildViewOnlyDocumentUrl } from '../../../../utils/buildViewOnlyDocumentUrl';
 import AppButton from './AppButton';
 import FontText from '../text/FontText';
@@ -16,8 +16,8 @@ interface ShareButtonProps {
 
 const ShareButton = ({ documentTitle, documentId, activePage, className }: ShareButtonProps) => {
     const { showToast } = useToast();
-    const setDocument = useUserListSet();
-    const setPage = useUserListSet<MathDocumentPage>();
+    const setDocument = useListSet();
+    const setPage = useListSet<MathDocumentPage>();
 
     const [isSharing, setIsSharing] = useState(false);
     const [shareTrigger, setShareTrigger] = useState(false);

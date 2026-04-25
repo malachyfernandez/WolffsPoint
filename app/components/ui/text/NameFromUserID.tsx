@@ -1,6 +1,6 @@
 import React from 'react';
 import FontText from './FontText';
-import { useUserVariableGet } from 'hooks/useUserVariableGet';
+import { useFindValues } from 'hooks/useData';
 
 interface NameFromUserIDProps {
     userid: string;
@@ -8,8 +8,7 @@ interface NameFromUserIDProps {
 
 const NameFromUserID = ({ userid }: NameFromUserIDProps) => {
     
-    const userDatas = useUserVariableGet({
-        key: "userData",
+    const userDatas = useFindValues("userData", {
         userIds: [userid],
     });
 

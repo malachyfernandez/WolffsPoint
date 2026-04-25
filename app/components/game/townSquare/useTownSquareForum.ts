@@ -1,7 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import { useFindListItems, useValue } from '../../../../hooks/useData';
-import { useUserListRemove } from '../../../../hooks/useUserListRemove';
-import { useUserListSet } from '../../../../hooks/useUserListSet';
+import { useListSet, useListRemove } from '../../../../hooks/useData';
 import { useUndoRedo, createUndoSnapshot } from '../../../../hooks/useUndoRedo';
 import { PlayerProfile, TownSquareComment, TownSquarePost } from '../../../../types/multiplayer';
 import { createClientId, getGameScopedKey } from '../../../../utils/multiplayer';
@@ -24,9 +23,9 @@ interface UseTownSquareForumParams {
 
 export const useTownSquareForum = ({ currentProfile, gameId, selectedPostId }: UseTownSquareForumParams) => {
     const { executeCommand } = useUndoRedo();
-    const setPost = useUserListSet<TownSquarePost>();
-    const setComment = useUserListSet<TownSquareComment>();
-    const removeUserListItem = useUserListRemove();
+    const setPost = useListSet<TownSquarePost>();
+    const setComment = useListSet<TownSquareComment>();
+    const removeUserListItem = useListRemove();
     const postKey = getGameScopedKey('townSquarePosts', gameId);
     const commentKey = getGameScopedKey('townSquareComments', gameId);
     const readStateKey = getGameScopedKey('townSquareReadState', gameId);

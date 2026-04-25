@@ -1,6 +1,6 @@
 import React from 'react';
 import FontText from '../text/FontText';
-import { useUserVariableGet } from 'hooks/useUserVariableGet';
+import { useFindValues } from 'hooks/useData';
 import Column from '../../layout/Column';
 import Row from '../../layout/Row';
 
@@ -9,8 +9,7 @@ interface FriendListItemProps {
 }
 
 const FriendListItem = ({ friend }: FriendListItemProps) => {
-    const friendData = useUserVariableGet({
-        key: "userData",
+    const friendData = useFindValues("userData", {
         userIds: [friend],
     });
 

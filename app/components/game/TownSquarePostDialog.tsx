@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { useFindListItems } from '../../../hooks/useData';
-import { useUserListSet } from '../../../hooks/useUserListSet';
+import { useListSet } from '../../../hooks/useData';
 import { PlayerProfile, TownSquareComment, TownSquarePost } from '../../../types/multiplayer';
 import { createClientId, getGameScopedKey } from '../../../utils/multiplayer';
 import ConvexDialog from '../ui/dialog/ConvexDialog';
@@ -24,7 +24,7 @@ interface TownSquarePostDialogProps {
 
 const TownSquarePostDialog = ({ gameId, isOpen, onOpenChange, post, currentProfile }: TownSquarePostDialogProps) => {
     const [isCommentDialogOpen, setIsCommentDialogOpen] = useState(false);
-    const setComment = useUserListSet<TownSquareComment>();
+    const setComment = useListSet<TownSquareComment>();
     const commentKey = getGameScopedKey('townSquareComments', gameId);
     const comments = useFindListItems<TownSquareComment>(commentKey, {
         filterFor: post?.postId,

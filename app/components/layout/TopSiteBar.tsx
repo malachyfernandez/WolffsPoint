@@ -5,8 +5,7 @@ import AppButton from '../ui/buttons/AppButton';
 import FontText from '../ui/text/FontText';
 import { HomeIcon } from '../ui/icons/HomeIcon';
 import { TouchableOpacity } from 'react-native';
-import { useUserListGet } from '../../../hooks/useUserListGet';
-import { useUserVariable } from '../../../hooks/useUserVariable';
+import { useValue, useFindListItems } from '../../../hooks/useData';
 import { GameInfo } from '../../../types/games';
 import CopyableText from '../ui/CopyableText';
 import Animated, { FadeIn } from 'react-native-reanimated';
@@ -17,13 +16,9 @@ interface TopSiteBarProps {
 }
 
 const TopSiteBar = ({ className = '' }: TopSiteBarProps) => {
-    const [activeGameId, setActiveGameId] = useUserVariable<string>({
-        key: 'activeGameId',
-        defaultValue: '',
-    });
+    const [activeGameId, setActiveGameId] = useValue<string>("activeGameId");
 
-    const gameJoinCodeInfo = useUserListGet<GameInfo>({
-        key: "games",
+    const gameJoinCodeInfo = useFindListItems<GameInfo>("games", {
         filterFor: activeGameId.value || undefined,
         returnTop: 1,
     });

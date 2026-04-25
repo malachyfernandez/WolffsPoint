@@ -5,8 +5,7 @@ import Row from '../layout/Row';
 import AppButton from '../ui/buttons/AppButton';
 import FontText from '../ui/text/FontText';
 import DialogHeader from '../ui/dialog/DialogHeader';
-import { useUserVariable } from 'hooks/useUserVariable';
-import { useUserListGet } from 'hooks/useUserListGet';
+import { useValue, useFindListItems } from 'hooks/useData';
 import ListRow from '../ui/lists/ListRow';
 import { UserVariableResult } from 'hooks/useUserVariable';
 
@@ -20,10 +19,7 @@ interface ArchivedGamesDialogProps {
 }
 
 const ArchivedGamesDialog = ({ isOpen, onOpenChange, setActiveGameId, textClassName, archivedGames, setArchivedGames }: ArchivedGamesDialogProps) => {
-    const [gamesTheyJoined, setGamesTheyJoined] = useUserVariable<string[]>({
-        key: "gamesTheyJoined",
-        defaultValue: [],
-    });
+    const [gamesTheyJoined, setGamesTheyJoined] = useValue<string[]>("gamesTheyJoined");
 
     const archivedGameIds = archivedGames.value || [];
 
@@ -87,8 +83,7 @@ interface ArchivedGameRowProps {
 }
 
 const ArchivedGameRow = ({ gameId, index, onUnarchive, onPress, textClassName }: ArchivedGameRowProps) => {
-    const gameInfo = useUserListGet({
-        key: "games",
+    const gameInfo = useFindListItems("games", {
         filterFor: gameId,
     });
 

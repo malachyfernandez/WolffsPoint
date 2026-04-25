@@ -44,6 +44,15 @@ export const DATA_CONFIG: DataConfigType = {
     privacy: "PUBLIC",
     defaultValue: 0,
   },
+  numberOfRealDaysPerInGameDay: {
+    type: "list",
+    privacy: "PUBLIC",
+    defaultValue: 2,
+  },
+  startingDate: {
+    type: "list",
+    privacy: "PUBLIC",
+  },
   userData: {
     type: "variable",
     privacy: "PUBLIC",
@@ -54,6 +63,22 @@ export const DATA_CONFIG: DataConfigType = {
     type: "variable",
     privacy: "PRIVATE",
     defaultValue: "",
+  },
+  gamesTheyJoined: {
+    type: "variable",
+    privacy: "PRIVATE",
+    defaultValue: [],
+  },
+  archivedGames: {
+    type: "variable",
+    privacy: "PRIVATE",
+    defaultValue: [],
+  },
+  customUserInfo: {
+    type: "variable",
+    privacy: "PUBLIC",
+    defaultValue: { name: "", photoUrl: "" },
+    searchKeys: ["name"],
   },
   games: {
     type: "list",

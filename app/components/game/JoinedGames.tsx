@@ -5,7 +5,6 @@ import FontText from '../ui/text/FontText';
 import AppButton from '../ui/buttons/AppButton';
 import JoinedGameListItem from './JoinedGameListItem';
 import ArchivedGamesDialog from './ArchivedGamesDialog';
-import { useUserVariable } from 'hooks/useUserVariable';
 import { UserVariableResult } from 'hooks/useUserVariable';
 
 interface JoinedGamesProps {

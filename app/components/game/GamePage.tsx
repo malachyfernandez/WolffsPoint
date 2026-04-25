@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import Column from '../layout/Column';
 import { Platform, View, useWindowDimensions } from 'react-native';
-import { useUserListGet } from 'hooks/useUserListGet';
-import { useUserVariableGet } from 'hooks/useUserVariableGet';
+import { useFindListItems, useFindValues } from 'hooks/useData';
 import ShadowScrollView from '../ui/ShadowScrollView';
 import OperatorGamePage from './OperatorGamePage';
 import NewserGamePage from './NewserGamePage';
@@ -34,27 +33,23 @@ const GamePage = ({ gameId, currentUserId }: GamePageProps) => {
         },
     });
 
-    const ownedGameRows = useUserListGet({
-        key: 'games',
+    const ownedGameRows = useFindListItems('games', {
         itemId: gameId,
         userIds: [currentUserId],
     });
 
-    const gameRows = useUserListGet({
-        key: 'games',
+    const gameRows = useFindListItems('games', {
         itemId: gameId,
         returnTop: 1,
     });
 
     const operatorUserId = gameRows?.[0]?.userToken ?? '';
 
-    const userDataRecords = useUserVariableGet<PublicUserData>({
-        key: 'userData',
+    const userDataRecords = useFindValues<PublicUserData>('userData', {
         returnTop: 500,
     });
 
-    const newserAssignmentRecords = useUserVariableGet<NewserAssignment>({
-        key: getNewserAssignmentKey(gameId),
+    const newserAssignmentRecords = useFindValues<NewserAssignment>(getNewserAssignmentKey(gameId), {
         userIds: operatorUserId ? [operatorUserId] : undefined,
         returnTop: 1,
     });

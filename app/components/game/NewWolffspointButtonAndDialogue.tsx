@@ -8,7 +8,7 @@ import FontTextInput from '../ui/forms/FontTextInput';
 import DialogHeader from '../ui/dialog/DialogHeader';
 import SmartDateInput from '../ui/forms/SmartDateInput';
 import StatusButton from '../ui/StatusButton';
-import { useUserListSet } from 'hooks/useUserListSet';
+import { useListSet } from 'hooks/useData';
 
 interface NewWolffspointButtonAndDialogueProps {
     onCreate?: (gameId: string) => void;
@@ -24,7 +24,7 @@ const NewWolffspointButtonAndDialogue = ({ onCreate, condensed }: NewWolffspoint
 
     const todaysDate = new Date()
 
-    const setUserListItem = useUserListSet();
+    const setUserListItem = useListSet();
 
     const generateGameId = () => {
         const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';

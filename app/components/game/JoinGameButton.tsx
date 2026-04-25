@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { useUserVariable } from 'hooks/useUserVariable';
 import ConvexDialog from '../ui/dialog/ConvexDialog';
 import Column from '../layout/Column';
 import { View } from 'react-native';
@@ -18,13 +17,7 @@ const JoinGameButton = ({ onJoin, condensed }: JoinGameButtonProps) => {
     const [isHeroDialogOpen, setIsHeroDialogOpen] = useState(false);
     const [gameCode, setGameCode] = useState('');
 
-    // const [gamesTheyJoined, setGamesTheyJoined] = useUserVariable<string[]>({
-    //     key: "gamesTheyJoined",
-    //     defaultValue: [],
-    // });
-
     const handleJoin = (code: string) => {
-        // setGamesTheyJoined([...gamesTheyJoined.value, code]);
         onJoin?.(code);
     };
 

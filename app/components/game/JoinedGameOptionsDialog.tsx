@@ -5,7 +5,7 @@ import Row from '../layout/Row';
 import AppButton from '../ui/buttons/AppButton';
 import FontText from '../ui/text/FontText';
 import DialogHeader from '../ui/dialog/DialogHeader';
-import { useUserListGet } from 'hooks/useUserListGet';
+import { useFindListItems } from 'hooks/useData';
 import { useTownSquareAuthorIdentity } from './townSquare/TownSquareAuthorIdentity';
 import { TownSquareAuthorAvatar } from './townSquare/TownSquareAuthorIdentity';
 import { Archive, Hash } from 'lucide-react-native';
@@ -26,8 +26,7 @@ const JoinedGameOptionsDialog = ({
     onArchive
 }: JoinedGameOptionsDialogProps) => {
     // Get game info to find the owner/operator
-    const gameInfo = useUserListGet({
-        key: "games",
+    const gameInfo = useFindListItems("games", {
         filterFor: gameId,
     });
 

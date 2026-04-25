@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { View } from 'react-native';
 import AppButton from '../ui/buttons/AppButton';
-import { useUserListRemove } from 'hooks/useUserListRemove';
-import { useUserVariable } from 'hooks/useUserVariable';
+import { useValue, useListRemove } from 'hooks/useData';
 import FontText from '../ui/text/FontText';
 import DeleteGameConfirmationDialog from '../dialog/DeleteGameConfirmationDialog';
 
@@ -13,7 +12,7 @@ interface RemoveGameButtonProps {
 
 const RemoveGameButton = ({ gameId, className }: RemoveGameButtonProps) => {
     const [isOpen, setIsOpen] = useState(false);
-    const removeGame = useUserListRemove();
+    const removeGame = useListRemove();
 
     const handleRemoveGame = () => {
         removeGame({
@@ -24,9 +23,7 @@ const RemoveGameButton = ({ gameId, className }: RemoveGameButtonProps) => {
         setIsOpen(false);
     };
 
-    const [activeGameId, setActiveGameId] = useUserVariable<string>({
-        key: "activeGameId",
-    });
+    const [activeGameId, setActiveGameId] = useValue<string>('activeGameId');
 
     return (
         <View className={`items-center ${className}`}>

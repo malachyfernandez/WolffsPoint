@@ -8,7 +8,7 @@ import AppButton from '../ui/buttons/AppButton';
 import FontText from '../ui/text/FontText';
 import NewspaperWritingView from './NewspaperWritingView';
 import { useList, useFindListItems } from 'hooks/useData';
-import { useUserListSet } from 'hooks/useUserListSet';
+import { useListSet } from 'hooks/useData';
 import { useGameOperatorUserId } from '../../../hooks/useGameOperatorUserId';
 import { useSharedListValue } from '../../../hooks/useSharedListValue';
 import OperatorDayNavigation from '../ui/daySelector/OperatorDayNavigation';
@@ -74,8 +74,8 @@ const NewspaperPageOPERATOR = ({ currentUserId, gameId }: NewspaperPageOPERATORP
         disabled: leavingDayIndex === null,
     });
     const [, setOperatorUsepaper] = useList<Usepaper>("newspaper", currentDayItemId, { privacy: "PUBLIC", defaultValue: minimumUsepaper });
-    const setOperatorSelectedDayIndex = useUserListSet<number>();
-    const setNewspaperControl = useUserListSet<NewspaperControlState>();
+    const setOperatorSelectedDayIndex = useListSet<number>();
+    const setNewspaperControl = useListSet<NewspaperControlState>();
     const selectedNewserUsepaper = useFindListItems<Usepaper>("newspaper", {
         itemId: currentDayItemId,
         userIds: selectedDayOwner.validNewser?.userId ? [selectedDayOwner.validNewser.userId] : [''],

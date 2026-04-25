@@ -3,7 +3,7 @@ import Column from '../../layout/Column';
 import Row from '../../layout/Row';
 import AppButton from '../buttons/AppButton';
 import FontText from '../text/FontText';
-import { useUserList } from 'hooks/useUserList';
+import { useList } from 'hooks/useData';
 import ShadowScrollView from '../../ui/ShadowScrollView';
 import DaySelectionDialog from '../../game/DaySelectionDialog';
 
@@ -15,28 +15,13 @@ interface DaySelectorProps {
 
 const DaySelector = ({ gameId, className = '', showAddButton = false }: DaySelectorProps) => {
     // Shared selected day index (same as players tab and nightly tab)
-    const [selectedDayIndex, setSelectedDayIndex] = useUserList<number>({
-        key: "selectedDayIndex",
-        itemId: gameId,
-        privacy: "PUBLIC",
-        defaultValue: 0,
-    });
+    const [selectedDayIndex, setSelectedDayIndex] = useList<number>("selectedDayIndex", gameId);
 
     // Shared number of real days per in-game day (same as players tab and nightly tab)
-    const [numberOfRealDaysPerInGameDay, setNumberOfRealDaysPerInGameDay] = useUserList<number>({
-        key: "numberOfRealDaysPerInGameDay",
-        itemId: gameId,
-        privacy: "PUBLIC",
-        defaultValue: 2,
-    });
+    const [numberOfRealDaysPerInGameDay, setNumberOfRealDaysPerInGameDay] = useList<number>("numberOfRealDaysPerInGameDay", gameId);
 
     // Shared day dates array (same as players tab and nightly tab)
-    const [dayDatesArray, setDayDatesArray] = useUserList<string[]>({
-        key: "dayDatesArray",
-        itemId: gameId,
-        privacy: "PUBLIC",
-        defaultValue: [],
-    });
+    const [dayDatesArray, setDayDatesArray] = useList<string[]>("dayDatesArray", gameId);
 
     // Convert stored MM/DD/YYYY strings back to real Date objects for UI use
     const fixedDayDatesArray = dayDatesArray.value.map(dateStr => {

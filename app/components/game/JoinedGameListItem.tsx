@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import AppButton from '../ui/buttons/AppButton';
 import FontText from '../ui/text/FontText';
 import ListRow from '../ui/lists/ListRow';
-import { useUserListGet } from 'hooks/useUserListGet';
+import { useFindListItems } from 'hooks/useData';
 import JoinedGameOptionsDialog from './JoinedGameOptionsDialog';
 import { MoreVertical } from 'lucide-react-native';
 import Row from '../layout/Row';
@@ -19,8 +19,7 @@ interface JoinedGameListItemProps {
 const JoinedGameListItem = ({ game, onArchive, className, setActiveGameId, index }: JoinedGameListItemProps) => {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-    const gameInfo = useUserListGet({
-        key: "games",
+    const gameInfo = useFindListItems("games", {
         filterFor: game,
     })
 

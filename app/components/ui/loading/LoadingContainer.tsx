@@ -3,7 +3,7 @@ import Animated, { FadeIn } from 'react-native-reanimated';
 import Column from '../../layout/Column';
 import LoadingText from './LoadingText';
 
-// Type for useUserVariable / useUserList result shape
+// Type for useValue / useList result shape
 type UserVarResult<T = unknown> = {
     state?: {
         isSyncing?: boolean;
@@ -11,7 +11,7 @@ type UserVarResult<T = unknown> = {
     value?: T;
 } | undefined;
 
-// Type for useUserVariableGet / useUserListGet result (array or undefined)
+// Type for useFindValues / useFindListItems result (array or undefined)
 type UserVarGetResult<T = unknown> = Array<{ value: T }> | undefined;
 
 // Type for the dependency items we accept
@@ -19,8 +19,8 @@ type DependencyItem = UserVarResult<unknown> | UserVarGetResult<unknown> | boole
 
 interface LoadingContainerProps {
     children: React.ReactNode;
-    /** Array of variables to check - can be useUserVariable results, useUserList results, 
-     *  useUserVariableGet results, useUserListGet results, or boolean flags */
+    /** Array of variables to check - can be useValue results, useList results,
+     *  useFindValues results, useFindListItems results, or boolean flags */
     dependencies: DependencyItem[];
     /** Text to show in LoadingText while loading */
     loadingText: string;
@@ -36,21 +36,19 @@ interface LoadingContainerProps {
  * LoadingContainer - A generic loading wrapper that fades in content once all dependencies are ready.
  * 
  * Checks each dependency:
- * - undefined → loading (useUserVariableGet/useUserListGet still fetching)
- * - { state: { isSyncing: true } } → loading (useUserVariable/useUserList still syncing)
+ * - undefined → loading (useFindValues/useFindListItems still fetching)
+ * - { state: { isSyncing: true } } → loading (useValue/useList still syncing)
  * - false boolean → loading (explicit flag)
  * - Anything else → ready
- * 
- * Shows centered LoadingText while loading, then fades in children with reanimated FadeIn.
- * 
+ *
  * @example
  * ```tsx
- * const [profile] = useUserVariable({ key: 'profile' });
- * const posts = useUserListGet({ key: 'posts' });
- * 
- * <LoadingContainer 
- *   dependencies={[profile, posts]} 
- *   loadingText='Loading profile'
+ * const [profile] = useValue('profile');
+ * const posts = useFindListItems('posts');
+ *
+ * <LoadingContainer
+ *   dependencies={[profile, posts]}
+ *   loadingText="Loading..."
  *   className='flex-1 min-h-[760px] pb-8'
  * >
  *   <ProfileContent profile={profile.value} posts={posts} />
@@ -66,10 +64,10 @@ const LoadingContainer = ({
     fadeInDuration = 300,
 }: LoadingContainerProps) => {
     const isLoading = dependencies.some((dep) => {
-        // undefined means still loading (useUserVariableGet/useUserListGet)
+        // undefined means still loading (useFindValues/useFindListItems)
         if (dep === undefined) return true;
 
-        // Check for isSyncing in state (useUserVariable/useUserList results)
+        // Check for isSyncing in state (useValue/useList results)
         if (typeof dep === 'object' && dep !== null && 'state' in dep) {
             const state = (dep as UserVarResult)?.state;
             if (state?.isSyncing === true) return true;

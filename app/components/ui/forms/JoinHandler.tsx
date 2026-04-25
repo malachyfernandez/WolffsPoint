@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import AppButton from '../buttons/AppButton';
 import FontText from '../text/FontText';
-import { useUserListGet } from 'hooks/useUserListGet';
+import { useFindListItems } from 'hooks/useData';
 import ConvexDialog from '../dialog/ConvexDialog';
 import { Dialog } from 'heroui-native/dialog';
 
@@ -17,8 +17,7 @@ const JoinHandler = ({
     onJoin,
 }: JoinHandlerProps) => {
 
-    const validGameId = useUserListGet({
-        key: "games",
+    const validGameId = useFindListItems("games", {
         filterFor: gameCode,
     });
 
