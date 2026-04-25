@@ -83,8 +83,9 @@ const AllGamesPage = ({
 
     const hasJoinedAGame = (activeJoinedGames.length ? true : false);
     const hasMadeAGame = (myGames?.length ? true : false);
+    const hasArchivedGames = (archivedGames.value || []).length > 0;
 
-    const isGamesPageEmpty = !hasJoinedAGame && !hasMadeAGame;
+    const isGamesPageEmpty = !hasJoinedAGame && !hasMadeAGame && !hasArchivedGames;
     const isGamesLoading = gamesTheyJoined?.state.isSyncing;
 
     return (
