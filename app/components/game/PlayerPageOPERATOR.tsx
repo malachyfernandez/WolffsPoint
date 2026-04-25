@@ -8,6 +8,7 @@ import Row from '../layout/Row';
 import ShadowScrollView from '../ui/ShadowScrollView';
 import { View } from 'react-native';
 import PlayerAddUserSection from './PlayerAddUserSection';
+import DownloadPlayerDataButton from './DownloadPlayerDataButton';
 import ComprehensiveDaySelector from '../ui/daySelector/ComprehensiveDaySelector';
 import DaysTable from './DaysTable';
 import LoadingText from '../ui/loading/LoadingText';
@@ -129,6 +130,7 @@ const PlayerPageOPERATOR = ({ currentUserId, gameId }: PlayerPageOPERATORProps) 
 
                         </ShadowScrollView>
                         <PlayerAddUserSection gameId={gameId} />
+                        <DownloadPlayerDataButton gameId={gameId} />
                     </Column>
                 ) : (
 

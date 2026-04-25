@@ -52,7 +52,7 @@ export const userVarConfig = {
     //
     // Set this to true only if you explicitly want useUserVariable(...) to keep
     // re-applying the latest passed privacy on every write.
-    overwriteStoredPrivacyOnSet: false,
+    overwriteStoredPrivacyOnSet: true,
 
     // Used when a new variable is created without a sortKey.
     defaultSortKey: "PROPERTY_LAST_MODIFIED",

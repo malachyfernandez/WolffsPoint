@@ -85,4 +85,19 @@ export const DATA_CONFIG: DataConfigType = {
     privacy: "PUBLIC",
     defaultValue: {},
   },
+  userTableTitle: {
+    type: "list",
+    privacy: "PUBLIC",
+    defaultValue: { extraUserColumns: [], extraDayColumns: [] },
+  },
+  userTableColumnVisibility: {
+    type: "list",
+    privacy: "PUBLIC",
+    defaultValue: { extraUserColumns: [], extraDayColumns: [] },
+  },
+  morningMessagesList: {
+    type: "list",
+    privacy: "PUBLIC",
+    defaultValue: {},
+  },
 };

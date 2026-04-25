@@ -64,6 +64,7 @@ const YourEyesOnlyDayContentPLAYER = ({ gameId, currentEmail, currentUserId, day
             submittedActionAt: null,
         },
         sortKey: 'submittedActionAt',
+        privacy: 'PUBLIC',
     });
 
     const voteOptions = userTable
