@@ -7,28 +7,22 @@ export const useSyncUserData = (userData: any, setUserData: any) => {
     const { isLoading: isConvexAuthLoading, isAuthenticated: isConvexAuthenticated } = useConvexAuth();
 
     useEffect(() => {
-        // Don't proceed if Clerk hasn't loaded yet
         if (!isClerkLoaded) {
-            console.log("⏳ Clerk still loading, skipping sync");
             return;
         }
 
         if (isConvexAuthLoading) {
-            console.log("⏳ Convex auth still loading, skipping sync");
             return;
         }
 
         const isLoggedIn = !!user;
         const isLoaded = userData !== undefined;
 
-        // Only proceed if user is fully loaded and authenticated
         if (!isLoggedIn) {
-            console.log("🔒 User not authenticated, skipping sync");
             return;
         }
 
         if (!isConvexAuthenticated) {
-            console.log("🔒 Convex not authenticated, skipping sync");
             return;
         }
 
@@ -51,7 +45,6 @@ export const useSyncUserData = (userData: any, setUserData: any) => {
                     email: clerkEmail,
                     userId: clerkUserId,
                 });
-                console.log("↻ Syncing userData with Clerk");
             }
         }
     }, [user, userData, isClerkLoaded, isConvexAuthLoading, isConvexAuthenticated]);

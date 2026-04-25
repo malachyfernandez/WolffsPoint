@@ -34,10 +34,6 @@ export function useValue<T = any>(key: string, overrides: any = {}): [UserVariab
 
   const finalResult = result || [{ value: args.defaultValue, state: { isSyncing: true } }, NO_OP];
   
-  if (key === 'activeGameId' || key === 'userData') {
-      console.log(`[useValue:${key}] Returning result for ${subId}. isSyncing: ${finalResult[0].state.isSyncing}, hasResultFromStore: ${!!result}`);
-  }
-
   return finalResult;
 }
 
@@ -50,10 +46,8 @@ export function useList<T = any>(key: string, itemId: string, overrides: any = {
   const subId = useMemo(() => JSON.stringify({ type: 'list', key, itemId, args }), [key, itemId, args]);
 
   useEffect(() => {
-    console.log(`[useList] Registering ${subId}`);
     const unregister = globalDataStore.register(subId, { type: 'list', key, itemId, args });
     return () => {
-        console.log(`[useList] Unregistering ${subId}`);
         unregister();
     };
   }, [subId, key, itemId, args]);
@@ -108,10 +102,8 @@ export function useFindListItems<T = any>(key: string, queryArgs: {
   const subId = useMemo(() => JSON.stringify({ type: 'find-list-items', key, args }), [key, args]);
 
   useEffect(() => {
-    console.log(`[useFindListItems] Registering ${subId}`);
     const unregister = globalDataStore.register(subId, { type: 'find-list-items', key, args });
     return () => {
-        console.log(`[useFindListItems] Unregistering ${subId}`);
         unregister();
     };
   }, [subId, key, args]);

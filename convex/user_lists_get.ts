@@ -87,7 +87,6 @@ export const search = query({
     startAfter: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    console.log(`[user_lists_get:search] Requested by client: key=${args.key}, itemId=${args.itemId}, userIds=${JSON.stringify(args.userIds)}, searchFor=${args.searchFor}, filterFor=${args.filterFor}`);
     const identity = await ctx.auth.getUserIdentity();
     const viewerUserId = identity?.subject;
 

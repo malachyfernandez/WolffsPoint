@@ -25,18 +25,12 @@ const ChangeDateInfo = ({ gameId, isGettingStarted }: ChangeDateInfoProps) => {
     const [startingDate, setStartingDate] = useList("startingDate", gameId);
 
     const [numberOfRealDaysPerInGameDay, setNumberOfRealDaysPerInGameDay] = useList<number>("numberOfRealDaysPerInGameDay", gameId);
-    console.log("set default to 2 in ChangeDateInfo.tsx");
-
-
-
 
     const resetState = () => {
         setDate('');
         setRealDaysPerInGameDaySTATE('2');
-        console.log("set default to 2 in ChangeDateInfo.tsx resetState");
         setOldDate('');
         setOldRealDaysPerInGameDay('2');
-        console.log("set default to 2 in ChangeDateInfo.tsx resetState oldRealDaysPerInGameDay");
     };
 
 
@@ -49,7 +43,6 @@ const ChangeDateInfo = ({ gameId, isGettingStarted }: ChangeDateInfoProps) => {
 
     const [date, setDate] = useState('');
     const [realDaysPerInGameDaySTATE, setRealDaysPerInGameDaySTATE] = useState('2');
-    console.log("set default to 2 in ChangeDateInfo.tsx useState realDaysPerInGameDaySTATE");
 
     const [oldDate, setOldDate] = useState(date);
     const [oldRealDaysPerInGameDay, setOldRealDaysPerInGameDay] = useState(realDaysPerInGameDaySTATE);
@@ -65,7 +58,6 @@ const ChangeDateInfo = ({ gameId, isGettingStarted }: ChangeDateInfoProps) => {
 
     useEffect(() => {
         if (realDaysPerInGameDaySTATE == '2' && numberOfRealDaysPerInGameDay.value != 2) {
-            console.log("set default to 2 in ChangeDateInfo.tsx useEffect checking realDaysPerInGameDaySTATE");
             setRealDaysPerInGameDaySTATE(numberOfRealDaysPerInGameDay.value.toString());
             setIsNumberValid(true);
             setOldRealDaysPerInGameDay(numberOfRealDaysPerInGameDay.value.toString());

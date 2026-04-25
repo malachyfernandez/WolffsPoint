@@ -240,14 +240,6 @@ export function useUserVariable<T>({
     overwriteStoredPrivacy?: boolean;
     onOpStatusChange?: (info: UserVarOpStatusInfo<T>) => void;
 }): [UserVariableResult<T>, (newValue: T) => void] {
-    // Log when this hook mounts or changes its Convex query arguments
-    useEffect(() => {
-        console.log(`[useUserVariable:CONVEX] Subscribing to key=${key}`);
-        return () => {
-            console.log(`[useUserVariable:CONVEX] Unsubscribing from key=${key}`);
-        };
-    }, [key]);
-
     const record = useQuery(api.user_vars.get, { key });
 
     const isSyncing = record === undefined;

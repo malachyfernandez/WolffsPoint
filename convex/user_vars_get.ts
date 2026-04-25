@@ -82,7 +82,6 @@ export const search = query({
     startAfter: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    console.log(`[user_vars_get:search] Requested by client: key=${args.key}, userIds=${JSON.stringify(args.userIds)}, searchFor=${args.searchFor}, filterFor=${args.filterFor}`);
     const identity = await ctx.auth.getUserIdentity();
     const viewerUserId = identity?.subject;
     const limit = Math.max(1, Math.min(args.returnTop ?? 10, 200));

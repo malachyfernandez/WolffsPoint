@@ -31,7 +31,6 @@ class DataStore {
   }
   
   setResult(subId: SubId, result: any) {
-    console.log(`[DataStore] setResult for ${subId}`);
     this.results.set(subId, result);
     this.listeners.get(subId)?.forEach(fn => fn());
   }
@@ -53,7 +52,6 @@ class DataStore {
   }
 
   killSub(subId: SubId) {
-    console.log(`[DataProvider] killSub called for ${subId}`);
     this.configs.delete(subId);
     this.results.delete(subId);
     this.refCounts.delete(subId);
@@ -88,11 +86,6 @@ function safeStringify(obj: any) {
 }
 
 function DataSubscriber({ subId, config, refCount }: { subId: SubId, config: any, refCount: number }) {
-  useEffect(() => {
-    console.log(`[DataSubscriber] MOUNTED for ${subId}`);
-    return () => console.log(`[DataSubscriber] UNMOUNTED for ${subId}`);
-  }, [subId]);
-
   const [unloadedChanges, setUnloadedChanges] = useState(0);
 
   let result: any;
@@ -100,7 +93,6 @@ function DataSubscriber({ subId, config, refCount }: { subId: SubId, config: any
   // Disable rules of hooks because config.type is completely static for a given subId.
   // A subscriber component is never re-used for a different type.
   /* eslint-disable react-hooks/rules-of-hooks */
-  console.log(`[DataProvider:DataSubscriber] Running hook for ${subId}, type=${config.type}, args=${JSON.stringify(config.args)}`);
   switch (config.type) {
     case 'variable':
       result = useUserVariable({ key: config.key, ...config.args });
@@ -114,7 +106,6 @@ function DataSubscriber({ subId, config, refCount }: { subId: SubId, config: any
     case 'find-list-items':
       // Explicitly spread query args to ensure userIds and other filters are passed
       const listGetArgs = { key: config.key, ...config.args };
-      console.log(`[DataProvider:DataSubscriber] useUserListGet args:`, JSON.stringify(listGetArgs));
       result = useUserListGet(listGetArgs);
       break;
     case 'value-count':
@@ -140,7 +131,6 @@ function DataSubscriber({ subId, config, refCount }: { subId: SubId, config: any
       
       // Track changes if nobody is actively listening
       if (refCount === 0) {
-        console.log(`[DataSubscriber] Result changed while refCount=0 for ${subId}. Incrementing unloadedChanges. Old: ${prevStringifiedRef.current?.substring(0, 50)}... New: ${stringified?.substring(0, 50)}...`);
         setUnloadedChanges(c => c + 1);
       }
     }
@@ -155,7 +145,6 @@ function DataSubscriber({ subId, config, refCount }: { subId: SubId, config: any
   useEffect(() => {
     const maxChanges = config.args?.unloadedChangesThreshold ?? 3;
     if (unloadedChanges > maxChanges) {
-      console.log(`[DataSubscriber] Killing sub ${subId} because unloadedChanges (${unloadedChanges}) > maxChanges (${maxChanges})`);
       globalDataStore.killSub(subId);
     }
   }, [unloadedChanges, config.args, subId]);

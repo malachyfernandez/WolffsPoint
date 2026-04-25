@@ -61,14 +61,6 @@ export function useUserListGet<TValue = any>({
   returnTop,
   startAfter,
 }: UseUserListGetOptions) {
-  // Log when this hook mounts or changes its Convex query arguments
-  useEffect(() => {
-    console.log(`[useUserListGet:CONVEX] Subscribing to key=${key}, itemId=${itemId}, userIds=${JSON.stringify(userIds)}`);
-    return () => {
-      console.log(`[useUserListGet:CONVEX] Unsubscribing from key=${key}, itemId=${itemId}, userIds=${JSON.stringify(userIds)}`);
-    };
-  }, [key, itemId, searchFor, filterFor, JSON.stringify(userIds), returnTop, startAfter]);
-
   const results = useQuery(api.user_lists_get.search, {
     key,
     itemId,
