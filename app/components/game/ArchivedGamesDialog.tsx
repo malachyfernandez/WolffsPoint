@@ -8,6 +8,7 @@ import DialogHeader from '../ui/dialog/DialogHeader';
 import { useValue, useFindListItems } from 'hooks/useData';
 import ListRow from '../ui/lists/ListRow';
 import { UserVariableResult } from 'hooks/useUserVariable';
+import { View } from 'react-native';
 
 interface ArchivedGamesDialogProps {
     isOpen: boolean;
@@ -28,14 +29,10 @@ const ArchivedGamesDialog = ({ isOpen, onOpenChange, setActiveGameId, textClassN
         setArchivedGames(archivedGameIds.filter(id => id !== gameId));
         // Add back to joined games
         setGamesTheyJoined([...(gamesTheyJoined.value || []), gameId]);
-    };
-
-    const handleGamePress = (gameId: string) => {
-        setActiveGameId(gameId);
         onOpenChange(false);
     };
 
-        return (
+    return (
         <ConvexDialog.Root isOpen={isOpen} onOpenChange={onOpenChange}>
             <ConvexDialog.Portal>
                 <ConvexDialog.Overlay />
@@ -61,7 +58,6 @@ const ArchivedGamesDialog = ({ isOpen, onOpenChange, setActiveGameId, textClassN
                                         gameId={gameId}
                                         index={index}
                                         onUnarchive={() => handleUnarchive(gameId)}
-                                        onPress={() => handleGamePress(gameId)}
                                         textClassName={textClassName}
                                     />
                                 ))
@@ -78,11 +74,10 @@ interface ArchivedGameRowProps {
     gameId: string;
     index: number;
     onUnarchive: () => void;
-    onPress: () => void;
     textClassName?: string;
 }
 
-const ArchivedGameRow = ({ gameId, index, onUnarchive, onPress, textClassName }: ArchivedGameRowProps) => {
+const ArchivedGameRow = ({ gameId, index, onUnarchive, textClassName }: ArchivedGameRowProps) => {
     const gameInfo = useFindListItems("games", {
         filterFor: gameId,
     });
@@ -97,22 +92,22 @@ const ArchivedGameRow = ({ gameId, index, onUnarchive, onPress, textClassName }:
 
     return (
         <Row className="gap-0 items-center">
-            <ListRow
-                className={`justify-between items-center flex-1 ${borderClass}`}
-                onPress={onPress}
-            >
-                <FontText className={textClassName || "text-text-inverted"}>
-                    {`${displayName} (${displayId})`}
-                    {isGameDeleted && (
-                        <FontText className={`${textClassName || "text-text-inverted"} text-sm`}>
-                            {' - (this game might have been deleted)'}
-                        </FontText>
-                    )}
-                </FontText>
-            </ListRow>
-
+            <View className='flex-1 h-16!' pointerEvents="none">
+                <ListRow
+                    className={`justify-between items-center flex-1 pointer-events-none ${borderClass}`}
+                >
+                    <FontText className={textClassName || "text-text-inverted"}>
+                        {`${displayName} (${displayId})`}
+                        {isGameDeleted && (
+                            <FontText className={`${textClassName || "text-text-inverted"} text-sm`}>
+                                {' - (this game might have been deleted)'}
+                            </FontText>
+                        )}
+                    </FontText>
+                </ListRow>
+            </View>
             <AppButton
-                variant="accent"
+                variant="filled"
                 className="h-10 px-3"
                 onPress={onUnarchive}
             >
