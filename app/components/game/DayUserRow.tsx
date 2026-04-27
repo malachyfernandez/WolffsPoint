@@ -85,7 +85,7 @@ const DayUserRow = ({ user, index, isLast, dayNumber, setVoteValue, setActionVal
                         className="text-center text-nowrap overflow-hidden"
                         style={{ width: dayBaseColumnWidths.vote - 16 }}
                     >
-                        {dayData.vote ? resolvedVoteName : 'Vote'}
+                        {dayData.vote ? resolvedVoteName : <FontText className="opacity-50">No Vote...</FontText>}
                     </FontText>
                 </Pressable>
             </Column>

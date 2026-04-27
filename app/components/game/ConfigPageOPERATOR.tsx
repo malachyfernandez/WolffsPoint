@@ -18,6 +18,8 @@ import GameNameConfigItem from './config/GameNameConfigItem';
 import RuleBookPageOPERATOR from './RuleBookPageOPERATOR';
 import PhoneBookPageOPERATOR from './PhoneBookPageOPERATOR';
 import RemoveGameButton from './RemoveGameButton';
+import DownloadPlayerDataButton from './DownloadPlayerDataButton';
+import DownloadNewspaperButton from './DownloadNewspaperButton';
 
 interface ConfigPageOPERATORProps {
     gameId: string;
@@ -116,6 +118,24 @@ const ConfigPageOPERATOR = ({ gameId, currentUserId }: ConfigPageOPERATORProps) 
                     <Column className='gap-6 pb-6'>
                         <RuleBookPreviewCard gameId={gameId} onPress={() => setActiveScreen('ruleBook')} />
                         <PhoneBookPreviewCard gameId={gameId} currentUserId={currentUserId} onPress={() => setActiveScreen('phoneBook')} />
+
+                        <Column className='gap-3 items-center border-t border-border/15 pt-6'>
+                            <FontText weight='medium'>Export game data</FontText>
+                            <Row className='gap-4 flex-wrap w-full'>
+                                <Column className='gap-2 items-center flex-1 min-w-[300px]'>
+                                    <FontText variant='subtext' className='text-center'>
+                                        Downloads the full table from the nightly and players pages for all days.
+                                    </FontText>
+                                    <DownloadPlayerDataButton gameId={gameId} />
+                                </Column>
+                                <Column className='gap-2 items-center flex-1 min-w-[300px]'>
+                                    <FontText variant='subtext' className='text-center'>
+                                        Downloads each day's newspaper columns as markdown files in a zip.
+                                    </FontText>
+                                    <DownloadNewspaperButton gameId={gameId} />
+                                </Column>
+                            </Row>
+                        </Column>
 
                         <Column className='gap-0 border-y border-border/15'>
                             <ActionDeadlineConfigItem gameId={gameId} />

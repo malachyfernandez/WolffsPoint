@@ -124,7 +124,7 @@ const DownloadPlayerDataButton = ({ gameId }: DownloadPlayerDataButtonProps) => 
             <Row className="gap-2 items-center">
                 <Download size={20} />
                 <FontText weight="medium">
-                    {isDownloading ? 'Preparing...' : 'Download Data'}
+                    {isDownloading ? 'Preparing...' : 'Download Table as Excel'}
                 </FontText>
             </Row>
         </AppButton>
