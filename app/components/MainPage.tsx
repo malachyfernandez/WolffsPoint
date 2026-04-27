@@ -1,4 +1,4 @@
-import React, { PropsWithChildren, useState } from 'react';
+import React, { PropsWithChildren, useState, useMemo } from 'react';
 import { Button } from 'heroui-native/button';
 import { Dialog } from 'heroui-native/dialog';
 import { ScrollView, View } from 'react-native';
@@ -13,7 +13,6 @@ import LayoutStateAnimatedView, { fromBottom } from './ui/LayoutStateAnimatedVie
 import FontTextInput from './ui/forms/FontTextInput';
 import JoinHandler from './ui/forms/JoinHandler';
 import FadeInAfterDelay from './ui/loading/FadeInAfterDelay';
-import prettyLog from 'utils/prettyLog';
 
 
 
@@ -45,9 +44,6 @@ const MainPage: React.FC<MainPageProps> = ({
     });
 
     const [activeGameId, setActiveGameId] = useValue<string>("activeGameId");
-
-
-    prettyLog(activeGameId);
     const generateGameId = () => {
         const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
         let result = '';

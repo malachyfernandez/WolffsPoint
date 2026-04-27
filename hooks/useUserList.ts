@@ -281,6 +281,9 @@ export function useUserList<T>({
       ? ((confirmedValue ?? defaultValue) as T)
       : baseValue;
 
+  const valueRef = useRef(value);
+  valueRef.current = value;
+
   useEffect(() => {
     if (!shouldAutoResetOnTimeout) return;
     if (opState.lastOpStatus !== "timed_out") return;
@@ -333,7 +336,7 @@ export function useUserList<T>({
     // Track mutation for rate limit monitoring
     globalRateLimitMonitor.trackCall(`user_lists:${key}:${itemId}`);
 
-    if (deepEqual(newValue, value)) {
+    if (deepEqual(newValue, valueRef.current)) {
       return;
     }
 

@@ -74,7 +74,7 @@ const NightlyDaysTable = ({
     // Subscribe to nightly page column sizes
     const [columnSizes, setColumnSizes] = useValue<NightlyPageColumnSizes>(
         getNightlyPageColumnSizesKey(gameId),
-        { defaultValue: defaultNightlyPageColumnSizes }
+        { defaultValue: defaultNightlyPageColumnSizes, privacy: 'PUBLIC' }
     );
 
     // Track when column data is ready (only check isSyncing, not value presence)

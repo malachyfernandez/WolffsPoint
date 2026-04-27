@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import FontText from '../ui/text/FontText';
 import { useList, useValue } from 'hooks/useData';
 import { deepEqual } from 'utils/deepEqual';
@@ -46,6 +46,9 @@ const PlayerTable = ({ gameId, doSync, setDoSync, isBeingEdited, setIsBeingEdite
 
     const [userTableColumnVisibility, setUserTableColumnVisibility] = useList<UserTableColumnVisibility>("userTableColumnVisibility", gameId, { privacy: "PUBLIC" });
 
+    const hasNormalizedOnceRef = useRef(false);
+    const prevDayDatesLengthRef = useRef(dayDatesArray.length);
+
     // Track when column data is ready (only check isSyncing, not value presence)
     const areColumnsReady = !userTable?.state?.isSyncing 
         && !userTableTitle?.state?.isSyncing 
@@ -55,10 +58,18 @@ const PlayerTable = ({ gameId, doSync, setDoSync, isBeingEdited, setIsBeingEdite
         onColumnsReady?.(areColumnsReady);
     }, [areColumnsReady, onColumnsReady]);
 
-    // Normalization effect - only runs when data is synced and stable
+    // Normalization effect - only runs when data first becomes ready or day count changes
     useEffect(() => {
         // Skip if any data is still syncing to avoid fighting during load
         if (userTable?.state?.isSyncing || userTableTitle?.state?.isSyncing || userTableColumnVisibility?.state?.isSyncing) {
+            hasNormalizedOnceRef.current = false;
+            return;
+        }
+
+        const dayDatesLengthChanged = prevDayDatesLengthRef.current !== dayDatesArray.length;
+        prevDayDatesLengthRef.current = dayDatesArray.length;
+
+        if (hasNormalizedOnceRef.current && !dayDatesLengthChanged) {
             return;
         }
 
@@ -84,10 +95,10 @@ const PlayerTable = ({ gameId, doSync, setDoSync, isBeingEdited, setIsBeingEdite
         if (!deepEqual(currentUsers, normalizedState.users)) {
             setUserTable(normalizedState.users);
         }
+
+        hasNormalizedOnceRef.current = true;
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [
-        // Only depend on the actual values, not the callbacks
-        // Use JSON.stringify to create stable comparison of array contents
         userTable?.state?.isSyncing,
         userTableTitle?.state?.isSyncing,
         userTableColumnVisibility?.state?.isSyncing,
@@ -241,7 +252,7 @@ const PlayerTable = ({ gameId, doSync, setDoSync, isBeingEdited, setIsBeingEdite
     // Subscribe to player page column sizes
     const [columnSizes, setColumnSizes] = useValue<PlayerPageColumnSizes>(
         getPlayerPageColumnSizesKey(gameId),
-        { defaultValue: defaultPlayerPageColumnSizes }
+        { defaultValue: defaultPlayerPageColumnSizes, privacy: 'PUBLIC' }
     );
 
     // Calculate extra user column widths based on sizes

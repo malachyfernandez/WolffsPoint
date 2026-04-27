@@ -9,6 +9,8 @@ import AppButton from '../ui/buttons/AppButton';
 import { PlayerNightSubmission } from '../../../types/multiplayer';
 import { UserTableItem } from '../../../types/playerTable';
 import { getPlayerActionSummary } from '../../../utils/multiplayer';
+import ActionPills from './ActionPills';
+import { resolveVoteEmailToName } from './VoteEditorDialog';
 
 interface NightlyCertificationDialogProps {
     isOpen: boolean;
@@ -38,11 +40,36 @@ const NightlyCertificationDialog = ({ isOpen, onOpenChange, users, submissionsBy
                             </Row>
                             {users.map((user) => {
                                 const submission = submissionsByEmail[user.email];
+                                const resolvedVote = resolveVoteEmailToName(submission?.vote || '', users);
+                                const actionSummary = getPlayerActionSummary(submission?.action);
                                 return (
-                                    <Row key={user.email} className='gap-4 border-b border-subtle-border py-2'>
-                                        <FontText className='flex-1'>{user.realName || user.email}</FontText>
-                                        <FontText className='flex-1'>{submission?.vote || '—'}</FontText>
-                                        <FontText className='flex-1'>{getPlayerActionSummary(submission?.action) || '—'}</FontText>
+                                    <Row key={user.email} className='gap-4 border-b border-subtle-border py-2 items-center'>
+                                        <Column className='flex-1 gap-0'>
+                                            <FontText
+                                                weight='medium'
+                                                className='text-nowrap overflow-hidden'
+                                            >
+                                                {user.realName || (
+                                                    <FontText className="opacity-50">No Name</FontText>
+                                                )}
+                                            </FontText>
+                                            <FontText
+                                                variant='subtext'
+                                                className='text-nowrap overflow-hidden'
+                                            >
+                                                {user.role || (
+                                                    <FontText className="opacity-50">No role</FontText>
+                                                )}
+                                            </FontText>
+                                        </Column>
+                                        <FontText weight='medium' className='flex-1'>{submission?.vote?.trim() ? resolvedVote : '—'}</FontText>
+                                        <Column className='flex-1 items-center justify-center'>
+                                            {actionSummary ? (
+                                                <ActionPills actionText={actionSummary} />
+                                            ) : (
+                                                <FontText className='opacity-50'>—</FontText>
+                                            )}
+                                        </Column>
                                     </Row>
                                 );
                             })}

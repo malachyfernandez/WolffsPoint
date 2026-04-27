@@ -89,7 +89,21 @@ const DownloadPlayerDataButton = ({ gameId }: DownloadPlayerDataButtonProps) => 
             });
 
             const fileName = `${gameName.replace(/\s+/g, '_')}_players.xlsx`;
-            XLSX.writeFile(workbook, fileName);
+
+            const wbout = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+            const blob = new Blob([wbout], {
+                type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            });
+            const url = URL.createObjectURL(blob);
+            const a = (typeof document !== 'undefined' ? document.createElement('a') : null);
+            if (a) {
+                a.href = url;
+                a.download = fileName;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
         } catch (error) {
             console.error('Failed to download player data:', error);
         } finally {

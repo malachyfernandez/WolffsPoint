@@ -36,7 +36,7 @@ export const useTownSquareForum = ({ currentProfile, gameId, selectedPostId }: U
 
     const isLoading = posts === undefined || comments === undefined;
 
-    const [readState, setReadState] = useValue<TownSquareReadState>(readStateKey, { defaultValue: {} });
+    const [readState, setReadState] = useValue<TownSquareReadState>(readStateKey, { defaultValue: {}, privacy: 'PUBLIC' });
 
     const replies = useMemo(() => {
         return [...(comments ?? [])]
