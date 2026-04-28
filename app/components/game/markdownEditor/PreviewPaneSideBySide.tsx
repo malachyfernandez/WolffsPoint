@@ -7,6 +7,7 @@ interface PreviewPaneSideBySideProps {
     includeTitle: boolean;
     inputState: Record<string, string | undefined>;
     setInputState: React.Dispatch<React.SetStateAction<Record<string, string | undefined>>>;
+    centered?: boolean;
 }
 
 export function PreviewPaneSideBySide({
@@ -15,6 +16,7 @@ export function PreviewPaneSideBySide({
     includeTitle,
     inputState,
     setInputState,
+    centered = false,
 }: PreviewPaneSideBySideProps) {
     return (
         <TownSquareComposerPreviewPane
@@ -23,6 +25,7 @@ export function PreviewPaneSideBySide({
             markdownInputState={inputState}
             setMarkdownInputState={setInputState}
             title={title}
+            centered={centered}
         />
     );
 }

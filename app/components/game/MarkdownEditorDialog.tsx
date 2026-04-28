@@ -39,6 +39,7 @@ interface MarkdownEditorDialogProps {
     titleInputLabel?: string;
     titleInputPlaceholder?: string;
     requireMarkdown?: boolean;
+    centered?: boolean;
 }
 
 const MarkdownEditorDialog = ({
@@ -57,6 +58,7 @@ const MarkdownEditorDialog = ({
     titleInputLabel = 'Thread title',
     titleInputPlaceholder = 'Conversation topic',
     requireMarkdown = false,
+    centered = false,
 }: MarkdownEditorDialogProps) => {
     const { executeCommand } = useUndoRedo();
     const createUndoSnapshot = useCreateUndoSnapshot();
@@ -204,6 +206,7 @@ const MarkdownEditorDialog = ({
                             onImage={handleImage}
                             onInput={handleInput}
                             onMore={handleMore}
+                            centered={centered}
                         />
                         <Row className='gap-4 justify-end pt-4 -mx-3 sm:mx-0'>
                             <ActionButtons

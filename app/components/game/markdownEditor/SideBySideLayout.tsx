@@ -20,6 +20,7 @@ interface SideBySideLayoutProps {
     onImage: () => void;
     onInput: () => void;
     onMore: () => void;
+    centered?: boolean;
 }
 
 export function SideBySideLayout({
@@ -37,6 +38,7 @@ export function SideBySideLayout({
     onImage,
     onInput,
     onMore,
+    centered = false,
 }: SideBySideLayoutProps) {
     return (
         <Row className='gap-4 flex-1 min-h-0'>
@@ -60,6 +62,7 @@ export function SideBySideLayout({
                     includeTitle={includeTitle}
                     inputState={previewInputState}
                     setInputState={setPreviewInputState}
+                    centered={centered}
                 />
             </Column>
         </Row>

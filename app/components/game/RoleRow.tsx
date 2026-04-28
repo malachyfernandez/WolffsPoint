@@ -122,6 +122,7 @@ const RoleRow = ({ gameId, role, index, isLast, setRoleName, setDoesRoleVote, se
                 submitLabel="Save About"
                 initialMarkdown={role.aboutRole}
                 onSubmit={({ markdown }) => setAboutRole(index, markdown)}
+                centered={true}
             />
         </>
     );

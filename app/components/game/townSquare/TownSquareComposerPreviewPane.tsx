@@ -10,9 +10,10 @@ interface TownSquareComposerPreviewPaneProps {
     markdownInputState?: Record<string, string | undefined>;
     setMarkdownInputState?: (nextState: Record<string, string | undefined>) => void;
     title: string;
+    centered?: boolean;
 }
 
-const TownSquareComposerPreviewPane = ({ includeTitle, markdown, markdownInputState, setMarkdownInputState, title }: TownSquareComposerPreviewPaneProps) => {
+const TownSquareComposerPreviewPane = ({ includeTitle, markdown, markdownInputState, setMarkdownInputState, title, centered = false }: TownSquareComposerPreviewPaneProps) => {
     return (
         <Column className='gap-2 flex-1 min-w-0'>
             {/* <FontText weight='medium'>Preview</FontText> */}
@@ -25,7 +26,7 @@ const TownSquareComposerPreviewPane = ({ includeTitle, markdown, markdownInputSt
                         ) : null}
 
                         {markdown.trim() ? (
-                            <MarkdownRenderer markdown={markdown.trim()} state={markdownInputState} setState={setMarkdownInputState} isInDialog={true} />
+                            <MarkdownRenderer markdown={markdown.trim()} state={markdownInputState} setState={setMarkdownInputState} isInDialog={true} textAlign={centered ? 'center' : undefined} />
                         ) : (
                             <Column className='gap-1 py-12'>
                                 <FontText weight='medium'>Nothing to preview yet</FontText>

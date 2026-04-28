@@ -9,6 +9,7 @@ interface PreviewPaneProps {
     inputState: Record<string, string | undefined>;
     setInputState: React.Dispatch<React.SetStateAction<Record<string, string | undefined>>>;
     className?: string;
+    centered?: boolean;
 }
 
 export function PreviewPane({
@@ -18,6 +19,7 @@ export function PreviewPane({
     inputState,
     setInputState,
     className,
+    centered = false,
 }: PreviewPaneProps) {
     return (
         <ShadowScrollView className={className || 'flex-1'} scrollViewClassName='flex-1 rounded-[24px] py-4'>
@@ -27,6 +29,7 @@ export function PreviewPane({
                     markdownInputState={inputState}
                     setMarkdownInputState={setInputState}
                     title={title}
+                    centered={centered}
                 />
         </ShadowScrollView>
     );

@@ -28,6 +28,7 @@ interface MainContentProps {
     onImage: () => void;
     onInput: () => void;
     onMore: () => void;
+    centered?: boolean;
 }
 
 export function MainContent({
@@ -51,6 +52,7 @@ export function MainContent({
     onImage,
     onInput,
     onMore,
+    centered = false,
 }: MainContentProps) {
     const { width } = useWindowDimensions();
     const isSideBySide = width > 800;
@@ -85,6 +87,7 @@ export function MainContent({
                     onImage={onImage}
                     onInput={onInput}
                     onMore={onMore}
+                    centered={centered}
                 />
             ) : (
                 <TabbedLayout
@@ -104,6 +107,7 @@ export function MainContent({
                     onImage={onImage}
                     onInput={onInput}
                     onMore={onMore}
+                    centered={centered}
                 />
             )}
         </Column>

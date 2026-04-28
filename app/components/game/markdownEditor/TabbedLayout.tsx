@@ -24,6 +24,7 @@ interface TabbedLayoutProps {
     onImage: () => void;
     onInput: () => void;
     onMore: () => void;
+    centered?: boolean;
 }
 
 export function TabbedLayout({
@@ -43,6 +44,7 @@ export function TabbedLayout({
     onImage,
     onInput,
     onMore,
+    centered = false,
 }: TabbedLayoutProps) {
     return (
         <Tabs value={activeTab} onValueChange={onTabChange} className='flex-1 h-full'>
@@ -75,6 +77,7 @@ export function TabbedLayout({
                             markdownInputState={previewInputState}
                             setMarkdownInputState={setPreviewInputState}
                             title={draftTitle}
+                            centered={centered}
                         />
                 </ShadowScrollView>
             </Tabs.Content>
