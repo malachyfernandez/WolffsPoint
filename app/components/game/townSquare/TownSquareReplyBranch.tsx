@@ -1,9 +1,10 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Pressable, useWindowDimensions } from 'react-native';
 import Column from '../../layout/Column';
 import Row from '../../layout/Row';
 import MarkdownRenderer from '../../ui/markdown/MarkdownRenderer';
 import FontText from '../../ui/text/FontText';
+import DeleteConfirmationDialog from '../DeleteRoleConfirmationDialog';
 import { TownSquareAuthorAvatar, TownSquareAuthorName } from './TownSquareAuthorIdentity';
 import { ReplyTreeNode, formatTimestamp } from './townSquareUtils';
 
@@ -30,6 +31,7 @@ const TownSquareReplyBranch = ({
     onExpandBranch,
     onReply,
 }: TownSquareReplyBranchProps) => {
+    const [pendingDeleteNode, setPendingDeleteNode] = useState<ReplyTreeNode | null>(null);
     const { width: screenWidth } = useWindowDimensions();
     const indentSize = useMemo(() => (screenWidth < 450 ? 16 : 24), [screenWidth]);
 
@@ -67,7 +69,7 @@ const TownSquareReplyBranch = ({
                                                     <FontText weight='bold' className='text-accent'>Edit</FontText>
                                                 </Pressable>
                                             )}
-                                            <Pressable onPress={() => onDeleteReply(node)}>
+                                            <Pressable onPress={() => setPendingDeleteNode(node)}>
                                                 <FontText weight='bold' className='text-red-500'>Delete</FontText>
                                             </Pressable>
                                         </>
@@ -100,6 +102,17 @@ const TownSquareReplyBranch = ({
                     </Column>
                 );
             })}
+            <DeleteConfirmationDialog
+                isOpen={pendingDeleteNode !== null}
+                onOpenChange={(open) => { if (!open) setPendingDeleteNode(null); }}
+                onConfirm={() => {
+                    if (pendingDeleteNode) {
+                        onDeleteReply(pendingDeleteNode);
+                    }
+                }}
+                itemType="Reply"
+                itemName="this reply"
+            />
         </Column>
     );
 };

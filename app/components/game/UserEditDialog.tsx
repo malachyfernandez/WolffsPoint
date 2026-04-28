@@ -13,6 +13,7 @@ import { UserTableItem } from 'types/playerTable';
 import { useCreateUndoSnapshot, useUndoRedo } from 'hooks/useUndoRedo';
 import Row from '../layout/Row';
 import StatusButton from '../ui/StatusButton';
+import DeleteConfirmationDialog from './DeleteRoleConfirmationDialog';
 
 interface UserEditDialogProps {
     isOpen: boolean;
@@ -130,6 +131,8 @@ const UserEditDialog = ({
         onOpenChange(false);
     };
 
+    const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+
     const handleDeleteUser = () => {
         // Remove user from the users array
         const updatedUsers = users.filter((_, index) => index !== userIndex);
@@ -139,6 +142,7 @@ const UserEditDialog = ({
     };
 
     return (
+        <>
         <ConvexDialog.Root isOpen={isOpen} onOpenChange={handleDialogOpenChange}>
             <ConvexDialog.Trigger asChild>
                 <View>
@@ -206,7 +210,7 @@ const UserEditDialog = ({
                                     </AppButton>
                                 </Row>
 
-                                <AppButton className='w-full h-10' variant='red' onPress={handleDeleteUser}>
+                                <AppButton className='w-full h-10' variant='red' onPress={() => setIsDeleteConfirmOpen(true)}>
                                     <FontText color='red' weight='medium'>Delete User</FontText>
                                 </AppButton>
                             </Column>
@@ -215,6 +219,15 @@ const UserEditDialog = ({
                 </ConvexDialog.Content>
             </ConvexDialog.Portal>
         </ConvexDialog.Root>
+
+        <DeleteConfirmationDialog
+            isOpen={isDeleteConfirmOpen}
+            onOpenChange={setIsDeleteConfirmOpen}
+            onConfirm={handleDeleteUser}
+            itemType="User"
+            itemName={realName || 'this user'}
+        />
+        </>
     );
 };
 

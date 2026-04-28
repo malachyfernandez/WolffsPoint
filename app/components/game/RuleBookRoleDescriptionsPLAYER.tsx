@@ -62,11 +62,11 @@ const RuleBookRoleDescriptionsPLAYER = ({ gameId }: RuleBookRoleDescriptionsPLAY
     }
 
     return (
-        <Column className='gap-2'>
+        <Column className='gap-2 pt-4 border-t border-border/15'>
             <FontText weight='bold' className='text-xl'>Role Descriptions</FontText>
-            <Column className='gap-4'>
-                {orderedRoles.map((role) => (
-                    <Row key={roles.indexOf(role)} className='gap-4 items-start'>
+            <Column className='gap-0'>
+                {orderedRoles.map((role, index) => (
+                    <Row key={roles.indexOf(role)} className={`gap-4 items-start py-4 ${index < orderedRoles.length - 1 ? 'border-b border-border/15' : ''}`}>
                         <Column className='gap-4 flex-1'>
                             <MarkdownRenderer 
                                 markdown={role.aboutRole} 

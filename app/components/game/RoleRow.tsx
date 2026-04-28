@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
+import { Pressable } from 'react-native';
 import FontText from '../ui/text/FontText';
 import InlineEditableText from '../ui/forms/InlineEditableText';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
 import CustomCheckbox from '../ui/CustomCheckbox';
 import AppButton from '../ui/buttons/AppButton';
-import { Pressable, Text } from 'react-native';
 import MarkdownEditorDialog from './MarkdownEditorDialog';
+import DeleteConfirmationDialog from './DeleteRoleConfirmationDialog';
 import { RoleTableItem } from 'types/roleTable';
 
 interface RoleRowProps {
@@ -29,6 +30,7 @@ const RoleRow = ({ gameId, role, index, isLast, setRoleName, setDoesRoleVote, se
     const [editingCell, setEditingCell] = useState<string | null>(null);
     const [isRoleMessageDialogOpen, setIsRoleMessageDialogOpen] = useState(false);
     const [isAboutRoleDialogOpen, setIsAboutRoleDialogOpen] = useState(false);
+    const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
 
     const toggleDoesRoleVote = () => {
         const newDoesRoleVote = !role.doesRoleVote;
@@ -100,7 +102,7 @@ const RoleRow = ({ gameId, role, index, isLast, setRoleName, setDoesRoleVote, se
                     </Pressable>
                 </Column>
                 <Column className={`gap-4 w-0 h-12 items-center justify-center`}>
-                    <AppButton variant="filled" className='w-8 max-h-8' onPress={() => onDeleteRole(index)}>
+                    <AppButton variant="filled" className='w-8 max-h-8' onPress={() => setIsDeleteConfirmOpen(true)}>
                         <FontText weight='bold' color='white' className='text-xl mt-[-0.1rem]'>-</FontText>
                     </AppButton>
                 </Column>
@@ -123,6 +125,14 @@ const RoleRow = ({ gameId, role, index, isLast, setRoleName, setDoesRoleVote, se
                 initialMarkdown={role.aboutRole}
                 onSubmit={({ markdown }) => setAboutRole(index, markdown)}
                 centered={true}
+            />
+
+            <DeleteConfirmationDialog
+                isOpen={isDeleteConfirmOpen}
+                onOpenChange={setIsDeleteConfirmOpen}
+                onConfirm={() => onDeleteRole(index)}
+                itemType="Role"
+                itemName={role.role || 'this role'}
             />
         </>
     );

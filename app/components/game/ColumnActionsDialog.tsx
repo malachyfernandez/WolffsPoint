@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View } from 'react-native';
 import ConvexDialog from '../ui/dialog/ConvexDialog';
 import DialogHeader from '../ui/dialog/DialogHeader';
@@ -6,6 +6,7 @@ import Column from '../layout/Column';
 import Row from '../layout/Row';
 import AppButton from '../ui/buttons/AppButton';
 import FontText from '../ui/text/FontText';
+import DeleteConfirmationDialog from './DeleteRoleConfirmationDialog';
 import { ColumnSizeOption } from './playerTableColumnSizing';
 
 interface ColumnActionsDialogProps {
@@ -24,54 +25,67 @@ const sizeOptions: { value: ColumnSizeOption; label: string; description: string
 ];
 
 const ColumnActionsDialog = ({ isOpen, onOpenChange, title, selectedSize, onSelectSize, onDelete }: ColumnActionsDialogProps) => {
-        return (
-        <ConvexDialog.Root isOpen={isOpen} onOpenChange={onOpenChange}>
-            <ConvexDialog.Trigger asChild>
-                <View />
-            </ConvexDialog.Trigger>
-            <ConvexDialog.Portal>
-                <ConvexDialog.Overlay />
-                <ConvexDialog.Content className='max-w-md p-1'>
-                    <ConvexDialog.Close iconProps={{ color: 'rgb(246, 238, 219)' }} className='absolute right-0 top-0 z-10 h-10 w-10 bg-text-inverted/10 hover:bg-text-inverted/15 rounded-full' />
-                    <DialogHeader text={title} />
-                    <Column className='gap-3 p-0 sm:p-5 pt-4'>
-                        {sizeOptions.map((option) => (
-                            <AppButton
-                                key={option.value}
-                                className='w-full justify-between px-4'
-                                variant={selectedSize === option.value ? 'filled' : 'outline'}
-                                onPress={() => {
-                                    onSelectSize(option.value);
-                                    onOpenChange(false);
-                                }}
-                            >
-                                <Row className='gap-4 w-full items-center justify-between'>
-                                    <FontText color={selectedSize === option.value ? 'white' : 'black'} weight='medium'>
-                                        {option.label}
-                                    </FontText>
-                                    <FontText color={selectedSize === option.value ? 'white' : 'black'} className={selectedSize === option.value ? 'opacity-80' : 'opacity-50'}>
-                                        {option.description}
-                                    </FontText>
-                                </Row>
-                            </AppButton>
-                        ))}
+    const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+    return (
+        <>
+            <ConvexDialog.Root isOpen={isOpen} onOpenChange={onOpenChange}>
+                <ConvexDialog.Trigger asChild>
+                    <View />
+                </ConvexDialog.Trigger>
+                <ConvexDialog.Portal>
+                    <ConvexDialog.Overlay />
+                    <ConvexDialog.Content className='max-w-md p-1'>
+                        <ConvexDialog.Close iconProps={{ color: 'rgb(246, 238, 219)' }} className='absolute right-0 top-0 z-10 h-10 w-10 bg-text-inverted/10 hover:bg-text-inverted/15 rounded-full' />
+                        <DialogHeader text={title} />
+                        <Column className='gap-3 p-0 sm:p-5 pt-4'>
+                            {sizeOptions.map((option) => (
+                                <AppButton
+                                    key={option.value}
+                                    className='w-full justify-between px-4'
+                                    variant={selectedSize === option.value ? 'filled' : 'outline'}
+                                    onPress={() => {
+                                        onSelectSize(option.value);
+                                        onOpenChange(false);
+                                    }}
+                                >
+                                    <Row className='gap-4 w-full items-center justify-between'>
+                                        <FontText color={selectedSize === option.value ? 'white' : 'black'} weight='medium'>
+                                            {option.label}
+                                        </FontText>
+                                        <FontText color={selectedSize === option.value ? 'white' : 'black'} className={selectedSize === option.value ? 'opacity-80' : 'opacity-50'}>
+                                            {option.description}
+                                        </FontText>
+                                    </Row>
+                                </AppButton>
+                            ))}
 
-                        {onDelete ? (
-                            <AppButton
-                                className='w-full justify-center px-4 mt-2'
-                                variant='red'
-                                onPress={() => {
-                                    onDelete();
-                                    onOpenChange(false);
-                                }}
-                            >
-                                <FontText weight='medium' color='red'>Delete Column</FontText>
-                            </AppButton>
-                        ) : null}
-                    </Column>
-                </ConvexDialog.Content>
-            </ConvexDialog.Portal>
-        </ConvexDialog.Root>
+                            {onDelete ? (
+                                <AppButton
+                                    className='w-full justify-center px-4 mt-2'
+                                    variant='red'
+                                    onPress={() => setIsDeleteConfirmOpen(true)}
+                                >
+                                    <FontText weight='medium' color='red'>Delete Column</FontText>
+                                </AppButton>
+                            ) : null}
+                        </Column>
+                    </ConvexDialog.Content>
+                </ConvexDialog.Portal>
+            </ConvexDialog.Root>
+
+            {onDelete ? (
+                <DeleteConfirmationDialog
+                    isOpen={isDeleteConfirmOpen}
+                    onOpenChange={setIsDeleteConfirmOpen}
+                    onConfirm={() => {
+                        onDelete?.();
+                        onOpenChange(false);
+                    }}
+                    itemType="Column"
+                    itemName={title || 'this column'}
+                />
+            ) : null}
+        </>
     );
 };
 

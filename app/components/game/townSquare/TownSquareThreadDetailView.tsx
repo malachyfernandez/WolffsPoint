@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Pressable } from 'react-native';
 import { ChevronLeft } from 'lucide-react-native';
 import ShadowScrollView from '../../ui/ShadowScrollView';
@@ -9,6 +9,7 @@ import MarkdownRenderer from '../../ui/markdown/MarkdownRenderer';
 import FontText from '../../ui/text/FontText';
 import { TownSquareAuthorAvatar, TownSquareAuthorName } from './TownSquareAuthorIdentity';
 import TownSquareReplyBranch from './TownSquareReplyBranch';
+import DeleteConfirmationDialog from '../DeleteRoleConfirmationDialog';
 import { ReplyTreeNode, ThreadViewModel, formatTimestamp } from './townSquareUtils';
 
 interface TownSquareThreadDetailViewProps {
@@ -44,6 +45,7 @@ const TownSquareThreadDetailView = ({
     replyTree,
     selectedThread,
 }: TownSquareThreadDetailViewProps) => {
+    const [isDeleteThreadConfirmOpen, setIsDeleteThreadConfirmOpen] = useState(false);
     const isOwnThread = selectedThread.authorUserId === currentUserId;
     const isAnnouncement = selectedThread.postType === 'announcement';
 
@@ -98,7 +100,7 @@ const TownSquareThreadDetailView = ({
                                                     <FontText weight='bold' className='text-accent'>Edit</FontText>
                                                 </Pressable>
                                             )}
-                                            <Pressable onPress={onDeleteThread}>
+                                            <Pressable onPress={() => setIsDeleteThreadConfirmOpen(true)}>
                                                 <FontText weight='bold' className='text-red-500'>Delete</FontText>
                                             </Pressable>
                                         </>
@@ -140,6 +142,13 @@ const TownSquareThreadDetailView = ({
                         )}
                     </Column>
             </ShadowScrollView>
+            <DeleteConfirmationDialog
+                isOpen={isDeleteThreadConfirmOpen}
+                onOpenChange={setIsDeleteThreadConfirmOpen}
+                onConfirm={onDeleteThread}
+                itemType="Thread"
+                itemName={selectedThread.titleResolved || 'this thread'}
+            />
         </Column>
     );
 };
