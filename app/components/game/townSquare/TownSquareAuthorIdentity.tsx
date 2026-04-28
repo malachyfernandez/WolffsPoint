@@ -63,13 +63,14 @@ export const useTownSquareAuthorIdentity = ({ gameId, userId }: { gameId: string
 
         return {
             displayName,
+            email,
             fallbackInitials: getInitials(fallbackLabel),
             fallbackLabel,
             imageUrl: profile?.profileImageUrl?.trim() || customUserInfo?.photoUrl?.trim() || '',
             inGameName,
             isLoading,
         };
-    }, [customUserInfos, playerProfiles, userDatas, isLoading]);
+    }, [customUserInfos, playerProfiles, userDatas, isLoading, userId]);
 };
 
 interface TownSquareAuthorNameProps {

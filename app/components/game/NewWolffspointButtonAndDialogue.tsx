@@ -93,7 +93,7 @@ const NewWolffspointButtonAndDialogue = ({ onCreate, condensed }: NewWolffspoint
             <ConvexDialog.Portal>
                 <ConvexDialog.Overlay />
 
-                <ConvexDialog.Content>
+                <ConvexDialog.Content className='w-md'>
 
                     <ConvexDialog.Close iconProps={{ color: 'rgb(246, 238, 219)' }} className="w-10 h-10 bg-text-inverted/10 hover:bg-text-inverted/15 rounded-full absolute right-0 top-0 z-10" />
 

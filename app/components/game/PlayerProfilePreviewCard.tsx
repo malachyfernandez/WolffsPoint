@@ -22,6 +22,7 @@ interface PlayerProfilePreviewCardProps {
 
 interface PlayerProfileContactInfoProps {
     profile?: PlayerProfile | null;
+    email?: string;
     className?: string;
     emptyText?: string;
     maxItems?: number;
@@ -40,32 +41,37 @@ const getContactRows = (profile?: PlayerProfile | null) => {
         return [] as ContactRow[];
     }
 
+    const phoneValue = profile?.phoneNumber?.trim();
+    const instaValue = profile?.instagram?.trim();
+    const discordValue = profile?.discord?.trim();
+    const otherValue = profile?.otherContact?.trim();
+
     const rows: (ContactRow | null)[] = [
-        profile.phoneNumber?.trim().length > 0
+        phoneValue
             ? {
                 key: 'phoneNumber',
-                value: profile.phoneNumber,
+                value: phoneValue,
                 icon: <Phone size={16} className={iconClassName} />,
             }
             : null,
-        profile.instagram?.trim().length > 0
+        instaValue
             ? {
                 key: 'instagram',
-                value: profile.instagram,
+                value: instaValue,
                 icon: <InstagramIcon size={16} color="#666" />,
             }
             : null,
-        profile.discord?.trim().length > 0
+        discordValue
             ? {
                 key: 'discord',
-                value: profile.discord,
+                value: discordValue,
                 icon: <DiscordIcon size={16} color="#666" />,
             }
             : null,
-        profile.otherContact?.trim().length > 0
+        otherValue
             ? {
                 key: 'otherContact',
-                value: profile.otherContact,
+                value: otherValue,
                 icon: null,
             }
             : null,
@@ -140,10 +146,11 @@ const PlayerProfilePreviewCard = ({
     imageUrl,
     initials,
     profile,
+    email,
     className = '',
     emptyBioLabel = 'Write whatever you want people to know about you.',
     isLoading = false,
-}: PlayerProfilePreviewCardProps & { isLoading?: boolean }) => {
+}: PlayerProfilePreviewCardProps & { email?: string; isLoading?: boolean }) => {
     const trimmedBioMarkdown = bioMarkdown.trim();
 
     return (
@@ -151,9 +158,16 @@ const PlayerProfilePreviewCard = ({
             <Column className='gap-4 items-center'>
                 <PlayerProfileAvatar imageUrl={imageUrl} initials={initials} isLoading={isLoading} />
                 <Column className='gap-4 w-full items-center'>
-                    <FontText weight='medium' className='text-lg text-center'>
-                        {displayName}
-                    </FontText>
+                    <Column className='gap-0 w-full items-center'>
+                        <FontText weight='medium' className='text-lg text-center'>
+                            {displayName}
+                        </FontText>
+                        {email?.trim() && (
+                            <FontText variant='subtext' className='text-center'>
+                                {email.trim()}
+                            </FontText>
+                        )}
+                    </Column>
                     {trimmedBioMarkdown.length > 0 ? (
                         <MarkdownRenderer
                             markdown={trimmedBioMarkdown}

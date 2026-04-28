@@ -112,6 +112,7 @@ const NewspaperWritingView = ({ gameId }: NewspaperWritingViewProps) => {
                                         <NewspaperColumnHeader
                                             columnIndex={columnIndex}
                                             onRemove={() => removeColumn(columnIndex)}
+                                            showRemove={newspaperColumns.length > 1}
                                         />
 
                                         <Pressable className='flex-1 min-h-120 p-4 bg-inner-background' onPress={() => openColumn(columnIndex)}>

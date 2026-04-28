@@ -1,11 +1,13 @@
 import React, { useMemo, useState } from 'react';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { Image, Pressable, View, useWindowDimensions } from 'react-native';
-import { useValue, useFindValues, useList } from '../../../hooks/useData';
+import { useValue, useFindValues, useFindListItems } from '../../../hooks/useData';
+import { useGameOperatorUserId } from '../../../hooks/useGameOperatorUserId';
 import { useDialogGuildedVariant } from '../../../hooks/useDialogGuildedVariant';
 import { PlayerProfile } from '../../../types/multiplayer';
 import { UserTableItem } from '../../../types/playerTable';
 import { getGameScopedKey } from '../../../utils/multiplayer';
+import { getNewserAssignmentKey, NewserAssignment } from '../../../utils/newspaperControl';
 import { useTownSquareAuthorIdentity } from './townSquare/TownSquareAuthorIdentity';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
@@ -53,12 +55,12 @@ const PhoneBookPagePLAYER = ({ gameId, currentUserId, currentEmail }: PhoneBookP
         userId: currentUserId,
     }), [currentEmail, currentUserId, gameId, myProfile.value]);
 
-    const isLoading = myProfile.state.isSyncing;
+    const { players, isLoading: isPhoneBookLoading } = useAllPlayers({ gameId });
 
+    const isLoading = myProfile.state.isSyncing || isPhoneBookLoading;
 
     const { width } = useWindowDimensions();
     const showEditButton = width >= 410;
-
 
     if (isLoading) {
         return (
@@ -90,7 +92,7 @@ const PhoneBookPagePLAYER = ({ gameId, currentUserId, currentEmail }: PhoneBookP
                         </AppButton>
                     </Row>
                 )}
-                <PhoneBookGrid gameId={gameId} />
+                <PhoneBookGrid gameId={gameId} players={players} />
 
                 <PlayerProfileDialog
                     initialValue={initialProfileValue}
@@ -173,11 +175,9 @@ const PhoneBookHeader = ({ onEditProfile }: { onEditProfile: () => void }) => {
     );
 };
 
-// Grid component - gets all players and renders them
-const PhoneBookGrid = ({ gameId }: { gameId: string }) => {
-    const allPlayers = useAllPlayers({ gameId });
-
-    if (allPlayers.length === 0) {
+// Grid component - renders players passed from parent
+const PhoneBookGrid = ({ gameId, players }: { gameId: string; players: { userId: string; email: string }[] }) => {
+    if (players.length === 0) {
         return (
             <Animated.View entering={FadeIn.duration(300)}>
                 <Column className='gap-4 bg-text/5 rounded-3xl p-8 items-center'>
@@ -189,34 +189,65 @@ const PhoneBookGrid = ({ gameId }: { gameId: string }) => {
 
     return (
         <Row className='gap-4 flex-wrap'>
-            {allPlayers.map((player, index) => (
-                <View key={`${player.userId}-${player.email}`} className='flex-1 min-w-[280px]'>
-                    <Animated.View entering={FadeIn.duration(300).delay(index * 50)}>
-                        <PlayerCard userId={player.userId} gameId={gameId} />
-                    </Animated.View>
-                </View>
+            {players.map((player, index) => (
+                <PlayerCard
+                    key={`${player.userId}-${player.email}`}
+                    userId={player.userId}
+                    gameId={gameId}
+                    email={player.email}
+                    index={index}
+                />
             ))}
         </Row>
     );
 };
 
-// Hook to get all players - handles the data logic
+// Hook to get all players - filters by operator's userTable + newser, waits for all data to load
 const useAllPlayers = ({ gameId }: { gameId: string }) => {
     const profiles = useAllProfiles({ gameId });
-    const tableUsers = useAllTableUsers({ gameId });
+    const { operatorUserId, isLoading: isOperatorLoading } = useGameOperatorUserId(gameId);
+    const operatorUserTableRecords = useFindListItems<UserTableItem[]>("userTable", {
+        itemId: gameId,
+        userIds: operatorUserId ? [operatorUserId] : undefined,
+        returnTop: 1,
+    });
+    const userTable = operatorUserTableRecords?.[0]?.value ?? [];
+    const newserAssignmentRecords = useFindValues<NewserAssignment>(getNewserAssignmentKey(gameId), {
+        returnTop: 1,
+        userIds: operatorUserId ? [operatorUserId] : undefined,
+    });
+    const newserAssignment = newserAssignmentRecords?.[0]?.value ?? { email: '', userId: '', assignedAt: 0 };
+    const newserEmail = newserAssignment.email?.trim()?.toLowerCase() ?? '';
 
-    // Combine and deduplicate
-    const allUserIds = new Set([
-        ...profiles.map((p: PlayerProfile) => p.userId),
-        ...tableUsers.map((u: UserTableItem) => u.userId)
+    // Loading check: wait for all data sources
+    const isUserTableLoading = operatorUserTableRecords === undefined || isOperatorLoading;
+    const isProfilesLoading = profiles === undefined;
+    const isNewserLoading = newserAssignmentRecords === undefined;
+    const isLoading = isUserTableLoading || isProfilesLoading || isNewserLoading;
+
+    // Build allowed emails from userTable + newser
+    const allowedEmails = new Set<string>([
+        ...userTable.map((u: UserTableItem) => u.email?.trim()?.toLowerCase()).filter((e): e is string => Boolean(e)),
+        ...(newserEmail ? [newserEmail] : []),
     ]);
 
-    return Array.from(allUserIds).map(userId => ({
+    // Combine profiles and table users
+    const allUserIds = new Set([
+        ...profiles.map((p: PlayerProfile) => p.userId),
+        ...userTable.map((u: UserTableItem) => u.userId)
+    ]);
+
+    const players = Array.from(allUserIds).map(userId => ({
         userId,
         email: profiles.find((p: PlayerProfile) => p.userId === userId)?.email ||
-            tableUsers.find((u: UserTableItem) => u.userId === userId)?.email ||
+            userTable.find((u: UserTableItem) => u.userId === userId)?.email ||
             ''
-    })).sort((a, b) => a.email.localeCompare(b.email));
+    })).filter(player => {
+        const playerEmail = player.email.trim().toLowerCase();
+        return allowedEmails.has(playerEmail);
+    }).sort((a, b) => a.email.localeCompare(b.email));
+
+    return { players, isLoading };
 };
 
 // Hook to get all profiles
@@ -229,19 +260,19 @@ const useAllProfiles = ({ gameId }: { gameId: string }) => {
     return profiles?.map((record: any) => record.value) || [];
 };
 
-// Hook to get all table users  
-const useAllTableUsers = ({ gameId }: { gameId: string }) => {
-    const [userTable] = useList<UserTableItem[]>("userTable", gameId, {
-        privacy: "PUBLIC",
-    });
-
-    return userTable?.value || [];
-};
-
 // Individual player card - subscribes to its own data
-const PlayerCard = ({ userId, gameId }: { userId: string; gameId: string }) => {
+const PlayerCard = ({ userId, gameId, email, index = 0 }: { userId: string; gameId: string; email?: string; index?: number }) => {
     const identity = useTownSquareAuthorIdentity({ gameId, userId });
     const profile = usePlayerProfile({ userId, gameId });
+
+    // Audit: hide cards with no valid identity data (orphaned profiles)
+    const hasValidData = (identity.displayName && identity.displayName !== 'Unknown' &&
+                         identity.displayName.trim().length > 0) ||
+                         (profile && profile.inGameName && profile.inGameName.trim().length > 0);
+
+    if (!hasValidData) {
+        return null;
+    }
 
     // Check if identity data is still loading (has '?' as initials indicates no data loaded yet)
     const isLoading = identity.fallbackInitials === '?' && !identity.displayName;
@@ -252,14 +283,19 @@ const PlayerCard = ({ userId, gameId }: { userId: string; gameId: string }) => {
         : '*No Bio*';
 
     return (
-        <PlayerProfilePreviewCard
-            displayName={displayName}
-            bioMarkdown={bioMarkdown}
-            imageUrl={identity.imageUrl || undefined}
-            initials={identity.fallbackInitials === '?' ? '' : identity.fallbackInitials}
-            profile={profile}
-            isLoading={isLoading}
-        />
+        <View className='flex-1 min-w-[280px]'>
+            <Animated.View entering={FadeIn.duration(300).delay(index * 50)}>
+                <PlayerProfilePreviewCard
+                    displayName={displayName}
+                    bioMarkdown={bioMarkdown}
+                    imageUrl={identity.imageUrl || undefined}
+                    initials={identity.fallbackInitials === '?' ? '' : identity.fallbackInitials}
+                    profile={profile}
+                    email={email}
+                    isLoading={isLoading}
+                />
+            </Animated.View>
+        </View>
     );
 };
 
