@@ -10,7 +10,7 @@ interface LoadingTextProps {
 
 const LoadingText = ({
     text,
-    delayMs = 1000,
+    delayMs = 700,
     fadeDuration = 300,
 }: LoadingTextProps) => {
     const [dots, setDots] = useState(1);

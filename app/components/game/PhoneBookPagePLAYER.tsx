@@ -1,5 +1,5 @@
-import React, { useMemo, useState } from 'react';
-import Animated, { FadeIn } from 'react-native-reanimated';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import Animated, { FadeIn, useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
 import { Image, Pressable, View, useWindowDimensions } from 'react-native';
 import { useValue, useFindValues, useFindListItems } from '../../../hooks/useData';
 import { useGameOperatorUserId } from '../../../hooks/useGameOperatorUserId';
@@ -177,6 +177,26 @@ const PhoneBookHeader = ({ onEditProfile }: { onEditProfile: () => void }) => {
 
 // Grid component - renders players passed from parent
 const PhoneBookGrid = ({ gameId, players }: { gameId: string; players: { userId: string; email: string }[] }) => {
+    const [readyCount, setReadyCount] = useState(0);
+    const [readyKey, setReadyKey] = useState(0);
+    const reportedRef = useRef(new Set<string>());
+    const opacity = useSharedValue(0);
+
+    const playerIdsStr = players.map(p => p.userId).join(',');
+
+    useEffect(() => {
+        reportedRef.current = new Set();
+        setReadyCount(0);
+        setReadyKey(k => k + 1);
+    }, [playerIdsStr]);
+
+    const markReady = useCallback((userId: string) => {
+        if (!reportedRef.current.has(userId)) {
+            reportedRef.current.add(userId);
+            setReadyCount(c => c + 1);
+        }
+    }, [readyKey]);
+
     if (players.length === 0) {
         return (
             <Animated.View entering={FadeIn.duration(300)}>
@@ -187,19 +207,51 @@ const PhoneBookGrid = ({ gameId, players }: { gameId: string; players: { userId:
         );
     }
 
+    const allReady = readyCount >= players.length;
+
+    useEffect(() => {
+        if (allReady) {
+            opacity.value = withTiming(1, { duration: 300 });
+        }
+    }, [allReady]);
+
+    const animatedStyle = useAnimatedStyle(() => ({
+        opacity: opacity.value,
+    }));
+
     return (
-        <Row className='gap-4 flex-wrap'>
-            {players.map((player, index) => (
-                <PlayerCard
-                    key={`${player.userId}-${player.email}`}
-                    userId={player.userId}
-                    gameId={gameId}
-                    email={player.email}
-                    index={index}
-                />
-            ))}
-        </Row>
+        <View style={{ flex: 1, minHeight: 400 }}>
+            {!allReady && (
+                <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'center', alignItems: 'center', zIndex: 10 }}>
+                    <LoadingText text='Loading players' />
+                </View>
+            )}
+            <Animated.View style={animatedStyle}>
+                <Row className='gap-4 flex-wrap'>
+                    {players.map((player, index) => (
+                        <PlayerCard
+                            key={`${player.userId}-${player.email}`}
+                            userId={player.userId}
+                            gameId={gameId}
+                            email={player.email}
+                            index={index}
+                            onReady={markReady}
+                        />
+                    ))}
+                </Row>
+            </Animated.View>
+        </View>
     );
+};
+
+// Hook to get all player profiles
+const useAllProfiles = ({ gameId }: { gameId: string }) => {
+    const profileKey = getGameScopedKey('playerProfile', gameId);
+    const profiles = useFindValues<PlayerProfile>(profileKey, {
+        returnTop: 200,
+    });
+
+    return profiles?.map((record: any) => record.value) || [];
 };
 
 // Hook to get all players - filters by operator's userTable + newser, waits for all data to load
@@ -250,20 +302,18 @@ const useAllPlayers = ({ gameId }: { gameId: string }) => {
     return { players, isLoading };
 };
 
-// Hook to get all profiles
-const useAllProfiles = ({ gameId }: { gameId: string }) => {
-    const profileKey = getGameScopedKey('playerProfile', gameId);
-    const profiles = useFindValues<PlayerProfile>(profileKey, {
-        returnTop: 200,
-    });
-
-    return profiles?.map((record: any) => record.value) || [];
-};
-
 // Individual player card - subscribes to its own data
-const PlayerCard = ({ userId, gameId, email, index = 0 }: { userId: string; gameId: string; email?: string; index?: number }) => {
+const PlayerCard = ({ userId, gameId, email, index = 0, onReady }: { userId: string; gameId: string; email?: string; index?: number; onReady?: (userId: string) => void }) => {
     const identity = useTownSquareAuthorIdentity({ gameId, userId });
-    const profile = usePlayerProfile({ userId, gameId });
+    const { profile, isLoading: isProfileLoading } = usePlayerProfile({ userId, gameId });
+
+    const isReady = !identity.isLoading && !isProfileLoading;
+
+    useEffect(() => {
+        if (isReady) {
+            onReady?.(userId);
+        }
+    }, [isReady, onReady, userId]);
 
     // Audit: hide cards with no valid identity data (orphaned profiles)
     const hasValidData = (identity.displayName && identity.displayName !== 'Unknown' &&
@@ -313,7 +363,10 @@ const usePlayerProfile = ({ userId, gameId }: { userId: string; gameId: string }
         returnTop: 1,
     });
 
-    return profiles?.[0]?.value || null;
+    return {
+        profile: profiles?.[0]?.value || null,
+        isLoading: profiles === undefined,
+    };
 };
 
 export default PhoneBookPagePLAYER;

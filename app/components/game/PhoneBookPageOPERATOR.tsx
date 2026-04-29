@@ -1,5 +1,6 @@
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Image, Pressable, View } from 'react-native';
+import Animated, { FadeIn, useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
 import { ChevronLeft } from 'lucide-react-native';
 import { useValue, useFindValues, useFindListItems } from '../../../hooks/useData';
 import { useGameOperatorUserId } from '../../../hooks/useGameOperatorUserId';
@@ -60,25 +61,69 @@ const PhoneBookHeader = () => {
 
 // Grid component - renders players passed from parent
 const PhoneBookGrid = ({ gameId, players }: { gameId: string; players: { userId: string; email: string }[] }) => {
+    const [readyCount, setReadyCount] = useState(0);
+    const [readyKey, setReadyKey] = useState(0);
+    const reportedRef = useRef(new Set<string>());
+    const opacity = useSharedValue(0);
+
+    const playerIdsStr = players.map(p => p.userId).join(',');
+
+    useEffect(() => {
+        reportedRef.current = new Set();
+        setReadyCount(0);
+        setReadyKey(k => k + 1);
+    }, [playerIdsStr]);
+
+    const markReady = useCallback((userId: string) => {
+        if (!reportedRef.current.has(userId)) {
+            reportedRef.current.add(userId);
+            setReadyCount(c => c + 1);
+        }
+    }, [readyKey]);
+
     if (players.length === 0) {
         return (
-            <Column className='gap-4 bg-text/5 rounded-3xl p-8 items-center'>
-                <FontText variant='subtext' className='text-center'>No players in this game yet.</FontText>
-            </Column>
+            <Animated.View entering={FadeIn.duration(300)}>
+                <Column className='gap-4 bg-text/5 rounded-3xl p-8 items-center'>
+                    <FontText variant='subtext' className='text-center'>No players in this game yet.</FontText>
+                </Column>
+            </Animated.View>
         );
     }
 
+    const allReady = readyCount >= players.length;
+
+    useEffect(() => {
+        if (allReady) {
+            opacity.value = withTiming(1, { duration: 300 });
+        }
+    }, [allReady]);
+
+    const animatedStyle = useAnimatedStyle(() => ({
+        opacity: opacity.value,
+    }));
+
     return (
-        <Row className='gap-4 flex-wrap'>
-            {players.map((player) => (
-                <PlayerCardWithContainer 
-                    key={`${player.userId}-${player.email}`} 
-                    userId={player.userId} 
-                    gameId={gameId}
-                    email={player.email}
-                />
-            ))}
-        </Row>
+        <View style={{ flex: 1, minHeight: 400 }}>
+            {!allReady && (
+                <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'center', alignItems: 'center', zIndex: 10 }}>
+                    <LoadingText text='Loading players' />
+                </View>
+            )}
+            <Animated.View style={animatedStyle}>
+                <Row className='gap-4 flex-wrap'>
+                    {players.map((player) => (
+                        <PlayerCardWithContainer
+                            key={`${player.userId}-${player.email}`}
+                            userId={player.userId}
+                            gameId={gameId}
+                            email={player.email}
+                            onReady={markReady}
+                        />
+                    ))}
+                </Row>
+            </Animated.View>
+        </View>
     );
 };
 
@@ -124,20 +169,23 @@ const useAllPlayers = ({ gameId, currentUserId }: { gameId: string; currentUserI
             email: profiles.find((p: PlayerProfile) => p.userId === userId)?.email ||
                 userTable.find((u: UserTableItem) => u.userId === userId)?.email ||
                 ''
-        }))
-        .filter(player => {
-            const playerEmail = player.email.trim().toLowerCase();
-            return allowedEmails.has(playerEmail);
-        })
-        .sort((a, b) => a.email.localeCompare(b.email));
+        }));
 
     return { players, isLoading };
 };
 
 // Player card with container that handles hiding invalid players
-const PlayerCardWithContainer = ({ userId, gameId, email }: { userId: string; gameId: string; email?: string }) => {
+const PlayerCardWithContainer = ({ userId, gameId, email, onReady }: { userId: string; gameId: string; email?: string; onReady?: (userId: string) => void }) => {
     const identity = useTownSquareAuthorIdentity({ gameId, userId });
-    const profile = usePlayerProfile({ userId, gameId });
+    const { profile, isLoading: isProfileLoading } = usePlayerProfile({ userId, gameId });
+
+    const isReady = !identity.isLoading && !isProfileLoading;
+
+    useEffect(() => {
+        if (isReady) {
+            onReady?.(userId);
+        }
+    }, [isReady, onReady, userId]);
 
     // Check if player has valid data
     const hasValidData = identity.displayName && identity.displayName !== 'Unknown' &&
@@ -168,7 +216,7 @@ const useAllProfiles = ({ gameId }: { gameId: string }) => {
 // Individual player card - subscribes to its own data
 const PlayerCard = ({ userId, gameId, email }: { userId: string; gameId: string; email?: string }) => {
     const identity = useTownSquareAuthorIdentity({ gameId, userId });
-    const profile = usePlayerProfile({ userId, gameId });
+    const { profile } = usePlayerProfile({ userId, gameId });
 
     const displayName = identity.displayName || 'Unknown';
     const bioMarkdown = profile?.bioMarkdown?.trim().length
@@ -195,7 +243,10 @@ const usePlayerProfile = ({ userId, gameId }: { userId: string; gameId: string }
         returnTop: 1,
     });
 
-    return profiles?.[0]?.value || null;
+    return {
+        profile: profiles?.[0]?.value || null,
+        isLoading: profiles === undefined,
+    };
 };
 
 export default PhoneBookPageOPERATOR;

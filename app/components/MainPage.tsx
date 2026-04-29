@@ -13,6 +13,7 @@ import LayoutStateAnimatedView, { fromBottom } from './ui/LayoutStateAnimatedVie
 import FontTextInput from './ui/forms/FontTextInput';
 import JoinHandler from './ui/forms/JoinHandler';
 import FadeInAfterDelay from './ui/loading/FadeInAfterDelay';
+import LoadingText from './ui/loading/LoadingText';
 
 
 
@@ -79,7 +80,9 @@ const MainPage: React.FC<MainPageProps> = ({
 
 
                 {isActiveGameLoading ? (
-                    <FontText>Loading</FontText>
+                    <View className='flex-1 items-center justify-center'>
+                        <LoadingText text="Loading" />
+                    </View>
                 ) : (
 
                     <LayoutStateAnimatedView.Container stateVar={currentScreen} className='flex-1'>
