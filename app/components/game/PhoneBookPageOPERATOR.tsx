@@ -169,7 +169,12 @@ const useAllPlayers = ({ gameId, currentUserId }: { gameId: string; currentUserI
             email: profiles.find((p: PlayerProfile) => p.userId === userId)?.email ||
                 userTable.find((u: UserTableItem) => u.userId === userId)?.email ||
                 ''
-        }));
+        }))
+        .filter(player => {
+            const playerEmail = player.email.trim().toLowerCase();
+            return allowedEmails.has(playerEmail);
+        })
+        .sort((a, b) => a.email.localeCompare(b.email));
 
     return { players, isLoading };
 };
