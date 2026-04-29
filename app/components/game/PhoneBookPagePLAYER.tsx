@@ -240,7 +240,7 @@ const PhoneBookGrid = ({ gameId, players }: { gameId: string; players: { userId:
                     ))}
                     <View className='flex-1 min-w-[280px] opacity-0 pointer-events-none' />
                     <View className='flex-1 min-w-[280px] opacity-0 pointer-events-none' />
-                </Row>
+                </Row> 
             </Animated.View>
         </View>
     );
