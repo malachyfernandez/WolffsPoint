@@ -12,11 +12,12 @@ export type UploadThingReactNativeFile = {
 };
 
 const TARGET_MIN_DIMENSION = 1080;
-const JPEG_COMPRESS_QUALITY = 0.72;
+const WEBP_COMPRESS_QUALITY = 0.72;
+const BYPASS_UPLOAD_MAX_FILE_SIZE_BYTES = 1_000_000;
 
-const ensureJpegFileName = (fileName?: string) => {
+const ensureWebpFileName = (fileName?: string) => {
     const baseName = fileName?.replace(/\.[^.]+$/, '') || `upload-${Date.now()}`;
-    return `${baseName}.jpg`;
+    return `${baseName}.webp`;
 };
 
 const getFileSizeFromUri = async (uri: string) => {
@@ -61,6 +62,13 @@ const isHeicLikeFile = (asset: ImagePickerAsset) => {
         || lowerMimeType.includes('heif');
 };
 
+const isGifLikeFile = (asset: ImagePickerAsset) => {
+    const lowerFileName = (asset.file?.name || asset.fileName || '').toLowerCase();
+    const lowerMimeType = (asset.file?.type || asset.mimeType || '').toLowerCase();
+
+    return lowerFileName.endsWith('.gif') || lowerMimeType === 'image/gif';
+};
+
 const loadWebImage = async (src: string) => {
     return new Promise<HTMLImageElement>((resolve, reject) => {
         const image = new globalThis.Image();
@@ -70,7 +78,7 @@ const loadWebImage = async (src: string) => {
     });
 };
 
-const canvasToJpegBlob = async (canvas: HTMLCanvasElement) => {
+const canvasToWebpBlob = async (canvas: HTMLCanvasElement) => {
     return new Promise<Blob>((resolve, reject) => {
         canvas.toBlob(
             (blob) => {
@@ -79,10 +87,10 @@ const canvasToJpegBlob = async (canvas: HTMLCanvasElement) => {
                     return;
                 }
 
-                reject(new Error('Failed to convert the selected image to JPEG.'));
+                reject(new Error('Failed to convert the selected image to WebP.'));
             },
-            'image/jpeg',
-            JPEG_COMPRESS_QUALITY,
+            'image/webp',
+            WEBP_COMPRESS_QUALITY,
         );
     });
 };
@@ -98,13 +106,13 @@ type Heic2AnyConverter = (options: {
     quality?: number;
 }) => Promise<Blob | Blob[]>;
 
-const convertHeicBlobToJpegBlob = async (blob: Blob) => {
+const convertHeicBlobToWebpBlob = async (blob: Blob) => {
     const heic2anyModule = await import('heic2any');
     const heic2any = heic2anyModule.default as Heic2AnyConverter;
     const convertedResult = await heic2any({
         blob,
-        toType: 'image/jpeg',
-        quality: JPEG_COMPRESS_QUALITY,
+        toType: 'image/webp',
+        quality: WEBP_COMPRESS_QUALITY,
     });
 
     if (Array.isArray(convertedResult)) {
@@ -119,7 +127,7 @@ const convertHeicBlobToJpegBlob = async (blob: Blob) => {
         return convertedResult;
     }
 
-    throw new Error('Failed to convert the selected HEIC image to JPEG.');
+    throw new Error('Failed to convert the selected HEIC image to WebP.');
 };
 
 const getWebImageSource = async (asset: ImagePickerAsset): Promise<WebImageSource> => {
@@ -148,7 +156,7 @@ const getWebImageSource = async (asset: ImagePickerAsset): Promise<WebImageSourc
             throw new Error('Failed to load the selected image for compression.');
         }
 
-        const convertedBlob = await convertHeicBlobToJpegBlob(asset.file);
+        const convertedBlob = await convertHeicBlobToWebpBlob(asset.file);
         const convertedObjectUrl = URL.createObjectURL(convertedBlob);
 
         return {
@@ -160,7 +168,32 @@ const getWebImageSource = async (asset: ImagePickerAsset): Promise<WebImageSourc
     }
 };
 
+const prepareOriginalWebFileForUpload = async (asset: ImagePickerAsset): Promise<UploadThingReactNativeFile> => {
+    const file = asset.file;
+
+    if (!file) {
+        throw new Error('Original web file is unavailable for upload.');
+    }
+
+    if (file.size > BYPASS_UPLOAD_MAX_FILE_SIZE_BYTES) {
+        throw new Error('Original web file exceeds the maximum allowed size (1MB) for uncompressed uploads.');
+    }
+
+    return {
+        uri: file.name,
+        name: file.name,
+        size: file.size,
+        type: file.type || asset.mimeType || 'application/octet-stream',
+        lastModified: file.lastModified || Date.now(),
+        file,
+    };
+};
+
 const prepareWebImageForUpload = async (asset: ImagePickerAsset): Promise<UploadThingReactNativeFile> => {
+    if (isGifLikeFile(asset)) {
+        return prepareOriginalWebFileForUpload(asset);
+    }
+
     const source = await getWebImageSource(asset);
 
     try {
@@ -180,10 +213,10 @@ const prepareWebImageForUpload = async (asset: ImagePickerAsset): Promise<Upload
 
         context.drawImage(image, 0, 0, width, height);
 
-        const blob = await canvasToJpegBlob(canvas);
-        const name = ensureJpegFileName(asset.file?.name || asset.fileName || undefined);
+        const blob = await canvasToWebpBlob(canvas);
+        const name = ensureWebpFileName(asset.file?.name || asset.fileName || undefined);
         const file = new File([blob], name, {
-            type: 'image/jpeg',
+            type: 'image/webp',
             lastModified: Date.now(),
         });
 
@@ -226,8 +259,8 @@ export const prepareImageForUpload = async (
         asset.uri,
         actions,
         {
-            compress: JPEG_COMPRESS_QUALITY,
-            format: ImageManipulator.SaveFormat.JPEG,
+            compress: WEBP_COMPRESS_QUALITY,
+            format: ImageManipulator.SaveFormat.WEBP,
         },
     );
 
@@ -235,9 +268,9 @@ export const prepareImageForUpload = async (
 
     return {
         uri: manipulatedImage.uri,
-        name: ensureJpegFileName(asset.fileName || undefined),
+        name: ensureWebpFileName(asset.fileName || undefined),
         size,
-        type: 'image/jpeg',
+        type: 'image/webp',
         lastModified: Date.now(),
     };
 };

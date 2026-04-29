@@ -43,6 +43,16 @@ const withTimeout = async <T,>(promise: Promise<T>, message: string, timeoutMs: 
     ]);
 };
 
+const UPLOAD_FAILURE_MESSAGE = 'Image Upload Failed. If obscure file type, use .WEBP or .PNG for best results';
+
+const getUploadErrorMessage = (error: unknown) => {
+    if (error instanceof Error && error.message) {
+        return error.message;
+    }
+
+    return UPLOAD_FAILURE_MESSAGE;
+};
+
 const uploadFileToPresignedUrl = async (
     file: UploadThingReactNativeFile,
     signedUpload: UploadThingSignedUpload,
@@ -76,8 +86,6 @@ const uploadFileToPresignedUrl = async (
         xhr.send(formData);
     });
 };
-
-const UPLOAD_FAILURE_MESSAGE = 'Image Upload Failed. If obscure file type, use .JPG or .PNG for best results';
 
 interface ImageUploadDialogProps {
     isOpen: boolean;
@@ -159,7 +167,7 @@ const ImageUploadDialog = ({
 
             setUploadedImageUrl(publicUrl);
         } catch (error) {
-            showToast(UPLOAD_FAILURE_MESSAGE);
+            showToast(getUploadErrorMessage(error));
         } finally {
             setIsUploading(false);
             setIsDragging(false);
@@ -202,8 +210,8 @@ const ImageUploadDialog = ({
         const trimmedUrl = urlInput.trim();
         if (trimmedUrl) {
             if (!isValidImageUrl(trimmedUrl)) {
-                setUrlError('Please enter a valid image URL (jpg, png, gif, webp, etc.)');
-                showToast('Image Upload Failed. If obscure file type, use .JPG or .PNG for best results');
+                setUrlError('Please enter a valid image URL (webp, png, gif, jpg, etc.)');
+                showToast(UPLOAD_FAILURE_MESSAGE);
                 return;
             }
             setUrlError('');

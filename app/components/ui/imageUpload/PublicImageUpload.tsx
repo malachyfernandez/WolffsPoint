@@ -98,6 +98,14 @@ const withTimeout = async <T,>(promise: Promise<T>, message: string, timeoutMs: 
 
 const UPLOAD_FAILURE_MESSAGE = 'Image Upload Failed. If obscure file type, use .JPG or .PNG for best results';
 
+const getUploadErrorMessage = (error: unknown) => {
+    if (error instanceof Error && error.message) {
+        return error.message;
+    }
+
+    return UPLOAD_FAILURE_MESSAGE;
+};
+
 const pickWebImageFile = async () => {
     if (typeof document === 'undefined' || typeof window === 'undefined') {
         throw new Error('The browser file picker is unavailable in this environment.');
@@ -256,7 +264,7 @@ const PublicImageUpload = ({
 
             setUrl(publicUrl);
         } catch (error) {
-            showToast(UPLOAD_FAILURE_MESSAGE);
+            showToast(getUploadErrorMessage(error));
         } finally {
             setIsUploading(false);
         }
