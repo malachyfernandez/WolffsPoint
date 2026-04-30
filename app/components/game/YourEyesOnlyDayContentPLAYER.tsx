@@ -227,7 +227,7 @@ const YourEyesOnlyDayContentPLAYER = ({ gameId, currentEmail, currentUserId, day
                                         } : undefined}
                                     />
                                 ) : (
-                                    <FontText variant='subtext'>The operator has not written your role action instructions yet.</FontText>
+                                    <FontText variant='subtext'>You do not have any action set for your role.</FontText>
                                 )}
                             </MarkdownRendererInputDataProvider>
 
