@@ -1,12 +1,13 @@
 import React, { useMemo } from 'react';
 import { View } from 'react-native';
+import { Ban } from 'lucide-react-native';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
 import FontText from '../ui/text/FontText';
 import TownSquareAvatar from './townSquare/TownSquareAvatar';
 import { useTownSquareAuthorIdentity } from './townSquare/TownSquareAuthorIdentity';
 import { useFindListItems, useFindValues } from '../../../hooks/useData';
-import { PlayerNightSubmission, PlayerProfile } from '../../../types/multiplayer';
+import { PlayerProfile } from '../../../types/multiplayer';
 import { UserTableItem } from '../../../types/playerTable';
 import { getGameScopedKey } from '../../../utils/multiplayer';
 
@@ -27,6 +28,33 @@ const getInitials = (value: string) => {
     }
 
     return parts.map((part) => part.slice(0, 1).toUpperCase()).join('');
+};
+
+const SkipVoteRow = ({
+    voteCount,
+    maxVoteCount,
+}: {
+    voteCount: number;
+    maxVoteCount: number;
+}) => {
+    const widthPercent = maxVoteCount > 0 ? Math.max((voteCount / maxVoteCount) * 100, 12) : 12;
+
+    return (
+        <Column className='gap-2 w-full'>
+            <Row className='gap-4 items-center'>
+                <View className='w-[44px] h-[44px] rounded-full border border-subtle-border/60 bg-border/10 items-center justify-center'>
+                    <Ban size={20} color='rgb(46, 41, 37)' />
+                </View>
+                <Row className='gap-4 flex-1 items-center justify-between'>
+                    <View className='flex-1 h-5 rounded-full bg-border/10 overflow-hidden'>
+                        <View className='h-full rounded-full bg-text/80' style={{ width: `${widthPercent}%` }} />
+                    </View>
+                    <FontText weight='bold' className='min-w-[28px] text-right'>{voteCount}</FontText>
+                </Row>
+            </Row>
+            <FontText weight='medium'>Skipped Vote</FontText>
+        </Column>
+    );
 };
 
 const VoteSummaryRow = ({
@@ -90,10 +118,6 @@ const NewspaperPreviousDayVoteSummary = ({ gameId, dayIndex }: NewspaperPrevious
         userIds: operatorUserId ? [operatorUserId] : undefined,
         returnTop: 1,
     });
-    const submissionRecords = useFindValues<PlayerNightSubmission>(getGameScopedKey(`playerNightSubmission-day-${dayIndex - 1}`, gameId), {
-        returnTop: 200,
-    });
-
     // Fetch all player profiles to map email -> userId for NOT-JOINED players
     const allProfiles = useFindValues<PlayerProfile>(getGameScopedKey('playerProfile', gameId), {
         returnTop: 200,
@@ -110,24 +134,31 @@ const NewspaperPreviousDayVoteSummary = ({ gameId, dayIndex }: NewspaperPrevious
         return map;
     }, [allProfiles]);
 
-    const voteRows = useMemo(() => {
+    const { voteRows, skipVoteCount } = useMemo(() => {
         if (dayIndex <= 0) {
-            return [] as { player: UserTableItem; voteCount: number }[];
+            return { voteRows: [] as { player: UserTableItem; voteCount: number }[], skipVoteCount: 0 };
         }
 
         const players = operatorUserTableRecords?.[0]?.value ?? [];
         const voteCounts = new Map<string, number>();
+        let skipVotes = 0;
+        const targetDay = dayIndex - 1;
 
-        (submissionRecords ?? []).forEach((record) => {
-            const voteTargetEmail = record.value.vote?.trim();
-            if (!voteTargetEmail) {
+        players.forEach((player) => {
+            const vote = player.days?.[targetDay]?.vote?.trim() ?? '';
+            if (!vote) {
                 return;
             }
 
-            voteCounts.set(voteTargetEmail, (voteCounts.get(voteTargetEmail) ?? 0) + 1);
+            if (vote === 'SKIP_VOTE') {
+                skipVotes += 1;
+                return;
+            }
+
+            voteCounts.set(vote, (voteCounts.get(vote) ?? 0) + 1);
         });
 
-        const result = players
+        const rows = players
             .map((player) => ({
                 player,
                 voteCount: voteCounts.get(player.email) ?? 0,
@@ -139,12 +170,12 @@ const NewspaperPreviousDayVoteSummary = ({ gameId, dayIndex }: NewspaperPrevious
                 return b.voteCount - a.voteCount || aLabel.localeCompare(bLabel);
             });
 
-        return result;
-    }, [dayIndex, operatorUserTableRecords, submissionRecords]);
+        return { voteRows: rows, skipVoteCount: skipVotes };
+    }, [dayIndex, operatorUserTableRecords]);
 
-    const maxVoteCount = voteRows[0]?.voteCount ?? 0;
+    const maxVoteCount = Math.max(voteRows[0]?.voteCount ?? 0, skipVoteCount);
 
-    if (dayIndex <= 0 || voteRows.length === 0) {
+    if (dayIndex <= 0 || (voteRows.length === 0 && skipVoteCount === 0)) {
         return null;
     }
 
@@ -155,6 +186,9 @@ const NewspaperPreviousDayVoteSummary = ({ gameId, dayIndex }: NewspaperPrevious
                 <FontText variant='subtext'>Certified results from Day {dayIndex}.</FontText>
             </Column>
             <Column className='gap-4'>
+                {skipVoteCount > 0 && (
+                    <SkipVoteRow voteCount={skipVoteCount} maxVoteCount={maxVoteCount} />
+                )}
                 {voteRows.map(({ player, voteCount }) => (
                     <VoteSummaryRow
                         key={player.email}

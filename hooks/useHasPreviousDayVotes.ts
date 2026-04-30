@@ -1,8 +1,6 @@
 import { useMemo } from 'react';
-import { useFindListItems, useFindValues } from './useData';
-import { PlayerNightSubmission } from '../types/multiplayer';
+import { useFindListItems } from './useData';
 import { UserTableItem } from '../types/playerTable';
-import { getGameScopedKey } from '../utils/multiplayer';
 
 export function useHasPreviousDayVotes(gameId: string, dayIndex: number): boolean | undefined {
   const gameRows = useFindListItems("games", {
@@ -17,26 +15,17 @@ export function useHasPreviousDayVotes(gameId: string, dayIndex: number): boolea
     returnTop: 1,
   });
 
-  const submissionRecords = useFindValues<PlayerNightSubmission>(getGameScopedKey(`playerNightSubmission-day-${dayIndex - 1}`, gameId), {
-    returnTop: 200,
-  });
-
   return useMemo(() => {
     if (dayIndex <= 0) {
       return false;
     }
 
     const players = operatorUserTableRecords?.[0]?.value ?? [];
-    const voteCounts = new Map<string, number>();
+    const targetDay = dayIndex - 1;
 
-    (submissionRecords ?? []).forEach((record) => {
-      const voteTargetEmail = record.value.vote?.trim();
-      if (!voteTargetEmail) {
-        return;
-      }
-      voteCounts.set(voteTargetEmail, (voteCounts.get(voteTargetEmail) ?? 0) + 1);
+    return players.some((player) => {
+      const vote = player.days?.[targetDay]?.vote?.trim() ?? '';
+      return vote.length > 0;
     });
-
-    return players.some((player) => (voteCounts.get(player.email) ?? 0) > 0);
-  }, [dayIndex, operatorUserTableRecords, submissionRecords]);
+  }, [dayIndex, operatorUserTableRecords]);
 }

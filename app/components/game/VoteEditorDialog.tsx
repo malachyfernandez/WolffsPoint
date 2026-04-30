@@ -24,6 +24,8 @@ export const resolveVoteEmailToName = (voteEmail: string, users: UserTableItem[]
     if (!voteEmail.trim()) return 'No vote';
 
     const trimmedEmail = voteEmail.trim();
+    if (trimmedEmail === 'SKIP_VOTE') return 'Skipped Vote';
+
     const targetUser = users.find(u => u.email.toLowerCase() === trimmedEmail.toLowerCase());
 
     return targetUser?.realName || voteEmail;

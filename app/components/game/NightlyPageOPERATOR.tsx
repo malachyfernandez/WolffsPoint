@@ -52,8 +52,9 @@ const NightlyPageOPERATOR = ({ currentUserId: _currentUserId, gameId }: NightlyP
             .map((record: any) => [record.value.playerEmail, record.value])
     ) as Record<string, PlayerNightSubmission>;
 
-    const voteCount = users.filter((user) => (submissionsByEmail[user.email]?.vote ?? '').trim().length > 0).length;
-    const actionCount = users.filter((user) => hasPlayerActionContent(submissionsByEmail[user.email]?.action)).length;
+    const currentDayIndex = selectedDayIndex.value;
+    const voteCount = users.filter((user) => (user.days[currentDayIndex]?.vote ?? '').trim().length > 0).length;
+    const actionCount = users.filter((user) => hasPlayerActionContent(user.days[currentDayIndex]?.action)).length;
 
     // Shared day dates array (same as players tab)
     const [dayDatesArray] = useList<string[]>("dayDatesArray", gameId, {

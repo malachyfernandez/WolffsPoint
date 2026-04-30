@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { Pressable, View } from 'react-native';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
 import FontText from '../ui/text/FontText';
@@ -88,6 +89,8 @@ const YourEyesOnlyDayContentPLAYER = ({ gameId, currentEmail, currentUserId, day
         }));
     const isVoteLocked = dayIndex < currentDayIndex || !isNightWindowOpen(selectedDayEndDate, voteDeadlineTime, now);
     const isActionLocked = dayIndex < currentDayIndex || !isNightWindowOpen(selectedDayEndDate, actionDeadlineTime, now);
+    const isSkipVote = submission.value.vote === 'SKIP_VOTE';
+    const canVote = !isVoteLocked && roleData?.doesRoleVote !== false;
     const currentMorningMessage = hasSelectedMorning ? morningMessagesList[currentEmail]?.[selectedMorningDayIndex] ?? '' : '';
     const currentActionState = useMemo(() => normalizePlayerActionState(submission.value.action), [submission.value.action]);
     const currentActionSummary = useMemo(() => getPlayerActionSummary(submission.value.action), [submission.value.action]);
@@ -145,11 +148,12 @@ const YourEyesOnlyDayContentPLAYER = ({ gameId, currentEmail, currentUserId, day
                     <ChainWraper className='' isDisabled={(isVoteLocked && roleData?.doesRoleVote !== false) || roleData?.doesRoleVote == false}>
                         <Column className='gap-3'>
                             <FontText weight='medium' className='text-sm tracking-[0.24em] uppercase opacity-60'>Vote</FontText>
+                            {/* HERE */}
                             <AppDropdown
                                 options={voteOptions}
-                                value={submission.value.vote}
+                                value={isSkipVote ? '' : submission.value.vote}
                                 onValueChange={(value) => {
-                                    if (isVoteLocked || roleData?.doesRoleVote === false) {
+                                    if (isVoteLocked || roleData?.doesRoleVote === false || isSkipVote) {
                                         return;
                                     }
 
@@ -159,15 +163,45 @@ const YourEyesOnlyDayContentPLAYER = ({ gameId, currentEmail, currentUserId, day
                                         submittedVoteAt: Date.now(),
                                     });
                                 }}
-                                placeholder={roleData?.doesRoleVote === false ? 'This role does not vote' : 'Choose a player'}
+                                placeholder={roleData?.doesRoleVote === false ? 'This role does not vote' : isSkipVote ? 'Vote skipped' : 'Choose a player'}
                                 triggerClassName='rounded-2xl border border-border/15 bg-none px-4 py-4'
                                 contentClassName='border border-border/15'
-                                disabled={isVoteLocked || roleData?.doesRoleVote === false}
+                                disabled={isVoteLocked || roleData?.doesRoleVote === false || isSkipVote}
                             />
-
+                            {canVote && (
+                                <Pressable
+                                    onPress={() => {
+                                        if (isSkipVote) {
+                                            setSubmission({
+                                                ...submission.value,
+                                                vote: '',
+                                                submittedVoteAt: Date.now(),
+                                            });
+                                        } else {
+                                            setSubmission({
+                                                ...submission.value,
+                                                vote: 'SKIP_VOTE',
+                                                submittedVoteAt: Date.now(),
+                                            });
+                                        }
+                                    }}
+                                    className='self-start'
+                                >
+                                    <Row className='gap-2 items-center'>
+                                        <View className={`w-5 h-5 rounded border items-center justify-center ${isSkipVote ? 'bg-text border-text' : 'border-border bg-background'}`}>
+                                            {isSkipVote && (
+                                                <FontText weight='bold' color='white' className='text-xs'>✓</FontText>
+                                            )}
+                                        </View>
+                                        <FontText weight='medium' className={isSkipVote ? '' : 'opacity-70'}>Skip Vote</FontText>
+                                    </Row>
+                                </Pressable>
+                            )}
                         </Column>
                     </ChainWraper>
-                    {!!submission.value.vote ? (
+                    {isSkipVote ? (
+                        <FontText variant='subtext'>You have skipped your vote.</FontText>
+                    ) : !!submission.value.vote ? (
                         <FontText variant='subtext'>Saved vote: {submission.value.vote}</FontText>
                     ) : roleData?.doesRoleVote === false ? (
                         <FontText variant='subtext'>This role doesn&apos;t submit a vote.</FontText>
