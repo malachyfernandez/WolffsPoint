@@ -72,7 +72,7 @@ const UserEditDialog = ({
 
     useEffect(() => {
         emailExists = users.some((user, index) =>
-            user.email === email.trim() && index !== userIndex
+            user.email.trim().toLowerCase() === email.trim().toLowerCase() && index !== userIndex
         );
         setIsUniqueEmail(!emailExists);
         setIsValidEmail(isValidEmailFormat(email));
@@ -81,7 +81,7 @@ const UserEditDialog = ({
     const handleSubmit = () => {
         // Check for email uniqueness (skip if it's the same user's current email)
         emailExists = users.some((user, index) =>
-            user.email === email.trim() && index !== userIndex
+            user.email.trim().toLowerCase() === email.trim().toLowerCase() && index !== userIndex
         );
 
         if (emailExists) {
@@ -100,7 +100,7 @@ const UserEditDialog = ({
             updatedUsers[userIndex] = {
                 ...updatedUsers[userIndex],
                 realName: realName.trim(),
-                email: email.trim(),
+                email: email.trim().toLowerCase(),
                 role: role.trim()
             };
             UNDOABLEsetUserTable(updatedUsers);

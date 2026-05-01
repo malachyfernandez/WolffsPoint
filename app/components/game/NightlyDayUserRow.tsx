@@ -66,8 +66,8 @@ const NightlyDayUserRow = ({
     }, [dayData.vote, users]);
 
     const getCurrentMorningMessage = () => {
-        if (morningMessagesList[user.email] && morningMessagesList[user.email][dayNumber] !== undefined) {
-            return morningMessagesList[user.email][dayNumber];
+        if (morningMessagesList[user.email.toLowerCase()] && morningMessagesList[user.email.toLowerCase()][dayNumber] !== undefined) {
+            return morningMessagesList[user.email.toLowerCase()][dayNumber];
         }
         return "";
     };
@@ -124,10 +124,10 @@ const NightlyDayUserRow = ({
                                 <FontText className="text-center">{getMorningMessagePreview()}</FontText>
                             </FontText>
                         </Pressable>
-                    ) : morningMessagesList[user.email]?.[dayNumber - 1] ? (
+                    ) : morningMessagesList[user.email.toLowerCase()]?.[dayNumber - 1] ? (
                         <Pressable 
                             onPress={() => {
-                                const yesterdayMessage = morningMessagesList[user.email]?.[dayNumber - 1];
+                                const yesterdayMessage = morningMessagesList[user.email.toLowerCase()]?.[dayNumber - 1];
                                 if (yesterdayMessage) {
                                     updateMorningMessage(dayNumber, index, yesterdayMessage);
                                 }

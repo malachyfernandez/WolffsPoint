@@ -89,7 +89,7 @@ const NightlyPageOPERATOR = ({ currentUserId: _currentUserId, gameId }: NightlyP
             }
             return keep;
         })
-        .map((record: any) => [record.value.playerEmail, record.value]);
+        .map((record: any) => [record.value.playerEmail.toLowerCase(), record.value]);
 
     prettyLog(
       {
@@ -152,14 +152,14 @@ const NightlyPageOPERATOR = ({ currentUserId: _currentUserId, gameId }: NightlyP
             const updatedMessages = { ...currentMessages };
             
             users.forEach(user => {
-                if (!updatedMessages[user.email]) {
-                    updatedMessages[user.email] = new Array(fixedDayDatesArray.length).fill("");
+                if (!updatedMessages[user.email.toLowerCase()]) {
+                    updatedMessages[user.email.toLowerCase()] = new Array(fixedDayDatesArray.length).fill("");
                 } else {
-                    const userMessages = [...updatedMessages[user.email]];
+                    const userMessages = [...updatedMessages[user.email.toLowerCase()]];
                     while (userMessages.length < fixedDayDatesArray.length) {
                         userMessages.push("");
                     }
-                    updatedMessages[user.email] = userMessages;
+                    updatedMessages[user.email.toLowerCase()] = userMessages;
                 }
             });
             
@@ -183,13 +183,13 @@ const NightlyPageOPERATOR = ({ currentUserId: _currentUserId, gameId }: NightlyP
         const currentMessages = morningMessagesList.value || {};
         const updatedMessages = { ...currentMessages };
         
-        if (!updatedMessages[user.email]) {
-            updatedMessages[user.email] = new Array(fixedDayDatesArray.length).fill("");
+        if (!updatedMessages[user.email.toLowerCase()]) {
+            updatedMessages[user.email.toLowerCase()] = new Array(fixedDayDatesArray.length).fill("");
         }
         
-        const userMessages = [...updatedMessages[user.email]];
+        const userMessages = [...updatedMessages[user.email.toLowerCase()]];
         userMessages[dayIndex] = value;
-        updatedMessages[user.email] = userMessages;
+        updatedMessages[user.email.toLowerCase()] = userMessages;
         
         setMorningMessagesList(updatedMessages);
     };
@@ -216,7 +216,7 @@ const NightlyPageOPERATOR = ({ currentUserId: _currentUserId, gameId }: NightlyP
         );
 
         const certifiedUsers = users.map((user) => {
-            const submission = submissionsByEmail[user.email];
+            const submission = submissionsByEmail[user.email.toLowerCase()];
 
             prettyLog(
               {

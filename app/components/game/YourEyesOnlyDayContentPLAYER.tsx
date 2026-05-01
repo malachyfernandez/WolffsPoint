@@ -39,7 +39,7 @@ const YourEyesOnlyDayContentPLAYER = ({ gameId, currentEmail, currentUserId, day
     const selectedDayEndDate = useMemo(() => getDayEndDate(dayDates, dayIndex, numberOfRealDaysPerInGameDay), [dayDates, dayIndex, numberOfRealDaysPerInGameDay]);
     const selectedMorningDayIndex = dayIndex - 1;
     const hasSelectedMorning = selectedMorningDayIndex >= 0 && isDayContentReleased(dayDates, selectedMorningDayIndex, schedule.wakeUpTime, now);
-    const matchingPlayer = useMemo(() => userTable.find((user) => user.email === currentEmail), [currentEmail, userTable]);
+    const matchingPlayer = useMemo(() => userTable.find((user) => user.email.trim().toLowerCase() === currentEmail.trim().toLowerCase()), [currentEmail, userTable]);
     const roleData = roleTable.value.find((roleItem) => roleItem.role === matchingPlayer?.role);
     const voteDeadlineTime = schedule.voteDeadlineTime ?? defaultGameSchedule.voteDeadlineTime ?? '22:00';
     const actionDeadlineTime = schedule.actionDeadlineTime ?? defaultGameSchedule.actionDeadlineTime ?? '22:00';
@@ -91,7 +91,7 @@ const YourEyesOnlyDayContentPLAYER = ({ gameId, currentEmail, currentUserId, day
     const isActionLocked = dayIndex < currentDayIndex || !isNightWindowOpen(selectedDayEndDate, actionDeadlineTime, now);
     const isSkipVote = submission.value.vote === 'SKIP_VOTE';
     const canVote = !isVoteLocked && roleData?.doesRoleVote !== false;
-    const currentMorningMessage = hasSelectedMorning ? morningMessagesList[currentEmail]?.[selectedMorningDayIndex] ?? '' : '';
+    const currentMorningMessage = hasSelectedMorning ? morningMessagesList[currentEmail.toLowerCase()]?.[selectedMorningDayIndex] ?? '' : '';
     const currentActionState = useMemo(() => normalizePlayerActionState(submission.value.action), [submission.value.action]);
     const currentActionSummary = useMemo(() => getPlayerActionSummary(submission.value.action), [submission.value.action]);
     const voteDeadline = useMemo(() => buildScheduledDate(selectedDayEndDate, voteDeadlineTime), [selectedDayEndDate, voteDeadlineTime]);

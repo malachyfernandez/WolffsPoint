@@ -226,19 +226,19 @@ const NightlyDaysTable = ({
         const previousMessagesList = createUndoSnapshot(morningMessagesList);
         const nextMessagesList = createUndoSnapshot(previousMessagesList);
         
-        if (!nextMessagesList[user.email]) {
-            nextMessagesList[user.email] = [];
+        if (!nextMessagesList[user.email.toLowerCase()]) {
+            nextMessagesList[user.email.toLowerCase()] = [];
         }
         
-        const userMessages = [...nextMessagesList[user.email]];
+        const userMessages = [...nextMessagesList[user.email.toLowerCase()]];
         userMessages[dayIndex] = value;
-        nextMessagesList[user.email] = userMessages;
+        nextMessagesList[user.email.toLowerCase()] = userMessages;
 
         executeCommand({
             action: () => updateMorningMessage(dayIndex, userIndex, value),
             undoAction: () => {
-                if (previousMessagesList[user.email] && nextMessagesList[user.email]) {
-                    updateMorningMessage(dayIndex, userIndex, previousMessagesList[user.email][dayIndex] || "");
+                if (previousMessagesList[user.email.toLowerCase()] && nextMessagesList[user.email.toLowerCase()]) {
+                    updateMorningMessage(dayIndex, userIndex, previousMessagesList[user.email.toLowerCase()][dayIndex] || "");
                 }
             },
             description: "Update Morning Message"

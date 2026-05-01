@@ -1,0 +1,2639 @@
+opening now
+VM106:1 Uncaught SyntaxError: Unexpected identifier 'now'
+entry-5cdf036de88934b382a465909b30899d.js:1944 ================================================================================
+🔍 useFindValues: playerNightSubmission-day-2-wsSd5N0R — result=5
+================================================================================
+{
+  hook: "useFindValues"
+  key: "playerNightSubmission-day-2-wsSd5N0R"
+  subId: "{"type":"find-values","key":"playerNightSubmission-day-2-wsSd5N0R","args":{"returnTop":200}}"
+  queryArgs: {
+    returnTop: 200
+  }
+  baseConfig: {}
+  resultLength: 5
+  resultSample: [
+    {
+      userId: undefined
+      valueKeys: [
+        "action"
+        "dayIndex"
+        "gameDayId"
+        "gameId"
+        "playerEmail"
+        "playerUserId"
+        "submittedActionAt"
+        "submittedVoteAt"
+        "vote"
+      ]
+      playerEmail: "camumford99@gmail.com"
+      votePreview: "cschmitz456@gmail.com..."
+    }
+    {
+      userId: undefined
+      valueKeys: [
+        "action"
+        "dayIndex"
+        "gameDayId"
+        "gameId"
+        "playerEmail"
+        "playerUserId"
+        "submittedActionAt"
+        "submittedVoteAt"
+        "vote"
+      ]
+      playerEmail: "darcyrose830@gmail.com"
+      votePreview: "cschmitz456@gmail.com..."
+    }
+    {
+      userId: undefined
+      valueKeys: [
+        "action"
+        "dayIndex"
+        "gameDayId"
+        "gameId"
+        "playerEmail"
+        "playerUserId"
+        "submittedActionAt"
+        "submittedVoteAt"
+        "vote"
+      ]
+      playerEmail: "nickmreston@gmail.com"
+      votePreview: "malachyfernandez@gmail.com..."
+    }
+  ]
+}
+================================================================================
+entry-5cdf036de88934b382a465909b30899d.js:1944 ================================================================================
+🔍 NightlyPageOPERATOR: submissionRecords for day 2
+================================================================================
+{
+  step: "NightlyPageOPERATOR: submissionRecords received"
+  submissionKey: "playerNightSubmission-day-2-wsSd5N0R"
+  selectedDayIndex: 2
+  gameId: "wsSd5N0R"
+  recordsType: "object"
+  recordsIsArray: true
+  recordsLength: 5
+  allRecords: [
+    {
+      _id: "kh7aty91ts3v88zg7seaj0kj3985x50z"
+      userId: undefined
+      playerEmail: "camumford99@gmail.com"
+      vote: "cschmitz456@gmail.com"
+      actionType: "object"
+      dayIndex: 2
+      gameDayId: "wsSd5N0R-day-2"
+    }
+    {
+      _id: "kh70xtyyjye4wy3cgze9akym9x85wfj0"
+      userId: undefined
+      playerEmail: "darcyrose830@gmail.com"
+      vote: "cschmitz456@gmail.com"
+      actionType: "object"
+      dayIndex: 2
+      gameDayId: "wsSd5N0R-day-2"
+    }
+    {
+      _id: "kh7bdrb8r9pycw14w7dyrnc8mh85wt91"
+      userId: undefined
+      playerEmail: "nickmreston@gmail.com"
+      vote: "malachyfernandez@gmail.com"
+      actionType: "object"
+      dayIndex: 2
+      gameDayId: "wsSd5N0R-day-2"
+    }
+    {
+      _id: "kh7d53rsz5vmzm1hbqdpfyy46185wr2g"
+      userId: undefined
+      playerEmail: "lcalico23@gmail.com"
+      vote: "camumford99@gmail.com"
+      actionType: "object"
+      dayIndex: 2
+      gameDayId: "wsSd5N0R-day-2"
+    }
+    {
+      _id: "kh76sy9ycxfhpnc1daqa0yhw6585x4a9"
+      userId: undefined
+      playerEmail: "cschmitz456@gmail.com"
+      vote: "cschmitz456@gmail.com"
+      actionType: "object"
+      dayIndex: 2
+      gameDayId: "wsSd5N0R-day-2"
+    }
+  ]
+}
+================================================================================
+entry-5cdf036de88934b382a465909b30899d.js:1944 ================================================================================
+🔍 NightlyPageOPERATOR: submissionsByEmail entries
+================================================================================
+{
+  step: "NightlyPageOPERATOR: after filter/map"
+  entriesLength: 5
+  allEmails: [
+    "camumford99@gmail.com"
+    "darcyrose830@gmail.com"
+    "nickmreston@gmail.com"
+    "lcalico23@gmail.com"
+    "cschmitz456@gmail.com"
+  ]
+}
+================================================================================
+entry-5cdf036de88934b382a465909b30899d.js:1944 ================================================================================
+🔍 NightlyPageOPERATOR: counts & user list
+================================================================================
+{
+  step: "NightlyPageOPERATOR: computed counts"
+  currentDayIndex: 2
+  totalUsers: 10
+  userEmails: [
+    "Lcalico23@gmail.com"
+    "jillyjams9@gmail.com"
+    "darcyrose830@gmail.com"
+    "malachyfernandez@gmail.com"
+    "lilarad100@gmail.com"
+    "melinelkin@gmail.com"
+    "cschmitz456@gmail.com"
+    "birchatrail@gmail.com"
+    "nickmreston@gmail.com"
+    "camumford99@gmail.com"
+  ]
+  voteCount: 5
+  actionCount: 2
+  submissionsByEmailKeys: [
+    "camumford99@gmail.com"
+    "darcyrose830@gmail.com"
+    "nickmreston@gmail.com"
+    "lcalico23@gmail.com"
+    "cschmitz456@gmail.com"
+  ]
+}
+================================================================================
+entry-5cdf036de88934b382a465909b30899d.js:1944 ================================================================================
+🔍 NightlyPageOPERATOR: NightlyCertificationDialog render
+================================================================================
+{
+  step: "NightlyPageOPERATOR: rendering NightlyCertificationDialog"
+  isOpen: true
+  usersCount: 10
+  userEmails: [
+    "Lcalico23@gmail.com"
+    "jillyjams9@gmail.com"
+    "darcyrose830@gmail.com"
+    "malachyfernandez@gmail.com"
+    "lilarad100@gmail.com"
+    "melinelkin@gmail.com"
+    "cschmitz456@gmail.com"
+    "birchatrail@gmail.com"
+    "nickmreston@gmail.com"
+    "camumford99@gmail.com"
+  ]
+  submissionsByEmailKeys: [
+    "camumford99@gmail.com"
+    "darcyrose830@gmail.com"
+    "nickmreston@gmail.com"
+    "lcalico23@gmail.com"
+    "cschmitz456@gmail.com"
+  ]
+  submissionsByEmailValues: [
+    {
+      playerEmail: "camumford99@gmail.com"
+      vote: "cschmitz456@gmail.com"
+      dayIndex: 2
+    }
+    {
+      playerEmail: "darcyrose830@gmail.com"
+      vote: "cschmitz456@gmail.com"
+      dayIndex: 2
+    }
+    {
+      playerEmail: "nickmreston@gmail.com"
+      vote: "malachyfernandez@gmail.com"
+      dayIndex: 2
+    }
+    {
+      playerEmail: "lcalico23@gmail.com"
+      vote: "camumford99@gmail.com"
+      dayIndex: 2
+    }
+    {
+      playerEmail: "cschmitz456@gmail.com"
+      vote: "cschmitz456@gmail.com"
+      dayIndex: 2
+    }
+  ]
+}
+================================================================================
+entry-5cdf036de88934b382a465909b30899d.js:1944 ================================================================================
+🔍 NightlyCertificationDialog: render START
+================================================================================
+{
+  step: "NightlyCertificationDialog: component render START"
+  isOpen: true
+  usersCount: 10
+  userEmails: [
+    "Lcalico23@gmail.com"
+    "jillyjams9@gmail.com"
+    "darcyrose830@gmail.com"
+    "malachyfernandez@gmail.com"
+    "lilarad100@gmail.com"
+    "melinelkin@gmail.com"
+    "cschmitz456@gmail.com"
+    "birchatrail@gmail.com"
+    "nickmreston@gmail.com"
+    "camumford99@gmail.com"
+  ]
+  userRealNames: [
+    "Calico"
+    "Jill"
+    "Darcy"
+    "Malachy"
+    "Lila"
+    "Meli"
+    "Chloe"
+    "Birch"
+    "Nick"
+    "Charlie"
+  ]
+  submissionsByEmailKeys: [
+    "camumford99@gmail.com"
+    "darcyrose830@gmail.com"
+    "nickmreston@gmail.com"
+    "lcalico23@gmail.com"
+    "cschmitz456@gmail.com"
+  ]
+  allSubmissions: [
+    {
+      email: "camumford99@gmail.com"
+      playerEmail: "camumford99@gmail.com"
+      vote: "cschmitz456@gmail.com"
+      actionType: "object"
+      dayIndex: 2
+      gameDayId: "wsSd5N0R-day-2"
+    }
+    {
+      email: "darcyrose830@gmail.com"
+      playerEmail: "darcyrose830@gmail.com"
+      vote: "cschmitz456@gmail.com"
+      actionType: "object"
+      dayIndex: 2
+      gameDayId: "wsSd5N0R-day-2"
+    }
+    {
+      email: "nickmreston@gmail.com"
+      playerEmail: "nickmreston@gmail.com"
+      vote: "malachyfernandez@gmail.com"
+      actionType: "object"
+      dayIndex: 2
+      gameDayId: "wsSd5N0R-day-2"
+    }
+    {
+      email: "lcalico23@gmail.com"
+      playerEmail: "lcalico23@gmail.com"
+      vote: "camumford99@gmail.com"
+      actionType: "object"
+      dayIndex: 2
+      gameDayId: "wsSd5N0R-day-2"
+    }
+    {
+      email: "cschmitz456@gmail.com"
+      playerEmail: "cschmitz456@gmail.com"
+      vote: "cschmitz456@gmail.com"
+      actionType: "object"
+      dayIndex: 2
+      gameDayId: "wsSd5N0R-day-2"
+    }
+  ]
+}
+================================================================================
+entry-5cdf036de88934b382a465909b30899d.js:1944 ================================================================================
+🔍 resolveVoteEmailToName: input=""
+================================================================================
+{
+  step: "resolveVoteEmailToName: called"
+  voteEmail: ""
+  usersCount: 10
+  allUserEmails: [
+    "Lcalico23@gmail.com"
+    "jillyjams9@gmail.com"
+    "darcyrose830@gmail.com"
+    "malachyfernandez@gmail.com"
+    "lilarad100@gmail.com"
+    "melinelkin@gmail.com"
+    "cschmitz456@gmail.com"
+    "birchatrail@gmail.com"
+    "nickmreston@gmail.com"
+    "camumford99@gmail.com"
+  ]
+  allUserRealNames: [
+    "Calico"
+    "Jill"
+    "Darcy"
+    "Malachy"
+    "Lila"
+    "Meli"
+    "Chloe"
+    "Birch"
+    "Nick"
+    "Charlie"
+  ]
+}
+================================================================================
+entry-5cdf036de88934b382a465909b30899d.js:1944 ================================================================================
+🔍 resolveVoteEmailToName: result
+================================================================================
+{
+  step: "resolveVoteEmailToName: empty vote → No vote"
+}
+================================================================================
+entry-5cdf036de88934b382a465909b30899d.js:1944 ================================================================================
+🔍 NightlyCertificationDialog: row for Lcalico23@gmail.com
+================================================================================
+{
+  step: "NightlyCertificationDialog: per-user row"
+  userEmail: "Lcalico23@gmail.com"
+  userRealName: "Calico"
+  hasSubmission: false
+  submissionKeys: "none"
+  rawVote: ""
+  resolvedVote: "No vote"
+  actionSummary: ""
+  actionType: "undefined"
+  actionValue: undefined
+  allSubmissionEmailsInLookup: [
+    "camumford99@gmail.com"
+    "darcyrose830@gmail.com"
+    "nickmreston@gmail.com"
+    "lcalico23@gmail.com"
+    "cschmitz456@gmail.com"
+  ]
+  matchedByEmail: false
+}
+================================================================================
+entry-5cdf036de88934b382a465909b30899d.js:1944 ================================================================================
+🔍 resolveVoteEmailToName: input=""
+================================================================================
+{
+  step: "resolveVoteEmailToName: called"
+  voteEmail: ""
+  usersCount: 10
+  allUserEmails: [
+    "Lcalico23@gmail.com"
+    "jillyjams9@gmail.com"
+    "darcyrose830@gmail.com"
+    "malachyfernandez@gmail.com"
+    "lilarad100@gmail.com"
+    "melinelkin@gmail.com"
+    "cschmitz456@gmail.com"
+    "birchatrail@gmail.com"
+    "nickmreston@gmail.com"
+    "camumford99@gmail.com"
+  ]
+  allUserRealNames: [
+    "Calico"
+    "Jill"
+    "Darcy"
+    "Malachy"
+    "Lila"
+    "Meli"
+    "Chloe"
+    "Birch"
+    "Nick"
+    "Charlie"
+  ]
+}
+================================================================================
+entry-5cdf036de88934b382a465909b30899d.js:1944 ================================================================================
+🔍 resolveVoteEmailToName: result
+================================================================================
+{
+  step: "resolveVoteEmailToName: empty vote → No vote"
+}
+================================================================================
+entry-5cdf036de88934b382a465909b30899d.js:1944 ================================================================================
+🔍 NightlyCertificationDialog: row for jillyjams9@gmail.com
+================================================================================
+{
+  step: "NightlyCertificationDialog: per-user row"
+  userEmail: "jillyjams9@gmail.com"
+  userRealName: "Jill"
+  hasSubmission: false
+  submissionKeys: "none"
+  rawVote: ""
+  resolvedVote: "No vote"
+  actionSummary: ""
+  actionType: "undefined"
+  actionValue: undefined
+  allSubmissionEmailsInLookup: [
+    "camumford99@gmail.com"
+    "darcyrose830@gmail.com"
+    "nickmreston@gmail.com"
+    "lcalico23@gmail.com"
+    "cschmitz456@gmail.com"
+  ]
+  matchedByEmail: false
+}
+================================================================================
+entry-5cdf036de88934b382a465909b30899d.js:1944 ================================================================================
+🔍 resolveVoteEmailToName: input="cschmitz456@gmail.com"
+================================================================================
+{
+  step: "resolveVoteEmailToName: called"
+  voteEmail: "cschmitz456@gmail.com"
+  usersCount: 10
+  allUserEmails: [
+    "Lcalico23@gmail.com"
+    "jillyjams9@gmail.com"
+    "darcyrose830@gmail.com"
+    "malachyfernandez@gmail.com"
+    "lilarad100@gmail.com"
+    "melinelkin@gmail.com"
+    "cschmitz456@gmail.com"
+    "birchatrail@gmail.com"
+    "nickmreston@gmail.com"
+    "camumford99@gmail.com"
+  ]
+  allUserRealNames: [
+    "Calico"
+    "Jill"
+    "Darcy"
+    "Malachy"
+    "Lila"
+    "Meli"
+    "Chloe"
+    "Birch"
+    "Nick"
+    "Charlie"
+  ]
+}
+================================================================================
+entry-5cdf036de88934b382a465909b30899d.js:1944 ================================================================================
+🔍 resolveVoteEmailToName: result
+================================================================================
+{
+  step: "resolveVoteEmailToName: lookup done"
+  trimmedEmail: "cschmitz456@gmail.com"
+  foundUserEmail: "cschmitz456@gmail.com"
+  foundUserRealName: "Chloe"
+  result: "Chloe"
+}
+================================================================================
+entry-5cdf036de88934b382a465909b30899d.js:1944 ================================================================================
+🔍 NightlyCertificationDialog: row for darcyrose830@gmail.com
+================================================================================
+{
+  step: "NightlyCertificationDialog: per-user row"
+  userEmail: "darcyrose830@gmail.com"
+  userRealName: "Darcy"
+  hasSubmission: true
+  submissionKeys: [
+    "action"
+    "dayIndex"
+    "gameDayId"
+    "gameId"
+    "playerEmail"
+    "playerUserId"
+    "submittedActionAt"
+    "submittedVoteAt"
+    "vote"
+  ]
+  rawVote: "cschmitz456@gmail.com"
+  resolvedVote: "Chloe"
+  actionSummary: "Kill...: Malachy"
+  actionType: "object"
+  actionValue: {
+    Kill...: "Malachy"
+  }
+  allSubmissionEmailsInLookup: [
+    "camumford99@gmail.com"
+    "darcyrose830@gmail.com"
+    "nickmreston@gmail.com"
+    "lcalico23@gmail.com"
+    "cschmitz456@gmail.com"
+  ]
+  matchedByEmail: true
+}
+================================================================================
+entry-5cdf036de88934b382a465909b30899d.js:1944 ================================================================================
+🔍 resolveVoteEmailToName: input=""
+================================================================================
+{
+  step: "resolveVoteEmailToName: called"
+  voteEmail: ""
+  usersCount: 10
+  allUserEmails: [
+    "Lcalico23@gmail.com"
+    "jillyjams9@gmail.com"
+    "darcyrose830@gmail.com"
+    "malachyfernandez@gmail.com"
+    "lilarad100@gmail.com"
+    "melinelkin@gmail.com"
+    "cschmitz456@gmail.com"
+    "birchatrail@gmail.com"
+    "nickmreston@gmail.com"
+    "camumford99@gmail.com"
+  ]
+  allUserRealNames: [
+    "Calico"
+    "Jill"
+    "Darcy"
+    "Malachy"
+    "Lila"
+    "Meli"
+    "Chloe"
+    "Birch"
+    "Nick"
+    "Charlie"
+  ]
+}
+================================================================================
+entry-5cdf036de88934b382a465909b30899d.js:1944 ================================================================================
+🔍 resolveVoteEmailToName: result
+================================================================================
+{
+  step: "resolveVoteEmailToName: empty vote → No vote"
+}
+================================================================================
+entry-5cdf036de88934b382a465909b30899d.js:1944 ================================================================================
+🔍 NightlyCertificationDialog: row for malachyfernandez@gmail.com
+================================================================================
+{
+  step: "NightlyCertificationDialog: per-user row"
+  userEmail: "malachyfernandez@gmail.com"
+  userRealName: "Malachy"
+  hasSubmission: false
+  submissionKeys: "none"
+  rawVote: ""
+  resolvedVote: "No vote"
+  actionSummary: ""
+  actionType: "undefined"
+  actionValue: undefined
+  allSubmissionEmailsInLookup: [
+    "camumford99@gmail.com"
+    "darcyrose830@gmail.com"
+    "nickmreston@gmail.com"
+    "lcalico23@gmail.com"
+    "cschmitz456@gmail.com"
+  ]
+  matchedByEmail: false
+}
+================================================================================
+entry-5cdf036de88934b382a465909b30899d.js:1944 ================================================================================
+🔍 resolveVoteEmailToName: input=""
+================================================================================
+{
+  step: "resolveVoteEmailToName: called"
+  voteEmail: ""
+  usersCount: 10
+  allUserEmails: [
+    "Lcalico23@gmail.com"
+    "jillyjams9@gmail.com"
+    "darcyrose830@gmail.com"
+    "malachyfernandez@gmail.com"
+    "lilarad100@gmail.com"
+    "melinelkin@gmail.com"
+    "cschmitz456@gmail.com"
+    "birchatrail@gmail.com"
+    "nickmreston@gmail.com"
+    "camumford99@gmail.com"
+  ]
+  allUserRealNames: [
+    "Calico"
+    "Jill"
+    "Darcy"
+    "Malachy"
+    "Lila"
+    "Meli"
+    "Chloe"
+    "Birch"
+    "Nick"
+    "Charlie"
+  ]
+}
+================================================================================
+entry-5cdf036de88934b382a465909b30899d.js:1944 ================================================================================
+🔍 resolveVoteEmailToName: result
+================================================================================
+{
+  step: "resolveVoteEmailToName: empty vote → No vote"
+}
+================================================================================
+entry-5cdf036de88934b382a465909b30899d.js:1944 ================================================================================
+🔍 NightlyCertificationDialog: row for lilarad100@gmail.com
+================================================================================
+{
+  step: "NightlyCertificationDialog: per-user row"
+  userEmail: "lilarad100@gmail.com"
+  userRealName: "Lila"
+  hasSubmission: false
+  submissionKeys: "none"
+  rawVote: ""
+  resolvedVote: "No vote"
+  actionSummary: ""
+  actionType: "undefined"
+  actionValue: undefined
+  allSubmissionEmailsInLookup: [
+    "camumford99@gmail.com"
+    "darcyrose830@gmail.com"
+    "nickmreston@gmail.com"
+    "lcalico23@gmail.com"
+    "cschmitz456@gmail.com"
+  ]
+  matchedByEmail: false
+}
+================================================================================
+entry-5cdf036de88934b382a465909b30899d.js:1944 ================================================================================
+🔍 resolveVoteEmailToName: input=""
+================================================================================
+{
+  step: "resolveVoteEmailToName: called"
+  voteEmail: ""
+  usersCount: 10
+  allUserEmails: [
+    "Lcalico23@gmail.com"
+    "jillyjams9@gmail.com"
+    "darcyrose830@gmail.com"
+    "malachyfernandez@gmail.com"
+    "lilarad100@gmail.com"
+    "melinelkin@gmail.com"
+    "cschmitz456@gmail.com"
+    "birchatrail@gmail.com"
+    "nickmreston@gmail.com"
+    "camumford99@gmail.com"
+  ]
+  allUserRealNames: [
+    "Calico"
+    "Jill"
+    "Darcy"
+    "Malachy"
+    "Lila"
+    "Meli"
+    "Chloe"
+    "Birch"
+    "Nick"
+    "Charlie"
+  ]
+}
+================================================================================
+entry-5cdf036de88934b382a465909b30899d.js:1944 ================================================================================
+🔍 resolveVoteEmailToName: result
+================================================================================
+{
+  step: "resolveVoteEmailToName: empty vote → No vote"
+}
+================================================================================
+entry-5cdf036de88934b382a465909b30899d.js:1944 ================================================================================
+🔍 NightlyCertificationDialog: row for melinelkin@gmail.com
+================================================================================
+{
+  step: "NightlyCertificationDialog: per-user row"
+  userEmail: "melinelkin@gmail.com"
+  userRealName: "Meli"
+  hasSubmission: false
+  submissionKeys: "none"
+  rawVote: ""
+  resolvedVote: "No vote"
+  actionSummary: ""
+  actionType: "undefined"
+  actionValue: undefined
+  allSubmissionEmailsInLookup: [
+    "camumford99@gmail.com"
+    "darcyrose830@gmail.com"
+    "nickmreston@gmail.com"
+    "lcalico23@gmail.com"
+    "cschmitz456@gmail.com"
+  ]
+  matchedByEmail: false
+}
+================================================================================
+entry-5cdf036de88934b382a465909b30899d.js:1944 ================================================================================
+🔍 resolveVoteEmailToName: input="cschmitz456@gmail.com"
+================================================================================
+{
+  step: "resolveVoteEmailToName: called"
+  voteEmail: "cschmitz456@gmail.com"
+  usersCount: 10
+  allUserEmails: [
+    "Lcalico23@gmail.com"
+    "jillyjams9@gmail.com"
+    "darcyrose830@gmail.com"
+    "malachyfernandez@gmail.com"
+    "lilarad100@gmail.com"
+    "melinelkin@gmail.com"
+    "cschmitz456@gmail.com"
+    "birchatrail@gmail.com"
+    "nickmreston@gmail.com"
+    "camumford99@gmail.com"
+  ]
+  allUserRealNames: [
+    "Calico"
+    "Jill"
+    "Darcy"
+    "Malachy"
+    "Lila"
+    "Meli"
+    "Chloe"
+    "Birch"
+    "Nick"
+    "Charlie"
+  ]
+}
+================================================================================
+entry-5cdf036de88934b382a465909b30899d.js:1944 ================================================================================
+🔍 resolveVoteEmailToName: result
+================================================================================
+{
+  step: "resolveVoteEmailToName: lookup done"
+  trimmedEmail: "cschmitz456@gmail.com"
+  foundUserEmail: "cschmitz456@gmail.com"
+  foundUserRealName: "Chloe"
+  result: "Chloe"
+}
+================================================================================
+entry-5cdf036de88934b382a465909b30899d.js:1944 ================================================================================
+🔍 NightlyCertificationDialog: row for cschmitz456@gmail.com
+================================================================================
+{
+  step: "NightlyCertificationDialog: per-user row"
+  userEmail: "cschmitz456@gmail.com"
+  userRealName: "Chloe"
+  hasSubmission: true
+  submissionKeys: [
+    "action"
+    "dayIndex"
+    "gameDayId"
+    "gameId"
+    "playerEmail"
+    "playerUserId"
+    "submittedActionAt"
+    "submittedVoteAt"
+    "vote"
+  ]
+  rawVote: "cschmitz456@gmail.com"
+  resolvedVote: "Chloe"
+  actionSummary: ""
+  actionType: "object"
+  actionValue: {}
+  allSubmissionEmailsInLookup: [
+    "camumford99@gmail.com"
+    "darcyrose830@gmail.com"
+    "nickmreston@gmail.com"
+    "lcalico23@gmail.com"
+    "cschmitz456@gmail.com"
+  ]
+  matchedByEmail: true
+}
+================================================================================
+entry-5cdf036de88934b382a465909b30899d.js:1944 ================================================================================
+🔍 resolveVoteEmailToName: input=""
+================================================================================
+{
+  step: "resolveVoteEmailToName: called"
+  voteEmail: ""
+  usersCount: 10
+  allUserEmails: [
+    "Lcalico23@gmail.com"
+    "jillyjams9@gmail.com"
+    "darcyrose830@gmail.com"
+    "malachyfernandez@gmail.com"
+    "lilarad100@gmail.com"
+    "melinelkin@gmail.com"
+    "cschmitz456@gmail.com"
+    "birchatrail@gmail.com"
+    "nickmreston@gmail.com"
+    "camumford99@gmail.com"
+  ]
+  allUserRealNames: [
+    "Calico"
+    "Jill"
+    "Darcy"
+    "Malachy"
+    "Lila"
+    "Meli"
+    "Chloe"
+    "Birch"
+    "Nick"
+    "Charlie"
+  ]
+}
+================================================================================
+entry-5cdf036de88934b382a465909b30899d.js:1944 ================================================================================
+🔍 resolveVoteEmailToName: result
+================================================================================
+{
+  step: "resolveVoteEmailToName: empty vote → No vote"
+}
+================================================================================
+entry-5cdf036de88934b382a465909b30899d.js:1944 ================================================================================
+🔍 NightlyCertificationDialog: row for birchatrail@gmail.com
+================================================================================
+{
+  step: "NightlyCertificationDialog: per-user row"
+  userEmail: "birchatrail@gmail.com"
+  userRealName: "Birch"
+  hasSubmission: false
+  submissionKeys: "none"
+  rawVote: ""
+  resolvedVote: "No vote"
+  actionSummary: ""
+  actionType: "undefined"
+  actionValue: undefined
+  allSubmissionEmailsInLookup: [
+    "camumford99@gmail.com"
+    "darcyrose830@gmail.com"
+    "nickmreston@gmail.com"
+    "lcalico23@gmail.com"
+    "cschmitz456@gmail.com"
+  ]
+  matchedByEmail: false
+}
+================================================================================
+entry-5cdf036de88934b382a465909b30899d.js:1944 ================================================================================
+🔍 resolveVoteEmailToName: input="malachyfernandez@gmail.com"
+================================================================================
+{
+  step: "resolveVoteEmailToName: called"
+  voteEmail: "malachyfernandez@gmail.com"
+  usersCount: 10
+  allUserEmails: [
+    "Lcalico23@gmail.com"
+    "jillyjams9@gmail.com"
+    "darcyrose830@gmail.com"
+    "malachyfernandez@gmail.com"
+    "lilarad100@gmail.com"
+    "melinelkin@gmail.com"
+    "cschmitz456@gmail.com"
+    "birchatrail@gmail.com"
+    "nickmreston@gmail.com"
+    "camumford99@gmail.com"
+  ]
+  allUserRealNames: [
+    "Calico"
+    "Jill"
+    "Darcy"
+    "Malachy"
+    "Lila"
+    "Meli"
+    "Chloe"
+    "Birch"
+    "Nick"
+    "Charlie"
+  ]
+}
+================================================================================
+entry-5cdf036de88934b382a465909b30899d.js:1944 ================================================================================
+🔍 resolveVoteEmailToName: result
+================================================================================
+{
+  step: "resolveVoteEmailToName: lookup done"
+  trimmedEmail: "malachyfernandez@gmail.com"
+  foundUserEmail: "malachyfernandez@gmail.com"
+  foundUserRealName: "Malachy"
+  result: "Malachy"
+}
+================================================================================
+entry-5cdf036de88934b382a465909b30899d.js:1944 ================================================================================
+🔍 NightlyCertificationDialog: row for nickmreston@gmail.com
+================================================================================
+{
+  step: "NightlyCertificationDialog: per-user row"
+  userEmail: "nickmreston@gmail.com"
+  userRealName: "Nick"
+  hasSubmission: true
+  submissionKeys: [
+    "action"
+    "dayIndex"
+    "gameDayId"
+    "gameId"
+    "playerEmail"
+    "playerUserId"
+    "submittedActionAt"
+    "submittedVoteAt"
+    "vote"
+  ]
+  rawVote: "malachyfernandez@gmail.com"
+  resolvedVote: "Malachy"
+  actionSummary: ""
+  actionType: "object"
+  actionValue: {}
+  allSubmissionEmailsInLookup: [
+    "camumford99@gmail.com"
+    "darcyrose830@gmail.com"
+    "nickmreston@gmail.com"
+    "lcalico23@gmail.com"
+    "cschmitz456@gmail.com"
+  ]
+  matchedByEmail: true
+}
+================================================================================
+entry-5cdf036de88934b382a465909b30899d.js:1944 ================================================================================
+🔍 resolveVoteEmailToName: input="cschmitz456@gmail.com"
+================================================================================
+{
+  step: "resolveVoteEmailToName: called"
+  voteEmail: "cschmitz456@gmail.com"
+  usersCount: 10
+  allUserEmails: [
+    "Lcalico23@gmail.com"
+    "jillyjams9@gmail.com"
+    "darcyrose830@gmail.com"
+    "malachyfernandez@gmail.com"
+    "lilarad100@gmail.com"
+    "melinelkin@gmail.com"
+    "cschmitz456@gmail.com"
+    "birchatrail@gmail.com"
+    "nickmreston@gmail.com"
+    "camumford99@gmail.com"
+  ]
+  allUserRealNames: [
+    "Calico"
+    "Jill"
+    "Darcy"
+    "Malachy"
+    "Lila"
+    "Meli"
+    "Chloe"
+    "Birch"
+    "Nick"
+    "Charlie"
+  ]
+}
+================================================================================
+entry-5cdf036de88934b382a465909b30899d.js:1944 ================================================================================
+🔍 resolveVoteEmailToName: result
+================================================================================
+{
+  step: "resolveVoteEmailToName: lookup done"
+  trimmedEmail: "cschmitz456@gmail.com"
+  foundUserEmail: "cschmitz456@gmail.com"
+  foundUserRealName: "Chloe"
+  result: "Chloe"
+}
+================================================================================
+entry-5cdf036de88934b382a465909b30899d.js:1944 ================================================================================
+🔍 NightlyCertificationDialog: row for camumford99@gmail.com
+================================================================================
+{
+  step: "NightlyCertificationDialog: per-user row"
+  userEmail: "camumford99@gmail.com"
+  userRealName: "Charlie"
+  hasSubmission: true
+  submissionKeys: [
+    "action"
+    "dayIndex"
+    "gameDayId"
+    "gameId"
+    "playerEmail"
+    "playerUserId"
+    "submittedActionAt"
+    "submittedVoteAt"
+    "vote"
+  ]
+  rawVote: "cschmitz456@gmail.com"
+  resolvedVote: "Chloe"
+  actionSummary: "Kill...: Malachy"
+  actionType: "object"
+  actionValue: {
+    Kill...: "Malachy"
+  }
+  allSubmissionEmailsInLookup: [
+    "camumford99@gmail.com"
+    "darcyrose830@gmail.com"
+    "nickmreston@gmail.com"
+    "lcalico23@gmail.com"
+    "cschmitz456@gmail.com"
+  ]
+  matchedByEmail: true
+}
+================================================================================
+entry-5cdf036de88934b382a465909b30899d.js:1944 ================================================================================
+🔍 useFindValues: playerNightSubmission-day-2-wsSd5N0R — result=5
+================================================================================
+{
+  hook: "useFindValues"
+  key: "playerNightSubmission-day-2-wsSd5N0R"
+  subId: "{"type":"find-values","key":"playerNightSubmission-day-2-wsSd5N0R","args":{"returnTop":200}}"
+  queryArgs: {
+    returnTop: 200
+  }
+  baseConfig: {}
+  resultLength: 5
+  resultSample: [
+    {
+      userId: undefined
+      valueKeys: [
+        "action"
+        "dayIndex"
+        "gameDayId"
+        "gameId"
+        "playerEmail"
+        "playerUserId"
+        "submittedActionAt"
+        "submittedVoteAt"
+        "vote"
+      ]
+      playerEmail: "camumford99@gmail.com"
+      votePreview: "cschmitz456@gmail.com..."
+    }
+    {
+      userId: undefined
+      valueKeys: [
+        "action"
+        "dayIndex"
+        "gameDayId"
+        "gameId"
+        "playerEmail"
+        "playerUserId"
+        "submittedActionAt"
+        "submittedVoteAt"
+        "vote"
+      ]
+      playerEmail: "darcyrose830@gmail.com"
+      votePreview: "cschmitz456@gmail.com..."
+    }
+    {
+      userId: undefined
+      valueKeys: [
+        "action"
+        "dayIndex"
+        "gameDayId"
+        "gameId"
+        "playerEmail"
+        "playerUserId"
+        "submittedActionAt"
+        "submittedVoteAt"
+        "vote"
+      ]
+      playerEmail: "nickmreston@gmail.com"
+      votePreview: "malachyfernandez@gmail.com..."
+    }
+  ]
+}
+================================================================================
+entry-5cdf036de88934b382a465909b30899d.js:1944 ================================================================================
+🔍 NightlyPageOPERATOR: submissionRecords for day 2
+================================================================================
+{
+  step: "NightlyPageOPERATOR: submissionRecords received"
+  submissionKey: "playerNightSubmission-day-2-wsSd5N0R"
+  selectedDayIndex: 2
+  gameId: "wsSd5N0R"
+  recordsType: "object"
+  recordsIsArray: true
+  recordsLength: 5
+  allRecords: [
+    {
+      _id: "kh7aty91ts3v88zg7seaj0kj3985x50z"
+      userId: undefined
+      playerEmail: "camumford99@gmail.com"
+      vote: "cschmitz456@gmail.com"
+      actionType: "object"
+      dayIndex: 2
+      gameDayId: "wsSd5N0R-day-2"
+    }
+    {
+      _id: "kh70xtyyjye4wy3cgze9akym9x85wfj0"
+      userId: undefined
+      playerEmail: "darcyrose830@gmail.com"
+      vote: "cschmitz456@gmail.com"
+      actionType: "object"
+      dayIndex: 2
+      gameDayId: "wsSd5N0R-day-2"
+    }
+    {
+      _id: "kh7bdrb8r9pycw14w7dyrnc8mh85wt91"
+      userId: undefined
+      playerEmail: "nickmreston@gmail.com"
+      vote: "malachyfernandez@gmail.com"
+      actionType: "object"
+      dayIndex: 2
+      gameDayId: "wsSd5N0R-day-2"
+    }
+    {
+      _id: "kh7d53rsz5vmzm1hbqdpfyy46185wr2g"
+      userId: undefined
+      playerEmail: "lcalico23@gmail.com"
+      vote: "camumford99@gmail.com"
+      actionType: "object"
+      dayIndex: 2
+      gameDayId: "wsSd5N0R-day-2"
+    }
+    {
+      _id: "kh76sy9ycxfhpnc1daqa0yhw6585x4a9"
+      userId: undefined
+      playerEmail: "cschmitz456@gmail.com"
+      vote: "cschmitz456@gmail.com"
+      actionType: "object"
+      dayIndex: 2
+      gameDayId: "wsSd5N0R-day-2"
+    }
+  ]
+}
+================================================================================
+entry-5cdf036de88934b382a465909b30899d.js:1944 ================================================================================
+🔍 NightlyPageOPERATOR: submissionsByEmail entries
+================================================================================
+{
+  step: "NightlyPageOPERATOR: after filter/map"
+  entriesLength: 5
+  allEmails: [
+    "camumford99@gmail.com"
+    "darcyrose830@gmail.com"
+    "nickmreston@gmail.com"
+    "lcalico23@gmail.com"
+    "cschmitz456@gmail.com"
+  ]
+}
+================================================================================
+entry-5cdf036de88934b382a465909b30899d.js:1944 ================================================================================
+🔍 NightlyPageOPERATOR: counts & user list
+================================================================================
+{
+  step: "NightlyPageOPERATOR: computed counts"
+  currentDayIndex: 2
+  totalUsers: 10
+  userEmails: [
+    "Lcalico23@gmail.com"
+    "jillyjams9@gmail.com"
+    "darcyrose830@gmail.com"
+    "malachyfernandez@gmail.com"
+    "lilarad100@gmail.com"
+    "melinelkin@gmail.com"
+    "cschmitz456@gmail.com"
+    "birchatrail@gmail.com"
+    "nickmreston@gmail.com"
+    "camumford99@gmail.com"
+  ]
+  voteCount: 5
+  actionCount: 2
+  submissionsByEmailKeys: [
+    "camumford99@gmail.com"
+    "darcyrose830@gmail.com"
+    "nickmreston@gmail.com"
+    "lcalico23@gmail.com"
+    "cschmitz456@gmail.com"
+  ]
+}
+================================================================================
+entry-5cdf036de88934b382a465909b30899d.js:1944 ================================================================================
+🔍 NightlyPageOPERATOR: NightlyCertificationDialog render
+================================================================================
+{
+  step: "NightlyPageOPERATOR: rendering NightlyCertificationDialog"
+  isOpen: true
+  usersCount: 10
+  userEmails: [
+    "Lcalico23@gmail.com"
+    "jillyjams9@gmail.com"
+    "darcyrose830@gmail.com"
+    "malachyfernandez@gmail.com"
+    "lilarad100@gmail.com"
+    "melinelkin@gmail.com"
+    "cschmitz456@gmail.com"
+    "birchatrail@gmail.com"
+    "nickmreston@gmail.com"
+    "camumford99@gmail.com"
+  ]
+  submissionsByEmailKeys: [
+    "camumford99@gmail.com"
+    "darcyrose830@gmail.com"
+    "nickmreston@gmail.com"
+    "lcalico23@gmail.com"
+    "cschmitz456@gmail.com"
+  ]
+  submissionsByEmailValues: [
+    {
+      playerEmail: "camumford99@gmail.com"
+      vote: "cschmitz456@gmail.com"
+      dayIndex: 2
+    }
+    {
+      playerEmail: "darcyrose830@gmail.com"
+      vote: "cschmitz456@gmail.com"
+      dayIndex: 2
+    }
+    {
+      playerEmail: "nickmreston@gmail.com"
+      vote: "malachyfernandez@gmail.com"
+      dayIndex: 2
+    }
+    {
+      playerEmail: "lcalico23@gmail.com"
+      vote: "camumford99@gmail.com"
+      dayIndex: 2
+    }
+    {
+      playerEmail: "cschmitz456@gmail.com"
+      vote: "cschmitz456@gmail.com"
+      dayIndex: 2
+    }
+  ]
+}
+================================================================================
+entry-5cdf036de88934b382a465909b30899d.js:1944 ================================================================================
+🔍 useUserVariableGet: playerNightSubmission-day-2-wsSd5N0R — raw=6 decoded=6
+================================================================================
+{
+  hook: "useUserVariableGet"
+  key: "playerNightSubmission-day-2-wsSd5N0R"
+  searchFor: undefined
+  filterFor: undefined
+  userIds: undefined
+  returnTop: 200
+  rawResultCount: 6
+  rawResultSample: [
+    {
+      _id: "kh7aty91ts3v88zg7seaj0kj3985x50z"
+      userId: undefined
+      rawValueType: "object"
+      rawValueKeys: [
+        "action"
+        "dayIndex"
+        "gameDayId"
+        "gameId"
+        "playerEmail"
+        "playerUserId"
+        "submittedActionAt"
+        "submittedVoteAt"
+        "vote"
+      ]
+      rawPlayerEmail: "camumford99@gmail.com"
+      rawVote: "cschmitz456@gmail.com"
+    }
+    {
+      _id: "kh70xtyyjye4wy3cgze9akym9x85wfj0"
+      userId: undefined
+      rawValueType: "object"
+      rawValueKeys: [
+        "action"
+        "dayIndex"
+        "gameDayId"
+        "gameId"
+        "playerEmail"
+        "playerUserId"
+        "submittedActionAt"
+        "submittedVoteAt"
+        "vote"
+      ]
+      rawPlayerEmail: "darcyrose830@gmail.com"
+      rawVote: "cschmitz456@gmail.com"
+    }
+    {
+      _id: "kh74w04cvpee5rbwfje2wscn5d85x58q"
+      userId: undefined
+      rawValueType: "object"
+      rawValueKeys: [
+        "action"
+        "dayIndex"
+        "gameDayId"
+        "gameId"
+        "playerEmail"
+        "playerUserId"
+        "submittedActionAt"
+        "submittedVoteAt"
+        "vote"
+      ]
+      rawPlayerEmail: "jillyjams9@gmail.com"
+      rawVote: "cschmitz456@gmail.com"
+    }
+  ]
+  decodedResultCount: 6
+  decodedSampleEmails: [
+    "camumford99@gmail.com"
+    "darcyrose830@gmail.com"
+    "jillyjams9@gmail.com"
+  ]
+}
+================================================================================
+entry-5cdf036de88934b382a465909b30899d.js:1944 ================================================================================
+🔍 DataSubscriber: playerNightSubmission-day-2-wsSd5N0R — result=6 (refCount=1)
+================================================================================
+{
+  dataSubscriber: "DataSubscriber"
+  subId: "{"type":"find-values","key":"playerNightSubmission-day-2-wsSd5N0R","args":{"returnTop":200}}"
+  type: "find-values"
+  key: "playerNightSubmission-day-2-wsSd5N0R"
+  refCount: 1
+  resultLength: 6
+  resultSample: [
+    {
+      userId: undefined
+      _id: "kh7aty91ts3v88zg7seaj0kj3985x50z"
+      playerEmail: "camumford99@gmail.com"
+      vote: "cschmitz456@gmail.com"
+      actionType: "object"
+    }
+    {
+      userId: undefined
+      _id: "kh70xtyyjye4wy3cgze9akym9x85wfj0"
+      playerEmail: "darcyrose830@gmail.com"
+      vote: "cschmitz456@gmail.com"
+      actionType: "object"
+    }
+    {
+      userId: undefined
+      _id: "kh74w04cvpee5rbwfje2wscn5d85x58q"
+      playerEmail: "jillyjams9@gmail.com"
+      vote: "cschmitz456@gmail.com"
+      actionType: "object"
+    }
+  ]
+}
+================================================================================
+entry-5cdf036de88934b382a465909b30899d.js:1944 ================================================================================
+🔍 useFindValues: playerNightSubmission-day-2-wsSd5N0R — result=6
+================================================================================
+{
+  hook: "useFindValues"
+  key: "playerNightSubmission-day-2-wsSd5N0R"
+  subId: "{"type":"find-values","key":"playerNightSubmission-day-2-wsSd5N0R","args":{"returnTop":200}}"
+  queryArgs: {
+    returnTop: 200
+  }
+  baseConfig: {}
+  resultLength: 6
+  resultSample: [
+    {
+      userId: undefined
+      valueKeys: [
+        "action"
+        "dayIndex"
+        "gameDayId"
+        "gameId"
+        "playerEmail"
+        "playerUserId"
+        "submittedActionAt"
+        "submittedVoteAt"
+        "vote"
+      ]
+      playerEmail: "camumford99@gmail.com"
+      votePreview: "cschmitz456@gmail.com..."
+    }
+    {
+      userId: undefined
+      valueKeys: [
+        "action"
+        "dayIndex"
+        "gameDayId"
+        "gameId"
+        "playerEmail"
+        "playerUserId"
+        "submittedActionAt"
+        "submittedVoteAt"
+        "vote"
+      ]
+      playerEmail: "darcyrose830@gmail.com"
+      votePreview: "cschmitz456@gmail.com..."
+    }
+    {
+      userId: undefined
+      valueKeys: [
+        "action"
+        "dayIndex"
+        "gameDayId"
+        "gameId"
+        "playerEmail"
+        "playerUserId"
+        "submittedActionAt"
+        "submittedVoteAt"
+        "vote"
+      ]
+      playerEmail: "jillyjams9@gmail.com"
+      votePreview: "cschmitz456@gmail.com..."
+    }
+  ]
+}
+================================================================================
+entry-5cdf036de88934b382a465909b30899d.js:1944 ================================================================================
+🔍 NightlyPageOPERATOR: submissionRecords for day 2
+================================================================================
+{
+  step: "NightlyPageOPERATOR: submissionRecords received"
+  submissionKey: "playerNightSubmission-day-2-wsSd5N0R"
+  selectedDayIndex: 2
+  gameId: "wsSd5N0R"
+  recordsType: "object"
+  recordsIsArray: true
+  recordsLength: 6
+  allRecords: [
+    {
+      _id: "kh7aty91ts3v88zg7seaj0kj3985x50z"
+      userId: undefined
+      playerEmail: "camumford99@gmail.com"
+      vote: "cschmitz456@gmail.com"
+      actionType: "object"
+      dayIndex: 2
+      gameDayId: "wsSd5N0R-day-2"
+    }
+    {
+      _id: "kh70xtyyjye4wy3cgze9akym9x85wfj0"
+      userId: undefined
+      playerEmail: "darcyrose830@gmail.com"
+      vote: "cschmitz456@gmail.com"
+      actionType: "object"
+      dayIndex: 2
+      gameDayId: "wsSd5N0R-day-2"
+    }
+    {
+      _id: "kh74w04cvpee5rbwfje2wscn5d85x58q"
+      userId: undefined
+      playerEmail: "jillyjams9@gmail.com"
+      vote: "cschmitz456@gmail.com"
+      actionType: "object"
+      dayIndex: 2
+      gameDayId: "wsSd5N0R-day-2"
+    }
+    {
+      _id: "kh7bdrb8r9pycw14w7dyrnc8mh85wt91"
+      userId: undefined
+      playerEmail: "nickmreston@gmail.com"
+      vote: "malachyfernandez@gmail.com"
+      actionType: "object"
+      dayIndex: 2
+      gameDayId: "wsSd5N0R-day-2"
+    }
+    {
+      _id: "kh7d53rsz5vmzm1hbqdpfyy46185wr2g"
+      userId: undefined
+      playerEmail: "lcalico23@gmail.com"
+      vote: "camumford99@gmail.com"
+      actionType: "object"
+      dayIndex: 2
+      gameDayId: "wsSd5N0R-day-2"
+    }
+    {
+      _id: "kh76sy9ycxfhpnc1daqa0yhw6585x4a9"
+      userId: undefined
+      playerEmail: "cschmitz456@gmail.com"
+      vote: "cschmitz456@gmail.com"
+      actionType: "object"
+      dayIndex: 2
+      gameDayId: "wsSd5N0R-day-2"
+    }
+  ]
+}
+================================================================================
+entry-5cdf036de88934b382a465909b30899d.js:1944 ================================================================================
+🔍 NightlyPageOPERATOR: submissionsByEmail entries
+================================================================================
+{
+  step: "NightlyPageOPERATOR: after filter/map"
+  entriesLength: 6
+  allEmails: [
+    "camumford99@gmail.com"
+    "darcyrose830@gmail.com"
+    "jillyjams9@gmail.com"
+    "nickmreston@gmail.com"
+    "lcalico23@gmail.com"
+    "cschmitz456@gmail.com"
+  ]
+}
+================================================================================
+entry-5cdf036de88934b382a465909b30899d.js:1944 ================================================================================
+🔍 NightlyPageOPERATOR: counts & user list
+================================================================================
+{
+  step: "NightlyPageOPERATOR: computed counts"
+  currentDayIndex: 2
+  totalUsers: 10
+  userEmails: [
+    "Lcalico23@gmail.com"
+    "jillyjams9@gmail.com"
+    "darcyrose830@gmail.com"
+    "malachyfernandez@gmail.com"
+    "lilarad100@gmail.com"
+    "melinelkin@gmail.com"
+    "cschmitz456@gmail.com"
+    "birchatrail@gmail.com"
+    "nickmreston@gmail.com"
+    "camumford99@gmail.com"
+  ]
+  voteCount: 5
+  actionCount: 2
+  submissionsByEmailKeys: [
+    "camumford99@gmail.com"
+    "darcyrose830@gmail.com"
+    "jillyjams9@gmail.com"
+    "nickmreston@gmail.com"
+    "lcalico23@gmail.com"
+    "cschmitz456@gmail.com"
+  ]
+}
+================================================================================
+entry-5cdf036de88934b382a465909b30899d.js:1944 ================================================================================
+🔍 NightlyPageOPERATOR: NightlyCertificationDialog render
+================================================================================
+{
+  step: "NightlyPageOPERATOR: rendering NightlyCertificationDialog"
+  isOpen: true
+  usersCount: 10
+  userEmails: [
+    "Lcalico23@gmail.com"
+    "jillyjams9@gmail.com"
+    "darcyrose830@gmail.com"
+    "malachyfernandez@gmail.com"
+    "lilarad100@gmail.com"
+    "melinelkin@gmail.com"
+    "cschmitz456@gmail.com"
+    "birchatrail@gmail.com"
+    "nickmreston@gmail.com"
+    "camumford99@gmail.com"
+  ]
+  submissionsByEmailKeys: [
+    "camumford99@gmail.com"
+    "darcyrose830@gmail.com"
+    "jillyjams9@gmail.com"
+    "nickmreston@gmail.com"
+    "lcalico23@gmail.com"
+    "cschmitz456@gmail.com"
+  ]
+  submissionsByEmailValues: [
+    {
+      playerEmail: "camumford99@gmail.com"
+      vote: "cschmitz456@gmail.com"
+      dayIndex: 2
+    }
+    {
+      playerEmail: "darcyrose830@gmail.com"
+      vote: "cschmitz456@gmail.com"
+      dayIndex: 2
+    }
+    {
+      playerEmail: "jillyjams9@gmail.com"
+      vote: "cschmitz456@gmail.com"
+      dayIndex: 2
+    }
+    {
+      playerEmail: "nickmreston@gmail.com"
+      vote: "malachyfernandez@gmail.com"
+      dayIndex: 2
+    }
+    {
+      playerEmail: "lcalico23@gmail.com"
+      vote: "camumford99@gmail.com"
+      dayIndex: 2
+    }
+    {
+      playerEmail: "cschmitz456@gmail.com"
+      vote: "cschmitz456@gmail.com"
+      dayIndex: 2
+    }
+  ]
+}
+================================================================================
+entry-5cdf036de88934b382a465909b30899d.js:1944 ================================================================================
+🔍 NightlyCertificationDialog: render START
+================================================================================
+{
+  step: "NightlyCertificationDialog: component render START"
+  isOpen: true
+  usersCount: 10
+  userEmails: [
+    "Lcalico23@gmail.com"
+    "jillyjams9@gmail.com"
+    "darcyrose830@gmail.com"
+    "malachyfernandez@gmail.com"
+    "lilarad100@gmail.com"
+    "melinelkin@gmail.com"
+    "cschmitz456@gmail.com"
+    "birchatrail@gmail.com"
+    "nickmreston@gmail.com"
+    "camumford99@gmail.com"
+  ]
+  userRealNames: [
+    "Calico"
+    "Jill"
+    "Darcy"
+    "Malachy"
+    "Lila"
+    "Meli"
+    "Chloe"
+    "Birch"
+    "Nick"
+    "Charlie"
+  ]
+  submissionsByEmailKeys: [
+    "camumford99@gmail.com"
+    "darcyrose830@gmail.com"
+    "jillyjams9@gmail.com"
+    "nickmreston@gmail.com"
+    "lcalico23@gmail.com"
+    "cschmitz456@gmail.com"
+  ]
+  allSubmissions: [
+    {
+      email: "camumford99@gmail.com"
+      playerEmail: "camumford99@gmail.com"
+      vote: "cschmitz456@gmail.com"
+      actionType: "object"
+      dayIndex: 2
+      gameDayId: "wsSd5N0R-day-2"
+    }
+    {
+      email: "darcyrose830@gmail.com"
+      playerEmail: "darcyrose830@gmail.com"
+      vote: "cschmitz456@gmail.com"
+      actionType: "object"
+      dayIndex: 2
+      gameDayId: "wsSd5N0R-day-2"
+    }
+    {
+      email: "jillyjams9@gmail.com"
+      playerEmail: "jillyjams9@gmail.com"
+      vote: "cschmitz456@gmail.com"
+      actionType: "object"
+      dayIndex: 2
+      gameDayId: "wsSd5N0R-day-2"
+    }
+    {
+      email: "nickmreston@gmail.com"
+      playerEmail: "nickmreston@gmail.com"
+      vote: "malachyfernandez@gmail.com"
+      actionType: "object"
+      dayIndex: 2
+      gameDayId: "wsSd5N0R-day-2"
+    }
+    {
+      email: "lcalico23@gmail.com"
+      playerEmail: "lcalico23@gmail.com"
+      vote: "camumford99@gmail.com"
+      actionType: "object"
+      dayIndex: 2
+      gameDayId: "wsSd5N0R-day-2"
+    }
+    {
+      email: "cschmitz456@gmail.com"
+      playerEmail: "cschmitz456@gmail.com"
+      vote: "cschmitz456@gmail.com"
+      actionType: "object"
+      dayIndex: 2
+      gameDayId: "wsSd5N0R-day-2"
+    }
+  ]
+}
+================================================================================
+entry-5cdf036de88934b382a465909b30899d.js:1944 ================================================================================
+🔍 resolveVoteEmailToName: input=""
+================================================================================
+{
+  step: "resolveVoteEmailToName: called"
+  voteEmail: ""
+  usersCount: 10
+  allUserEmails: [
+    "Lcalico23@gmail.com"
+    "jillyjams9@gmail.com"
+    "darcyrose830@gmail.com"
+    "malachyfernandez@gmail.com"
+    "lilarad100@gmail.com"
+    "melinelkin@gmail.com"
+    "cschmitz456@gmail.com"
+    "birchatrail@gmail.com"
+    "nickmreston@gmail.com"
+    "camumford99@gmail.com"
+  ]
+  allUserRealNames: [
+    "Calico"
+    "Jill"
+    "Darcy"
+    "Malachy"
+    "Lila"
+    "Meli"
+    "Chloe"
+    "Birch"
+    "Nick"
+    "Charlie"
+  ]
+}
+================================================================================
+entry-5cdf036de88934b382a465909b30899d.js:1944 ================================================================================
+🔍 resolveVoteEmailToName: result
+================================================================================
+{
+  step: "resolveVoteEmailToName: empty vote → No vote"
+}
+================================================================================
+entry-5cdf036de88934b382a465909b30899d.js:1944 ================================================================================
+🔍 NightlyCertificationDialog: row for Lcalico23@gmail.com
+================================================================================
+{
+  step: "NightlyCertificationDialog: per-user row"
+  userEmail: "Lcalico23@gmail.com"
+  userRealName: "Calico"
+  hasSubmission: false
+  submissionKeys: "none"
+  rawVote: ""
+  resolvedVote: "No vote"
+  actionSummary: ""
+  actionType: "undefined"
+  actionValue: undefined
+  allSubmissionEmailsInLookup: [
+    "camumford99@gmail.com"
+    "darcyrose830@gmail.com"
+    "jillyjams9@gmail.com"
+    "nickmreston@gmail.com"
+    "lcalico23@gmail.com"
+    "cschmitz456@gmail.com"
+  ]
+  matchedByEmail: false
+}
+================================================================================
+entry-5cdf036de88934b382a465909b30899d.js:1944 ================================================================================
+🔍 resolveVoteEmailToName: input="cschmitz456@gmail.com"
+================================================================================
+{
+  step: "resolveVoteEmailToName: called"
+  voteEmail: "cschmitz456@gmail.com"
+  usersCount: 10
+  allUserEmails: [
+    "Lcalico23@gmail.com"
+    "jillyjams9@gmail.com"
+    "darcyrose830@gmail.com"
+    "malachyfernandez@gmail.com"
+    "lilarad100@gmail.com"
+    "melinelkin@gmail.com"
+    "cschmitz456@gmail.com"
+    "birchatrail@gmail.com"
+    "nickmreston@gmail.com"
+    "camumford99@gmail.com"
+  ]
+  allUserRealNames: [
+    "Calico"
+    "Jill"
+    "Darcy"
+    "Malachy"
+    "Lila"
+    "Meli"
+    "Chloe"
+    "Birch"
+    "Nick"
+    "Charlie"
+  ]
+}
+================================================================================
+entry-5cdf036de88934b382a465909b30899d.js:1944 ================================================================================
+🔍 resolveVoteEmailToName: result
+================================================================================
+{
+  step: "resolveVoteEmailToName: lookup done"
+  trimmedEmail: "cschmitz456@gmail.com"
+  foundUserEmail: "cschmitz456@gmail.com"
+  foundUserRealName: "Chloe"
+  result: "Chloe"
+}
+================================================================================
+entry-5cdf036de88934b382a465909b30899d.js:1944 ================================================================================
+🔍 NightlyCertificationDialog: row for jillyjams9@gmail.com
+================================================================================
+{
+  step: "NightlyCertificationDialog: per-user row"
+  userEmail: "jillyjams9@gmail.com"
+  userRealName: "Jill"
+  hasSubmission: true
+  submissionKeys: [
+    "action"
+    "dayIndex"
+    "gameDayId"
+    "gameId"
+    "playerEmail"
+    "playerUserId"
+    "submittedActionAt"
+    "submittedVoteAt"
+    "vote"
+  ]
+  rawVote: "cschmitz456@gmail.com"
+  resolvedVote: "Chloe"
+  actionSummary: ""
+  actionType: "object"
+  actionValue: {}
+  allSubmissionEmailsInLookup: [
+    "camumford99@gmail.com"
+    "darcyrose830@gmail.com"
+    "jillyjams9@gmail.com"
+    "nickmreston@gmail.com"
+    "lcalico23@gmail.com"
+    "cschmitz456@gmail.com"
+  ]
+  matchedByEmail: true
+}
+================================================================================
+entry-5cdf036de88934b382a465909b30899d.js:1944 ================================================================================
+🔍 resolveVoteEmailToName: input="cschmitz456@gmail.com"
+================================================================================
+{
+  step: "resolveVoteEmailToName: called"
+  voteEmail: "cschmitz456@gmail.com"
+  usersCount: 10
+  allUserEmails: [
+    "Lcalico23@gmail.com"
+    "jillyjams9@gmail.com"
+    "darcyrose830@gmail.com"
+    "malachyfernandez@gmail.com"
+    "lilarad100@gmail.com"
+    "melinelkin@gmail.com"
+    "cschmitz456@gmail.com"
+    "birchatrail@gmail.com"
+    "nickmreston@gmail.com"
+    "camumford99@gmail.com"
+  ]
+  allUserRealNames: [
+    "Calico"
+    "Jill"
+    "Darcy"
+    "Malachy"
+    "Lila"
+    "Meli"
+    "Chloe"
+    "Birch"
+    "Nick"
+    "Charlie"
+  ]
+}
+================================================================================
+entry-5cdf036de88934b382a465909b30899d.js:1944 ================================================================================
+🔍 resolveVoteEmailToName: result
+================================================================================
+{
+  step: "resolveVoteEmailToName: lookup done"
+  trimmedEmail: "cschmitz456@gmail.com"
+  foundUserEmail: "cschmitz456@gmail.com"
+  foundUserRealName: "Chloe"
+  result: "Chloe"
+}
+================================================================================
+entry-5cdf036de88934b382a465909b30899d.js:1944 ================================================================================
+🔍 NightlyCertificationDialog: row for darcyrose830@gmail.com
+================================================================================
+{
+  step: "NightlyCertificationDialog: per-user row"
+  userEmail: "darcyrose830@gmail.com"
+  userRealName: "Darcy"
+  hasSubmission: true
+  submissionKeys: [
+    "action"
+    "dayIndex"
+    "gameDayId"
+    "gameId"
+    "playerEmail"
+    "playerUserId"
+    "submittedActionAt"
+    "submittedVoteAt"
+    "vote"
+  ]
+  rawVote: "cschmitz456@gmail.com"
+  resolvedVote: "Chloe"
+  actionSummary: "Kill...: Malachy"
+  actionType: "object"
+  actionValue: {
+    Kill...: "Malachy"
+  }
+  allSubmissionEmailsInLookup: [
+    "camumford99@gmail.com"
+    "darcyrose830@gmail.com"
+    "jillyjams9@gmail.com"
+    "nickmreston@gmail.com"
+    "lcalico23@gmail.com"
+    "cschmitz456@gmail.com"
+  ]
+  matchedByEmail: true
+}
+================================================================================
+entry-5cdf036de88934b382a465909b30899d.js:1944 ================================================================================
+🔍 resolveVoteEmailToName: input=""
+================================================================================
+{
+  step: "resolveVoteEmailToName: called"
+  voteEmail: ""
+  usersCount: 10
+  allUserEmails: [
+    "Lcalico23@gmail.com"
+    "jillyjams9@gmail.com"
+    "darcyrose830@gmail.com"
+    "malachyfernandez@gmail.com"
+    "lilarad100@gmail.com"
+    "melinelkin@gmail.com"
+    "cschmitz456@gmail.com"
+    "birchatrail@gmail.com"
+    "nickmreston@gmail.com"
+    "camumford99@gmail.com"
+  ]
+  allUserRealNames: [
+    "Calico"
+    "Jill"
+    "Darcy"
+    "Malachy"
+    "Lila"
+    "Meli"
+    "Chloe"
+    "Birch"
+    "Nick"
+    "Charlie"
+  ]
+}
+================================================================================
+entry-5cdf036de88934b382a465909b30899d.js:1944 ================================================================================
+🔍 resolveVoteEmailToName: result
+================================================================================
+{
+  step: "resolveVoteEmailToName: empty vote → No vote"
+}
+================================================================================
+entry-5cdf036de88934b382a465909b30899d.js:1944 ================================================================================
+🔍 NightlyCertificationDialog: row for malachyfernandez@gmail.com
+================================================================================
+{
+  step: "NightlyCertificationDialog: per-user row"
+  userEmail: "malachyfernandez@gmail.com"
+  userRealName: "Malachy"
+  hasSubmission: false
+  submissionKeys: "none"
+  rawVote: ""
+  resolvedVote: "No vote"
+  actionSummary: ""
+  actionType: "undefined"
+  actionValue: undefined
+  allSubmissionEmailsInLookup: [
+    "camumford99@gmail.com"
+    "darcyrose830@gmail.com"
+    "jillyjams9@gmail.com"
+    "nickmreston@gmail.com"
+    "lcalico23@gmail.com"
+    "cschmitz456@gmail.com"
+  ]
+  matchedByEmail: false
+}
+================================================================================
+entry-5cdf036de88934b382a465909b30899d.js:1944 ================================================================================
+🔍 resolveVoteEmailToName: input=""
+================================================================================
+{
+  step: "resolveVoteEmailToName: called"
+  voteEmail: ""
+  usersCount: 10
+  allUserEmails: [
+    "Lcalico23@gmail.com"
+    "jillyjams9@gmail.com"
+    "darcyrose830@gmail.com"
+    "malachyfernandez@gmail.com"
+    "lilarad100@gmail.com"
+    "melinelkin@gmail.com"
+    "cschmitz456@gmail.com"
+    "birchatrail@gmail.com"
+    "nickmreston@gmail.com"
+    "camumford99@gmail.com"
+  ]
+  allUserRealNames: [
+    "Calico"
+    "Jill"
+    "Darcy"
+    "Malachy"
+    "Lila"
+    "Meli"
+    "Chloe"
+    "Birch"
+    "Nick"
+    "Charlie"
+  ]
+}
+================================================================================
+entry-5cdf036de88934b382a465909b30899d.js:1944 ================================================================================
+🔍 resolveVoteEmailToName: result
+================================================================================
+{
+  step: "resolveVoteEmailToName: empty vote → No vote"
+}
+================================================================================
+entry-5cdf036de88934b382a465909b30899d.js:1944 ================================================================================
+🔍 NightlyCertificationDialog: row for lilarad100@gmail.com
+================================================================================
+{
+  step: "NightlyCertificationDialog: per-user row"
+  userEmail: "lilarad100@gmail.com"
+  userRealName: "Lila"
+  hasSubmission: false
+  submissionKeys: "none"
+  rawVote: ""
+  resolvedVote: "No vote"
+  actionSummary: ""
+  actionType: "undefined"
+  actionValue: undefined
+  allSubmissionEmailsInLookup: [
+    "camumford99@gmail.com"
+    "darcyrose830@gmail.com"
+    "jillyjams9@gmail.com"
+    "nickmreston@gmail.com"
+    "lcalico23@gmail.com"
+    "cschmitz456@gmail.com"
+  ]
+  matchedByEmail: false
+}
+================================================================================
+entry-5cdf036de88934b382a465909b30899d.js:1944 ================================================================================
+🔍 resolveVoteEmailToName: input=""
+================================================================================
+{
+  step: "resolveVoteEmailToName: called"
+  voteEmail: ""
+  usersCount: 10
+  allUserEmails: [
+    "Lcalico23@gmail.com"
+    "jillyjams9@gmail.com"
+    "darcyrose830@gmail.com"
+    "malachyfernandez@gmail.com"
+    "lilarad100@gmail.com"
+    "melinelkin@gmail.com"
+    "cschmitz456@gmail.com"
+    "birchatrail@gmail.com"
+    "nickmreston@gmail.com"
+    "camumford99@gmail.com"
+  ]
+  allUserRealNames: [
+    "Calico"
+    "Jill"
+    "Darcy"
+    "Malachy"
+    "Lila"
+    "Meli"
+    "Chloe"
+    "Birch"
+    "Nick"
+    "Charlie"
+  ]
+}
+================================================================================
+entry-5cdf036de88934b382a465909b30899d.js:1944 ================================================================================
+🔍 resolveVoteEmailToName: result
+================================================================================
+{
+  step: "resolveVoteEmailToName: empty vote → No vote"
+}
+================================================================================
+entry-5cdf036de88934b382a465909b30899d.js:1944 ================================================================================
+🔍 NightlyCertificationDialog: row for melinelkin@gmail.com
+================================================================================
+{
+  step: "NightlyCertificationDialog: per-user row"
+  userEmail: "melinelkin@gmail.com"
+  userRealName: "Meli"
+  hasSubmission: false
+  submissionKeys: "none"
+  rawVote: ""
+  resolvedVote: "No vote"
+  actionSummary: ""
+  actionType: "undefined"
+  actionValue: undefined
+  allSubmissionEmailsInLookup: [
+    "camumford99@gmail.com"
+    "darcyrose830@gmail.com"
+    "jillyjams9@gmail.com"
+    "nickmreston@gmail.com"
+    "lcalico23@gmail.com"
+    "cschmitz456@gmail.com"
+  ]
+  matchedByEmail: false
+}
+================================================================================
+entry-5cdf036de88934b382a465909b30899d.js:1944 ================================================================================
+🔍 resolveVoteEmailToName: input="cschmitz456@gmail.com"
+================================================================================
+{
+  step: "resolveVoteEmailToName: called"
+  voteEmail: "cschmitz456@gmail.com"
+  usersCount: 10
+  allUserEmails: [
+    "Lcalico23@gmail.com"
+    "jillyjams9@gmail.com"
+    "darcyrose830@gmail.com"
+    "malachyfernandez@gmail.com"
+    "lilarad100@gmail.com"
+    "melinelkin@gmail.com"
+    "cschmitz456@gmail.com"
+    "birchatrail@gmail.com"
+    "nickmreston@gmail.com"
+    "camumford99@gmail.com"
+  ]
+  allUserRealNames: [
+    "Calico"
+    "Jill"
+    "Darcy"
+    "Malachy"
+    "Lila"
+    "Meli"
+    "Chloe"
+    "Birch"
+    "Nick"
+    "Charlie"
+  ]
+}
+================================================================================
+entry-5cdf036de88934b382a465909b30899d.js:1944 ================================================================================
+🔍 resolveVoteEmailToName: result
+================================================================================
+{
+  step: "resolveVoteEmailToName: lookup done"
+  trimmedEmail: "cschmitz456@gmail.com"
+  foundUserEmail: "cschmitz456@gmail.com"
+  foundUserRealName: "Chloe"
+  result: "Chloe"
+}
+================================================================================
+entry-5cdf036de88934b382a465909b30899d.js:1944 ================================================================================
+🔍 NightlyCertificationDialog: row for cschmitz456@gmail.com
+================================================================================
+{
+  step: "NightlyCertificationDialog: per-user row"
+  userEmail: "cschmitz456@gmail.com"
+  userRealName: "Chloe"
+  hasSubmission: true
+  submissionKeys: [
+    "action"
+    "dayIndex"
+    "gameDayId"
+    "gameId"
+    "playerEmail"
+    "playerUserId"
+    "submittedActionAt"
+    "submittedVoteAt"
+    "vote"
+  ]
+  rawVote: "cschmitz456@gmail.com"
+  resolvedVote: "Chloe"
+  actionSummary: ""
+  actionType: "object"
+  actionValue: {}
+  allSubmissionEmailsInLookup: [
+    "camumford99@gmail.com"
+    "darcyrose830@gmail.com"
+    "jillyjams9@gmail.com"
+    "nickmreston@gmail.com"
+    "lcalico23@gmail.com"
+    "cschmitz456@gmail.com"
+  ]
+  matchedByEmail: true
+}
+================================================================================
+entry-5cdf036de88934b382a465909b30899d.js:1944 ================================================================================
+🔍 resolveVoteEmailToName: input=""
+================================================================================
+{
+  step: "resolveVoteEmailToName: called"
+  voteEmail: ""
+  usersCount: 10
+  allUserEmails: [
+    "Lcalico23@gmail.com"
+    "jillyjams9@gmail.com"
+    "darcyrose830@gmail.com"
+    "malachyfernandez@gmail.com"
+    "lilarad100@gmail.com"
+    "melinelkin@gmail.com"
+    "cschmitz456@gmail.com"
+    "birchatrail@gmail.com"
+    "nickmreston@gmail.com"
+    "camumford99@gmail.com"
+  ]
+  allUserRealNames: [
+    "Calico"
+    "Jill"
+    "Darcy"
+    "Malachy"
+    "Lila"
+    "Meli"
+    "Chloe"
+    "Birch"
+    "Nick"
+    "Charlie"
+  ]
+}
+================================================================================
+entry-5cdf036de88934b382a465909b30899d.js:1944 ================================================================================
+🔍 resolveVoteEmailToName: result
+================================================================================
+{
+  step: "resolveVoteEmailToName: empty vote → No vote"
+}
+================================================================================
+entry-5cdf036de88934b382a465909b30899d.js:1944 ================================================================================
+🔍 NightlyCertificationDialog: row for birchatrail@gmail.com
+================================================================================
+{
+  step: "NightlyCertificationDialog: per-user row"
+  userEmail: "birchatrail@gmail.com"
+  userRealName: "Birch"
+  hasSubmission: false
+  submissionKeys: "none"
+  rawVote: ""
+  resolvedVote: "No vote"
+  actionSummary: ""
+  actionType: "undefined"
+  actionValue: undefined
+  allSubmissionEmailsInLookup: [
+    "camumford99@gmail.com"
+    "darcyrose830@gmail.com"
+    "jillyjams9@gmail.com"
+    "nickmreston@gmail.com"
+    "lcalico23@gmail.com"
+    "cschmitz456@gmail.com"
+  ]
+  matchedByEmail: false
+}
+================================================================================
+entry-5cdf036de88934b382a465909b30899d.js:1944 ================================================================================
+🔍 resolveVoteEmailToName: input="malachyfernandez@gmail.com"
+================================================================================
+{
+  step: "resolveVoteEmailToName: called"
+  voteEmail: "malachyfernandez@gmail.com"
+  usersCount: 10
+  allUserEmails: [
+    "Lcalico23@gmail.com"
+    "jillyjams9@gmail.com"
+    "darcyrose830@gmail.com"
+    "malachyfernandez@gmail.com"
+    "lilarad100@gmail.com"
+    "melinelkin@gmail.com"
+    "cschmitz456@gmail.com"
+    "birchatrail@gmail.com"
+    "nickmreston@gmail.com"
+    "camumford99@gmail.com"
+  ]
+  allUserRealNames: [
+    "Calico"
+    "Jill"
+    "Darcy"
+    "Malachy"
+    "Lila"
+    "Meli"
+    "Chloe"
+    "Birch"
+    "Nick"
+    "Charlie"
+  ]
+}
+================================================================================
+entry-5cdf036de88934b382a465909b30899d.js:1944 ================================================================================
+🔍 resolveVoteEmailToName: result
+================================================================================
+{
+  step: "resolveVoteEmailToName: lookup done"
+  trimmedEmail: "malachyfernandez@gmail.com"
+  foundUserEmail: "malachyfernandez@gmail.com"
+  foundUserRealName: "Malachy"
+  result: "Malachy"
+}
+================================================================================
+entry-5cdf036de88934b382a465909b30899d.js:1944 ================================================================================
+🔍 NightlyCertificationDialog: row for nickmreston@gmail.com
+================================================================================
+{
+  step: "NightlyCertificationDialog: per-user row"
+  userEmail: "nickmreston@gmail.com"
+  userRealName: "Nick"
+  hasSubmission: true
+  submissionKeys: [
+    "action"
+    "dayIndex"
+    "gameDayId"
+    "gameId"
+    "playerEmail"
+    "playerUserId"
+    "submittedActionAt"
+    "submittedVoteAt"
+    "vote"
+  ]
+  rawVote: "malachyfernandez@gmail.com"
+  resolvedVote: "Malachy"
+  actionSummary: ""
+  actionType: "object"
+  actionValue: {}
+  allSubmissionEmailsInLookup: [
+    "camumford99@gmail.com"
+    "darcyrose830@gmail.com"
+    "jillyjams9@gmail.com"
+    "nickmreston@gmail.com"
+    "lcalico23@gmail.com"
+    "cschmitz456@gmail.com"
+  ]
+  matchedByEmail: true
+}
+================================================================================
+entry-5cdf036de88934b382a465909b30899d.js:1944 ================================================================================
+🔍 resolveVoteEmailToName: input="cschmitz456@gmail.com"
+================================================================================
+{
+  step: "resolveVoteEmailToName: called"
+  voteEmail: "cschmitz456@gmail.com"
+  usersCount: 10
+  allUserEmails: [
+    "Lcalico23@gmail.com"
+    "jillyjams9@gmail.com"
+    "darcyrose830@gmail.com"
+    "malachyfernandez@gmail.com"
+    "lilarad100@gmail.com"
+    "melinelkin@gmail.com"
+    "cschmitz456@gmail.com"
+    "birchatrail@gmail.com"
+    "nickmreston@gmail.com"
+    "camumford99@gmail.com"
+  ]
+  allUserRealNames: [
+    "Calico"
+    "Jill"
+    "Darcy"
+    "Malachy"
+    "Lila"
+    "Meli"
+    "Chloe"
+    "Birch"
+    "Nick"
+    "Charlie"
+  ]
+}
+================================================================================
+entry-5cdf036de88934b382a465909b30899d.js:1944 ================================================================================
+🔍 resolveVoteEmailToName: result
+================================================================================
+{
+  step: "resolveVoteEmailToName: lookup done"
+  trimmedEmail: "cschmitz456@gmail.com"
+  foundUserEmail: "cschmitz456@gmail.com"
+  foundUserRealName: "Chloe"
+  result: "Chloe"
+}
+================================================================================
+entry-5cdf036de88934b382a465909b30899d.js:1944 ================================================================================
+🔍 NightlyCertificationDialog: row for camumford99@gmail.com
+================================================================================
+{
+  step: "NightlyCertificationDialog: per-user row"
+  userEmail: "camumford99@gmail.com"
+  userRealName: "Charlie"
+  hasSubmission: true
+  submissionKeys: [
+    "action"
+    "dayIndex"
+    "gameDayId"
+    "gameId"
+    "playerEmail"
+    "playerUserId"
+    "submittedActionAt"
+    "submittedVoteAt"
+    "vote"
+  ]
+  rawVote: "cschmitz456@gmail.com"
+  resolvedVote: "Chloe"
+  actionSummary: "Kill...: Malachy"
+  actionType: "object"
+  actionValue: {
+    Kill...: "Malachy"
+  }
+  allSubmissionEmailsInLookup: [
+    "camumford99@gmail.com"
+    "darcyrose830@gmail.com"
+    "jillyjams9@gmail.com"
+    "nickmreston@gmail.com"
+    "lcalico23@gmail.com"
+    "cschmitz456@gmail.com"
+  ]
+  matchedByEmail: true
+}
+================================================================================
+entry-5cdf036de88934b382a465909b30899d.js:1944 ================================================================================
+🔍 useFindValues: playerNightSubmission-day-2-wsSd5N0R — result=6
+================================================================================
+{
+  hook: "useFindValues"
+  key: "playerNightSubmission-day-2-wsSd5N0R"
+  subId: "{"type":"find-values","key":"playerNightSubmission-day-2-wsSd5N0R","args":{"returnTop":200}}"
+  queryArgs: {
+    returnTop: 200
+  }
+  baseConfig: {}
+  resultLength: 6
+  resultSample: [
+    {
+      userId: undefined
+      valueKeys: [
+        "action"
+        "dayIndex"
+        "gameDayId"
+        "gameId"
+        "playerEmail"
+        "playerUserId"
+        "submittedActionAt"
+        "submittedVoteAt"
+        "vote"
+      ]
+      playerEmail: "camumford99@gmail.com"
+      votePreview: "cschmitz456@gmail.com..."
+    }
+    {
+      userId: undefined
+      valueKeys: [
+        "action"
+        "dayIndex"
+        "gameDayId"
+        "gameId"
+        "playerEmail"
+        "playerUserId"
+        "submittedActionAt"
+        "submittedVoteAt"
+        "vote"
+      ]
+      playerEmail: "darcyrose830@gmail.com"
+      votePreview: "cschmitz456@gmail.com..."
+    }
+    {
+      userId: undefined
+      valueKeys: [
+        "action"
+        "dayIndex"
+        "gameDayId"
+        "gameId"
+        "playerEmail"
+        "playerUserId"
+        "submittedActionAt"
+        "submittedVoteAt"
+        "vote"
+      ]
+      playerEmail: "jillyjams9@gmail.com"
+      votePreview: "cschmitz456@gmail.com..."
+    }
+  ]
+}
+================================================================================
+entry-5cdf036de88934b382a465909b30899d.js:1944 ================================================================================
+🔍 NightlyPageOPERATOR: submissionRecords for day 2
+================================================================================
+{
+  step: "NightlyPageOPERATOR: submissionRecords received"
+  submissionKey: "playerNightSubmission-day-2-wsSd5N0R"
+  selectedDayIndex: 2
+  gameId: "wsSd5N0R"
+  recordsType: "object"
+  recordsIsArray: true
+  recordsLength: 6
+  allRecords: [
+    {
+      _id: "kh7aty91ts3v88zg7seaj0kj3985x50z"
+      userId: undefined
+      playerEmail: "camumford99@gmail.com"
+      vote: "cschmitz456@gmail.com"
+      actionType: "object"
+      dayIndex: 2
+      gameDayId: "wsSd5N0R-day-2"
+    }
+    {
+      _id: "kh70xtyyjye4wy3cgze9akym9x85wfj0"
+      userId: undefined
+      playerEmail: "darcyrose830@gmail.com"
+      vote: "cschmitz456@gmail.com"
+      actionType: "object"
+      dayIndex: 2
+      gameDayId: "wsSd5N0R-day-2"
+    }
+    {
+      _id: "kh74w04cvpee5rbwfje2wscn5d85x58q"
+      userId: undefined
+      playerEmail: "jillyjams9@gmail.com"
+      vote: "cschmitz456@gmail.com"
+      actionType: "object"
+      dayIndex: 2
+      gameDayId: "wsSd5N0R-day-2"
+    }
+    {
+      _id: "kh7bdrb8r9pycw14w7dyrnc8mh85wt91"
+      userId: undefined
+      playerEmail: "nickmreston@gmail.com"
+      vote: "malachyfernandez@gmail.com"
+      actionType: "object"
+      dayIndex: 2
+      gameDayId: "wsSd5N0R-day-2"
+    }
+    {
+      _id: "kh7d53rsz5vmzm1hbqdpfyy46185wr2g"
+      userId: undefined
+      playerEmail: "lcalico23@gmail.com"
+      vote: "camumford99@gmail.com"
+      actionType: "object"
+      dayIndex: 2
+      gameDayId: "wsSd5N0R-day-2"
+    }
+    {
+      _id: "kh76sy9ycxfhpnc1daqa0yhw6585x4a9"
+      userId: undefined
+      playerEmail: "cschmitz456@gmail.com"
+      vote: "cschmitz456@gmail.com"
+      actionType: "object"
+      dayIndex: 2
+      gameDayId: "wsSd5N0R-day-2"
+    }
+  ]
+}
+================================================================================
+entry-5cdf036de88934b382a465909b30899d.js:1944 ================================================================================
+🔍 NightlyPageOPERATOR: submissionsByEmail entries
+================================================================================
+{
+  step: "NightlyPageOPERATOR: after filter/map"
+  entriesLength: 6
+  allEmails: [
+    "camumford99@gmail.com"
+    "darcyrose830@gmail.com"
+    "jillyjams9@gmail.com"
+    "nickmreston@gmail.com"
+    "lcalico23@gmail.com"
+    "cschmitz456@gmail.com"
+  ]
+}
+================================================================================
+entry-5cdf036de88934b382a465909b30899d.js:1944 ================================================================================
+🔍 NightlyPageOPERATOR: counts & user list
+================================================================================
+{
+  step: "NightlyPageOPERATOR: computed counts"
+  currentDayIndex: 2
+  totalUsers: 10
+  userEmails: [
+    "Lcalico23@gmail.com"
+    "jillyjams9@gmail.com"
+    "darcyrose830@gmail.com"
+    "malachyfernandez@gmail.com"
+    "lilarad100@gmail.com"
+    "melinelkin@gmail.com"
+    "cschmitz456@gmail.com"
+    "birchatrail@gmail.com"
+    "nickmreston@gmail.com"
+    "camumford99@gmail.com"
+  ]
+  voteCount: 5
+  actionCount: 2
+  submissionsByEmailKeys: [
+    "camumford99@gmail.com"
+    "darcyrose830@gmail.com"
+    "jillyjams9@gmail.com"
+    "nickmreston@gmail.com"
+    "lcalico23@gmail.com"
+    "cschmitz456@gmail.com"
+  ]
+}
+================================================================================
+entry-5cdf036de88934b382a465909b30899d.js:1944 ================================================================================
+🔍 NightlyPageOPERATOR: NightlyCertificationDialog render
+================================================================================
+{
+  step: "NightlyPageOPERATOR: rendering NightlyCertificationDialog"
+  isOpen: true
+  usersCount: 10
+  userEmails: [
+    "Lcalico23@gmail.com"
+    "jillyjams9@gmail.com"
+    "darcyrose830@gmail.com"
+    "malachyfernandez@gmail.com"
+    "lilarad100@gmail.com"
+    "melinelkin@gmail.com"
+    "cschmitz456@gmail.com"
+    "birchatrail@gmail.com"
+    "nickmreston@gmail.com"
+    "camumford99@gmail.com"
+  ]
+  submissionsByEmailKeys: [
+    "camumford99@gmail.com"
+    "darcyrose830@gmail.com"
+    "jillyjams9@gmail.com"
+    "nickmreston@gmail.com"
+    "lcalico23@gmail.com"
+    "cschmitz456@gmail.com"
+  ]
+  submissionsByEmailValues: [
+    {
+      playerEmail: "camumford99@gmail.com"
+      vote: "cschmitz456@gmail.com"
+      dayIndex: 2
+    }
+    {
+      playerEmail: "darcyrose830@gmail.com"
+      vote: "cschmitz456@gmail.com"
+      dayIndex: 2
+    }
+    {
+      playerEmail: "jillyjams9@gmail.com"
+      vote: "cschmitz456@gmail.com"
+      dayIndex: 2
+    }
+    {
+      playerEmail: "nickmreston@gmail.com"
+      vote: "malachyfernandez@gmail.com"
+      dayIndex: 2
+    }
+    {
+      playerEmail: "lcalico23@gmail.com"
+      vote: "camumford99@gmail.com"
+      dayIndex: 2
+    }
+    {
+      playerEmail: "cschmitz456@gmail.com"
+      vote: "cschmitz456@gmail.com"
+      dayIndex: 2
+    }
+  ]
+}
+================================================================================

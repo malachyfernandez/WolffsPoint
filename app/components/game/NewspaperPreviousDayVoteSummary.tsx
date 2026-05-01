@@ -76,7 +76,7 @@ const VoteSummaryRow = ({
             return player.userId;
         }
         // Try to find userId by email from the profile map
-        return emailToUserIdMap.get(player.email) || '';
+        return emailToUserIdMap.get(player.email.toLowerCase()) || '';
     }, [player.userId, player.email, emailToUserIdMap]);
 
     const identity = useTownSquareAuthorIdentity({
@@ -128,7 +128,7 @@ const NewspaperPreviousDayVoteSummary = ({ gameId, dayIndex }: NewspaperPrevious
         const map = new Map<string, string>();
         (allProfiles ?? []).forEach((record) => {
             if (record.value.email && record.value.userId) {
-                map.set(record.value.email, record.value.userId);
+                map.set(record.value.email.toLowerCase(), record.value.userId);
             }
         });
         return map;
@@ -155,13 +155,13 @@ const NewspaperPreviousDayVoteSummary = ({ gameId, dayIndex }: NewspaperPrevious
                 return;
             }
 
-            voteCounts.set(vote, (voteCounts.get(vote) ?? 0) + 1);
+            voteCounts.set(vote.toLowerCase(), (voteCounts.get(vote.toLowerCase()) ?? 0) + 1);
         });
 
         const rows = players
             .map((player) => ({
                 player,
-                voteCount: voteCounts.get(player.email) ?? 0,
+                voteCount: voteCounts.get(player.email.toLowerCase()) ?? 0,
             }))
             .filter((row) => row.voteCount > 0)
             .sort((a, b) => {
@@ -191,7 +191,7 @@ const NewspaperPreviousDayVoteSummary = ({ gameId, dayIndex }: NewspaperPrevious
                 )}
                 {voteRows.map(({ player, voteCount }) => (
                     <VoteSummaryRow
-                        key={player.email}
+                        key={player.email.toLowerCase()}
                         emailToUserIdMap={emailToUserIdMap}
                         gameId={gameId}
                         maxVoteCount={maxVoteCount}

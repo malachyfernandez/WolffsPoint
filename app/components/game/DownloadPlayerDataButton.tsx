@@ -70,7 +70,7 @@ const DownloadPlayerDataButton = ({ gameId }: DownloadPlayerDataButtonProps) => 
                     const day = user.days[dayIndex] || { vote: '', action: '', extraColumns: [] };
                     const voteName = resolveVoteEmailToName(day.vote || '', users);
                     const actionSummary = getPlayerActionSummary(day.action);
-                    const morningMessage = messages[user.email]?.[dayIndex] ?? '';
+                    const morningMessage = messages[user.email.toLowerCase()]?.[dayIndex] ?? '';
 
                     return [
                         user.realName,

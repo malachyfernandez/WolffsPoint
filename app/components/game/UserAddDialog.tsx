@@ -61,7 +61,7 @@ const UserAddDialog = ({
 
     useEffect(() => {
         const emailExists = (users ?? []).some((user) =>
-            user.email === email.trim()
+            user.email.trim().toLowerCase() === email.trim().toLowerCase()
         );
         setIsUniqueEmail(!emailExists);
         setIsValidEmail(isValidEmailFormat(email));
@@ -70,7 +70,7 @@ const UserAddDialog = ({
     const handleSubmit = () => {
         // Check for email uniqueness and format
         const emailExists = (users ?? []).some((user) =>
-            user.email === email.trim()
+            user.email.trim().toLowerCase() === email.trim().toLowerCase()
         );
 
         if (emailExists) {
@@ -92,7 +92,7 @@ const UserAddDialog = ({
         const currentTitles = userTableTitle?.value ?? { extraUserColumns: [], extraDayColumns: [] };
         const newUser: UserTableItem = {
             realName: realName.trim(),
-            email: email.trim(),
+            email: email.trim().toLowerCase(),
             userId: "NOT-JOINED",
             role: role.trim() || "UNSET",
             playerData: {

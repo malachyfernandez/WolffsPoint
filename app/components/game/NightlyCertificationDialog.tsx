@@ -60,7 +60,7 @@ const NightlyCertificationDialog = ({ isOpen, onOpenChange, users, submissionsBy
                                 <FontText weight='medium' className='flex-1'>Action</FontText>
                             </Row>
                             {users.map((user) => {
-                                const submission = submissionsByEmail[user.email];
+                                const submission = submissionsByEmail[user.email.toLowerCase()];
                                 const rawVote = submission?.vote ?? '';
                                 const resolvedVote = resolveVoteEmailToName(rawVote, users);
                                 const actionSummary = getPlayerActionSummary(submission?.action);
@@ -78,7 +78,7 @@ const NightlyCertificationDialog = ({ isOpen, onOpenChange, users, submissionsBy
                                     actionType: typeof submission?.action,
                                     actionValue: submission?.action,
                                     allSubmissionEmailsInLookup: Object.keys(submissionsByEmail),
-                                    matchedByEmail: submissionsByEmail[user.email] !== undefined,
+                                    matchedByEmail: submissionsByEmail[user.email.toLowerCase()] !== undefined,
                                   },
                                   `NightlyCertificationDialog: row for ${user.email}`
                                 );
