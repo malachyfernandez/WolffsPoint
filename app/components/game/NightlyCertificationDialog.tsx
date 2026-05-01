@@ -11,6 +11,7 @@ import { UserTableItem } from '../../../types/playerTable';
 import { getPlayerActionSummary } from '../../../utils/multiplayer';
 import ActionPills from './ActionPills';
 import { resolveVoteEmailToName } from './VoteEditorDialog';
+import prettyLog from '../../../utils/prettyLog';
 
 interface NightlyCertificationDialogProps {
     isOpen: boolean;
@@ -21,6 +22,26 @@ interface NightlyCertificationDialogProps {
 }
 
 const NightlyCertificationDialog = ({ isOpen, onOpenChange, users, submissionsByEmail, onCertify }: NightlyCertificationDialogProps) => {
+    prettyLog(
+      {
+        step: 'NightlyCertificationDialog: component render START',
+        isOpen,
+        usersCount: users.length,
+        userEmails: users.map(u => u.email),
+        userRealNames: users.map(u => u.realName),
+        submissionsByEmailKeys: Object.keys(submissionsByEmail),
+        allSubmissions: Object.entries(submissionsByEmail).map(([email, sub]: [string, any]) => ({
+          email,
+          playerEmail: sub?.playerEmail,
+          vote: sub?.vote,
+          actionType: typeof sub?.action,
+          dayIndex: sub?.dayIndex,
+          gameDayId: sub?.gameDayId,
+        })),
+      },
+      'NightlyCertificationDialog: render START'
+    );
+
         return (
         <ConvexDialog.Root isOpen={isOpen} onOpenChange={onOpenChange}>
             <ConvexDialog.Trigger asChild>
@@ -40,8 +61,28 @@ const NightlyCertificationDialog = ({ isOpen, onOpenChange, users, submissionsBy
                             </Row>
                             {users.map((user) => {
                                 const submission = submissionsByEmail[user.email];
-                                const resolvedVote = resolveVoteEmailToName(submission?.vote || '', users);
+                                const rawVote = submission?.vote ?? '';
+                                const resolvedVote = resolveVoteEmailToName(rawVote, users);
                                 const actionSummary = getPlayerActionSummary(submission?.action);
+
+                                prettyLog(
+                                  {
+                                    step: 'NightlyCertificationDialog: per-user row',
+                                    userEmail: user.email,
+                                    userRealName: user.realName,
+                                    hasSubmission: !!submission,
+                                    submissionKeys: submission ? Object.keys(submission) : 'none',
+                                    rawVote,
+                                    resolvedVote,
+                                    actionSummary,
+                                    actionType: typeof submission?.action,
+                                    actionValue: submission?.action,
+                                    allSubmissionEmailsInLookup: Object.keys(submissionsByEmail),
+                                    matchedByEmail: submissionsByEmail[user.email] !== undefined,
+                                  },
+                                  `NightlyCertificationDialog: row for ${user.email}`
+                                );
+
                                 return (
                                     <Row key={user.email} className='gap-4 border-b border-subtle-border py-2 items-center'>
                                         <Column className='flex-1 gap-0'>

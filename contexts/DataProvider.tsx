@@ -5,6 +5,7 @@ import { useUserVariableGet } from "../hooks/useUserVariableGet";
 import { useUserListGet } from "../hooks/useUserListGet";
 import { useUserVariableLength } from "../hooks/useUserVariableLength";
 import { useUserListLength } from "../hooks/useUserListLength";
+import prettyLog from "../utils/prettyLog";
 
 export type SubId = string;
 
@@ -125,10 +126,31 @@ function DataSubscriber({ subId, config, refCount }: { subId: SubId, config: any
     const stringified = safeStringify(result);
     if (stringified !== prevStringifiedRef.current) {
       prevStringifiedRef.current = stringified;
-      
+
+      if (config.type === 'find-values' && config.key && config.key.includes('playerNightSubmission')) {
+        prettyLog(
+          {
+            dataSubscriber: 'DataSubscriber',
+            subId,
+            type: config.type,
+            key: config.key,
+            refCount,
+            resultLength: Array.isArray(result) ? result.length : 'undefined',
+            resultSample: Array.isArray(result) ? result.slice(0, 3).map((r: any) => ({
+              userId: r?.userId,
+              _id: r?._id,
+              playerEmail: r?.value?.playerEmail,
+              vote: r?.value?.vote,
+              actionType: typeof r?.value?.action,
+            })) : result,
+          },
+          `DataSubscriber: ${config.key} — result=${Array.isArray(result) ? result.length : 'undefined'} (refCount=${refCount})`
+        );
+      }
+
       // Update global store
       globalDataStore.setResult(subId, result);
-      
+
       // Track changes if nobody is actively listening
       if (refCount === 0) {
         setUnloadedChanges(c => c + 1);

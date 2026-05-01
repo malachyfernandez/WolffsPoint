@@ -15,6 +15,7 @@ import ComprehensiveDaySelector from '../ui/daySelector/ComprehensiveDaySelector
 import NightlyCertificationDialog from './NightlyCertificationDialog';
 import { getGameScopedKey, hasPlayerActionContent } from '../../../utils/multiplayer';
 import { PlayerNightSubmission } from '../../../types/multiplayer';
+import prettyLog from '../../../utils/prettyLog';
 
 interface NightlyPageOPERATORProps {
     currentUserId: string;
@@ -41,20 +42,82 @@ const NightlyPageOPERATOR = ({ currentUserId: _currentUserId, gameId }: NightlyP
         defaultValue: 0,
     });
 
+    const submissionKey = getGameScopedKey(`playerNightSubmission-day-${selectedDayIndex.value}`, gameId);
     const submissionRecords = useFindValues<PlayerNightSubmission>(
-        getGameScopedKey(`playerNightSubmission-day-${selectedDayIndex.value}`, gameId),
+        submissionKey,
         { returnTop: 200 }
     );
 
-    const submissionsByEmail = Object.fromEntries(
-        (submissionRecords ?? [])
-            .filter((record: any) => record.value.playerEmail.trim().length > 0)
-            .map((record: any) => [record.value.playerEmail, record.value])
-    ) as Record<string, PlayerNightSubmission>;
+    prettyLog(
+      {
+        step: 'NightlyPageOPERATOR: submissionRecords received',
+        submissionKey,
+        selectedDayIndex: selectedDayIndex.value,
+        gameId,
+        recordsType: typeof submissionRecords,
+        recordsIsArray: Array.isArray(submissionRecords),
+        recordsLength: submissionRecords?.length ?? 'undefined',
+        allRecords: submissionRecords?.map((r: any) => ({
+          _id: r?._id,
+          userId: r?.userId,
+          playerEmail: r?.value?.playerEmail,
+          vote: r?.value?.vote,
+          actionType: typeof r?.value?.action,
+          dayIndex: r?.value?.dayIndex,
+          gameDayId: r?.value?.gameDayId,
+        })) ?? 'undefined',
+      },
+      `NightlyPageOPERATOR: submissionRecords for day ${selectedDayIndex.value}`
+    );
+
+    const submissionEntries = (submissionRecords ?? [])
+        .filter((record: any) => {
+            const email = record.value?.playerEmail;
+            const keep = email?.trim()?.length > 0;
+            if (!keep) {
+                prettyLog(
+                  {
+                    step: 'NightlyPageOPERATOR: FILTERED OUT submission',
+                    reason: 'empty or missing playerEmail',
+                    rawEmail: email,
+                    recordId: record._id,
+                    recordUserId: record.userId,
+                    fullValue: record.value,
+                  },
+                  'NightlyPageOPERATOR: submission FILTERED OUT'
+                );
+            }
+            return keep;
+        })
+        .map((record: any) => [record.value.playerEmail, record.value]);
+
+    prettyLog(
+      {
+        step: 'NightlyPageOPERATOR: after filter/map',
+        entriesLength: submissionEntries.length,
+        allEmails: submissionEntries.map((entry: any) => entry[0]),
+      },
+      'NightlyPageOPERATOR: submissionsByEmail entries'
+    );
+
+    const submissionsByEmail = Object.fromEntries(submissionEntries) as Record<string, PlayerNightSubmission>;
 
     const currentDayIndex = selectedDayIndex.value;
     const voteCount = users.filter((user) => (user.days[currentDayIndex]?.vote ?? '').trim().length > 0).length;
     const actionCount = users.filter((user) => hasPlayerActionContent(user.days[currentDayIndex]?.action)).length;
+
+    prettyLog(
+      {
+        step: 'NightlyPageOPERATOR: computed counts',
+        currentDayIndex,
+        totalUsers: users.length,
+        userEmails: users.map(u => u.email),
+        voteCount,
+        actionCount,
+        submissionsByEmailKeys: Object.keys(submissionsByEmail),
+      },
+      'NightlyPageOPERATOR: counts & user list'
+    );
 
     // Shared day dates array (same as players tab)
     const [dayDatesArray] = useList<string[]>("dayDatesArray", gameId, {
@@ -142,8 +205,31 @@ const NightlyPageOPERATOR = ({ currentUserId: _currentUserId, gameId }: NightlyP
     };
 
     const certifySubmissions = () => {
+        prettyLog(
+          {
+            step: 'NightlyPageOPERATOR: certifySubmissions START',
+            selectedDayIndex: selectedDayIndex.value,
+            totalUsers: users.length,
+            submissionsByEmailKeys: Object.keys(submissionsByEmail),
+          },
+          'NightlyPageOPERATOR: certifySubmissions START'
+        );
+
         const certifiedUsers = users.map((user) => {
             const submission = submissionsByEmail[user.email];
+
+            prettyLog(
+              {
+                step: 'NightlyPageOPERATOR: certify per-user',
+                userEmail: user.email,
+                userRealName: user.realName,
+                hasSubmission: !!submission,
+                submissionVote: submission?.vote ?? 'NO SUBMISSION',
+                submissionActionType: typeof submission?.action,
+              },
+              `NightlyPageOPERATOR: certifying ${user.email}`
+            );
+
             const nextDays = [...(user.days ?? [])];
 
             while (nextDays.length <= selectedDayIndex.value) {
@@ -163,6 +249,14 @@ const NightlyPageOPERATOR = ({ currentUserId: _currentUserId, gameId }: NightlyP
                 days: nextDays,
             };
         });
+
+        prettyLog(
+          {
+            step: 'NightlyPageOPERATOR: certifySubmissions END',
+            certifiedCount: certifiedUsers.length,
+          },
+          'NightlyPageOPERATOR: certifySubmissions END'
+        );
 
         setUserTable(certifiedUsers);
         setDoSync(true);
@@ -255,6 +349,24 @@ const NightlyPageOPERATOR = ({ currentUserId: _currentUserId, gameId }: NightlyP
                                 </Row>
             </ShadowScrollView>
 
+                        {(() => {
+                            prettyLog(
+                              {
+                                step: 'NightlyPageOPERATOR: rendering NightlyCertificationDialog',
+                                isOpen: isCertificationDialogOpen,
+                                usersCount: users.length,
+                                userEmails: users.map(u => u.email),
+                                submissionsByEmailKeys: Object.keys(submissionsByEmail),
+                                submissionsByEmailValues: Object.values(submissionsByEmail).map((s: any) => ({
+                                  playerEmail: s?.playerEmail,
+                                  vote: s?.vote,
+                                  dayIndex: s?.dayIndex,
+                                })),
+                              },
+                              'NightlyPageOPERATOR: NightlyCertificationDialog render'
+                            );
+                            return null;
+                        })()}
                         <NightlyCertificationDialog
                             isOpen={isCertificationDialogOpen}
                             onOpenChange={setIsCertificationDialogOpen}
