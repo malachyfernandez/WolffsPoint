@@ -9,8 +9,6 @@ import FontText from '../ui/text/FontText';
 import AppButton from '../ui/buttons/AppButton';
 import DisableableButton from '../ui/buttons/DisableableButton';
 import { UserTableItem } from '../../../types/playerTable';
-import prettyLog from '../../../utils/prettyLog';
-
 interface VoteEditorDialogProps {
     isOpen: boolean;
     onOpenChange: (open: boolean) => void;
@@ -22,40 +20,16 @@ interface VoteEditorDialogProps {
 }
 
 export const resolveVoteEmailToName = (voteEmail: string, users: UserTableItem[]): string => {
-    prettyLog(
-      {
-        step: 'resolveVoteEmailToName: called',
-        voteEmail,
-        usersCount: users.length,
-        allUserEmails: users.map(u => u.email),
-        allUserRealNames: users.map(u => u.realName),
-      },
-      `resolveVoteEmailToName: input="${voteEmail}"`
-    );
-
     if (!voteEmail.trim()) {
-        prettyLog({ step: 'resolveVoteEmailToName: empty vote → No vote' }, 'resolveVoteEmailToName: result');
         return 'No vote';
     }
 
     const trimmedEmail = voteEmail.trim();
     if (trimmedEmail === 'SKIP_VOTE') {
-        prettyLog({ step: 'resolveVoteEmailToName: SKIP_VOTE → Skipped Vote' }, 'resolveVoteEmailToName: result');
         return 'Skipped Vote';
     }
 
     const targetUser = users.find(u => u.email.toLowerCase() === trimmedEmail.toLowerCase());
-
-    prettyLog(
-      {
-        step: 'resolveVoteEmailToName: lookup done',
-        trimmedEmail,
-        foundUserEmail: targetUser?.email ?? 'NOT FOUND',
-        foundUserRealName: targetUser?.realName ?? 'NOT FOUND',
-        result: targetUser?.realName || voteEmail,
-      },
-      'resolveVoteEmailToName: result'
-    );
 
     return targetUser?.realName || voteEmail;
 };

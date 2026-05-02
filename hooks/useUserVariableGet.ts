@@ -3,8 +3,6 @@ import { useQuery } from "convex/react";
 import { api } from "../convex/_generated/api";
 import type { UserVariableRecord } from "./useUserVariable";
 import { decodeUserValue } from "./userValueSerialization";
-import prettyLog from "../utils/prettyLog";
-
 type PrimitiveIndexValue = string | number | boolean;
 
 interface UseUserVariableGetOptions {
@@ -77,31 +75,6 @@ export function useUserVariableGet<TValue = any>({
     ...record,
     value: decodeUserValue(record.value as TValue),
   })) as UserVariableRecord<TValue>[] | undefined;
-
-  if (key.includes('playerNightSubmission')) {
-    prettyLog(
-      {
-        hook: 'useUserVariableGet',
-        key,
-        searchFor,
-        filterFor,
-        userIds,
-        returnTop,
-        rawResultCount: results?.length ?? 'undefined',
-        rawResultSample: results?.slice(0, 3).map((r: any) => ({
-          _id: r?._id,
-          userId: r?.userId,
-          rawValueType: typeof r?.value,
-          rawValueKeys: r?.value && typeof r.value === 'object' ? Object.keys(r.value) : 'N/A',
-          rawPlayerEmail: r?.value?.playerEmail,
-          rawVote: r?.value?.vote,
-        })) ?? 'no results',
-        decodedResultCount: mappedResults?.length ?? 'undefined',
-        decodedSampleEmails: mappedResults?.slice(0, 3).map((r: any) => r?.value?.playerEmail) ?? 'no results',
-      },
-      `useUserVariableGet: ${key} — raw=${results?.length ?? 'undefined'} decoded=${mappedResults?.length ?? 'undefined'}`
-    );
-  }
 
   return mappedResults;
 }

@@ -1,8 +1,6 @@
 import { useEffect, useSyncExternalStore, useMemo } from "react";
 import { DATA_CONFIG } from "../utils/dataConfig";
 import { globalDataStore } from "../contexts/DataProvider";
-import prettyLog from "../utils/prettyLog";
-
 import { useUserListSet } from "./useUserListSet";
 import { useUserListRemove } from "./useUserListRemove";
 import { useUserVariablePrivacy } from "./useUserVariablePrivacy";
@@ -85,26 +83,6 @@ export function useFindValues<T = any>(key: string, queryArgs: {
   );
 
   const finalResult = (result || FALLBACK_GET) as UserVariableRecord<T>[] | undefined;
-
-  if (key.includes('playerNightSubmission')) {
-    prettyLog(
-      {
-        hook: 'useFindValues',
-        key,
-        subId,
-        queryArgs,
-        baseConfig,
-        resultLength: Array.isArray(finalResult) ? finalResult.length : 'undefined',
-        resultSample: Array.isArray(finalResult) ? finalResult.slice(0, 3).map((r: any) => ({
-          userId: r?.userId,
-          valueKeys: r?.value ? Object.keys(r.value) : 'no value',
-          playerEmail: r?.value?.playerEmail,
-          votePreview: r?.value?.vote ? `${r.value.vote.slice(0, 30)}...` : 'no vote',
-        })) : finalResult,
-      },
-      `useFindValues: ${key} — result=${Array.isArray(finalResult) ? finalResult.length : 'undefined'}`
-    );
-  }
 
   return finalResult;
 }
