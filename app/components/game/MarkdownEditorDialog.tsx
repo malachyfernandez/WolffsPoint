@@ -127,6 +127,14 @@ const MarkdownEditorDialog = ({
         || (includeTitle && draftTitle.trim() !== (initialTitle?.trim() || ''));
     const canSubmit = isTitleValid && isMarkdownValid && hasUnsavedChanges;
 
+    const submitDisabledText = !isTitleValid
+        ? 'No Title'
+        : !isMarkdownValid
+            ? 'No Text'
+            : !hasUnsavedChanges
+                ? 'No Changes'
+                : 'No Changes';
+
     const handleAttemptClose = () => {
         if (hasUnsavedChanges) {
             setIsLeaveConfirmDialogOpen(true);
@@ -212,6 +220,7 @@ const MarkdownEditorDialog = ({
                             <ActionButtons
                                 canSubmit={canSubmit}
                                 submitLabel={submitLabel}
+                                submitDisabledText={submitDisabledText}
                                 onCancel={handleAttemptClose}
                                 onSubmit={handleSubmit}
                             />

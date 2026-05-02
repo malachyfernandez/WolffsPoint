@@ -62,24 +62,24 @@ export function TabbedLayout({
                 </Column>
                 <ShadowScrollView className='flex-1' scrollViewClassName='flex-1 h-full py-4'>
                     <TownSquareComposerEditorPane
-                            onBodyChange={onBodyChange}
-                            onSelectionChange={onSelectionChange}
-                            value={draftBody}
-                        />
+                        onBodyChange={onBodyChange}
+                        onSelectionChange={onSelectionChange}
+                        value={draftBody}
+                    />
                 </ShadowScrollView>
             </Tabs.Content>
 
             <Tabs.Content value='preview' className='flex-1'>
-                <ShadowScrollView className='flex-1' scrollViewClassName='flex-1 rounded-[24px] py-4'>
-                    <TownSquareComposerPreviewPane
-                            includeTitle={includeTitle}
-                            markdown={draftBody}
-                            markdownInputState={previewInputState}
-                            setMarkdownInputState={setPreviewInputState}
-                            title={draftTitle}
-                            centered={centered}
-                        />
-                </ShadowScrollView>
+
+                <TownSquareComposerPreviewPane
+                    includeTitle={includeTitle}
+                    markdown={draftBody}
+                    markdownInputState={previewInputState}
+                    setMarkdownInputState={setPreviewInputState}
+                    title={draftTitle}
+                    centered={centered}
+                />
+
             </Tabs.Content>
         </Tabs>
     );

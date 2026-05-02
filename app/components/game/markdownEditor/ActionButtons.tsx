@@ -7,6 +7,7 @@ import FontText from '../../ui/text/FontText';
 interface ActionButtonsProps {
     canSubmit: boolean;
     submitLabel: string;
+    submitDisabledText?: string;
     onCancel: () => void;
     onSubmit: () => void;
 }
@@ -14,6 +15,7 @@ interface ActionButtonsProps {
 export function ActionButtons({
     canSubmit,
     submitLabel,
+    submitDisabledText = 'No Changes',
     onCancel,
     onSubmit,
 }: ActionButtonsProps) {
@@ -25,7 +27,7 @@ export function ActionButtons({
             <DisableableButton
                 isEnabled={canSubmit}
                 enabledText={submitLabel}
-                disabledText='No Changes'
+                disabledText={submitDisabledText}
                 enabledVariant='filled'
                 className='w-32'
                 onPress={onSubmit}
