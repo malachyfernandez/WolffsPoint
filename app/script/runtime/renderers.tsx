@@ -1,5 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Pressable, View } from 'react-native';
+import { ChevronDown } from 'lucide-react-native';
+import ConvexDialog from '../../components/ui/dialog/ConvexDialog';
+import DialogHeader from '../../components/ui/dialog/DialogHeader';
+import ShadowScrollView from '../../components/ui/ShadowScrollView';
 import Column from '../../components/layout/Column';
 import Row from '../../components/layout/Row';
 import AppDropdown, { AppDropdownOption } from '../../components/ui/forms/AppDropdown';
@@ -55,6 +59,85 @@ const parseSelections = (value: string | undefined): string[] => {
   }
 };
 
+const MultiSelectDropdown = ({
+  options,
+  selected,
+  limit,
+  placeholder,
+  disabled,
+  onChange,
+}: {
+  options: AppDropdownOption[];
+  selected: string[];
+  limit: number;
+  placeholder: string;
+  disabled: boolean;
+  isInDialog: boolean;
+  onChange: (next: string[]) => void;
+}) => {
+  const [open, setOpen] = useState(false);
+  const selectedCount = selected.length;
+  const triggerLabel =
+    selectedCount === 0
+      ? placeholder
+      : selectedCount === 1
+        ? (options.find((opt) => selected.includes(opt.value))?.label ?? placeholder)
+        : `${selectedCount} selected`;
+
+  const toggle = (value: string) => {
+    if (selected.includes(value)) {
+      onChange(selected.filter((item) => item !== value));
+    } else if (selected.length < limit) {
+      onChange([...selected, value]);
+    }
+  };
+
+  return (
+    <>
+      <Pressable
+        disabled={disabled}
+        onPress={() => setOpen(true)}
+        className={`bg-text/10 w-full flex-row items-center justify-between rounded-xl px-4 py-3 ${disabled ? 'opacity-60' : ''}`}>
+        <FontText className={selectedCount === 0 ? 'opacity-50' : ''}>{triggerLabel}</FontText>
+        <ChevronDown size={16} color="currentColor" />
+      </Pressable>
+      <ConvexDialog.Root isOpen={open} onOpenChange={setOpen}>
+        <ConvexDialog.Portal>
+          <ConvexDialog.Overlay />
+          <ConvexDialog.Content className="max-w-sm p-1">
+            <DialogHeader text={placeholder} subtext={`Select up to ${limit}`} />
+            <Column className="gap-1 p-4">
+              <ShadowScrollView className="max-h-80" contentContainerStyle={{ gap: 0 }}>
+                {options.map((option) => {
+                  const isSelected = selected.includes(option.value);
+                  const atLimit = selected.length >= limit && !isSelected;
+                  return (
+                    <Pressable
+                      key={option.value}
+                      disabled={atLimit}
+                      onPress={() => toggle(option.value)}
+                      className={`flex-row items-center gap-3 rounded-lg px-3 py-2.5 ${isSelected ? 'bg-text/5' : atLimit ? 'opacity-40' : ''}`}>
+                      <CustomCheckbox checked={isSelected} onChange={() => {}} monochrome />
+                      <FontText>{option.label}</FontText>
+                    </Pressable>
+                  );
+                })}
+              </ShadowScrollView>
+              <Row className="justify-end pt-3">
+                <Pressable onPress={() => setOpen(false)} className="px-3 py-1.5">
+                  <FontText weight="medium" color="accent">
+                    Done
+                  </FontText>
+                </Pressable>
+              </Row>
+            </Column>
+          </ConvexDialog.Content>
+        </ConvexDialog.Portal>
+      </ConvexDialog.Root>
+    </>
+  );
+};
+
 export const ScriptRenderers = ({
   instructions,
   state,
@@ -91,7 +174,7 @@ export const ScriptRenderers = ({
               <CustomCheckbox
                 checked={checked}
                 onChange={(next) => update(instruction.key, String(next))}
-                selectedStateAppearance="positive"
+                monochrome
               />
               <FontText>{instruction.label ?? instruction.key}</FontText>
             </Row>
@@ -133,28 +216,16 @@ export const ScriptRenderers = ({
         if (limit > 1) {
           const selected = parseSelections(value);
           return (
-            <Column key={key} className="gap-2">
-              <FontText weight="medium">{instruction.label ?? instruction.key}</FontText>
-              <Row className="flex-wrap gap-2">
-                {options.map((option) => {
-                  const isSelected = selected.includes(option.value);
-                  return (
-                    <Pressable
-                      key={option.value}
-                      disabled={disabled}
-                      onPress={() => {
-                        const next = isSelected
-                          ? selected.filter((item) => item !== option.value)
-                          : [...selected, option.value].slice(0, limit);
-                        update(instruction.key, JSON.stringify(next));
-                      }}
-                      className={`rounded-xl border px-3 py-2 ${isSelected ? 'bg-accent border-accent' : 'border-subtle-border bg-text/5'} ${disabled ? 'opacity-60' : ''}`}>
-                      <FontText color={isSelected ? 'white' : undefined}>{option.label}</FontText>
-                    </Pressable>
-                  );
-                })}
-              </Row>
-            </Column>
+            <MultiSelectDropdown
+              key={key}
+              options={options}
+              selected={selected}
+              limit={limit}
+              placeholder={instruction.label ?? instruction.key}
+              disabled={disabled}
+              isInDialog={isInDialog}
+              onChange={(next) => update(instruction.key, JSON.stringify(next))}
+            />
           );
         }
         return (
