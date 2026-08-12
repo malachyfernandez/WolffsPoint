@@ -35,6 +35,7 @@ export const normalizeGameSchedule = (schedule?: Partial<GameSchedule> | null): 
     defaultGameSchedule.wakeUpTime;
   const actionDayOffset = schedule?.actionDayOffset ?? 0;
   const voteDayOffset = schedule?.voteDayOffset ?? 0;
+  const publicVoting = schedule?.publicVoting ?? false;
 
   return {
     nightlyDeadlineTime: fallbackDeadlineTime,
@@ -45,6 +46,7 @@ export const normalizeGameSchedule = (schedule?: Partial<GameSchedule> | null): 
     newspaperReleaseTime: wakeUpTime,
     actionDayOffset,
     voteDayOffset,
+    publicVoting,
   };
 };
 

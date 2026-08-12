@@ -27,6 +27,8 @@ export type GameSchedule = {
   actionDayOffset?: number;
   /** Number of days before the final day that votes are due. 0 = on the final day (default). */
   voteDayOffset?: number;
+  /** When true, players can see who voted for whom on the newspaper screen. */
+  publicVoting?: boolean;
 };
 
 export type TownSquarePost = {
