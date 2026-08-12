@@ -9,213 +9,296 @@ import ShadowScrollView from '../../ui/ShadowScrollView';
 import DaySelectionDialog from '../../game/DaySelectionDialog';
 import ChooseDayDialog from '../../game/ChooseDayDialog';
 import DayButton from './DayButton';
-import { getCurrentPlayableDayIndex, getDayRangeLabel, parseStoredDayDates } from '../../../../utils/multiplayer';
+import {
+  getCurrentPlayableDayIndex,
+  getDayRangeLabel,
+  parseStoredDayDates,
+} from '../../../../utils/multiplayer';
 
 export type DaySelectorMode = 'player' | 'nightly' | 'newspaper';
 
 interface ComprehensiveDaySelectorProps {
-    gameId: string;
-    showAddButton?: boolean;
-    showInitialSetupDialog?: boolean;
+  gameId: string;
+  showAddButton?: boolean;
+  showInitialSetupDialog?: boolean;
 }
 
-const ComprehensiveDaySelector = ({ gameId, showAddButton = false, showInitialSetupDialog = false }: ComprehensiveDaySelectorProps) => {
-    const scrollViewRef = useRef<ScrollView>(null);
-    
-    // Shared selected day index
-    const [selectedDayIndex, setSelectedDayIndex] = useList<number>("selectedDayIndex", gameId);
+const ComprehensiveDaySelector = ({
+  gameId,
+  showAddButton = false,
+  showInitialSetupDialog = false,
+}: ComprehensiveDaySelectorProps) => {
+  const scrollViewRef = useRef<ScrollView>(null);
 
-    // Number of real days per in-game day
-    const [numberOfRealDaysPerInGameDay] = useList<number>("numberOfRealDaysPerInGameDay", gameId, { privacy: "PUBLIC", defaultValue: 2 });
+  // Shared selected day index
+  const [selectedDayIndex, setSelectedDayIndex] = useList<number>('selectedDayIndex', gameId);
 
-    const [hasCompletedInitialDaySetup, setHasCompletedInitialDaySetup] = useList<boolean>("hasCompletedInitialDaySetup", gameId, { privacy: "PUBLIC", defaultValue: false });
+  // Number of real days per in-game day
+  const [numberOfRealDaysPerInGameDay] = useList<number>('numberOfRealDaysPerInGameDay', gameId, {
+    privacy: 'PUBLIC',
+    defaultValue: 2,
+  });
 
-    // Shared day dates array
-    const [dayDatesArray, setDayDatesArray] = useList<string[]>("dayDatesArray", gameId);
+  const [hasCompletedInitialDaySetup, setHasCompletedInitialDaySetup] = useList<boolean>(
+    'hasCompletedInitialDaySetup',
+    gameId,
+    { privacy: 'PUBLIC', defaultValue: false }
+  );
 
-    // Convert stored MM/DD/YYYY strings back to real Date objects for UI use
-    const fixedDayDatesArray = parseStoredDayDates(dayDatesArray.value);
-    const currentPlayableDayIndex = getCurrentPlayableDayIndex(fixedDayDatesArray);
+  // Shared day dates array
+  const [dayDatesArray, setDayDatesArray] = useList<string[]>('dayDatesArray', gameId);
 
-    // Clean setter that accepts Date[] and handles string conversion internally
-    const setFixedDayDatesArray = useCallback((dates: Date[]) => {
-        setDayDatesArray(
-            dates.map((date) => `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`)
-        );
-    }, [setDayDatesArray]);
+  // Per-day skip flags (arrays of day indices)
+  const [skipVotingDays, setSkipVotingDays] = useList<number[]>('skipVotingDays', gameId, {
+    privacy: 'PUBLIC',
+    defaultValue: [],
+  });
+  const [skipActionsDays, setSkipActionsDays] = useList<number[]>('skipActionsDays', gameId, {
+    privacy: 'PUBLIC',
+    defaultValue: [],
+  });
 
-    useEffect(() => {
-        if (dayDatesArray.value.length > 0 && hasCompletedInitialDaySetup.state.isSyncing === false && hasCompletedInitialDaySetup.value === false) {
-            setHasCompletedInitialDaySetup(true);
-        }
-    }, [dayDatesArray.value.length, hasCompletedInitialDaySetup.state.isSyncing, hasCompletedInitialDaySetup.value, setHasCompletedInitialDaySetup]);
+  // Convert stored MM/DD/YYYY strings back to real Date objects for UI use
+  const fixedDayDatesArray = parseStoredDayDates(dayDatesArray.value);
+  const currentPlayableDayIndex = getCurrentPlayableDayIndex(fixedDayDatesArray);
 
-    // Auto-scroll to selected day
-    useEffect(() => {
-        if (scrollViewRef.current && selectedDayIndex.value !== undefined && fixedDayDatesArray.length > 0) {
-            const dayButtonWidth = 112;
-            const gapWidth = 4;
-            // Calculate position in reversed order: newest days are first (after + button)
-            const reversedIndex = fixedDayDatesArray.length - 1 - selectedDayIndex.value;
-            const selectedDayPosition = reversedIndex * (dayButtonWidth + gapWidth);
-            
-            // Scroll to position with some padding to center the selected day
-            const scrollPosition = Math.max(0, selectedDayPosition - 100);
-            
-            scrollViewRef.current.scrollTo({ x: scrollPosition, animated: true });
-        }
-    }, [selectedDayIndex.value, fixedDayDatesArray.length]);
+  // Clean setter that accepts Date[] and handles string conversion internally
+  const setFixedDayDatesArray = useCallback(
+    (dates: Date[]) => {
+      setDayDatesArray(
+        dates.map((date) => `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`)
+      );
+    },
+    [setDayDatesArray]
+  );
 
-    const addNewDay = (customDaysPerGameDay?: number) => {
-        const currentDays = [...fixedDayDatesArray];
-        if (currentDays.length === 0) {
-            const firstDay = new Date();
-            setFixedDayDatesArray([firstDay]);
-            setSelectedDayIndex(0);
-            setHasCompletedInitialDaySetup(true);
-            return;
-        }
-        const lastDate = currentDays[currentDays.length - 1];
-        const newDate = new Date(lastDate);
+  useEffect(() => {
+    if (
+      dayDatesArray.value.length > 0 &&
+      hasCompletedInitialDaySetup.state.isSyncing === false &&
+      hasCompletedInitialDaySetup.value === false
+    ) {
+      setHasCompletedInitialDaySetup(true);
+    }
+  }, [
+    dayDatesArray.value.length,
+    hasCompletedInitialDaySetup.state.isSyncing,
+    hasCompletedInitialDaySetup.value,
+    setHasCompletedInitialDaySetup,
+  ]);
 
-        const daysToAdd = customDaysPerGameDay ?? numberOfRealDaysPerInGameDay.value;
-        newDate.setDate(newDate.getDate() + daysToAdd);
-        setFixedDayDatesArray([...currentDays, newDate]);
+  // Auto-scroll to selected day
+  useEffect(() => {
+    if (
+      scrollViewRef.current &&
+      selectedDayIndex.value !== undefined &&
+      fixedDayDatesArray.length > 0
+    ) {
+      const dayButtonWidth = 112;
+      const gapWidth = 4;
+      // Calculate position in reversed order: newest days are first (after + button)
+      const reversedIndex = fixedDayDatesArray.length - 1 - selectedDayIndex.value;
+      const selectedDayPosition = reversedIndex * (dayButtonWidth + gapWidth);
 
-        // Snap to the newest day
-        setSelectedDayIndex(currentDays.length);
-    };
+      // Scroll to position with some padding to center the selected day
+      const scrollPosition = Math.max(0, selectedDayPosition - 100);
 
-    const [isDialogOpen, setIsDialogOpen] = useState(false);
-    const [isChooseDayDialogOpen, setIsChooseDayDialogOpen] = useState(false);
+      scrollViewRef.current.scrollTo({ x: scrollPosition, animated: true });
+    }
+  }, [selectedDayIndex.value, fixedDayDatesArray.length]);
 
-    useEffect(() => {
-        if (
-            showInitialSetupDialog &&
-            dayDatesArray.state.isSyncing === false &&
-            hasCompletedInitialDaySetup.state.isSyncing === false &&
-            dayDatesArray.value.length === 0 &&
-            hasCompletedInitialDaySetup.value === false
-        ) {
-            setIsChooseDayDialogOpen(true);
-        }
-    }, [dayDatesArray.state.isSyncing, dayDatesArray.value.length, hasCompletedInitialDaySetup.state.isSyncing, hasCompletedInitialDaySetup.value, showInitialSetupDialog]);
+  const addNewDay = (customDaysPerGameDay?: number) => {
+    const currentDays = [...fixedDayDatesArray];
+    if (currentDays.length === 0) {
+      const firstDay = new Date();
+      setFixedDayDatesArray([firstDay]);
+      setSelectedDayIndex(0);
+      setHasCompletedInitialDaySetup(true);
+      return;
+    }
+    const lastDate = currentDays[currentDays.length - 1];
+    const newDate = new Date(lastDate);
 
-    const replaceDayDate = (index: number, replacementDate: Date) => {
-        const currentDays = [...fixedDayDatesArray];
-        if (index >= 0 && index < currentDays.length) {
-            currentDays[index] = replacementDate;
-            setFixedDayDatesArray(currentDays);
-        }
-    };
+    const daysToAdd = customDaysPerGameDay ?? numberOfRealDaysPerInGameDay.value;
+    newDate.setDate(newDate.getDate() + daysToAdd);
+    setFixedDayDatesArray([...currentDays, newDate]);
 
-    const handleDaySelect = (index: number) => {
-        setSelectedDayIndex(index);
-    };
+    // Snap to the newest day
+    setSelectedDayIndex(currentDays.length);
+  };
 
-    const handleAddNewDay = () => {
-        if (showAddButton === false) {
-            return;
-        }
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isChooseDayDialogOpen, setIsChooseDayDialogOpen] = useState(false);
 
-        if (fixedDayDatesArray.length === 0 && showInitialSetupDialog) {
-            setIsChooseDayDialogOpen(true);
-            return;
-        }
+  useEffect(() => {
+    if (
+      showInitialSetupDialog &&
+      dayDatesArray.state.isSyncing === false &&
+      hasCompletedInitialDaySetup.state.isSyncing === false &&
+      dayDatesArray.value.length === 0 &&
+      hasCompletedInitialDaySetup.value === false
+    ) {
+      setIsChooseDayDialogOpen(true);
+    }
+  }, [
+    dayDatesArray.state.isSyncing,
+    dayDatesArray.value.length,
+    hasCompletedInitialDaySetup.state.isSyncing,
+    hasCompletedInitialDaySetup.value,
+    showInitialSetupDialog,
+  ]);
 
-        addNewDay();
-    };
+  const replaceDayDate = (index: number, replacementDate: Date) => {
+    const currentDays = [...fixedDayDatesArray];
+    if (index >= 0 && index < currentDays.length) {
+      currentDays[index] = replacementDate;
+      setFixedDayDatesArray(currentDays);
+    }
+  };
 
-    const handleInitialDaySetupSubmit = (daysPerGameDay: number) => {
-        if (fixedDayDatesArray.length === 0) {
-            setFixedDayDatesArray([new Date()]);
-            setSelectedDayIndex(0);
-        }
+  const toggleSkipVoting = (index: number, skip: boolean) => {
+    const current = skipVotingDays.value ?? [];
+    if (skip) {
+      if (!current.includes(index)) setSkipVotingDays([...current, index]);
+    } else {
+      setSkipVotingDays(current.filter((i) => i !== index));
+    }
+  };
 
-        if (daysPerGameDay !== numberOfRealDaysPerInGameDay.value && fixedDayDatesArray.length > 0) {
-            setSelectedDayIndex(Math.min(selectedDayIndex.value, fixedDayDatesArray.length - 1));
-        }
+  const toggleSkipActions = (index: number, skip: boolean) => {
+    const current = skipActionsDays.value ?? [];
+    if (skip) {
+      if (!current.includes(index)) setSkipActionsDays([...current, index]);
+    } else {
+      setSkipActionsDays(current.filter((i) => i !== index));
+    }
+  };
 
-        setHasCompletedInitialDaySetup(true);
-    };
+  const handleDaySelect = (index: number) => {
+    setSelectedDayIndex(index);
+  };
 
-    // Create a unique key for content based on the day index
-    const getDayKey = (dayIndex: number) => {
-        return `day-${dayIndex}`;
-    };
+  const handleAddNewDay = () => {
+    if (showAddButton === false) {
+      return;
+    }
 
-    return (
-        <Column className='gap-4'>
-            <ShadowScrollView
-                direction='horizontal'
-                className='mr-1 pr-1 max-w-min -mb-3 -mt-1'
-                scrollViewClassName='px-1 m-0 h-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]'
-                ref={scrollViewRef}
-                horizontal
-            >
-                    <Row className='gap-1 h-6'>
-                        {showAddButton && (
-                            <AppButton variant="filled" className='h-6! w-6 min-w-6 mx-1 rounded-full' onPress={handleAddNewDay}>
-                                <FontText weight="bold" className='text-white'>+</FontText>
-                            </AppButton>
-                        )}
-                        {fixedDayDatesArray.slice().reverse().map((date, reverseIndex) => {
-                            const index = fixedDayDatesArray.length - 1 - reverseIndex;
-                            const isCurrentDay = index === currentPlayableDayIndex;
-                            const isSelected = selectedDayIndex.value === index;
-                            const label = getDayRangeLabel(fixedDayDatesArray, index, numberOfRealDaysPerInGameDay.value);
+    if (fixedDayDatesArray.length === 0 && showInitialSetupDialog) {
+      setIsChooseDayDialogOpen(true);
+      return;
+    }
 
-                            if (isSelected) {
-                                return (
-                                    <DayButton
-                                        key={index}
-                                        date={date}
-                                        index={index}
-                                        label={label}
-                                        isSelected={true}
-                                        showCurrentDayIndicator={isCurrentDay}
-                                        onPress={() => handleDaySelect(index)}
-                                    >
-                                        <DaySelectionDialog
-                                            isOpen={isDialogOpen}
-                                            onOpenChange={setIsDialogOpen}
-                                            index={index}
-                                            dayDate={date}
-                                            buttonLabel={label}
-                                            previousDate={index > 0 ? fixedDayDatesArray[index - 1] : new Date()}
-                                            followingDate={index < fixedDayDatesArray.length - 1 ? fixedDayDatesArray[index + 1] : undefined}
-                                            onPress={() => handleDaySelect(index)}
-                                            replaceDayDate={replaceDayDate}
-                                            showCurrentDayIndicator={isCurrentDay}
-                                        />
-                                    </DayButton>
-                                );
-                            }
+    addNewDay();
+  };
 
-                            return (
-                                <DayButton
-                                    key={index}
-                                    date={date}
-                                    index={index}
-                                    label={label}
-                                    isSelected={false}
-                                    showCurrentDayIndicator={isCurrentDay}
-                                    onPress={() => handleDaySelect(index)}
-                                />
-                            );
-                        })}
-                    </Row>
-            </ShadowScrollView>
+  const handleInitialDaySetupSubmit = (daysPerGameDay: number) => {
+    if (fixedDayDatesArray.length === 0) {
+      setFixedDayDatesArray([new Date()]);
+      setSelectedDayIndex(0);
+    }
 
-            {/* ChooseDayDialog for initial setup */}
-            <ChooseDayDialog
-                isOpen={isChooseDayDialogOpen}
-                onOpenChange={setIsChooseDayDialogOpen}
-                gameId={gameId}
-                onSubmitDaysValue={handleInitialDaySetupSubmit}
-            />
-        </Column>
-    );
+    if (daysPerGameDay !== numberOfRealDaysPerInGameDay.value && fixedDayDatesArray.length > 0) {
+      setSelectedDayIndex(Math.min(selectedDayIndex.value, fixedDayDatesArray.length - 1));
+    }
+
+    setHasCompletedInitialDaySetup(true);
+  };
+
+  // Create a unique key for content based on the day index
+  const getDayKey = (dayIndex: number) => {
+    return `day-${dayIndex}`;
+  };
+
+  return (
+    <Column className="gap-4">
+      <ShadowScrollView
+        direction="horizontal"
+        className="-mb-3 -mt-1 mr-1 max-w-min pr-1"
+        scrollViewClassName="px-1 m-0 h-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+        ref={scrollViewRef}
+        horizontal>
+        <Row className="h-6 gap-1">
+          {showAddButton && (
+            <AppButton
+              variant="filled"
+              className="h-6! mx-1 w-6 min-w-6 rounded-full"
+              onPress={handleAddNewDay}>
+              <FontText weight="bold" className="text-white">
+                +
+              </FontText>
+            </AppButton>
+          )}
+          {fixedDayDatesArray
+            .slice()
+            .reverse()
+            .map((date, reverseIndex) => {
+              const index = fixedDayDatesArray.length - 1 - reverseIndex;
+              const isCurrentDay = index === currentPlayableDayIndex;
+              const isSelected = selectedDayIndex.value === index;
+              const label = getDayRangeLabel(
+                fixedDayDatesArray,
+                index,
+                numberOfRealDaysPerInGameDay.value
+              );
+
+              if (isSelected) {
+                return (
+                  <DayButton
+                    key={index}
+                    date={date}
+                    index={index}
+                    label={label}
+                    isSelected={true}
+                    showCurrentDayIndicator={isCurrentDay}
+                    onPress={() => handleDaySelect(index)}>
+                    <DaySelectionDialog
+                      isOpen={isDialogOpen}
+                      onOpenChange={setIsDialogOpen}
+                      index={index}
+                      dayDate={date}
+                      buttonLabel={label}
+                      previousDate={index > 0 ? fixedDayDatesArray[index - 1] : new Date()}
+                      followingDate={
+                        index < fixedDayDatesArray.length - 1
+                          ? fixedDayDatesArray[index + 1]
+                          : undefined
+                      }
+                      onPress={() => handleDaySelect(index)}
+                      replaceDayDate={replaceDayDate}
+                      showCurrentDayIndicator={isCurrentDay}
+                      skipVoting={(skipVotingDays.value ?? []).includes(index)}
+                      skipActions={(skipActionsDays.value ?? []).includes(index)}
+                      onSkipVotingChange={(skip) => toggleSkipVoting(index, skip)}
+                      onSkipActionsChange={(skip) => toggleSkipActions(index, skip)}
+                    />
+                  </DayButton>
+                );
+              }
+
+              return (
+                <DayButton
+                  key={index}
+                  date={date}
+                  index={index}
+                  label={label}
+                  isSelected={false}
+                  showCurrentDayIndicator={isCurrentDay}
+                  onPress={() => handleDaySelect(index)}
+                />
+              );
+            })}
+        </Row>
+      </ShadowScrollView>
+
+      {/* ChooseDayDialog for initial setup */}
+      <ChooseDayDialog
+        isOpen={isChooseDayDialogOpen}
+        onOpenChange={setIsChooseDayDialogOpen}
+        gameId={gameId}
+        onSubmitDaysValue={handleInitialDaySetupSubmit}
+      />
+    </Column>
+  );
 };
 
 export default ComprehensiveDaySelector;

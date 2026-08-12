@@ -171,10 +171,20 @@ const ScriptEditorDialog = ({
         return [name, sample && typeof sample === 'object' ? Object.keys(sample) : []];
       })
     );
-    keys.players = ['realName', 'email', 'userId', 'role', 'isAlive', 'days'];
+    keys.players = [
+      'realName',
+      'email',
+      'userId',
+      'role',
+      'isAlive',
+      'days',
+      ...(sources?.userTableTitle?.extraUserColumns ?? []),
+    ];
     keys.currentPlayer = keys.players;
     keys.roles = ['role', 'doesRoleVote', 'isVisible', 'aboutRole'];
     keys.Inputs = collectInputLabels(state.ast.statements);
+    // Day object keys: built-in fields + extra day column titles
+    keys.day = ['vote', 'action', ...(sources?.userTableTitle?.extraDayColumns ?? [])];
     return keys;
   }, [sources, state.ast.statements]);
 

@@ -1,4 +1,4 @@
-import type { UserTableItem } from '../../../types/playerTable';
+import type { UserTableItem, UserTableTitle, DayData } from '../../../types/playerTable';
 import type { RoleTableItem } from '../../../types/roleTable';
 
 export type ScriptCapability = 'operator' | 'player' | 'newser';
@@ -13,21 +13,52 @@ export interface ScriptSourceData {
   dayDates?: string[];
   schedule?: Record<string, unknown>;
   profiles?: unknown[];
+  userTableTitle?: UserTableTitle;
 }
+
+/**
+ * Convert a DayData into a flat runtime object with extra columns merged in
+ * using their column titles as keys. e.g. { vote, action, Infected: "Y", ... }
+ */
+const dayEntry = (day: DayData | undefined, extraDayColumnTitles: string[]) => {
+  const base: Record<string, unknown> = {
+    vote: day?.vote ?? '',
+    action: day?.action ?? '',
+  };
+  const extra = day?.extraColumns ?? [];
+  for (let i = 0; i < extraDayColumnTitles.length; i++) {
+    base[extraDayColumnTitles[i]] = extra[i] ?? '';
+  }
+  return base;
+};
 
 /**
  * Convert a UserTableItem into a flat runtime object.
  * The player's fields are spread directly so scripts can access
  * `Item.isDead`, `Item.realName`, `Item.role`, etc. without nesting.
+ * Extra user columns are merged in using their titles as keys.
+ * Day objects also have extra day columns merged in using their titles as keys.
  */
-const playerEntry = (player: UserTableItem) => ({
-  realName: player.realName,
-  email: player.email,
-  userId: player.userId,
-  role: player.role,
-  isAlive: player.playerData.livingState === 'alive',
-  days: player.days,
-});
+const playerEntry = (player: UserTableItem, titles?: UserTableTitle) => {
+  const extraUserColumnTitles = titles?.extraUserColumns ?? [];
+  const extraDayColumnTitles = titles?.extraDayColumns ?? [];
+
+  const base: Record<string, unknown> = {
+    realName: player.realName,
+    email: player.email,
+    userId: player.userId,
+    role: player.role,
+    isAlive: player.playerData.livingState === 'alive',
+    days: (player.days ?? []).map((day) => dayEntry(day, extraDayColumnTitles)),
+  };
+
+  const extra = player.playerData.extraColumns ?? [];
+  for (let i = 0; i < extraUserColumnTitles.length; i++) {
+    base[extraUserColumnTitles[i]] = extra[i] ?? '';
+  }
+
+  return base;
+};
 
 export const SCRIPT_GLOBAL_NAMES = [
   'players',
@@ -41,13 +72,16 @@ export const SCRIPT_GLOBAL_NAMES = [
 
 export const createScriptGlobals = (source: ScriptSourceData = {}): Record<string, unknown> => {
   const capability = source.capability ?? 'newser';
-  const players = (source.players ?? []).map((entry) => playerEntry(entry));
+  const players = (source.players ?? []).map((entry) => playerEntry(entry, source.userTableTitle));
   const currentPlayer = players.find((entry) => {
-    if (source.currentUserId && entry.userId === source.currentUserId) {
+    const e = entry as Record<string, unknown>;
+    if (source.currentUserId && e.userId === source.currentUserId) {
       return true;
     }
     return Boolean(
-      source.currentEmail && entry.email.toLowerCase() === source.currentEmail.toLowerCase()
+      source.currentEmail &&
+      typeof e.email === 'string' &&
+      e.email.toLowerCase() === source.currentEmail.toLowerCase()
     );
   });
   const roles = (source.roles ?? [])

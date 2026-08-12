@@ -746,6 +746,21 @@ const ExpressionSocket = ({
                 (block) => block.id.toLowerCase() === nextLink.name.toLowerCase()
               )
             : undefined;
+        // Compute the entry source for this link's position in the chain.
+        // As we traverse through .entry("days").index(...), the source evolves
+        // so subsequent .entry() calls get keys for the nested object type.
+        let linkEntrySource = chainBaseSource;
+        for (let i = 0; i < index; i++) {
+          const prev = chain[i];
+          if (prev.type === 'method' && prev.name.toLowerCase() === 'entry') {
+            const keyArg = prev.args[0];
+            if (keyArg && keyArg.value.kind === 'StringLiteral') {
+              const key = keyArg.value.value.toLowerCase();
+              // .entry("days") on a player → subsequent entries are day fields
+              if (key === 'days') linkEntrySource = 'day';
+            }
+          }
+        }
         return (
           <React.Fragment key={index}>
             {link.type === 'base' ? (
@@ -840,7 +855,7 @@ const ExpressionSocket = ({
                 location={location}
                 contextVariables={contextVariables}
                 entryKeysBySource={entryKeysBySource}
-                entrySource={chainBaseSource}
+                entrySource={linkEntrySource}
                 entrySourceMap={entrySourceMap}
                 onAdd={onAdd}
                 onSetExpression={onSetExpression}
