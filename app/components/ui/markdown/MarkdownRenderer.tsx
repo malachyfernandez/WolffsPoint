@@ -673,6 +673,10 @@ const MarkdownRendererContent = ({
 
   useEffect(() => {
     if (!setState || !state) return;
+    // If this renderer has no script blocks and no inline inputs, it doesn't
+    // own any inputs — don't prune. (Nested renderers from CreateMarkdown receive
+    // the same state/setState but render plain text, so they must not wipe state.)
+    if (scriptSourcesList.length === 0 && inlineInputKeys.size === 0) return;
     const scriptKeys = collectActiveInputKeys(scriptSourcesList, scriptSources, state);
     const allActiveKeys = new Set([...scriptKeys, ...inlineInputKeys]);
     const staleKeys = Object.keys(state).filter((key) => !allActiveKeys.has(key));
