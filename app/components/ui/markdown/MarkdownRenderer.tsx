@@ -13,7 +13,7 @@ import Row from '../../layout/Row';
 import AppDropdown, { AppDropdownOption } from '../forms/AppDropdown';
 import FontTextInput from '../forms/FontTextInput';
 import FontText from '../text/FontText';
-import ScriptRuntime from '../../../script/runtime/ScriptRuntime';
+import ScriptRuntime, { collectActiveInputKeys } from '../../../script/runtime/ScriptRuntime';
 import type { ScriptSourceData } from '../../../script/runtime/sources';
 
 interface MarkdownRendererProps {
@@ -644,6 +644,48 @@ const MarkdownRendererContent = ({
   const blocks = useMemo(() => parseMarkdown(markdown || ''), [markdown]);
 
   const containsInputs = useMemo(() => MARKDOWN_INPUT_FINDER.test(markdown || ''), [markdown]);
+
+  // Collect all active input keys across ALL script blocks and inline inputs,
+  // then prune stale state entries that no longer correspond to any rendered input.
+  const scriptSourcesList = useMemo(
+    () => blocks.filter((b) => b.type === 'script').map((b) => (b as { source: string }).source),
+    [blocks]
+  );
+  const inlineInputKeys = useMemo(() => {
+    const keys = new Set<string>();
+    if (!containsInputs) return keys;
+    for (const block of blocks) {
+      if (block.type === 'heading' || block.type === 'paragraph' || block.type === 'quote') {
+        for (const segment of parseInlineSegments(block.text)) {
+          if (segment.type === 'input') keys.add(segment.label);
+        }
+      }
+      if (block.type === 'list') {
+        for (const item of block.items) {
+          for (const segment of parseInlineSegments(item)) {
+            if (segment.type === 'input') keys.add(segment.label);
+          }
+        }
+      }
+    }
+    return keys;
+  }, [blocks, containsInputs]);
+
+  useEffect(() => {
+    if (!setState || !state) return;
+    const scriptKeys = collectActiveInputKeys(scriptSourcesList, scriptSources, state);
+    const allActiveKeys = new Set([...scriptKeys, ...inlineInputKeys]);
+    const staleKeys = Object.keys(state).filter((key) => !allActiveKeys.has(key));
+    if (staleKeys.length === 0) return;
+    const pruned: Record<string, string | undefined> = {};
+    for (const [key, value] of Object.entries(state)) {
+      if (allActiveKeys.has(key)) {
+        pruned[key] = value;
+      }
+    }
+    setState(pruned);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scriptSourcesList, inlineInputKeys, scriptSources]);
 
   return (
     <Column className={`gap-3 ${className ?? ''}`.trim()}>

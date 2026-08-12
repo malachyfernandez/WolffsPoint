@@ -38,11 +38,11 @@ const buildScriptForInput = (label: string, inputType: string): string => {
       );
     case 'SELECT_PLAYER_ALIVE':
       return printScriptBlock(
-        `CreateSelectInput({\n  LIST = players.Filter(Item => Item.isAlive),\n  LABEL = "${label}",\n  NUMSELECTABLE = 1,\n});`
+        `CreateSelectInput({\n  LIST = players.Filter(Item => (Item.entry("isAlive") == true)),\n  LABEL = "${label}",\n  NUMSELECTABLE = 1,\n});`
       );
     case 'SELECT_PLAYER_DEAD':
       return printScriptBlock(
-        `CreateSelectInput({\n  LIST = players.Filter(Item => NOT Item.isAlive),\n  LABEL = "${label}",\n  NUMSELECTABLE = 1,\n});`
+        `CreateSelectInput({\n  LIST = players.Filter(Item => (Item.entry("isAlive") == false)),\n  LABEL = "${label}",\n  NUMSELECTABLE = 1,\n});`
       );
     case 'SELECT_ROLE':
       return printScriptBlock(
