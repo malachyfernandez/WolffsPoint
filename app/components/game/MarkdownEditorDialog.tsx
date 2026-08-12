@@ -310,59 +310,61 @@ const MarkdownEditorDialog = ({
         </ConvexDialog.Trigger>
         <ConvexDialog.Portal>
           <ConvexDialog.Overlay />
-          <ConvexDialog.Content className="h-[80vh]">
-            <CloseButton onPress={handleAttemptClose} />
-            <DialogHeader text={title} subtext={dialogSubtext} />
-            <MainContent
-              includeTitle={includeTitle}
-              titleInputLabel={titleInputLabel}
-              titleInputPlaceholder={titleInputPlaceholder}
-              draftTitle={draftTitle}
-              draftBody={draftBody}
-              isPreviewSideBySide={isPreviewSideBySide}
-              activeTab={activeTab}
-              showInputs={showInputs}
-              previewInputState={previewInputState}
-              setPreviewInputState={setPreviewInputState}
-              setDraftTitle={setDraftTitle}
-              setDraftBody={setDraftBody}
-              setSelection={setSelection}
-              onTabChange={handleTabChange}
-              onBold={handleBold}
-              onItalic={handleItalic}
-              onLink={handleLink}
-              onImage={handleImage}
-              onInput={handleInput}
-              onMore={handleMore}
-              onScript={showScript ? handleScript : undefined}
-              centered={centered}
-              showPreviewAsPlayer={findScriptBlocks(draftBody).length > 0}
-              onPreviewAsPlayer={handlePreviewAsPlayer}
-            />
-            <Row className="-mx-3 items-center justify-between gap-4 pt-4 sm:mx-0">
-              {cursorScriptBlock ? (
-                <AppButton
-                  variant="outline"
-                  className="h-8 px-3"
-                  onPress={handleEditCode}
-                  dropShadow={false}>
-                  <Row className="items-center gap-1.5">
-                    <Code2 size={14} color="#1a1a1a" />
-                    <FontText className="text-sm">Edit Code</FontText>
-                  </Row>
-                </AppButton>
-              ) : (
-                <View />
-              )}
-              <ActionButtons
-                canSubmit={canSubmit}
-                submitLabel={submitLabel}
-                submitDisabledText={submitDisabledText}
-                onCancel={handleAttemptClose}
-                onSubmit={handleSubmit}
+          <InputOptionsProvider gameId={gameId} showInputs>
+            <ConvexDialog.Content className="h-[80vh]">
+              <CloseButton onPress={handleAttemptClose} />
+              <DialogHeader text={title} subtext={dialogSubtext} />
+              <MainContent
+                includeTitle={includeTitle}
+                titleInputLabel={titleInputLabel}
+                titleInputPlaceholder={titleInputPlaceholder}
+                draftTitle={draftTitle}
+                draftBody={draftBody}
+                isPreviewSideBySide={isPreviewSideBySide}
+                activeTab={activeTab}
+                showInputs={showInputs}
+                previewInputState={previewInputState}
+                setPreviewInputState={setPreviewInputState}
+                setDraftTitle={setDraftTitle}
+                setDraftBody={setDraftBody}
+                setSelection={setSelection}
+                onTabChange={handleTabChange}
+                onBold={handleBold}
+                onItalic={handleItalic}
+                onLink={handleLink}
+                onImage={handleImage}
+                onInput={handleInput}
+                onMore={handleMore}
+                onScript={showScript ? handleScript : undefined}
+                centered={centered}
+                showPreviewAsPlayer={findScriptBlocks(draftBody).length > 0}
+                onPreviewAsPlayer={handlePreviewAsPlayer}
               />
-            </Row>
-          </ConvexDialog.Content>
+              <Row className="-mx-3 items-center justify-between gap-4 pt-4 sm:mx-0">
+                {cursorScriptBlock ? (
+                  <AppButton
+                    variant="outline"
+                    className="h-8 px-3"
+                    onPress={handleEditCode}
+                    dropShadow={false}>
+                    <Row className="items-center gap-1.5">
+                      <Code2 size={14} color="#1a1a1a" />
+                      <FontText className="text-sm">Edit Code</FontText>
+                    </Row>
+                  </AppButton>
+                ) : (
+                  <View />
+                )}
+                <ActionButtons
+                  canSubmit={canSubmit}
+                  submitLabel={submitLabel}
+                  submitDisabledText={submitDisabledText}
+                  onCancel={handleAttemptClose}
+                  onSubmit={handleSubmit}
+                />
+              </Row>
+            </ConvexDialog.Content>
+          </InputOptionsProvider>
         </ConvexDialog.Portal>
       </ConvexDialog.Root>
 

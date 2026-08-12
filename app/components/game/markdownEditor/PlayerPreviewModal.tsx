@@ -45,6 +45,7 @@ const PlayerPreviewModal = ({
   const [roleTable] = useList<RoleTableItem[]>('roleTable', gameId, { privacy: 'PUBLIC' });
   const [userTableTitle] = useList<UserTableTitle>('userTableTitle', gameId, { privacy: 'PUBLIC' });
   const [dayDatesArray] = useList<string[]>('dayDatesArray', gameId, { privacy: 'PUBLIC' });
+  const [selectedDayIndex] = useList<number>('selectedDayIndex', gameId, { privacy: 'PUBLIC' });
 
   const players = userTable?.value ?? [];
   const roles = roleTable?.value ?? [];
@@ -111,12 +112,19 @@ const PlayerPreviewModal = ({
       roles,
       currentUserId: selectedPlayer.userId,
       currentEmail: selectedPlayer.email,
-      currentDay: 0,
+      currentDay: selectedDayIndex?.value ?? 0,
       dayDates: dayDatesArray?.value ?? [],
       schedule: {},
       userTableTitle: userTableTitle?.value,
     };
-  }, [selectedPlayer, players, roles, dayDatesArray?.value, userTableTitle?.value]);
+  }, [
+    selectedPlayer,
+    players,
+    roles,
+    dayDatesArray?.value,
+    userTableTitle?.value,
+    selectedDayIndex?.value,
+  ]);
 
   const hasMarkdown = markdown.trim().length > 0;
   const hasRolePlayers = rolePlayers.length > 0;
