@@ -286,7 +286,10 @@ const InsertModal = ({
         })),
     ];
     const entryBlock = EXPRESSION_BLOCKS.find((b) => b.id === 'entry');
-    const otherExpressionBlocks = EXPRESSION_BLOCKS.filter((b) => b.id !== 'entry');
+    const indexBlock = EXPRESSION_BLOCKS.find((b) => b.id === 'index');
+    const otherExpressionBlocks = EXPRESSION_BLOCKS.filter(
+      (b) => b.id !== 'entry' && b.id !== 'index'
+    );
     const sharedItems: ModalItem[] = [
       ...functionItems,
       ...variableItems,
@@ -297,6 +300,16 @@ const InsertModal = ({
               description: entryBlock.description,
               category: 'data',
               onSelect: () => selectExpression(buildMethodExpression(entryBlock.id)),
+            },
+          ]
+        : []),
+      ...(indexBlock
+        ? [
+            {
+              label: indexBlock.name,
+              description: indexBlock.description,
+              category: 'data',
+              onSelect: () => selectExpression(buildMethodExpression(indexBlock.id)),
               dividerAfter: true,
             },
           ]

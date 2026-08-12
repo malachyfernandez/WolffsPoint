@@ -745,6 +745,20 @@ export const EXPRESSION_BLOCKS: ExpressionBlockDef[] = [
       return matching === undefined ? NOTHING : obj[matching];
     },
   },
+  {
+    id: 'index',
+    name: 'index',
+    kind: 'expression',
+    description: 'Get an item at a position in a list',
+    category: 'data',
+    appliesTo: 'any',
+    inputs: [{ name: 'position', label: 'Position', type: 'number', required: true, default: 0 }],
+    evaluate: (receiver, args) => {
+      if (!Array.isArray(receiver) && typeof receiver !== 'string') return NOTHING;
+      const i = num(args[0]);
+      return i === undefined ? NOTHING : (receiver[Math.trunc(i)] ?? NOTHING);
+    },
+  },
 ];
 
 export const ALL_BLOCKS: BlockDef[] = [...STATEMENT_BLOCKS, ...EXPRESSION_BLOCKS];
