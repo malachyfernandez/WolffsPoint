@@ -734,8 +734,10 @@ const ExpressionSocket = ({
     );
   }
 
+  const isChain = chain.length > 1;
   const ChainContent = (
-    <Row className="items-center gap-0">
+    <Row
+      className={`items-center gap-0 ${isChain ? 'rounded-lg bg-black/[0.08] px-1 py-0.5' : ''}`}>
       {chain.map((link, index) => {
         const nextLink = chain[index + 1];
         const nextDefinition =
