@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
 import { Pressable } from 'react-native';
 import FontText from '../ui/text/FontText';
-import InlineEditableText from '../ui/forms/InlineEditableText';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
-import CustomCheckbox from '../ui/CustomCheckbox';
 import AppButton from '../ui/buttons/AppButton';
+import RoleEditDialog from './RoleEditDialog';
 import MarkdownEditorDialog from './MarkdownEditorDialog';
 import DeleteConfirmationDialog from './DeleteRoleConfirmationDialog';
 import { RoleTableItem } from 'types/roleTable';
@@ -17,6 +16,7 @@ interface RoleRowProps {
   isLast: boolean;
   setRoleName: (roleIndex: number, newRoleName: string) => void;
   setDoesRoleVote: (roleIndex: number, newDoesRoleVote: boolean) => void;
+  setIsVisible: (roleIndex: number, value: boolean) => void;
   setRoleMessage: (roleIndex: number, newRoleMessage: string) => void;
   setAboutRole: (roleIndex: number, newAboutRole: string) => void;
   onDeleteRole: (roleIndex: number) => void;
@@ -33,6 +33,7 @@ const RoleRow = ({
   isLast,
   setRoleName,
   setDoesRoleVote,
+  setIsVisible,
   setRoleMessage,
   setAboutRole,
   onDeleteRole,
@@ -41,48 +42,29 @@ const RoleRow = ({
   isEditing,
   showInputs = false,
 }: RoleRowProps) => {
-  const [editingCell, setEditingCell] = useState<string | null>(null);
+  const [isRoleInfoDialogOpen, setIsRoleInfoDialogOpen] = useState(false);
   const [isRoleMessageDialogOpen, setIsRoleMessageDialogOpen] = useState(false);
   const [isAboutRoleDialogOpen, setIsAboutRoleDialogOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
-
-  const toggleDoesRoleVote = () => {
-    const newDoesRoleVote = !role.doesRoleVote;
-    setDoesRoleVote(index, newDoesRoleVote);
-  };
-
-  const handleCellEditStart = (cellType: string) => {
-    setEditingCell(cellType);
-    onEditStart?.();
-  };
-
-  const handleCellEditEnd = () => {
-    setEditingCell(null);
-    onEditEnd?.();
-  };
 
   return (
     <>
       <Row className={`h-12 w-min gap-0 ${isEditing ? 'z-50' : ''}`}>
         <Column
           className={`border-subtle-border h-full w-32 items-center justify-center gap-4 border ${isLast ? 'rounded-bl-lg' : ''}`}>
-          <InlineEditableText
-            value={role.role || ''}
-            onChange={(newValue) => setRoleName(index, newValue)}
-            placeholder="Role name"
-            className="w-28 overflow-hidden text-nowrap text-center"
-            weight="medium"
-            compact={true}
-            onEditStart={() => handleCellEditStart('role')}
-            onEditEnd={handleCellEditEnd}
-          />
-        </Column>
-        <Column className="border-subtle-border h-full w-24 items-center justify-center gap-4 border">
-          <CustomCheckbox
-            checked={role.doesRoleVote}
-            onChange={toggleDoesRoleVote}
-            selectedStateAppearance="positive"
-          />
+          <Pressable
+            onPress={() => setIsRoleInfoDialogOpen(true)}
+            className="h-full w-full items-center justify-center">
+            <FontText
+              weight="medium"
+              className="w-28 overflow-hidden text-nowrap text-center"
+              style={{
+                textDecorationLine: 'underline',
+                textDecorationStyle: 'dotted',
+              }}>
+              {role.role || <FontText className="opacity-50">Role name</FontText>}
+            </FontText>
+          </Pressable>
         </Column>
         <Column
           className={`border-subtle-border h-full w-64 items-center justify-center gap-4 border`}>
@@ -141,6 +123,17 @@ const RoleRow = ({
           </AppButton>
         </Column>
       </Row>
+
+      <RoleEditDialog
+        isOpen={isRoleInfoDialogOpen}
+        onOpenChange={setIsRoleInfoDialogOpen}
+        roleIndex={index}
+        role={role}
+        onSetRoleName={setRoleName}
+        onSetDoesRoleVote={setDoesRoleVote}
+        onSetIsVisible={setIsVisible}
+      />
+
       <MarkdownEditorDialog
         isOpen={isRoleMessageDialogOpen}
         onOpenChange={setIsRoleMessageDialogOpen}
