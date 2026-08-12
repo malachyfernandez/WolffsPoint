@@ -174,10 +174,35 @@ const YourEyesOnlyDayContentPLAYER = ({
       value: role.role,
       label: role.role,
     }));
+  const actionDayOffset = schedule.actionDayOffset ?? 0;
+  const voteDayOffset = schedule.voteDayOffset ?? 0;
+  const actionDeadlineBaseDate = useMemo(
+    () =>
+      actionDayOffset > 0
+        ? getDayEndDate(
+            dayDates,
+            Math.max(0, dayIndex - actionDayOffset),
+            numberOfRealDaysPerInGameDay
+          )
+        : selectedDayEndDate,
+    [actionDayOffset, dayDates, dayIndex, numberOfRealDaysPerInGameDay, selectedDayEndDate]
+  );
+  const voteDeadlineBaseDate = useMemo(
+    () =>
+      voteDayOffset > 0
+        ? getDayEndDate(
+            dayDates,
+            Math.max(0, dayIndex - voteDayOffset),
+            numberOfRealDaysPerInGameDay
+          )
+        : selectedDayEndDate,
+    [voteDayOffset, dayDates, dayIndex, numberOfRealDaysPerInGameDay, selectedDayEndDate]
+  );
   const isVoteLocked =
-    dayIndex < currentDayIndex || !isNightWindowOpen(selectedDayEndDate, voteDeadlineTime, now);
+    dayIndex < currentDayIndex || !isNightWindowOpen(voteDeadlineBaseDate, voteDeadlineTime, now);
   const isActionLocked =
-    dayIndex < currentDayIndex || !isNightWindowOpen(selectedDayEndDate, actionDeadlineTime, now);
+    dayIndex < currentDayIndex ||
+    !isNightWindowOpen(actionDeadlineBaseDate, actionDeadlineTime, now);
   const isVotingSkipped = (skipVotingDays ?? []).includes(dayIndex);
   const isActionsSkipped = (skipActionsDays ?? []).includes(dayIndex);
   const isSkipVote = submission.value.vote === 'SKIP_VOTE';
@@ -194,12 +219,12 @@ const YourEyesOnlyDayContentPLAYER = ({
     [submission.value.action]
   );
   const voteDeadline = useMemo(
-    () => buildScheduledDate(selectedDayEndDate, voteDeadlineTime),
-    [selectedDayEndDate, voteDeadlineTime]
+    () => buildScheduledDate(voteDeadlineBaseDate, voteDeadlineTime),
+    [voteDeadlineBaseDate, voteDeadlineTime]
   );
   const actionDeadline = useMemo(
-    () => buildScheduledDate(selectedDayEndDate, actionDeadlineTime),
-    [actionDeadlineTime, selectedDayEndDate]
+    () => buildScheduledDate(actionDeadlineBaseDate, actionDeadlineTime),
+    [actionDeadlineTime, actionDeadlineBaseDate]
   );
 
   // Determine which deadline comes first

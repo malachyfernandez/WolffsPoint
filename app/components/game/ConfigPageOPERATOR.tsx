@@ -22,86 +22,91 @@ import DownloadPlayerDataButton from './DownloadPlayerDataButton';
 import DownloadNewspaperButton from './DownloadNewspaperButton';
 
 interface ConfigPageOPERATORProps {
-    gameId: string;
-    currentUserId: string;
+  gameId: string;
+  currentUserId: string;
 }
 
 type ConfigPageScreenState = 'config' | 'ruleBook' | 'phoneBook';
 
 interface RuleBookPreviewCardProps {
-    gameId: string;
-    onPress: () => void;
+  gameId: string;
+  onPress: () => void;
 }
 
 const RuleBookPreviewCard = ({ gameId, onPress }: RuleBookPreviewCardProps) => {
-    const [ruleBookData] = useValue<RuleBookData>(getGameScopedKey('ruleBook', gameId), {
-        defaultValue: { content: '', roleOrder: [] },
-        privacy: 'PUBLIC',
-    });
-    const [roleTable] = useList<RoleTableItem[]>("roleTable", gameId, { privacy: "PUBLIC" });
+  const [ruleBookData] = useValue<RuleBookData>(getGameScopedKey('ruleBook', gameId), {
+    defaultValue: { content: '', roleOrder: [] },
+    privacy: 'PUBLIC',
+  });
+  const [roleTable] = useList<RoleTableItem[]>('roleTable', gameId, { privacy: 'PUBLIC' });
 
-    const previewText = React.useMemo(() => {
-        const rawContent = ruleBookData?.value?.content ?? '';
-        const flattenedContent = rawContent
-            .replace(/!\[[^\]]*\]\([^)]*\)/g, ' ')
-            .replace(/\[[^\]]*\]\([^)]*\)/g, ' ')
-            .replace(/[`*_>#-]/g, ' ')
-            .replace(/\s+/g, ' ')
-            .trim();
+  const previewText = React.useMemo(() => {
+    const rawContent = ruleBookData?.value?.content ?? '';
+    const flattenedContent = rawContent
+      .replace(/!\[[^\]]*\]\([^)]*\)/g, ' ')
+      .replace(/\[[^\]]*\]\([^)]*\)/g, ' ')
+      .replace(/[`*_>#-]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
 
-        if (!flattenedContent.length) {
-            return 'No rule book written yet.';
-        }
+    if (!flattenedContent.length) {
+      return 'No rule book written yet.';
+    }
 
-        return flattenedContent.length > 180 ? `${flattenedContent.slice(0, 180).trim()}...` : flattenedContent;
-    }, [ruleBookData?.value?.content]);
+    return flattenedContent.length > 180
+      ? `${flattenedContent.slice(0, 180).trim()}...`
+      : flattenedContent;
+  }, [ruleBookData?.value?.content]);
 
-    const visibleRoleDescriptionCount = React.useMemo(() => {
-        return (roleTable?.value ?? []).filter((role) => role.isVisible !== false && role.aboutRole?.trim().length).length;
-    }, [roleTable?.value]);
+  const visibleRoleDescriptionCount = React.useMemo(() => {
+    return (roleTable?.value ?? []).filter(
+      (role) => role.isVisible !== false && role.aboutRole?.trim().length
+    ).length;
+  }, [roleTable?.value]);
 
-    return (
-        <Pressable onPress={onPress} className='w-full rounded-3xl bg-text/5 px-4 py-4'>
-            <Row className='gap-4 items-start'>
-                
-                <Column className='gap-1 flex-1'>
-                    <FontText weight='medium'>Rule book</FontText>
-                    <FontText variant='subtext'>{previewText}</FontText>
-                    <FontText variant='subtext'>
-                        {visibleRoleDescriptionCount} role description{visibleRoleDescriptionCount === 1 ? '' : 's'}
-                    </FontText>
-                </Column>
-                <ChevronRight size={20} color='rgb(46, 41, 37)' className='mt-1' />
-            </Row>
-        </Pressable>
-    );
+  return (
+    <Pressable onPress={onPress} className="bg-text/5 w-full rounded-3xl px-4 py-4">
+      <Row className="items-start gap-4">
+        <Column className="flex-1 gap-1">
+          <FontText weight="medium">Rule book</FontText>
+          <FontText variant="subtext">{previewText}</FontText>
+          <FontText variant="subtext">
+            {visibleRoleDescriptionCount} role description
+            {visibleRoleDescriptionCount === 1 ? '' : 's'}
+          </FontText>
+        </Column>
+        <ChevronRight size={20} color="rgb(46, 41, 37)" className="mt-1" />
+      </Row>
+    </Pressable>
+  );
 };
 
 interface PhoneBookPreviewCardProps {
-    gameId: string;
-    currentUserId: string;
-    onPress: () => void;
+  gameId: string;
+  currentUserId: string;
+  onPress: () => void;
 }
 
 const PhoneBookPreviewCard = ({ gameId, currentUserId, onPress }: PhoneBookPreviewCardProps) => {
-    const [userTable] = useList<any[]>("userTable", gameId, { privacy: "PUBLIC" });
+  const [userTable] = useList<any[]>('userTable', gameId, { privacy: 'PUBLIC' });
 
-    const playerCount = (userTable?.value ?? []).filter((user: any) => user.userId !== currentUserId).length;
+  const playerCount = (userTable?.value ?? []).filter(
+    (user: any) => user.userId !== currentUserId
+  ).length;
 
-    return (
-        <Pressable onPress={onPress} className='w-full rounded-3xl bg-text/5 px-4 py-4'>
-            <Row className='gap-4 items-start'>
-                
-                <Column className='gap-1 flex-1'>
-                    <FontText weight='medium'>Phone book</FontText>
-                    <FontText variant='subtext'>
-                        {playerCount} player{playerCount === 1 ? '' : 's'} in the game
-                    </FontText>
-                </Column>
-                <ChevronRight size={20} color='rgb(46, 41, 37)' className='mt-1' />
-            </Row>
-        </Pressable>
-    );
+  return (
+    <Pressable onPress={onPress} className="bg-text/5 w-full rounded-3xl px-4 py-4">
+      <Row className="items-start gap-4">
+        <Column className="flex-1 gap-1">
+          <FontText weight="medium">Phone book</FontText>
+          <FontText variant="subtext">
+            {playerCount} player{playerCount === 1 ? '' : 's'} in the game
+          </FontText>
+        </Column>
+        <ChevronRight size={20} color="rgb(46, 41, 37)" className="mt-1" />
+      </Row>
+    </Pressable>
+  );
 };
 
 /**
@@ -109,58 +114,66 @@ const PhoneBookPreviewCard = ({ gameId, currentUserId, onPress }: PhoneBookPrevi
  * Contains game schedule settings and provides access to the rule book editor.
  */
 const ConfigPageOPERATOR = ({ gameId, currentUserId }: ConfigPageOPERATORProps) => {
-    const [activeScreen, setActiveScreen] = useState<ConfigPageScreenState>('config');
+  const [activeScreen, setActiveScreen] = useState<ConfigPageScreenState>('config');
 
-    return (
-        <Column className='gap-0 flex-1 min-h-[760px] py-3 sm:px-4'>
-            <LayoutStateAnimatedView.Container stateVar={activeScreen} className='flex-1'>
-                <LayoutStateAnimatedView.Option page={1} stateValue='config'>
-                    <Column className='gap-6 pb-6'>
-                        <RuleBookPreviewCard gameId={gameId} onPress={() => setActiveScreen('ruleBook')} />
-                        <PhoneBookPreviewCard gameId={gameId} currentUserId={currentUserId} onPress={() => setActiveScreen('phoneBook')} />
+  return (
+    <Column className="min-h-[760px] flex-1 gap-0 py-3 sm:px-4">
+      <LayoutStateAnimatedView.Container stateVar={activeScreen} className="flex-1">
+        <LayoutStateAnimatedView.Option page={1} stateValue="config">
+          <Column className="gap-6 pb-6">
+            <RuleBookPreviewCard gameId={gameId} onPress={() => setActiveScreen('ruleBook')} />
+            <PhoneBookPreviewCard
+              gameId={gameId}
+              currentUserId={currentUserId}
+              onPress={() => setActiveScreen('phoneBook')}
+            />
 
-                        <Column className='gap-3 items-center border-t border-border/15 pt-6'>
-                            <FontText weight='medium'>Export game data</FontText>
-                            <Row className='gap-4 flex-wrap w-full'>
-                                <Column className='gap-2 items-center flex-1 min-w-[300px]'>
-                                    <FontText variant='subtext' className='text-center'>
-                                        Downloads the full table from the nightly and players pages for all days.
-                                    </FontText>
-                                    <DownloadPlayerDataButton gameId={gameId} />
-                                </Column>
-                                <Column className='gap-2 items-center flex-1 min-w-[300px]'>
-                                    <FontText variant='subtext' className='text-center'>
-                                        Downloads each day's newspaper columns as markdown files in a zip.
-                                    </FontText>
-                                    <DownloadNewspaperButton gameId={gameId} />
-                                </Column>
-                            </Row>
-                        </Column>
+            <Column className="border-border/15 items-center gap-3 border-t pt-6">
+              <FontText weight="medium">Export game data</FontText>
+              <Row className="w-full flex-wrap gap-4">
+                <Column className="min-w-[300px] flex-1 items-center gap-2">
+                  <FontText variant="subtext" className="text-center">
+                    Downloads the full table from the nightly and players pages for all days.
+                  </FontText>
+                  <DownloadPlayerDataButton gameId={gameId} />
+                </Column>
+                <Column className="min-w-[300px] flex-1 items-center gap-2">
+                  <FontText variant="subtext" className="text-center">
+                    Downloads each day's newspaper columns as markdown files in a zip.
+                  </FontText>
+                  <DownloadNewspaperButton gameId={gameId} />
+                </Column>
+              </Row>
+            </Column>
 
-                        <Column className='gap-0 border-y border-border/15'>
-                            <ActionDeadlineConfigItem gameId={gameId} />
-                            <VoteDeadlineConfigItem gameId={gameId} />
-                            <WakeUpTimeConfigItem gameId={gameId} />
-                            <DaysPerGameDayConfigItem gameId={gameId} />
-                            <NewserConfigItem gameId={gameId} />
-                            <GameNameConfigItem gameId={gameId} />
-                        </Column>
+            <Column className="border-border/15 gap-0 border-y">
+              <ActionDeadlineConfigItem gameId={gameId} />
+              <VoteDeadlineConfigItem gameId={gameId} />
+              <WakeUpTimeConfigItem gameId={gameId} />
+              <DaysPerGameDayConfigItem gameId={gameId} />
+              <NewserConfigItem gameId={gameId} />
+              <GameNameConfigItem gameId={gameId} />
+            </Column>
 
-                        <RemoveGameButton gameId={gameId} />
-                    </Column>
-                </LayoutStateAnimatedView.Option>
+            <RemoveGameButton gameId={gameId} />
+          </Column>
+        </LayoutStateAnimatedView.Option>
 
-                <LayoutStateAnimatedView.OptionContainer page={2} pushInAnimation={fromRight}>
-                    <LayoutStateAnimatedView.Option stateValue='ruleBook'>
-                        <RuleBookPageOPERATOR gameId={gameId} onBack={() => setActiveScreen('config')} />
-                    </LayoutStateAnimatedView.Option>
-                    <LayoutStateAnimatedView.Option stateValue='phoneBook'>
-                        <PhoneBookPageOPERATOR gameId={gameId} currentUserId={currentUserId} onBack={() => setActiveScreen('config')} />
-                    </LayoutStateAnimatedView.Option>
-                </LayoutStateAnimatedView.OptionContainer>
-            </LayoutStateAnimatedView.Container>
-        </Column>
-    );
+        <LayoutStateAnimatedView.OptionContainer page={2} pushInAnimation={fromRight}>
+          <LayoutStateAnimatedView.Option stateValue="ruleBook">
+            <RuleBookPageOPERATOR gameId={gameId} onBack={() => setActiveScreen('config')} />
+          </LayoutStateAnimatedView.Option>
+          <LayoutStateAnimatedView.Option stateValue="phoneBook">
+            <PhoneBookPageOPERATOR
+              gameId={gameId}
+              currentUserId={currentUserId}
+              onBack={() => setActiveScreen('config')}
+            />
+          </LayoutStateAnimatedView.Option>
+        </LayoutStateAnimatedView.OptionContainer>
+      </LayoutStateAnimatedView.Container>
+    </Column>
+  );
 };
 
 export default ConfigPageOPERATOR;
