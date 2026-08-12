@@ -173,6 +173,14 @@ const BOOLEAN_OPERATORS: { label: string; operator: BinaryOperator }[] = [
   { label: 'or', operator: 'OR' },
 ];
 
+const MATH_OPERATORS: { label: string; operator: BinaryOperator; description: string }[] = [
+  { label: 'plus', operator: '+', description: 'Add two values' },
+  { label: 'minus', operator: '-', description: 'Subtract two values' },
+  { label: 'times', operator: '*', description: 'Multiply two values' },
+  { label: 'divide', operator: '/', description: 'Divide two values' },
+  { label: 'modulo', operator: '%', description: 'Remainder of division' },
+];
+
 interface ModalItem {
   label: string;
   description: string;
@@ -189,10 +197,10 @@ const CATEGORY_LABELS: Record<string, string> = {
   control: 'Control',
   data: 'Data',
   list: 'List',
-  number: 'Number',
   string: 'Text',
   boolean: 'Boolean',
   operator: 'Operators',
+  math: 'Numbers',
 };
 
 const InsertModal = ({
@@ -345,22 +353,52 @@ const InsertModal = ({
           }),
       },
     ];
+    const mathItems: ModalItem[] = [
+      ...MATH_OPERATORS.map(({ label, operator, description }) => ({
+        label,
+        description,
+        category: 'math',
+        onSelect: () =>
+          selectExpression({
+            kind: 'BinaryExpression',
+            operator,
+            left: { kind: 'NothingLiteral', span },
+            right: { kind: 'NothingLiteral', span },
+            span,
+          }),
+      })),
+      {
+        label: 'negate',
+        description: 'Negate a number',
+        category: 'math',
+        onSelect: () =>
+          selectExpression({
+            kind: 'UnaryExpression',
+            operator: '-',
+            operand: { kind: 'NothingLiteral', span },
+            span,
+          }),
+      },
+    ];
     if (target.expectedType === 'boolean')
       return [...functionItems, ...variableItems, ...booleanItems];
     return [
-      ...sharedItems,
+      {
+        label: '0',
+        description: 'Number',
+        category: 'math',
+        dividerAfter: true,
+        onSelect: () => selectExpression({ kind: 'NumberLiteral', value: 0, span }),
+      },
       {
         label: '"text"',
         description: 'Text',
         category: 'string',
+        dividerAfter: true,
         onSelect: () => selectExpression({ kind: 'StringLiteral', value: '', span }),
       },
-      {
-        label: '0',
-        description: 'Number',
-        category: 'number',
-        onSelect: () => selectExpression({ kind: 'NumberLiteral', value: 0, span }),
-      },
+      ...sharedItems,
+      ...mathItems,
       ...booleanItems,
     ];
   }, [
@@ -395,8 +433,8 @@ const InsertModal = ({
       target?.kind === 'statement'
         ? ['input', 'display', 'variable', 'control']
         : target?.kind === 'chainInsert' || target?.kind === 'chainSwap'
-          ? ['list', 'number', 'string', 'boolean', 'data']
-          : ['data', 'variable', 'function', 'operator', 'boolean', 'list', 'number', 'string'];
+          ? ['list', 'math', 'string', 'boolean', 'data']
+          : ['data', 'variable', 'function', 'math', 'operator', 'boolean', 'list', 'string'];
     return order.filter((category) => grouped[category]?.length);
   }, [target, grouped]);
 

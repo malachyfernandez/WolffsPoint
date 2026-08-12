@@ -28,31 +28,29 @@ const INPUT_TYPE_OPTIONS: AppDropdownOption[] = [
 
 /**
  * Generate a script block that creates the equivalent input via code.
- * The label is sanitized to a valid identifier for the NAME field.
+ * The label is used directly as both the display label and the state key.
  */
 const buildScriptForInput = (label: string, inputType: string): string => {
-  const name = label.replace(/[^a-zA-Z0-9_]/g, '').replace(/^[0-9]/, '_$&') || 'input';
-
   switch (inputType) {
     case 'SELECT_PLAYER':
       return printScriptBlock(
-        `CreateSelectInput({\n  NAME = "${name}",\n  LIST = players,\n  LABEL = "${label}",\n});`
+        `CreateSelectInput({\n  LIST = players,\n  LABEL = "${label}",\n  NUMSELECTABLE = 1,\n});`
       );
     case 'SELECT_PLAYER_ALIVE':
       return printScriptBlock(
-        `CreateSelectInput({\n  NAME = "${name}",\n  LIST = players.Filter(Item => Item.isAlive),\n  LABEL = "${label}",\n});`
+        `CreateSelectInput({\n  LIST = players.Filter(Item => Item.isAlive),\n  LABEL = "${label}",\n  NUMSELECTABLE = 1,\n});`
       );
     case 'SELECT_PLAYER_DEAD':
       return printScriptBlock(
-        `CreateSelectInput({\n  NAME = "${name}",\n  LIST = players.Filter(Item => NOT Item.isAlive),\n  LABEL = "${label}",\n});`
+        `CreateSelectInput({\n  LIST = players.Filter(Item => NOT Item.isAlive),\n  LABEL = "${label}",\n  NUMSELECTABLE = 1,\n});`
       );
     case 'SELECT_ROLE':
       return printScriptBlock(
-        `CreateSelectInput({\n  NAME = "${name}",\n  LIST = roles,\n  LABEL = "${label}",\n});`
+        `CreateSelectInput({\n  LIST = roles,\n  LABEL = "${label}",\n  NUMSELECTABLE = 1,\n});`
       );
     case 'TEXT':
     default:
-      return printScriptBlock(`CreateTextInput({\n  NAME = "${name}",\n  LABEL = "${label}",\n});`);
+      return printScriptBlock(`CreateTextInput({\n  LABEL = "${label}",\n});`);
   }
 };
 

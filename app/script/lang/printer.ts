@@ -75,7 +75,7 @@ export const printExpression = (
       break;
     }
     case 'BinaryExpression':
-      result = `${printExpression(expression.left, ownPrecedence, depth)} ${expression.operator} ${printExpression(expression.right, ownPrecedence + 1, depth)}`;
+      result = `(${printExpression(expression.left, 0, depth)} ${expression.operator} ${printExpression(expression.right, 0, depth)})`;
       break;
     case 'MemberExpression':
       result = `${printExpression(expression.object, ownPrecedence, depth)}.${expression.property}`;

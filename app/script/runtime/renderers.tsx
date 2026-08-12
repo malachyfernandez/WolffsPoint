@@ -99,32 +99,29 @@ export const ScriptRenderers = ({
         }
         if (instruction.kind === 'number') {
           return (
-            <Column key={key} className="gap-1">
-              <FontText weight="medium">{instruction.label ?? instruction.key}</FontText>
-              <FontNumberInput
-                value={value ?? (typeof instruction.value === 'number' ? instruction.value : '')}
-                onChangeText={(displayValue) => update(instruction.key, displayValue)}
-                minValue={instruction.min}
-                maxValue={instruction.max}
-                editable={!disabled}
-                className="bg-text/10 w-full rounded-xl px-4 py-3"
-              />
-            </Column>
+            <FontNumberInput
+              key={key}
+              value={value ?? (typeof instruction.value === 'number' ? instruction.value : '')}
+              onChangeText={(displayValue) => update(instruction.key, displayValue)}
+              minValue={instruction.min}
+              maxValue={instruction.max}
+              editable={!disabled}
+              placeholder={instruction.placeholder ?? instruction.label ?? instruction.key}
+              className="bg-text/10 w-full rounded-xl px-4 py-3"
+            />
           );
         }
         if (instruction.kind === 'text') {
           return (
-            <Column key={key} className="gap-1">
-              <FontText weight="medium">{instruction.label ?? instruction.key}</FontText>
-              <FontTextInput
-                value={value ?? (typeof instruction.value === 'string' ? instruction.value : '')}
-                onChangeText={(next) => update(instruction.key, next)}
-                editable={!disabled}
-                autoGrow
-                placeholder={instruction.placeholder}
-                className="bg-text/10 w-full rounded-xl px-4 py-3"
-              />
-            </Column>
+            <FontTextInput
+              key={key}
+              value={value ?? (typeof instruction.value === 'string' ? instruction.value : '')}
+              onChangeText={(next) => update(instruction.key, next)}
+              editable={!disabled}
+              autoGrow
+              placeholder={instruction.placeholder ?? instruction.label ?? instruction.key}
+              className="bg-text/10 w-full rounded-xl px-4 py-3"
+            />
           );
         }
 
@@ -161,20 +158,18 @@ export const ScriptRenderers = ({
           );
         }
         return (
-          <Column key={key} className="gap-1">
-            <FontText weight="medium">{instruction.label ?? instruction.key}</FontText>
-            <AppDropdown
-              options={options}
-              value={value}
-              onValueChange={(next) => update(instruction.key, next)}
-              placeholder={instruction.placeholder ?? instruction.label ?? instruction.key}
-              emptyText="No options available"
-              triggerClassName="border-0 bg-text/10 hover:bg-text/5 rounded-xl"
-              contentClassName="border-0"
-              isInDialog={isInDialog}
-              disabled={disabled}
-            />
-          </Column>
+          <AppDropdown
+            key={key}
+            options={options}
+            value={value}
+            onValueChange={(next) => update(instruction.key, next)}
+            placeholder={instruction.placeholder ?? instruction.label ?? instruction.key}
+            emptyText="No options available"
+            triggerClassName="border-0 bg-text/10 hover:bg-text/5 rounded-xl"
+            contentClassName="border-0"
+            isInDialog={isInDialog}
+            disabled={disabled}
+          />
         );
       })}
     </Column>

@@ -30,6 +30,8 @@ import {
 
 const span = emptySpan();
 const BOOLEAN_OPERATORS: BinaryOperator[] = ['==', '!=', '>', '<', '>=', '<=', 'AND', 'OR'];
+const MATH_OPERATORS: BinaryOperator[] = ['+', '-', '*', '/', '%'];
+const isMathOperator = (op: BinaryOperator) => MATH_OPERATORS.includes(op);
 
 const sanitizeIdentifier = (value: string) =>
   value.replace(/[^a-zA-Z0-9_]/g, '').replace(/^[0-9]/, '_$&');
@@ -551,6 +553,7 @@ const ExpressionSocket = ({
 
   if (expression.kind === 'BinaryExpression') {
     const operandType = ['AND', 'OR'].includes(expression.operator) ? 'boolean' : 'expression';
+    const operatorSet = isMathOperator(expression.operator) ? MATH_OPERATORS : BOOLEAN_OPERATORS;
     return (
       <Swapable
         label={expressionLabel}
@@ -574,7 +577,7 @@ const ExpressionSocket = ({
             onEditMarkdown={onEditMarkdown}
           />
           <AppDropdown
-            options={BOOLEAN_OPERATORS.map((operator) => ({ value: operator, label: operator }))}
+            options={operatorSet.map((operator) => ({ value: operator, label: operator }))}
             value={expression.operator}
             onValueChange={(operator) =>
               onSetExpression(
@@ -712,10 +715,10 @@ const ExpressionSocket = ({
                 location,
                 next.trim() && !Number.isNaN(number)
                   ? { kind: 'NumberLiteral', value: number, span }
-                  : { kind: 'NothingLiteral', span }
+                  : { kind: 'NumberLiteral', value: 0, span }
               );
             }}
-            placeholder={label}
+            placeholder="0"
             onReplace={() => openExpressionModal()}
           />
         </View>
@@ -1071,6 +1074,22 @@ const MethodArgument = ({
         expression={argument.value}
         keys={entryKeys}
         onChange={(next) => onSetExpression(location, next, true)}
+      />
+    );
+  }
+  if (input?.enumValues && input.enumValues.length > 0) {
+    const currentValue = argument.value.kind === 'StringLiteral' ? argument.value.value : '';
+    return (
+      <AppDropdown
+        options={input.enumValues.map((v) => ({ value: v, label: v }))}
+        value={input.enumValues.includes(currentValue) ? currentValue : undefined}
+        onValueChange={(next) =>
+          onSetExpression(location, { kind: 'StringLiteral', value: next, span }, true)
+        }
+        placeholder={input.label}
+        triggerClassName="min-w-24 !py-1 !px-2 text-sm"
+        isInDialog
+        allowUnselect={false}
       />
     );
   }

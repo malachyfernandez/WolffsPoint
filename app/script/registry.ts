@@ -25,6 +25,7 @@ export interface BlockInput {
   type: InputType;
   required?: boolean;
   default?: unknown;
+  enumValues?: string[];
 }
 
 export interface StatementBlockDef {
@@ -43,7 +44,7 @@ export interface ExpressionBlockDef {
   kind: 'expression';
   description: string;
   inputs: BlockInput[];
-  category: 'list' | 'number' | 'string' | 'boolean' | 'data' | 'operator' | 'object';
+  category: 'list' | 'number' | 'string' | 'boolean' | 'data' | 'operator' | 'object' | 'math';
   appliesTo?: 'list' | 'number' | 'string' | 'any';
   evaluate: (receiver: RuntimeValue, args: RuntimeValue[], ctx: ExpressionContext) => RuntimeValue;
   isProperty?: boolean;
@@ -201,25 +202,22 @@ export const STATEMENT_BLOCKS: StatementBlockDef[] = [
     description: 'Selectable dropdown input',
     category: 'input',
     inputs: [
-      { name: 'NAME', label: 'Name', type: 'string', required: true, default: 'input' },
       { name: 'LIST', label: 'Options', type: 'list', required: true },
       { name: 'LABEL', label: 'Label', type: 'string', default: 'Select' },
       { name: 'NUMSELECTABLE', label: 'Max selectable', type: 'number', default: 1 },
-      { name: 'PLACEHOLDER', label: 'Placeholder', type: 'string' },
     ],
     execute: (args, ctx) => {
-      const name = str(args.name ?? NOTHING);
+      const label = str(args.label ?? NOTHING) || 'input';
       const list = Array.isArray(args.list) ? args.list : [];
       const numSelectable = num(args.numselectable) ?? 1;
       const options = list.map(formatSelectOption);
       ctx.emit({
         kind: 'select',
-        key: name,
-        label: str(args.label ?? NOTHING) || name,
+        key: label,
+        label,
         options,
         numberSelectable: Math.max(1, Math.floor(numSelectable)),
         multiple: numSelectable > 1,
-        placeholder: args.placeholder ? str(args.placeholder) : undefined,
       });
     },
   },
@@ -229,18 +227,13 @@ export const STATEMENT_BLOCKS: StatementBlockDef[] = [
     kind: 'statement',
     description: 'Text input field',
     category: 'input',
-    inputs: [
-      { name: 'NAME', label: 'Name', type: 'string', required: true, default: 'input' },
-      { name: 'LABEL', label: 'Label', type: 'string', default: 'Text' },
-      { name: 'PLACEHOLDER', label: 'Placeholder', type: 'string' },
-    ],
+    inputs: [{ name: 'LABEL', label: 'Label', type: 'string', default: 'Text' }],
     execute: (args, ctx) => {
-      const name = str(args.name ?? NOTHING);
+      const label = str(args.label ?? NOTHING) || 'input';
       ctx.emit({
         kind: 'text',
-        key: name,
-        label: str(args.label ?? NOTHING) || name,
-        placeholder: args.placeholder ? str(args.placeholder) : undefined,
+        key: label,
+        label,
       });
     },
   },
@@ -251,17 +244,16 @@ export const STATEMENT_BLOCKS: StatementBlockDef[] = [
     description: 'Number input with optional bounds',
     category: 'input',
     inputs: [
-      { name: 'NAME', label: 'Name', type: 'string', required: true, default: 'input' },
       { name: 'LABEL', label: 'Label', type: 'string', default: 'Number' },
       { name: 'MIN', label: 'Min', type: 'number' },
       { name: 'MAX', label: 'Max', type: 'number' },
     ],
     execute: (args, ctx) => {
-      const name = str(args.name ?? NOTHING);
+      const label = str(args.label ?? NOTHING) || 'input';
       ctx.emit({
         kind: 'number',
-        key: name,
-        label: str(args.label ?? NOTHING) || name,
+        key: label,
+        label,
         min: args.min ? num(args.min) : undefined,
         max: args.max ? num(args.max) : undefined,
       });
@@ -274,16 +266,15 @@ export const STATEMENT_BLOCKS: StatementBlockDef[] = [
     description: 'Boolean toggle',
     category: 'input',
     inputs: [
-      { name: 'NAME', label: 'Name', type: 'string', required: true, default: 'input' },
       { name: 'LABEL', label: 'Label', type: 'string', default: 'Checkbox' },
       { name: 'DEFAULT', label: 'Default', type: 'boolean', default: false },
     ],
     execute: (args, ctx) => {
-      const name = str(args.name ?? NOTHING);
+      const label = str(args.label ?? NOTHING) || 'input';
       ctx.emit({
         kind: 'checkbox',
-        key: name,
-        label: str(args.label ?? NOTHING) || name,
+        key: label,
+        label,
         value: isTruthy(args.default),
       });
     },
@@ -458,45 +449,28 @@ export const EXPRESSION_BLOCKS: ExpressionBlockDef[] = [
     },
   },
   {
-    id: 'floor',
-    name: 'floor',
+    id: 'Round',
+    name: 'Round',
     kind: 'expression',
-    description: 'Round down to integer',
-    category: 'number',
+    description: 'Round to integer',
+    category: 'math',
     appliesTo: 'number',
-    inputs: [],
-    isProperty: true,
-    evaluate: (receiver) => {
+    inputs: [
+      {
+        name: 'mode',
+        label: 'Mode',
+        type: 'string',
+        default: 'round',
+        enumValues: ['round', 'floor', 'ceil'],
+      },
+    ],
+    evaluate: (receiver, args) => {
       const n = num(receiver);
-      return n === undefined ? NOTHING : Math.floor(n);
-    },
-  },
-  {
-    id: 'ceil',
-    name: 'ceil',
-    kind: 'expression',
-    description: 'Round up to integer',
-    category: 'number',
-    appliesTo: 'number',
-    inputs: [],
-    isProperty: true,
-    evaluate: (receiver) => {
-      const n = num(receiver);
-      return n === undefined ? NOTHING : Math.ceil(n);
-    },
-  },
-  {
-    id: 'round',
-    name: 'round',
-    kind: 'expression',
-    description: 'Round to nearest integer',
-    category: 'number',
-    appliesTo: 'number',
-    inputs: [],
-    isProperty: true,
-    evaluate: (receiver) => {
-      const n = num(receiver);
-      return n === undefined ? NOTHING : Math.round(n);
+      if (n === undefined) return NOTHING;
+      const mode = str(args[0] ?? NOTHING) || 'round';
+      if (mode === 'floor') return Math.floor(n);
+      if (mode === 'ceil') return Math.ceil(n);
+      return Math.round(n);
     },
   },
   {
@@ -504,7 +478,7 @@ export const EXPRESSION_BLOCKS: ExpressionBlockDef[] = [
     name: 'abs',
     kind: 'expression',
     description: 'Absolute value',
-    category: 'number',
+    category: 'math',
     appliesTo: 'number',
     inputs: [],
     isProperty: true,
@@ -514,33 +488,184 @@ export const EXPRESSION_BLOCKS: ExpressionBlockDef[] = [
     },
   },
   {
-    id: 'min',
-    name: 'min',
+    id: 'MinMax',
+    name: 'MinMax',
     kind: 'expression',
-    description: 'Minimum of two numbers',
-    category: 'number',
+    description: 'Minimum or maximum of two numbers',
+    category: 'math',
     appliesTo: 'number',
-    inputs: [{ name: 'other', label: 'Other', type: 'number', required: true }],
+    inputs: [
+      {
+        name: 'mode',
+        label: 'Mode',
+        type: 'string',
+        default: 'min',
+        enumValues: ['min', 'max'],
+      },
+      { name: 'other', label: 'Other', type: 'number', required: true },
+    ],
     evaluate: (receiver, args) => {
       const a = num(receiver);
-      const b = num(args[0]);
+      const b = num(args[1]);
       if (a === undefined || b === undefined) return NOTHING;
-      return Math.min(a, b);
+      const mode = str(args[0] ?? NOTHING) || 'min';
+      return mode === 'max' ? Math.max(a, b) : Math.min(a, b);
     },
   },
   {
-    id: 'max',
-    name: 'max',
+    id: 'toString',
+    name: 'toString',
     kind: 'expression',
-    description: 'Maximum of two numbers',
-    category: 'number',
+    description: 'Convert to text',
+    category: 'string',
+    appliesTo: 'any',
+    inputs: [],
+    isProperty: true,
+    evaluate: (receiver) => displayValue(receiver),
+  },
+  {
+    id: 'toNumber',
+    name: 'toNumber',
+    kind: 'expression',
+    description: 'Convert to number',
+    category: 'math',
+    appliesTo: 'any',
+    inputs: [],
+    isProperty: true,
+    evaluate: (receiver) => {
+      if (typeof receiver === 'number') return receiver;
+      if (typeof receiver === 'boolean') return receiver ? 1 : 0;
+      if (typeof receiver === 'string') {
+        const parsed = Number(receiver);
+        return Number.isNaN(parsed) ? NOTHING : parsed;
+      }
+      if (isNothing(receiver)) return NOTHING;
+      return NOTHING;
+    },
+  },
+  {
+    id: 'Trig',
+    name: 'Trig',
+    kind: 'expression',
+    description: 'Trigonometric function',
+    category: 'math',
     appliesTo: 'number',
-    inputs: [{ name: 'other', label: 'Other', type: 'number', required: true }],
+    inputs: [
+      {
+        name: 'fn',
+        label: 'Function',
+        type: 'string',
+        default: 'sin',
+        enumValues: ['sin', 'cos', 'tan', 'asin', 'acos', 'atan'],
+      },
+    ],
     evaluate: (receiver, args) => {
-      const a = num(receiver);
-      const b = num(args[0]);
-      if (a === undefined || b === undefined) return NOTHING;
-      return Math.max(a, b);
+      const n = num(receiver);
+      if (n === undefined) return NOTHING;
+      const fn = str(args[0] ?? NOTHING) || 'sin';
+      const fns: Record<string, (x: number) => number> = {
+        sin: Math.sin,
+        cos: Math.cos,
+        tan: Math.tan,
+        asin: Math.asin,
+        acos: Math.acos,
+        atan: Math.atan,
+      };
+      const fnImpl = fns[fn];
+      return fnImpl ? fnImpl(n) : NOTHING;
+    },
+  },
+  {
+    id: 'LogExp',
+    name: 'LogExp',
+    kind: 'expression',
+    description: 'Logarithm or exponential',
+    category: 'math',
+    appliesTo: 'number',
+    inputs: [
+      {
+        name: 'fn',
+        label: 'Function',
+        type: 'string',
+        default: 'log',
+        enumValues: ['log', 'log2', 'log10', 'exp'],
+      },
+    ],
+    evaluate: (receiver, args) => {
+      const n = num(receiver);
+      if (n === undefined) return NOTHING;
+      const fn = str(args[0] ?? NOTHING) || 'log';
+      const fns: Record<string, (x: number) => number> = {
+        log: Math.log,
+        log2: Math.log2,
+        log10: Math.log10,
+        exp: Math.exp,
+      };
+      const fnImpl = fns[fn];
+      return fnImpl ? fnImpl(n) : NOTHING;
+    },
+  },
+  {
+    id: 'Power',
+    name: 'Power',
+    kind: 'expression',
+    description: 'Raise to a power',
+    category: 'math',
+    appliesTo: 'number',
+    inputs: [{ name: 'exponent', label: 'Exponent', type: 'number', required: true }],
+    evaluate: (receiver, args) => {
+      const base = num(receiver);
+      const exp = num(args[0]);
+      if (base === undefined || exp === undefined) return NOTHING;
+      return Math.pow(base, exp);
+    },
+  },
+  {
+    id: 'Root',
+    name: 'Root',
+    kind: 'expression',
+    description: 'Square or cube root',
+    category: 'math',
+    appliesTo: 'number',
+    inputs: [
+      {
+        name: 'fn',
+        label: 'Function',
+        type: 'string',
+        default: 'sqrt',
+        enumValues: ['sqrt', 'cbrt'],
+      },
+    ],
+    evaluate: (receiver, args) => {
+      const n = num(receiver);
+      if (n === undefined) return NOTHING;
+      const fn = str(args[0] ?? NOTHING) || 'sqrt';
+      if (fn === 'cbrt') return Math.cbrt(n);
+      return Math.sqrt(n);
+    },
+  },
+  {
+    id: 'Sign',
+    name: 'Sign',
+    kind: 'expression',
+    description: 'Sign or truncate',
+    category: 'math',
+    appliesTo: 'number',
+    inputs: [
+      {
+        name: 'fn',
+        label: 'Function',
+        type: 'string',
+        default: 'sign',
+        enumValues: ['sign', 'trunc'],
+      },
+    ],
+    evaluate: (receiver, args) => {
+      const n = num(receiver);
+      if (n === undefined) return NOTHING;
+      const fn = str(args[0] ?? NOTHING) || 'sign';
+      if (fn === 'trunc') return Math.trunc(n);
+      return Math.sign(n);
     },
   },
   {
