@@ -123,10 +123,16 @@ const mapList = (
  * - label: "Real Name (email)" or just "Real Name"
  * - meta: { email, userId, role, isAlive } for downstream use
  *
- * Non-player objects/primitives pass through as { value, label }.
+ * Role objects have { role, doesRoleVote, isVisible, aboutRole }.
+ * - value/label: role (the role name)
+ *
+ * Non-player/role objects/primitives pass through as { value, label }.
  */
 const isPlayerObject = (v: RuntimeValue): v is Record<string, RuntimeValue> =>
   isRuntimeObject(v) && typeof (v as Record<string, RuntimeValue>).realName === 'string';
+
+const isRoleObject = (v: RuntimeValue): v is Record<string, RuntimeValue> =>
+  isRuntimeObject(v) && typeof (v as Record<string, RuntimeValue>).role === 'string';
 
 const formatSelectOption = (item: RuntimeValue): Record<string, unknown> => {
   if (isPlayerObject(item)) {
@@ -142,6 +148,19 @@ const formatSelectOption = (item: RuntimeValue): Record<string, unknown> => {
         userId: typeof obj.userId === 'string' ? obj.userId : undefined,
         role: typeof obj.role === 'string' ? obj.role : undefined,
         isAlive,
+      },
+    };
+  }
+  if (isRoleObject(item)) {
+    const obj = item as Record<string, RuntimeValue>;
+    const role = String(obj.role ?? '');
+    return {
+      value: role,
+      label: role,
+      meta: {
+        doesRoleVote: obj.doesRoleVote,
+        isVisible: obj.isVisible,
+        aboutRole: typeof obj.aboutRole === 'string' ? obj.aboutRole : undefined,
       },
     };
   }

@@ -85,7 +85,6 @@ const DATA_SOURCES: { name: string; description: string }[] = [
   { name: 'dayDates', description: 'Dates for each day' },
   { name: 'schedule', description: 'Game schedule' },
   { name: 'profiles', description: 'Player profiles' },
-  { name: 'submissions', description: 'Player submissions (operator only)' },
   { name: 'Inputs', description: 'Current input state' },
 ];
 

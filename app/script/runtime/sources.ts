@@ -13,7 +13,6 @@ export interface ScriptSourceData {
   dayDates?: string[];
   schedule?: Record<string, unknown>;
   profiles?: unknown[];
-  submissions?: unknown[];
 }
 
 /**
@@ -38,7 +37,6 @@ export const SCRIPT_GLOBAL_NAMES = [
   'dayDates',
   'schedule',
   'profiles',
-  'submissions',
 ] as const;
 
 export const createScriptGlobals = (source: ScriptSourceData = {}): Record<string, unknown> => {
@@ -69,6 +67,5 @@ export const createScriptGlobals = (source: ScriptSourceData = {}): Record<strin
     dayDates: source.dayDates ?? [],
     schedule: source.schedule ?? {},
     profiles: source.profiles ?? [],
-    submissions: capability === 'operator' ? (source.submissions ?? []) : [],
   };
 };

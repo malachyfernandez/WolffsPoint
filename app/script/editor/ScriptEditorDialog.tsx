@@ -84,6 +84,43 @@ const collectDefinedFunctions = (
   return acc;
 };
 
+const INPUT_STATEMENT_IDS = new Set([
+  'createtextinput',
+  'createnumberinput',
+  'createcheckbox',
+  'createselectinput',
+]);
+
+/** Collect LABEL values from all input-creating statements in the script. */
+const collectInputLabels = (statements: Statement[], acc: string[] = []): string[] => {
+  for (const stmt of statements) {
+    if (
+      stmt.kind === 'ExpressionStatement' &&
+      stmt.expression.kind === 'CallExpression' &&
+      stmt.expression.callee.kind === 'IdentifierExpression' &&
+      INPUT_STATEMENT_IDS.has(stmt.expression.callee.name.toLowerCase())
+    ) {
+      const labelArg = stmt.expression.arguments.find(
+        (arg) => arg.kind === 'NamedArgument' && arg.name.toUpperCase() === 'LABEL'
+      );
+      if (labelArg && labelArg.value.kind === 'StringLiteral' && labelArg.value.value) {
+        acc.push(labelArg.value.value);
+      }
+    }
+    if (stmt.kind === 'IfStatement') {
+      stmt.branches.forEach((branch) => collectInputLabels(branch.body.statements, acc));
+      if (stmt.elseBody) collectInputLabels(stmt.elseBody.statements, acc);
+    }
+    if (stmt.kind === 'ForEachStatement') {
+      collectInputLabels(stmt.body.statements, acc);
+    }
+    if (stmt.kind === 'FunctionStatement') {
+      collectInputLabels(stmt.body.statements, acc);
+    }
+  }
+  return acc;
+};
+
 const ScriptEditorDialog = ({
   isOpen,
   onOpenChange,
@@ -137,8 +174,9 @@ const ScriptEditorDialog = ({
     keys.players = ['realName', 'email', 'userId', 'role', 'isAlive', 'days'];
     keys.currentPlayer = keys.players;
     keys.roles = ['role', 'doesRoleVote', 'isVisible', 'aboutRole'];
+    keys.Inputs = collectInputLabels(state.ast.statements);
     return keys;
-  }, [sources]);
+  }, [sources, state.ast.statements]);
 
   const handleTextChange = (value: string) => {
     setTextDraft(value);
