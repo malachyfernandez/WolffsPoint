@@ -52,7 +52,8 @@ const SkipVoteRow = ({
   emailToUserIdMap: Map<string, string>;
 }) => {
   const [showVoters, setShowVoters] = useState(false);
-  const widthPercent = maxVoteCount > 0 ? Math.max((voteCount / maxVoteCount) * 100, 12) : 12;
+  const widthPercent =
+    maxVoteCount > 0 ? Math.max((Math.abs(voteCount) / maxVoteCount) * 100, 12) : 12;
 
   const content = (
     <Column className="w-full gap-2">
@@ -181,7 +182,8 @@ const VoteSummaryRow = ({
     gameId,
     userId: resolvedUserId,
   });
-  const widthPercent = maxVoteCount > 0 ? Math.max((voteCount / maxVoteCount) * 100, 12) : 12;
+  const widthPercent =
+    maxVoteCount > 0 ? Math.max((Math.abs(voteCount) / maxVoteCount) * 100, 12) : 12;
   const fallbackName = player.realName || player.email;
   const displayName = resolvedUserId ? identity.displayName : fallbackName;
   const avatarUri = resolvedUserId ? identity.imageUrl : '';
@@ -303,6 +305,8 @@ const NewspaperPreviousDayVoteSummary = ({
         return;
       }
 
+      const multiplier = player.days?.[targetDay]?.voteMultiplier ?? 1;
+
       if (vote === 'SKIP_VOTE') {
         skipVotes += 1;
         skipVoterList.push(player);
@@ -310,7 +314,7 @@ const NewspaperPreviousDayVoteSummary = ({
       }
 
       const voteKey = vote.toLowerCase();
-      voteCounts.set(voteKey, (voteCounts.get(voteKey) ?? 0) + 1);
+      voteCounts.set(voteKey, (voteCounts.get(voteKey) ?? 0) + multiplier);
       const existing = votersMap.get(voteKey);
       if (existing) {
         existing.push(player);
@@ -325,7 +329,7 @@ const NewspaperPreviousDayVoteSummary = ({
         voteCount: voteCounts.get(player.email.toLowerCase()) ?? 0,
         voters: votersMap.get(player.email.toLowerCase()) ?? [],
       }))
-      .filter((row) => row.voteCount > 0)
+      .filter((row) => row.voters.length > 0)
       .sort((a, b) => {
         const aLabel = a.player.realName || a.player.email;
         const bLabel = b.player.realName || b.player.email;
@@ -340,7 +344,7 @@ const NewspaperPreviousDayVoteSummary = ({
     };
   }, [dayIndex, operatorUserTableRecords]);
 
-  const maxVoteCount = Math.max(voteRows[0]?.voteCount ?? 0, skipVoteCount);
+  const maxVoteCount = Math.max(Math.abs(voteRows[0]?.voteCount ?? 0), skipVoteCount);
 
   if (dayIndex <= 0 || (voteRows.length === 0 && skipVoteCount === 0)) {
     return null;

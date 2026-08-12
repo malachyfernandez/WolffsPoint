@@ -16,7 +16,7 @@ interface NightlyDayUserRowProps {
   index: number;
   isLast: boolean;
   dayNumber: number;
-  setVoteValue?: (userIndex: number, newValue: string) => void;
+  setVoteValue?: (userIndex: number, newValue: string, voteMultiplier: number) => void;
   setActionValue?: (userIndex: number, newValue: string) => void;
   updateMorningMessage: (dayIndex: number, userIndex: number, value: string) => void;
   onEditStart?: () => void;
@@ -51,6 +51,8 @@ const NightlyDayUserRow = ({
   const [isVoteDialogOpen, setIsVoteDialogOpen] = useState(false);
 
   const dayData = user.days[dayNumber] || { vote: '', action: '', extraColumns: [] };
+  const voteMultiplier = dayData.voteMultiplier ?? 1;
+  const hasMultiplierBadge = voteMultiplier !== 1;
 
   const handleVotePress = () => {
     setIsVoteDialogOpen(true);
@@ -110,6 +112,11 @@ const NightlyDayUserRow = ({
               )}
             </FontText>
           </Pressable>
+          {hasMultiplierBadge && (
+            <View className="bg-border/30 absolute bottom-0.5 right-0.5 rounded px-1 py-0.5">
+              <FontText className="text-text/60 text-[10px]">{voteMultiplier}x</FontText>
+            </View>
+          )}
         </Column>
         <Column
           className={`border-subtle-border z-20 h-full items-center justify-center gap-0 border`}
@@ -199,7 +206,8 @@ const NightlyDayUserRow = ({
         onOpenChange={setIsVoteDialogOpen}
         title={`${user.realName || 'User'} Vote`}
         initialVote={dayData.vote || ''}
-        onSubmit={(vote) => setVoteValue?.(index, vote)}
+        initialVoteMultiplier={voteMultiplier}
+        onSubmit={(vote, multiplier) => setVoteValue?.(index, vote, multiplier)}
         dialogSubtext={`Set the vote target for ${user.realName || 'User'}.`}
         users={users}
       />
