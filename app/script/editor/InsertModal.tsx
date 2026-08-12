@@ -312,6 +312,7 @@ const InsertModal = ({
         description: block.description,
         category: block.category,
         onSelect: () => selectExpression(buildMethodExpression(block.id)),
+        dividerAfter: block.id === 'sort' || block.id === 'lower',
       })),
     ];
     const booleanItems: ModalItem[] = [
@@ -331,6 +332,7 @@ const InsertModal = ({
         label,
         description: operator,
         category: 'operator',
+        dividerAfter: operator === '<=',
         onSelect: () =>
           selectExpression({
             kind: 'BinaryExpression',
@@ -371,6 +373,7 @@ const InsertModal = ({
         label: 'negate',
         description: 'Negate a number',
         category: 'math',
+        dividerAfter: true,
         onSelect: () =>
           selectExpression({
             kind: 'UnaryExpression',
@@ -397,8 +400,8 @@ const InsertModal = ({
         dividerAfter: true,
         onSelect: () => selectExpression({ kind: 'StringLiteral', value: '', span }),
       },
-      ...sharedItems,
       ...mathItems,
+      ...sharedItems,
       ...booleanItems,
     ];
   }, [

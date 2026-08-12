@@ -452,7 +452,7 @@ export const EXPRESSION_BLOCKS: ExpressionBlockDef[] = [
     id: 'Round',
     name: 'Round',
     kind: 'expression',
-    description: 'Round to integer',
+    description: 'Round, floor, or ceil to integer',
     category: 'math',
     appliesTo: 'number',
     inputs: [
@@ -513,21 +513,49 @@ export const EXPRESSION_BLOCKS: ExpressionBlockDef[] = [
     },
   },
   {
-    id: 'toString',
-    name: 'toString',
+    id: 'toPowerOf',
+    name: 'toPowerOf',
     kind: 'expression',
-    description: 'Convert to text',
-    category: 'string',
-    appliesTo: 'any',
-    inputs: [],
-    isProperty: true,
-    evaluate: (receiver) => displayValue(receiver),
+    description: 'Raise to a power',
+    category: 'math',
+    appliesTo: 'number',
+    inputs: [{ name: 'exponent', label: 'Exponent', type: 'number', required: true, default: 2 }],
+    evaluate: (receiver, args) => {
+      const base = num(receiver);
+      const exp = num(args[0]);
+      if (base === undefined || exp === undefined) return NOTHING;
+      return Math.pow(base, exp);
+    },
+  },
+  {
+    id: 'Root',
+    name: 'Root',
+    kind: 'expression',
+    description: 'Square root or cube root',
+    category: 'math',
+    appliesTo: 'number',
+    inputs: [
+      {
+        name: 'fn',
+        label: 'Function',
+        type: 'string',
+        default: 'sqrt',
+        enumValues: ['sqrt', 'cbrt'],
+      },
+    ],
+    evaluate: (receiver, args) => {
+      const n = num(receiver);
+      if (n === undefined) return NOTHING;
+      const fn = str(args[0] ?? NOTHING) || 'sqrt';
+      if (fn === 'cbrt') return Math.cbrt(n);
+      return Math.sqrt(n);
+    },
   },
   {
     id: 'toNumber',
     name: 'toNumber',
     kind: 'expression',
-    description: 'Convert to number',
+    description: 'Convert text or boolean to number',
     category: 'math',
     appliesTo: 'any',
     inputs: [],
@@ -547,7 +575,7 @@ export const EXPRESSION_BLOCKS: ExpressionBlockDef[] = [
     id: 'Trig',
     name: 'Trig',
     kind: 'expression',
-    description: 'Trigonometric function',
+    description: 'Sine, cosine, tangent, and their inverses',
     category: 'math',
     appliesTo: 'number',
     inputs: [
@@ -606,49 +634,10 @@ export const EXPRESSION_BLOCKS: ExpressionBlockDef[] = [
     },
   },
   {
-    id: 'Power',
-    name: 'Power',
-    kind: 'expression',
-    description: 'Raise to a power',
-    category: 'math',
-    appliesTo: 'number',
-    inputs: [{ name: 'exponent', label: 'Exponent', type: 'number', required: true }],
-    evaluate: (receiver, args) => {
-      const base = num(receiver);
-      const exp = num(args[0]);
-      if (base === undefined || exp === undefined) return NOTHING;
-      return Math.pow(base, exp);
-    },
-  },
-  {
-    id: 'Root',
-    name: 'Root',
-    kind: 'expression',
-    description: 'Square or cube root',
-    category: 'math',
-    appliesTo: 'number',
-    inputs: [
-      {
-        name: 'fn',
-        label: 'Function',
-        type: 'string',
-        default: 'sqrt',
-        enumValues: ['sqrt', 'cbrt'],
-      },
-    ],
-    evaluate: (receiver, args) => {
-      const n = num(receiver);
-      if (n === undefined) return NOTHING;
-      const fn = str(args[0] ?? NOTHING) || 'sqrt';
-      if (fn === 'cbrt') return Math.cbrt(n);
-      return Math.sqrt(n);
-    },
-  },
-  {
     id: 'Sign',
     name: 'Sign',
     kind: 'expression',
-    description: 'Sign or truncate',
+    description: 'Sign (-1, 0, 1) or truncate to integer',
     category: 'math',
     appliesTo: 'number',
     inputs: [
@@ -667,6 +656,17 @@ export const EXPRESSION_BLOCKS: ExpressionBlockDef[] = [
       if (fn === 'trunc') return Math.trunc(n);
       return Math.sign(n);
     },
+  },
+  {
+    id: 'toString',
+    name: 'toString',
+    kind: 'expression',
+    description: 'Convert to text',
+    category: 'string',
+    appliesTo: 'any',
+    inputs: [],
+    isProperty: true,
+    evaluate: (receiver) => displayValue(receiver),
   },
   {
     id: 'upper',
