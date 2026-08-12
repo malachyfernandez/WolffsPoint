@@ -18,6 +18,7 @@ import { CloseButton, MainContent, ActionButtons, SubDialogs } from './markdownE
 import ScriptEditorDialog from '../../script/editor/ScriptEditorDialog';
 import { useMarkdownRendererInputData } from '../ui/markdown/MarkdownRenderer';
 import { InputOptionsProvider } from './markdownEditor/InputOptionsProvider';
+import PlayerPreviewModal from './markdownEditor/PlayerPreviewModal';
 
 /** Find all `/*script ... script*\/` blocks in the markdown text. */
 const findScriptBlocks = (text: string): { start: number; end: number; content: string }[] => {
@@ -67,6 +68,7 @@ interface MarkdownEditorDialogProps {
   titleInputPlaceholder?: string;
   requireMarkdown?: boolean;
   centered?: boolean;
+  roleName?: string;
 }
 
 const ScriptEditorWithSources = ({
@@ -110,6 +112,7 @@ const MarkdownEditorDialog = ({
   titleInputPlaceholder = 'Conversation topic',
   requireMarkdown = false,
   centered = false,
+  roleName,
 }: MarkdownEditorDialogProps) => {
   const { executeCommand } = useUndoRedo();
   const createUndoSnapshot = useCreateUndoSnapshot();
@@ -134,6 +137,8 @@ const MarkdownEditorDialog = ({
   const [previewInputState, setPreviewInputState] = useState<Record<string, string | undefined>>(
     {}
   );
+  const [isPlayerPreviewOpen, setIsPlayerPreviewOpen] = useState(false);
+  const [savedMarkdownForPreview, setSavedMarkdownForPreview] = useState('');
 
   useEffect(() => {
     if (!isOpen) {
@@ -241,6 +246,19 @@ const MarkdownEditorDialog = ({
     onOpenChange(false);
   };
 
+  const handlePreviewAsPlayer = () => {
+    // Force save: submit the current draft, then open the preview modal
+    const markdownToSave = draftBody.trim();
+    onSubmit({
+      markdown: markdownToSave,
+      plainText: stripMarkdownSyntax(markdownToSave),
+      title: includeTitle ? draftTitle.trim() : undefined,
+    });
+    setSavedMarkdownForPreview(markdownToSave);
+    setEditingStartText(markdownToSave);
+    setIsPlayerPreviewOpen(true);
+  };
+
   const handleBold = () =>
     runBodyUpdate((value, range) => wrapSelection(value, range, '**', '**', 'bold text'));
   const handleItalic = () =>
@@ -318,6 +336,8 @@ const MarkdownEditorDialog = ({
               onMore={handleMore}
               onScript={showScript ? handleScript : undefined}
               centered={centered}
+              showPreviewAsPlayer={findScriptBlocks(draftBody).length > 0}
+              onPreviewAsPlayer={handlePreviewAsPlayer}
             />
             <Row className="-mx-3 items-center justify-between gap-4 pt-4 sm:mx-0">
               {cursorScriptBlock ? (
@@ -376,6 +396,16 @@ const MarkdownEditorDialog = ({
           initialScriptText={editingScriptBlock?.content}
         />
       </InputOptionsProvider>
+
+      {gameId && (
+        <PlayerPreviewModal
+          isOpen={isPlayerPreviewOpen}
+          onOpenChange={setIsPlayerPreviewOpen}
+          gameId={gameId}
+          roleName={roleName}
+          markdown={savedMarkdownForPreview}
+        />
+      )}
     </>
   );
 };

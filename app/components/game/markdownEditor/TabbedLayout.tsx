@@ -8,83 +8,87 @@ import TownSquareComposerPreviewPane from '../townSquare/TownSquareComposerPrevi
 import { SelectionRange } from '../townSquare/townSquareUtils';
 
 interface TabbedLayoutProps {
-    draftBody: string;
-    draftTitle: string;
-    includeTitle: boolean;
-    showInputs: boolean;
-    activeTab: string;
-    previewInputState: Record<string, string | undefined>;
-    setPreviewInputState: React.Dispatch<React.SetStateAction<Record<string, string | undefined>>>;
-    onBodyChange: (body: string) => void;
-    onSelectionChange: (selection: SelectionRange) => void;
-    onTabChange: (tab: string) => void;
-    onBold: () => void;
-    onItalic: () => void;
-    onLink: () => void;
-    onImage: () => void;
-    onInput: () => void;
-    onMore: () => void;
-    onScript?: () => void;
-    centered?: boolean;
+  draftBody: string;
+  draftTitle: string;
+  includeTitle: boolean;
+  showInputs: boolean;
+  activeTab: string;
+  previewInputState: Record<string, string | undefined>;
+  setPreviewInputState: React.Dispatch<React.SetStateAction<Record<string, string | undefined>>>;
+  onBodyChange: (body: string) => void;
+  onSelectionChange: (selection: SelectionRange) => void;
+  onTabChange: (tab: string) => void;
+  onBold: () => void;
+  onItalic: () => void;
+  onLink: () => void;
+  onImage: () => void;
+  onInput: () => void;
+  onMore: () => void;
+  onScript?: () => void;
+  centered?: boolean;
+  showPreviewAsPlayer?: boolean;
+  onPreviewAsPlayer?: () => void;
 }
 
 export function TabbedLayout({
-    draftBody,
-    draftTitle,
-    includeTitle,
-    showInputs,
-    activeTab,
-    previewInputState,
-    setPreviewInputState,
-    onBodyChange,
-    onSelectionChange,
-    onTabChange,
-    onBold,
-    onItalic,
-    onLink,
-    onImage,
-    onInput,
-    onMore,
-    onScript,
-    centered = false,
+  draftBody,
+  draftTitle,
+  includeTitle,
+  showInputs,
+  activeTab,
+  previewInputState,
+  setPreviewInputState,
+  onBodyChange,
+  onSelectionChange,
+  onTabChange,
+  onBold,
+  onItalic,
+  onLink,
+  onImage,
+  onInput,
+  onMore,
+  onScript,
+  centered = false,
+  showPreviewAsPlayer = false,
+  onPreviewAsPlayer,
 }: TabbedLayoutProps) {
-    return (
-        <Tabs value={activeTab} onValueChange={onTabChange} className='flex-1 h-full'>
-            <Tabs.Content value='editing' className='flex-1'>
-                <Column className='gap-1'>
-                    <TownSquareComposerToolbar
-                        onBold={onBold}
-                        onInput={onInput}
-                        onImage={onImage}
-                        onItalic={onItalic}
-                        onLink={onLink}
-                        onMore={onMore}
-                        onScript={onScript}
-                        showInputs={showInputs}
-                    />
-                </Column>
-                <ShadowScrollView className='flex-1' scrollViewClassName='flex-1 h-full py-4'>
-                    <TownSquareComposerEditorPane
-                        onBodyChange={onBodyChange}
-                        onSelectionChange={onSelectionChange}
-                        value={draftBody}
-                    />
-                </ShadowScrollView>
-            </Tabs.Content>
+  return (
+    <Tabs value={activeTab} onValueChange={onTabChange} className="h-full flex-1">
+      <Tabs.Content value="editing" className="flex-1">
+        <Column className="gap-1">
+          <TownSquareComposerToolbar
+            onBold={onBold}
+            onInput={onInput}
+            onImage={onImage}
+            onItalic={onItalic}
+            onLink={onLink}
+            onMore={onMore}
+            onScript={onScript}
+            showInputs={showInputs}
+          />
+        </Column>
+        <ShadowScrollView className="flex-1" scrollViewClassName="flex-1 h-full py-4">
+          <TownSquareComposerEditorPane
+            onBodyChange={onBodyChange}
+            onSelectionChange={onSelectionChange}
+            value={draftBody}
+          />
+        </ShadowScrollView>
+      </Tabs.Content>
 
-            <Tabs.Content value='preview' className='flex-1'>
-
-                <TownSquareComposerPreviewPane
-                    includeTitle={includeTitle}
-                    markdown={draftBody}
-                    markdownInputState={previewInputState}
-                    setMarkdownInputState={setPreviewInputState}
-                    title={draftTitle}
-                    centered={centered}
-                />
-
-            </Tabs.Content>
-        </Tabs>
-    );
+      <Tabs.Content value="preview" className="flex-1">
+        <TownSquareComposerPreviewPane
+          includeTitle={includeTitle}
+          markdown={draftBody}
+          markdownInputState={previewInputState}
+          setMarkdownInputState={setPreviewInputState}
+          title={draftTitle}
+          centered={centered}
+          showPreviewAsPlayer={showPreviewAsPlayer}
+          onPreviewAsPlayer={onPreviewAsPlayer}
+        />
+      </Tabs.Content>
+    </Tabs>
+  );
 }
 export default TabbedLayout;

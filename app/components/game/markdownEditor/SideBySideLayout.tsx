@@ -6,69 +6,75 @@ import { PreviewPaneSideBySide } from './PreviewPaneSideBySide';
 import { SelectionRange } from '../townSquare/townSquareUtils';
 
 interface SideBySideLayoutProps {
-    draftBody: string;
-    draftTitle: string;
-    includeTitle: boolean;
-    showInputs: boolean;
-    previewInputState: Record<string, string | undefined>;
-    setPreviewInputState: React.Dispatch<React.SetStateAction<Record<string, string | undefined>>>;
-    onBodyChange: (body: string) => void;
-    onSelectionChange: (selection: SelectionRange) => void;
-    onBold: () => void;
-    onItalic: () => void;
-    onLink: () => void;
-    onImage: () => void;
-    onInput: () => void;
-    onMore: () => void;
-    onScript?: () => void;
-    centered?: boolean;
+  draftBody: string;
+  draftTitle: string;
+  includeTitle: boolean;
+  showInputs: boolean;
+  previewInputState: Record<string, string | undefined>;
+  setPreviewInputState: React.Dispatch<React.SetStateAction<Record<string, string | undefined>>>;
+  onBodyChange: (body: string) => void;
+  onSelectionChange: (selection: SelectionRange) => void;
+  onBold: () => void;
+  onItalic: () => void;
+  onLink: () => void;
+  onImage: () => void;
+  onInput: () => void;
+  onMore: () => void;
+  onScript?: () => void;
+  centered?: boolean;
+  showPreviewAsPlayer?: boolean;
+  onPreviewAsPlayer?: () => void;
 }
 
 export function SideBySideLayout({
-    draftBody,
-    draftTitle,
-    includeTitle,
-    showInputs,
-    previewInputState,
-    setPreviewInputState,
-    onBodyChange,
-    onSelectionChange,
-    onBold,
-    onItalic,
-    onLink,
-    onImage,
-    onInput,
-    onMore,
-    onScript,
-    centered = false,
+  draftBody,
+  draftTitle,
+  includeTitle,
+  showInputs,
+  previewInputState,
+  setPreviewInputState,
+  onBodyChange,
+  onSelectionChange,
+  onBold,
+  onItalic,
+  onLink,
+  onImage,
+  onInput,
+  onMore,
+  onScript,
+  centered = false,
+  showPreviewAsPlayer = false,
+  onPreviewAsPlayer,
 }: SideBySideLayoutProps) {
-    return (
-        <Row className='gap-4 flex-1 min-h-0'>
-            <EditorPane
-                value={draftBody}
-                onBodyChange={onBodyChange}
-                onSelectionChange={onSelectionChange}
-                showInputs={showInputs}
-                onBold={onBold}
-                onItalic={onItalic}
-                onLink={onLink}
-                onImage={onImage}
-                onInput={onInput}
-                onMore={onMore}
-                onScript={onScript}
-            />
+  return (
+    <Row className="min-h-0 flex-1 gap-4">
+      <EditorPane
+        value={draftBody}
+        onBodyChange={onBodyChange}
+        onSelectionChange={onSelectionChange}
+        showInputs={showInputs}
+        onBold={onBold}
+        onItalic={onItalic}
+        onLink={onLink}
+        onImage={onImage}
+        onInput={onInput}
+        onMore={onMore}
+        onScript={onScript}
+      />
 
-            <Column className='gap-4 flex-1 min-w-0'>
-                <PreviewPaneSideBySide
-                    markdown={draftBody}
-                    title={draftTitle}
-                    includeTitle={includeTitle}
-                    inputState={previewInputState}
-                    setInputState={setPreviewInputState}
-                    centered={centered}
-                />
-            </Column>
-        </Row>
-    );
+      <Column className="min-w-0 flex-1 gap-4">
+        <PreviewPaneSideBySide
+          markdown={draftBody}
+          title={draftTitle}
+          includeTitle={includeTitle}
+          inputState={previewInputState}
+          setInputState={setPreviewInputState}
+          centered={centered}
+          showPreviewAsPlayer={showPreviewAsPlayer}
+          onPreviewAsPlayer={onPreviewAsPlayer}
+        />
+      </Column>
+    </Row>
+  );
 }
 export default SideBySideLayout;

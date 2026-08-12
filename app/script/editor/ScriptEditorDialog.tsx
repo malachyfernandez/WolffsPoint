@@ -14,7 +14,6 @@ import { printScript, printScriptBlock } from '../lang/printer';
 import type { Expression, Statement } from '../lang/ast';
 import { editorReducer, initialState, createScript } from './editorReducer';
 import Canvas from './Canvas';
-import PreviewPanel from './PreviewPanel';
 import InsertModal, { type DefinedFunction, type InsertTarget } from './InsertModal';
 import { createScriptGlobals, type ScriptSourceData } from '../runtime/sources';
 
@@ -131,7 +130,6 @@ const ScriptEditorDialog = ({
 }: ScriptEditorDialogProps) => {
   const [state, dispatch] = useReducer(editorReducer, createScript(), (ast) => initialState(ast));
   const [mode, setMode] = useState<EditorMode>('blocks');
-  const [showPreview, setShowPreview] = useState(false);
   const [textDraft, setTextDraft] = useState('');
   const [parseError, setParseError] = useState<string | null>(null);
   const [insertTarget, setInsertTarget] = useState<InsertTarget | null>(null);
@@ -148,7 +146,6 @@ const ScriptEditorDialog = ({
     dispatch({ type: 'REPLACE_AST', ast });
     setTextDraft(trimmed);
     setMode('blocks');
-    setShowPreview(false);
     setParseError(null);
     setInsertTarget(null);
   }, [initialScriptText, isOpen]);
@@ -301,16 +298,7 @@ const ScriptEditorDialog = ({
             <Column className="min-h-0 flex-1 gap-3 pt-3">
               <Row className="justify-between gap-2">
                 <Row className="gap-2">
-                  <AppButton
-                    variant={showPreview ? 'outline' : 'filled'}
-                    className="h-8 px-3"
-                    onPress={() => setShowPreview(!showPreview)}
-                    dropShadow={false}>
-                    <FontText className="text-sm" color={showPreview ? undefined : 'white'}>
-                      {showPreview ? 'Edit' : 'Preview'}
-                    </FontText>
-                  </AppButton>
-                  {mode === 'blocks' && !showPreview && (
+                  {mode === 'blocks' && (
                     <>
                       <AppButton
                         variant="outline"
@@ -358,11 +346,7 @@ const ScriptEditorDialog = ({
               )}
 
               <View className="min-h-0 flex-1">
-                {showPreview ? (
-                  <ShadowScrollView className="flex-1" scrollViewClassName="flex-1 rounded-xl p-3">
-                    <PreviewPanel ast={state.ast} sources={sources} isInDialog />
-                  </ShadowScrollView>
-                ) : mode === 'text' ? (
+                {mode === 'text' ? (
                   <TextInput
                     multiline
                     value={textDraft}
