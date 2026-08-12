@@ -24,6 +24,7 @@ interface TabbedLayoutProps {
     onImage: () => void;
     onInput: () => void;
     onMore: () => void;
+    onScript?: () => void;
     centered?: boolean;
 }
 
@@ -44,6 +45,7 @@ export function TabbedLayout({
     onImage,
     onInput,
     onMore,
+    onScript,
     centered = false,
 }: TabbedLayoutProps) {
     return (
@@ -57,6 +59,7 @@ export function TabbedLayout({
                         onItalic={onItalic}
                         onLink={onLink}
                         onMore={onMore}
+                        onScript={onScript}
                         showInputs={showInputs}
                     />
                 </Column>

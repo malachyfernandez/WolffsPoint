@@ -14,196 +14,213 @@ import { RoleTableItem } from '../../../types/roleTable';
 import MarkdownEditorDialog from './MarkdownEditorDialog';
 
 interface RuleBookRoleDescriptionsProps {
-    gameId: string;
+  gameId: string;
 }
 
 const RuleBookRoleDescriptions = ({ gameId }: RuleBookRoleDescriptionsProps) => {
-    const { executeCommand } = useUndoRedo();
-    const createUndoSnapshot = useCreateUndoSnapshot();
-    const [editingRoleIndex, setEditingRoleIndex] = useState<number | null>(null);
-    
-    const [ruleBookData, setRuleBookData] = useValue<RuleBookData>(getGameScopedKey('ruleBook', gameId), {
-        defaultValue: { content: '', roleOrder: [] },
-        privacy: 'PUBLIC',
+  const { executeCommand } = useUndoRedo();
+  const createUndoSnapshot = useCreateUndoSnapshot();
+  const [editingRoleIndex, setEditingRoleIndex] = useState<number | null>(null);
+
+  const [ruleBookData, setRuleBookData] = useValue<RuleBookData>(
+    getGameScopedKey('ruleBook', gameId),
+    {
+      defaultValue: { content: '', roleOrder: [] },
+      privacy: 'PUBLIC',
+    }
+  );
+
+  const [roleTable, setRoleTable] = useList<RoleTableItem[]>('roleTable', gameId, {
+    privacy: 'PUBLIC',
+  });
+
+  const roles = roleTable?.value ?? [];
+  const visibleRolesWithContent = roles.filter(
+    (role) => role.isVisible !== false && role.aboutRole && role.aboutRole.trim().length > 0
+  );
+
+  // Get ordered roles based on stored order, fallback to original order
+  const getOrderedRoles = () => {
+    const orderedRoleIndexes = ruleBookData?.value?.roleOrder || [];
+    const roleMap = new Map(
+      visibleRolesWithContent.map((role, index) => [roles.indexOf(role), role])
+    );
+
+    const orderedRoles: RoleTableItem[] = [];
+    orderedRoleIndexes.forEach((originalIndex) => {
+      const role = roleMap.get(originalIndex);
+      if (role) orderedRoles.push(role);
     });
 
-    const [roleTable, setRoleTable] = useList<RoleTableItem[]>("roleTable", gameId, { privacy: "PUBLIC" });
+    // Add any roles not in the order list
+    visibleRolesWithContent.forEach((role, index) => {
+      const originalIndex = roles.indexOf(role);
+      if (!orderedRoleIndexes.includes(originalIndex)) {
+        orderedRoles.push(role);
+      }
+    });
 
-    const roles = roleTable?.value ?? [];
-    const visibleRolesWithContent = roles.filter(role => role.isVisible !== false && role.aboutRole && role.aboutRole.trim().length > 0);
-    
-    // Get ordered roles based on stored order, fallback to original order
-    const getOrderedRoles = () => {
-        const orderedRoleIndexes = ruleBookData?.value?.roleOrder || [];
-        const roleMap = new Map(visibleRolesWithContent.map((role, index) => [roles.indexOf(role), role]));
-        
-        const orderedRoles: RoleTableItem[] = [];
-        orderedRoleIndexes.forEach(originalIndex => {
-            const role = roleMap.get(originalIndex);
-            if (role) orderedRoles.push(role);
-        });
-        
-        // Add any roles not in the order list
-        visibleRolesWithContent.forEach((role, index) => {
-            const originalIndex = roles.indexOf(role);
-            if (!orderedRoleIndexes.includes(originalIndex)) {
-                orderedRoles.push(role);
-            }
-        });
-        
-        return orderedRoles;
-    };
-    
-    const orderedRoles = getOrderedRoles();
-    
-    const UNDOABLEsetAboutRole = (roleIndex: number, newAboutRole: string) => {
-        const previousRoleTable = createUndoSnapshot(roleTable?.value ?? []);
-        if (roleIndex < 0 || roleIndex >= previousRoleTable.length) return;
+    return orderedRoles;
+  };
 
-        const nextRoleTable = createUndoSnapshot(previousRoleTable);
-        nextRoleTable[roleIndex] = {
-            ...nextRoleTable[roleIndex],
-            aboutRole: newAboutRole
-        };
+  const orderedRoles = getOrderedRoles();
 
-        executeCommand({
-            action: () => setRoleTable(createUndoSnapshot(nextRoleTable)),
-            undoAction: () => setRoleTable(createUndoSnapshot(previousRoleTable)),
-            description: "Set About Role"
-        });
-    };
-    
-    const moveRoleUp = (currentIndex: number) => {
-        if (currentIndex <= 0) return;
-        
-        const currentOrder = [...(ruleBookData?.value?.roleOrder || [])];
-        const roleToMove = orderedRoles[currentIndex];
-        const originalIndex = roles.indexOf(roleToMove);
-        const roleAbove = orderedRoles[currentIndex - 1];
-        const originalIndexAbove = roles.indexOf(roleAbove);
-        
-        // Swap positions in order array
-        const currentIndexInOrder = currentOrder.indexOf(originalIndex);
-        const aboveIndexInOrder = currentOrder.indexOf(originalIndexAbove);
-        
-        if (currentIndexInOrder !== -1 && aboveIndexInOrder !== -1) {
-            [currentOrder[currentIndexInOrder], currentOrder[aboveIndexInOrder]] = 
-            [currentOrder[aboveIndexInOrder], currentOrder[currentIndexInOrder]];
-        } else {
-            // If one or both aren't in the order yet, add them in the right positions
-            if (currentIndexInOrder === -1) currentOrder.push(originalIndex);
-            if (aboveIndexInOrder === -1) currentOrder.push(originalIndexAbove);
-            // Then swap
-            const newCurrentIndex = currentOrder.indexOf(originalIndex);
-            const newAboveIndex = currentOrder.indexOf(originalIndexAbove);
-            [currentOrder[newCurrentIndex], currentOrder[newAboveIndex]] = 
-            [currentOrder[newAboveIndex], currentOrder[newCurrentIndex]];
-        }
-        
-        setRuleBookData({
-            ...(ruleBookData?.value || { content: '', roleOrder: [] }),
-            roleOrder: currentOrder
-        });
-    };
-    
-    const moveRoleDown = (currentIndex: number) => {
-        if (currentIndex >= orderedRoles.length - 1) return;
-        
-        const currentOrder = [...(ruleBookData?.value?.roleOrder || [])];
-        const roleToMove = orderedRoles[currentIndex];
-        const originalIndex = roles.indexOf(roleToMove);
-        const roleBelow = orderedRoles[currentIndex + 1];
-        const originalIndexBelow = roles.indexOf(roleBelow);
-        
-        // Swap positions in order array
-        const currentIndexInOrder = currentOrder.indexOf(originalIndex);
-        const belowIndexInOrder = currentOrder.indexOf(originalIndexBelow);
-        
-        if (currentIndexInOrder !== -1 && belowIndexInOrder !== -1) {
-            [currentOrder[currentIndexInOrder], currentOrder[belowIndexInOrder]] = 
-            [currentOrder[belowIndexInOrder], currentOrder[currentIndexInOrder]];
-        } else {
-            // If one or both aren't in the order yet, add them in the right positions
-            if (currentIndexInOrder === -1) currentOrder.push(originalIndex);
-            if (belowIndexInOrder === -1) currentOrder.push(originalIndexBelow);
-            // Then swap
-            const newCurrentIndex = currentOrder.indexOf(originalIndex);
-            const newBelowIndex = currentOrder.indexOf(originalIndexBelow);
-            [currentOrder[newCurrentIndex], currentOrder[newBelowIndex]] = 
-            [currentOrder[newBelowIndex], currentOrder[newCurrentIndex]];
-        }
-        
-        setRuleBookData({
-            ...(ruleBookData?.value || { content: '', roleOrder: [] }),
-            roleOrder: currentOrder
-        });
+  const UNDOABLEsetAboutRole = (roleIndex: number, newAboutRole: string) => {
+    const previousRoleTable = createUndoSnapshot(roleTable?.value ?? []);
+    if (roleIndex < 0 || roleIndex >= previousRoleTable.length) return;
+
+    const nextRoleTable = createUndoSnapshot(previousRoleTable);
+    nextRoleTable[roleIndex] = {
+      ...nextRoleTable[roleIndex],
+      aboutRole: newAboutRole,
     };
 
-    if (orderedRoles.length === 0) {
-        return null;
+    executeCommand({
+      action: () => setRoleTable(createUndoSnapshot(nextRoleTable)),
+      undoAction: () => setRoleTable(createUndoSnapshot(previousRoleTable)),
+      description: 'Set About Role',
+    });
+  };
+
+  const moveRoleUp = (currentIndex: number) => {
+    if (currentIndex <= 0) return;
+
+    const currentOrder = [...(ruleBookData?.value?.roleOrder || [])];
+    const roleToMove = orderedRoles[currentIndex];
+    const originalIndex = roles.indexOf(roleToMove);
+    const roleAbove = orderedRoles[currentIndex - 1];
+    const originalIndexAbove = roles.indexOf(roleAbove);
+
+    // Swap positions in order array
+    const currentIndexInOrder = currentOrder.indexOf(originalIndex);
+    const aboveIndexInOrder = currentOrder.indexOf(originalIndexAbove);
+
+    if (currentIndexInOrder !== -1 && aboveIndexInOrder !== -1) {
+      [currentOrder[currentIndexInOrder], currentOrder[aboveIndexInOrder]] = [
+        currentOrder[aboveIndexInOrder],
+        currentOrder[currentIndexInOrder],
+      ];
+    } else {
+      // If one or both aren't in the order yet, add them in the right positions
+      if (currentIndexInOrder === -1) currentOrder.push(originalIndex);
+      if (aboveIndexInOrder === -1) currentOrder.push(originalIndexAbove);
+      // Then swap
+      const newCurrentIndex = currentOrder.indexOf(originalIndex);
+      const newAboveIndex = currentOrder.indexOf(originalIndexAbove);
+      [currentOrder[newCurrentIndex], currentOrder[newAboveIndex]] = [
+        currentOrder[newAboveIndex],
+        currentOrder[newCurrentIndex],
+      ];
     }
 
-    return (
-        <>
-            <Column className='gap-2'>
-                <FontText weight='bold' className='text-xl'>Role Descriptions</FontText>
-                {/* <ScrollView> */}
-                    <Column className='gap-4'>
-                        {orderedRoles.map((role, index) => (
-                            <Row key={roles.indexOf(role)} className='gap-4 items-stretch'>
-                                <Column className='gap-4 flex-1'>
-                                    {/* <FontText weight='bold' className='text-lg'>
+    setRuleBookData({
+      ...(ruleBookData?.value || { content: '', roleOrder: [] }),
+      roleOrder: currentOrder,
+    });
+  };
+
+  const moveRoleDown = (currentIndex: number) => {
+    if (currentIndex >= orderedRoles.length - 1) return;
+
+    const currentOrder = [...(ruleBookData?.value?.roleOrder || [])];
+    const roleToMove = orderedRoles[currentIndex];
+    const originalIndex = roles.indexOf(roleToMove);
+    const roleBelow = orderedRoles[currentIndex + 1];
+    const originalIndexBelow = roles.indexOf(roleBelow);
+
+    // Swap positions in order array
+    const currentIndexInOrder = currentOrder.indexOf(originalIndex);
+    const belowIndexInOrder = currentOrder.indexOf(originalIndexBelow);
+
+    if (currentIndexInOrder !== -1 && belowIndexInOrder !== -1) {
+      [currentOrder[currentIndexInOrder], currentOrder[belowIndexInOrder]] = [
+        currentOrder[belowIndexInOrder],
+        currentOrder[currentIndexInOrder],
+      ];
+    } else {
+      // If one or both aren't in the order yet, add them in the right positions
+      if (currentIndexInOrder === -1) currentOrder.push(originalIndex);
+      if (belowIndexInOrder === -1) currentOrder.push(originalIndexBelow);
+      // Then swap
+      const newCurrentIndex = currentOrder.indexOf(originalIndex);
+      const newBelowIndex = currentOrder.indexOf(originalIndexBelow);
+      [currentOrder[newCurrentIndex], currentOrder[newBelowIndex]] = [
+        currentOrder[newBelowIndex],
+        currentOrder[newCurrentIndex],
+      ];
+    }
+
+    setRuleBookData({
+      ...(ruleBookData?.value || { content: '', roleOrder: [] }),
+      roleOrder: currentOrder,
+    });
+  };
+
+  if (orderedRoles.length === 0) {
+    return null;
+  }
+
+  return (
+    <>
+      <Column className="gap-2">
+        <FontText weight="bold" className="text-xl">
+          Role Descriptions
+        </FontText>
+        {/* <ScrollView> */}
+        <Column className="gap-4">
+          {orderedRoles.map((role, index) => (
+            <Row key={roles.indexOf(role)} className="items-stretch gap-4">
+              <Column className="flex-1 gap-4">
+                {/* <FontText weight='bold' className='text-lg'>
                                         {role.role}
                                     </FontText> */}
-                                    <Pressable 
-                                        onPress={() => setEditingRoleIndex(roles.indexOf(role))}
-                                        className='w-full min-h-[160px] rounded-xl bg-text/10 p-4 hover:bg-text/5 justify-center'
-                                    >
-                                        <MarkdownRenderer 
-                                            markdown={role.aboutRole} 
-                                            textAlign="center" 
-                                            viewHeightImages={30}
-                                        />
-                                    </Pressable>
-                                </Column>
-                                <Column className='gap-0 justify-center'>
-                                    <AppButton 
-                                        variant='none' 
-                                        className='h-12 w-12' 
-                                        onPress={() => moveRoleUp(index)}
-                                        disabled={index === 0}
-                                    >
-                                        <ChevronUp size={20} color="white" />
-                                    </AppButton>
-                                    <AppButton 
-                                        variant='none' 
-                                        className='h-12 w-12' 
-                                        onPress={() => moveRoleDown(index)}
-                                        disabled={index === orderedRoles.length - 1}
-                                    >
-                                        <ChevronDown size={20} color="white" />
-                                    </AppButton>
-                                </Column>
-                            </Row>
-                        ))}
-                    </Column>
-                {/* </ScrollView> */}
-            </Column>
-            
-            <MarkdownEditorDialog
-                isOpen={editingRoleIndex !== null}
-                onOpenChange={(open) => !open && setEditingRoleIndex(null)}
-                title={`About ${editingRoleIndex !== null ? roles[editingRoleIndex]?.role || 'Role' : 'Role'}`}
-                submitLabel="Save About"
-                initialMarkdown={editingRoleIndex !== null ? roles[editingRoleIndex]?.aboutRole || '' : ''}
-                onSubmit={({ markdown }) => {
-                    if (editingRoleIndex !== null) {
-                        UNDOABLEsetAboutRole(editingRoleIndex, markdown);
-                    }
-                }}
-            />
-        </>
-    );
+                <Pressable
+                  onPress={() => setEditingRoleIndex(roles.indexOf(role))}
+                  className="bg-text/10 hover:bg-text/5 min-h-[160px] w-full justify-center rounded-xl p-4">
+                  <MarkdownRenderer
+                    markdown={role.aboutRole}
+                    textAlign="center"
+                    viewHeightImages={30}
+                  />
+                </Pressable>
+              </Column>
+              <Column className="justify-center gap-0">
+                <AppButton
+                  variant="none"
+                  className="h-12 w-12"
+                  onPress={() => moveRoleUp(index)}
+                  disabled={index === 0}>
+                  <ChevronUp size={20} color="white" />
+                </AppButton>
+                <AppButton
+                  variant="none"
+                  className="h-12 w-12"
+                  onPress={() => moveRoleDown(index)}
+                  disabled={index === orderedRoles.length - 1}>
+                  <ChevronDown size={20} color="white" />
+                </AppButton>
+              </Column>
+            </Row>
+          ))}
+        </Column>
+        {/* </ScrollView> */}
+      </Column>
+
+      <MarkdownEditorDialog
+        isOpen={editingRoleIndex !== null}
+        onOpenChange={(open) => !open && setEditingRoleIndex(null)}
+        title={`About ${editingRoleIndex !== null ? roles[editingRoleIndex]?.role || 'Role' : 'Role'}`}
+        submitLabel="Save About"
+        initialMarkdown={editingRoleIndex !== null ? roles[editingRoleIndex]?.aboutRole || '' : ''}
+        showScript
+        onSubmit={({ markdown }) => {
+          if (editingRoleIndex !== null) {
+            UNDOABLEsetAboutRole(editingRoleIndex, markdown);
+          }
+        }}
+      />
+    </>
+  );
 };
 
 export default RuleBookRoleDescriptions;

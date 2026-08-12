@@ -1,5 +1,5 @@
 import React from 'react';
-import { Bold, ChevronDown, ImagePlus, Italic, Link2, MoreHorizontal } from 'lucide-react-native';
+import { Bold, ChevronDown, Code, ImagePlus, Italic, Link2, MoreHorizontal } from 'lucide-react-native';
 import TownSquareToolbarButton, { TownSquareToolbarButtonGroup } from './TownSquareToolbarButton';
 import Row from '../../layout/Row';
 
@@ -10,6 +10,7 @@ interface TownSquareComposerToolbarProps {
     onItalic: () => void;
     onLink: () => void;
     onMore: () => void;
+    onScript?: () => void;
     showInputs?: boolean;
 }
 
@@ -22,6 +23,7 @@ const TownSquareComposerToolbar = ({
     onItalic,
     onLink,
     onMore,
+    onScript,
     showInputs = false,
 }: TownSquareComposerToolbarProps) => {
     return (
@@ -43,12 +45,17 @@ const TownSquareComposerToolbar = ({
                     <TownSquareToolbarButton isFirst={true} onPress={onLink}>
                         <Link2 color={iconColor} size={20} strokeWidth={2.5} />
                     </TownSquareToolbarButton>
-                    <TownSquareToolbarButton isLast={!showInputs} onPress={onImage}>
+                    <TownSquareToolbarButton isLast={!showInputs && !onScript} onPress={onImage}>
                         <ImagePlus color={iconColor} size={20} strokeWidth={2.5} />
                     </TownSquareToolbarButton>
                     {showInputs ? (
-                        <TownSquareToolbarButton isLast={true} onPress={onInput}>
+                        <TownSquareToolbarButton isLast={!onScript} onPress={onInput}>
                             <ChevronDown color={iconColor} size={20} strokeWidth={2.5} />
+                        </TownSquareToolbarButton>
+                    ) : null}
+                    {onScript ? (
+                        <TownSquareToolbarButton isLast={true} onPress={onScript}>
+                            <Code color={iconColor} size={20} strokeWidth={2.5} />
                         </TownSquareToolbarButton>
                     ) : null}
                 </TownSquareToolbarButtonGroup>

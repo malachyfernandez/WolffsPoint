@@ -28,6 +28,7 @@ interface MainContentProps {
     onImage: () => void;
     onInput: () => void;
     onMore: () => void;
+    onScript?: () => void;
     centered?: boolean;
 }
 
@@ -52,6 +53,7 @@ export function MainContent({
     onImage,
     onInput,
     onMore,
+    onScript,
     centered = false,
 }: MainContentProps) {
     const { width } = useWindowDimensions();
@@ -87,6 +89,7 @@ export function MainContent({
                     onImage={onImage}
                     onInput={onInput}
                     onMore={onMore}
+                    onScript={onScript}
                     centered={centered}
                 />
             ) : (
@@ -107,6 +110,7 @@ export function MainContent({
                     onImage={onImage}
                     onInput={onInput}
                     onMore={onMore}
+                    onScript={onScript}
                     centered={centered}
                 />
             )}

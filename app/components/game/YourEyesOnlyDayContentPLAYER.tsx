@@ -213,7 +213,20 @@ const YourEyesOnlyDayContentPLAYER = ({ gameId, currentEmail, currentUserId, day
                     <ChainWraper className='min-w-[300px] flex-1' isDisabled={isActionLocked}>
                         <Column className='gap-3'>
                             <FontText weight='medium' className='text-sm tracking-[0.24em] uppercase opacity-60'>Action</FontText>
-                            <MarkdownRendererInputDataProvider playerOptions={playerOptions} roleOptions={roleOptions}>
+                            <MarkdownRendererInputDataProvider
+                                playerOptions={playerOptions}
+                                roleOptions={roleOptions}
+                                scriptSources={{
+                                    capability: 'player',
+                                    players: userTable,
+                                    roles: roleTable.value,
+                                    currentUserId,
+                                    currentEmail,
+                                    currentDay: dayIndex,
+                                    dayDates: dayDateStrings,
+                                    schedule,
+                                }}
+                            >
                                 {roleData?.roleMessage?.trim().length ? (
                                     <MarkdownRenderer
                                         markdown={roleData.roleMessage}

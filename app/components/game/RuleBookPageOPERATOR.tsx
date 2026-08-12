@@ -12,8 +12,8 @@ import RuleBookRoleDescriptions from './RuleBookRoleDescriptions';
 import { RuleBookData } from '../../../types/ruleBook';
 
 interface RuleBookPageOPERATORProps {
-    gameId: string;
-    onBack: () => void;
+  gameId: string;
+  onBack: () => void;
 }
 
 /**
@@ -21,55 +21,61 @@ interface RuleBookPageOPERATORProps {
  * Provides editing capabilities for the rule book content and role descriptions.
  */
 const RuleBookPageOPERATOR = ({ gameId, onBack }: RuleBookPageOPERATORProps) => {
-    const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-    const [ruleBookData, setRuleBookData] = useValue<RuleBookData>(getGameScopedKey('ruleBook', gameId), {
-        defaultValue: { content: '', roleOrder: [] },
-        privacy: 'PUBLIC',
-    });
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [ruleBookData, setRuleBookData] = useValue<RuleBookData>(
+    getGameScopedKey('ruleBook', gameId),
+    {
+      defaultValue: { content: '', roleOrder: [] },
+      privacy: 'PUBLIC',
+    }
+  );
 
-    return (
-        <Column className='gap-6 pb-6'>
-            <Pressable onPress={onBack} className='self-start py-1'>
-                <Row className='gap-4 items-center'>
-                    <ChevronLeft size={20} color='rgb(46, 41, 37)' />
-                    <FontText weight='medium'>Config</FontText>
-                </Row>
-            </Pressable>
+  return (
+    <Column className="gap-6 pb-6">
+      <Pressable onPress={onBack} className="self-start py-1">
+        <Row className="items-center gap-4">
+          <ChevronLeft size={20} color="rgb(46, 41, 37)" />
+          <FontText weight="medium">Config</FontText>
+        </Row>
+      </Pressable>
 
-            <Column className='gap-5 border-y border-border/15 py-5'>
-                <Column className='gap-2'>
-                    <FontText weight='bold' className='text-xl'>Rule Book</FontText>
-                    <Pressable 
-                    onPress={() => setIsEditDialogOpen(true)}
-                        className='flex-1 min-h-[220px] rounded-3xl bg-text/5 p-4'
-                    >
-                        {ruleBookData?.value?.content?.trim()?.length > 0 ? (
-                            <MarkdownRenderer markdown={ruleBookData.value.content} />
-                        ) : (
-                            <Column className='gap-4 min-h-[180px] items-center justify-center'>
-                                <FontText variant='subtext'>No rule book written yet. Tap to edit.</FontText>
-                            </Column>
-                        )}
-                    </Pressable>
-                </Column>
-
-                <RuleBookRoleDescriptions gameId={gameId} />
-            </Column>
-
-            <MarkdownEditorDialog
-                isOpen={isEditDialogOpen}
-                onOpenChange={setIsEditDialogOpen}
-                title="Rule Book"
-                submitLabel="Save Rule Book"
-                initialMarkdown={ruleBookData?.value?.content || ''}
-                onSubmit={({ markdown }) => setRuleBookData({
-                    ...(ruleBookData?.value || { content: '', roleOrder: [] }),
-                    content: markdown
-                })}
-            />
+      <Column className="border-border/15 gap-5 border-y py-5">
+        <Column className="gap-2">
+          <FontText weight="bold" className="text-xl">
+            Rule Book
+          </FontText>
+          <Pressable
+            onPress={() => setIsEditDialogOpen(true)}
+            className="bg-text/5 min-h-[220px] flex-1 rounded-3xl p-4">
+            {ruleBookData?.value?.content?.trim()?.length > 0 ? (
+              <MarkdownRenderer markdown={ruleBookData.value.content} />
+            ) : (
+              <Column className="min-h-[180px] items-center justify-center gap-4">
+                <FontText variant="subtext">No rule book written yet. Tap to edit.</FontText>
+              </Column>
+            )}
+          </Pressable>
         </Column>
-    );
-};
 
+        <RuleBookRoleDescriptions gameId={gameId} />
+      </Column>
+
+      <MarkdownEditorDialog
+        isOpen={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        title="Rule Book"
+        submitLabel="Save Rule Book"
+        initialMarkdown={ruleBookData?.value?.content || ''}
+        showScript
+        onSubmit={({ markdown }) =>
+          setRuleBookData({
+            ...(ruleBookData?.value || { content: '', roleOrder: [] }),
+            content: markdown,
+          })
+        }
+      />
+    </Column>
+  );
+};
 
 export default RuleBookPageOPERATOR;

@@ -16,143 +16,151 @@ import PressLogo from '../ui/icons/Press';
 import { Usepaper } from 'types/usepaper';
 
 interface NewspaperWritingViewProps {
-    gameId: string; // This will now be in format "originalGameId-day-year-month-day"
+  gameId: string; // This will now be in format "originalGameId-day-year-month-day"
 }
 
 const defaultUsepaper: Usepaper = {
-    columns: [],
+  columns: [],
 };
 
 const minimumUsepaper: Usepaper = {
-    columns: ['', ''],
+  columns: ['', ''],
 };
 
 const NewspaperWritingView = ({ gameId }: NewspaperWritingViewProps) => {
-    const { executeCommand } = useUndoRedo();
-    const { showToast } = useToast();
-    const [selectedColumnIndex, setSelectedColumnIndex] = useState<number | null>(null);
-    const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const { executeCommand } = useUndoRedo();
+  const { showToast } = useToast();
+  const [selectedColumnIndex, setSelectedColumnIndex] = useState<number | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-    const [newspaper, setNewspaper] = useList<Usepaper>("newspaper", gameId, { privacy: "PUBLIC", defaultValue: minimumUsepaper });
+  const [newspaper, setNewspaper] = useList<Usepaper>('newspaper', gameId, {
+    privacy: 'PUBLIC',
+    defaultValue: minimumUsepaper,
+  });
 
-    const resolvedUsepaper = newspaper?.value?.columns?.length
-        ? newspaper.value
-        : minimumUsepaper;
+  const resolvedUsepaper = newspaper?.value?.columns?.length ? newspaper.value : minimumUsepaper;
 
-    const newspaperColumns = resolvedUsepaper.columns;
+  const newspaperColumns = resolvedUsepaper.columns;
 
-    const setColumnMarkdown = (columnIndex: number, markdown: string) => {
-        const previousUsepaper = createUndoSnapshot(resolvedUsepaper);
-        const nextUsepaper = createUndoSnapshot(previousUsepaper);
+  const setColumnMarkdown = (columnIndex: number, markdown: string) => {
+    const previousUsepaper = createUndoSnapshot(resolvedUsepaper);
+    const nextUsepaper = createUndoSnapshot(previousUsepaper);
 
-        nextUsepaper.columns[columnIndex] = markdown;
+    nextUsepaper.columns[columnIndex] = markdown;
 
-        executeCommand({
-            action: () => setNewspaper(createUndoSnapshot(nextUsepaper)),
-            undoAction: () => setNewspaper(createUndoSnapshot(previousUsepaper)),
-            description: 'Update Newspaper Column',
-        });
-    };
+    executeCommand({
+      action: () => setNewspaper(createUndoSnapshot(nextUsepaper)),
+      undoAction: () => setNewspaper(createUndoSnapshot(previousUsepaper)),
+      description: 'Update Newspaper Column',
+    });
+  };
 
-    const addColumn = () => {
-        if (newspaperColumns.length >= 8) {
-            showToast('Too many columns — maximum 8');
-            return;
-        }
+  const addColumn = () => {
+    if (newspaperColumns.length >= 8) {
+      showToast('Too many columns — maximum 8');
+      return;
+    }
 
-        const previousUsepaper = createUndoSnapshot(resolvedUsepaper);
-        const nextUsepaper = createUndoSnapshot(previousUsepaper);
+    const previousUsepaper = createUndoSnapshot(resolvedUsepaper);
+    const nextUsepaper = createUndoSnapshot(previousUsepaper);
 
-        nextUsepaper.columns.push('');
+    nextUsepaper.columns.push('');
 
-        executeCommand({
-            action: () => setNewspaper(createUndoSnapshot(nextUsepaper)),
-            undoAction: () => setNewspaper(createUndoSnapshot(previousUsepaper)),
-            description: 'Add Newspaper Column',
-        });
-    };
+    executeCommand({
+      action: () => setNewspaper(createUndoSnapshot(nextUsepaper)),
+      undoAction: () => setNewspaper(createUndoSnapshot(previousUsepaper)),
+      description: 'Add Newspaper Column',
+    });
+  };
 
-    const removeColumn = (columnIndex: number) => {
-        if (newspaperColumns.length <= 1) {
-            return;
-        }
+  const removeColumn = (columnIndex: number) => {
+    if (newspaperColumns.length <= 1) {
+      return;
+    }
 
-        const previousUsepaper = createUndoSnapshot(resolvedUsepaper);
-        const nextUsepaper = createUndoSnapshot(previousUsepaper);
+    const previousUsepaper = createUndoSnapshot(resolvedUsepaper);
+    const nextUsepaper = createUndoSnapshot(previousUsepaper);
 
-        nextUsepaper.columns.splice(columnIndex, 1);
+    nextUsepaper.columns.splice(columnIndex, 1);
 
-        executeCommand({
-            action: () => setNewspaper(createUndoSnapshot(nextUsepaper)),
-            undoAction: () => setNewspaper(createUndoSnapshot(previousUsepaper)),
-            description: 'Remove Newspaper Column',
-        });
-    };
+    executeCommand({
+      action: () => setNewspaper(createUndoSnapshot(nextUsepaper)),
+      undoAction: () => setNewspaper(createUndoSnapshot(previousUsepaper)),
+      description: 'Remove Newspaper Column',
+    });
+  };
 
-    const openColumn = (columnIndex: number) => {
-        setSelectedColumnIndex(columnIndex);
-        setIsDialogOpen(true);
-    };
+  const openColumn = (columnIndex: number) => {
+    setSelectedColumnIndex(columnIndex);
+    setIsDialogOpen(true);
+  };
 
-    return (
-        <>
-            <ShadowScrollView direction='horizontal' extensionPercent={0} className='w-full' scrollViewClassName='w-full px-4' horizontal>
-                    <Column className='gap-4 w-[910px]'>
-                        <View className='items-center justify-center px-8'>
-                            <PressLogo width="100%" />
-                        </View>
-                        <NewspaperPageHeader onAddColumn={addColumn} />
-                        <View className='w-full'>
-                            <Row className='gap-0 w-full rounded-xl border-2 border-border items-stretch overflow-hidden'>
-                                {newspaperColumns.map((columnMarkdown, columnIndex) => (
-                                    <Column
-                                        key={columnIndex}
-                                        className={`gap-0 flex-1 shrink bg-background ${columnIndex !== newspaperColumns.length - 1 ? 'border-r border-border' : ''}`}
-                                    >
-                                        <NewspaperColumnHeader
-                                            columnIndex={columnIndex}
-                                            onRemove={() => removeColumn(columnIndex)}
-                                            showRemove={newspaperColumns.length > 1}
-                                        />
+  return (
+    <>
+      <ShadowScrollView
+        direction="horizontal"
+        extensionPercent={0}
+        className="w-full"
+        scrollViewClassName="w-full px-4"
+        horizontal>
+        <Column className="w-[910px] gap-4">
+          <View className="items-center justify-center px-8">
+            <PressLogo width="100%" />
+          </View>
+          <NewspaperPageHeader onAddColumn={addColumn} />
+          <View className="w-full">
+            <Row className="border-border w-full items-stretch gap-0 overflow-hidden rounded-xl border-2">
+              {newspaperColumns.map((columnMarkdown, columnIndex) => (
+                <Column
+                  key={columnIndex}
+                  className={`bg-background flex-1 shrink gap-0 ${columnIndex !== newspaperColumns.length - 1 ? 'border-border border-r' : ''}`}>
+                  <NewspaperColumnHeader
+                    columnIndex={columnIndex}
+                    onRemove={() => removeColumn(columnIndex)}
+                    showRemove={newspaperColumns.length > 1}
+                  />
 
-                                        <Pressable className='flex-1 min-h-120 p-4 bg-inner-background' onPress={() => openColumn(columnIndex)}>
-                                            <Column className='gap-4 h-full justify-between'>
-                                                <Column className='gap-3'>
-                                                    {columnMarkdown.trim().length > 0 ? (
-                                                        <MarkdownRenderer markdown={columnMarkdown} textAlign='justify' />
-                                                    ) : (
-                                                        <NewspaperColumnEmptyState />
-                                                    )}
-                                                </Column>
+                  <Pressable
+                    className="min-h-120 bg-inner-background flex-1 p-4"
+                    onPress={() => openColumn(columnIndex)}>
+                    <Column className="h-full justify-between gap-4">
+                      <Column className="gap-3">
+                        {columnMarkdown.trim().length > 0 ? (
+                          <MarkdownRenderer markdown={columnMarkdown} textAlign="justify" />
+                        ) : (
+                          <NewspaperColumnEmptyState />
+                        )}
+                      </Column>
 
-                                                <NewspaperColumnFooter />
-                                            </Column>
-                                        </Pressable>
-                                    </Column>
-                                ))}
-                            </Row>
-                        </View>
+                      <NewspaperColumnFooter />
                     </Column>
-            </ShadowScrollView>
+                  </Pressable>
+                </Column>
+              ))}
+            </Row>
+          </View>
+        </Column>
+      </ShadowScrollView>
 
-            {selectedColumnIndex !== null && (
-                <MarkdownEditorDialog
-                    isOpen={isDialogOpen}
-                    onOpenChange={(open) => {
-                        setIsDialogOpen(open);
-                        if (!open) {
-                            setSelectedColumnIndex(null);
-                        }
-                    }}
-                    title={`Column ${selectedColumnIndex + 1}`}
-                    submitLabel='Save Column'
-                    initialMarkdown={newspaperColumns[selectedColumnIndex] ?? ''}
-                    onSubmit={({ markdown }) => setColumnMarkdown(selectedColumnIndex, markdown)}
-                    isPreviewSideBySide={true}
-                />
-            )}
-        </>
-    );
+      {selectedColumnIndex !== null && (
+        <MarkdownEditorDialog
+          isOpen={isDialogOpen}
+          onOpenChange={(open) => {
+            setIsDialogOpen(open);
+            if (!open) {
+              setSelectedColumnIndex(null);
+            }
+          }}
+          title={`Column ${selectedColumnIndex + 1}`}
+          submitLabel="Save Column"
+          initialMarkdown={newspaperColumns[selectedColumnIndex] ?? ''}
+          onSubmit={({ markdown }) => setColumnMarkdown(selectedColumnIndex, markdown)}
+          showScript
+          isPreviewSideBySide={true}
+        />
+      )}
+    </>
+  );
 };
 
 export default NewspaperWritingView;

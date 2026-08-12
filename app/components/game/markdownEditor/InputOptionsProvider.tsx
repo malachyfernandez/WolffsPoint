@@ -3,6 +3,7 @@ import { useList, useValue } from '../../../../hooks/useData';
 import { RoleTableItem } from '../../../../types/roleTable';
 import { UserTableItem } from '../../../../types/playerTable';
 import { MarkdownRendererInputDataProvider } from '../../ui/markdown/MarkdownRenderer';
+import type { ScriptSourceData } from '../../../script/runtime/sources';
 
 interface InputOption {
     value: string;
@@ -25,6 +26,8 @@ export function InputOptionsProvider({
 }: InputOptionsProviderProps) {
     const [userTable] = useList<UserTableItem[]>("userTable", gameId || '__markdown_editor_dialog_no_game__', { privacy: "PUBLIC" });
     const [roleTable] = useList<RoleTableItem[]>("roleTable", gameId || '__markdown_editor_dialog_no_game__', { privacy: "PUBLIC" });
+    const [dayDatesArray] = useList<string[]>("dayDatesArray", gameId || '__markdown_editor_dialog_no_game__', { privacy: "PUBLIC" });
+    const [selectedDayIndex] = useList<number>("selectedDayIndex", gameId || '__markdown_editor_dialog_no_game__', { privacy: "PUBLIC" });
 
     const playerOptions = useMemo(() => {
         if (!showInputs) {
@@ -53,8 +56,20 @@ export function InputOptionsProvider({
             }));
     }, [roleTable?.value, showInputs]);
 
+    const scriptSources = useMemo<ScriptSourceData>(() => ({
+        capability: 'operator',
+        players: userTable?.value ?? [],
+        roles: roleTable?.value ?? [],
+        currentDay: selectedDayIndex?.value ?? 0,
+        dayDates: dayDatesArray?.value ?? [],
+    }), [userTable?.value, roleTable?.value, selectedDayIndex?.value, dayDatesArray?.value]);
+
     return (
-        <MarkdownRendererInputDataProvider playerOptions={playerOptions} roleOptions={roleOptions}>
+        <MarkdownRendererInputDataProvider
+            playerOptions={playerOptions}
+            roleOptions={roleOptions}
+            scriptSources={scriptSources}
+        >
             {children}
         </MarkdownRendererInputDataProvider>
     );

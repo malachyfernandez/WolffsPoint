@@ -20,6 +20,7 @@ interface SideBySideLayoutProps {
     onImage: () => void;
     onInput: () => void;
     onMore: () => void;
+    onScript?: () => void;
     centered?: boolean;
 }
 
@@ -38,6 +39,7 @@ export function SideBySideLayout({
     onImage,
     onInput,
     onMore,
+    onScript,
     centered = false,
 }: SideBySideLayoutProps) {
     return (
@@ -53,6 +55,7 @@ export function SideBySideLayout({
                 onImage={onImage}
                 onInput={onInput}
                 onMore={onMore}
+                onScript={onScript}
             />
 
             <Column className='gap-4 flex-1 min-w-0'>
