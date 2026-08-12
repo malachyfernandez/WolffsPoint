@@ -58,7 +58,7 @@ const SkipVoteRow = ({
   const content = (
     <Column className="w-full gap-2">
       <Row className="items-center gap-4">
-        <View className="border-subtle-border/60 bg-border/10 h-[44px] w-[44px] items-center justify-center rounded-full border">
+        <View className="border-subtle-border/60 bg-border/10 h-11 w-11 items-center justify-center rounded-full border">
           <Ban size={20} color="rgb(46, 41, 37)" />
         </View>
         <Row className="flex-1 items-center justify-between gap-4">
