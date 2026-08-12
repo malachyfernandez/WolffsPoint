@@ -70,7 +70,14 @@ export const printExpression = (
       result = `[${expression.items.map((item) => printExpression(item, 0, depth)).join(', ')}]`;
       break;
     case 'UnaryExpression': {
-      const operator = expression.operator === 'NOT' ? 'NOT ' : expression.operator;
+      const operator =
+        expression.operator === 'NOT'
+          ? 'NOT '
+          : expression.operator === 'ISTRUTHY'
+            ? 'isTruthy '
+            : expression.operator === 'ISFALSY'
+              ? 'isFalsy '
+              : expression.operator;
       result = `${operator}${printExpression(expression.operand, ownPrecedence, depth)}`;
       break;
     }

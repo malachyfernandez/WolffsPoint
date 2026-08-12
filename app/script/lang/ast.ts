@@ -111,7 +111,7 @@ export interface ListExpression extends NodeBase {
 
 export interface UnaryExpression extends NodeBase {
   kind: 'UnaryExpression';
-  operator: 'NOT' | '-' | '+';
+  operator: 'NOT' | '-' | '+' | 'ISTRUTHY' | 'ISFALSY';
   operand: Expression;
 }
 

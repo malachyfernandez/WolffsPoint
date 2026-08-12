@@ -340,6 +340,30 @@ const InsertModal = ({
         category: 'boolean',
         onSelect: () => selectExpression({ kind: 'BooleanLiteral', value: false, span }),
       },
+      {
+        label: 'isTruthy',
+        description: 'Check if value is truthy',
+        category: 'boolean',
+        onSelect: () =>
+          selectExpression({
+            kind: 'UnaryExpression',
+            operator: 'ISTRUTHY',
+            operand: { kind: 'NothingLiteral', span },
+            span,
+          }),
+      },
+      {
+        label: 'isFalsy',
+        description: 'Check if value is falsy',
+        category: 'boolean',
+        onSelect: () =>
+          selectExpression({
+            kind: 'UnaryExpression',
+            operator: 'ISFALSY',
+            operand: { kind: 'NothingLiteral', span },
+            span,
+          }),
+      },
       ...BOOLEAN_OPERATORS.map(({ label, operator }) => ({
         label,
         description: operator,

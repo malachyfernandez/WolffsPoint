@@ -497,7 +497,11 @@ const ExpressionSocket = ({
   const expressionLabel = (() => {
     if (expression.kind === 'BooleanLiteral') return String(expression.value);
     if (expression.kind === 'BinaryExpression') return expression.operator;
-    if (expression.kind === 'UnaryExpression') return expression.operator;
+    if (expression.kind === 'UnaryExpression') {
+      if (expression.operator === 'ISTRUTHY') return 'isTruthy';
+      if (expression.operator === 'ISFALSY') return 'isFalsy';
+      return expression.operator;
+    }
     if (expression.kind === 'StringLiteral') return `"${expression.value}"`;
     if (expression.kind === 'NumberLiteral') return String(expression.value);
     if (expression.kind === 'IdentifierExpression') return expression.name;
@@ -619,12 +623,22 @@ const ExpressionSocket = ({
           className="items-center gap-1"
           style={{ borderRadius: expectedType === 'boolean' ? 0 : 6 }}>
           <FontText weight="medium" className="text-sm">
-            {expression.operator}
+            {expression.operator === 'ISTRUTHY'
+              ? 'isTruthy'
+              : expression.operator === 'ISFALSY'
+                ? 'isFalsy'
+                : expression.operator}
           </FontText>
           <ExpressionSocket
             expression={expression.operand}
             location={appendLocation(location, { kind: 'unaryOperand' })}
-            expectedType={expression.operator === 'NOT' ? 'boolean' : 'number'}
+            expectedType={
+              expression.operator === 'NOT'
+                ? 'boolean'
+                : expression.operator === 'ISTRUTHY' || expression.operator === 'ISFALSY'
+                  ? 'expression'
+                  : 'number'
+            }
             contextVariables={contextVariables}
             entryKeysBySource={entryKeysBySource}
             entrySource={entrySource}
@@ -1312,6 +1326,7 @@ const StatementBlock = ({
             onSetStatementField,
             onDeleteStatement,
             entryKeysBySource,
+            onEditMarkdown,
           }}
           stmtPath={currentPath}
         />
@@ -1356,6 +1371,7 @@ const StatementBlock = ({
             onSetStatementField,
             onDeleteStatement,
             entryKeysBySource,
+            onEditMarkdown,
           }}
           stmtPath={currentPath}
         />
@@ -1442,6 +1458,7 @@ const StatementBlock = ({
               onSetStatementField,
               onDeleteStatement,
               entryKeysBySource,
+              onEditMarkdown,
             }}
             stmtPath={currentPath}
           />

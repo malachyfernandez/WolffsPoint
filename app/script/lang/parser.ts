@@ -272,6 +272,15 @@ class Parser {
         span: joinSpan(token.span.start, operand.span.end),
       };
     }
+    if (upper === 'ISTRUTHY' || upper === 'ISFALSY') {
+      const operand = this.parseExpression(7);
+      return {
+        kind: 'UnaryExpression',
+        operator: upper === 'ISTRUTHY' ? 'ISTRUTHY' : 'ISFALSY',
+        operand,
+        span: joinSpan(token.span.start, operand.span.end),
+      };
+    }
     if (this.isName(token)) {
       if (this.matchText('=>')) {
         const body = this.checkText('{')

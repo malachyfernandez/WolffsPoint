@@ -352,6 +352,12 @@ class Interpreter {
           if (expression.operator === 'NOT') {
             return !isTruthy(operand);
           }
+          if (expression.operator === 'ISTRUTHY') {
+            return isTruthy(operand);
+          }
+          if (expression.operator === 'ISFALSY') {
+            return !isTruthy(operand);
+          }
           const number = this.number(operand);
           return number === undefined ? NOTHING : expression.operator === '-' ? -number : number;
         }
