@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useId, useRef, useState } from 'react';
-import { Platform } from 'react-native';
+import { Platform, Pressable } from 'react-native';
 import { Dialog, Popover } from 'heroui-native';
 import { ChevronDown } from 'lucide-react-native';
 import Column from '../../layout/Column';
@@ -31,6 +31,8 @@ interface AppDropdownProps {
   disabled?: boolean;
   allowUnselect?: boolean;
   unselectLabel?: string;
+  footer?: React.ReactNode;
+  onFooterPress?: () => void;
 }
 
 interface WebDropdownMenuPosition {
@@ -59,6 +61,8 @@ const AppDropdown = ({
   disabled = false,
   allowUnselect = true,
   unselectLabel = '— None —',
+  footer,
+  onFooterPress,
 }: AppDropdownProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedValue, setSelectedValue] = useState(value ?? '');
@@ -237,9 +241,31 @@ const AppDropdown = ({
             selectedClassName={selectedItemClassName || 'bg-accent'}
           />
         ))}
+        {footer && (
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => {
+              closeDropdown();
+              onFooterPress?.();
+            }}>
+            {footer}
+          </Pressable>
+        )}
       </Column>
     ) : (
-      <AppDropdownEmptyState className={emptyStateClassName} text={emptyText} />
+      <Column className="w-full gap-1">
+        <AppDropdownEmptyState className={emptyStateClassName} text={emptyText} />
+        {footer && (
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => {
+              closeDropdown();
+              onFooterPress?.();
+            }}>
+            {footer}
+          </Pressable>
+        )}
+      </Column>
     );
 
   if (Platform.OS === 'web') {
