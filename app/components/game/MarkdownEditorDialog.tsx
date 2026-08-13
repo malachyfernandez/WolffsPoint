@@ -209,6 +209,18 @@ const MarkdownEditorDialog = ({
     }
   };
 
+  // Intercept all dismiss attempts (overlay click, escape) to check for unsaved changes.
+  // Swipe is disabled when there are unsaved changes (via isSwipeable prop) because
+  // HeroUI's swipe animation completes before onOpenChange fires, leaving the dialog
+  // stuck off-screen if we intercept the close.
+  const handleOpenChange = (open: boolean) => {
+    if (!open && hasUnsavedChanges) {
+      setIsLeaveConfirmDialogOpen(true);
+    } else {
+      onOpenChange(open);
+    }
+  };
+
   const handleConfirmLeave = () => {
     setIsLeaveConfirmDialogOpen(false);
     onOpenChange(false);
@@ -304,14 +316,14 @@ const MarkdownEditorDialog = ({
 
   return (
     <>
-      <ConvexDialog.Root isOpen={isOpen} onOpenChange={onOpenChange}>
+      <ConvexDialog.Root isOpen={isOpen} onOpenChange={handleOpenChange}>
         <ConvexDialog.Trigger asChild>
           <View />
         </ConvexDialog.Trigger>
         <ConvexDialog.Portal>
           <ConvexDialog.Overlay />
           <InputOptionsProvider gameId={gameId} showInputs>
-            <ConvexDialog.Content className="h-[80vh]">
+            <ConvexDialog.Content className="h-[80vh]" isSwipeable={false}>
               <CloseButton onPress={handleAttemptClose} />
               <DialogHeader text={title} subtext={dialogSubtext} />
               <MainContent

@@ -20,13 +20,13 @@ interface RoleAddDialogProps {
 const RoleAddDialog = ({ isOpen, onOpenChange, onAddRole }: RoleAddDialogProps) => {
   const [roleName, setRoleName] = useState('');
   const [doesRoleVote, setDoesRoleVote] = useState(true);
-  const [isVisible, setIsVisible] = useState(true);
+  const [hiddenFromRulebook, setHiddenFromRulebook] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
       setRoleName('');
       setDoesRoleVote(true);
-      setIsVisible(true);
+      setHiddenFromRulebook(false);
     }
   }, [isOpen]);
 
@@ -37,7 +37,8 @@ const RoleAddDialog = ({ isOpen, onOpenChange, onAddRole }: RoleAddDialogProps) 
       doesRoleVote,
       roleMessage: 'Unset role message',
       aboutRole: '## NEW ROLE - No description set',
-      isVisible,
+      isVisible: true,
+      hiddenFromRulebook,
     });
     onOpenChange(false);
   };
@@ -45,7 +46,7 @@ const RoleAddDialog = ({ isOpen, onOpenChange, onAddRole }: RoleAddDialogProps) 
   const handleCancel = () => {
     setRoleName('');
     setDoesRoleVote(true);
-    setIsVisible(true);
+    setHiddenFromRulebook(false);
     onOpenChange(false);
   };
 
@@ -86,15 +87,15 @@ const RoleAddDialog = ({ isOpen, onOpenChange, onAddRole }: RoleAddDialogProps) 
               </Pressable>
 
               <Pressable
-                onPress={() => setIsVisible(!isVisible)}
+                onPress={() => setHiddenFromRulebook(!hiddenFromRulebook)}
                 className="flex-row items-center gap-3 pt-2">
                 <CustomCheckbox
-                  checked={isVisible}
-                  onChange={() => setIsVisible(!isVisible)}
+                  checked={!hiddenFromRulebook}
+                  onChange={() => setHiddenFromRulebook(!hiddenFromRulebook)}
                   monochrome
                 />
-                <FontText className={isVisible ? '' : 'opacity-70'}>
-                  {isVisible ? 'Visible in rulebook' : 'Hidden from rulebook'}
+                <FontText className={hiddenFromRulebook ? 'opacity-70' : ''}>
+                  {hiddenFromRulebook ? 'Hidden from rulebook' : 'Visible in rulebook'}
                 </FontText>
               </Pressable>
             </Column>

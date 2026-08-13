@@ -18,7 +18,7 @@ interface RoleEditDialogProps {
   role: RoleTableItem;
   onSetRoleName: (index: number, name: string) => void;
   onSetDoesRoleVote: (index: number, value: boolean) => void;
-  onSetIsVisible: (index: number, value: boolean) => void;
+  onSetHiddenFromRulebook: (index: number, value: boolean) => void;
 }
 
 const RoleEditDialog = ({
@@ -28,37 +28,37 @@ const RoleEditDialog = ({
   role,
   onSetRoleName,
   onSetDoesRoleVote,
-  onSetIsVisible,
+  onSetHiddenFromRulebook,
 }: RoleEditDialogProps) => {
   const [roleName, setRoleName] = useState(role.role || '');
   const [doesRoleVote, setDoesRoleVote] = useState(role.doesRoleVote);
-  const [isVisible, setIsVisible] = useState(role.isVisible !== false);
+  const [hiddenFromRulebook, setHiddenFromRulebook] = useState(role.hiddenFromRulebook === true);
 
   useEffect(() => {
     if (isOpen) {
       setRoleName(role.role || '');
       setDoesRoleVote(role.doesRoleVote);
-      setIsVisible(role.isVisible !== false);
+      setHiddenFromRulebook(role.hiddenFromRulebook === true);
     }
   }, [isOpen, role]);
 
   const hasChange =
     roleName.trim() !== (role.role || '').trim() ||
     doesRoleVote !== role.doesRoleVote ||
-    isVisible !== (role.isVisible !== false);
+    hiddenFromRulebook !== (role.hiddenFromRulebook === true);
 
   const handleSave = () => {
     if (!roleName.trim()) return;
     onSetRoleName(roleIndex, roleName.trim());
     onSetDoesRoleVote(roleIndex, doesRoleVote);
-    onSetIsVisible(roleIndex, isVisible);
+    onSetHiddenFromRulebook(roleIndex, hiddenFromRulebook);
     onOpenChange(false);
   };
 
   const handleCancel = () => {
     setRoleName(role.role || '');
     setDoesRoleVote(role.doesRoleVote);
-    setIsVisible(role.isVisible !== false);
+    setHiddenFromRulebook(role.hiddenFromRulebook === true);
     onOpenChange(false);
   };
 
@@ -98,15 +98,15 @@ const RoleEditDialog = ({
               </Pressable>
 
               <Pressable
-                onPress={() => setIsVisible(!isVisible)}
+                onPress={() => setHiddenFromRulebook(!hiddenFromRulebook)}
                 className="flex-row items-center gap-3 pt-2">
                 <CustomCheckbox
-                  checked={isVisible}
-                  onChange={() => setIsVisible(!isVisible)}
+                  checked={!hiddenFromRulebook}
+                  onChange={() => setHiddenFromRulebook(!hiddenFromRulebook)}
                   monochrome
                 />
-                <FontText className={isVisible ? '' : 'opacity-70'}>
-                  {isVisible ? 'Visible in rulebook' : 'Hidden from rulebook'}
+                <FontText className={hiddenFromRulebook ? 'opacity-70' : ''}>
+                  {hiddenFromRulebook ? 'Hidden from rulebook' : 'Visible in rulebook'}
                 </FontText>
               </Pressable>
             </Column>

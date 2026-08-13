@@ -36,7 +36,11 @@ const RuleBookRoleDescriptions = ({ gameId }: RuleBookRoleDescriptionsProps) => 
 
   const roles = roleTable?.value ?? [];
   const visibleRolesWithContent = roles.filter(
-    (role) => role.isVisible !== false && role.aboutRole && role.aboutRole.trim().length > 0
+    (role) =>
+      role.isVisible !== false &&
+      role.hiddenFromRulebook !== true &&
+      role.aboutRole &&
+      role.aboutRole.trim().length > 0
   );
 
   // Get ordered roles based on stored order, fallback to original order
@@ -82,36 +86,44 @@ const RuleBookRoleDescriptions = ({ gameId }: RuleBookRoleDescriptionsProps) => 
     });
   };
 
+  // Ensure roleOrder contains all visible roles, initialized in current display order
+  const getFullCurrentOrder = (): number[] => {
+    const storedOrder = ruleBookData?.value?.roleOrder || [];
+    const visibleOriginalIndexes = visibleRolesWithContent.map((role) => roles.indexOf(role));
+
+    // If stored order already covers all visible roles, use it as-is
+    const storedVisibleCount = visibleOriginalIndexes.filter((idx) =>
+      storedOrder.includes(idx)
+    ).length;
+    if (storedVisibleCount === visibleRolesWithContent.length) {
+      return storedOrder;
+    }
+
+    // Otherwise, build a full order: stored entries first (that are still visible),
+    // then any visible roles not yet in the stored order, preserving display order
+    const fullOrder: number[] = storedOrder.filter((idx) => visibleOriginalIndexes.includes(idx));
+    visibleOriginalIndexes.forEach((idx) => {
+      if (!fullOrder.includes(idx)) fullOrder.push(idx);
+    });
+    return fullOrder;
+  };
+
   const moveRoleUp = (currentIndex: number) => {
     if (currentIndex <= 0) return;
 
-    const currentOrder = [...(ruleBookData?.value?.roleOrder || [])];
+    const currentOrder = getFullCurrentOrder();
     const roleToMove = orderedRoles[currentIndex];
     const originalIndex = roles.indexOf(roleToMove);
     const roleAbove = orderedRoles[currentIndex - 1];
     const originalIndexAbove = roles.indexOf(roleAbove);
 
-    // Swap positions in order array
     const currentIndexInOrder = currentOrder.indexOf(originalIndex);
     const aboveIndexInOrder = currentOrder.indexOf(originalIndexAbove);
 
-    if (currentIndexInOrder !== -1 && aboveIndexInOrder !== -1) {
-      [currentOrder[currentIndexInOrder], currentOrder[aboveIndexInOrder]] = [
-        currentOrder[aboveIndexInOrder],
-        currentOrder[currentIndexInOrder],
-      ];
-    } else {
-      // If one or both aren't in the order yet, add them in the right positions
-      if (currentIndexInOrder === -1) currentOrder.push(originalIndex);
-      if (aboveIndexInOrder === -1) currentOrder.push(originalIndexAbove);
-      // Then swap
-      const newCurrentIndex = currentOrder.indexOf(originalIndex);
-      const newAboveIndex = currentOrder.indexOf(originalIndexAbove);
-      [currentOrder[newCurrentIndex], currentOrder[newAboveIndex]] = [
-        currentOrder[newAboveIndex],
-        currentOrder[newCurrentIndex],
-      ];
-    }
+    [currentOrder[currentIndexInOrder], currentOrder[aboveIndexInOrder]] = [
+      currentOrder[aboveIndexInOrder],
+      currentOrder[currentIndexInOrder],
+    ];
 
     setRuleBookData({
       ...(ruleBookData?.value || { content: '', roleOrder: [] }),
@@ -122,33 +134,19 @@ const RuleBookRoleDescriptions = ({ gameId }: RuleBookRoleDescriptionsProps) => 
   const moveRoleDown = (currentIndex: number) => {
     if (currentIndex >= orderedRoles.length - 1) return;
 
-    const currentOrder = [...(ruleBookData?.value?.roleOrder || [])];
+    const currentOrder = getFullCurrentOrder();
     const roleToMove = orderedRoles[currentIndex];
     const originalIndex = roles.indexOf(roleToMove);
     const roleBelow = orderedRoles[currentIndex + 1];
     const originalIndexBelow = roles.indexOf(roleBelow);
 
-    // Swap positions in order array
     const currentIndexInOrder = currentOrder.indexOf(originalIndex);
     const belowIndexInOrder = currentOrder.indexOf(originalIndexBelow);
 
-    if (currentIndexInOrder !== -1 && belowIndexInOrder !== -1) {
-      [currentOrder[currentIndexInOrder], currentOrder[belowIndexInOrder]] = [
-        currentOrder[belowIndexInOrder],
-        currentOrder[currentIndexInOrder],
-      ];
-    } else {
-      // If one or both aren't in the order yet, add them in the right positions
-      if (currentIndexInOrder === -1) currentOrder.push(originalIndex);
-      if (belowIndexInOrder === -1) currentOrder.push(originalIndexBelow);
-      // Then swap
-      const newCurrentIndex = currentOrder.indexOf(originalIndex);
-      const newBelowIndex = currentOrder.indexOf(originalIndexBelow);
-      [currentOrder[newCurrentIndex], currentOrder[newBelowIndex]] = [
-        currentOrder[newBelowIndex],
-        currentOrder[newCurrentIndex],
-      ];
-    }
+    [currentOrder[currentIndexInOrder], currentOrder[belowIndexInOrder]] = [
+      currentOrder[belowIndexInOrder],
+      currentOrder[currentIndexInOrder],
+    ];
 
     setRuleBookData({
       ...(ruleBookData?.value || { content: '', roleOrder: [] }),

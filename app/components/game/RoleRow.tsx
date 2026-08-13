@@ -16,7 +16,7 @@ interface RoleRowProps {
   isLast: boolean;
   setRoleName: (roleIndex: number, newRoleName: string) => void;
   setDoesRoleVote: (roleIndex: number, newDoesRoleVote: boolean) => void;
-  setIsVisible: (roleIndex: number, value: boolean) => void;
+  setHiddenFromRulebook: (roleIndex: number, value: boolean) => void;
   setRoleMessage: (roleIndex: number, newRoleMessage: string) => void;
   setAboutRole: (roleIndex: number, newAboutRole: string) => void;
   onDeleteRole: (roleIndex: number) => void;
@@ -33,7 +33,7 @@ const RoleRow = ({
   isLast,
   setRoleName,
   setDoesRoleVote,
-  setIsVisible,
+  setHiddenFromRulebook,
   setRoleMessage,
   setAboutRole,
   onDeleteRole,
@@ -131,7 +131,7 @@ const RoleRow = ({
         role={role}
         onSetRoleName={setRoleName}
         onSetDoesRoleVote={setDoesRoleVote}
-        onSetIsVisible={setIsVisible}
+        onSetHiddenFromRulebook={setHiddenFromRulebook}
       />
 
       <MarkdownEditorDialog

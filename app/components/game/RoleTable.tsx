@@ -85,20 +85,20 @@ const RoleTable = ({
     });
   };
 
-  const UNDOABLEsetIsVisible = (roleIndex: number, value: boolean) => {
+  const UNDOABLEsetHiddenFromRulebook = (roleIndex: number, value: boolean) => {
     const previousRoleTable = createUndoSnapshot(roleTable?.value ?? []);
     if (roleIndex < 0 || roleIndex >= previousRoleTable.length) return;
 
     const nextRoleTable = createUndoSnapshot(previousRoleTable);
     nextRoleTable[roleIndex] = {
       ...nextRoleTable[roleIndex],
-      isVisible: value,
+      hiddenFromRulebook: value,
     };
 
     executeCommand({
       action: () => setRoleTable(createUndoSnapshot(nextRoleTable)),
       undoAction: () => setRoleTable(createUndoSnapshot(previousRoleTable)),
-      description: 'Set Role Visibility',
+      description: 'Set Role Rulebook Visibility',
     });
   };
 
@@ -188,7 +188,7 @@ const RoleTable = ({
                 isLast={index === visibleRoles.length - 1}
                 setRoleName={UNDOABLEsetRoleName}
                 setDoesRoleVote={UNDOABLEsetDoesRoleVote}
-                setIsVisible={UNDOABLEsetIsVisible}
+                setHiddenFromRulebook={UNDOABLEsetHiddenFromRulebook}
                 setRoleMessage={UNDOABLEsetRoleMessage}
                 setAboutRole={UNDOABLEsetAboutRole}
                 onDeleteRole={UNDOABLEdeleteRole}

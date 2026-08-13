@@ -61,7 +61,10 @@ const RuleBookPreviewCard = ({ gameId, onPress }: RuleBookPreviewCardProps) => {
 
   const visibleRoleDescriptionCount = React.useMemo(() => {
     return (roleTable?.value ?? []).filter(
-      (role) => role.isVisible !== false && role.aboutRole?.trim().length
+      (role) =>
+        role.isVisible !== false &&
+        role.hiddenFromRulebook !== true &&
+        role.aboutRole?.trim().length
     ).length;
   }, [roleTable?.value]);
 
