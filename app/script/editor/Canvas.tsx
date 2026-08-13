@@ -511,26 +511,25 @@ const FunctionCallRenderer = ({
           {fnName}
         </FontText>
         {call.arguments.map((argument, index) => (
-          <View key={index} className="border-subtle-border items-center gap-1 border-l pl-1">
-            <ExpressionSocket
-              expression={argument.value}
-              location={appendLocation(
-                location,
-                { kind: 'chainBase' },
-                { kind: 'callArgument', index }
-              )}
-              contextVariables={contextVariables}
-              entryKeysBySource={entryKeysBySource}
-              entrySource={entrySource}
-              entrySourceMap={entrySourceMap}
-              isOuterExpression={false}
-              definedFunctions={definedFunctions}
-              label={`argument ${index + 1}`}
-              onAdd={onAdd}
-              onSetExpression={onSetExpression}
-              onEditMarkdown={onEditMarkdown}
-            />
-          </View>
+          <ExpressionSocket
+            key={index}
+            expression={argument.value}
+            location={appendLocation(
+              location,
+              { kind: 'chainBase' },
+              { kind: 'callArgument', index }
+            )}
+            contextVariables={contextVariables}
+            entryKeysBySource={entryKeysBySource}
+            entrySource={entrySource}
+            entrySourceMap={entrySourceMap}
+            isOuterExpression={false}
+            definedFunctions={definedFunctions}
+            label={`argument ${index + 1}`}
+            onAdd={onAdd}
+            onSetExpression={onSetExpression}
+            onEditMarkdown={onEditMarkdown}
+          />
         ))}
       </Row>
     );
@@ -543,9 +542,6 @@ const FunctionCallRenderer = ({
 
   return (
     <Row className="items-center gap-1">
-      <FontText weight="medium" className="text-sm">
-        {fnName}
-      </FontText>
       {template!.map((piece, pieceIndex) => {
         if (piece.kind === 'text') {
           return (
@@ -559,38 +555,31 @@ const FunctionCallRenderer = ({
         const argument = call.arguments[argIndex];
         if (!argument) {
           return (
-            <View
-              key={`tpl-${pieceIndex}`}
-              className="border-subtle-border items-center gap-1 border-l pl-1">
-              <FontText variant="subtext" className="text-xs">
-                {piece.label ?? 'input'}
-              </FontText>
-            </View>
+            <FontText key={`tpl-${pieceIndex}`} variant="subtext" className="text-xs">
+              {piece.label ?? 'input'}
+            </FontText>
           );
         }
         return (
-          <View
+          <ExpressionSocket
             key={`tpl-${pieceIndex}`}
-            className="border-subtle-border items-center gap-1 border-l pl-1">
-            <ExpressionSocket
-              expression={argument.value}
-              location={appendLocation(
-                location,
-                { kind: 'chainBase' },
-                { kind: 'callArgument', index: argIndex }
-              )}
-              contextVariables={contextVariables}
-              entryKeysBySource={entryKeysBySource}
-              entrySource={entrySource}
-              entrySourceMap={entrySourceMap}
-              isOuterExpression={false}
-              definedFunctions={definedFunctions}
-              label={piece.label ?? `argument ${argIndex + 1}`}
-              onAdd={onAdd}
-              onSetExpression={onSetExpression}
-              onEditMarkdown={onEditMarkdown}
-            />
-          </View>
+            expression={argument.value}
+            location={appendLocation(
+              location,
+              { kind: 'chainBase' },
+              { kind: 'callArgument', index: argIndex }
+            )}
+            contextVariables={contextVariables}
+            entryKeysBySource={entryKeysBySource}
+            entrySource={entrySource}
+            entrySourceMap={entrySourceMap}
+            isOuterExpression={false}
+            definedFunctions={definedFunctions}
+            label={piece.label ?? `argument ${argIndex + 1}`}
+            onAdd={onAdd}
+            onSetExpression={onSetExpression}
+            onEditMarkdown={onEditMarkdown}
+          />
         );
       })}
     </Row>
@@ -963,21 +952,12 @@ export const ExpressionSocket = ({
                   />
                 </Swapable>
               ) : (
-                <ExpressionSocket
-                  expression={link.expr}
-                  location={appendLocation(location, { kind: 'chainBase' })}
-                  expectedType={expectedType}
-                  contextVariables={contextVariables}
-                  entryKeysBySource={entryKeysBySource}
-                  entrySource={chainBaseSource}
-                  entrySourceMap={entrySourceMap}
-                  isOuterExpression={false}
-                  definedFunctions={definedFunctions}
-                  label={label}
-                  onAdd={onAdd}
-                  onSetExpression={onSetExpression}
-                  onEditMarkdown={onEditMarkdown}
-                />
+                <Swapable
+                  label={chainBaseLabel}
+                  variant="block"
+                  onSwap={() => openExpressionModal('chainBase', expectedType, chainBaseLabel)}>
+                  <FontText className="text-sm">{printExpression(link.expr)}</FontText>
+                </Swapable>
               )
             ) : link.type === 'property' ? (
               <Swapable
@@ -1468,6 +1448,7 @@ const StatementBlock = ({
           statements={statement.branches[0]?.body.statements ?? []}
           {...{
             definedVariables,
+            definedFunctions,
             onAdd,
             onSetExpression,
             onSetStatementField,

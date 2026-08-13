@@ -332,8 +332,7 @@ class Parser {
       };
     }
     if (this.isName(token)) {
-      if (token.text === 'Dropdown' && this.peek(1).text === '(') {
-        this.advance();
+      if (token.text === 'Dropdown' && this.current().text === '(') {
         this.consumeText('(', 'Expected ( after Dropdown');
         const valueExpr = this.parseExpression();
         this.consumeText(',', 'Expected , after Dropdown value');
@@ -472,10 +471,7 @@ class Parser {
         const value = this.parseExpression();
         argumentsList.push({ kind: 'PositionalArgument', value, span: value.span });
       }
-      this.matchText(',');
-      const nextIsNamedArg = this.isName(this.current()) && this.peek(1).text === '=';
-      const nextIsEnd = this.checkText(endText) || this.atEnd();
-      if (!nextIsNamedArg && !nextIsEnd) {
+      if (!this.matchText(',')) {
         break;
       }
     }
