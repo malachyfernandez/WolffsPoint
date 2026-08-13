@@ -295,18 +295,18 @@ const PuzzleConnector = ({
       onPress={onPress}
       onHoverIn={() => setHovered(true)}
       onHoverOut={() => setHovered(false)}
-      className={`relative items-center justify-center ${
-        isVertical ? 'my-1 h-8 w-full' : 'mx-0.5 h-9 w-8'
-      }`}>
+      className={`relative m-0 h-7 w-7 items-center justify-center ${isVertical ? 'my-1 w-full' : ''}`}>
       <View
-        className={`border-subtle-border bg-text/10 border ${isList ? 'rounded-[3px]' : 'rounded-full'}`}
-        style={isVertical ? { height: 16, width: 12 } : { height: 12, width: 16 }}
-      />
-      <View
-        className={`border-subtle-border absolute h-7 w-7 items-center justify-center rounded-full border bg-white transition-opacity ${
-          hovered ? 'opacity-100' : 'opacity-0'
+        className={`border-subtle-border items-center justify-center border transition-all ${
+          isList ? 'rounded-[3px]' : 'rounded-full'
+        } ${
+          hovered
+            ? 'bg-text/10 h-7 w-7'
+            : isVertical
+              ? 'bg-text/20 h-3 w-2 border-transparent'
+              : 'bg-text/20 h-2 w-3 border-transparent'
         }`}>
-        <Plus size={14} color="#1a1a1a" />
+        {hovered && <Plus size={14} color="#1a1a1a" />}
       </View>
     </Pressable>
   );
@@ -905,8 +905,7 @@ export const ExpressionSocket = ({
 
   const isChain = chain.length > 1;
   const ChainContent = (
-    <Row
-      className={`items-center gap-0 ${isChain ? 'rounded-lg bg-black/[0.08] px-1 py-0.5' : ''}`}>
+    <Row className="items-center gap-0 rounded-lg bg-black/[0.08]">
       {chain.map((link, index) => {
         const nextLink = chain[index + 1];
         const nextDefinition =
