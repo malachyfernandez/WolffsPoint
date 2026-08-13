@@ -292,8 +292,8 @@ const FunctionTemplateEditor = ({
   }, []);
 
   return (
-    <Column className="gap-1">
-      <Row className="flex-wrap items-center gap-1">
+    <Column className="gap-0">
+      <Row className="flex-wrap items-center gap-0 rounded-lg bg-black/5 p-3">
         {/* Leading connector */}
         <TemplatePlusButton
           onPress={() => {

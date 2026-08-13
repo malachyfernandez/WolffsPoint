@@ -303,8 +303,8 @@ const PuzzleConnector = ({
           hovered
             ? 'bg-text/10 h-7 w-7'
             : isVertical
-              ? 'bg-text/20 h-3 w-2 border-transparent'
-              : 'bg-text/20 h-2 w-3 border-transparent'
+              ? 'bg-text/20 h-3 w-2'
+              : 'bg-text/20 h-2 w-3'
         }`}>
         {hovered && <Plus size={14} color="#1a1a1a" />}
       </View>
@@ -905,7 +905,7 @@ export const ExpressionSocket = ({
 
   const isChain = chain.length > 1;
   const ChainContent = (
-    <Row className="items-center gap-0 rounded-lg bg-black/[0.08]">
+    <Row className="items-center gap-0 rounded-lg bg-black/5">
       {chain.map((link, index) => {
         const nextLink = chain[index + 1];
         const nextDefinition =
