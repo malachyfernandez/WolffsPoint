@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useReducer, useState } from 're
 import { TextInput, View } from 'react-native';
 import ConvexDialog from '../../components/ui/dialog/ConvexDialog';
 import DialogHeader from '../../components/ui/dialog/DialogHeader';
+import UnsavedChangesDialog from '../../components/ui/dialog/UnsavedChangesDialog';
 import Column from '../../components/layout/Column';
 import Row from '../../components/layout/Row';
 import AppButton from '../../components/ui/buttons/AppButton';
@@ -143,6 +144,8 @@ const ScriptEditorDialog = ({
     value: string;
     onSave: (newValue: string) => void;
   } | null>(null);
+  const [hasModifications, setHasModifications] = useState(false);
+  const [isLeaveConfirmDialogOpen, setIsLeaveConfirmDialogOpen] = useState(false);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -153,6 +156,8 @@ const ScriptEditorDialog = ({
     setMode('blocks');
     setParseError(null);
     setInsertTarget(null);
+    setHasModifications(false);
+    setIsLeaveConfirmDialogOpen(false);
   }, [initialScriptText, isOpen]);
 
   // Bridge the reducer's history with the global useUndoRedo system.
@@ -164,9 +169,7 @@ const ScriptEditorDialog = ({
       const oldAst = createUndoSnapshot(state.ast);
       const newState = editorReducer(state, action);
       const newAst = createUndoSnapshot(newState.ast);
-      // Don't dispatch here — executeCommand's action() will dispatch.
-      // This ensures the store update and the dispatch happen in the
-      // same synchronous batch, avoiding stale canUndo/canRedo values.
+      setHasModifications(true);
       executeCommand({
         action: () => dispatch({ type: 'SET_AST', ast: newAst }),
         undoAction: () => dispatch({ type: 'SET_AST', ast: oldAst }),
@@ -213,6 +216,7 @@ const ScriptEditorDialog = ({
 
   const handleTextChange = (value: string) => {
     setTextDraft(value);
+    setHasModifications(true);
     try {
       const ast = value.trim().length > 0 ? parseScript(value) : createScript();
       dispatch({ type: 'REPLACE_AST', ast });
@@ -324,7 +328,35 @@ const ScriptEditorDialog = ({
     const textToSubmit =
       mode === 'text' ? printScriptBlock(textDraft) : printScriptBlock(state.ast);
     onSubmit(textToSubmit);
+    setHasModifications(false);
     onOpenChange(false);
+  };
+
+  // --- Unsaved changes protection ---
+  const handleAttemptClose = () => {
+    if (hasModifications) {
+      setIsLeaveConfirmDialogOpen(true);
+    } else {
+      onOpenChange(false);
+    }
+  };
+
+  const handleOpenChange = (open: boolean) => {
+    if (!open && hasModifications) {
+      setIsLeaveConfirmDialogOpen(true);
+    } else {
+      onOpenChange(open);
+    }
+  };
+
+  const handleConfirmLeave = () => {
+    setIsLeaveConfirmDialogOpen(false);
+    setHasModifications(false);
+    onOpenChange(false);
+  };
+
+  const handleCancelLeave = () => {
+    setIsLeaveConfirmDialogOpen(false);
   };
 
   const canSubmit =
@@ -332,14 +364,14 @@ const ScriptEditorDialog = ({
 
   return (
     <>
-      <ConvexDialog.Root isOpen={isOpen} onOpenChange={onOpenChange}>
+      <ConvexDialog.Root isOpen={isOpen} onOpenChange={handleOpenChange}>
         <ConvexDialog.Trigger asChild>
           <View />
         </ConvexDialog.Trigger>
         <ConvexDialog.Portal>
           <ConvexDialog.Overlay />
-          <ConvexDialog.Content className="h-[85vh] max-w-5xl">
-            <CloseButton onPress={() => onOpenChange(false)} />
+          <ConvexDialog.Content className="h-[85vh] max-w-5xl" isSwipeable={!hasModifications}>
+            <CloseButton onPress={handleAttemptClose} />
             <DialogHeader text={title} subtext="Build dynamic inputs with blocks or text" />
             <Column className="min-h-0 flex-1 gap-3 pt-3">
               <Row className="justify-between gap-2">
@@ -429,7 +461,7 @@ const ScriptEditorDialog = ({
               </View>
 
               <Row className="justify-end gap-4 pt-2">
-                <AppButton variant="outline" className="w-28" onPress={() => onOpenChange(false)}>
+                <AppButton variant="outline" className="w-28" onPress={handleAttemptClose}>
                   <FontText weight="medium">Cancel</FontText>
                 </AppButton>
                 <AppButton
@@ -475,6 +507,13 @@ const ScriptEditorDialog = ({
           }}
         />
       )}
+
+      <UnsavedChangesDialog
+        isOpen={isLeaveConfirmDialogOpen}
+        onOpenChange={setIsLeaveConfirmDialogOpen}
+        onStay={handleCancelLeave}
+        onLeave={handleConfirmLeave}
+      />
     </>
   );
 };

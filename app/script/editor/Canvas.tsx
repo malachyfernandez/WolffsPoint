@@ -1535,8 +1535,6 @@ const StatementBlock = ({
             contextVariables={contextVariables}
             definedFunctions={definedFunctions}
             entryKeysBySource={entryKeysBySource}
-            onAdd={onAdd}
-            onSetExpression={onSetExpression}
             onEditMarkdown={onEditMarkdown}
           />
         </View>
