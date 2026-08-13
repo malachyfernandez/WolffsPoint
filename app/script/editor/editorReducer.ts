@@ -57,7 +57,13 @@ export type EditorAction =
   | { type: 'UNDO' }
   | { type: 'REDO' }
   | { type: 'REPLACE_AST'; ast: Script }
-  | { type: 'SET_AST'; ast: Script };
+  | { type: 'SET_AST'; ast: Script }
+  | {
+      type: 'INSERT_BUILTIN_FUNCTION';
+      fnStatement: Statement;
+      location: ExpressionLocation;
+      expression: Expression;
+    };
 
 const span = emptySpan();
 
@@ -728,6 +734,38 @@ export const editorReducer = (state: EditorState, action: EditorAction): EditorS
       return { ...state, ast: action.ast, past: [...state.past, state.ast].slice(-50), future: [] };
     case 'SET_AST':
       return { ...state, ast: action.ast };
+    case 'INSERT_BUILTIN_FUNCTION': {
+      // 1. Append the function statement to the end of the script
+      const statementsWithFn = [...state.ast.statements, action.fnStatement];
+      const astWithFn = { ...state.ast, statements: statementsWithFn };
+      // 2. Insert the call expression at the target location
+      const targetStatement = getStatementAtPath(
+        astWithFn.statements,
+        action.location.statementPath
+      );
+      if (!targetStatement) {
+        return {
+          ast: astWithFn,
+          past: [...state.past, state.ast].slice(-50),
+          future: [],
+        };
+      }
+      const updatedStatement = setExpressionAtLocation(
+        targetStatement,
+        action.location,
+        action.expression
+      );
+      const finalStatements = replaceStatementAtPath(
+        astWithFn.statements,
+        action.location.statementPath,
+        updatedStatement
+      );
+      return {
+        ast: { ...state.ast, statements: finalStatements },
+        past: [...state.past, state.ast].slice(-50),
+        future: [],
+      };
+    }
     default:
       return state;
   }

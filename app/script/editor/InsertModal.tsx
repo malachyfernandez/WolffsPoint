@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, View, TextInput } from 'react-native';
 import ConvexDialog from '../../components/ui/dialog/ConvexDialog';
 import ShadowScrollView from '../../components/ui/ShadowScrollView';
@@ -9,6 +9,7 @@ import AppButton from '../../components/ui/buttons/AppButton';
 import { CloseButton } from '../../components/game/markdownEditor';
 import type { BinaryOperator, Expression, FunctionTemplatePiece, Statement } from '../lang/ast';
 import { emptySpan } from '../lang/ast';
+import { parseScript } from '../lang/parser';
 import type { InputType } from '../registry';
 import { STATEMENT_BLOCKS, EXPRESSION_BLOCKS } from '../registry';
 import {
@@ -39,6 +40,8 @@ export interface DefinedFunction {
   name: string;
   parameters: string[];
   template?: FunctionTemplatePiece[];
+  bodyStatements?: Statement[];
+  returnEntrySource?: string;
 }
 
 interface InsertModalProps {
@@ -49,7 +52,14 @@ interface InsertModalProps {
   onInsertStatement: (statement: Statement, path: number[], replace?: boolean) => void;
   onInsertExpression: (expression: Expression, target: InsertTarget) => void;
   onInsertChainLink: (target: InsertTarget, blockId: string) => void;
+  onInsertBuiltinFunction: (
+    fnStatement: Statement,
+    callExpression: Expression,
+    target: InsertTarget
+  ) => void;
   onRemove: (target: InsertTarget) => void;
+  /** When true, built-in functions are hidden (used in sub-editors like template input) */
+  hideBuiltinFunctions?: boolean;
   onClose: () => void;
 }
 
@@ -104,8 +114,71 @@ const DATA_SOURCES: { name: string; description: string }[] = [
   { name: 'schedule', description: 'Game schedule' },
   { name: 'profiles', description: 'Player profiles' },
   { name: 'Inputs', description: 'Selected input values (e.g. player name)' },
-  { name: 'InputsWithData', description: 'Full data for selected inputs (e.g. player object with role, email, days)' },
+  {
+    name: 'InputsWithData',
+    description: 'Full data for selected inputs (e.g. player object with role, email, days)',
+  },
 ];
+
+/**
+ * Built-in functions: pre-made function definitions that get appended to the
+ * script when first used. They appear in the function list but disappear once
+ * a function with the same name already exists in the script.
+ */
+interface BuiltinFunction {
+  name: string;
+  description: string;
+  /** Source text of the full function definition (parsed to get the AST) */
+  source: string;
+}
+
+const BUILTIN_FUNCTIONS: BuiltinFunction[] = [
+  {
+    name: 'dataDaysToday',
+    description: 'Player day data relative to today (before/after)',
+    source: `Function dataDaysToday(data, days, direction) template(input("data", players), " data ", input("days", 0), " day(s) ", input("direction", Dropdown("before", ["before", "after"])), "today") {
+  Variable({ NAME = "targetDay", VALUE = (currentDay + days) });
+  If ((direction == "before")) {
+    Variable({ NAME = "targetDay", VALUE = (currentDay - days) });
+  }
+  Return data.Map(Item => Item.entry("days").index(targetDay));
+}`,
+  },
+  {
+    name: 'dataOnDay',
+    description: 'Player day data for a specific day number',
+    source: `Function dataOnDay(data, day) template(input("data", players), " on day ", input("day", 1)) {
+  Return data.Map(Item => Item.entry("days").index(day));
+}`,
+  },
+];
+
+/** Parse a built-in function source into its FunctionStatement AST node. */
+const parseBuiltinFunction = (source: string): Statement => {
+  const ast = parseScript(source);
+  return ast.statements[0];
+};
+
+/** Build a call expression for a built-in function from its source. */
+const buildBuiltinCall = (source: string): Expression => {
+  const fnStatement = parseBuiltinFunction(source);
+  if (fnStatement.kind !== 'FunctionStatement') return { kind: 'NothingLiteral', span };
+  const templateInputs = fnStatement.template?.filter((p) => p.kind === 'input') ?? [];
+  const args = fnStatement.parameters.map((_, index) => {
+    const defaultExpr = templateInputs[index]?.defaultExpression;
+    return {
+      kind: 'PositionalArgument' as const,
+      value: defaultExpr ?? { kind: 'NothingLiteral' as const, span },
+      span,
+    };
+  });
+  return {
+    kind: 'CallExpression',
+    callee: { kind: 'IdentifierExpression', name: fnStatement.name, span },
+    arguments: args,
+    span,
+  };
+};
 
 const buildStatementFromRegistry = (id: string): Statement => {
   const definition = STATEMENT_BLOCKS.find((block) => block.id === id);
@@ -213,6 +286,8 @@ interface ModalItem {
   category: string;
   onSelect: () => void;
   dividerAfter?: boolean;
+  /** When true, handleSelect skips calling onClose (the item manages its own dialog flow) */
+  skipCloseOnSelect?: boolean;
 }
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -237,18 +312,29 @@ const InsertModal = ({
   onInsertStatement,
   onInsertExpression,
   onInsertChainLink,
+  onInsertBuiltinFunction,
+  hideBuiltinFunctions,
   onRemove,
   onClose,
 }: InsertModalProps) => {
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const [showBuiltinInfo, setShowBuiltinInfo] = useState(false);
+  const [pendingBuiltin, setPendingBuiltin] = useState<{
+    fnStatement: Statement;
+    callExpression: Expression;
+  } | null>(null);
+  const searchInputRef = useRef<TextInput>(null);
 
   // Reset to the first tab + clear search every time the modal opens so a
-  // previous session's selection never carries over.
+  // previous session's selection never carries over. Auto-focus the search
+  // bar so the user can start typing immediately.
   useEffect(() => {
     if (isOpen) {
       setSearch('');
       setActiveCategory(null);
+      const timer = setTimeout(() => searchInputRef.current?.focus(), 100);
+      return () => clearTimeout(timer);
     }
   }, [isOpen]);
 
@@ -285,12 +371,33 @@ const InsertModal = ({
       }));
     }
     const selectExpression = (expression: Expression) => onInsertExpression(expression, target);
+    const existingFnNames = new Set(definedFunctions.map((fn) => fn.name));
     const functionItems = definedFunctions.map((fn) => ({
       label: `${fn.name}(${fn.parameters.join(', ')})`,
       description: 'Custom function',
       category: 'function',
       onSelect: () => selectExpression(buildFunctionCall(fn)),
     }));
+    // Built-in functions: only show if not already defined and not hidden
+    const builtinItems: ModalItem[] = hideBuiltinFunctions
+      ? []
+      : BUILTIN_FUNCTIONS.filter((builtin) => !existingFnNames.has(builtin.name)).map(
+          (builtin, index, arr) => {
+            const fnStatement = parseBuiltinFunction(builtin.source);
+            const callExpression = buildBuiltinCall(builtin.source);
+            return {
+              label: builtin.name,
+              description: builtin.description,
+              category: 'function',
+              dividerAfter: index === arr.length - 1,
+              skipCloseOnSelect: true,
+              onSelect: () => {
+                setPendingBuiltin({ fnStatement, callExpression });
+                setShowBuiltinInfo(true);
+              },
+            };
+          }
+        );
     const seenVariables = new Set<string>();
     const variableItems: ModalItem[] = [
       ...(target.contextVariables ?? []).filter(Boolean).map((name) => {
@@ -318,6 +425,7 @@ const InsertModal = ({
     );
     const sharedItems: ModalItem[] = [
       ...functionItems,
+      ...builtinItems,
       ...variableItems,
       ...(entryBlock
         ? [
@@ -447,7 +555,7 @@ const InsertModal = ({
       },
     ];
     if (target.expectedType === 'boolean')
-      return [...functionItems, ...variableItems, ...booleanItems];
+      return [...functionItems, ...builtinItems, ...variableItems, ...booleanItems];
     return [
       {
         label: '0',
@@ -487,6 +595,7 @@ const InsertModal = ({
     onInsertStatement,
     onInsertExpression,
     onInsertChainLink,
+    onInsertBuiltinFunction,
   ]);
 
   const filtered = useMemo(() => {
@@ -523,7 +632,7 @@ const InsertModal = ({
 
   const handleSelect = (item: ModalItem) => {
     item.onSelect();
-    onClose();
+    if (!item.skipCloseOnSelect) onClose();
   };
 
   return (
@@ -564,6 +673,7 @@ const InsertModal = ({
               </AppButton>
             )}
             <TextInput
+              ref={searchInputRef}
               value={search}
               onChangeText={setSearch}
               placeholder="Search..."
@@ -618,6 +728,70 @@ const InsertModal = ({
           </Column>
         </ConvexDialog.Content>
       </ConvexDialog.Portal>
+
+      {/* First-time explanation dialog for built-in functions */}
+      <ConvexDialog.Root
+        isOpen={showBuiltinInfo}
+        onOpenChange={(open: boolean) => {
+          if (!open) {
+            setShowBuiltinInfo(false);
+            setPendingBuiltin(null);
+          }
+        }}>
+        <ConvexDialog.Portal>
+          <ConvexDialog.Overlay />
+          <ConvexDialog.Content className="max-w-md">
+            <CloseButton
+              onPress={() => {
+                setShowBuiltinInfo(false);
+                setPendingBuiltin(null);
+              }}
+            />
+            <Column className="gap-3 pt-3">
+              <FontText weight="medium" className="text-base">
+                Built-in Functions
+              </FontText>
+              <FontText variant="subtext" className="text-sm leading-5">
+                Built-in functions are pre-made functions for common tasks. When you use one, the
+                full function code is added to the bottom of your script so you can see and modify
+                it like any other function. Once added, it becomes a regular function — you'll find
+                it in the function list as normal, and it won't appear in the built-in section
+                again.
+              </FontText>
+              <Row className="gap-2">
+                <AppButton
+                  variant="accent"
+                  className="flex-1"
+                  onPress={() => {
+                    if (pendingBuiltin && target) {
+                      onInsertBuiltinFunction(
+                        pendingBuiltin.fnStatement,
+                        pendingBuiltin.callExpression,
+                        target
+                      );
+                    }
+                    setShowBuiltinInfo(false);
+                    setPendingBuiltin(null);
+                    onClose();
+                  }}>
+                  <FontText weight="medium" color="white">
+                    Add function
+                  </FontText>
+                </AppButton>
+                <AppButton
+                  variant="secondary"
+                  className="flex-1"
+                  onPress={() => {
+                    setShowBuiltinInfo(false);
+                    setPendingBuiltin(null);
+                  }}>
+                  <FontText weight="medium">Cancel</FontText>
+                </AppButton>
+              </Row>
+            </Column>
+          </ConvexDialog.Content>
+        </ConvexDialog.Portal>
+      </ConvexDialog.Root>
     </ConvexDialog.Root>
   );
 };

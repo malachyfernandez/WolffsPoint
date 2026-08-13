@@ -1,5 +1,6 @@
 import type { CallArgument, Expression, NamedArgument, Statement } from '../lang/ast';
 import { emptySpan } from '../lang/ast';
+import type { DefinedFunction } from './InsertModal';
 
 export type ExpressionSlot =
   | { kind: 'callArg'; name: string }
@@ -398,4 +399,273 @@ export const updateExpressionAtLocation = (
     }
   }, root);
   return current ? setExpressionAtLocation(statement, location, update(current)) : statement;
+};
+
+/* ──────────────────────────────────────────────────────────────────────────
+ * Entry source tracing — determines what "source" of data an expression
+ * evaluates to (e.g. "players", "day", "roles") so .entry() autocomplete
+ * can suggest the right keys even through function calls and chains.
+ * ────────────────────────────────────────────────────────────────────────── */
+
+/** Known transitions: .entry("X") on source S → sub-source. */
+export const ENTRY_SOURCE_TRANSITIONS: Record<string, Record<string, string>> = {
+  players: { days: 'day' },
+  currentplayer: { days: 'day' },
+};
+
+/** Global data sources — identifiers that are their own source. */
+const GLOBAL_DATA_SOURCES = new Set([
+  'players',
+  'currentplayer',
+  'roles',
+  'schedule',
+  'profiles',
+  'daydates',
+]);
+
+/** Apply an .entry(key) transition to a source. Returns the new source or undefined. */
+export const applyEntryTransition = (
+  source: string | undefined,
+  key: string
+): string | undefined => {
+  if (!source) return undefined;
+  return ENTRY_SOURCE_TRANSITIONS[source]?.[key.toLowerCase()];
+};
+
+/** Methods that preserve the element source (array → element). */
+const SOURCE_PRESERVING_METHODS = new Set(['index', 'filter', 'sort', 'first', 'last']);
+
+/** Methods that return a non-object (number/string/boolean). */
+const SOURCE_DROPPING_METHODS = new Set(['length', 'count', 'join', 'contains']);
+
+interface TraceContext {
+  varSources: Record<string, string>;
+  inputSources: Record<string, string>;
+  definedFunctions: DefinedFunction[];
+}
+
+/** Find the return expression from a function body (searches nested blocks). */
+const findReturnExpression = (statements: Statement[]): Expression | undefined => {
+  for (let i = statements.length - 1; i >= 0; i--) {
+    const stmt = statements[i];
+    if (stmt.kind === 'ReturnStatement' && stmt.value) return stmt.value;
+    if (stmt.kind === 'IfStatement') {
+      for (let j = stmt.branches.length - 1; j >= 0; j--) {
+        const found = findReturnExpression(stmt.branches[j].body.statements);
+        if (found) return found;
+      }
+      if (stmt.elseBody) {
+        const found = findReturnExpression(stmt.elseBody.statements);
+        if (found) return found;
+      }
+    }
+    if (stmt.kind === 'ForEachStatement') {
+      const found = findReturnExpression(stmt.body.statements);
+      if (found) return found;
+    }
+  }
+  return undefined;
+};
+
+/** Trace a single chain method link to determine the resulting source. */
+const traceMethodSource = (
+  link: ChainLink,
+  currentSource: string | undefined,
+  ctx: TraceContext
+): string | undefined => {
+  if (link.type !== 'method') return currentSource;
+  const name = link.name.toLowerCase();
+
+  // .entry("X") → look up transition
+  if (name === 'entry') {
+    if (!currentSource) return undefined;
+    const keyArg = link.args[0];
+    if (keyArg && keyArg.value.kind === 'StringLiteral') {
+      const key = keyArg.value.value.toLowerCase();
+      return ENTRY_SOURCE_TRANSITIONS[currentSource]?.[key];
+    }
+    return undefined;
+  }
+
+  // .map(lambda) → trace lambda body
+  if (name === 'map') {
+    if (!currentSource) return undefined;
+    const lambdaArg = link.args[0];
+    if (lambdaArg && lambdaArg.value.kind === 'LambdaExpression') {
+      const lambda = lambdaArg.value;
+      const param = lambda.parameters[0] || 'Item';
+      const body = lambda.body;
+      // Lambda parameter gets the element source (same as array element source)
+      const lambdaCtx: TraceContext = {
+        ...ctx,
+        varSources: { ...ctx.varSources, [param]: currentSource },
+      };
+      // Lambda body can be a BlockStatement (not an Expression) — skip those
+      if (body.kind === 'BlockStatement') return undefined;
+      return traceEntrySource(body, lambdaCtx);
+    }
+    return undefined;
+  }
+
+  // Methods that drop the source (return primitives)
+  if (SOURCE_DROPPING_METHODS.has(name)) return undefined;
+
+  // Methods that preserve the source (index, filter, sort, first, last)
+  if (SOURCE_PRESERVING_METHODS.has(name)) return currentSource;
+
+  return undefined;
+};
+
+/** Trace an expression to determine its entry source. */
+export const traceEntrySource = (
+  expr: Expression | undefined,
+  ctx: TraceContext
+): string | undefined => {
+  if (!expr) return undefined;
+
+  switch (expr.kind) {
+    case 'IdentifierExpression':
+      // Check local variables first, then fall back to global data sources
+      if (expr.name in ctx.varSources) return ctx.varSources[expr.name];
+      if (GLOBAL_DATA_SOURCES.has(expr.name.toLowerCase())) return expr.name.toLowerCase();
+      return undefined;
+
+    case 'CallExpression': {
+      // Function call to a defined function
+      if (expr.callee.kind === 'IdentifierExpression') {
+        const fnName = expr.callee.name;
+        const fnDef = ctx.definedFunctions.find((f) => f.name === fnName);
+        if (fnDef?.bodyStatements) {
+          // Build parameter sources from actual arguments
+          const paramSources: Record<string, string> = {};
+          fnDef.parameters.forEach((param, index) => {
+            const arg = expr.arguments[index];
+            if (arg) {
+              const source = traceEntrySource(arg.value, ctx);
+              if (source) paramSources[param] = source;
+            }
+          });
+          // Fall back to template defaults for params without arg sources
+          const templateInputs = fnDef.template?.filter((p) => p.kind === 'input') ?? [];
+          templateInputs.forEach((input, index) => {
+            const param = fnDef.parameters[index];
+            if (param && !(param in paramSources) && input.defaultExpression) {
+              const source = traceEntrySource(input.defaultExpression, ctx);
+              if (source) paramSources[param] = source;
+            }
+          });
+          // Also include variables defined inside the function body
+          // (e.g. Variable statements)
+          const bodyVarSources = { ...paramSources };
+          for (const stmt of fnDef.bodyStatements) {
+            if (
+              stmt.kind === 'ExpressionStatement' &&
+              stmt.expression.kind === 'CallExpression' &&
+              stmt.expression.callee.kind === 'IdentifierExpression' &&
+              stmt.expression.callee.name.toLowerCase() === 'variable'
+            ) {
+              const nameArg = stmt.expression.arguments.find(
+                (a) => a.kind === 'NamedArgument' && a.name.toLowerCase() === 'name'
+              );
+              const valueArg = stmt.expression.arguments.find(
+                (a) => a.kind === 'NamedArgument' && a.name.toLowerCase() === 'value'
+              );
+              if (nameArg && valueArg && nameArg.value.kind === 'StringLiteral') {
+                const source = traceEntrySource(valueArg.value, {
+                  ...ctx,
+                  varSources: bodyVarSources,
+                });
+                if (source) bodyVarSources[nameArg.value.value] = source;
+              }
+            }
+          }
+          // Trace the return expression
+          const returnExpr = findReturnExpression(fnDef.bodyStatements);
+          if (returnExpr) {
+            return traceEntrySource(returnExpr, { ...ctx, varSources: bodyVarSources });
+          }
+        }
+        // Fall back to pre-computed returnEntrySource
+        return fnDef?.returnEntrySource;
+      }
+
+      // Chain (MemberExpression callee) — decompose and trace
+      const chain = decomposeChain(expr);
+      if (chain.length > 1) {
+        return traceChainSource(chain, ctx);
+      }
+      return undefined;
+    }
+
+    case 'MemberExpression': {
+      const chain = decomposeChain(expr);
+      if (chain.length > 1) {
+        return traceChainSource(chain, ctx);
+      }
+      return undefined;
+    }
+
+    default:
+      return undefined;
+  }
+};
+
+/** Trace a chain (base + method links) to determine the resulting source. */
+const traceChainSource = (chain: ChainLink[], ctx: TraceContext): string | undefined => {
+  const base = chain[0];
+  if (base.type !== 'base') return undefined;
+
+  // Handle InputsWithData.entry("X") specially
+  if (
+    base.expr.kind === 'IdentifierExpression' &&
+    base.expr.name.toLowerCase() === 'inputswithdata'
+  ) {
+    for (let i = 1; i < chain.length; i++) {
+      const link = chain[i];
+      if (link.type === 'method' && link.name.toLowerCase() === 'entry') {
+        const keyArg = link.args[0];
+        if (keyArg && keyArg.value.kind === 'StringLiteral') {
+          const key = keyArg.value.value.toLowerCase();
+          let source: string | undefined = ctx.inputSources[key];
+          for (let j = i + 1; j < chain.length; j++) {
+            source = traceMethodSource(chain[j], source, ctx);
+          }
+          return source;
+        }
+      }
+    }
+    return undefined;
+  }
+
+  // Handle Inputs.entry("X") — returns the raw value, trace from input source
+  if (base.expr.kind === 'IdentifierExpression' && base.expr.name.toLowerCase() === 'inputs') {
+    for (let i = 1; i < chain.length; i++) {
+      const link = chain[i];
+      if (link.type === 'method' && link.name.toLowerCase() === 'entry') {
+        const keyArg = link.args[0];
+        if (keyArg && keyArg.value.kind === 'StringLiteral') {
+          const key = keyArg.value.value.toLowerCase();
+          // Inputs.entry("X") returns the raw selected value (e.g. player name string)
+          // The source is the input's source, but the value is a primitive (string)
+          // So .entry() on it won't have keys — return undefined
+          let source: string | undefined;
+          // For Inputs, the value is a primitive, not an object
+          // So we don't set a source — .entry() won't autocomplete
+          source = undefined;
+          for (let j = i + 1; j < chain.length; j++) {
+            source = traceMethodSource(chain[j], source, ctx);
+          }
+          return source;
+        }
+      }
+    }
+    return undefined;
+  }
+
+  // Regular chain tracing
+  let source = traceEntrySource(base.expr, ctx);
+  for (let i = 1; i < chain.length; i++) {
+    source = traceMethodSource(chain[i], source, ctx);
+  }
+  return source;
 };

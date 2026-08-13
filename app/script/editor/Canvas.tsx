@@ -24,8 +24,10 @@ import type { BlockInput, InputType } from '../registry';
 import { EXPRESSION_BLOCKS, STATEMENT_BLOCKS } from '../registry';
 import type { DefinedFunction, InsertTarget } from './InsertModal';
 import {
+  applyEntryTransition,
   decomposeChain,
   renameIdentifier,
+  traceEntrySource,
   type ChainLink,
   type ExpressionLocation,
   type ExpressionPathStep,
@@ -34,6 +36,9 @@ import DropdownLiteralEditor from './DropdownLiteralEditor';
 import FunctionTemplateEditor from './FunctionTemplateEditor';
 
 const span = emptySpan();
+
+/** Context for input label → data source mapping (used for entry autocomplete tracing). */
+const InputSourcesContext = React.createContext<Record<string, string>>({});
 const BOOLEAN_OPERATORS: BinaryOperator[] = ['==', '!=', '>', '<', '>=', '<=', 'AND', 'OR'];
 const MATH_OPERATORS: BinaryOperator[] = ['+', '-', '*', '/', '%'];
 const isMathOperator = (op: BinaryOperator) => MATH_OPERATORS.includes(op);
@@ -58,6 +63,7 @@ interface CanvasProps {
   ) => void;
   onDeleteStatement: (path: number[]) => void;
   entryKeysBySource?: Record<string, string[]>;
+  inputSources?: Record<string, string>;
   stmtPath?: number[];
   onEditMarkdown?: (currentValue: string, onSave: (newValue: string) => void) => void;
 }
@@ -625,6 +631,7 @@ export const ExpressionSocket = ({
   onEditMarkdown,
 }: ExpressionSocketProps) => {
   const chain = useMemo(() => decomposeChain(expression), [expression]);
+  const inputSources = React.useContext(InputSourcesContext);
   const expressionLabel = (() => {
     if (expression.kind === 'BooleanLiteral') return String(expression.value);
     if (expression.kind === 'BinaryExpression') return expression.operator;
@@ -832,10 +839,37 @@ export const ExpressionSocket = ({
   // ".map"). Used for the base's tooltip + the swap modal title so clicking
   // the base targets the base, not the last link.
   const chainBaseLabel = base.type === 'base' ? printExpression(base.expr) : expressionLabel;
-  const chainBaseSource =
-    base.type === 'base' && base.expr.kind === 'IdentifierExpression'
-      ? (entrySourceMap?.[base.expr.name] ?? base.expr.name)
-      : entrySource;
+  const chainBaseSource = useMemo(() => {
+    if (base.type !== 'base') return entrySource;
+    // Identifier: look up in entrySourceMap (lambda params, variables)
+    if (base.expr.kind === 'IdentifierExpression') {
+      return entrySourceMap?.[base.expr.name] ?? base.expr.name;
+    }
+    // Function call: trace through the function body to determine return source
+    if (base.expr.kind === 'CallExpression' && base.expr.callee.kind === 'IdentifierExpression') {
+      const fnName = base.expr.callee.name;
+      const fnDef = definedFunctions?.find((f) => f.name === fnName);
+      if (fnDef) {
+        // Try tracing with actual call-site arguments for accuracy
+        const traced = traceEntrySource(base.expr, {
+          varSources: {},
+          inputSources,
+          definedFunctions: definedFunctions ?? [],
+        });
+        return traced ?? fnDef.returnEntrySource ?? entrySource;
+      }
+    }
+    // Chain base (e.g. InputsWithData.entry("Select").map(...))
+    if (base.expr.kind === 'MemberExpression' || base.expr.kind === 'CallExpression') {
+      const traced = traceEntrySource(base.expr, {
+        varSources: {},
+        inputSources,
+        definedFunctions: definedFunctions ?? [],
+      });
+      if (traced) return traced;
+    }
+    return entrySource;
+  }, [base, entrySource, entrySourceMap, definedFunctions, inputSources]);
   const isSingleLiteral =
     chain.length === 1 &&
     base.type === 'base' &&
@@ -919,9 +953,7 @@ export const ExpressionSocket = ({
           if (prev.type === 'method' && prev.name.toLowerCase() === 'entry') {
             const keyArg = prev.args[0];
             if (keyArg && keyArg.value.kind === 'StringLiteral') {
-              const key = keyArg.value.value.toLowerCase();
-              // .entry("days") on a player → subsequent entries are day fields
-              if (key === 'days') linkEntrySource = 'day';
+              linkEntrySource = applyEntryTransition(linkEntrySource, keyArg.value.value);
             }
           }
         }
@@ -1657,52 +1689,55 @@ const Canvas = ({
   onSetStatementField,
   onDeleteStatement,
   entryKeysBySource,
+  inputSources,
   stmtPath = [],
   onEditMarkdown,
 }: CanvasProps) => (
-  <Column className="gap-0">
-    {statements.length > 0 && (
-      <PuzzleConnector
-        direction="vertical"
-        tooltip="Add block"
-        onPress={() => onAdd({ kind: 'statement', path: [...stmtPath, 0] })}
-      />
-    )}
-    {statements.map((statement, index) => (
-      <React.Fragment key={`stmt-${stmtPath.join('-')}-${index}`}>
-        <StatementBlock
-          statement={statement}
-          index={index}
-          stmtPath={stmtPath}
-          definedVariables={definedVariables}
-          definedFunctions={definedFunctions}
-          onAdd={onAdd}
-          onSetExpression={onSetExpression}
-          onEditMarkdown={onEditMarkdown}
-          onSetStatementField={onSetStatementField}
-          onDeleteStatement={onDeleteStatement}
-          entryKeysBySource={entryKeysBySource}
-        />
+  <InputSourcesContext.Provider value={inputSources ?? {}}>
+    <Column className="gap-0">
+      {statements.length > 0 && (
         <PuzzleConnector
           direction="vertical"
           tooltip="Add block"
-          onPress={() => onAdd({ kind: 'statement', path: [...stmtPath, index + 1] })}
+          onPress={() => onAdd({ kind: 'statement', path: [...stmtPath, 0] })}
         />
-      </React.Fragment>
-    ))}
-    {statements.length === 0 && (
-      <Pressable
-        accessibilityRole="button"
-        onPress={() => onAdd({ kind: 'statement', path: [...stmtPath, 0] })}>
-        <View className="border-subtle-border my-2 h-10 w-full flex-row items-center justify-center gap-2 rounded-xl border border-dashed bg-transparent">
-          <FontText className="text-text/40 text-sm">+</FontText>
-          <FontText variant="subtext" className="text-sm">
-            press to add a block
-          </FontText>
-        </View>
-      </Pressable>
-    )}
-  </Column>
+      )}
+      {statements.map((statement, index) => (
+        <React.Fragment key={`stmt-${stmtPath.join('-')}-${index}`}>
+          <StatementBlock
+            statement={statement}
+            index={index}
+            stmtPath={stmtPath}
+            definedVariables={definedVariables}
+            definedFunctions={definedFunctions}
+            onAdd={onAdd}
+            onSetExpression={onSetExpression}
+            onEditMarkdown={onEditMarkdown}
+            onSetStatementField={onSetStatementField}
+            onDeleteStatement={onDeleteStatement}
+            entryKeysBySource={entryKeysBySource}
+          />
+          <PuzzleConnector
+            direction="vertical"
+            tooltip="Add block"
+            onPress={() => onAdd({ kind: 'statement', path: [...stmtPath, index + 1] })}
+          />
+        </React.Fragment>
+      ))}
+      {statements.length === 0 && (
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => onAdd({ kind: 'statement', path: [...stmtPath, 0] })}>
+          <View className="border-subtle-border my-2 h-10 w-full flex-row items-center justify-center gap-2 rounded-xl border border-dashed bg-transparent">
+            <FontText className="text-text/40 text-sm">+</FontText>
+            <FontText variant="subtext" className="text-sm">
+              press to add a block
+            </FontText>
+          </View>
+        </Pressable>
+      )}
+    </Column>
+  </InputSourcesContext.Provider>
 );
 
 export default Canvas;

@@ -688,6 +688,8 @@ const EditInputContent = ({
         }}
         onInsertExpression={handleInsertExpression}
         onInsertChainLink={handleInsertChainLink}
+        onInsertBuiltinFunction={() => setInsertTarget(null)}
+        hideBuiltinFunctions
         onRemove={handleRemoveExpr}
         onClose={() => setInsertTarget(null)}
       />

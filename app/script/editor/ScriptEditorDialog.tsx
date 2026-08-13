@@ -18,6 +18,7 @@ import type { EditorAction } from './editorReducer';
 import Canvas from './Canvas';
 import InsertModal, { type DefinedFunction, type InsertTarget } from './InsertModal';
 import { createScriptGlobals, type ScriptSourceData } from '../runtime/sources';
+import { traceEntrySource } from './expressionEditor';
 import { useUndoRedo, useCreateUndoSnapshot } from '../../../hooks/useUndoRedo';
 
 interface ScriptEditorDialogProps {
@@ -67,24 +68,125 @@ const collectDefinedVariables = (statements: Statement[], acc: string[] = []): s
 
 const collectDefinedFunctions = (
   statements: Statement[],
+  inputSources: Record<string, string> = {},
   acc: DefinedFunction[] = []
 ): DefinedFunction[] => {
   for (const statement of statements) {
     if (statement.kind === 'FunctionStatement') {
+      // Build parameter source map from template defaults
+      const paramSources: Record<string, string> = {};
+      const templateInputs = statement.template?.filter((p) => p.kind === 'input') ?? [];
+      templateInputs.forEach((input, index) => {
+        const param = statement.parameters[index];
+        if (param && input.defaultExpression) {
+          const source = traceEntrySource(input.defaultExpression, {
+            varSources: {},
+            inputSources,
+            definedFunctions: acc,
+          });
+          if (source) paramSources[param] = source;
+        }
+      });
+      // Trace the return expression to compute returnEntrySource
+      const returnExpr = findReturnExpression(statement.body.statements);
+      const returnEntrySource = returnExpr
+        ? traceEntrySource(returnExpr, {
+            varSources: paramSources,
+            inputSources,
+            definedFunctions: acc,
+          })
+        : undefined;
       acc.push({
         name: statement.name,
         parameters: statement.parameters,
         template: statement.template,
+        bodyStatements: statement.body.statements,
+        returnEntrySource,
       });
-      collectDefinedFunctions(statement.body.statements, acc);
+      collectDefinedFunctions(statement.body.statements, inputSources, acc);
     } else if (statement.kind === 'IfStatement') {
-      statement.branches.forEach((branch) => collectDefinedFunctions(branch.body.statements, acc));
-      if (statement.elseBody) collectDefinedFunctions(statement.elseBody.statements, acc);
+      statement.branches.forEach((branch) =>
+        collectDefinedFunctions(branch.body.statements, inputSources, acc)
+      );
+      if (statement.elseBody)
+        collectDefinedFunctions(statement.elseBody.statements, inputSources, acc);
     } else if (statement.kind === 'ForEachStatement') {
-      collectDefinedFunctions(statement.body.statements, acc);
+      collectDefinedFunctions(statement.body.statements, inputSources, acc);
     }
   }
   return acc;
+};
+
+/** Find the return expression from a function body (searches nested blocks). */
+const findReturnExpression = (statements: Statement[]): Expression | undefined => {
+  for (let i = statements.length - 1; i >= 0; i--) {
+    const stmt = statements[i];
+    if (stmt.kind === 'ReturnStatement' && stmt.value) return stmt.value;
+    if (stmt.kind === 'IfStatement') {
+      for (let j = stmt.branches.length - 1; j >= 0; j--) {
+        const found = findReturnExpression(stmt.branches[j].body.statements);
+        if (found) return found;
+      }
+      if (stmt.elseBody) {
+        const found = findReturnExpression(stmt.elseBody.statements);
+        if (found) return found;
+      }
+    }
+    if (stmt.kind === 'ForEachStatement') {
+      const found = findReturnExpression(stmt.body.statements);
+      if (found) return found;
+    }
+  }
+  return undefined;
+};
+
+/** Build a map of input label → data source from CreateSelectInput statements. */
+const collectInputSources = (
+  statements: Statement[],
+  entryKeysBySource: Record<string, string[]>
+): Record<string, string> => {
+  const sources: Record<string, string> = {};
+  for (const stmt of statements) {
+    if (
+      stmt.kind === 'ExpressionStatement' &&
+      stmt.expression.kind === 'CallExpression' &&
+      stmt.expression.callee.kind === 'IdentifierExpression' &&
+      stmt.expression.callee.name.toLowerCase() === 'createselectinput'
+    ) {
+      const labelArg = stmt.expression.arguments.find(
+        (a) => a.kind === 'NamedArgument' && a.name.toLowerCase() === 'label'
+      );
+      const listArg = stmt.expression.arguments.find(
+        (a) => a.kind === 'NamedArgument' && a.name.toLowerCase() === 'list'
+      );
+      if (labelArg && listArg && labelArg.value.kind === 'StringLiteral') {
+        // Determine the source of the LIST argument
+        const listExpr = listArg.value;
+        if (listExpr.kind === 'IdentifierExpression') {
+          const name = listExpr.name.toLowerCase();
+          // Check if it's a known source (players, roles, etc.)
+          if (name in entryKeysBySource) {
+            sources[labelArg.value.value.toLowerCase()] = name;
+          }
+        }
+      }
+    }
+    // Recurse into nested blocks
+    if (stmt.kind === 'IfStatement') {
+      stmt.branches.forEach((b) =>
+        Object.assign(sources, collectInputSources(b.body.statements, entryKeysBySource))
+      );
+      if (stmt.elseBody)
+        Object.assign(sources, collectInputSources(stmt.elseBody.statements, entryKeysBySource));
+    }
+    if (stmt.kind === 'ForEachStatement') {
+      Object.assign(sources, collectInputSources(stmt.body.statements, entryKeysBySource));
+    }
+    if (stmt.kind === 'FunctionStatement') {
+      Object.assign(sources, collectInputSources(stmt.body.statements, entryKeysBySource));
+    }
+  }
+  return sources;
 };
 
 const INPUT_STATEMENT_IDS = new Set([
@@ -183,10 +285,6 @@ const ScriptEditorDialog = ({
     () => collectDefinedVariables(state.ast.statements),
     [state.ast.statements]
   );
-  const definedFunctions = useMemo(
-    () => collectDefinedFunctions(state.ast.statements),
-    [state.ast.statements]
-  );
   const entryKeysBySource = useMemo(() => {
     const globals = createScriptGlobals(sources);
     const keys = Object.fromEntries(
@@ -214,6 +312,14 @@ const ScriptEditorDialog = ({
     keys.day = ['vote', 'action', ...(sources?.userTableTitle?.extraDayColumns ?? [])];
     return keys;
   }, [sources, state.ast.statements]);
+  const inputSources = useMemo(
+    () => collectInputSources(state.ast.statements, entryKeysBySource),
+    [state.ast.statements, entryKeysBySource]
+  );
+  const definedFunctions = useMemo(
+    () => collectDefinedFunctions(state.ast.statements, inputSources),
+    [state.ast.statements, inputSources]
+  );
 
   const handleTextChange = (value: string) => {
     setTextDraft(value);
@@ -257,6 +363,23 @@ const ScriptEditorDialog = ({
         ? { type: 'REPLACE_CHAIN_BASE', location: target.location, expression }
         : { type: 'SET_EXPRESSION', location: target.location, expression, trackHistory: true },
       'Insert expression'
+    );
+  };
+
+  const handleInsertBuiltinFunction = (
+    fnStatement: Statement,
+    callExpression: Expression,
+    target: InsertTarget
+  ) => {
+    if (!target.location) return;
+    dispatchWithUndo(
+      {
+        type: 'INSERT_BUILTIN_FUNCTION',
+        fnStatement,
+        location: target.location,
+        expression: callExpression,
+      },
+      'Add built-in function'
     );
   };
 
@@ -453,6 +576,7 @@ const ScriptEditorDialog = ({
                       onSetStatementField={handleSetStatementField}
                       onDeleteStatement={handleDeleteStatement}
                       entryKeysBySource={entryKeysBySource}
+                      inputSources={inputSources}
                       onEditMarkdown={(value, onSave) =>
                         setMarkdownEditor({ isOpen: true, value, onSave })
                       }
@@ -485,6 +609,7 @@ const ScriptEditorDialog = ({
               onInsertStatement={handleInsertStatement}
               onInsertExpression={handleInsertExpression}
               onInsertChainLink={handleInsertChainLink}
+              onInsertBuiltinFunction={handleInsertBuiltinFunction}
               onRemove={handleRemove}
               onClose={() => setInsertTarget(null)}
             />

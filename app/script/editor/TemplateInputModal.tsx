@@ -275,6 +275,8 @@ const TemplateInputModal = ({
         }}
         onInsertExpression={handleInsertExpression}
         onInsertChainLink={handleInsertChainLink}
+        onInsertBuiltinFunction={() => setInsertTarget(null)}
+        hideBuiltinFunctions
         onRemove={handleRemove}
         onClose={() => setInsertTarget(null)}
       />
