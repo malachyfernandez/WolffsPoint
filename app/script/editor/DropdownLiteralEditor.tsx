@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { Pencil, Plus, X } from 'lucide-react-native';
 import Column from '../../components/layout/Column';
@@ -8,6 +8,7 @@ import AppDropdown from '../../components/ui/forms/AppDropdown';
 import ConvexDialog from '../../components/ui/dialog/ConvexDialog';
 import { CloseButton } from '../../components/game/markdownEditor';
 import AppButton from '../../components/ui/buttons/AppButton';
+import UnsavedChangesDialog from '../../components/ui/dialog/UnsavedChangesDialog';
 import { StableTextInput } from './Canvas';
 import type { DropdownLiteral } from '../lang/ast';
 import { emptySpan } from '../lang/ast';
@@ -24,7 +25,29 @@ const DropdownLiteralEditor = ({
   onEditOptions,
 }: DropdownLiteralEditorProps) => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isLeaveConfirmOpen, setIsLeaveConfirmOpen] = useState(false);
   const [newOption, setNewOption] = useState('');
+
+  // Draft state for the edit dialog
+  const [draftOptions, setDraftOptions] = useState<string[]>([]);
+  const [draftValue, setDraftValue] = useState('');
+  const [originalOptions, setOriginalOptions] = useState<string[]>([]);
+  const [originalValue, setOriginalValue] = useState('');
+
+  // Initialize drafts when dialog opens
+  useEffect(() => {
+    if (isEditDialogOpen) {
+      setDraftOptions([...expression.options]);
+      setDraftValue(expression.value);
+      setOriginalOptions([...expression.options]);
+      setOriginalValue(expression.value);
+      setNewOption('');
+    }
+  }, [isEditDialogOpen, expression.options, expression.value]);
+
+  const hasUnsavedChanges =
+    JSON.stringify(draftOptions) !== JSON.stringify(originalOptions) ||
+    draftValue !== originalValue;
 
   const options = expression.options.map((opt) => ({ value: opt, label: opt }));
 
@@ -35,38 +58,60 @@ const DropdownLiteralEditor = ({
   const handleAddOption = () => {
     const trimmed = newOption.trim();
     if (!trimmed) return;
-    onEditOptions({
-      ...expression,
-      options: [...expression.options, trimmed],
-      value: expression.value || trimmed,
-      span: emptySpan(),
-    });
+    setDraftOptions([...draftOptions, trimmed]);
+    if (!draftValue) setDraftValue(trimmed);
     setNewOption('');
   };
 
   const handleRemoveOption = (index: number) => {
-    const newOptions = expression.options.filter((_, i) => i !== index);
-    const newValue =
-      expression.value === expression.options[index] ? (newOptions[0] ?? '') : expression.value;
-    onEditOptions({
-      ...expression,
-      options: newOptions,
-      value: newValue,
-      span: emptySpan(),
-    });
+    const newOptions = draftOptions.filter((_, i) => i !== index);
+    const newValue = draftValue === draftOptions[index] ? (newOptions[0] ?? '') : draftValue;
+    setDraftOptions(newOptions);
+    setDraftValue(newValue);
   };
 
   const handleRenameOption = (index: number, newName: string) => {
-    const oldName = expression.options[index];
-    const newOptions = [...expression.options];
+    const oldName = draftOptions[index];
+    const newOptions = [...draftOptions];
     newOptions[index] = newName;
-    const newValue = expression.value === oldName ? newName : expression.value;
+    const newValue = draftValue === oldName ? newName : draftValue;
+    setDraftOptions(newOptions);
+    setDraftValue(newValue);
+  };
+
+  const handleSave = () => {
     onEditOptions({
       ...expression,
-      options: newOptions,
-      value: newValue,
+      options: draftOptions,
+      value: draftValue,
       span: emptySpan(),
     });
+    setIsEditDialogOpen(false);
+  };
+
+  const handleAttemptClose = () => {
+    if (hasUnsavedChanges) {
+      setIsLeaveConfirmOpen(true);
+    } else {
+      setIsEditDialogOpen(false);
+    }
+  };
+
+  const handleOpenChange = (open: boolean) => {
+    if (!open && hasUnsavedChanges) {
+      setIsLeaveConfirmOpen(true);
+    } else if (!open) {
+      setIsEditDialogOpen(false);
+    }
+  };
+
+  const handleConfirmLeave = () => {
+    setIsLeaveConfirmOpen(false);
+    setIsEditDialogOpen(false);
+  };
+
+  const handleCancelLeave = () => {
+    setIsLeaveConfirmOpen(false);
   };
 
   return (
@@ -88,25 +133,21 @@ const DropdownLiteralEditor = ({
       </Pressable>
 
       {/* Edit options dialog */}
-      <ConvexDialog.Root
-        isOpen={isEditDialogOpen}
-        onOpenChange={(open: boolean) => {
-          if (!open) setIsEditDialogOpen(false);
-        }}>
+      <ConvexDialog.Root isOpen={isEditDialogOpen} onOpenChange={handleOpenChange}>
         <ConvexDialog.Trigger asChild>
           <View />
         </ConvexDialog.Trigger>
         <ConvexDialog.Portal>
           <ConvexDialog.Overlay />
-          <ConvexDialog.Content className="max-w-sm">
-            <CloseButton onPress={() => setIsEditDialogOpen(false)} />
+          <ConvexDialog.Content className="max-w-sm" isSwipeable={!hasUnsavedChanges}>
+            <CloseButton onPress={handleAttemptClose} />
             <Column className="gap-3 pt-3">
               <FontText weight="medium" className="text-base">
                 Edit dropdown options
               </FontText>
 
               {/* Current options list */}
-              {expression.options.map((option, index) => (
+              {draftOptions.map((option, index) => (
                 <Row key={`opt-${index}`} className="items-center gap-2">
                   <StableTextInput
                     value={option}
@@ -141,12 +182,33 @@ const DropdownLiteralEditor = ({
 
               {/* Selected value indicator */}
               <FontText variant="subtext" className="text-xs">
-                Selected value: "{expression.value}"
+                Selected value: "{draftValue}"
               </FontText>
+
+              {/* Save button */}
+              <Row className="justify-end">
+                <AppButton
+                  variant="filled"
+                  className="h-9 px-4"
+                  onPress={handleSave}
+                  dropShadow={false}>
+                  <FontText weight="medium" color="white">
+                    Save
+                  </FontText>
+                </AppButton>
+              </Row>
             </Column>
           </ConvexDialog.Content>
         </ConvexDialog.Portal>
       </ConvexDialog.Root>
+
+      {/* Unsaved changes confirmation */}
+      <UnsavedChangesDialog
+        isOpen={isLeaveConfirmOpen}
+        onOpenChange={setIsLeaveConfirmOpen}
+        onStay={handleCancelLeave}
+        onLeave={handleConfirmLeave}
+      />
     </Row>
   );
 };

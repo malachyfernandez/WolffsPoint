@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import ConvexDialog from '../ui/dialog/ConvexDialog';
+import UnsavedChangesDialog from '../ui/dialog/UnsavedChangesDialog';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
 import AppButton from '../ui/buttons/AppButton';
@@ -33,6 +34,7 @@ const RoleEditDialog = ({
   const [roleName, setRoleName] = useState(role.role || '');
   const [doesRoleVote, setDoesRoleVote] = useState(role.doesRoleVote);
   const [hiddenFromRulebook, setHiddenFromRulebook] = useState(role.hiddenFromRulebook === true);
+  const [isLeaveConfirmDialogOpen, setIsLeaveConfirmDialogOpen] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -56,87 +58,131 @@ const RoleEditDialog = ({
   };
 
   const handleCancel = () => {
+    if (hasChange) {
+      setIsLeaveConfirmDialogOpen(true);
+    } else {
+      setRoleName(role.role || '');
+      setDoesRoleVote(role.doesRoleVote);
+      setHiddenFromRulebook(role.hiddenFromRulebook === true);
+      onOpenChange(false);
+    }
+  };
+
+  const handleAttemptClose = () => {
+    if (hasChange) {
+      setIsLeaveConfirmDialogOpen(true);
+    } else {
+      onOpenChange(false);
+    }
+  };
+
+  const handleOpenChange = (open: boolean) => {
+    if (!open && hasChange) {
+      setIsLeaveConfirmDialogOpen(true);
+    } else {
+      onOpenChange(open);
+    }
+  };
+
+  const handleConfirmLeave = () => {
+    setIsLeaveConfirmDialogOpen(false);
     setRoleName(role.role || '');
     setDoesRoleVote(role.doesRoleVote);
     setHiddenFromRulebook(role.hiddenFromRulebook === true);
     onOpenChange(false);
   };
 
+  const handleCancelLeave = () => {
+    setIsLeaveConfirmDialogOpen(false);
+  };
+
   return (
-    <ConvexDialog.Root isOpen={isOpen} onOpenChange={onOpenChange}>
-      <ConvexDialog.Trigger asChild>
-        <View />
-      </ConvexDialog.Trigger>
-      <ConvexDialog.Portal>
-        <ConvexDialog.Overlay />
-        <ConvexDialog.Content className="max-w-xl">
-          <ConvexDialog.Close
-            iconProps={{ color: 'rgb(246, 238, 219)' }}
-            className="bg-text-inverted/10 hover:bg-text-inverted/15 absolute right-0 top-0 z-10 h-10 w-10 rounded-full"
-          />
-          <DialogHeader text="Edit Role" subtext="Set the role details" />
-          <Column className="gap-4 p-0 sm:p-5">
-            <Column className="gap-2">
-              <FontText weight="medium">Role Name</FontText>
-              <FontTextInput
-                placeholder="Enter role name..."
-                variant="styled"
-                className="w-full p-2"
-                value={roleName}
-                onChangeText={setRoleName}
-              />
-
-              <Pressable
-                onPress={() => setDoesRoleVote(!doesRoleVote)}
-                className="flex-row items-center gap-3 pt-2">
-                <CustomCheckbox
-                  checked={doesRoleVote}
-                  onChange={() => setDoesRoleVote(!doesRoleVote)}
-                  selectedStateAppearance="positive"
+    <>
+      <ConvexDialog.Root isOpen={isOpen} onOpenChange={handleOpenChange}>
+        <ConvexDialog.Trigger asChild>
+          <View />
+        </ConvexDialog.Trigger>
+        <ConvexDialog.Portal>
+          <ConvexDialog.Overlay />
+          <ConvexDialog.Content className="max-w-xl" isSwipeable={!hasChange}>
+            <ConvexDialog.Close
+              iconProps={{ color: 'rgb(246, 238, 219)' }}
+              className="bg-text-inverted/10 hover:bg-text-inverted/15 absolute right-0 top-0 z-10 h-10 w-10 rounded-full"
+              onPress={handleAttemptClose}
+            />
+            <DialogHeader text="Edit Role" subtext="Set the role details" />
+            <Column className="gap-4 p-0 sm:p-5">
+              <Column className="gap-2">
+                <FontText weight="medium">Role Name</FontText>
+                <FontTextInput
+                  placeholder="Enter role name..."
+                  variant="styled"
+                  className="w-full p-2"
+                  value={roleName}
+                  onChangeText={setRoleName}
                 />
-                <FontText className={doesRoleVote ? '' : 'opacity-70'}>This role can vote</FontText>
-              </Pressable>
 
-              <Pressable
-                onPress={() => setHiddenFromRulebook(!hiddenFromRulebook)}
-                className="flex-row items-center gap-3 pt-2">
-                <CustomCheckbox
-                  checked={!hiddenFromRulebook}
-                  onChange={() => setHiddenFromRulebook(!hiddenFromRulebook)}
-                  monochrome
-                />
-                <FontText className={hiddenFromRulebook ? 'opacity-70' : ''}>
-                  {hiddenFromRulebook ? 'Hidden from rulebook' : 'Visible in rulebook'}
-                </FontText>
-              </Pressable>
-            </Column>
+                <Pressable
+                  onPress={() => setDoesRoleVote(!doesRoleVote)}
+                  className="flex-row items-center gap-3 pt-2">
+                  <CustomCheckbox
+                    checked={doesRoleVote}
+                    onChange={() => setDoesRoleVote(!doesRoleVote)}
+                    selectedStateAppearance="positive"
+                  />
+                  <FontText className={doesRoleVote ? '' : 'opacity-70'}>
+                    This role can vote
+                  </FontText>
+                </Pressable>
 
-            <Column className="w-full items-center justify-center gap-4">
-              <Row className="gap-4">
-                {hasChange && roleName.trim() ? (
-                  <AppButton className="h-10 w-48" variant="black" onPress={handleSave}>
-                    <FontText color="white" weight="medium">
-                      Save
+                <Pressable
+                  onPress={() => setHiddenFromRulebook(!hiddenFromRulebook)}
+                  className="flex-row items-center gap-3 pt-2">
+                  <CustomCheckbox
+                    checked={!hiddenFromRulebook}
+                    onChange={() => setHiddenFromRulebook(!hiddenFromRulebook)}
+                    monochrome
+                  />
+                  <FontText className={hiddenFromRulebook ? 'opacity-70' : ''}>
+                    {hiddenFromRulebook ? 'Hidden from rulebook' : 'Visible in rulebook'}
+                  </FontText>
+                </Pressable>
+              </Column>
+
+              <Column className="w-full items-center justify-center gap-4">
+                <Row className="gap-4">
+                  {hasChange && roleName.trim() ? (
+                    <AppButton className="h-10 w-48" variant="black" onPress={handleSave}>
+                      <FontText color="white" weight="medium">
+                        Save
+                      </FontText>
+                    </AppButton>
+                  ) : (
+                    <StatusButton
+                      className="h-10 w-48"
+                      buttonText="Save"
+                      buttonAltText="No changes"
+                    />
+                  )}
+                  <AppButton className="h-10 w-48" variant="outline" onPress={handleCancel}>
+                    <FontText color="black" weight="medium">
+                      Cancel
                     </FontText>
                   </AppButton>
-                ) : (
-                  <StatusButton
-                    className="h-10 w-48"
-                    buttonText="Save"
-                    buttonAltText="No changes"
-                  />
-                )}
-                <AppButton className="h-10 w-48" variant="outline" onPress={handleCancel}>
-                  <FontText color="black" weight="medium">
-                    Cancel
-                  </FontText>
-                </AppButton>
-              </Row>
+                </Row>
+              </Column>
             </Column>
-          </Column>
-        </ConvexDialog.Content>
-      </ConvexDialog.Portal>
-    </ConvexDialog.Root>
+          </ConvexDialog.Content>
+        </ConvexDialog.Portal>
+      </ConvexDialog.Root>
+
+      <UnsavedChangesDialog
+        isOpen={isLeaveConfirmDialogOpen}
+        onOpenChange={setIsLeaveConfirmDialogOpen}
+        onStay={handleCancelLeave}
+        onLeave={handleConfirmLeave}
+      />
+    </>
   );
 };
 

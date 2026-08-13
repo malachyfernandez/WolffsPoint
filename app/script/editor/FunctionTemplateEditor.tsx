@@ -1,12 +1,13 @@
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Pressable, View } from 'react-native';
-import { Plus, X } from 'lucide-react-native';
+import { Plus } from 'lucide-react-native';
 import Column from '../../components/layout/Column';
 import Row from '../../components/layout/Row';
 import FontText from '../../components/ui/text/FontText';
 import ConvexDialog from '../../components/ui/dialog/ConvexDialog';
 import { CloseButton } from '../../components/game/markdownEditor';
 import AppButton from '../../components/ui/buttons/AppButton';
+import UnsavedChangesDialog from '../../components/ui/dialog/UnsavedChangesDialog';
 import { StableTextInput, ExpressionSocket } from './Canvas';
 import type { Expression, FunctionTemplatePiece } from '../lang/ast';
 import { emptySpan } from '../lang/ast';
@@ -44,7 +45,7 @@ const PIECE_TYPES = [
 const createPiece = (kind: string): FunctionTemplatePiece => {
   switch (kind) {
     case 'text':
-      return { kind: 'text', text: 'text' };
+      return { kind: 'text', text: '' };
     case 'input-blank':
       return {
         kind: 'input',
@@ -82,6 +83,13 @@ const createPiece = (kind: string): FunctionTemplatePiece => {
 const sanitizeIdentifier = (value: string) =>
   value.replace(/[^a-zA-Z0-9_]/g, '').replace(/^[0-9]/, '_$&');
 
+type ModalState =
+  | { kind: 'picker'; insertIndex: number }
+  | { kind: 'newText'; insertIndex: number }
+  | { kind: 'newInput'; insertIndex: number; pieceType: string }
+  | { kind: 'editText'; index: number }
+  | { kind: 'editInput'; index: number };
+
 const FunctionTemplateEditor = ({
   template,
   onChange,
@@ -93,46 +101,195 @@ const FunctionTemplateEditor = ({
   onSetExpression,
   onEditMarkdown,
 }: FunctionTemplateEditorProps) => {
-  const [pickerIndex, setPickerIndex] = useState<number | null>(null);
-  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [modalState, setModalState] = useState<ModalState | null>(null);
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
 
-  const addPiece = (index: number, kind: string) => {
-    const newPiece = createPiece(kind);
+  // Draft state for text editing
+  const [textDraft, setTextDraft] = useState('');
+  const [originalText, setOriginalText] = useState('');
+
+  // Draft state for input editing
+  const [labelDraft, setLabelDraft] = useState('');
+  const [originalLabel, setOriginalLabel] = useState('');
+  const [exprDraft, setExprDraft] = useState<Expression>({
+    kind: 'NothingLiteral',
+    span: emptySpan(),
+  });
+  const [originalExpr, setOriginalExpr] = useState<Expression>({
+    kind: 'NothingLiteral',
+    span: emptySpan(),
+  });
+
+  // Reset drafts when modal opens
+  useEffect(() => {
+    if (!modalState) return;
+    if (modalState.kind === 'newText') {
+      setTextDraft('');
+      setOriginalText('');
+    } else if (modalState.kind === 'editText') {
+      const piece = template[modalState.index];
+      const text = piece?.kind === 'text' ? (piece.text ?? '') : '';
+      setTextDraft(text);
+      setOriginalText(text);
+    } else if (modalState.kind === 'newInput') {
+      const piece = createPiece(modalState.pieceType);
+      if (piece.kind === 'input') {
+        const expr: Expression = piece.defaultExpression ?? {
+          kind: 'NothingLiteral',
+          span: emptySpan(),
+        };
+        setLabelDraft(piece.label ?? '');
+        setExprDraft(expr);
+      } else {
+        setLabelDraft('');
+        setExprDraft({ kind: 'NothingLiteral', span: emptySpan() });
+      }
+      setOriginalLabel('');
+      setOriginalExpr({ kind: 'NothingLiteral', span: emptySpan() });
+    } else if (modalState.kind === 'editInput') {
+      const piece = template[modalState.index];
+      if (piece && piece.kind === 'input') {
+        const expr: Expression = piece.defaultExpression ?? {
+          kind: 'NothingLiteral',
+          span: emptySpan(),
+        };
+        setLabelDraft(piece.label ?? '');
+        setOriginalLabel(piece.label ?? '');
+        setExprDraft(expr);
+        setOriginalExpr(expr);
+      } else {
+        setLabelDraft('');
+        setOriginalLabel('');
+        setExprDraft({ kind: 'NothingLiteral', span: emptySpan() });
+        setOriginalExpr({ kind: 'NothingLiteral', span: emptySpan() });
+      }
+    }
+  }, [modalState, template]);
+
+  // Check for unsaved changes
+  const hasUnsavedChanges = (() => {
+    if (!modalState) return false;
+    if (modalState.kind === 'newText' || modalState.kind === 'editText') {
+      return textDraft !== originalText;
+    }
+    if (modalState.kind === 'newInput' || modalState.kind === 'editInput') {
+      return (
+        labelDraft !== originalLabel || JSON.stringify(exprDraft) !== JSON.stringify(originalExpr)
+      );
+    }
+    return false;
+  })();
+
+  const closeModal = useCallback(() => {
+    setModalState(null);
+  }, []);
+
+  const handleAttemptClose = useCallback(() => {
+    if (hasUnsavedChanges) {
+      setShowLeaveConfirm(true);
+    } else {
+      closeModal();
+    }
+  }, [hasUnsavedChanges, closeModal]);
+
+  const handleOpenChange = useCallback(
+    (open: boolean) => {
+      if (!open && hasUnsavedChanges) {
+        setShowLeaveConfirm(true);
+      } else if (!open) {
+        closeModal();
+      }
+    },
+    [hasUnsavedChanges, closeModal]
+  );
+
+  const handleConfirmLeave = () => {
+    setShowLeaveConfirm(false);
+    closeModal();
+  };
+
+  const handleCancelLeave = () => {
+    setShowLeaveConfirm(false);
+  };
+
+  // Commit a new text piece
+  const handleDoneNewText = () => {
+    if (!modalState || modalState.kind !== 'newText') return;
+    const newPiece: FunctionTemplatePiece = { kind: 'text', text: textDraft };
     const newTemplate = [...template];
-    newTemplate.splice(index, 0, newPiece);
+    newTemplate.splice(modalState.insertIndex, 0, newPiece);
     onChange(newTemplate);
-    setPickerIndex(null);
-    // If it's an input piece, open the editor for it
-    if (kind !== 'text') {
-      // The new piece is at `index` in the new template
-      setEditingIndex(index);
+    closeModal();
+  };
+
+  // Commit a new input piece
+  const handleDoneNewInput = () => {
+    if (!modalState || modalState.kind !== 'newInput') return;
+    const newPiece: FunctionTemplatePiece = {
+      kind: 'input',
+      label: sanitizeIdentifier(labelDraft) || 'param',
+      defaultExpression: exprDraft,
+    };
+    const newTemplate = [...template];
+    newTemplate.splice(modalState.insertIndex, 0, newPiece);
+    onChange(newTemplate);
+    closeModal();
+  };
+
+  // Save an edited text piece
+  const handleSaveEditText = () => {
+    if (!modalState || modalState.kind !== 'editText') return;
+    const newTemplate = [...template];
+    newTemplate[modalState.index] = { kind: 'text', text: textDraft };
+    onChange(newTemplate);
+    closeModal();
+  };
+
+  // Save an edited input piece
+  const handleSaveEditInput = () => {
+    if (!modalState || modalState.kind !== 'editInput') return;
+    const newTemplate = [...template];
+    newTemplate[modalState.index] = {
+      kind: 'input',
+      label: sanitizeIdentifier(labelDraft) || 'param',
+      defaultExpression: exprDraft,
+    };
+    onChange(newTemplate);
+    closeModal();
+  };
+
+  // Remove a piece
+  const handleRemove = () => {
+    if (!modalState) return;
+    if (modalState.kind === 'editText' || modalState.kind === 'editInput') {
+      const newTemplate = template.filter((_, i) => i !== modalState.index);
+      onChange(newTemplate);
+      closeModal();
     }
   };
 
-  const removePiece = (index: number) => {
-    const newTemplate = template.filter((_, i) => i !== index);
-    onChange(newTemplate);
-    setEditingIndex(null);
-  };
-
-  const updatePiece = (index: number, updates: Partial<FunctionTemplatePiece>) => {
-    const newTemplate = [...template];
-    newTemplate[index] = { ...newTemplate[index], ...updates };
-    onChange(newTemplate);
-  };
-
-  const swapPieceType = (index: number, kind: string) => {
-    const newPiece = createPiece(kind);
-    // Preserve label if it was an input and new one is also an input
-    if (template[index].kind === 'input' && newPiece.kind === 'input') {
-      newPiece.label = template[index].label;
+  // Location for the ExpressionSocket to edit the draft expression
+  const exprLocation: ExpressionLocation | null = (() => {
+    if (!modalState) return null;
+    if (modalState.kind === 'newInput' || modalState.kind === 'editInput') {
+      return {
+        statementPath,
+        slot: { kind: 'templateDefault', pieceIndex: -1 }, // -1 = draft, not yet committed
+        expressionPath: [],
+      };
     }
-    const newTemplate = [...template];
-    newTemplate[index] = newPiece;
-    onChange(newTemplate);
-  };
+    return null;
+  })();
 
-  const editingPiece = editingIndex !== null ? template[editingIndex] : null;
+  // For the draft expression, we need a custom onSetExpression that updates the draft
+  const handleSetDraftExpr = useCallback((location: ExpressionLocation, expression: Expression) => {
+    setExprDraft(expression);
+  }, []);
+
+  const isEditing = modalState?.kind === 'editText' || modalState?.kind === 'editInput';
+  const isNew = modalState?.kind === 'newText' || modalState?.kind === 'newInput';
+  const isTextInput = modalState?.kind === 'newText' || modalState?.kind === 'editText';
+  const isInputPiece = modalState?.kind === 'newInput' || modalState?.kind === 'editInput';
 
   return (
     <Column className="gap-1">
@@ -146,7 +303,7 @@ const FunctionTemplateEditor = ({
         {/* Leading connector */}
         <Pressable
           accessibilityRole="button"
-          onPress={() => setPickerIndex(0)}
+          onPress={() => setModalState({ kind: 'picker', insertIndex: 0 })}
           className="border-subtle-border hover:bg-text/10 h-6 w-6 items-center justify-center rounded-full border">
           <Plus size={12} color="#1a1a1a" />
         </Pressable>
@@ -155,12 +312,17 @@ const FunctionTemplateEditor = ({
           <React.Fragment key={`piece-${index}`}>
             <PieceChip
               piece={piece}
-              onPress={() => setEditingIndex(index)}
-              onRemove={() => removePiece(index)}
+              onPress={() => {
+                if (piece.kind === 'text') {
+                  setModalState({ kind: 'editText', index });
+                } else {
+                  setModalState({ kind: 'editInput', index });
+                }
+              }}
             />
             <Pressable
               accessibilityRole="button"
-              onPress={() => setPickerIndex(index + 1)}
+              onPress={() => setModalState({ kind: 'picker', insertIndex: index + 1 })}
               className="border-subtle-border hover:bg-text/10 h-6 w-6 items-center justify-center rounded-full border">
               <Plus size={12} color="#1a1a1a" />
             </Pressable>
@@ -168,28 +330,49 @@ const FunctionTemplateEditor = ({
         ))}
       </Row>
 
-      {/* ADD PIECE dialog — separate from edit dialog */}
-      <ConvexDialog.Root
-        isOpen={pickerIndex !== null}
-        onOpenChange={(open: boolean) => {
-          if (!open) setPickerIndex(null);
-        }}>
+      {/* ADD A PIECE picker dialog */}
+      <ConvexDialog.Root isOpen={modalState?.kind === 'picker'} onOpenChange={handleOpenChange}>
         <ConvexDialog.Trigger asChild>
           <View />
         </ConvexDialog.Trigger>
         <ConvexDialog.Portal>
           <ConvexDialog.Overlay />
-          <ConvexDialog.Content className="max-w-sm">
-            <CloseButton onPress={() => setPickerIndex(null)} />
+          <ConvexDialog.Content className="max-w-sm" isSwipeable={false}>
+            <CloseButton onPress={handleAttemptClose} />
             <Column className="gap-3 pt-3">
               <FontText weight="medium" className="text-base">
                 Add a piece
               </FontText>
-              {PIECE_TYPES.map((pt) => (
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => {
+                  if (modalState?.kind === 'picker') {
+                    setModalState({ kind: 'newText', insertIndex: modalState.insertIndex });
+                  }
+                }}
+                className="bg-text/5 hover:bg-text/10 rounded-lg p-3">
+                <Column className="gap-0.5">
+                  <FontText weight="medium" className="text-sm">
+                    New Text
+                  </FontText>
+                  <FontText variant="subtext" className="text-xs">
+                    Static text between inputs
+                  </FontText>
+                </Column>
+              </Pressable>
+              {PIECE_TYPES.filter((p) => p.kind !== 'text').map((pt) => (
                 <Pressable
                   key={pt.kind}
                   accessibilityRole="button"
-                  onPress={() => pickerIndex !== null && addPiece(pickerIndex, pt.kind)}
+                  onPress={() => {
+                    if (modalState?.kind === 'picker') {
+                      setModalState({
+                        kind: 'newInput',
+                        insertIndex: modalState.insertIndex,
+                        pieceType: pt.kind,
+                      });
+                    }
+                  }}
                   className="bg-text/5 hover:bg-text/10 rounded-lg p-3">
                   <Column className="gap-0.5">
                     <FontText weight="medium" className="text-sm">
@@ -206,65 +389,167 @@ const FunctionTemplateEditor = ({
         </ConvexDialog.Portal>
       </ConvexDialog.Root>
 
-      {/* EDIT PIECE dialog — separate from add dialog */}
-      <ConvexDialog.Root
-        isOpen={editingIndex !== null}
-        onOpenChange={(open: boolean) => {
-          if (!open) setEditingIndex(null);
-        }}>
+      {/* NEW TEXT dialog */}
+      <ConvexDialog.Root isOpen={modalState?.kind === 'newText'} onOpenChange={handleOpenChange}>
         <ConvexDialog.Trigger asChild>
           <View />
         </ConvexDialog.Trigger>
         <ConvexDialog.Portal>
           <ConvexDialog.Overlay />
-          <ConvexDialog.Content className="max-w-md">
-            <CloseButton onPress={() => setEditingIndex(null)} />
-            {editingPiece && editingIndex !== null && (
-              <PieceEditorContent
-                piece={editingPiece}
-                pieceIndex={editingIndex}
-                statementPath={statementPath}
+          <ConvexDialog.Content className="max-w-md" isSwipeable={!hasUnsavedChanges}>
+            <CloseButton onPress={handleAttemptClose} />
+            <Column className="gap-3 pt-3">
+              <FontText weight="medium" className="text-base">
+                New Text
+              </FontText>
+              <StableTextInput
+                value={textDraft}
+                onChangeText={setTextDraft}
+                placeholder="Static text"
+                className="bg-text/10 rounded-lg px-3 py-2 text-sm"
+              />
+              <Row className="justify-end">
+                <AppButton
+                  variant="filled"
+                  className="h-9 px-4"
+                  onPress={handleDoneNewText}
+                  dropShadow={false}>
+                  <FontText weight="medium" color="white">
+                    Done
+                  </FontText>
+                </AppButton>
+              </Row>
+            </Column>
+          </ConvexDialog.Content>
+        </ConvexDialog.Portal>
+      </ConvexDialog.Root>
+
+      {/* NEW INPUT dialog */}
+      <ConvexDialog.Root isOpen={modalState?.kind === 'newInput'} onOpenChange={handleOpenChange}>
+        <ConvexDialog.Trigger asChild>
+          <View />
+        </ConvexDialog.Trigger>
+        <ConvexDialog.Portal>
+          <ConvexDialog.Overlay />
+          <ConvexDialog.Content className="max-w-md" isSwipeable={!hasUnsavedChanges}>
+            <CloseButton onPress={handleAttemptClose} />
+            {modalState?.kind === 'newInput' && (
+              <InputEditorContent
+                labelDraft={labelDraft}
+                setLabelDraft={setLabelDraft}
+                exprDraft={exprDraft}
+                onSetExpr={handleSetDraftExpr}
                 contextVariables={contextVariables}
                 definedFunctions={definedFunctions}
                 entryKeysBySource={entryKeysBySource}
-                onChange={(updates) => updatePiece(editingIndex, updates)}
-                onSwapType={(kind) => swapPieceType(editingIndex, kind)}
-                onRemove={() => removePiece(editingIndex)}
                 onAdd={onAdd}
                 onSetExpression={onSetExpression}
                 onEditMarkdown={onEditMarkdown}
+                isEditing={false}
+                onSave={handleDoneNewInput}
+                saveLabel="Done"
               />
             )}
           </ConvexDialog.Content>
         </ConvexDialog.Portal>
       </ConvexDialog.Root>
+
+      {/* EDIT TEXT dialog */}
+      <ConvexDialog.Root isOpen={modalState?.kind === 'editText'} onOpenChange={handleOpenChange}>
+        <ConvexDialog.Trigger asChild>
+          <View />
+        </ConvexDialog.Trigger>
+        <ConvexDialog.Portal>
+          <ConvexDialog.Overlay />
+          <ConvexDialog.Content className="max-w-md" isSwipeable={!hasUnsavedChanges}>
+            <CloseButton onPress={handleAttemptClose} />
+            <Column className="gap-3 pt-3">
+              <FontText weight="medium" className="text-base">
+                Edit Text
+              </FontText>
+              <StableTextInput
+                value={textDraft}
+                onChangeText={setTextDraft}
+                placeholder="Static text"
+                className="bg-text/10 rounded-lg px-3 py-2 text-sm"
+              />
+              <Row className="justify-between">
+                <AppButton
+                  variant="red"
+                  className="h-9 px-3"
+                  onPress={handleRemove}
+                  dropShadow={false}>
+                  <FontText weight="bold" className="text-sm text-red-500">
+                    Remove
+                  </FontText>
+                </AppButton>
+                <AppButton
+                  variant="filled"
+                  className="h-9 px-4"
+                  onPress={handleSaveEditText}
+                  dropShadow={false}>
+                  <FontText weight="medium" color="white">
+                    Save
+                  </FontText>
+                </AppButton>
+              </Row>
+            </Column>
+          </ConvexDialog.Content>
+        </ConvexDialog.Portal>
+      </ConvexDialog.Root>
+
+      {/* EDIT INPUT dialog */}
+      <ConvexDialog.Root isOpen={modalState?.kind === 'editInput'} onOpenChange={handleOpenChange}>
+        <ConvexDialog.Trigger asChild>
+          <View />
+        </ConvexDialog.Trigger>
+        <ConvexDialog.Portal>
+          <ConvexDialog.Overlay />
+          <ConvexDialog.Content className="max-w-md" isSwipeable={!hasUnsavedChanges}>
+            <CloseButton onPress={handleAttemptClose} />
+            {modalState?.kind === 'editInput' && (
+              <InputEditorContent
+                labelDraft={labelDraft}
+                setLabelDraft={setLabelDraft}
+                exprDraft={exprDraft}
+                onSetExpr={handleSetDraftExpr}
+                contextVariables={contextVariables}
+                definedFunctions={definedFunctions}
+                entryKeysBySource={entryKeysBySource}
+                onAdd={onAdd}
+                onSetExpression={onSetExpression}
+                onEditMarkdown={onEditMarkdown}
+                isEditing={true}
+                onSave={handleSaveEditInput}
+                saveLabel="Save"
+                onRemove={handleRemove}
+              />
+            )}
+          </ConvexDialog.Content>
+        </ConvexDialog.Portal>
+      </ConvexDialog.Root>
+
+      {/* Unsaved changes confirmation */}
+      <UnsavedChangesDialog
+        isOpen={showLeaveConfirm}
+        onOpenChange={setShowLeaveConfirm}
+        onStay={handleCancelLeave}
+        onLeave={handleConfirmLeave}
+      />
     </Column>
   );
 };
 
 /** Compact chip display for a piece in the template row. */
-const PieceChip = ({
-  piece,
-  onPress,
-  onRemove,
-}: {
-  piece: FunctionTemplatePiece;
-  onPress: () => void;
-  onRemove: () => void;
-}) => {
+const PieceChip = ({ piece, onPress }: { piece: FunctionTemplatePiece; onPress: () => void }) => {
   if (piece.kind === 'text') {
     return (
-      <Row className="border-subtle-border items-center rounded-full border bg-white">
-        <Pressable accessibilityRole="button" onPress={onPress} className="px-2 py-1">
-          <FontText className="text-sm">{piece.text || 'text'}</FontText>
-        </Pressable>
-        <Pressable
-          accessibilityRole="button"
-          onPress={onRemove}
-          className="hover:bg-text/10 h-5 w-5 items-center justify-center rounded-full">
-          <X size={10} color="#1a1a1a" />
-        </Pressable>
-      </Row>
+      <Pressable
+        accessibilityRole="button"
+        onPress={onPress}
+        className="border-subtle-border items-center rounded-full border bg-white px-2 py-1">
+        <FontText className="text-sm">{piece.text || 'text'}</FontText>
+      </Pressable>
     );
   }
 
@@ -281,51 +566,46 @@ const PieceChip = ({
             : 'expr';
 
   return (
-    <Row className="border-subtle-border bg-accent/10 items-center rounded-lg border">
-      <Pressable accessibilityRole="button" onPress={onPress} className="px-2 py-1">
-        <Row className="items-center gap-1">
-          <FontText weight="medium" className="text-sm">
-            {piece.label || 'param'}
-          </FontText>
-          <FontText variant="subtext" className="text-xs opacity-60">
-            {typeLabel}
-          </FontText>
-        </Row>
-      </Pressable>
-      <Pressable
-        accessibilityRole="button"
-        onPress={onRemove}
-        className="hover:bg-text/10 h-5 w-5 items-center justify-center rounded-full">
-        <X size={10} color="#1a1a1a" />
-      </Pressable>
-    </Row>
+    <Pressable
+      accessibilityRole="button"
+      onPress={onPress}
+      className="border-subtle-border bg-accent/10 items-center rounded-lg border px-2 py-1">
+      <Row className="items-center gap-1">
+        <FontText weight="medium" className="text-sm">
+          {piece.label || 'param'}
+        </FontText>
+        <FontText variant="subtext" className="text-xs opacity-60">
+          {typeLabel}
+        </FontText>
+      </Row>
+    </Pressable>
   );
 };
 
-/** Full editor content for a piece, shown in a dialog. */
-const PieceEditorContent = ({
-  piece,
-  pieceIndex,
-  statementPath,
+/** Shared input editor content for both new and edit input modals. */
+const InputEditorContent = ({
+  labelDraft,
+  setLabelDraft,
+  exprDraft,
+  onSetExpr,
   contextVariables,
   definedFunctions,
   entryKeysBySource,
-  onChange,
-  onSwapType,
-  onRemove,
   onAdd,
   onSetExpression,
   onEditMarkdown,
+  isEditing,
+  onSave,
+  saveLabel,
+  onRemove,
 }: {
-  piece: FunctionTemplatePiece;
-  pieceIndex: number;
-  statementPath: number[];
+  labelDraft: string;
+  setLabelDraft: (value: string) => void;
+  exprDraft: Expression;
+  onSetExpr: (location: ExpressionLocation, expression: Expression) => void;
   contextVariables: string[];
   definedFunctions?: DefinedFunction[];
   entryKeysBySource?: Record<string, string[]>;
-  onChange: (updates: Partial<FunctionTemplatePiece>) => void;
-  onSwapType: (kind: string) => void;
-  onRemove: () => void;
   onAdd: (target: InsertTarget) => void;
   onSetExpression: (
     location: ExpressionLocation,
@@ -333,77 +613,22 @@ const PieceEditorContent = ({
     trackHistory?: boolean
   ) => void;
   onEditMarkdown?: (currentValue: string, onSave: (newValue: string) => void) => void;
+  isEditing: boolean;
+  onSave: () => void;
+  saveLabel: string;
+  onRemove?: () => void;
 }) => {
-  const [showSwapMenu, setShowSwapMenu] = useState(false);
-
-  if (piece.kind === 'text') {
-    return (
-      <Column className="gap-3 pt-3">
-        <FontText weight="medium" className="text-base">
-          Edit text
-        </FontText>
-        <StableTextInput
-          value={piece.text ?? ''}
-          onChangeText={(value: string) => onChange({ text: value })}
-          placeholder="Static text"
-          className="bg-text/10 rounded-lg px-3 py-2 text-sm"
-        />
-        <Row className="justify-between">
-          <AppButton
-            variant="outline"
-            className="h-9 px-3"
-            onPress={() => setShowSwapMenu(!showSwapMenu)}
-            dropShadow={false}>
-            <FontText className="text-sm">Change type</FontText>
-          </AppButton>
-          <AppButton variant="red" className="h-9 px-3" onPress={onRemove} dropShadow={false}>
-            <FontText weight="bold" className="text-sm text-red-500">
-              Remove
-            </FontText>
-          </AppButton>
-        </Row>
-        {showSwapMenu && (
-          <Column className="gap-1">
-            {PIECE_TYPES.map((pt) => (
-              <Pressable
-                key={pt.kind}
-                accessibilityRole="button"
-                onPress={() => {
-                  onSwapType(pt.kind);
-                  setShowSwapMenu(false);
-                }}
-                className="bg-text/5 hover:bg-text/10 rounded-lg p-2">
-                <FontText className="text-sm">{pt.label}</FontText>
-              </Pressable>
-            ))}
-          </Column>
-        )}
-      </Column>
-    );
-  }
-
-  // Input piece editor
-  const defaultExpr = piece.defaultExpression;
-  const currentType =
-    defaultExpr?.kind === 'StringLiteral'
-      ? 'input-text'
-      : defaultExpr?.kind === 'NumberLiteral'
-        ? 'input-number'
-        : defaultExpr?.kind === 'DropdownLiteral'
-          ? 'input-dropdown'
-          : 'input-blank';
-
-  // Location for the ExpressionSocket to edit this piece's default expression
-  const exprLocation: ExpressionLocation = {
-    statementPath,
-    slot: { kind: 'templateDefault', pieceIndex },
+  // Use a dummy location for the draft expression socket
+  const draftLocation: ExpressionLocation = {
+    statementPath: [],
+    slot: { kind: 'templateDefault', pieceIndex: -1 },
     expressionPath: [],
   };
 
   return (
     <Column className="gap-3 pt-3">
       <FontText weight="medium" className="text-base">
-        Edit input
+        {isEditing ? 'Edit Input' : 'New Input'}
       </FontText>
 
       {/* Variable name */}
@@ -412,10 +637,8 @@ const PieceEditorContent = ({
           Variable name
         </FontText>
         <StableTextInput
-          value={piece.label ?? ''}
-          onChangeText={(value: string) =>
-            onChange({ label: sanitizeIdentifier(value) || 'param' })
-          }
+          value={labelDraft}
+          onChangeText={(value: string) => setLabelDraft(sanitizeIdentifier(value) || 'param')}
           placeholder="variableName"
           autoCapitalize="none"
           autoCorrect={false}
@@ -429,54 +652,34 @@ const PieceEditorContent = ({
           Default value
         </FontText>
         <ExpressionSocket
-          expression={defaultExpr ?? { kind: 'NothingLiteral', span: emptySpan() }}
-          location={exprLocation}
+          expression={exprDraft}
+          location={draftLocation}
           contextVariables={contextVariables}
           entryKeysBySource={entryKeysBySource}
           definedFunctions={definedFunctions}
           label="default"
           onAdd={onAdd}
-          onSetExpression={onSetExpression}
+          onSetExpression={onSetExpr}
           onEditMarkdown={onEditMarkdown}
         />
       </Column>
 
       <Row className="justify-between">
-        <AppButton
-          variant="outline"
-          className="h-9 px-3"
-          onPress={() => setShowSwapMenu(!showSwapMenu)}
-          dropShadow={false}>
-          <FontText className="text-sm">Change type</FontText>
-        </AppButton>
-        <AppButton variant="red" className="h-9 px-3" onPress={onRemove} dropShadow={false}>
-          <FontText weight="bold" className="text-sm text-red-500">
-            Remove
+        {isEditing && onRemove ? (
+          <AppButton variant="red" className="h-9 px-3" onPress={onRemove} dropShadow={false}>
+            <FontText weight="bold" className="text-sm text-red-500">
+              Remove
+            </FontText>
+          </AppButton>
+        ) : (
+          <View />
+        )}
+        <AppButton variant="filled" className="h-9 px-4" onPress={onSave} dropShadow={false}>
+          <FontText weight="medium" color="white">
+            {saveLabel}
           </FontText>
         </AppButton>
       </Row>
-
-      {showSwapMenu && (
-        <Column className="gap-1">
-          {PIECE_TYPES.map((pt) => (
-            <Pressable
-              key={pt.kind}
-              accessibilityRole="button"
-              onPress={() => {
-                onSwapType(pt.kind);
-                setShowSwapMenu(false);
-              }}
-              className="bg-text/5 hover:bg-text/10 rounded-lg p-2">
-              <Row className="items-center justify-between">
-                <FontText className="text-sm">{pt.label}</FontText>
-                {pt.kind === currentType && (
-                  <FontText className="text-xs opacity-50">current</FontText>
-                )}
-              </Row>
-            </Pressable>
-          ))}
-        </Column>
-      )}
     </Column>
   );
 };

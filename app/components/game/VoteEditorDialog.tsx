@@ -3,6 +3,7 @@ import { View } from 'react-native';
 import FontTextInput from '../ui/forms/FontTextInput';
 import ConvexDialog from '../ui/dialog/ConvexDialog';
 import DialogHeader from '../ui/dialog/DialogHeader';
+import UnsavedChangesDialog from '../ui/dialog/UnsavedChangesDialog';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
 import FontText from '../ui/text/FontText';
@@ -51,6 +52,7 @@ const VoteEditorDialog = ({
   const [editingStartMultiplier, setEditingStartMultiplier] = useState(
     String(initialVoteMultiplier)
   );
+  const [isLeaveConfirmDialogOpen, setIsLeaveConfirmDialogOpen] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -78,9 +80,40 @@ const VoteEditorDialog = ({
   };
 
   const handleCancel = () => {
+    if (hasUnsavedChanges) {
+      setIsLeaveConfirmDialogOpen(true);
+    } else {
+      setDraftVote(initialVote);
+      setDraftMultiplier(String(initialVoteMultiplier));
+      onOpenChange(false);
+    }
+  };
+
+  const handleAttemptClose = () => {
+    if (hasUnsavedChanges) {
+      setIsLeaveConfirmDialogOpen(true);
+    } else {
+      onOpenChange(false);
+    }
+  };
+
+  const handleOpenChange = (open: boolean) => {
+    if (!open && hasUnsavedChanges) {
+      setIsLeaveConfirmDialogOpen(true);
+    } else {
+      onOpenChange(open);
+    }
+  };
+
+  const handleConfirmLeave = () => {
+    setIsLeaveConfirmDialogOpen(false);
     setDraftVote(initialVote);
     setDraftMultiplier(String(initialVoteMultiplier));
     onOpenChange(false);
+  };
+
+  const handleCancelLeave = () => {
+    setIsLeaveConfirmDialogOpen(false);
   };
 
   const handleMultiplierChange = (text: string) => {
@@ -90,92 +123,102 @@ const VoteEditorDialog = ({
   };
 
   return (
-    <ConvexDialog.Root isOpen={isOpen} onOpenChange={onOpenChange}>
-      <ConvexDialog.Trigger asChild>
-        <View />
-      </ConvexDialog.Trigger>
-      <ConvexDialog.Portal>
-        <ConvexDialog.Overlay />
-        <ConvexDialog.Content className="max-w-md p-1">
-          <ConvexDialog.Close
-            iconProps={{ color: 'rgb(246, 238, 219)' }}
-            className="bg-text-inverted/10 hover:bg-text-inverted/15 absolute right-0 top-0 z-10 h-10 w-10 rounded-full"
-          />
-          <DialogHeader text={title} subtext={dialogSubtext} />
+    <>
+      <ConvexDialog.Root isOpen={isOpen} onOpenChange={handleOpenChange}>
+        <ConvexDialog.Trigger asChild>
+          <View />
+        </ConvexDialog.Trigger>
+        <ConvexDialog.Portal>
+          <ConvexDialog.Overlay />
+          <ConvexDialog.Content className="max-w-md p-1" isSwipeable={!hasUnsavedChanges}>
+            <ConvexDialog.Close
+              iconProps={{ color: 'rgb(246, 238, 219)' }}
+              className="bg-text-inverted/10 hover:bg-text-inverted/15 absolute right-0 top-0 z-10 h-10 w-10 rounded-full"
+              onPress={handleAttemptClose}
+            />
+            <DialogHeader text={title} subtext={dialogSubtext} />
 
-          <Column className="gap-4 p-0 pt-4 sm:p-5">
-            {/* Email Input */}
-            <Column className="gap-1">
-              <FontText weight="medium" className="text-sm opacity-70">
-                Player Email
-              </FontText>
-              <FontTextInput
-                value={draftVote}
-                onChangeText={setDraftVote}
-                placeholder="Enter player email..."
-                variant="styled"
-                className="p-2"
-                style={{ fontFamily: 'Poppins-Regular' }}
-                autoCapitalize="none"
-                keyboardType="email-address"
-              />
-            </Column>
-
-            {/* Live Preview */}
-            <Column className="gap-1">
-              <FontText weight="medium" className="text-sm opacity-70">
-                Resolved Name
-              </FontText>
-              <View className="bg-text border-border rounded-lg border-2 p-3">
-                <FontText color="white" weight="medium" className="text-center">
-                  {resolvedName}
+            <Column className="gap-4 p-0 pt-4 sm:p-5">
+              {/* Email Input */}
+              <Column className="gap-1">
+                <FontText weight="medium" className="text-sm opacity-70">
+                  Player Email
                 </FontText>
-              </View>
-            </Column>
-
-            {/* Vote Multiplier */}
-            <Column className="gap-1">
-              <FontText weight="medium" className="text-sm opacity-70">
-                Vote Multiplier
-              </FontText>
-              <Row className="items-center gap-3">
                 <FontTextInput
-                  value={draftMultiplier}
-                  onChangeText={handleMultiplierChange}
-                  placeholder="1"
+                  value={draftVote}
+                  onChangeText={setDraftVote}
+                  placeholder="Enter player email..."
                   variant="styled"
-                  className="w-24 p-2"
+                  className="p-2"
                   style={{ fontFamily: 'Poppins-Regular' }}
-                  keyboardType="numeric"
+                  autoCapitalize="none"
+                  keyboardType="email-address"
                 />
-                <FontText variant="subtext" className="text-sm">
-                  {safeMultiplier === 1
-                    ? 'Standard vote (1x)'
-                    : safeMultiplier === -1
-                      ? 'Thief-style negative vote (-1x)'
-                      : `${safeMultiplier}x vote weight`}
+              </Column>
+
+              {/* Live Preview */}
+              <Column className="gap-1">
+                <FontText weight="medium" className="text-sm opacity-70">
+                  Resolved Name
                 </FontText>
+                <View className="bg-text border-border rounded-lg border-2 p-3">
+                  <FontText color="white" weight="medium" className="text-center">
+                    {resolvedName}
+                  </FontText>
+                </View>
+              </Column>
+
+              {/* Vote Multiplier */}
+              <Column className="gap-1">
+                <FontText weight="medium" className="text-sm opacity-70">
+                  Vote Multiplier
+                </FontText>
+                <Row className="items-center gap-3">
+                  <FontTextInput
+                    value={draftMultiplier}
+                    onChangeText={handleMultiplierChange}
+                    placeholder="1"
+                    variant="styled"
+                    className="w-24 p-2"
+                    style={{ fontFamily: 'Poppins-Regular' }}
+                    keyboardType="numeric"
+                  />
+                  <FontText variant="subtext" className="text-sm">
+                    {safeMultiplier === 1
+                      ? 'Standard vote (1x)'
+                      : safeMultiplier === -1
+                        ? 'Thief-style negative vote (-1x)'
+                        : `${safeMultiplier}x vote weight`}
+                  </FontText>
+                </Row>
+              </Column>
+
+              {/* Action Buttons */}
+              <Row className="justify-end gap-4 pt-2">
+                <AppButton variant="outline" onPress={handleCancel} className="h-12 w-24 sm:w-32">
+                  <FontText>Cancel</FontText>
+                </AppButton>
+                <DisableableButton
+                  isEnabled={hasUnsavedChanges}
+                  enabledText="Save"
+                  className="w-24 sm:w-32"
+                  disabledText="No changes"
+                  onPress={handleSubmit}
+                  enabledVariant="filled"
+                />
               </Row>
             </Column>
+          </ConvexDialog.Content>
+        </ConvexDialog.Portal>
+      </ConvexDialog.Root>
 
-            {/* Action Buttons */}
-            <Row className="justify-end gap-4 pt-2">
-              <AppButton variant="outline" onPress={handleCancel} className="h-12 w-24 sm:w-32">
-                <FontText>Cancel</FontText>
-              </AppButton>
-              <DisableableButton
-                isEnabled={hasUnsavedChanges}
-                enabledText="Save"
-                className="w-24 sm:w-32"
-                disabledText="No changes"
-                onPress={handleSubmit}
-                enabledVariant="filled"
-              />
-            </Row>
-          </Column>
-        </ConvexDialog.Content>
-      </ConvexDialog.Portal>
-    </ConvexDialog.Root>
+      <UnsavedChangesDialog
+        isOpen={isLeaveConfirmDialogOpen}
+        onOpenChange={setIsLeaveConfirmDialogOpen}
+        onStay={handleCancelLeave}
+        onLeave={handleConfirmLeave}
+      />
+    </>
   );
 };
 
