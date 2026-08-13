@@ -318,12 +318,14 @@ export const ReplaceableTextInput = ({
   placeholder,
   onReplace,
   minWidth = 80,
+  maxWidth = 150,
 }: {
   value: string;
   onChangeText: (value: string) => void;
   placeholder?: string;
   onReplace?: () => void;
   minWidth?: number;
+  maxWidth?: number;
 }) => {
   // Local state keeps the text input responsive without depending on external
   // re-renders. We sync from props only when the external value differs from
@@ -338,7 +340,7 @@ export const ReplaceableTextInput = ({
   }, [value, focused, localValue]);
 
   return (
-    <View className="relative" style={{ minWidth, maxWidth: 150 }}>
+    <View className="relative" style={{ minWidth, maxWidth }}>
       <FontTextInput
         value={localValue}
         onChangeText={(next) => {
@@ -355,7 +357,7 @@ export const ReplaceableTextInput = ({
         autoCapitalize="none"
         autoCorrect={false}
         className="bg-white py-1 pl-2 pr-7 text-sm"
-        style={{ minWidth, maxWidth: 220 }}
+        style={{ minWidth, maxWidth: maxWidth + 70 }}
       />
       {onReplace && (
         <Pressable
@@ -876,6 +878,7 @@ export const ExpressionSocket = ({
             }}
             placeholder="0"
             onReplace={() => openExpressionModal()}
+            maxWidth={40}
           />
         </View>
       );
