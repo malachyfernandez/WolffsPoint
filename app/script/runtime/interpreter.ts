@@ -173,6 +173,21 @@ class Interpreter {
     environment: Environment,
     depth: number
   ): StatementResult {
+    // Hoist function declarations so they can be called before their definition
+    for (const statement of statements) {
+      if (statement.kind === 'FunctionStatement') {
+        const closure = environment.snapshot();
+        const runtimeFunction: RuntimeFunction = {
+          kind: 'function',
+          name: statement.name,
+          parameters: statement.parameters,
+          body: statement.body,
+          closure,
+        };
+        closure[statement.name] = runtimeFunction;
+        environment.define(statement.name, runtimeFunction);
+      }
+    }
     for (const statement of statements) {
       const result = this.executeStatement(statement, environment, depth);
       if (result.returned) {
