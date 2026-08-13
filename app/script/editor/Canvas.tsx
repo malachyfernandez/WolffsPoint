@@ -1632,7 +1632,10 @@ const StatementBlock = ({
     content = <FontText variant="subtext">Unsupported statement: {statement.kind}</FontText>;
   }
 
-  const isFunction = statement.kind === 'FunctionStatement';
+  const isFunction =
+    statement.kind === 'FunctionStatement' ||
+    statement.kind === 'IfStatement' ||
+    statement.kind === 'ForEachStatement';
   return (
     <Swapable
       label={statementLabel}
