@@ -179,24 +179,16 @@ const YourEyesOnlyDayContentPLAYER = ({
   const actionDeadlineBaseDate = useMemo(
     () =>
       actionDayOffset > 0
-        ? getDayEndDate(
-            dayDates,
-            Math.max(0, dayIndex - actionDayOffset),
-            numberOfRealDaysPerInGameDay
-          )
+        ? new Date(selectedDayEndDate.getTime() - actionDayOffset * 24 * 60 * 60 * 1000)
         : selectedDayEndDate,
-    [actionDayOffset, dayDates, dayIndex, numberOfRealDaysPerInGameDay, selectedDayEndDate]
+    [actionDayOffset, selectedDayEndDate]
   );
   const voteDeadlineBaseDate = useMemo(
     () =>
       voteDayOffset > 0
-        ? getDayEndDate(
-            dayDates,
-            Math.max(0, dayIndex - voteDayOffset),
-            numberOfRealDaysPerInGameDay
-          )
+        ? new Date(selectedDayEndDate.getTime() - voteDayOffset * 24 * 60 * 60 * 1000)
         : selectedDayEndDate,
-    [voteDayOffset, dayDates, dayIndex, numberOfRealDaysPerInGameDay, selectedDayEndDate]
+    [voteDayOffset, selectedDayEndDate]
   );
   const isVoteLocked =
     dayIndex < currentDayIndex || !isNightWindowOpen(voteDeadlineBaseDate, voteDeadlineTime, now);
