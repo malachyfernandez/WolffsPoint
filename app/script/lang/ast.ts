@@ -53,11 +53,19 @@ export interface ForEachStatement extends NodeBase {
   body: BlockStatement;
 }
 
+export interface FunctionTemplatePiece {
+  kind: 'text' | 'input';
+  text?: string;
+  label?: string;
+  defaultExpression?: Expression;
+}
+
 export interface FunctionStatement extends NodeBase {
   kind: 'FunctionStatement';
   name: string;
   parameters: string[];
   body: BlockStatement;
+  template?: FunctionTemplatePiece[];
 }
 
 export interface ReturnStatement extends NodeBase {
@@ -184,6 +192,12 @@ export interface MarkdownLiteral extends NodeBase {
   value: string;
 }
 
+export interface DropdownLiteral extends NodeBase {
+  kind: 'DropdownLiteral';
+  options: string[];
+  value: string;
+}
+
 export type Expression =
   | StringLiteral
   | NumberLiteral
@@ -198,6 +212,7 @@ export type Expression =
   | CallExpression
   | LambdaExpression
   | MarkdownLiteral
+  | DropdownLiteral
   | ErrorExpression;
 
 export const positionAt = (

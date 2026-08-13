@@ -5,7 +5,8 @@ export type ExpressionSlot =
   | { kind: 'callArg'; name: string }
   | { kind: 'ifCondition'; branchIndex?: number }
   | { kind: 'forEachIterable' }
-  | { kind: 'returnValue' };
+  | { kind: 'returnValue' }
+  | { kind: 'templateDefault'; pieceIndex: number };
 
 export type ExpressionPathStep =
   | { kind: 'lambdaBody' }
@@ -275,6 +276,9 @@ const getRootExpression = (statement: Statement, slot: ExpressionSlot): Expressi
       return statement.kind === 'ForEachStatement' ? statement.iterable : undefined;
     case 'returnValue':
       return statement.kind === 'ReturnStatement' ? statement.value : undefined;
+    case 'templateDefault':
+      if (statement.kind !== 'FunctionStatement' || !statement.template) return undefined;
+      return statement.template[slot.pieceIndex]?.defaultExpression;
   }
 };
 
@@ -329,6 +333,13 @@ const setRootExpression = (
         : statement;
     case 'returnValue':
       return statement.kind === 'ReturnStatement' ? { ...statement, value: expression } : statement;
+    case 'templateDefault': {
+      if (statement.kind !== 'FunctionStatement' || !statement.template) return statement;
+      const template = statement.template.map((piece, index) =>
+        index === slot.pieceIndex ? { ...piece, defaultExpression: expression } : piece
+      );
+      return { ...statement, template };
+    }
   }
 };
 

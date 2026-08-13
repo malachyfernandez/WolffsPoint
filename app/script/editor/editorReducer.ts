@@ -2,6 +2,7 @@ import type {
   CallArgument,
   CallExpression,
   Expression,
+  FunctionTemplatePiece,
   PositionalArgument,
   Script,
   Statement,
@@ -49,13 +50,14 @@ export type EditorAction =
   | {
       type: 'SET_STATEMENT_FIELD';
       path: number[];
-      field: 'name' | 'parameters' | 'itemName';
-      value: string | string[];
+      field: 'name' | 'parameters' | 'itemName' | 'template';
+      value: string | string[] | FunctionTemplatePiece[];
     }
   | { type: 'DELETE_STATEMENT'; path: number[] }
   | { type: 'UNDO' }
   | { type: 'REDO' }
-  | { type: 'REPLACE_AST'; ast: Script };
+  | { type: 'REPLACE_AST'; ast: Script }
+  | { type: 'SET_AST'; ast: Script };
 
 const span = emptySpan();
 
@@ -420,6 +422,33 @@ export const createFunctionStatement = (
   span,
 });
 
+const sanitizeIdentifier = (value: string) =>
+  value.replace(/[^a-zA-Z0-9_]/g, '').replace(/^[0-9]/, '_$&');
+
+/** Derive function name and parameters from a template. */
+export const deriveFunctionMetaFromTemplate = (template: FunctionTemplatePiece[]) => {
+  const textPieces = template.filter((p) => p.kind === 'text');
+  const inputPieces = template.filter((p) => p.kind === 'input');
+
+  // Name: concatenate text pieces, camelCase
+  const words = textPieces
+    .map((p) => (p.text ?? '').replace(/[^a-zA-Z0-9]/g, ''))
+    .filter((w) => w.length > 0);
+  const name =
+    words.length === 0
+      ? 'fn'
+      : words[0].toLowerCase() +
+        words
+          .slice(1)
+          .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+          .join('');
+
+  // Parameters: from input labels
+  const parameters = inputPieces.map((p) => sanitizeIdentifier(p.label ?? 'param') || 'param');
+
+  return { name, parameters };
+};
+
 export const initialState = (ast: Script): EditorState => ({
   ast,
   past: [],
@@ -579,29 +608,74 @@ export const editorReducer = (state: EditorState, action: EditorAction): EditorS
           }
         }
         if (action.field === 'parameters' && Array.isArray(action.value)) {
+          const paramValue = action.value as string[];
           const bodyStatements =
-            action.value.length === statement.parameters.length
+            paramValue.length === statement.parameters.length
               ? statement.parameters.reduce(
                   (statements, parameter, index) =>
-                    action.value[index] && action.value[index] !== parameter
-                      ? renameIdentifierInStatements(statements, parameter, action.value[index])
+                    paramValue[index] && paramValue[index] !== parameter
+                      ? renameIdentifierInStatements(statements, parameter, paramValue[index])
                       : statements,
                   statement.body.statements
                 )
               : statement.body.statements;
           nextStatement = {
             ...statement,
-            parameters: action.value,
+            parameters: paramValue,
             body: { ...statement.body, statements: bodyStatements },
           };
           // Sync the arity of all call sites to this function.
-          if (action.value.length !== statement.parameters.length) {
+          if (paramValue.length !== statement.parameters.length) {
             const replaced = replaceStatementAtPath(
               state.ast.statements,
               action.path,
               nextStatement
             );
-            extraStatements = syncFunctionCallArity(replaced, statement.name, action.value.length);
+            extraStatements = syncFunctionCallArity(replaced, statement.name, paramValue.length);
+          }
+        }
+        if (action.field === 'template' && Array.isArray(action.value)) {
+          const templateValue = action.value as FunctionTemplatePiece[];
+          const { name, parameters } = deriveFunctionMetaFromTemplate(templateValue);
+          const oldName = statement.name;
+          const oldParams = statement.parameters;
+          // Rename parameter references in body if parameters changed
+          const bodyStatements =
+            parameters.length === oldParams.length
+              ? oldParams.reduce(
+                  (stmts, oldParam, i) =>
+                    parameters[i] && parameters[i] !== oldParam
+                      ? renameIdentifierInStatements(stmts, oldParam, parameters[i])
+                      : stmts,
+                  statement.body.statements
+                )
+              : statement.body.statements;
+          nextStatement = {
+            ...statement,
+            name,
+            parameters,
+            template: templateValue,
+            body: { ...statement.body, statements: bodyStatements },
+          };
+          // Rename call sites if function name changed
+          if (oldName && oldName !== name) {
+            const replaced = replaceStatementAtPath(
+              state.ast.statements,
+              action.path,
+              nextStatement
+            );
+            extraStatements = renameIdentifierInStatements(replaced, oldName, name);
+            // Also sync arity if parameter count changed
+            if (parameters.length !== oldParams.length) {
+              extraStatements = syncFunctionCallArity(extraStatements, name, parameters.length);
+            }
+          } else if (parameters.length !== oldParams.length) {
+            const replaced = replaceStatementAtPath(
+              state.ast.statements,
+              action.path,
+              nextStatement
+            );
+            extraStatements = syncFunctionCallArity(replaced, name, parameters.length);
           }
         }
       } else if (
@@ -652,6 +726,8 @@ export const editorReducer = (state: EditorState, action: EditorAction): EditorS
     }
     case 'REPLACE_AST':
       return { ...state, ast: action.ast, past: [...state.past, state.ast].slice(-50), future: [] };
+    case 'SET_AST':
+      return { ...state, ast: action.ast };
     default:
       return state;
   }

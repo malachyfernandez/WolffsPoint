@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useReducer, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
 import { TextInput, View } from 'react-native';
 import ConvexDialog from '../../components/ui/dialog/ConvexDialog';
 import DialogHeader from '../../components/ui/dialog/DialogHeader';
@@ -11,11 +11,13 @@ import { CloseButton } from '../../components/game/markdownEditor';
 import MarkdownEditorDialog from '../../components/game/MarkdownEditorDialog';
 import { parseScript } from '../lang/parser';
 import { printScript, printScriptBlock } from '../lang/printer';
-import type { Expression, Statement } from '../lang/ast';
+import type { Expression, FunctionTemplatePiece, Statement } from '../lang/ast';
 import { editorReducer, initialState, createScript } from './editorReducer';
+import type { EditorAction } from './editorReducer';
 import Canvas from './Canvas';
 import InsertModal, { type DefinedFunction, type InsertTarget } from './InsertModal';
 import { createScriptGlobals, type ScriptSourceData } from '../runtime/sources';
+import { useUndoRedo, useCreateUndoSnapshot } from '../../../hooks/useUndoRedo';
 
 interface ScriptEditorDialogProps {
   isOpen: boolean;
@@ -71,6 +73,7 @@ const collectDefinedFunctions = (
       acc.push({
         name: statement.name,
         parameters: statement.parameters,
+        template: statement.template,
       });
       collectDefinedFunctions(statement.body.statements, acc);
     } else if (statement.kind === 'IfStatement') {
@@ -129,6 +132,8 @@ const ScriptEditorDialog = ({
   title = 'Script Editor',
 }: ScriptEditorDialogProps) => {
   const [state, dispatch] = useReducer(editorReducer, createScript(), (ast) => initialState(ast));
+  const { executeCommand, undo, redo, canUndo, canRedo } = useUndoRedo();
+  const createUndoSnapshot = useCreateUndoSnapshot();
   const [mode, setMode] = useState<EditorMode>('blocks');
   const [textDraft, setTextDraft] = useState('');
   const [parseError, setParseError] = useState<string | null>(null);
@@ -149,6 +154,27 @@ const ScriptEditorDialog = ({
     setParseError(null);
     setInsertTarget(null);
   }, [initialScriptText, isOpen]);
+
+  // Bridge the reducer's history with the global useUndoRedo system.
+  // Computes the new AST by running the reducer manually, applies it via SET_AST
+  // (no internal history), and registers an undo command with useUndoRedo so
+  // Ctrl+Z / Ctrl+Shift+Z work globally with toast notifications.
+  const dispatchWithUndo = useCallback(
+    (action: EditorAction, description: string) => {
+      const oldAst = createUndoSnapshot(state.ast);
+      const newState = editorReducer(state, action);
+      const newAst = createUndoSnapshot(newState.ast);
+      // Don't dispatch here — executeCommand's action() will dispatch.
+      // This ensures the store update and the dispatch happen in the
+      // same synchronous batch, avoiding stale canUndo/canRedo values.
+      executeCommand({
+        action: () => dispatch({ type: 'SET_AST', ast: newAst }),
+        undoAction: () => dispatch({ type: 'SET_AST', ast: oldAst }),
+        description,
+      });
+    },
+    [state, createUndoSnapshot, executeCommand]
+  );
 
   const definedVariables = useMemo(
     () => collectDefinedVariables(state.ast.statements),
@@ -200,7 +226,7 @@ const ScriptEditorDialog = ({
     if (newMode === 'blocks' && mode === 'text') {
       try {
         const ast = textDraft.trim().length > 0 ? parseScript(textDraft) : createScript();
-        dispatch({ type: 'REPLACE_AST', ast });
+        dispatchWithUndo({ type: 'REPLACE_AST', ast }, 'Switch to blocks');
         setParseError(null);
       } catch (error) {
         setParseError(error instanceof Error ? error.message : 'Parse error');
@@ -213,15 +239,19 @@ const ScriptEditorDialog = ({
   };
 
   const handleInsertStatement = (stmt: Statement, path: number[], replace = false) => {
-    dispatch({ type: replace ? 'REPLACE_STATEMENT' : 'INSERT_STATEMENT', statement: stmt, path });
+    dispatchWithUndo(
+      { type: replace ? 'REPLACE_STATEMENT' : 'INSERT_STATEMENT', statement: stmt, path },
+      replace ? 'Replace block' : 'Add block'
+    );
   };
 
   const handleInsertExpression = (expression: Expression, target: InsertTarget) => {
     if (!target.location) return;
-    dispatch(
+    dispatchWithUndo(
       target.replaceMode === 'chainBase'
         ? { type: 'REPLACE_CHAIN_BASE', location: target.location, expression }
-        : { type: 'SET_EXPRESSION', location: target.location, expression, trackHistory: true }
+        : { type: 'SET_EXPRESSION', location: target.location, expression, trackHistory: true },
+      'Insert expression'
     );
   };
 
@@ -230,47 +260,63 @@ const ScriptEditorDialog = ({
     expression: Expression,
     trackHistory = false
   ) => {
-    dispatch({ type: 'SET_EXPRESSION', location, expression, trackHistory });
+    if (trackHistory) {
+      dispatchWithUndo(
+        { type: 'SET_EXPRESSION', location, expression, trackHistory: true },
+        'Edit expression'
+      );
+    } else {
+      dispatch({ type: 'SET_EXPRESSION', location, expression, trackHistory });
+    }
   };
 
   const handleSetStatementField = (
     path: number[],
-    field: 'name' | 'parameters' | 'itemName',
-    value: string | string[]
+    field: 'name' | 'parameters' | 'itemName' | 'template',
+    value: string | string[] | FunctionTemplatePiece[]
   ) => {
-    dispatch({ type: 'SET_STATEMENT_FIELD', path, field, value });
+    dispatchWithUndo({ type: 'SET_STATEMENT_FIELD', path, field, value }, 'Edit field');
   };
 
   const handleDeleteStatement = (path: number[]) => {
-    dispatch({ type: 'DELETE_STATEMENT', path });
+    dispatchWithUndo({ type: 'DELETE_STATEMENT', path }, 'Delete block');
   };
 
   const handleInsertChainLink = (target: InsertTarget, blockId: string) => {
     if (!target.location) return;
-    dispatch({
-      type: target.kind === 'chainSwap' ? 'REPLACE_CHAIN_LINK_AT' : 'INSERT_CHAIN_LINK_AT',
-      location: target.location,
-      linkIndex: target.linkIndex ?? 1,
-      blockId,
-    });
+    dispatchWithUndo(
+      {
+        type: target.kind === 'chainSwap' ? 'REPLACE_CHAIN_LINK_AT' : 'INSERT_CHAIN_LINK_AT',
+        location: target.location,
+        linkIndex: target.linkIndex ?? 1,
+        blockId,
+      },
+      target.kind === 'chainSwap' ? 'Replace chain link' : 'Add chain link'
+    );
   };
 
   const handleRemove = (target: InsertTarget) => {
     if (target.kind === 'statement' && target.path) {
-      dispatch({ type: 'DELETE_STATEMENT', path: target.path });
+      dispatchWithUndo({ type: 'DELETE_STATEMENT', path: target.path }, 'Remove block');
     } else if (target.kind === 'chainSwap' && target.location) {
-      dispatch({
-        type: 'REPLACE_CHAIN_LINK_AT',
-        location: target.location,
-        linkIndex: target.linkIndex ?? 1,
-      });
+      dispatchWithUndo(
+        {
+          type: 'REPLACE_CHAIN_LINK_AT',
+          location: target.location,
+          linkIndex: target.linkIndex ?? 1,
+        },
+        'Remove chain link'
+      );
     } else if (target.location) {
-      dispatch({
-        type: 'SET_EXPRESSION',
-        location: target.location,
-        expression: { kind: 'NothingLiteral', span: state.ast.span },
-        trackHistory: true,
-      });
+      dispatchWithUndo(
+        {
+          type: 'SET_EXPRESSION',
+          location: target.location,
+          expression: { kind: 'NothingLiteral', span: state.ast.span },
+          trackHistory: true,
+        },
+        'Remove expression'
+      );
     }
   };
 
@@ -303,15 +349,17 @@ const ScriptEditorDialog = ({
                       <AppButton
                         variant="outline"
                         className="h-8 px-3"
-                        onPress={() => dispatch({ type: 'UNDO' })}
-                        dropShadow={false}>
+                        onPress={undo}
+                        dropShadow={false}
+                        disabled={!canUndo}>
                         <FontText className="text-sm">Undo</FontText>
                       </AppButton>
                       <AppButton
                         variant="outline"
                         className="h-8 px-3"
-                        onPress={() => dispatch({ type: 'REDO' })}
-                        dropShadow={false}>
+                        onPress={redo}
+                        dropShadow={false}
+                        disabled={!canRedo}>
                         <FontText className="text-sm">Redo</FontText>
                       </AppButton>
                     </>
@@ -366,6 +414,7 @@ const ScriptEditorDialog = ({
                     <Canvas
                       statements={state.ast.statements}
                       definedVariables={definedVariables}
+                      definedFunctions={definedFunctions}
                       onAdd={(target) => setInsertTarget(target)}
                       onSetExpression={handleSetExpression}
                       onSetStatementField={handleSetStatementField}

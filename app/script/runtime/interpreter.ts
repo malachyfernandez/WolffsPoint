@@ -340,6 +340,8 @@ class Interpreter {
           return expression.value;
         case 'MarkdownLiteral':
           return expression.value;
+        case 'DropdownLiteral':
+          return expression.value;
         case 'NothingLiteral':
         case 'ErrorExpression':
           return NOTHING;

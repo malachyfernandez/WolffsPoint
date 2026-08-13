@@ -7,7 +7,7 @@ import Row from '../../components/layout/Row';
 import FontText from '../../components/ui/text/FontText';
 import AppButton from '../../components/ui/buttons/AppButton';
 import { CloseButton } from '../../components/game/markdownEditor';
-import type { BinaryOperator, Expression, Statement } from '../lang/ast';
+import type { BinaryOperator, Expression, FunctionTemplatePiece, Statement } from '../lang/ast';
 import { emptySpan } from '../lang/ast';
 import type { InputType } from '../registry';
 import { STATEMENT_BLOCKS, EXPRESSION_BLOCKS } from '../registry';
@@ -38,6 +38,7 @@ export interface InsertTarget {
 export interface DefinedFunction {
   name: string;
   parameters: string[];
+  template?: FunctionTemplatePiece[];
 }
 
 interface InsertModalProps {
@@ -68,7 +69,24 @@ const CONTROL_TEMPLATES: { label: string; description: string; build: () => Stat
   {
     label: 'Function',
     description: 'Reusable function with a return value',
-    build: () => createFunctionStatement('isPlayerDead', ['Item']),
+    build: () => ({
+      kind: 'FunctionStatement' as const,
+      name: 'fn',
+      parameters: [],
+      body: {
+        kind: 'BlockStatement' as const,
+        statements: [
+          {
+            kind: 'ReturnStatement' as const,
+            value: { kind: 'NothingLiteral' as const, span },
+            span,
+          },
+        ],
+        span,
+      },
+      template: [{ kind: 'text' as const, text: 'function' }],
+      span,
+    }),
   },
   {
     label: 'Return',
@@ -127,16 +145,24 @@ const buildVariableReference = (name: string): Expression => ({
   span,
 });
 
-const buildFunctionCall = (fn: DefinedFunction): Expression => ({
-  kind: 'CallExpression',
-  callee: { kind: 'IdentifierExpression', name: fn.name, span },
-  arguments: fn.parameters.map(() => ({
-    kind: 'PositionalArgument' as const,
-    value: { kind: 'NothingLiteral' as const, span },
+const buildFunctionCall = (fn: DefinedFunction): Expression => {
+  // If the function has a template, use the default expressions from input pieces
+  const templateInputs = fn.template?.filter((p) => p.kind === 'input') ?? [];
+  const args = fn.parameters.map((_, index) => {
+    const defaultExpr = templateInputs[index]?.defaultExpression;
+    return {
+      kind: 'PositionalArgument' as const,
+      value: defaultExpr ?? { kind: 'NothingLiteral' as const, span },
+      span,
+    };
+  });
+  return {
+    kind: 'CallExpression',
+    callee: { kind: 'IdentifierExpression', name: fn.name, span },
+    arguments: args,
     span,
-  })),
-  span,
-});
+  };
+};
 
 const buildMethodExpression = (id: string): Expression => {
   const definition = EXPRESSION_BLOCKS.find((block) => block.id === id);
@@ -435,6 +461,19 @@ const InsertModal = ({
         category: 'string',
         dividerAfter: true,
         onSelect: () => selectExpression({ kind: 'StringLiteral', value: '', span }),
+      },
+      {
+        label: 'Dropdown',
+        description: 'Selectable options',
+        category: 'string',
+        dividerAfter: true,
+        onSelect: () =>
+          selectExpression({
+            kind: 'DropdownLiteral',
+            options: ['Option 1', 'Option 2'],
+            value: 'Option 1',
+            span,
+          }),
       },
       ...mathItems,
       ...sharedItems,

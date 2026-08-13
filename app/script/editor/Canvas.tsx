@@ -9,7 +9,10 @@ import FontTextInput from '../../components/ui/forms/FontTextInput';
 import type {
   BinaryOperator,
   CallArgument,
+  CallExpression,
+  DropdownLiteral,
   Expression,
+  FunctionTemplatePiece,
   IdentifierExpression,
   NamedArgument,
   Statement,
@@ -19,7 +22,7 @@ import { parseExpression } from '../lang/parser';
 import { printExpression } from '../lang/printer';
 import type { BlockInput, InputType } from '../registry';
 import { EXPRESSION_BLOCKS, STATEMENT_BLOCKS } from '../registry';
-import type { InsertTarget } from './InsertModal';
+import type { DefinedFunction, InsertTarget } from './InsertModal';
 import {
   decomposeChain,
   renameIdentifier,
@@ -27,6 +30,8 @@ import {
   type ExpressionLocation,
   type ExpressionPathStep,
 } from './expressionEditor';
+import DropdownLiteralEditor from './DropdownLiteralEditor';
+import FunctionTemplateEditor from './FunctionTemplateEditor';
 
 const span = emptySpan();
 const BOOLEAN_OPERATORS: BinaryOperator[] = ['==', '!=', '>', '<', '>=', '<=', 'AND', 'OR'];
@@ -39,6 +44,7 @@ const sanitizeIdentifier = (value: string) =>
 interface CanvasProps {
   statements: Statement[];
   definedVariables: string[];
+  definedFunctions?: DefinedFunction[];
   onAdd: (target: InsertTarget) => void;
   onSetExpression: (
     location: ExpressionLocation,
@@ -47,8 +53,8 @@ interface CanvasProps {
   ) => void;
   onSetStatementField: (
     path: number[],
-    field: 'name' | 'parameters' | 'itemName',
-    value: string | string[]
+    field: 'name' | 'parameters' | 'itemName' | 'template',
+    value: string | string[] | FunctionTemplatePiece[]
   ) => void;
   onDeleteStatement: (path: number[]) => void;
   entryKeysBySource?: Record<string, string[]>;
@@ -306,7 +312,7 @@ const PuzzleConnector = ({
   );
 };
 
-const ReplaceableTextInput = ({
+export const ReplaceableTextInput = ({
   value,
   onChangeText,
   placeholder,
@@ -367,7 +373,7 @@ const ReplaceableTextInput = ({
 
 // Thin wrapper around FontTextInput that keeps local state while focused
 // to prevent focus loss from external re-renders.
-const StableTextInput = ({
+export const StableTextInput = ({
   value,
   onChangeText,
   ...props
@@ -464,6 +470,133 @@ const BooleanSocket = ({ onAdd, tooltip }: { onAdd: () => void; tooltip?: string
   );
 };
 
+interface FunctionCallRendererProps {
+  call: CallExpression;
+  location: ExpressionLocation;
+  contextVariables: string[];
+  entryKeysBySource?: Record<string, string[]>;
+  entrySource?: string;
+  entrySourceMap?: Record<string, string>;
+  definedFunctions?: DefinedFunction[];
+  onAdd: (target: InsertTarget) => void;
+  onSetExpression: CanvasProps['onSetExpression'];
+  onEditMarkdown?: CanvasProps['onEditMarkdown'];
+}
+
+const FunctionCallRenderer = ({
+  call,
+  location,
+  contextVariables,
+  entryKeysBySource,
+  entrySource,
+  entrySourceMap,
+  definedFunctions,
+  onAdd,
+  onSetExpression,
+  onEditMarkdown,
+}: FunctionCallRendererProps) => {
+  if (call.callee.kind !== 'IdentifierExpression') {
+    return <FontText className="text-sm">{printExpression(call)}</FontText>;
+  }
+  const fnName = call.callee.name;
+  const fnDef = definedFunctions?.find((f) => f.name === fnName);
+  const template = fnDef?.template;
+  const hasTemplate = template && template.length > 0;
+
+  // If no template, render the flat argument list
+  if (!hasTemplate) {
+    return (
+      <Row className="items-center gap-1">
+        <FontText weight="medium" className="text-sm">
+          {fnName}
+        </FontText>
+        {call.arguments.map((argument, index) => (
+          <View key={index} className="border-subtle-border items-center gap-1 border-l pl-1">
+            <ExpressionSocket
+              expression={argument.value}
+              location={appendLocation(
+                location,
+                { kind: 'chainBase' },
+                { kind: 'callArgument', index }
+              )}
+              contextVariables={contextVariables}
+              entryKeysBySource={entryKeysBySource}
+              entrySource={entrySource}
+              entrySourceMap={entrySourceMap}
+              isOuterExpression={false}
+              definedFunctions={definedFunctions}
+              label={`argument ${index + 1}`}
+              onAdd={onAdd}
+              onSetExpression={onSetExpression}
+              onEditMarkdown={onEditMarkdown}
+            />
+          </View>
+        ))}
+      </Row>
+    );
+  }
+
+  // Render using the template layout
+  // Input pieces map to call arguments by position
+  const inputPieces = template!.filter((p) => p.kind === 'input');
+  let inputIndex = 0;
+
+  return (
+    <Row className="items-center gap-1">
+      <FontText weight="medium" className="text-sm">
+        {fnName}
+      </FontText>
+      {template!.map((piece, pieceIndex) => {
+        if (piece.kind === 'text') {
+          return (
+            <FontText key={`tpl-${pieceIndex}`} className="text-sm">
+              {piece.text}
+            </FontText>
+          );
+        }
+        // Input piece - render the corresponding argument
+        const argIndex = inputIndex++;
+        const argument = call.arguments[argIndex];
+        if (!argument) {
+          return (
+            <View
+              key={`tpl-${pieceIndex}`}
+              className="border-subtle-border items-center gap-1 border-l pl-1">
+              <FontText variant="subtext" className="text-xs">
+                {piece.label ?? 'input'}
+              </FontText>
+            </View>
+          );
+        }
+        return (
+          <View
+            key={`tpl-${pieceIndex}`}
+            className="border-subtle-border items-center gap-1 border-l pl-1">
+            <ExpressionSocket
+              expression={argument.value}
+              location={appendLocation(
+                location,
+                { kind: 'chainBase' },
+                { kind: 'callArgument', index: argIndex }
+              )}
+              contextVariables={contextVariables}
+              entryKeysBySource={entryKeysBySource}
+              entrySource={entrySource}
+              entrySourceMap={entrySourceMap}
+              isOuterExpression={false}
+              definedFunctions={definedFunctions}
+              label={piece.label ?? `argument ${argIndex + 1}`}
+              onAdd={onAdd}
+              onSetExpression={onSetExpression}
+              onEditMarkdown={onEditMarkdown}
+            />
+          </View>
+        );
+      })}
+    </Row>
+  );
+};
+
 interface ExpressionSocketProps {
   expression: Expression;
   location: ExpressionLocation;
@@ -474,12 +607,13 @@ interface ExpressionSocketProps {
   entrySource?: string;
   entrySourceMap?: Record<string, string>;
   isOuterExpression?: boolean;
+  definedFunctions?: DefinedFunction[];
   onAdd: (target: InsertTarget) => void;
   onSetExpression: CanvasProps['onSetExpression'];
   onEditMarkdown?: CanvasProps['onEditMarkdown'];
 }
 
-const ExpressionSocket = ({
+export const ExpressionSocket = ({
   expression,
   location,
   expectedType = 'expression',
@@ -489,6 +623,7 @@ const ExpressionSocket = ({
   entrySource,
   entrySourceMap,
   isOuterExpression = true,
+  definedFunctions,
   onAdd,
   onSetExpression,
   onEditMarkdown,
@@ -677,6 +812,21 @@ const ExpressionSocket = ({
     );
   }
 
+  if (expression.kind === 'DropdownLiteral') {
+    return (
+      <Swapable
+        label={expressionLabel}
+        variant="block"
+        onSwap={() => openExpressionModal('whole', expectedType)}>
+        <DropdownLiteralEditor
+          expression={expression}
+          onChange={(next) => onSetExpression(location, next, true)}
+          onEditOptions={(next) => onSetExpression(location, next, true)}
+        />
+      </Swapable>
+    );
+  }
+
   const base = chain[0];
   // Label for the chain BASE (e.g. "players" in players.filter().map()), as
   // opposed to `expressionLabel` which describes the WHOLE expression (e.g.
@@ -796,39 +946,18 @@ const ExpressionSocket = ({
                   label={chainBaseLabel}
                   variant="block"
                   onSwap={() => openExpressionModal('chainBase', expectedType, chainBaseLabel)}>
-                  <Row
-                    className="items-center gap-1"
-                    style={{ borderRadius: expectedType === 'boolean' ? 0 : 6 }}>
-                    <FontText weight="medium" className="text-sm">
-                      {link.expr.callee.name}
-                    </FontText>
-                    {link.expr.arguments.map((argument, index) => (
-                      <View
-                        key={index}
-                        className="border-subtle-border items-center gap-1 border-l pl-1">
-                        <ExpressionSocket
-                          expression={argument.value}
-                          location={appendLocation(
-                            location,
-                            { kind: 'chainBase' },
-                            {
-                              kind: 'callArgument',
-                              index,
-                            }
-                          )}
-                          contextVariables={contextVariables}
-                          entryKeysBySource={entryKeysBySource}
-                          entrySource={chainBaseSource}
-                          entrySourceMap={entrySourceMap}
-                          isOuterExpression={false}
-                          label={`argument ${index + 1}`}
-                          onAdd={onAdd}
-                          onSetExpression={onSetExpression}
-                          onEditMarkdown={onEditMarkdown}
-                        />
-                      </View>
-                    ))}
-                  </Row>
+                  <FunctionCallRenderer
+                    call={link.expr}
+                    location={location}
+                    contextVariables={contextVariables}
+                    entryKeysBySource={entryKeysBySource}
+                    entrySource={chainBaseSource}
+                    entrySourceMap={entrySourceMap}
+                    definedFunctions={definedFunctions}
+                    onAdd={onAdd}
+                    onSetExpression={onSetExpression}
+                    onEditMarkdown={onEditMarkdown}
+                  />
                 </Swapable>
               ) : (
                 <ExpressionSocket
@@ -1200,6 +1329,7 @@ const StatementBlock = ({
   index,
   stmtPath,
   definedVariables,
+  definedFunctions,
   onAdd,
   onSetExpression,
   onSetStatementField,
@@ -1366,6 +1496,7 @@ const StatementBlock = ({
           statements={statement.body.statements}
           {...{
             definedVariables: [statement.itemName, ...definedVariables],
+            definedFunctions,
             onAdd,
             onSetExpression,
             onSetStatementField,
@@ -1391,68 +1522,30 @@ const StatementBlock = ({
     content = (
       <Column className="gap-0">
         <View className="bg-text/10 rounded-t-xl p-2">
-          <Row className="flex-wrap items-center justify-between gap-2">
-            <Row className="flex-wrap items-center gap-2">
-              <FontText weight="medium">Function</FontText>
-              <ReplaceableTextInput
-                value={statement.name}
-                onChangeText={(value) =>
-                  onSetStatementField(currentPath, 'name', sanitizeIdentifier(value) || 'fn')
-                }
-                placeholder="functionName"
-              />
-              <FontText>(</FontText>
-              {statement.parameters.map((parameter, parameterIndex) => (
-                <Row
-                  key={`param-${parameterIndex}`}
-                  className="border-subtle-border items-center rounded-full border bg-white pl-1">
-                  <StableTextInput
-                    value={parameter}
-                    onChangeText={(value) => {
-                      const parameters = [...statement.parameters];
-                      parameters[parameterIndex] = sanitizeIdentifier(value);
-                      onSetStatementField(currentPath, 'parameters', parameters);
-                    }}
-                    placeholder="parameter"
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    className="min-w-20 bg-transparent px-2 py-1 text-sm"
-                  />
-                  <Pressable
-                    accessibilityRole="button"
-                    onPress={() =>
-                      onSetStatementField(
-                        currentPath,
-                        'parameters',
-                        statement.parameters.filter((_, index) => index !== parameterIndex)
-                      )
-                    }
-                    className="hover:bg-text/10 h-7 w-7 items-center justify-center rounded-full">
-                    <X size={13} color="#1a1a1a" />
-                  </Pressable>
-                </Row>
-              ))}
-              <Pressable
-                accessibilityRole="button"
-                onPress={() =>
-                  onSetStatementField(currentPath, 'parameters', [
-                    ...statement.parameters,
-                    `param${statement.parameters.length + 1}`,
-                  ])
-                }
-                className="border-subtle-border hover:bg-text/10 h-7 w-7 items-center justify-center rounded-full border bg-white">
-                <Plus size={14} color="#1a1a1a" />
-              </Pressable>
-              <FontText>)</FontText>
-            </Row>
+          <Row className="items-center justify-between">
+            <FontText weight="medium">Function</FontText>
             <DeleteButton onPress={() => onDeleteStatement(currentPath)} />
           </Row>
+        </View>
+        <View className="border-subtle-border border-x px-2 py-2">
+          <FunctionTemplateEditor
+            template={statement.template ?? []}
+            onChange={(template) => onSetStatementField(currentPath, 'template', template)}
+            statementPath={currentPath}
+            contextVariables={contextVariables}
+            definedFunctions={definedFunctions}
+            entryKeysBySource={entryKeysBySource}
+            onAdd={onAdd}
+            onSetExpression={onSetExpression}
+            onEditMarkdown={onEditMarkdown}
+          />
         </View>
         <View className="border-subtle-border border-x px-2">
           <Canvas
             statements={bodyStatements}
             {...{
               definedVariables: [...statement.parameters, ...definedVariables],
+              definedFunctions,
               onAdd,
               onSetExpression,
               onSetStatementField,
@@ -1477,6 +1570,7 @@ const StatementBlock = ({
                 expectedType="expression"
                 contextVariables={[...statement.parameters, ...contextVariables]}
                 entryKeysBySource={entryKeysBySource}
+                definedFunctions={definedFunctions}
                 onAdd={onAdd}
                 onSetExpression={onSetExpression}
                 onEditMarkdown={onEditMarkdown}
@@ -1530,6 +1624,7 @@ const StatementBlock = ({
 const Canvas = ({
   statements,
   definedVariables,
+  definedFunctions,
   onAdd,
   onSetExpression,
   onSetStatementField,
@@ -1553,6 +1648,7 @@ const Canvas = ({
           index={index}
           stmtPath={stmtPath}
           definedVariables={definedVariables}
+          definedFunctions={definedFunctions}
           onAdd={onAdd}
           onSetExpression={onSetExpression}
           onEditMarkdown={onEditMarkdown}

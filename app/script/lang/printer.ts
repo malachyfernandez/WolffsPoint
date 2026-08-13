@@ -54,6 +54,9 @@ export const printExpression = (
     case 'MarkdownLiteral':
       result = `\`${expression.value.replace(/\\/g, '\\\\').replace(/`/g, '\\`')}\``;
       break;
+    case 'DropdownLiteral':
+      result = `Dropdown(${JSON.stringify(expression.value)}, [${expression.options.map((o) => JSON.stringify(o)).join(', ')}])`;
+      break;
     case 'NumberLiteral':
       result = Number.isFinite(expression.value) ? String(expression.value) : '0';
       break;
@@ -154,8 +157,23 @@ export const printStatement = (statement: Statement, depth: number = 0): string 
     }
     case 'ForEachStatement':
       return `${prefix}ForEach (${statement.itemName} in ${printExpression(statement.iterable, 0, depth)}) ${printBlock(statement.body, depth)}`;
-    case 'FunctionStatement':
-      return `${prefix}Function ${statement.name}(${statement.parameters.join(', ')}) ${printBlock(statement.body, depth)}`;
+    case 'FunctionStatement': {
+      let templateStr = '';
+      if (statement.template && statement.template.length > 0) {
+        const pieces = statement.template.map((piece) => {
+          if (piece.kind === 'text') {
+            return JSON.stringify(piece.text ?? '');
+          }
+          const label = JSON.stringify(piece.label ?? '');
+          const defaultStr = piece.defaultExpression
+            ? `, ${printExpression(piece.defaultExpression, 0, depth)}`
+            : '';
+          return `input(${label}${defaultStr})`;
+        });
+        templateStr = ` template(${pieces.join(', ')})`;
+      }
+      return `${prefix}Function ${statement.name}(${statement.parameters.join(', ')})${templateStr} ${printBlock(statement.body, depth)}`;
+    }
     case 'ReturnStatement':
       return `${prefix}Return${statement.value ? ` ${printExpression(statement.value, 0, depth)}` : ''};`;
     case 'ErrorStatement':

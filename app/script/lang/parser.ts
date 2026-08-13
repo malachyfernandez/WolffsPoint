@@ -4,6 +4,7 @@ import type {
   CallArgument,
   Diagnostic,
   Expression,
+  FunctionTemplatePiece,
   IfBranch,
   Script,
   SourcePosition,
@@ -176,14 +177,63 @@ class Parser {
       }
     }
     this.consumeText(')', 'Expected ) after parameters');
+
+    // Optionally parse template(...) before the body
+    let template: FunctionTemplatePiece[] | undefined;
+    if (
+      this.isName(this.current()) &&
+      this.current().text === 'template' &&
+      this.peek(1).text === '('
+    ) {
+      this.advance(); // consume 'template'
+      this.consumeText('(', 'Expected ( after template');
+      template = [];
+      while (!this.atEnd() && !this.checkText(')')) {
+        const piece = this.parseTemplatePiece();
+        if (piece) template.push(piece);
+        if (!this.matchText(',')) {
+          break;
+        }
+      }
+      this.consumeText(')', 'Expected ) after template');
+    }
+
     const body = this.parseRequiredBlock('Expected function body');
     return {
       kind: 'FunctionStatement',
       name: name.text,
       parameters,
       body,
+      template,
       span: joinSpan(keyword.span.start, body.span.end),
     };
+  }
+
+  private parseTemplatePiece(): FunctionTemplatePiece | null {
+    // input(label, defaultExpr) → input piece
+    if (
+      this.isName(this.current()) &&
+      this.current().text === 'input' &&
+      this.peek(1).text === '('
+    ) {
+      this.advance(); // consume 'input'
+      this.consumeText('(', 'Expected ( after input');
+      const labelExpr = this.parseExpression();
+      const label = labelExpr.kind === 'StringLiteral' ? labelExpr.value : '';
+      let defaultExpression: Expression | undefined;
+      if (this.matchText(',')) {
+        defaultExpression = this.parseExpression();
+      }
+      this.consumeText(')', 'Expected ) after input');
+      return { kind: 'input', label, defaultExpression };
+    }
+    // String literal → text piece
+    const expr = this.parseExpression();
+    if (expr.kind === 'StringLiteral') {
+      return { kind: 'text', text: expr.value };
+    }
+    // Fallback: treat any other expression as an input with no label
+    return { kind: 'input', defaultExpression: expr };
   }
 
   private parseReturn(keyword: Token): Statement {
@@ -282,6 +332,32 @@ class Parser {
       };
     }
     if (this.isName(token)) {
+      if (token.text === 'Dropdown' && this.peek(1).text === '(') {
+        this.advance();
+        this.consumeText('(', 'Expected ( after Dropdown');
+        const valueExpr = this.parseExpression();
+        this.consumeText(',', 'Expected , after Dropdown value');
+        this.consumeText('[', 'Expected [ for Dropdown options');
+        const options: string[] = [];
+        while (!this.atEnd() && !this.checkText(']')) {
+          const optExpr = this.parseExpression();
+          if (optExpr.kind === 'StringLiteral') {
+            options.push(optExpr.value);
+          }
+          if (!this.matchText(',')) {
+            break;
+          }
+        }
+        this.consumeText(']', 'Expected ] after Dropdown options');
+        const close = this.consumeText(')', 'Expected ) after Dropdown');
+        const value = valueExpr.kind === 'StringLiteral' ? valueExpr.value : '';
+        return {
+          kind: 'DropdownLiteral',
+          options,
+          value,
+          span: joinSpan(token.span.start, close.span.end),
+        };
+      }
       if (this.matchText('=>')) {
         const body = this.checkText('{')
           ? this.parseRequiredBlock('Expected lambda body')

@@ -25,6 +25,8 @@ export const inferExpressionKind = (
       return 'string';
     case 'MarkdownLiteral':
       return 'string';
+    case 'DropdownLiteral':
+      return 'string';
     case 'NumberLiteral':
       return 'number';
     case 'BooleanLiteral':
