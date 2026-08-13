@@ -139,16 +139,11 @@ const formatSelectOption = (item: RuntimeValue): Record<string, unknown> => {
     const obj = item as Record<string, RuntimeValue>;
     const realName = String(obj.realName ?? '');
     const email = typeof obj.email === 'string' ? obj.email : '';
-    const isAlive = obj.isAlive === true;
     return {
       value: realName,
       label: email ? `${realName} (${email})` : realName,
-      meta: {
-        email,
-        userId: typeof obj.userId === 'string' ? obj.userId : undefined,
-        role: typeof obj.role === 'string' ? obj.role : undefined,
-        isAlive,
-      },
+      // Store the full player object so InputsWithData can access all fields
+      meta: { ...obj },
     };
   }
   if (isRoleObject(item)) {
@@ -157,11 +152,8 @@ const formatSelectOption = (item: RuntimeValue): Record<string, unknown> => {
     return {
       value: role,
       label: role,
-      meta: {
-        doesRoleVote: obj.doesRoleVote,
-        isVisible: obj.isVisible,
-        aboutRole: typeof obj.aboutRole === 'string' ? obj.aboutRole : undefined,
-      },
+      // Store the full role object so InputsWithData can access all fields
+      meta: { ...obj },
     };
   }
   if (isRuntimeObject(item)) {

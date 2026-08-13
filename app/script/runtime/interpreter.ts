@@ -9,6 +9,7 @@ import type {
 import { parseScript } from '../lang/parser';
 import {
   displayValue,
+  isInputsWithData,
   isNothing,
   isRuntimeFunction,
   isRuntimeObject,
@@ -121,6 +122,8 @@ class Interpreter {
     for (const [name, value] of Object.entries(options.globals ?? {})) {
       this.root.define(name, toRuntimeValue(value));
     }
+    // InputsWithData resolves selected input values back to their full data objects
+    this.root.define('InputsWithData', { kind: 'inputsWithData' } as const);
   }
 
   run(script: Script): InterpreterResult {
@@ -293,6 +296,22 @@ class Interpreter {
       return;
     }
     const named = this.namedArguments(expression.arguments, environment, depth);
+    // Resilience: coerce inputs to match expected types
+    for (const input of def.inputs) {
+      const key = normalize(input.name);
+      if (!(key in named)) continue;
+      const value = named[key];
+      if (input.type === 'list') {
+        if (!Array.isArray(value)) {
+          named[key] = isNothing(value) ? [] : [value];
+        }
+      } else {
+        // Non-list inputs: unwrap single-element arrays
+        if (Array.isArray(value) && value.length === 1) {
+          named[key] = value[0];
+        }
+      }
+    }
     const ctx: StatementContext = {
       defineVariable: (varName, value) => environment.define(varName, value),
       emit: (instruction) => {
@@ -548,8 +567,24 @@ class Interpreter {
     depth: number,
     span: SourceSpan
   ): RuntimeValue {
+    // InputsWithData: resolve selected value to full data object
+    if (isInputsWithData(receiver)) {
+      return this.resolveInputsWithData(name, args, span);
+    }
     const def = lookupExpression(name);
     if (def) {
+      // Resilience: coerce receiver to match expected type
+      let resolvedReceiver: RuntimeValue = receiver;
+      if (def.appliesTo === 'list') {
+        if (!Array.isArray(receiver)) {
+          resolvedReceiver = isNothing(receiver) ? [] : [receiver];
+        }
+      } else if (def.appliesTo !== 'any') {
+        // Non-list methods: unwrap single-element arrays
+        if (Array.isArray(receiver) && receiver.length === 1) {
+          resolvedReceiver = receiver[0];
+        }
+      }
       const ctx: ExpressionContext = {
         evaluateLambda: (fn, item) => {
           if (!isRuntimeFunction(fn)) return NOTHING;
@@ -558,7 +593,7 @@ class Interpreter {
         issues: this.issues,
       };
       try {
-        return def.evaluate(receiver, args, ctx);
+        return def.evaluate(resolvedReceiver, args, ctx);
       } catch (error) {
         this.issues.push({
           message: error instanceof Error ? error.message : `${def.name} failed`,
@@ -569,6 +604,58 @@ class Interpreter {
     }
     this.issues.push({ message: `Unsupported method ${name}`, span });
     return NOTHING;
+  }
+
+  /**
+   * Resolve InputsWithData.entry("key") — returns the full data object
+   * for the selected input value, not just the stored string.
+   *
+   * Looks up the emitted output instruction for the given key to find
+   * the options (with their meta/data), then matches the selected value
+   * from inputState back to the full option object.
+   */
+  private resolveInputsWithData(
+    method: string,
+    args: RuntimeValue[],
+    span: SourceSpan
+  ): RuntimeValue {
+    if (method.toLowerCase() !== 'entry') {
+      this.issues.push({ message: `InputsWithData only supports .entry(), not .${method}`, span });
+      return NOTHING;
+    }
+    const key = displayValue(args[0] ?? NOTHING).toLowerCase();
+    const inputKey = Object.keys(this.inputState).find((k) => k.toLowerCase() === key);
+    const selectedValue = inputKey ? toRuntimeValue(this.inputState[inputKey]) : NOTHING;
+
+    // Find the emitted instruction for this key to get the options with metadata
+    const instruction = this.output.find((instr) => instr.key.toLowerCase() === key);
+    if (instruction?.options && Array.isArray(instruction.options)) {
+      const options = instruction.options as Array<{
+        value: unknown;
+        label?: string;
+        meta?: Record<string, unknown>;
+      }>;
+
+      // For multi-select, selectedValue is an array; for single-select, it's a primitive
+      if (Array.isArray(selectedValue)) {
+        return selectedValue.map((sel) => {
+          const match = options.find(
+            (opt) =>
+              runtimeEquals(toRuntimeValue(opt.value), sel) || opt.label === displayValue(sel)
+          );
+          return match?.meta ? toRuntimeValue(match.meta) : sel;
+        });
+      }
+      const match = options.find(
+        (opt) =>
+          runtimeEquals(toRuntimeValue(opt.value), selectedValue) ||
+          opt.label === displayValue(selectedValue)
+      );
+      return match?.meta ? toRuntimeValue(match.meta) : selectedValue;
+    }
+
+    // No options found — return the raw selected value
+    return selectedValue;
   }
 
   private readMember(value: RuntimeValue, property: string): RuntimeValue {

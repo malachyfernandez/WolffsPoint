@@ -209,6 +209,7 @@ const ScriptEditorDialog = ({
     keys.currentPlayer = keys.players;
     keys.roles = ['role', 'doesRoleVote', 'isVisible', 'aboutRole'];
     keys.Inputs = collectInputLabels(state.ast.statements);
+    keys.InputsWithData = keys.Inputs;
     // Day object keys: built-in fields + extra day column titles
     keys.day = ['vote', 'action', ...(sources?.userTableTitle?.extraDayColumns ?? [])];
     return keys;

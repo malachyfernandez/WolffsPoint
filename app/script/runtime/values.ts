@@ -15,6 +15,10 @@ export interface RuntimeFunction {
   readonly name?: string;
 }
 
+export interface InputsWithDataMarker {
+  readonly kind: 'inputsWithData';
+}
+
 export type RuntimeValue =
   | string
   | number
@@ -22,7 +26,8 @@ export type RuntimeValue =
   | NothingValue
   | RuntimeValue[]
   | RuntimeObject
-  | RuntimeFunction;
+  | RuntimeFunction
+  | InputsWithDataMarker;
 
 export type RuntimeScope = Record<string, RuntimeValue>;
 export type ExternalValue = unknown;
@@ -35,12 +40,19 @@ export const isRuntimeFunction = (value: RuntimeValue): value is RuntimeFunction
   !Array.isArray(value) &&
   (value as { kind?: unknown }).kind === 'function';
 
+export const isInputsWithData = (value: RuntimeValue): value is InputsWithDataMarker =>
+  typeof value === 'object' &&
+  value !== null &&
+  !Array.isArray(value) &&
+  (value as { kind?: unknown }).kind === 'inputsWithData';
+
 export const isRuntimeObject = (value: RuntimeValue): value is RuntimeObject =>
   typeof value === 'object' &&
   value !== null &&
   !Array.isArray(value) &&
   !isNothing(value) &&
-  !isRuntimeFunction(value);
+  !isRuntimeFunction(value) &&
+  !isInputsWithData(value);
 
 export const toRuntimeValue = (
   value: ExternalValue,
@@ -79,7 +91,7 @@ export const toRuntimeValue = (
 };
 
 export const toExternalValue = (value: RuntimeValue): unknown => {
-  if (isNothing(value) || isRuntimeFunction(value)) {
+  if (isNothing(value) || isRuntimeFunction(value) || isInputsWithData(value)) {
     return null;
   }
   if (Array.isArray(value)) {

@@ -68,6 +68,8 @@ export const SCRIPT_GLOBAL_NAMES = [
   'dayDates',
   'schedule',
   'profiles',
+  'Inputs',
+  'InputsWithData',
 ] as const;
 
 export const createScriptGlobals = (source: ScriptSourceData = {}): Record<string, unknown> => {

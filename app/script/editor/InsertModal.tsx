@@ -103,7 +103,8 @@ const DATA_SOURCES: { name: string; description: string }[] = [
   { name: 'dayDates', description: 'Dates for each day' },
   { name: 'schedule', description: 'Game schedule' },
   { name: 'profiles', description: 'Player profiles' },
-  { name: 'Inputs', description: 'Current input state' },
+  { name: 'Inputs', description: 'Selected input values (e.g. player name)' },
+  { name: 'InputsWithData', description: 'Full data for selected inputs (e.g. player object with role, email, days)' },
 ];
 
 const buildStatementFromRegistry = (id: string): Statement => {
