@@ -1,5 +1,5 @@
 import React, { useEffect, useId, useMemo, useState } from 'react';
-import { Pressable, ScrollView, View } from 'react-native';
+import { Pressable, ScrollView, View, type TextStyle } from 'react-native';
 import { Plus, X } from 'lucide-react-native';
 import Column from '../../components/layout/Column';
 import Row from '../../components/layout/Row';
@@ -319,6 +319,7 @@ export const ReplaceableTextInput = ({
   onReplace,
   minWidth = 80,
   maxWidth = 150,
+  autoSize = false,
 }: {
   value: string;
   onChangeText: (value: string) => void;
@@ -326,6 +327,7 @@ export const ReplaceableTextInput = ({
   onReplace?: () => void;
   minWidth?: number;
   maxWidth?: number;
+  autoSize?: boolean;
 }) => {
   // Local state keeps the text input responsive without depending on external
   // re-renders. We sync from props only when the external value differs from
@@ -335,12 +337,15 @@ export const ReplaceableTextInput = ({
   const [focused, setFocused] = useState(false);
   const replaceTooltipId = useId();
   const { setHovered: setReplaceHovered } = useTooltip(replaceTooltipId, 'Change expression');
+
   useEffect(() => {
     if (!focused && localValue !== value) setLocalValue(value);
   }, [value, focused, localValue]);
 
   return (
-    <View className="relative" style={{ minWidth, maxWidth }}>
+    <View
+      className="relative"
+      style={autoSize ? { minWidth: 0, maxWidth } : { minWidth, maxWidth }}>
       <FontTextInput
         value={localValue}
         onChangeText={(next) => {
@@ -357,7 +362,11 @@ export const ReplaceableTextInput = ({
         autoCapitalize="none"
         autoCorrect={false}
         className="bg-white py-1 pl-2 pr-7 text-sm"
-        style={{ minWidth, maxWidth: maxWidth + 70 }}
+        style={
+          autoSize
+            ? ({ minWidth: 0, maxWidth: maxWidth + 70, fieldSizing: 'content' } as TextStyle)
+            : { minWidth, maxWidth: maxWidth + 70 }
+        }
       />
       {onReplace && (
         <Pressable
@@ -878,7 +887,8 @@ export const ExpressionSocket = ({
             }}
             placeholder="0"
             onReplace={() => openExpressionModal()}
-            maxWidth={40}
+            autoSize
+            maxWidth={120}
           />
         </View>
       );
@@ -1524,21 +1534,21 @@ const StatementBlock = ({
     content = (
       <Column className="gap-0">
         <View className="bg-text/10 rounded-t-xl p-2">
-          <Row className="items-center justify-between">
-            <FontText weight="medium">Function</FontText>
-            <DeleteButton onPress={() => onDeleteStatement(currentPath)} />
-          </Row>
-        </View>
-        <View className="border-subtle-border border-x px-2 py-2">
-          <FunctionTemplateEditor
-            template={statement.template ?? []}
-            onChange={(template) => onSetStatementField(currentPath, 'template', template)}
-            statementPath={currentPath}
-            contextVariables={contextVariables}
-            definedFunctions={definedFunctions}
-            entryKeysBySource={entryKeysBySource}
-            onEditMarkdown={onEditMarkdown}
-          />
+          <Column className="gap-2">
+            <Row className="items-center justify-between">
+              <FontText weight="medium">Function</FontText>
+              <DeleteButton onPress={() => onDeleteStatement(currentPath)} />
+            </Row>
+            <FunctionTemplateEditor
+              template={statement.template ?? []}
+              onChange={(template) => onSetStatementField(currentPath, 'template', template)}
+              statementPath={currentPath}
+              contextVariables={contextVariables}
+              definedFunctions={definedFunctions}
+              entryKeysBySource={entryKeysBySource}
+              onEditMarkdown={onEditMarkdown}
+            />
+          </Column>
         </View>
         <View className="border-subtle-border border-x px-2">
           <Canvas

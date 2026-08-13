@@ -293,12 +293,6 @@ const FunctionTemplateEditor = ({
 
   return (
     <Column className="gap-1">
-      <Row className="items-center gap-2">
-        <FontText weight="medium" className="text-sm">
-          Template
-        </FontText>
-      </Row>
-
       <Row className="flex-wrap items-center gap-1">
         {/* Leading connector */}
         <TemplatePlusButton
