@@ -710,6 +710,7 @@ export const ExpressionSocket = ({
             entrySource={entrySource}
             entrySourceMap={entrySourceMap}
             isOuterExpression={false}
+            definedFunctions={definedFunctions}
             label="left side"
             onAdd={onAdd}
             onSetExpression={onSetExpression}
@@ -738,6 +739,7 @@ export const ExpressionSocket = ({
             entrySource={entrySource}
             entrySourceMap={entrySourceMap}
             isOuterExpression={false}
+            definedFunctions={definedFunctions}
             label="right side"
             onAdd={onAdd}
             onSetExpression={onSetExpression}
@@ -779,6 +781,7 @@ export const ExpressionSocket = ({
             entrySource={entrySource}
             entrySourceMap={entrySourceMap}
             isOuterExpression={false}
+            definedFunctions={definedFunctions}
             onAdd={onAdd}
             onSetExpression={onSetExpression}
             onEditMarkdown={onEditMarkdown}
@@ -969,6 +972,7 @@ export const ExpressionSocket = ({
                   entrySource={chainBaseSource}
                   entrySourceMap={entrySourceMap}
                   isOuterExpression={false}
+                  definedFunctions={definedFunctions}
                   label={label}
                   onAdd={onAdd}
                   onSetExpression={onSetExpression}
@@ -1000,6 +1004,7 @@ export const ExpressionSocket = ({
                 entryKeysBySource={entryKeysBySource}
                 entrySource={linkEntrySource}
                 entrySourceMap={entrySourceMap}
+                definedFunctions={definedFunctions}
                 onAdd={onAdd}
                 onSetExpression={onSetExpression}
                 onEditMarkdown={onEditMarkdown}
@@ -1051,6 +1056,7 @@ const MethodLink = ({
   entryKeysBySource,
   entrySource,
   entrySourceMap,
+  definedFunctions,
   onAdd,
   onSetExpression,
   onEditMarkdown,
@@ -1063,6 +1069,7 @@ const MethodLink = ({
   entryKeysBySource?: Record<string, string[]>;
   entrySource?: string;
   entrySourceMap?: Record<string, string>;
+  definedFunctions?: DefinedFunction[];
   onAdd: CanvasProps['onAdd'];
   onSetExpression: CanvasProps['onSetExpression'];
   onEditMarkdown?: CanvasProps['onEditMarkdown'];
@@ -1090,6 +1097,7 @@ const MethodLink = ({
             entrySource={entrySource}
             entrySourceMap={entrySourceMap}
             methodName={link.name}
+            definedFunctions={definedFunctions}
             onAdd={onAdd}
             onSetExpression={onSetExpression}
             onEditMarkdown={onEditMarkdown}
@@ -1154,6 +1162,7 @@ const MethodArgument = ({
   entrySource,
   entrySourceMap,
   methodName,
+  definedFunctions,
   onAdd,
   onSetExpression,
   onEditMarkdown,
@@ -1166,6 +1175,7 @@ const MethodArgument = ({
   entrySource?: string;
   entrySourceMap?: Record<string, string>;
   methodName?: string;
+  definedFunctions?: DefinedFunction[];
   onAdd: CanvasProps['onAdd'];
   onSetExpression: CanvasProps['onSetExpression'];
   onEditMarkdown?: CanvasProps['onEditMarkdown'];
@@ -1219,6 +1229,7 @@ const MethodArgument = ({
           entrySource={entrySource}
           entrySourceMap={innerEntrySourceMap}
           isOuterExpression={false}
+          definedFunctions={definedFunctions}
           label={input.label}
           onAdd={onAdd}
           onSetExpression={onSetExpression}
@@ -1262,6 +1273,7 @@ const MethodArgument = ({
       entryKeysBySource={entryKeysBySource}
       entrySource={entrySource}
       entrySourceMap={entrySourceMap}
+      definedFunctions={definedFunctions}
       label={input?.label}
       onAdd={onAdd}
       onSetExpression={onSetExpression}
@@ -1277,6 +1289,7 @@ const ArgRow = ({
   contextVariables,
   entryKeysBySource,
   entrySourceMap,
+  definedFunctions,
   onAdd,
   onSetExpression,
   onEditMarkdown,
@@ -1287,6 +1300,7 @@ const ArgRow = ({
   contextVariables: string[];
   entryKeysBySource?: Record<string, string[]>;
   entrySourceMap?: Record<string, string>;
+  definedFunctions?: DefinedFunction[];
   onAdd: CanvasProps['onAdd'];
   onSetExpression: CanvasProps['onSetExpression'];
   onEditMarkdown?: CanvasProps['onEditMarkdown'];
@@ -1302,6 +1316,7 @@ const ArgRow = ({
       contextVariables={contextVariables}
       entryKeysBySource={entryKeysBySource}
       entrySourceMap={entrySourceMap}
+      definedFunctions={definedFunctions}
       label={input?.label ?? argument.name}
       onAdd={onAdd}
       onSetExpression={onSetExpression}
@@ -1418,6 +1433,7 @@ const StatementBlock = ({
             }}
             contextVariables={contextVariables}
             entryKeysBySource={entryKeysBySource}
+            definedFunctions={definedFunctions}
             onAdd={onAdd}
             onSetExpression={onSetExpression}
             onEditMarkdown={onEditMarkdown}
@@ -1443,6 +1459,7 @@ const StatementBlock = ({
           expectedType="boolean"
           contextVariables={contextVariables}
           entryKeysBySource={entryKeysBySource}
+          definedFunctions={definedFunctions}
           onAdd={onAdd}
           onSetExpression={onSetExpression}
           onEditMarkdown={onEditMarkdown}
@@ -1488,6 +1505,7 @@ const StatementBlock = ({
           expectedType="list"
           contextVariables={contextVariables}
           entryKeysBySource={entryKeysBySource}
+          definedFunctions={definedFunctions}
           onAdd={onAdd}
           onSetExpression={onSetExpression}
           onEditMarkdown={onEditMarkdown}
@@ -1594,6 +1612,7 @@ const StatementBlock = ({
             }}
             contextVariables={contextVariables}
             entryKeysBySource={entryKeysBySource}
+            definedFunctions={definedFunctions}
             onAdd={onAdd}
             onSetExpression={onSetExpression}
             onEditMarkdown={onEditMarkdown}

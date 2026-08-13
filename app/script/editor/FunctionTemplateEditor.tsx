@@ -301,15 +301,12 @@ const FunctionTemplateEditor = ({
 
       <Row className="flex-wrap items-center gap-1">
         {/* Leading connector */}
-        <Pressable
-          accessibilityRole="button"
+        <TemplatePlusButton
           onPress={() => {
             setInsertIndex(0);
             setPickerOpen(true);
           }}
-          className="border-subtle-border hover:bg-text/10 h-6 w-6 items-center justify-center rounded-full border">
-          <Plus size={12} color="#1a1a1a" />
-        </Pressable>
+        />
 
         {template.map((piece, index) => (
           <React.Fragment key={`piece-${index}`}>
@@ -325,15 +322,12 @@ const FunctionTemplateEditor = ({
                 }
               }}
             />
-            <Pressable
-              accessibilityRole="button"
+            <TemplatePlusButton
               onPress={() => {
                 setInsertIndex(index + 1);
                 setPickerOpen(true);
               }}
-              className="border-subtle-border hover:bg-text/10 h-6 w-6 items-center justify-center rounded-full border">
-              <Plus size={12} color="#1a1a1a" />
-            </Pressable>
+            />
           </React.Fragment>
         ))}
       </Row>
@@ -502,6 +496,26 @@ const FunctionTemplateEditor = ({
         onLeave={handleConfirmLeave}
       />
     </Column>
+  );
+};
+
+/** Plus button that shows as a small dot and expands on hover. */
+const TemplatePlusButton = ({ onPress }: { onPress: () => void }) => {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <Pressable
+      accessibilityRole="button"
+      onPress={onPress}
+      onHoverIn={() => setHovered(true)}
+      onHoverOut={() => setHovered(false)}
+      className="-mx-1 h-6 w-6 items-center justify-center rounded-full">
+      <View
+        className={`border-subtle-border items-center justify-center rounded-full border transition-all ${
+          hovered ? 'hover:bg-text/10 h-6 w-6' : 'bg-text/20 h-2 w-2 border-transparent'
+        }`}>
+        {hovered && <Plus size={12} color="#1a1a1a" />}
+      </View>
+    </Pressable>
   );
 };
 
