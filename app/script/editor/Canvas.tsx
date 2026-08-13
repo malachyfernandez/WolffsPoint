@@ -300,11 +300,7 @@ const PuzzleConnector = ({
         className={`border-subtle-border items-center justify-center border transition-all ${
           isList ? 'rounded-[3px]' : 'rounded-full'
         } ${
-          hovered
-            ? 'bg-text/10 h-7 w-7'
-            : isVertical
-              ? 'bg-text/20 h-3 w-2'
-              : 'bg-text/20 h-2 w-3'
+          hovered ? 'bg-text/10 h-7 w-7' : isVertical ? 'bg-text/20 h-3 w-2' : 'bg-text/20 h-2 w-3'
         }`}>
         {hovered && <Plus size={14} color="#1a1a1a" />}
       </View>
@@ -1436,87 +1432,105 @@ const StatementBlock = ({
   } else if (statement.kind === 'IfStatement') {
     const condition = statement.branches[0]?.condition ?? { kind: 'NothingLiteral' as const, span };
     content = (
-      <Column className="gap-2">
-        <Row className="items-center justify-between gap-2">
-          <FontText weight="medium">If</FontText>
-          <DeleteButton onPress={() => onDeleteStatement(currentPath)} />
-        </Row>
-        <ExpressionSocket
-          expression={condition}
-          location={{
-            statementPath: currentPath,
-            slot: { kind: 'ifCondition' },
-            expressionPath: [],
-          }}
-          expectedType="boolean"
-          contextVariables={contextVariables}
-          entryKeysBySource={entryKeysBySource}
-          definedFunctions={definedFunctions}
-          onAdd={onAdd}
-          onSetExpression={onSetExpression}
-          onEditMarkdown={onEditMarkdown}
-        />
-        <Canvas
-          statements={statement.branches[0]?.body.statements ?? []}
-          {...{
-            definedVariables,
-            definedFunctions,
-            onAdd,
-            onSetExpression,
-            onSetStatementField,
-            onDeleteStatement,
-            entryKeysBySource,
-            onEditMarkdown,
-          }}
-          stmtPath={currentPath}
-        />
+      <Column className="gap-0">
+        <View className="bg-text/10 rounded-t-xl p-2">
+          <Column className="gap-2">
+            <Row className="items-center justify-between gap-2">
+              <FontText weight="medium">If</FontText>
+              <DeleteButton onPress={() => onDeleteStatement(currentPath)} />
+            </Row>
+            <ExpressionSocket
+              expression={condition}
+              location={{
+                statementPath: currentPath,
+                slot: { kind: 'ifCondition' },
+                expressionPath: [],
+              }}
+              expectedType="boolean"
+              contextVariables={contextVariables}
+              entryKeysBySource={entryKeysBySource}
+              definedFunctions={definedFunctions}
+              onAdd={onAdd}
+              onSetExpression={onSetExpression}
+              onEditMarkdown={onEditMarkdown}
+            />
+          </Column>
+        </View>
+        <View className="border-subtle-border border-x px-2">
+          <Canvas
+            statements={statement.branches[0]?.body.statements ?? []}
+            {...{
+              definedVariables,
+              definedFunctions,
+              onAdd,
+              onSetExpression,
+              onSetStatementField,
+              onDeleteStatement,
+              entryKeysBySource,
+              onEditMarkdown,
+            }}
+            stmtPath={currentPath}
+          />
+        </View>
+        <View className="bg-text/10 rounded-b-xl p-2" />
       </Column>
     );
   } else if (statement.kind === 'ForEachStatement') {
     content = (
-      <Column className="gap-2">
-        <Row className="items-center justify-between gap-2">
-          <Row className="items-center gap-2">
-            <FontText weight="medium">For each</FontText>
-            <ReplaceableTextInput
-              value={statement.itemName}
-              onChangeText={(value) =>
-                onSetStatementField(currentPath, 'itemName', sanitizeIdentifier(value) || 'Item')
-              }
-              placeholder="Item"
+      <Column className="gap-0">
+        <View className="bg-text/10 rounded-t-xl p-2">
+          <Column className="gap-2">
+            <Row className="items-center justify-between gap-2">
+              <Row className="items-center gap-2">
+                <FontText weight="medium">For each</FontText>
+                <ReplaceableTextInput
+                  value={statement.itemName}
+                  onChangeText={(value) =>
+                    onSetStatementField(
+                      currentPath,
+                      'itemName',
+                      sanitizeIdentifier(value) || 'Item'
+                    )
+                  }
+                  placeholder="Item"
+                />
+              </Row>
+              <DeleteButton onPress={() => onDeleteStatement(currentPath)} />
+            </Row>
+            <ExpressionSocket
+              expression={statement.iterable}
+              location={{
+                statementPath: currentPath,
+                slot: { kind: 'forEachIterable' },
+                expressionPath: [],
+              }}
+              expectedType="list"
+              contextVariables={contextVariables}
+              entryKeysBySource={entryKeysBySource}
+              definedFunctions={definedFunctions}
+              onAdd={onAdd}
+              onSetExpression={onSetExpression}
+              onEditMarkdown={onEditMarkdown}
             />
-          </Row>
-          <DeleteButton onPress={() => onDeleteStatement(currentPath)} />
-        </Row>
-        <ExpressionSocket
-          expression={statement.iterable}
-          location={{
-            statementPath: currentPath,
-            slot: { kind: 'forEachIterable' },
-            expressionPath: [],
-          }}
-          expectedType="list"
-          contextVariables={contextVariables}
-          entryKeysBySource={entryKeysBySource}
-          definedFunctions={definedFunctions}
-          onAdd={onAdd}
-          onSetExpression={onSetExpression}
-          onEditMarkdown={onEditMarkdown}
-        />
-        <Canvas
-          statements={statement.body.statements}
-          {...{
-            definedVariables: [statement.itemName, ...definedVariables],
-            definedFunctions,
-            onAdd,
-            onSetExpression,
-            onSetStatementField,
-            onDeleteStatement,
-            entryKeysBySource,
-            onEditMarkdown,
-          }}
-          stmtPath={currentPath}
-        />
+          </Column>
+        </View>
+        <View className="border-subtle-border border-x px-2">
+          <Canvas
+            statements={statement.body.statements}
+            {...{
+              definedVariables: [statement.itemName, ...definedVariables],
+              definedFunctions,
+              onAdd,
+              onSetExpression,
+              onSetStatementField,
+              onDeleteStatement,
+              entryKeysBySource,
+              onEditMarkdown,
+            }}
+            stmtPath={currentPath}
+          />
+        </View>
+        <View className="bg-text/10 rounded-b-xl p-2" />
       </Column>
     );
   } else if (statement.kind === 'FunctionStatement') {
