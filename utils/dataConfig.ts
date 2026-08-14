@@ -1,7 +1,7 @@
-import { Privacy } from "../hooks/useUserVariable";
+import { Privacy } from '../hooks/useUserVariable';
 
 export type DataVariableConfig<T = any> = {
-  type: "variable";
+  type: 'variable';
   defaultValue?: T;
   privacy?: Privacy;
   filterKey?: keyof T | string;
@@ -11,7 +11,7 @@ export type DataVariableConfig<T = any> = {
 };
 
 export type DataListConfig<T = any> = {
-  type: "list";
+  type: 'list';
   defaultValue?: T;
   privacy?: Privacy;
   filterKey?: keyof T | string;
@@ -30,74 +30,79 @@ export type DataConfigType = {
  */
 export const DATA_CONFIG: DataConfigType = {
   userTable: {
-    type: "list",
-    privacy: "PUBLIC",
+    type: 'list',
+    privacy: 'PUBLIC',
     defaultValue: [],
   },
   dayDatesArray: {
-    type: "list",
-    privacy: "PUBLIC",
+    type: 'list',
+    privacy: 'PUBLIC',
     defaultValue: [],
   },
   selectedDayIndex: {
-    type: "list",
-    privacy: "PUBLIC",
+    type: 'list',
+    privacy: 'PUBLIC',
     defaultValue: 0,
   },
   numberOfRealDaysPerInGameDay: {
-    type: "list",
-    privacy: "PUBLIC",
+    type: 'list',
+    privacy: 'PUBLIC',
     defaultValue: 2,
   },
   startingDate: {
-    type: "list",
-    privacy: "PUBLIC",
+    type: 'list',
+    privacy: 'PUBLIC',
   },
   userData: {
-    type: "variable",
-    privacy: "PUBLIC",
-    defaultValue: { name: "", email: "", userId: "" },
-    searchKeys: ["name"],
+    type: 'variable',
+    privacy: 'PUBLIC',
+    defaultValue: { name: '', email: '', userId: '' },
+    searchKeys: ['name'],
   },
   activeGameId: {
-    type: "variable",
-    privacy: "PRIVATE",
-    defaultValue: "",
+    type: 'variable',
+    privacy: 'PRIVATE',
+    defaultValue: '',
   },
   gamesTheyJoined: {
-    type: "variable",
-    privacy: "PRIVATE",
+    type: 'variable',
+    privacy: 'PRIVATE',
     defaultValue: [],
   },
   archivedGames: {
-    type: "variable",
-    privacy: "PRIVATE",
+    type: 'variable',
+    privacy: 'PRIVATE',
     defaultValue: [],
   },
   customUserInfo: {
-    type: "variable",
-    privacy: "PUBLIC",
-    defaultValue: { name: "", photoUrl: "" },
-    searchKeys: ["name"],
+    type: 'variable',
+    privacy: 'PUBLIC',
+    defaultValue: { name: '', photoUrl: '' },
+    searchKeys: ['name'],
   },
   games: {
-    type: "list",
-    privacy: "PUBLIC",
+    type: 'list',
+    privacy: 'PUBLIC',
     defaultValue: {},
   },
   userTableTitle: {
-    type: "list",
-    privacy: "PUBLIC",
+    type: 'list',
+    privacy: 'PUBLIC',
     defaultValue: { extraUserColumns: [], extraDayColumns: [] },
   },
   userTableColumnVisibility: {
-    type: "list",
-    privacy: "PUBLIC",
+    type: 'list',
+    privacy: 'PUBLIC',
     defaultValue: { extraUserColumns: [], extraDayColumns: [] },
   },
   morningMessagesList: {
-    type: "list",
-    privacy: "PUBLIC",
+    type: 'list',
+    privacy: 'PUBLIC',
     defaultValue: {},
+  },
+  tagDefinitions: {
+    type: 'variable',
+    privacy: 'PUBLIC',
+    defaultValue: [],
   },
 };
