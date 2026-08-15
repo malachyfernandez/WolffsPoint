@@ -8,7 +8,12 @@ import Row from '../layout/Row';
 import DayUserRow from './DayUserRow';
 import DayTitleRow from './DayTitleRow';
 import { createUndoSnapshot, useUndoRedo } from 'hooks/useUndoRedo';
-import { UserTableItem, UserTableTitle, UserTableColumnVisibility } from 'types/playerTable';
+import {
+  UserTableItem,
+  UserTableTitle,
+  UserTableColumnVisibility,
+  UserTableColumnNightlyVisibility,
+} from 'types/playerTable';
 import {
   ColumnSizeOption,
   PlayerPageColumnSizes,
@@ -75,6 +80,11 @@ const DaysTable = ({
   const [userTable, setUserTable] = useList<UserTableItem[]>('userTable', gameId);
 
   const users = userTable?.value ?? [];
+  // Ref that mirrors `users` but is also updated synchronously when we call
+  // setUserTable, so that handleTagsAdded can see the tag change that was
+  // just applied via onChange (before React re-renders).
+  const usersRef = useRef(users);
+  usersRef.current = users;
 
   const [userTableTitle, setUserTableTitle] = useList<UserTableTitle>('userTableTitle', gameId, {
     privacy: 'PUBLIC',
@@ -83,16 +93,31 @@ const DaysTable = ({
   const [userTableColumnVisibility, setUserTableColumnVisibility] =
     useList<UserTableColumnVisibility>('userTableColumnVisibility', gameId, { privacy: 'PUBLIC' });
 
+  const [nightlyVisibility, setNightlyVisibility] = useList<UserTableColumnNightlyVisibility>(
+    'userTableColumnNightlyVisibility',
+    gameId,
+    { privacy: 'PUBLIC' }
+  );
+
   const titles = userTableTitle?.value ?? { extraUserColumns: [], extraDayColumns: [] };
   const { fireTagTriggers } = useTagTriggers(gameId, users, titles, (updated) =>
     setUserTable(updated)
   );
 
   const handleTagsAdded = (tagNames: string[], context: CellContext) => {
-    // Compute the projected user table after the cell change, then fire triggers
-    const projectedUsers = users; // cell change already applied via onChange
-    const updated = fireTagTriggers(tagNames, context, projectedUsers);
+    const projectedUsers = usersRef.current;
+    const updated = fireTagTriggers(tagNames, context, projectedUsers, 'added');
     if (updated !== projectedUsers) {
+      usersRef.current = updated;
+      setUserTable(updated);
+    }
+  };
+
+  const handleTagsRemoved = (tagNames: string[], context: CellContext) => {
+    const projectedUsers = usersRef.current;
+    const updated = fireTagTriggers(tagNames, context, projectedUsers, 'removed');
+    if (updated !== projectedUsers) {
+      usersRef.current = updated;
       setUserTable(updated);
     }
   };
@@ -150,7 +175,8 @@ const DaysTable = ({
       userTable?.state?.isSyncing ||
       userTableTitle?.state?.isSyncing ||
       userTableColumnVisibility?.state?.isSyncing ||
-      columnSizes?.state?.isSyncing
+      columnSizes?.state?.isSyncing ||
+      nightlyVisibility?.state?.isSyncing
     ) {
       hasNormalizedOnceRef.current = false;
       return;
@@ -174,6 +200,22 @@ const DaysTable = ({
     const currentUsers = userTable?.value ?? [];
     const currentColumnSizes = columnSizes.value ?? defaultPlayerPageColumnSizes;
 
+    // Normalize nightly visibility to match column counts, defaulting to false
+    const currentNightly = nightlyVisibility?.value ?? {
+      extraUserColumns: [],
+      extraDayColumns: [],
+    };
+    const normalizedNightly = {
+      extraUserColumns: Array.from(
+        { length: normalizedState.titles.extraUserColumns.length },
+        (_, i) => currentNightly.extraUserColumns[i] ?? false
+      ),
+      extraDayColumns: Array.from(
+        { length: normalizedState.titles.extraDayColumns.length },
+        (_, i) => currentNightly.extraDayColumns[i] ?? false
+      ),
+    };
+
     let hasChanges = false;
 
     if (!deepEqual(currentVisibility, normalizedState.visibility)) {
@@ -196,6 +238,11 @@ const DaysTable = ({
       hasChanges = true;
     }
 
+    if (!deepEqual(currentNightly, normalizedNightly)) {
+      setNightlyVisibility(normalizedNightly);
+      hasChanges = true;
+    }
+
     hasNormalizedOnceRef.current = true;
 
     // Only measure width if columns actually changed
@@ -208,6 +255,7 @@ const DaysTable = ({
     userTableTitle?.state?.isSyncing,
     userTableColumnVisibility?.state?.isSyncing,
     columnSizes?.state?.isSyncing,
+    nightlyVisibility?.state?.isSyncing,
     dayCount,
     dayNumber,
   ]);
@@ -296,7 +344,7 @@ const DaysTable = ({
     extraColumnIndex: number,
     newExtraColumnValue: string
   ) => {
-    const previousUserTable = createUndoSnapshot(userTable?.value ?? []);
+    const previousUserTable = createUndoSnapshot(usersRef.current);
     if (userIndex < 0 || userIndex >= previousUserTable.length) return;
 
     const nextUserTable = createUndoSnapshot(
@@ -323,9 +371,14 @@ const DaysTable = ({
       days,
     };
 
+    // Update ref synchronously so handleTagsAdded sees the tag change
+    usersRef.current = nextUserTable;
     executeCommand({
       action: () => setUserTable(createUndoSnapshot(nextUserTable)),
-      undoAction: () => setUserTable(createUndoSnapshot(previousUserTable)),
+      undoAction: () => {
+        usersRef.current = previousUserTable;
+        setUserTable(createUndoSnapshot(previousUserTable));
+      },
       description: 'Set Day Column Value',
     });
   };
@@ -416,6 +469,22 @@ const DaysTable = ({
     });
   };
 
+  const toggleNightlyVisibility = (columnIndex: number) => {
+    const current = nightlyVisibility?.value ?? { extraUserColumns: [], extraDayColumns: [] };
+    const colCount = titles.extraDayColumns.length;
+    // Normalize to full length, defaulting to false (not shown in nightly)
+    const normalized = Array.from(
+      { length: colCount },
+      (_, i) => current.extraDayColumns[i] ?? false
+    );
+    const currentValue = normalized[columnIndex] ?? false;
+    const next = {
+      ...current,
+      extraDayColumns: normalized.map((v, index) => (index === columnIndex ? !currentValue : v)),
+    };
+    setNightlyVisibility(next);
+  };
+
   const UNDOABLEdeleteDayColumn = (columnIndex: number) => {
     const previousTitles = createUndoSnapshot(
       userTableTitle?.value ?? { extraUserColumns: [], extraDayColumns: [] }
@@ -425,6 +494,9 @@ const DaysTable = ({
       userTableColumnVisibility?.value ?? { extraUserColumns: [], extraDayColumns: [] }
     );
     const previousSizes = createUndoSnapshot(columnSizes.value ?? defaultPlayerPageColumnSizes);
+    const previousNightlyVisibility = createUndoSnapshot(
+      nightlyVisibility?.value ?? { extraUserColumns: [], extraDayColumns: [] }
+    );
 
     const nextTitles = {
       ...previousTitles,
@@ -443,6 +515,13 @@ const DaysTable = ({
       dayExtraColumns: previousSizes.dayExtraColumns.filter((_, index) => index !== columnIndex),
     };
 
+    const nextNightlyVisibility = {
+      ...previousNightlyVisibility,
+      extraDayColumns: previousNightlyVisibility.extraDayColumns.filter(
+        (_, index) => index !== columnIndex
+      ),
+    };
+
     const normalizedNextState = getNormalizedState({
       titles: nextTitles,
       visibility: nextVisibilityInput,
@@ -456,12 +535,14 @@ const DaysTable = ({
         setUserTable(createUndoSnapshot(normalizedNextState.users));
         setUserTableColumnVisibility(createUndoSnapshot(normalizedNextState.visibility));
         setColumnSizes(createUndoSnapshot(normalizedNextState.columnSizes));
+        setNightlyVisibility(createUndoSnapshot(nextNightlyVisibility));
       },
       undoAction: () => {
         setUserTableTitle(createUndoSnapshot(previousTitles));
         setUserTable(createUndoSnapshot(previousUserTable));
         setUserTableColumnVisibility(createUndoSnapshot(previousVisibility));
         setColumnSizes(createUndoSnapshot(previousSizes));
+        setNightlyVisibility(createUndoSnapshot(previousNightlyVisibility));
       },
       description: 'Delete Day Column',
     });
@@ -495,6 +576,8 @@ const DaysTable = ({
               onSetDayBaseColumnSize={setDayBaseColumnSize}
               onSetExtraDayColumnSize={setDayExtraColumnSize}
               onDeleteExtraDayColumn={UNDOABLEdeleteDayColumn}
+              nightlyVisibility={nightlyVisibility?.value?.extraDayColumns}
+              onToggleNightlyVisibility={toggleNightlyVisibility}
             />
 
             {users.map((user, index) => (
@@ -517,6 +600,7 @@ const DaysTable = ({
                 users={users}
                 dayColumnTitles={titles.extraDayColumns}
                 onTagsAdded={handleTagsAdded}
+                onTagsRemoved={handleTagsRemoved}
               />
             ))}
           </Column>

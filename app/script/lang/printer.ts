@@ -205,6 +205,12 @@ export const printStatement = (statement: Statement, depth: number = 0): string 
     }
     case 'ErrorStatement':
       return `${prefix}${statement.source}`;
+    case 'OnTagAddedStatement': {
+      return `${prefix}OnTagAdded ${printBlock(statement.body, depth)}`;
+    }
+    case 'OnTagRemovedStatement': {
+      return `${prefix}OnTagRemoved ${printBlock(statement.body, depth)}`;
+    }
   }
 };
 

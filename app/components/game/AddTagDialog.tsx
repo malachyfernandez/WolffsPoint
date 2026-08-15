@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { Trash2, X } from 'lucide-react-native';
 import ConvexDialog from '../ui/dialog/ConvexDialog';
@@ -11,8 +11,10 @@ import DialogHeader from '../ui/dialog/DialogHeader';
 import UnsavedChangesDialog from '../ui/dialog/UnsavedChangesDialog';
 import TagPill, { TAG_COLORS, type TagColor } from './TagPill';
 import ScriptEditorDialog from '../../script/editor/ScriptEditorDialog';
-import { useValue } from 'hooks/useData';
+import { useValue, useList } from 'hooks/useData';
 import { getGameScopedKey } from 'utils/multiplayer';
+import type { UserTableItem, UserTableTitle } from '../../../types/playerTable';
+import type { ScriptSourceData } from '../../script/runtime/sources';
 
 interface AddTagDialogProps {
   isOpen: boolean;
@@ -49,11 +51,30 @@ const AddTagDialog = ({
   const [isTriggerEditorOpen, setIsTriggerEditorOpen] = useState(false);
 
   // Tag trigger scripts: { "Infected": "script...", "Dead": "..." }
+  // Each script can contain OnTagAdded and OnTagRemoved blocks.
   const [tagTriggersRecord, setTagTriggersRecord] = useValue<Record<string, string>>(
     gameId ? getGameScopedKey('tagTriggers', gameId) : 'tagTriggers-noop',
     { defaultValue: {}, privacy: 'PUBLIC' }
   );
   const tagTriggers = tagTriggersRecord?.value ?? {};
+
+  // Load user table title + players so the ScriptEditorDialog can show
+  // extra columns in UpdateCell and provide proper script globals.
+  const [userTableTitle] = useList<UserTableTitle>('userTableTitle', gameId ?? '', {
+    privacy: 'PUBLIC',
+  });
+  const [userTable] = useList<UserTableItem[]>('userTable', gameId ?? '', {
+    privacy: 'PUBLIC',
+  });
+
+  const scriptSources = useMemo<ScriptSourceData>(
+    () => ({
+      capability: 'operator',
+      players: userTable?.value ?? [],
+      userTableTitle: userTableTitle?.value,
+    }),
+    [userTable?.value, userTableTitle?.value]
+  );
 
   // Snapshot of the initial state when the dialog opens, used to detect
   // unsaved changes and prompt before closing.
@@ -198,25 +219,21 @@ const AddTagDialog = ({
               {/* Trigger script (edit mode only) */}
               {isEditMode && editTag && gameId && (
                 <Column className="gap-2">
-                  <FontText weight="medium">When Tag Added — Trigger Script</FontText>
-                  <FontText variant="subtext" className="text-xs">
-                    Runs when this tag is added to a cell. Use UpdateCell to modify other cells.
-                    Globals: placedTag, placedUser, placedDay, placedColumn. No inputs/dropdowns —
-                    use logic and table updates only.
-                  </FontText>
                   <Row className="gap-2">
                     <AppButton
                       variant="outline"
-                      className="h-9"
+                      className="h-9 px-4"
                       onPress={() => setIsTriggerEditorOpen(true)}>
                       <FontText weight="medium" className="text-sm">
-                        {tagTriggers[editTag.name]?.trim() ? 'Edit Trigger' : 'Add Trigger'}
+                        {tagTriggers[editTag.name]?.trim()
+                          ? 'Edit Trigger Script'
+                          : 'Add Trigger Script'}
                       </FontText>
                     </AppButton>
                     {tagTriggers[editTag.name]?.trim() && (
                       <AppButton
                         variant="outline"
-                        className="h-9"
+                        className="h-9 px-4"
                         onPress={() => {
                           const next = { ...tagTriggers };
                           delete next[editTag.name];
@@ -228,6 +245,15 @@ const AddTagDialog = ({
                       </AppButton>
                     )}
                   </Row>
+                  {/* Script preview when a trigger exists */}
+                  {tagTriggers[editTag.name]?.trim() && (
+                    <View className="bg-text/5 max-h-32 overflow-hidden rounded-lg p-2">
+                      <FontText className="text-xs opacity-60" style={{ fontFamily: 'monospace' }}>
+                        {tagTriggers[editTag.name].slice(0, 500)}
+                        {tagTriggers[editTag.name].length > 500 ? '…' : ''}
+                      </FontText>
+                    </View>
+                  )}
                 </Column>
               )}
 
@@ -275,7 +301,10 @@ const AddTagDialog = ({
           onOpenChange={setIsTriggerEditorOpen}
           title="Tag Trigger Script"
           initialScriptText={tagTriggers[editTag.name] ?? ''}
+          sources={scriptSources}
           hideInputs
+          isTriggerContext
+          gameId={gameId}
           onSubmit={(scriptText) => {
             const next = { ...tagTriggers };
             if (scriptText.trim()) {

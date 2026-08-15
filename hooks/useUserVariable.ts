@@ -1,12 +1,12 @@
-import { useMutation, useQuery } from "convex/react";
-import { useConvexAuth } from "convex/react";
-import { api } from "../convex/_generated/api";
-import { useEffect, useRef, useState } from "react";
-import { devWarn } from "../utils/devWarnings";
-import { userVarConfig } from "../utils/userVarConfig";
-import { decodeUserValue, encodeUserValue } from "./userValueSerialization";
-import { globalRateLimitMonitor } from "./useRateLimitMonitor";
-import { deepEqual } from "../utils/deepEqual";
+import { useMutation, useQuery } from 'convex/react';
+import { useConvexAuth } from 'convex/react';
+import { api } from '../convex/_generated/api';
+import { useEffect, useRef, useState } from 'react';
+import { devWarn } from '../utils/devWarnings';
+import { userVarConfig } from '../utils/userVarConfig';
+import { decodeUserValue, encodeUserValue } from './userValueSerialization';
+import { globalRateLimitMonitor } from './useRateLimitMonitor';
+import { deepEqual } from '../utils/deepEqual';
 
 type ObjectKeys<T> = T extends object ? Extract<keyof T, string> : never;
 type PrimitiveIndexValue = string | number | boolean;
@@ -15,56 +15,53 @@ type PrimitiveIndexValue = string | number | boolean;
 // - "PUBLIC"
 // - "PRIVATE"
 // - array of user IDs, which is converted to { allowList: [...] } on the backend
-export type Privacy = "PUBLIC" | "PRIVATE" | string[];
+export type Privacy = 'PUBLIC' | 'PRIVATE' | string[];
 
 // Stored/backend privacy output shape
-export type StoredPrivacy =
-    | "PUBLIC"
-    | "PRIVATE"
-    | { allowList: string[] };
+export type StoredPrivacy = 'PUBLIC' | 'PRIVATE' | { allowList: string[] };
 
-export type OptimisticTimeoutBehavior = "reset" | "keep";
+export type OptimisticTimeoutBehavior = 'reset' | 'keep';
 
 type SyncState = {
-    isSyncing: boolean;
-    lastOpStatus?: "idle" | "pending" | "confirmed" | "timed_out";
-    lastOpStartedAt?: number;
-    lastOpTimedOutAt?: number;
+  isSyncing: boolean;
+  lastOpStatus?: 'idle' | 'pending' | 'confirmed' | 'timed_out';
+  lastOpStartedAt?: number;
+  lastOpTimedOutAt?: number;
 };
 
 export type UserVariableRecord<T> = {
-    id?: string;
-    _id?: string;
-    key?: string;
-    userToken?: string;
+  id?: string;
+  _id?: string;
+  key?: string;
+  userToken?: string;
 
-    value: T;
-    privacy?: StoredPrivacy;
+  value: T;
+  privacy?: StoredPrivacy;
 
-    filterKey?: string;
-    filterValue?: PrimitiveIndexValue;
+  filterKey?: string;
+  filterValue?: PrimitiveIndexValue;
 
-    searchKeys?: string[];
-    searchValue?: string;
+  searchKeys?: string[];
+  searchValue?: string;
 
-    sortKey?: string;
-    sortValue?: PrimitiveIndexValue;
+  sortKey?: string;
+  sortValue?: PrimitiveIndexValue;
 
-    createdAt?: number;
-    lastModified?: number;
+  createdAt?: number;
+  lastModified?: number;
 };
 
 export type UserVariableResult<T> = UserVariableRecord<T> & {
-    confirmedValue?: T;
-    state: SyncState;
+  confirmedValue?: T;
+  state: SyncState;
 };
 
 export type UserVarOpStatusInfo<T> = {
-    key: string;
-    status: "pending" | "confirmed" | "timed_out";
-    optimisticValue: T;
-    lastConfirmedValue: T | undefined;
-    msSinceSet: number;
+  key: string;
+  status: 'pending' | 'confirmed' | 'timed_out';
+  optimisticValue: T;
+  lastConfirmedValue: T | undefined;
+  msSinceSet: number;
 };
 
 /**
@@ -216,300 +213,291 @@ export type UserVarOpStatusInfo<T> = {
  * - defaults live in `utils/userVarConfig.ts`
  */
 export function useUserVariable<T>({
-    key,
-    defaultValue,
-    privacy = "PRIVATE",
-    filterKey,
-    searchKeys,
-    sortKey,
-    timeoutMs = userVarConfig.defaultTimeoutMs,
-    optimisticTimeoutBehavior = "reset",
-    overwriteStoredConfig = userVarConfig.overwriteStoredConfigOnSet,
-    overwriteStoredPrivacy = userVarConfig.overwriteStoredPrivacyOnSet,
-    onOpStatusChange,
+  key,
+  defaultValue,
+  privacy = 'PRIVATE',
+  filterKey,
+  searchKeys,
+  sortKey,
+  timeoutMs = userVarConfig.defaultTimeoutMs,
+  optimisticTimeoutBehavior = 'reset',
+  overwriteStoredConfig = userVarConfig.overwriteStoredConfigOnSet,
+  overwriteStoredPrivacy = userVarConfig.overwriteStoredPrivacyOnSet,
+  onOpStatusChange,
 }: {
-    key: string;
-    defaultValue?: T;
-    privacy?: Privacy;
-    filterKey?: ObjectKeys<T> | string;
-    searchKeys?: (ObjectKeys<T> | string)[];
-    sortKey?: ObjectKeys<T> | string;
-    timeoutMs?: number;
-    optimisticTimeoutBehavior?: OptimisticTimeoutBehavior;
-    overwriteStoredConfig?: boolean;
-    overwriteStoredPrivacy?: boolean;
-    onOpStatusChange?: (info: UserVarOpStatusInfo<T>) => void;
+  key: string;
+  defaultValue?: T;
+  privacy?: Privacy;
+  filterKey?: ObjectKeys<T> | string;
+  searchKeys?: (ObjectKeys<T> | string)[];
+  sortKey?: ObjectKeys<T> | string;
+  timeoutMs?: number;
+  optimisticTimeoutBehavior?: OptimisticTimeoutBehavior;
+  overwriteStoredConfig?: boolean;
+  overwriteStoredPrivacy?: boolean;
+  onOpStatusChange?: (info: UserVarOpStatusInfo<T>) => void;
 }): [UserVariableResult<T>, (newValue: T) => void] {
-    const record = useQuery(api.user_vars.get, { key });
+  const record = useQuery(api.user_vars.get, { key });
 
-    const isSyncing = record === undefined;
+  const isSyncing = record === undefined;
 
-    const [confirmedValue, setConfirmedValue] = useState<T | undefined>(undefined);
-    const confirmedValueRef = useRef<T | undefined>(undefined);
+  const [confirmedValue, setConfirmedValue] = useState<T | undefined>(undefined);
+  const confirmedValueRef = useRef<T | undefined>(undefined);
 
-    const [opState, setOpState] = useState<{
-        lastOpStatus: SyncState["lastOpStatus"];
-        lastOpStartedAt?: number;
-        lastOpTimedOutAt?: number;
-    }>({ lastOpStatus: "idle" });
+  const [opState, setOpState] = useState<{
+    lastOpStatus: SyncState['lastOpStatus'];
+    lastOpStartedAt?: number;
+    lastOpTimedOutAt?: number;
+  }>({ lastOpStatus: 'idle' });
 
-    const pendingOpRef = useRef<{
-        id: number;
-        startedAt: number;
-        optimisticValue: T;
-        timeoutHandle: ReturnType<typeof setTimeout> | null;
-        hasTimedOut: boolean;
-    } | null>(null);
+  const pendingOpRef = useRef<{
+    id: number;
+    startedAt: number;
+    optimisticValue: T;
+    timeoutHandle: ReturnType<typeof setTimeout> | null;
+    hasTimedOut: boolean;
+  } | null>(null);
 
-    const opIdRef = useRef(0);
-    const didAutoCreateRef = useRef(false);
-    const { isLoading: isConvexAuthLoading, isAuthenticated: isConvexAuthenticated } = useConvexAuth();
+  const opIdRef = useRef(0);
+  const didAutoCreateRef = useRef(false);
+  const { isLoading: isConvexAuthLoading, isAuthenticated: isConvexAuthenticated } =
+    useConvexAuth();
 
-    const decodedRecordValue =
-        record?.value === undefined
-            ? undefined
-            : decodeUserValue(record.value as T);
+  const decodedRecordValue =
+    record?.value === undefined ? undefined : decodeUserValue(record.value as T);
 
-    const baseValue: T = isSyncing
-        ? (defaultValue as T)
-        : ((decodedRecordValue ?? defaultValue) as T);
+  const baseValue: T = isSyncing
+    ? (defaultValue as T)
+    : ((decodedRecordValue ?? defaultValue) as T);
 
-    useEffect(() => {
-        if (record === undefined || record === null) return;
-        if (pendingOpRef.current) return;
+  useEffect(() => {
+    if (record === undefined || record === null) return;
+    if (pendingOpRef.current) return;
 
-        const next = decodeUserValue(record.value as T);
-        confirmedValueRef.current = next;
-        setConfirmedValue(next);
-    }, [record]);
+    const next = decodeUserValue(record.value as T);
+    confirmedValueRef.current = next;
+    setConfirmedValue(next);
+  }, [record]);
 
-    const shouldAutoResetOnTimeout = optimisticTimeoutBehavior === "reset";
+  const shouldAutoResetOnTimeout = optimisticTimeoutBehavior === 'reset';
 
-    const value: T =
-        shouldAutoResetOnTimeout && opState.lastOpStatus === "timed_out"
-            ? ((confirmedValue ?? defaultValue) as T)
-            : baseValue;
+  const value: T =
+    shouldAutoResetOnTimeout && opState.lastOpStatus === 'timed_out'
+      ? ((confirmedValue ?? defaultValue) as T)
+      : baseValue;
 
-    const valueRef = useRef(value);
-    valueRef.current = value;
+  const valueRef = useRef(value);
+  valueRef.current = value;
 
-    useEffect(() => {
-        if (!shouldAutoResetOnTimeout) return;
-        if (opState.lastOpStatus !== "timed_out") return;
-        if (!opState.lastOpTimedOutAt) return;
+  useEffect(() => {
+    if (!shouldAutoResetOnTimeout) return;
+    if (opState.lastOpStatus !== 'timed_out') return;
+    if (!opState.lastOpTimedOutAt) return;
 
-        devWarn(
-            "uservar_rollback",
-            `Rolled back key="${key}" to last confirmed value after timeout.` 
-        );
-    }, [
+    devWarn('uservar_rollback', `Rolled back key="${key}" to last confirmed value after timeout.`);
+  }, [key, opState.lastOpStatus, opState.lastOpTimedOutAt, shouldAutoResetOnTimeout]);
+
+  const setMutation = useMutation(api.user_vars.set).withOptimisticUpdate((localStore, args) => {
+    const existing = localStore.getQuery(api.user_vars.get, {
+      key,
+    }) as any;
+
+    const now = Date.now();
+
+    localStore.setQuery(
+      api.user_vars.get,
+      { key },
+      {
+        ...(existing ?? {}),
         key,
-        opState.lastOpStatus,
-        opState.lastOpTimedOutAt,
-        shouldAutoResetOnTimeout,
-    ]);
-
-    const setMutation = useMutation(api.user_vars.set).withOptimisticUpdate(
-        (localStore, args) => {
-            const existing = localStore.getQuery(api.user_vars.get, {
-                key,
-            }) as any;
-
-            const now = Date.now();
-
-            localStore.setQuery(api.user_vars.get, { key }, {
-                ...(existing ?? {}),
-                key,
-                value: args.value,
-                lastModified: now,
-                createdAt: existing?.createdAt ?? now,
-                privacy: existing?.privacy ?? args.privacy,
-                filterKey: existing?.filterKey ?? args.filterKey,
-                searchKeys: existing?.searchKeys ?? args.searchKeys,
-                sortKey: existing?.sortKey ?? args.sortKey,
-                id: existing?.id,
-                _id: existing?._id,
-                userToken: existing?.userToken,
-                filterValue: existing?.filterValue,
-                searchValue: existing?.searchValue,
-                sortValue: existing?.sortValue,
-            });
-        }
+        value: args.value,
+        lastModified: now,
+        createdAt: existing?.createdAt ?? now,
+        privacy: existing?.privacy ?? args.privacy,
+        filterKey: existing?.filterKey ?? args.filterKey,
+        searchKeys: existing?.searchKeys ?? args.searchKeys,
+        sortKey: existing?.sortKey ?? args.sortKey,
+        id: existing?.id,
+        _id: existing?._id,
+        userToken: existing?.userToken,
+        filterValue: existing?.filterValue,
+        searchValue: existing?.searchValue,
+        sortValue: existing?.sortValue,
+      }
     );
+  });
 
-    const setValue = (newValue: T) => {
-        // Track mutation for rate limit monitoring
-        globalRateLimitMonitor.trackCall(`user_vars:${key}`);
+  const setValue = (newValue: T) => {
+    // Track mutation for rate limit monitoring
+    globalRateLimitMonitor.trackCall(`user_vars:${key}`);
 
-        if (deepEqual(newValue, valueRef.current)) {
-            return;
+    if (deepEqual(newValue, valueRef.current)) {
+      return;
+    }
+
+    if (isConvexAuthLoading || !isConvexAuthenticated) {
+      devWarn(
+        'uservar_auth_not_ready',
+        `Blocked set for key="${key}" because Convex auth is not ready.`
+      );
+      return;
+    }
+
+    const startedAt = Date.now();
+    const opId = (opIdRef.current += 1);
+    const encodedValue = encodeUserValue(newValue);
+
+    const existingPending = pendingOpRef.current;
+    if (existingPending?.timeoutHandle) {
+      clearTimeout(existingPending.timeoutHandle);
+    }
+
+    setOpState({
+      lastOpStatus: 'pending',
+      lastOpStartedAt: startedAt,
+      lastOpTimedOutAt: undefined,
+    });
+
+    onOpStatusChange?.({
+      key,
+      status: 'pending',
+      optimisticValue: newValue,
+      lastConfirmedValue: confirmedValueRef.current,
+      msSinceSet: 0,
+    });
+
+    const backendPrivacy = Array.isArray(privacy) ? { allowList: privacy } : privacy;
+
+    const timeoutHandle = setTimeout(() => {
+      const pending = pendingOpRef.current;
+      if (!pending || pending.id !== opId) return;
+
+      const msSinceSet = Date.now() - startedAt;
+
+      devWarn(
+        'uservar_op_timeout',
+        `Setter for key="${key}" has not been confirmed after ${msSinceSet}ms (timeoutMs=${timeoutMs}). ResetBehavior=${optimisticTimeoutBehavior}.`
+      );
+
+      pending.hasTimedOut = true;
+
+      setOpState({
+        lastOpStatus: 'timed_out',
+        lastOpStartedAt: startedAt,
+        lastOpTimedOutAt: Date.now(),
+      });
+
+      onOpStatusChange?.({
+        key,
+        status: 'timed_out',
+        optimisticValue: newValue,
+        lastConfirmedValue: confirmedValueRef.current,
+        msSinceSet,
+      });
+    }, timeoutMs);
+
+    pendingOpRef.current = {
+      id: opId,
+      startedAt,
+      optimisticValue: newValue,
+      timeoutHandle,
+      hasTimedOut: false,
+    };
+
+    const mutationPromise = setMutation({
+      key,
+      value: encodedValue,
+      privacy: backendPrivacy,
+      filterKey,
+      searchKeys,
+      sortKey,
+      overwriteStoredConfig,
+      overwriteStoredPrivacy,
+    });
+
+    Promise.resolve(mutationPromise)
+      .then(() => {
+        const pending = pendingOpRef.current;
+        if (!pending || pending.id !== opId) return;
+
+        if (pending.timeoutHandle) {
+          clearTimeout(pending.timeoutHandle);
         }
 
-        if (isConvexAuthLoading || !isConvexAuthenticated) {
-            devWarn(
-                "uservar_auth_not_ready",
-                `Blocked set for key="${key}" because Convex auth is not ready.`
-            );
-            return;
+        if (pending.hasTimedOut) {
+          pendingOpRef.current = null;
+          return;
         }
 
-        const startedAt = Date.now();
-        const opId = (opIdRef.current += 1);
-        const encodedValue = encodeUserValue(newValue);
-
-        const existingPending = pendingOpRef.current;
-        if (existingPending?.timeoutHandle) {
-            clearTimeout(existingPending.timeoutHandle);
-        }
+        pendingOpRef.current = null;
+        confirmedValueRef.current = newValue;
+        setConfirmedValue(newValue);
 
         setOpState({
-            lastOpStatus: "pending",
-            lastOpStartedAt: startedAt,
-            lastOpTimedOutAt: undefined,
+          lastOpStatus: 'confirmed',
+          lastOpStartedAt: startedAt,
+          lastOpTimedOutAt: undefined,
         });
 
         onOpStatusChange?.({
-            key,
-            status: "pending",
-            optimisticValue: newValue,
-            lastConfirmedValue: confirmedValueRef.current,
-            msSinceSet: 0,
+          key,
+          status: 'confirmed',
+          optimisticValue: newValue,
+          lastConfirmedValue: newValue,
+          msSinceSet: Date.now() - startedAt,
         });
+      })
+      .catch((error) => {
+        const pending = pendingOpRef.current;
+        if (!pending || pending.id !== opId) return;
 
-        const backendPrivacy = Array.isArray(privacy)
-            ? { allowList: privacy }
-            : privacy;
+        if (pending.timeoutHandle) {
+          clearTimeout(pending.timeoutHandle);
+        }
 
-        const timeoutHandle = setTimeout(() => {
-            const pending = pendingOpRef.current;
-            if (!pending || pending.id !== opId) return;
-
-            const msSinceSet = Date.now() - startedAt;
-
-            devWarn(
-                "uservar_op_timeout",
-                `Setter for key="${key}" has not been confirmed after ${msSinceSet}ms (timeoutMs=${timeoutMs}). ResetBehavior=${optimisticTimeoutBehavior}.` 
-            );
-
-            pending.hasTimedOut = true;
-
-            setOpState({
-                lastOpStatus: "timed_out",
-                lastOpStartedAt: startedAt,
-                lastOpTimedOutAt: Date.now(),
-            });
-
-            onOpStatusChange?.({
-                key,
-                status: "timed_out",
-                optimisticValue: newValue,
-                lastConfirmedValue: confirmedValueRef.current,
-                msSinceSet,
-            });
-        }, timeoutMs);
-
-        pendingOpRef.current = {
-            id: opId,
-            startedAt,
-            optimisticValue: newValue,
-            timeoutHandle,
-            hasTimedOut: false,
-        };
-
-        const mutationPromise = setMutation({
-            key,
-            value: encodedValue,
-            privacy: backendPrivacy,
-            filterKey,
-            searchKeys,
-            sortKey,
-            overwriteStoredConfig,
-            overwriteStoredPrivacy,
+        pendingOpRef.current = null;
+        console.error(`useUserVariable set failed for key="${key}"`, error);
+        setOpState({
+          lastOpStatus: 'idle',
+          lastOpStartedAt: undefined,
+          lastOpTimedOutAt: undefined,
         });
+      });
+  };
 
-        Promise.resolve(mutationPromise)
-            .then(() => {
-                const pending = pendingOpRef.current;
-                if (!pending || pending.id !== opId) return;
+  useEffect(() => {
+    if (didAutoCreateRef.current) return;
+    if (isConvexAuthLoading) return;
+    if (!isConvexAuthenticated) return;
+    if (record !== null) return;
+    if (defaultValue === undefined) return;
 
-                if (pending.timeoutHandle) {
-                    clearTimeout(pending.timeoutHandle);
-                }
+    didAutoCreateRef.current = true;
+    setValue(defaultValue as T);
+  }, [record, defaultValue, isConvexAuthLoading, isConvexAuthenticated]);
 
-                if (pending.hasTimedOut) {
-                    pendingOpRef.current = null;
-                    return;
-                }
-
-                pendingOpRef.current = null;
-                confirmedValueRef.current = newValue;
-                setConfirmedValue(newValue);
-
-                setOpState({
-                    lastOpStatus: "confirmed",
-                    lastOpStartedAt: startedAt,
-                    lastOpTimedOutAt: undefined,
-                });
-
-                onOpStatusChange?.({
-                    key,
-                    status: "confirmed",
-                    optimisticValue: newValue,
-                    lastConfirmedValue: newValue,
-                    msSinceSet: Date.now() - startedAt,
-                });
-            })
-            .catch((error) => {
-                const pending = pendingOpRef.current;
-                if (!pending || pending.id !== opId) return;
-
-                if (pending.timeoutHandle) {
-                    clearTimeout(pending.timeoutHandle);
-                }
-
-                pendingOpRef.current = null;
-                console.error(`useUserVariable set failed for key="${key}"`, error);
-                setOpState({
-                    lastOpStatus: "idle",
-                    lastOpStartedAt: undefined,
-                    lastOpTimedOutAt: undefined,
-                });
-            });
+  useEffect(() => {
+    return () => {
+      const pending = pendingOpRef.current;
+      if (pending?.timeoutHandle) {
+        clearTimeout(pending.timeoutHandle);
+      }
+      pendingOpRef.current = null;
     };
+  }, []);
 
-    useEffect(() => {
-        if (didAutoCreateRef.current) return;
-        if (isConvexAuthLoading) return;
-        if (!isConvexAuthenticated) return;
-        if (record !== null) return;
-        if (defaultValue === undefined) return;
-
-        didAutoCreateRef.current = true;
-        setValue(defaultValue as T);
-    }, [record, defaultValue, isConvexAuthLoading, isConvexAuthenticated]);
-
-    useEffect(() => {
-        return () => {
-            const pending = pendingOpRef.current;
-            if (pending?.timeoutHandle) {
-                clearTimeout(pending.timeoutHandle);
-            }
-            pendingOpRef.current = null;
-        };
-    }, []);
-
-    return [
-        {
-            ...(record ?? {}),
-            value,
-            confirmedValue,
-            state: {
-                isSyncing,
-                lastOpStatus: opState.lastOpStatus,
-                lastOpStartedAt: opState.lastOpStartedAt,
-                lastOpTimedOutAt: opState.lastOpTimedOutAt,
-            },
-        } as UserVariableResult<T>,
-        setValue,
-    ];
+  return [
+    {
+      ...(record ?? {}),
+      value,
+      confirmedValue,
+      state: {
+        isSyncing,
+        lastOpStatus: opState.lastOpStatus,
+        lastOpStartedAt: opState.lastOpStartedAt,
+        lastOpTimedOutAt: opState.lastOpTimedOutAt,
+      },
+    } as UserVariableResult<T>,
+    setValue,
+  ];
 }

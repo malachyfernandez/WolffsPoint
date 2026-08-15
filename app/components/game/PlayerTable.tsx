@@ -8,7 +8,12 @@ import Row from '../layout/Row';
 import UserRow from './UserRow';
 import TitleRow from './TitleRow';
 import { createUndoSnapshot, useUndoRedo } from 'hooks/useUndoRedo';
-import { UserTableItem, UserTableTitle, UserTableColumnVisibility } from 'types/playerTable';
+import {
+  UserTableItem,
+  UserTableTitle,
+  UserTableColumnVisibility,
+  UserTableColumnNightlyVisibility,
+} from 'types/playerTable';
 import { normalizePlayerPageState } from './playerTableNormalization';
 import { useTagTriggers, type CellContext } from '../../../hooks/useTagTriggers';
 import {
@@ -57,6 +62,11 @@ const PlayerTable = ({
   // User Row.tsx
 
   const users = userTable?.value ?? [];
+  // Ref that mirrors `users` but is also updated synchronously when we call
+  // setUserTable, so that handleTagsAdded can see the tag change that was
+  // just applied via onChange (before React re-renders).
+  const usersRef = useRef(users);
+  usersRef.current = users;
 
   const [userTableTitle, setUserTableTitle] = useList<UserTableTitle>('userTableTitle', gameId, {
     privacy: 'PUBLIC',
@@ -65,15 +75,31 @@ const PlayerTable = ({
   const [userTableColumnVisibility, setUserTableColumnVisibility] =
     useList<UserTableColumnVisibility>('userTableColumnVisibility', gameId, { privacy: 'PUBLIC' });
 
+  const [nightlyVisibility, setNightlyVisibility] = useList<UserTableColumnNightlyVisibility>(
+    'userTableColumnNightlyVisibility',
+    gameId,
+    { privacy: 'PUBLIC' }
+  );
+
   const titles = userTableTitle?.value ?? { extraUserColumns: [], extraDayColumns: [] };
   const { fireTagTriggers } = useTagTriggers(gameId, users, titles, (updated) =>
     setUserTable(updated)
   );
 
   const handleTagsAdded = (tagNames: string[], context: CellContext) => {
-    const projectedUsers = users;
-    const updated = fireTagTriggers(tagNames, context, projectedUsers);
+    const projectedUsers = usersRef.current;
+    const updated = fireTagTriggers(tagNames, context, projectedUsers, 'added');
     if (updated !== projectedUsers) {
+      usersRef.current = updated;
+      setUserTable(updated);
+    }
+  };
+
+  const handleTagsRemoved = (tagNames: string[], context: CellContext) => {
+    const projectedUsers = usersRef.current;
+    const updated = fireTagTriggers(tagNames, context, projectedUsers, 'removed');
+    if (updated !== projectedUsers) {
+      usersRef.current = updated;
       setUserTable(updated);
     }
   };
@@ -97,7 +123,8 @@ const PlayerTable = ({
     if (
       userTable?.state?.isSyncing ||
       userTableTitle?.state?.isSyncing ||
-      userTableColumnVisibility?.state?.isSyncing
+      userTableColumnVisibility?.state?.isSyncing ||
+      nightlyVisibility?.state?.isSyncing
     ) {
       hasNormalizedOnceRef.current = false;
       return;
@@ -124,6 +151,22 @@ const PlayerTable = ({
     };
     const currentUsers = userTable?.value ?? [];
 
+    // Normalize nightly visibility to match column counts, defaulting to false
+    const currentNightly = nightlyVisibility?.value ?? {
+      extraUserColumns: [],
+      extraDayColumns: [],
+    };
+    const normalizedNightly = {
+      extraUserColumns: Array.from(
+        { length: normalizedState.titles.extraUserColumns.length },
+        (_, i) => currentNightly.extraUserColumns[i] ?? false
+      ),
+      extraDayColumns: Array.from(
+        { length: normalizedState.titles.extraDayColumns.length },
+        (_, i) => currentNightly.extraDayColumns[i] ?? false
+      ),
+    };
+
     if (!deepEqual(currentTitles, normalizedState.titles)) {
       setUserTableTitle(normalizedState.titles);
     }
@@ -136,12 +179,17 @@ const PlayerTable = ({
       setUserTable(normalizedState.users);
     }
 
+    if (!deepEqual(currentNightly, normalizedNightly)) {
+      setNightlyVisibility(normalizedNightly);
+    }
+
     hasNormalizedOnceRef.current = true;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     userTable?.state?.isSyncing,
     userTableTitle?.state?.isSyncing,
     userTableColumnVisibility?.state?.isSyncing,
+    nightlyVisibility?.state?.isSyncing,
     dayDatesArray.length,
   ]);
 
@@ -201,7 +249,7 @@ const PlayerTable = ({
     extraColumnIndex: number,
     newExtraColumnValue: string
   ) => {
-    const previousUserTable = createUndoSnapshot(userTable?.value ?? []);
+    const previousUserTable = createUndoSnapshot(usersRef.current);
     if (userIndex < 0 || userIndex >= previousUserTable.length) return;
 
     const nextUserTable = createUndoSnapshot(previousUserTable);
@@ -217,9 +265,14 @@ const PlayerTable = ({
       },
     };
 
+    // Update ref synchronously so handleTagsAdded sees the tag change
+    usersRef.current = nextUserTable;
     executeCommand({
       action: () => setUserTable(createUndoSnapshot(nextUserTable)),
-      undoAction: () => setUserTable(createUndoSnapshot(previousUserTable)),
+      undoAction: () => {
+        usersRef.current = previousUserTable;
+        setUserTable(createUndoSnapshot(previousUserTable));
+      },
       description: 'Set Column Value',
     });
   };
@@ -299,6 +352,22 @@ const PlayerTable = ({
     });
   };
 
+  const toggleNightlyVisibility = (columnIndex: number) => {
+    const current = nightlyVisibility?.value ?? { extraUserColumns: [], extraDayColumns: [] };
+    const colCount = currentTitles.extraUserColumns.length;
+    // Normalize to full length, defaulting to false (not shown in nightly)
+    const normalized = Array.from(
+      { length: colCount },
+      (_, i) => current.extraUserColumns[i] ?? false
+    );
+    const currentValue = normalized[columnIndex] ?? false;
+    const next = {
+      ...current,
+      extraUserColumns: normalized.map((v, index) => (index === columnIndex ? !currentValue : v)),
+    };
+    setNightlyVisibility(next);
+  };
+
   // Subscribe to player page column sizes
   const [columnSizes, setColumnSizes] = useValue<PlayerPageColumnSizes>(
     getPlayerPageColumnSizesKey(gameId),
@@ -333,6 +402,9 @@ const PlayerTable = ({
     const previousColumnSizes = createUndoSnapshot(
       columnSizes.value ?? defaultPlayerPageColumnSizes
     );
+    const previousNightlyVisibility = createUndoSnapshot(
+      nightlyVisibility?.value ?? { extraUserColumns: [], extraDayColumns: [] }
+    );
 
     const nextTitles = {
       ...previousTitles,
@@ -359,18 +431,27 @@ const PlayerTable = ({
       ),
     };
 
+    const nextNightlyVisibility = {
+      ...previousNightlyVisibility,
+      extraUserColumns: previousNightlyVisibility.extraUserColumns.filter(
+        (_, i) => i !== columnIndex
+      ),
+    };
+
     executeCommand({
       action: () => {
         setUserTableTitle(createUndoSnapshot(nextTitles));
         setUserTable(createUndoSnapshot(nextUserTable));
         setUserTableColumnVisibility(createUndoSnapshot(nextVisibility));
         setColumnSizes(createUndoSnapshot(nextColumnSizes));
+        setNightlyVisibility(createUndoSnapshot(nextNightlyVisibility));
       },
       undoAction: () => {
         setUserTableTitle(createUndoSnapshot(previousTitles));
         setUserTable(createUndoSnapshot(previousUserTable));
         setUserTableColumnVisibility(createUndoSnapshot(previousVisibility));
         setColumnSizes(createUndoSnapshot(previousColumnSizes));
+        setNightlyVisibility(createUndoSnapshot(previousNightlyVisibility));
       },
       description: 'Delete Column',
     });
@@ -392,6 +473,8 @@ const PlayerTable = ({
             extraUserColumnSizes={columnSizes.value?.playerExtraColumns}
             onSetExtraUserColumnSize={setExtraUserColumnSize}
             onDeleteExtraUserColumn={UNDOABLEdeleteExtraUserColumn}
+            nightlyVisibility={nightlyVisibility?.value?.extraUserColumns}
+            onToggleNightlyVisibility={toggleNightlyVisibility}
           />
 
           {users.map((user, index) => (
@@ -410,6 +493,7 @@ const PlayerTable = ({
               extraUserColumnWidths={extraUserColumnWidths}
               userColumnTitles={titles.extraUserColumns}
               onTagsAdded={handleTagsAdded}
+              onTagsRemoved={handleTagsRemoved}
             />
           ))}
         </Column>

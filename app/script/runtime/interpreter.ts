@@ -7,6 +7,7 @@ import type {
   Statement,
 } from '../lang/ast';
 import { parseScript } from '../lang/parser';
+import { parseScriptBlock } from '../lang/printer';
 import {
   displayValue,
   isInputsWithData,
@@ -28,6 +29,8 @@ import {
   type ExpressionContext,
   type TableUpdate,
 } from '../registry';
+import { printExpression } from '../lang/printer';
+import type { PlannedUpdate } from '../../../types/multiplayer';
 
 export type RenderInstructionKind =
   | 'select'
@@ -67,8 +70,15 @@ export interface InterpreterOptions {
   maxDepth?: number;
   /** When provided, UpdateCell blocks collect updates here */
   tableUpdates?: TableUpdate[];
+  /** When provided, UpdateCell blocks collect planned updates (with
+   * partially-evaluated expressions) here instead of tableUpdates. */
+  plannedUpdates?: PlannedUpdate[];
   /** When provided, UpdateCell blocks can read current cell values */
   getCellValue?: (playerIndex: number | null, dayIndex: number | null, column: string) => string;
+  /** When set, only OnTagAdded ('added') or OnTagRemoved ('removed') blocks
+   * will execute their bodies. The other type is skipped. When undefined,
+   * both execute (backward compat for non-trigger contexts). */
+  triggerMode?: 'added' | 'removed';
 }
 
 export interface InterpreterResult {
@@ -121,12 +131,14 @@ class Interpreter {
   private readonly issues: RuntimeIssue[] = [];
   private readonly inputState: Record<string, unknown>;
   private readonly tableUpdates: TableUpdate[];
+  private readonly plannedUpdates: PlannedUpdate[];
 
   constructor(private readonly options: InterpreterOptions) {
     this.fuel = Math.max(0, Math.floor(options.fuel ?? 100_000));
     this.maxDepth = Math.max(1, Math.floor(options.maxDepth ?? 32));
     this.inputState = { ...(options.inputState ?? {}) };
     this.tableUpdates = options.tableUpdates ?? [];
+    this.plannedUpdates = options.plannedUpdates ?? [];
     for (const [name, value] of Object.entries(options.globals ?? {})) {
       this.root.define(name, toRuntimeValue(value));
     }
@@ -280,6 +292,18 @@ class Interpreter {
           returned: true,
           value: statement.value ? this.evaluate(statement.value, environment, depth) : NOTHING,
         };
+      case 'OnTagAddedStatement': {
+        // Only execute if triggerMode is 'added' or undefined (non-trigger context)
+        if (this.options.triggerMode === 'removed') return NO_RETURN;
+        this.executeStatements(statement.body.statements, environment, depth);
+        return NO_RETURN;
+      }
+      case 'OnTagRemovedStatement': {
+        // Only execute if triggerMode is 'removed' or undefined (non-trigger context)
+        if (this.options.triggerMode === 'added') return NO_RETURN;
+        this.executeStatements(statement.body.statements, environment, depth);
+        return NO_RETURN;
+      }
       case 'UpdateCellStatement': {
         if (!this.options.getCellValue) {
           this.issues.push({ message: 'UpdateCell is not available in this context' });
@@ -364,17 +388,41 @@ class Interpreter {
           // Execute body statements
           this.executeStatements(statement.body.statements, child, depth);
 
-          // Evaluate the update value
-          const newValue = this.evaluate(statement.updateValue, child, depth);
-          const newValueStr = displayValue(newValue);
-
-          this.tableUpdates.push({
-            playerIndex: idx,
-            dayIndex: statement.columnType === 'day' ? dayNum : null,
-            column: col,
-            value: newValueStr,
-            mode: 'replace',
-          });
+          if (this.plannedUpdates.length > 0 || this.options.plannedUpdates) {
+            // Planning mode: partially evaluate the update expression, keeping
+            // function calls (tag, .append, etc.) but resolving all variables.
+            const partialExpr = this.partialEvaluateExpression(
+              statement.updateValue,
+              child,
+              statement.itemName,
+              depth
+            );
+            this.plannedUpdates.push({
+              playerIndex: idx,
+              dayIndex: statement.columnType === 'day' ? dayNum : null,
+              column: col,
+              columnType: statement.columnType,
+              updateExpression: printExpression(partialExpr),
+              itemName: statement.itemName,
+            });
+          } else {
+            // Execution mode: fully evaluate and collect a TableUpdate
+            if (statement.columnType === 'day' && dayNum === null) {
+              this.issues.push({
+                message: `UpdateCell: columnType is "day" but day index is null (placedDay may be null). Skipping update to column "${col}".`,
+              });
+              continue;
+            }
+            const newValue = this.evaluate(statement.updateValue, child, depth);
+            const newValueStr = displayValue(newValue);
+            this.tableUpdates.push({
+              playerIndex: idx,
+              dayIndex: statement.columnType === 'day' ? dayNum : null,
+              column: col,
+              value: newValueStr,
+              mode: 'replace',
+            });
+          }
 
           if (this.fuel <= 0) break;
         }
@@ -470,6 +518,155 @@ class Interpreter {
         message: error instanceof Error ? error.message : `${def.name} failed`,
         span: expression.span,
       });
+    }
+  }
+
+  /** Convert a runtime value to an AST literal expression for serialization. */
+  private valueToExpression(value: RuntimeValue, span: SourceSpan): Expression {
+    if (typeof value === 'string') return { kind: 'StringLiteral', value, span };
+    if (typeof value === 'number') return { kind: 'NumberLiteral', value, span };
+    if (typeof value === 'boolean') return { kind: 'BooleanLiteral', value, span };
+    if (value === null || value === undefined || isNothing(value)) {
+      return { kind: 'NothingLiteral', span };
+    }
+    if (Array.isArray(value)) {
+      return {
+        kind: 'ListExpression',
+        items: value.map((v) => this.valueToExpression(v, span)),
+        span,
+      };
+    }
+    // For objects, fall back to a string representation
+    return { kind: 'StringLiteral', value: displayValue(value), span };
+  }
+
+  /** Partially evaluate an expression: replace all variable references (except
+   * the cell variable `itemName`) with their computed literal values, while
+   * keeping function calls (tag(), .append(), etc.) structurally intact.
+   * The result can be serialized with printExpression and later evaluated at
+   * certify time with only the cell variable in scope. */
+  private partialEvaluateExpression(
+    expr: Expression,
+    environment: Environment,
+    itemName: string,
+    depth: number
+  ): Expression {
+    const span = expr.span;
+    switch (expr.kind) {
+      case 'StringLiteral':
+      case 'NumberLiteral':
+      case 'BooleanLiteral':
+      case 'NothingLiteral':
+      case 'MarkdownLiteral':
+      case 'DropdownLiteral':
+        return expr;
+
+      case 'IdentifierExpression':
+        if (expr.name === itemName) return expr;
+        // Evaluate and convert to literal
+        try {
+          const value = this.evaluate(expr, environment, depth);
+          return this.valueToExpression(value, span);
+        } catch {
+          return expr;
+        }
+
+      case 'ListExpression':
+        return {
+          ...expr,
+          items: expr.items.map((item) =>
+            this.partialEvaluateExpression(item, environment, itemName, depth)
+          ),
+        };
+
+      case 'UnaryExpression':
+        return {
+          ...expr,
+          operand: this.partialEvaluateExpression(expr.operand, environment, itemName, depth),
+        };
+
+      case 'BinaryExpression':
+        return {
+          ...expr,
+          left: this.partialEvaluateExpression(expr.left, environment, itemName, depth),
+          right: this.partialEvaluateExpression(expr.right, environment, itemName, depth),
+        };
+
+      case 'MemberExpression': {
+        // If object is itemName (e.g. cellContents.append), keep as-is
+        if (expr.object.kind === 'IdentifierExpression' && expr.object.name === itemName) {
+          return expr;
+        }
+        // Otherwise, try to evaluate the whole member expression
+        try {
+          const value = this.evaluate(expr, environment, depth);
+          return this.valueToExpression(value, span);
+        } catch {
+          // Can't evaluate — partially evaluate the object
+          return {
+            ...expr,
+            object: this.partialEvaluateExpression(expr.object, environment, itemName, depth),
+          };
+        }
+      }
+
+      case 'IndexExpression':
+        return {
+          ...expr,
+          object: this.partialEvaluateExpression(expr.object, environment, itemName, depth),
+          index: this.partialEvaluateExpression(expr.index, environment, itemName, depth),
+        };
+
+      case 'CallExpression': {
+        const callee = expr.callee;
+        // If callee is a method on itemName (e.g. cellContents.append(...)),
+        // keep the callee as-is and partially evaluate arguments.
+        if (
+          callee.kind === 'MemberExpression' &&
+          callee.object.kind === 'IdentifierExpression' &&
+          callee.object.name === itemName
+        ) {
+          return {
+            ...expr,
+            arguments: expr.arguments.map((arg) => ({
+              ...arg,
+              value: this.partialEvaluateExpression(arg.value, environment, itemName, depth),
+            })),
+          };
+        }
+        // If callee is a plain function name (e.g. tag(...)),
+        // keep the callee as-is and partially evaluate arguments.
+        if (callee.kind === 'IdentifierExpression') {
+          return {
+            ...expr,
+            arguments: expr.arguments.map((arg) => ({
+              ...arg,
+              value: this.partialEvaluateExpression(arg.value, environment, itemName, depth),
+            })),
+          };
+        }
+        // Otherwise, try to evaluate the whole call
+        try {
+          const value = this.evaluate(expr, environment, depth);
+          return this.valueToExpression(value, span);
+        } catch {
+          // Can't evaluate — partially evaluate callee and arguments
+          return {
+            ...expr,
+            callee: this.partialEvaluateExpression(callee, environment, itemName, depth),
+            arguments: expr.arguments.map((arg) => ({
+              ...arg,
+              value: this.partialEvaluateExpression(arg.value, environment, itemName, depth),
+            })),
+          };
+        }
+      }
+
+      case 'LambdaExpression':
+        return expr;
+
+      default:
+        return expr;
     }
   }
 
@@ -815,7 +1012,16 @@ class Interpreter {
   }
 
   private number(value: RuntimeValue): number | undefined {
-    return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
+    if (typeof value === 'number') return Number.isFinite(value) ? value : undefined;
+    if (typeof value === 'boolean') return value ? 1 : 0;
+    if (typeof value === 'string') {
+      const trimmed = value.trim();
+      if (trimmed === '') return 0;
+      const parsed = Number(trimmed);
+      return Number.isFinite(parsed) ? parsed : undefined;
+    }
+    if (isNothing(value)) return 0;
+    return undefined;
   }
 
   private namedArguments(
@@ -857,7 +1063,12 @@ export const interpretScript = (
   options: InterpreterOptions = {}
 ): InterpreterResult => {
   try {
-    const parsed = typeof script === 'string' ? parseScript(script) : script;
+    const parsed =
+      typeof script === 'string'
+        ? script.trim().startsWith('/*script')
+          ? parseScriptBlock(script)
+          : parseScript(script)
+        : script;
     return new Interpreter(options).run(parsed);
   } catch (error) {
     return {

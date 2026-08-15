@@ -6,6 +6,7 @@ import Row from '../../components/layout/Row';
 import FontText from '../../components/ui/text/FontText';
 import AppDropdown from '../../components/ui/forms/AppDropdown';
 import FontTextInput from '../../components/ui/forms/FontTextInput';
+import { useTooltip } from './useTooltip';
 import type {
   BinaryOperator,
   CallArgument,
@@ -26,6 +27,7 @@ import type { DefinedFunction, InsertTarget } from './InsertModal';
 import {
   applyEntryTransition,
   decomposeChain,
+  recomposeChain,
   renameIdentifier,
   traceEntrySource,
   type ChainLink,
@@ -74,6 +76,8 @@ interface CanvasProps {
   inputSources?: Record<string, string>;
   stmtPath?: number[];
   onEditMarkdown?: (currentValue: string, onSave: (newValue: string) => void) => void;
+  /** When true, UpdateCell blocks show "Update Cell" instead of "On Certify => Update Cell" */
+  isTriggerContext?: boolean;
 }
 
 const appendLocation = (
@@ -83,65 +87,6 @@ const appendLocation = (
   ...location,
   expressionPath: [...location.expressionPath, ...steps],
 });
-
-// Global mouse position tracker — listens on document so it works regardless of
-// which element is under the cursor.
-const useGlobalMouse = () => {
-  const [pos, setPos] = useState({ x: 0, y: 0 });
-  useEffect(() => {
-    const handler = (e: MouseEvent) => setPos({ x: e.clientX, y: e.clientY });
-    document.addEventListener('mousemove', handler);
-    return () => document.removeEventListener('mousemove', handler);
-  }, []);
-  return pos;
-};
-
-// Shared tooltip element — one DOM node appended to document.body, reused.
-// Uses an ownership model: only the component that last requested the tooltip
-// can release it. This prevents parent/child hover conflicts.
-let sharedTooltip: HTMLDivElement | null = null;
-let tooltipOwner: string | null = null; // tracks which id currently owns the tooltip
-
-const showTooltip = (id: string, message: string) => {
-  if (typeof document === 'undefined') return;
-  if (!sharedTooltip) {
-    sharedTooltip = document.createElement('div');
-    sharedTooltip.style.cssText =
-      'position:fixed;z-index:99999;pointer-events:none;white-space:nowrap;' +
-      'border-radius:9999px;background:rgba(0,0,0,0.5);color:#fff;padding:4px 10px;' +
-      'font-size:12px;line-height:16px;font-family:inherit;opacity:0;transition:opacity 80ms;';
-    document.body.appendChild(sharedTooltip);
-  }
-  tooltipOwner = id;
-  sharedTooltip.textContent = message;
-  sharedTooltip.style.opacity = '1';
-};
-const hideTooltip = (id: string) => {
-  if (sharedTooltip && tooltipOwner === id) sharedTooltip.style.opacity = '0';
-};
-const moveTooltip = (x: number, y: number) => {
-  if (sharedTooltip) {
-    sharedTooltip.style.left = `${x + 14}px`;
-    sharedTooltip.style.top = `${y + 14}px`;
-  }
-};
-
-// Hook for any element that wants a hover-following tooltip.
-// Pass a unique id and the message to show. Returns hovered state + setter.
-const useTooltip = (id: string, message: string | undefined) => {
-  const [hovered, setHovered] = useState(false);
-  const mousePos = useGlobalMouse();
-  useEffect(() => {
-    if (hovered && message) {
-      showTooltip(id, message);
-      moveTooltip(mousePos.x, mousePos.y);
-    } else {
-      hideTooltip(id);
-    }
-  }, [hovered, id, message, mousePos]);
-  useEffect(() => () => hideTooltip(id), [id]);
-  return { hovered, setHovered };
-};
 
 // Selector for elements that own their own interaction and therefore opt out
 // of swapable hover/click-to-swap. Detected by tag/role rather than a manual
@@ -1019,6 +964,7 @@ export const ExpressionSocket = ({
                     location,
                     linkIndex: index,
                     contextVariables,
+                    chainExpression: recomposeChain(chain.slice(0, index)),
                   })
                 }>
                 <FontText className="text-sm">.{link.name}</FontText>
@@ -1044,6 +990,7 @@ export const ExpressionSocket = ({
                     location,
                     linkIndex: index,
                     contextVariables,
+                    chainExpression: recomposeChain(chain.slice(0, index)),
                   })
                 }
               />
@@ -1058,6 +1005,7 @@ export const ExpressionSocket = ({
                   location,
                   linkIndex: index + 1,
                   contextVariables,
+                  chainExpression: recomposeChain(chain.slice(0, index + 1)),
                 })
               }
             />
@@ -1455,6 +1403,7 @@ const StatementBlock = ({
   onDeleteStatement,
   entryKeysBySource,
   onEditMarkdown,
+  isTriggerContext,
 }: Omit<CanvasProps, 'statements'> & { statement: Statement; index: number }) => {
   const currentPath = [...stmtPath!, index];
   const contextVariables = definedVariables;
@@ -1584,6 +1533,7 @@ const StatementBlock = ({
               onDeleteStatement,
               entryKeysBySource,
               onEditMarkdown,
+              isTriggerContext,
             }}
             stmtPath={currentPath}
           />
@@ -1642,6 +1592,7 @@ const StatementBlock = ({
               onDeleteStatement,
               entryKeysBySource,
               onEditMarkdown,
+              isTriggerContext,
             }}
             stmtPath={currentPath}
           />
@@ -1652,7 +1603,13 @@ const StatementBlock = ({
   } else if (statement.kind === 'UpdateCellStatement') {
     const userColumns = entryKeysBySource?.['_userColumns'] ?? [];
     const dayColumns = entryKeysBySource?.['_dayColumns'] ?? [];
-    const columnKeys = statement.columnType === 'user' ? userColumns : dayColumns;
+    // Built-in fields that are not extra columns but can be updated:
+    // - livingState (alive/dead) is a player-level field
+    // - vote, action, voteMultiplier are day-level fields
+    const columnKeys =
+      statement.columnType === 'user'
+        ? ['livingState', ...userColumns]
+        : ['vote', 'action', 'voteMultiplier', ...dayColumns];
     content = (
       <Column className="gap-0">
         {/* Cell selector section (row layout, like normal blocks) */}
@@ -1660,7 +1617,7 @@ const StatementBlock = ({
           <Column className="gap-1">
             <Row className="items-center justify-between gap-2">
               <FontText weight="medium" className="text-sm">
-                On Certify =&gt; Update Cell
+                {isTriggerContext ? 'Update Cell' : 'On Certify => Update Cell'}
               </FontText>
               <DeleteButton onPress={() => onDeleteStatement(currentPath)} />
             </Row>
@@ -1788,13 +1745,12 @@ const StatementBlock = ({
               onDeleteStatement,
               entryKeysBySource,
               onEditMarkdown,
+              isTriggerContext,
             }}
             stmtPath={currentPath}
           />
-        </View>
-        {/* Update with section (dark background) */}
-        <View className="bg-text/10 rounded-b-xl p-2">
-          <Row className="items-center gap-2">
+          {/* Update with expression — inside the loop body */}
+          <Row className="border-subtle-border items-center gap-2 border-t py-2">
             <FontText weight="medium">Update with</FontText>
             <ExpressionSocket
               expression={statement.updateValue}
@@ -1813,6 +1769,70 @@ const StatementBlock = ({
             />
           </Row>
         </View>
+        {/* Bottom strip (dark background, like ForEach) */}
+        <View className="bg-text/10 rounded-b-xl p-2" />
+      </Column>
+    );
+  } else if (statement.kind === 'OnTagAddedStatement') {
+    content = (
+      <Column className="gap-0">
+        <View className="rounded-t-xl p-2">
+          <Row className="items-center justify-between gap-2">
+            <FontText weight="medium" className="text-sm">
+              On Tag Added
+            </FontText>
+            <DeleteButton onPress={() => onDeleteStatement(currentPath)} />
+          </Row>
+        </View>
+        <View className="border-subtle-border border-x px-2">
+          <Canvas
+            statements={statement.body.statements}
+            {...{
+              definedVariables,
+              definedFunctions,
+              onAdd,
+              onSetExpression,
+              onSetStatementField,
+              onDeleteStatement,
+              entryKeysBySource,
+              onEditMarkdown,
+              isTriggerContext,
+            }}
+            stmtPath={currentPath}
+          />
+        </View>
+        <View className="bg-text/10 rounded-b-xl p-2" />
+      </Column>
+    );
+  } else if (statement.kind === 'OnTagRemovedStatement') {
+    content = (
+      <Column className="gap-0">
+        <View className="rounded-t-xl p-2">
+          <Row className="items-center justify-between gap-2">
+            <FontText weight="medium" className="text-sm">
+              On Tag Removed
+            </FontText>
+            <DeleteButton onPress={() => onDeleteStatement(currentPath)} />
+          </Row>
+        </View>
+        <View className="border-subtle-border border-x px-2">
+          <Canvas
+            statements={statement.body.statements}
+            {...{
+              definedVariables,
+              definedFunctions,
+              onAdd,
+              onSetExpression,
+              onSetStatementField,
+              onDeleteStatement,
+              entryKeysBySource,
+              onEditMarkdown,
+              isTriggerContext,
+            }}
+            stmtPath={currentPath}
+          />
+        </View>
+        <View className="bg-text/10 rounded-b-xl p-2" />
       </Column>
     );
   } else if (statement.kind === 'FunctionStatement') {
@@ -1857,6 +1877,7 @@ const StatementBlock = ({
               onDeleteStatement,
               entryKeysBySource,
               onEditMarkdown,
+              isTriggerContext,
             }}
             stmtPath={currentPath}
           />
@@ -1942,6 +1963,7 @@ const Canvas = ({
   inputSources,
   stmtPath = [],
   onEditMarkdown,
+  isTriggerContext,
 }: CanvasProps) => (
   <InputSourcesContext.Provider value={inputSources ?? {}}>
     <Column className="gap-0">
@@ -1966,6 +1988,7 @@ const Canvas = ({
             onSetStatementField={onSetStatementField}
             onDeleteStatement={onDeleteStatement}
             entryKeysBySource={entryKeysBySource}
+            isTriggerContext={isTriggerContext}
           />
           <PuzzleConnector
             direction="vertical"

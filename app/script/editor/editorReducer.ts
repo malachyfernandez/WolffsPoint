@@ -14,6 +14,7 @@ import {
   recomposeChain,
   setExpressionAtLocation,
   updateExpressionAtLocation,
+  renameIdentifier,
   renameIdentifierInStatements,
   type ChainLink,
   type ExpressionLocation,
@@ -94,6 +95,10 @@ const getBodyStatements = (stmt: Statement): Statement[] => {
       return stmt.body.statements;
     case 'UpdateCellStatement':
       return stmt.body.statements;
+    case 'OnTagAddedStatement':
+      return stmt.body.statements;
+    case 'OnTagRemovedStatement':
+      return stmt.body.statements;
     case 'BlockStatement':
       return stmt.statements;
     default:
@@ -119,6 +124,10 @@ const withBodyStatements = (stmt: Statement, newBody: Statement[]): Statement =>
     case 'FunctionStatement':
       return { ...stmt, body: { ...stmt.body, statements: newBody } };
     case 'UpdateCellStatement':
+      return { ...stmt, body: { ...stmt.body, statements: newBody } };
+    case 'OnTagAddedStatement':
+      return { ...stmt, body: { ...stmt.body, statements: newBody } };
+    case 'OnTagRemovedStatement':
       return { ...stmt, body: { ...stmt.body, statements: newBody } };
     case 'BlockStatement':
       return { ...stmt, statements: newBody };
@@ -366,6 +375,22 @@ const syncFunctionCallArity = (
             statements: syncFunctionCallArity(statement.body.statements, fnName, targetCount),
           },
         };
+      case 'OnTagAddedStatement':
+        return {
+          ...statement,
+          body: {
+            ...statement.body,
+            statements: syncFunctionCallArity(statement.body.statements, fnName, targetCount),
+          },
+        };
+      case 'OnTagRemovedStatement':
+        return {
+          ...statement,
+          body: {
+            ...statement.body,
+            statements: syncFunctionCallArity(statement.body.statements, fnName, targetCount),
+          },
+        };
       case 'ReturnStatement':
         return statement.value
           ? { ...statement, value: syncExpression(statement.value) }
@@ -436,7 +461,64 @@ export const createUpdateCellStatement = (): Statement => ({
   column: { kind: 'StringLiteral', value: '', span },
   itemName: 'cellContents',
   body: { kind: 'BlockStatement', statements: [], span },
-  updateValue: { kind: 'StringLiteral', value: '', span },
+  updateValue: {
+    kind: 'CallExpression',
+    callee: {
+      kind: 'MemberExpression',
+      object: { kind: 'IdentifierExpression', name: 'cellContents', span },
+      property: 'append',
+      span,
+    },
+    arguments: [
+      {
+        kind: 'PositionalArgument',
+        value: { kind: 'StringLiteral', value: '', span },
+        span,
+      },
+    ],
+    span,
+  },
+  span,
+});
+
+/** Trigger-context UpdateCell: defaults players to placedUser, day to placedDay */
+export const createTriggerUpdateCellStatement = (): Statement => ({
+  kind: 'UpdateCellStatement',
+  players: { kind: 'IdentifierExpression', name: 'placedUser', span },
+  columnType: 'user',
+  dayIndex: { kind: 'IdentifierExpression', name: 'placedDay', span },
+  column: { kind: 'StringLiteral', value: '', span },
+  itemName: 'cellContents',
+  body: { kind: 'BlockStatement', statements: [], span },
+  updateValue: {
+    kind: 'CallExpression',
+    callee: {
+      kind: 'MemberExpression',
+      object: { kind: 'IdentifierExpression', name: 'cellContents', span },
+      property: 'append',
+      span,
+    },
+    arguments: [
+      {
+        kind: 'PositionalArgument',
+        value: { kind: 'StringLiteral', value: '', span },
+        span,
+      },
+    ],
+    span,
+  },
+  span,
+});
+
+export const createOnTagAddedStatement = (): Statement => ({
+  kind: 'OnTagAddedStatement',
+  body: { kind: 'BlockStatement', statements: [], span },
+  span,
+});
+
+export const createOnTagRemovedStatement = (): Statement => ({
+  kind: 'OnTagRemovedStatement',
+  body: { kind: 'BlockStatement', statements: [], span },
   span,
 });
 
@@ -713,10 +795,45 @@ export const editorReducer = (state: EditorState, action: EditorAction): EditorS
         action.field === 'itemName' &&
         typeof action.value === 'string'
       ) {
-        nextStatement = { ...statement, itemName: action.value };
+        const oldName = statement.itemName;
+        const newName = action.value;
+        if (oldName && newName && oldName !== newName) {
+          // Rename all references to the old item name within the loop body
+          const renamedBody = renameIdentifierInStatements(
+            statement.body.statements,
+            oldName,
+            newName
+          );
+          nextStatement = {
+            ...statement,
+            itemName: newName,
+            body: { ...statement.body, statements: renamedBody },
+          };
+        } else {
+          nextStatement = { ...statement, itemName: newName };
+        }
       } else if (statement.kind === 'UpdateCellStatement') {
         if (action.field === 'itemName' && typeof action.value === 'string') {
-          nextStatement = { ...statement, itemName: action.value };
+          const oldName = statement.itemName;
+          const newName = action.value;
+          if (oldName && newName && oldName !== newName) {
+            // Rename all references to the old item name within the update body
+            // and in the updateValue expression
+            const renamedBody = renameIdentifierInStatements(
+              statement.body.statements,
+              oldName,
+              newName
+            );
+            const renamedUpdateValue = renameIdentifier(statement.updateValue, oldName, newName);
+            nextStatement = {
+              ...statement,
+              itemName: newName,
+              body: { ...statement.body, statements: renamedBody },
+              updateValue: renamedUpdateValue,
+            };
+          } else {
+            nextStatement = { ...statement, itemName: newName };
+          }
         } else if (action.field === 'columnType' && typeof action.value === 'string') {
           const ct = action.value === 'user' ? 'user' : 'day';
           nextStatement = { ...statement, columnType: ct };

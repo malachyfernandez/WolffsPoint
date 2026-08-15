@@ -1,27 +1,43 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { Pressable, View, TextInput } from 'react-native';
 import ConvexDialog from '../../components/ui/dialog/ConvexDialog';
 import ShadowScrollView from '../../components/ui/ShadowScrollView';
 import Column from '../../components/layout/Column';
+import { useTooltip } from './useTooltip';
 import Row from '../../components/layout/Row';
 import FontText from '../../components/ui/text/FontText';
 import AppButton from '../../components/ui/buttons/AppButton';
+import AppDropdown from '../../components/ui/forms/AppDropdown';
 import { CloseButton } from '../../components/game/markdownEditor';
 import type { BinaryOperator, Expression, FunctionTemplatePiece, Statement } from '../lang/ast';
 import { emptySpan } from '../lang/ast';
 import { parseScript } from '../lang/parser';
 import type { InputType } from '../registry';
 import { STATEMENT_BLOCKS, EXPRESSION_BLOCKS } from '../registry';
+import { useValue } from 'hooks/useData';
+import { getGameScopedKey } from 'utils/multiplayer';
+import type { TagDefinitionsData } from '../../components/game/TagCellEditor';
 import {
   buildDefaultMethodArgs,
   createCallStatement,
   createForEachStatement,
   createFunctionStatement,
   createIfStatement,
+  createOnTagAddedStatement,
+  createOnTagRemovedStatement,
   createUpdateCellStatement,
+  createTriggerUpdateCellStatement,
   parseLiteralValue,
 } from './editorReducer';
 import type { ExpressionLocation } from './expressionEditor';
+import {
+  inferExpressionType,
+  inferBlockResultType,
+  appliesToType,
+  isCompatible,
+  explainIncompatibility,
+  type ScriptType,
+} from './typeInference';
 
 export type InsertKind = 'statement' | 'expression' | 'chainInsert' | 'chainSwap';
 
@@ -35,6 +51,9 @@ export interface InsertTarget {
   expectedType?: InputType;
   contextVariables?: string[];
   linkIndex?: number;
+  /** The current chain expression (for chainInsert/chainSwap) — used to infer
+   * the receiver type so we can show which blocks are compatible. */
+  chainExpression?: Expression;
 }
 
 export interface DefinedFunction {
@@ -50,6 +69,8 @@ interface InsertModalProps {
   target: InsertTarget | null;
   definedVariables: string[];
   definedFunctions: DefinedFunction[];
+  /** Map of data source name → available keys (for type inference and .entry dropdowns) */
+  entryKeysBySource?: Record<string, string[]>;
   onInsertStatement: (statement: Statement, path: number[], replace?: boolean) => void;
   onInsertExpression: (expression: Expression, target: InsertTarget) => void;
   onInsertChainLink: (target: InsertTarget, blockId: string) => void;
@@ -64,12 +85,26 @@ interface InsertModalProps {
   /** When true, input-creating blocks (select, text, number, checkbox) are hidden.
    *  Used for tag trigger scripts which have no input state storage. */
   hideInputs?: boolean;
+  /** When true, the editor is configured for tag trigger scripts.
+   *  Hides irrelevant data sources (currentDay, Inputs, etc.) and shows
+   *  trigger-specific ones (placedTag, placedUser, placedDay, placedColumn). */
+  isTriggerContext?: boolean;
+  /** Game ID, used to load tag definitions for the tag() function picker. */
+  gameId?: string;
   onClose: () => void;
 }
 
 const span = emptySpan();
 
-const CONTROL_TEMPLATES: { label: string; description: string; build: () => Statement }[] = [
+const CONTROL_TEMPLATES: {
+  label: string;
+  description: string;
+  build: () => Statement;
+  /** When true, only show at trigger root level. When false, only show in regular context.
+   *  When 'inside', only show inside trigger blocks (not at root level).
+   *  When undefined, show in both contexts (but not at trigger root level). */
+  triggerOnly?: boolean | 'inside';
+}[] = [
   {
     label: 'If / Else',
     description: 'Run code when a condition is met',
@@ -111,6 +146,29 @@ const CONTROL_TEMPLATES: { label: string; description: string; build: () => Stat
     label: 'On Certify => Update Cell',
     description: 'On certify: loop over cells and update them',
     build: () => createUpdateCellStatement(),
+    /** Only shown in regular (non-trigger) scripts */
+    triggerOnly: false,
+  },
+  {
+    label: 'Update Cell',
+    description: 'Loop over cells and update them',
+    build: () => createTriggerUpdateCellStatement(),
+    /** Only shown inside trigger blocks (not at root level) */
+    triggerOnly: 'inside',
+  },
+  {
+    label: 'On Tag Added',
+    description: 'Runs when this tag is added to a cell',
+    build: () => createOnTagAddedStatement(),
+    /** Only shown in trigger scripts */
+    triggerOnly: true,
+  },
+  {
+    label: 'On Tag Removed',
+    description: 'Runs when this tag is removed from a cell',
+    build: () => createOnTagRemovedStatement(),
+    /** Only shown in trigger scripts */
+    triggerOnly: true,
   },
 ];
 
@@ -127,6 +185,19 @@ const DATA_SOURCES: { name: string; description: string }[] = [
     name: 'InputsWithData',
     description: 'Full data for selected inputs (e.g. player object with role, email, days)',
   },
+];
+
+/** Data sources available in tag trigger scripts. */
+const TRIGGER_DATA_SOURCES: { name: string; description: string }[] = [
+  { name: 'players', description: 'All players in the game' },
+  { name: 'roles', description: 'All roles in the game' },
+  { name: 'placedTag', description: 'The tag that was added' },
+  { name: 'placedUser', description: 'The player the tag was placed on' },
+  {
+    name: 'placedDay',
+    description: 'The day index the tag was placed on (or nothing for player columns)',
+  },
+  { name: 'placedColumn', description: 'The column title the tag was placed in' },
 ];
 
 /**
@@ -297,6 +368,9 @@ interface ModalItem {
   dividerAfter?: boolean;
   /** When true, handleSelect skips calling onClose (the item manages its own dialog flow) */
   skipCloseOnSelect?: boolean;
+  /** When set, the item is shown greyed out and not clickable.
+   * The string is shown as a tooltip explaining why it's disabled. */
+  disabledReason?: string;
 }
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -313,17 +387,43 @@ const CATEGORY_LABELS: Record<string, string> = {
   math: 'Numbers',
 };
 
+/** Renders a single modal item. When disabled, shows a hover-following tooltip
+ * explaining why (same tooltip system as the script editor canvas). */
+const ModalItemRow = ({ item, onSelect }: { item: ModalItem; onSelect: () => void }) => {
+  const tooltipId = useId();
+  const { setHovered } = useTooltip(tooltipId, item.disabledReason);
+  return (
+    <Pressable
+      onPress={() => !item.disabledReason && onSelect()}
+      onHoverIn={() => item.disabledReason && setHovered(true)}
+      onHoverOut={() => setHovered(false)}
+      className={`border-subtle-border rounded-lg border px-3 py-2 ${
+        item.disabledReason ? 'opacity-40' : 'hover:bg-text/5'
+      }`}>
+      <FontText weight="medium" className="text-sm">
+        {item.label}
+      </FontText>
+      <FontText variant="subtext" className="text-xs">
+        {item.disabledReason ?? item.description}
+      </FontText>
+    </Pressable>
+  );
+};
+
 const InsertModal = ({
   isOpen,
   target,
   definedVariables,
   definedFunctions,
+  entryKeysBySource,
   onInsertStatement,
   onInsertExpression,
   onInsertChainLink,
   onInsertBuiltinFunction,
   hideBuiltinFunctions,
   hideInputs,
+  isTriggerContext,
+  gameId,
   onRemove,
   onClose,
 }: InsertModalProps) => {
@@ -334,7 +434,17 @@ const InsertModal = ({
     fnStatement: Statement;
     callExpression: Expression;
   } | null>(null);
+  const [pendingTagPicker, setPendingTagPicker] = useState(false);
+  const [customTagName, setCustomTagName] = useState('');
   const searchInputRef = useRef<TextInput>(null);
+
+  // Load tag definitions for the tag() function picker
+  const tagDefsKey = gameId ? getGameScopedKey('tagDefinitions', gameId) : null;
+  const [tagDefs] = useValue<TagDefinitionsData>(tagDefsKey ?? '__no-game__', {
+    defaultValue: [],
+    privacy: 'PUBLIC',
+  });
+  const tagDefinitions = tagDefs?.value ?? [];
 
   // Reset to the first tab + clear search every time the modal opens so a
   // previous session's selection never carries over. Auto-focus the search
@@ -351,19 +461,41 @@ const InsertModal = ({
   const items = useMemo<ModalItem[]>(() => {
     if (!target) return [];
     if (target.kind === 'statement') {
+      // In trigger context at the root level (path length <= 1), only
+      // OnTagAdded, OnTagRemoved, and Function blocks are allowed.
+      // Everything else must be inside an OnTagAdded/OnTagRemoved block.
+      const isTriggerRootLevel = isTriggerContext && (target.path ?? []).length <= 1;
+
       return [
-        ...STATEMENT_BLOCKS.map((block) => ({
-          label: block.name,
-          description: block.description,
-          category: block.category,
-          onSelect: () =>
-            onInsertStatement(
-              buildStatementFromRegistry(block.id),
-              target.path ?? [],
-              target.mode === 'swap'
-            ),
-        })),
-        ...CONTROL_TEMPLATES.map((template) => ({
+        ...(isTriggerRootLevel
+          ? [] // No statement blocks at trigger root level
+          : STATEMENT_BLOCKS.map((block) => ({
+              label: block.name,
+              description: block.description,
+              category: block.category,
+              onSelect: () =>
+                onInsertStatement(
+                  buildStatementFromRegistry(block.id),
+                  target.path ?? [],
+                  target.mode === 'swap'
+                ),
+            }))),
+        ...CONTROL_TEMPLATES.filter((template) => {
+          // OnTagAdded/OnTagRemoved are only available at the trigger root level
+          if (template.triggerOnly === true) return isTriggerRootLevel;
+          // On Certify is only in non-trigger context
+          if (template.triggerOnly === false) return !isTriggerContext;
+          // Update Cell (trigger variant) is only inside trigger blocks
+          if (template.triggerOnly === 'inside') {
+            return isTriggerContext && !isTriggerRootLevel;
+          }
+          // At trigger root level, only allow Function (OnTag blocks handled above)
+          if (isTriggerRootLevel) {
+            return template.label === 'Function';
+          }
+          // Inside trigger blocks, other templates are fine
+          return true;
+        }).map((template) => ({
           label: template.label,
           description: template.description,
           category: 'control',
@@ -373,12 +505,68 @@ const InsertModal = ({
       ];
     }
     if (target.kind === 'chainInsert' || target.kind === 'chainSwap') {
-      return EXPRESSION_BLOCKS.map((block) => ({
-        label: block.name,
-        description: block.description,
-        category: block.category,
-        onSelect: () => onInsertChainLink(target, block.id),
-      }));
+      // Infer the receiver type from the current chain expression
+      const receiverType: ScriptType = target.chainExpression
+        ? inferExpressionType(
+            target.chainExpression,
+            entryKeysBySource ?? {},
+            target.contextVariables ?? []
+          )
+        : 'any';
+      const chainExpressionItems = EXPRESSION_BLOCKS.map((block) => {
+        const blockType = appliesToType(block.appliesTo);
+        const disabledReason = explainIncompatibility(receiverType, block);
+        return {
+          label: block.name,
+          description: block.description,
+          category: block.category,
+          onSelect: () => onInsertChainLink(target, block.id),
+          disabledReason,
+        };
+      });
+      // Binary operators: wrap the current chain expression as the left operand
+      // and add a default right operand. This lets users chain e.g.
+      // cellContents.toNumber minus 1 without needing to restructure.
+      const defaultRightForOperator = (op: BinaryOperator): Expression => {
+        if (op === '+' || op === '-' || op === '*' || op === '/' || op === '%')
+          return { kind: 'NumberLiteral', value: 0, span };
+        return { kind: 'NothingLiteral', span };
+      };
+      const binaryOperatorItems: ModalItem[] = [
+        ...MATH_OPERATORS.map(({ label, operator, description }) => ({
+          label,
+          description,
+          category: 'math',
+          onSelect: () =>
+            onInsertExpression(
+              {
+                kind: 'BinaryExpression',
+                operator,
+                left: target.chainExpression ?? { kind: 'NothingLiteral', span },
+                right: defaultRightForOperator(operator),
+                span,
+              },
+              target
+            ),
+        })),
+        ...BOOLEAN_OPERATORS.map(({ label, operator }) => ({
+          label,
+          description: operator,
+          category: 'operator',
+          onSelect: () =>
+            onInsertExpression(
+              {
+                kind: 'BinaryExpression',
+                operator,
+                left: target.chainExpression ?? { kind: 'NothingLiteral', span },
+                right: defaultRightForOperator(operator),
+                span,
+              },
+              target
+            ),
+        })),
+      ];
+      return [...chainExpressionItems, ...binaryOperatorItems];
     }
     const selectExpression = (expression: Expression) => onInsertExpression(expression, target);
     const existingFnNames = new Set(definedFunctions.map((fn) => fn.name));
@@ -441,19 +629,26 @@ const InsertModal = ({
         label: 'tag',
         description: 'Encode a tag name as a tag string (for .contains checks)',
         category: 'data',
-        onSelect: () =>
-          selectExpression({
-            kind: 'CallExpression',
-            callee: { kind: 'IdentifierExpression', name: 'tag', span },
-            arguments: [
-              {
-                kind: 'PositionalArgument' as const,
-                value: { kind: 'StringLiteral' as const, value: 'Tag name', span },
-                span,
-              },
-            ],
-            span,
-          }),
+        skipCloseOnSelect: true,
+        onSelect: () => {
+          // If we have tag definitions, show the picker; otherwise insert directly
+          if (tagDefinitions.length > 0) {
+            setPendingTagPicker(true);
+          } else {
+            selectExpression({
+              kind: 'CallExpression',
+              callee: { kind: 'IdentifierExpression', name: 'tag', span },
+              arguments: [
+                {
+                  kind: 'PositionalArgument' as const,
+                  value: { kind: 'StringLiteral' as const, value: 'Tag name', span },
+                  span,
+                },
+              ],
+              span,
+            });
+          }
+        },
       },
       ...(entryBlock
         ? [
@@ -476,7 +671,7 @@ const InsertModal = ({
             },
           ]
         : []),
-      ...DATA_SOURCES.map((source) => ({
+      ...(isTriggerContext ? TRIGGER_DATA_SOURCES : DATA_SOURCES).map((source) => ({
         label: source.name,
         description: source.description,
         category: 'data',
@@ -620,10 +815,13 @@ const InsertModal = ({
     target,
     definedVariables,
     definedFunctions,
+    entryKeysBySource,
     onInsertStatement,
     onInsertExpression,
     onInsertChainLink,
     onInsertBuiltinFunction,
+    tagDefinitions,
+    isTriggerContext,
   ]);
 
   const filtered = useMemo(() => {
@@ -631,13 +829,17 @@ const InsertModal = ({
     if (hideInputs) {
       result = result.filter((item) => item.category !== 'input');
     }
+    if (isTriggerContext) {
+      // Trigger scripts can't display content or use inputs
+      result = result.filter((item) => item.category !== 'input' && item.category !== 'display');
+    }
     if (!search.trim()) return result;
     const query = search.toLowerCase();
     return result.filter(
       (item) =>
         item.label.toLowerCase().includes(query) || item.description.toLowerCase().includes(query)
     );
-  }, [items, search, hideInputs]);
+  }, [items, search, hideInputs, isTriggerContext]);
 
   const grouped = useMemo(
     () =>
@@ -651,9 +853,9 @@ const InsertModal = ({
   const categoryOrder = useMemo(() => {
     const order =
       target?.kind === 'statement'
-        ? ['input', 'display', 'variable', 'control']
+        ? ['input', 'control', 'display', 'variable']
         : target?.kind === 'chainInsert' || target?.kind === 'chainSwap'
-          ? ['list', 'math', 'string', 'boolean', 'data']
+          ? ['list', 'math', 'operator', 'string', 'boolean', 'data']
           : ['data', 'variable', 'function', 'math', 'operator', 'boolean', 'list', 'string'];
     return order.filter((category) => grouped[category]?.length);
   }, [target, grouped]);
@@ -736,16 +938,7 @@ const InsertModal = ({
               nestedScrollEnabled>
               {visibleItems.map((item, index) => (
                 <React.Fragment key={`${item.category}-${item.label}-${index}`}>
-                  <Pressable
-                    onPress={() => handleSelect(item)}
-                    className="border-subtle-border hover:bg-text/5 rounded-lg border px-3 py-2">
-                    <FontText weight="medium" className="text-sm">
-                      {item.label}
-                    </FontText>
-                    <FontText variant="subtext" className="text-xs">
-                      {item.description}
-                    </FontText>
-                  </Pressable>
+                  <ModalItemRow item={item} onSelect={() => handleSelect(item)} />
                   {item.dividerAfter && (
                     <View className="border-subtle-border my-1 h-px border-t" />
                   )}
@@ -818,6 +1011,108 @@ const InsertModal = ({
                     setPendingBuiltin(null);
                   }}>
                   <FontText weight="medium">Cancel</FontText>
+                </AppButton>
+              </Row>
+            </Column>
+          </ConvexDialog.Content>
+        </ConvexDialog.Portal>
+      </ConvexDialog.Root>
+
+      {/* Tag picker dialog — choose from existing tags or type a custom name */}
+      <ConvexDialog.Root
+        isOpen={pendingTagPicker}
+        onOpenChange={(open: boolean) => {
+          if (!open) {
+            setPendingTagPicker(false);
+            setCustomTagName('');
+          }
+        }}>
+        <ConvexDialog.Portal>
+          <ConvexDialog.Overlay />
+          <ConvexDialog.Content className="max-w-sm">
+            <CloseButton
+              onPress={() => {
+                setPendingTagPicker(false);
+                setCustomTagName('');
+              }}
+            />
+            <Column className="gap-3 pt-3">
+              <FontText weight="medium" className="text-base">
+                Select a tag
+              </FontText>
+              <AppDropdown
+                options={tagDefinitions.map((def) => ({ value: def.name, label: def.name }))}
+                value=""
+                onValueChange={(name) => {
+                  if (name && target) {
+                    onInsertExpression(
+                      {
+                        kind: 'CallExpression',
+                        callee: { kind: 'IdentifierExpression', name: 'tag', span },
+                        arguments: [
+                          {
+                            kind: 'PositionalArgument' as const,
+                            value: { kind: 'StringLiteral' as const, value: name, span },
+                            span,
+                          },
+                        ],
+                        span,
+                      },
+                      target
+                    );
+                  }
+                  setPendingTagPicker(false);
+                  setCustomTagName('');
+                  onClose();
+                }}
+                placeholder="Choose a tag…"
+                triggerClassName="min-w-32 !py-1.5 !px-3 text-sm"
+                isInDialog
+                allowUnselect={false}
+              />
+              <FontText variant="subtext" className="text-center text-xs opacity-60">
+                or type a custom tag name
+              </FontText>
+              <Row className="gap-2">
+                <TextInput
+                  value={customTagName}
+                  onChangeText={setCustomTagName}
+                  placeholder="Custom tag name…"
+                  placeholderTextColor="#0004"
+                  className="bg-text/10 min-w-20 flex-1 rounded-lg px-3 py-2 text-sm"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                />
+                <AppButton
+                  variant="accent"
+                  className="h-9 px-4"
+                  dropShadow={false}
+                  onPress={() => {
+                    const name = customTagName.trim();
+                    if (name && target) {
+                      onInsertExpression(
+                        {
+                          kind: 'CallExpression',
+                          callee: { kind: 'IdentifierExpression', name: 'tag', span },
+                          arguments: [
+                            {
+                              kind: 'PositionalArgument' as const,
+                              value: { kind: 'StringLiteral' as const, value: name, span },
+                              span,
+                            },
+                          ],
+                          span,
+                        },
+                        target
+                      );
+                    }
+                    setPendingTagPicker(false);
+                    setCustomTagName('');
+                    onClose();
+                  }}>
+                  <FontText weight="medium" color="white">
+                    Add
+                  </FontText>
                 </AppButton>
               </Row>
             </Column>

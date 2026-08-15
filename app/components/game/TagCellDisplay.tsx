@@ -19,6 +19,8 @@ interface TagCellDisplayProps {
   cellContext?: CellContext;
   /** Called when new tags are added (for firing tag triggers) */
   onTagsAdded?: (tagNames: string[], context: CellContext) => void;
+  /** Called when tags are removed (for firing tag-removed triggers) */
+  onTagsRemoved?: (tagNames: string[], context: CellContext) => void;
 }
 
 const TagCellDisplay = ({
@@ -30,6 +32,7 @@ const TagCellDisplay = ({
   onEditEnd,
   cellContext,
   onTagsAdded,
+  onTagsRemoved,
 }: TagCellDisplayProps) => {
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [tagDefs] = useValue<TagDefinition[]>(getGameScopedKey('tagDefinitions', gameId), {
@@ -112,6 +115,7 @@ const TagCellDisplay = ({
         onChange={onChange}
         cellContext={cellContext}
         onTagsAdded={onTagsAdded}
+        onTagsRemoved={onTagsRemoved}
       />
     </>
   );

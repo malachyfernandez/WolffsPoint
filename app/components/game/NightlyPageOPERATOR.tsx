@@ -15,9 +15,8 @@ import { View, useWindowDimensions } from 'react-native';
 import ComprehensiveDaySelector from '../ui/daySelector/ComprehensiveDaySelector';
 import NightlyCertificationDialog from './NightlyCertificationDialog';
 import { getGameScopedKey, hasPlayerActionContent } from '../../../utils/multiplayer';
-import { PlayerNightSubmission } from '../../../types/multiplayer';
-import { applyTableUpdates } from '../../../utils/applyTableUpdates';
-import type { TableUpdate } from '../../script/registry';
+import { PlayerNightSubmission, PlannedUpdate } from '../../../types/multiplayer';
+import { executePlannedUpdates } from '../../../utils/executePlannedUpdates';
 interface NightlyPageOPERATORProps {
   currentUserId: string;
   gameId: string;
@@ -202,22 +201,23 @@ const NightlyPageOPERATOR = ({
       };
     });
 
-    // Apply planned updates that were computed at input time (stored in each
-    // player's submission). This avoids re-running scripts at certify time,
-    // which avoids issues with stale currentDay values and ensures the exact
-    // updates the player saw in their "Your Eyes Only" page are what gets applied.
+    // Execute planned updates that were computed at input time (stored in each
+    // player's submission). Each planned update contains a partially-evaluated
+    // expression that is evaluated against the current cell value at certify
+    // time, allowing append/remove operations from multiple players to compose
+    // correctly rather than overwriting each other.
     const titles = userTableTitle?.value ?? { extraUserColumns: [], extraDayColumns: [] };
-    const allUpdates: TableUpdate[] = [];
+    const allPlannedUpdates: PlannedUpdate[] = [];
 
     for (const user of certifiedUsers) {
       const submission = submissionsByEmail[user.email.toLowerCase()];
       if (!submission?.plannedUpdates) continue;
-      allUpdates.push(...submission.plannedUpdates);
+      allPlannedUpdates.push(...submission.plannedUpdates);
     }
 
     let finalUsers = certifiedUsers;
-    if (allUpdates.length > 0) {
-      finalUsers = applyTableUpdates(certifiedUsers, allUpdates, titles);
+    if (allPlannedUpdates.length > 0) {
+      finalUsers = executePlannedUpdates(certifiedUsers, allPlannedUpdates, titles);
     }
 
     setUserTable(finalUsers);

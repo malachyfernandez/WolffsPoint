@@ -2,12 +2,23 @@ import { useCallback } from 'react';
 import { useValue } from './useData';
 import { getGameScopedKey } from '../utils/multiplayer';
 import { UserTableItem, UserTableTitle } from '../types/playerTable';
-import { runScriptWithUpdates } from '../utils/runScriptWithUpdates';
-import { applyTableUpdates } from '../utils/applyTableUpdates';
+import { interpretScript } from '../app/script/runtime/interpreter';
+import { createScriptGlobals } from '../app/script/runtime/sources';
+import {
+  applyTableUpdates,
+  VOTE_MULTIPLIER_COLUMN,
+  LIVING_STATE_COLUMN,
+  VOTE_COLUMN,
+  ACTION_COLUMN,
+} from '../utils/applyTableUpdates';
+import { TableUpdate } from '../app/script/registry';
 
 /**
  * Tag trigger scripts keyed by tag name.
  * Stored as: { "Infected": "script text...", "Dead": "..." }
+ *
+ * Each script can contain OnTagAdded and OnTagRemoved blocks. The interpreter
+ * uses triggerMode to decide which blocks to execute.
  */
 type TagTriggersData = Record<string, string>;
 
@@ -20,15 +31,19 @@ export interface CellContext {
 }
 
 /**
- * Hook that provides a function to fire tag trigger scripts when tags are added.
+ * Hook that provides a function to fire tag trigger scripts when tags are
+ * added or removed.
  *
- * The trigger script gets these globals:
- * - placedTag: the tag name that was added
+ * A single trigger script per tag contains both OnTagAdded and OnTagRemoved
+ * blocks. The `mode` parameter controls which blocks execute.
+ *
+ * Trigger scripts get these globals:
+ * - placedTag: the tag name that was added/removed
  * - placedUser: the player object (from the players list)
  * - placedDay: the day index (or null for player columns)
  * - placedColumn: the column title
  *
- * The trigger script can use UpdateCell to modify other cells.
+ * Trigger scripts can use UpdateCell to modify other cells.
  */
 export const useTagTriggers = (
   gameId: string,
@@ -44,18 +59,24 @@ export const useTagTriggers = (
   const tagTriggers = tagTriggersRecord?.value ?? {};
 
   /**
-   * Fire trigger scripts for newly added tags.
+   * Fire trigger scripts for tags that were added or removed.
    * Called after a cell value has been updated (the cell change is already
    * applied to `updatedUsers`). This function runs trigger scripts and
    * applies their table updates on top.
+   *
+   * @param tagNames  The tags that were added or removed
+   * @param context   Where the tag change happened
+   * @param updatedUsers  The user table after the cell change
+   * @param mode      'added' to run OnTagAdded blocks, 'removed' for OnTagRemoved
    */
   const fireTagTriggers = useCallback(
     (
-      addedTagNames: string[],
+      tagNames: string[],
       context: CellContext,
-      updatedUsers: UserTableItem[]
+      updatedUsers: UserTableItem[],
+      mode: 'added' | 'removed'
     ): UserTableItem[] => {
-      if (addedTagNames.length === 0) return updatedUsers;
+      if (tagNames.length === 0) return updatedUsers;
 
       const { playerIndex, dayIndex, column } = context;
       const player = updatedUsers[playerIndex];
@@ -63,7 +84,7 @@ export const useTagTriggers = (
 
       let result = updatedUsers;
 
-      for (const tagName of addedTagNames) {
+      for (const tagName of tagNames) {
         const triggerScript = tagTriggers[tagName];
         if (!triggerScript || !triggerScript.trim()) continue;
 
@@ -95,57 +116,78 @@ export const useTagTriggers = (
         }
 
         const globals = {
-          players: result.map((p) => {
-            const pe: Record<string, unknown> = {
-              realName: p.realName,
-              email: p.email,
-              userId: p.userId,
-              role: p.role,
-              isAlive: p.playerData.livingState === 'alive',
-              days: (p.days ?? []).map((day) => {
-                const base: Record<string, unknown> = {
-                  vote: day?.vote ?? '',
-                  action: day?.action ?? '',
-                };
-                const dExtra = day?.extraColumns ?? [];
-                for (let i = 0; i < extraDayColumnTitles.length; i++) {
-                  base[extraDayColumnTitles[i]] = dExtra[i] ?? '';
-                }
-                return base;
-              }),
-            };
-            const pExtra = p.playerData.extraColumns ?? [];
-            for (let i = 0; i < extraUserColumnTitles.length; i++) {
-              pe[extraUserColumnTitles[i]] = pExtra[i] ?? '';
-            }
-            return pe;
+          ...createScriptGlobals({
+            capability: 'operator',
+            players: result as unknown as UserTableItem[],
+            userTableTitle: titles,
           }),
-          roles: [],
-          currentDay: dayIndex ?? 0,
-          dayDates: [],
-          schedule: {},
-          profiles: [],
-          // Trigger-specific globals
+          // Trigger-specific globals (override any standard ones with same name)
           placedTag: tagName,
           placedUser: playerEntry,
           placedDay: dayIndex,
           placedColumn: column,
         };
 
-        const { updates, issues } = runScriptWithUpdates(
-          triggerScript,
-          {
-            capability: 'operator',
-            players: result as unknown as UserTableItem[],
-            currentDay: dayIndex ?? 0,
-            userTableTitle: titles,
-          },
-          result,
-          titles
-        );
+        // Build getCellValue for UpdateCell blocks
+        const getCellValue = (
+          playerIndex: number | null,
+          dayIdx: number | null,
+          col: string
+        ): string => {
+          const indices = playerIndex === null ? result.map((_, i) => i) : [playerIndex];
+          if (indices.length === 0) return '';
+          const idx = indices[0];
+          if (idx < 0 || idx >= result.length) return '';
+          const user = result[idx];
+          const colLower = col.toLowerCase();
+          if (dayIdx === null) {
+            // Special: livingState is a field on PlayerData
+            if (colLower === LIVING_STATE_COLUMN) {
+              return user.playerData.livingState;
+            }
+            const colIdx = extraUserColumnTitles.findIndex((t) => t.toLowerCase() === colLower);
+            if (colIdx === -1) return '';
+            return user.playerData.extraColumns?.[colIdx] ?? '';
+          } else {
+            // Special built-in fields on DayData
+            if (colLower === VOTE_MULTIPLIER_COLUMN) {
+              const day = user.days?.[dayIdx];
+              return String(day?.voteMultiplier ?? 1);
+            }
+            if (colLower === VOTE_COLUMN) {
+              const day = user.days?.[dayIdx];
+              return day?.vote ?? '';
+            }
+            if (colLower === ACTION_COLUMN) {
+              const day = user.days?.[dayIdx];
+              return typeof day?.action === 'string' ? day.action : '';
+            }
+            const colIdx = extraDayColumnTitles.findIndex((t) => t.toLowerCase() === colLower);
+            if (colIdx === -1) return '';
+            const day = user.days?.[dayIdx];
+            return day?.extraColumns?.[colIdx] ?? '';
+          }
+        };
 
-        if (issues.length > 0) {
-          console.warn(`Tag trigger "${tagName}" issues:`, issues);
+        const updates: TableUpdate[] = [];
+        try {
+          const triggerResult = interpretScript(triggerScript, {
+            globals,
+            tableUpdates: updates,
+            getCellValue,
+            triggerMode: mode,
+          });
+          if (triggerResult.issues.length > 0) {
+            console.warn(
+              `Tag trigger "${tagName}" issues:`,
+              triggerResult.issues.map((i) => i.message)
+            );
+          }
+        } catch (error) {
+          console.warn(
+            `Tag trigger "${tagName}" failed:`,
+            error instanceof Error ? error.message : 'Unknown error'
+          );
         }
 
         if (updates.length > 0) {

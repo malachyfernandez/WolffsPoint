@@ -95,6 +95,11 @@ export const DATA_CONFIG: DataConfigType = {
     privacy: 'PUBLIC',
     defaultValue: { extraUserColumns: [], extraDayColumns: [] },
   },
+  userTableColumnNightlyVisibility: {
+    type: 'list',
+    privacy: 'PUBLIC',
+    defaultValue: { extraUserColumns: [], extraDayColumns: [] },
+  },
   morningMessagesList: {
     type: 'list',
     privacy: 'PUBLIC',

@@ -6,6 +6,8 @@ import type {
   Expression,
   FunctionTemplatePiece,
   IfBranch,
+  OnTagAddedStatement,
+  OnTagRemovedStatement,
   Script,
   SourcePosition,
   SourceSpan,
@@ -87,6 +89,22 @@ class Parser {
       this.peek(1).text === '('
     ) {
       return this.parseUpdateCell(this.current());
+    }
+    // OnTagAdded container statement: OnTagAdded { body }
+    if (
+      this.isName(this.current()) &&
+      this.current().text.toUpperCase() === 'ONTAGADDED' &&
+      this.peek(1).text === '{'
+    ) {
+      return this.parseOnTagAdded(this.current());
+    }
+    // OnTagRemoved container statement: OnTagRemoved { body }
+    if (
+      this.isName(this.current()) &&
+      this.current().text.toUpperCase() === 'ONTAGREMOVED' &&
+      this.peek(1).text === '{'
+    ) {
+      return this.parseOnTagRemoved(this.current());
     }
     if (this.matchText('{')) {
       return this.parseBlockAfterOpen(this.previous());
@@ -239,6 +257,28 @@ class Parser {
       itemName,
       body: { kind: 'BlockStatement', statements: bodyStatements, span: body.span },
       updateValue,
+      span: joinSpan(keyword.span.start, body.span.end),
+    };
+    return result;
+  }
+
+  private parseOnTagAdded(keyword: Token): Statement {
+    this.advance(); // consume 'OnTagAdded'
+    const body = this.parseRequiredBlock('Expected a block after OnTagAdded');
+    const result: OnTagAddedStatement = {
+      kind: 'OnTagAddedStatement',
+      body: { kind: 'BlockStatement', statements: body.statements, span: body.span },
+      span: joinSpan(keyword.span.start, body.span.end),
+    };
+    return result;
+  }
+
+  private parseOnTagRemoved(keyword: Token): Statement {
+    this.advance(); // consume 'OnTagRemoved'
+    const body = this.parseRequiredBlock('Expected a block after OnTagRemoved');
+    const result: OnTagRemovedStatement = {
+      kind: 'OnTagRemovedStatement',
+      body: { kind: 'BlockStatement', statements: body.statements, span: body.span },
       span: joinSpan(keyword.span.start, body.span.end),
     };
     return result;

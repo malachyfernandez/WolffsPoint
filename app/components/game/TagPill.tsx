@@ -54,6 +54,25 @@ const TagPill = ({
   const fontSize = size === 'sm' ? 'text-xs' : 'text-sm';
   const textMaxWidth = maxWidth ? maxWidth - (size === 'sm' ? 16 : 24) : undefined;
 
+  // When there's no press handler, render as a plain View so touch events
+  // bubble up to any parent Pressable (e.g. TagCellDisplay's open-editor press).
+  if (!onPress && !onRemove) {
+    return (
+      <View
+        className={`flex-row items-center rounded-full ${padding}`}
+        style={{ backgroundColor: color.bg, maxWidth }}>
+        <FontText
+          weight="medium"
+          className={fontSize}
+          style={{ color: color.text, maxWidth: textMaxWidth }}
+          numberOfLines={1}
+          ellipsizeMode="tail">
+          {label}
+        </FontText>
+      </View>
+    );
+  }
+
   if (onRemove) {
     return (
       <View

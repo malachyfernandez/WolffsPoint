@@ -21,7 +21,7 @@ const formatPlannedUpdate = (
       ? users[update.playerIndex].realName || users[update.playerIndex].email
       : 'All players';
   const dayLabel = update.dayIndex !== null ? `Day ${update.dayIndex + 1}, ` : '';
-  return `${playerName} → ${dayLabel}${update.column}: ${update.value}`;
+  return `${playerName} → ${dayLabel}${update.column}: ${update.updateExpression}`;
 };
 
 interface NightlyCertificationDialogProps {

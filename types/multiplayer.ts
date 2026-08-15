@@ -1,5 +1,27 @@
 import type { TableUpdate } from '../app/script/registry';
 
+/** A planned cell update computed at input time. Unlike TableUpdate (which
+ * stores the final value), PlannedUpdate stores a partially-evaluated
+ * expression string where all variables (currentDay, Inputs, etc.) have been
+ * resolved to their values, but function calls (tag(), .append(), etc.) are
+ * kept as-is. At certify time, the expression is evaluated with the cell
+ * variable bound to the current cell value. */
+export interface PlannedUpdate {
+  /** Index into the users array, or null to apply to all players */
+  playerIndex: number | null;
+  /** Day index (0-based), or null for player-level extra columns */
+  dayIndex: number | null;
+  /** Column title */
+  column: string;
+  /** Whether this is a user-level or day-level column */
+  columnType: 'user' | 'day';
+  /** Partially evaluated update expression, e.g. `cellContents.append(tag("Infected"))`
+   * or `cellContents.append(2)`. Variables are resolved but functions are kept. */
+  updateExpression: string;
+  /** The cell variable name (e.g. "cellContents") */
+  itemName: string;
+}
+
 export type PlayerProfile = {
   gameId: string;
   email: string;
@@ -70,6 +92,6 @@ export type PlayerNightSubmission = {
   submittedVoteAt: number | null;
   submittedActionAt: number | null;
   /** Planned table updates computed from role message scripts at input time.
-   * Applied at certify time without re-running scripts. */
-  plannedUpdates?: TableUpdate[];
+   * Stores partially-evaluated expressions that are executed at certify time. */
+  plannedUpdates?: PlannedUpdate[];
 };

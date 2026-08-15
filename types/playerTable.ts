@@ -30,3 +30,10 @@ export type UserTableColumnVisibility = {
   extraUserColumns: boolean[];
   extraDayColumns: boolean[];
 };
+
+/** Which extra columns should also appear in the nightly operator table.
+ * Defaults to false (not shown in nightly) for each column. */
+export type UserTableColumnNightlyVisibility = {
+  extraUserColumns: boolean[];
+  extraDayColumns: boolean[];
+};

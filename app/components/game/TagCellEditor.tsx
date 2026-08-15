@@ -43,6 +43,8 @@ interface TagCellEditorProps {
   cellContext?: CellContext;
   /** Called when new tags are added (for firing tag triggers) */
   onTagsAdded?: (tagNames: string[], context: CellContext) => void;
+  /** Called when tags are removed (for firing tag-removed triggers) */
+  onTagsRemoved?: (tagNames: string[], context: CellContext) => void;
 }
 
 const TagCellEditor = ({
@@ -53,6 +55,7 @@ const TagCellEditor = ({
   onChange,
   cellContext,
   onTagsAdded,
+  onTagsRemoved,
 }: TagCellEditorProps) => {
   const [tagDefs, setTagDefs] = useValue<TagDefinitionsData>(getTagDefinitionsKey(gameId), {
     defaultValue: [],
@@ -153,17 +156,24 @@ const TagCellEditor = ({
   const handleSave = () => {
     const newValue = isInTagMode ? encodeTags(selectedTagNames) : encodeText(textValue.trim());
 
-    // Detect newly added tags (present in new selection but not in original value)
-    if (isInTagMode && cellContext && onTagsAdded) {
-      const originalTagNames = new Set(parsed.tags.map((t) => t.name));
-      const addedTags = selectedTagNames.filter((name) => !originalTagNames.has(name));
-      if (addedTags.length > 0) {
-        onTagsAdded(addedTags, cellContext);
-      }
-    }
-
+    // Apply the cell change first, then fire tag triggers on top.
+    // This ensures trigger scripts see the updated cell value.
     onChange(newValue);
     onOpenChange(false);
+
+    // Detect newly added and removed tags
+    if (isInTagMode && cellContext) {
+      const originalTagNames = new Set(parsed.tags.map((t) => t.name));
+      const newTagNames = new Set(selectedTagNames);
+      const addedTags = selectedTagNames.filter((name) => !originalTagNames.has(name));
+      const removedTags = parsed.tags.map((t) => t.name).filter((name) => !newTagNames.has(name));
+      if (addedTags.length > 0 && onTagsAdded) {
+        onTagsAdded(addedTags, cellContext);
+      }
+      if (removedTags.length > 0 && onTagsRemoved) {
+        onTagsRemoved(removedTags, cellContext);
+      }
+    }
   };
 
   return (
@@ -217,9 +227,10 @@ const TagCellEditor = ({
                                     setEditingTag(def);
                                     setIsAddTagOpen(true);
                                   }}
-                                  hitSlop={6}>
+                                  className="items-center justify-center self-stretch rounded"
+                                  style={{ width: 28, marginLeft: -2 }}>
                                   <Pencil
-                                    size={11}
+                                    size={13}
                                     color="rgb(46, 41, 37)"
                                     style={{ opacity: 0.7 }}
                                   />

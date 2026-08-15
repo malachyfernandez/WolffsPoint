@@ -84,6 +84,16 @@ export interface UpdateCellStatement extends NodeBase {
   updateValue: Expression;
 }
 
+export interface OnTagAddedStatement extends NodeBase {
+  kind: 'OnTagAddedStatement';
+  body: BlockStatement;
+}
+
+export interface OnTagRemovedStatement extends NodeBase {
+  kind: 'OnTagRemovedStatement';
+  body: BlockStatement;
+}
+
 export interface ErrorStatement extends NodeBase {
   kind: 'ErrorStatement';
   source: string;
@@ -97,6 +107,8 @@ export type Statement =
   | FunctionStatement
   | ReturnStatement
   | UpdateCellStatement
+  | OnTagAddedStatement
+  | OnTagRemovedStatement
   | ErrorStatement;
 
 export interface StringLiteral extends NodeBase {

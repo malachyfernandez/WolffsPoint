@@ -7,7 +7,7 @@ import Row from '../layout/Row';
 import NightlyDayUserRow from './NightlyDayUserRow';
 import NightlyDayTitleRow from './NightlyDayTitleRow';
 import { createUndoSnapshot, useUndoRedo } from 'hooks/useUndoRedo';
-import { UserTableItem } from 'types/playerTable';
+import { UserTableItem, UserTableTitle, UserTableColumnNightlyVisibility } from 'types/playerTable';
 import {
   ColumnSizeOption,
   NightlyPageColumnSizes,
@@ -15,6 +15,11 @@ import {
   getNightlyPageColumnSizesKey,
   getWidthForColumnSize,
 } from './nightlyTableColumnSizing';
+import {
+  PlayerPageColumnSizes,
+  defaultPlayerPageColumnSizes,
+  getPlayerPageColumnSizesKey,
+} from './playerTableColumnSizing';
 
 interface NightlyDaysTableProps {
   gameId: string;
@@ -75,6 +80,30 @@ const NightlyDaysTable = ({
   const [columnSizes, setColumnSizes] = useValue<NightlyPageColumnSizes>(
     getNightlyPageColumnSizesKey(gameId),
     { defaultValue: defaultNightlyPageColumnSizes, privacy: 'PUBLIC' }
+  );
+
+  // Subscribe to table titles and nightly visibility for extra day columns
+  const [userTableTitle] = useList<UserTableTitle>('userTableTitle', gameId, { privacy: 'PUBLIC' });
+  const [nightlyVisibility] = useList<UserTableColumnNightlyVisibility>(
+    'userTableColumnNightlyVisibility',
+    gameId,
+    { privacy: 'PUBLIC' }
+  );
+  const [playerPageColumnSizes] = useValue<PlayerPageColumnSizes>(
+    getPlayerPageColumnSizesKey(gameId),
+    { defaultValue: defaultPlayerPageColumnSizes, privacy: 'PUBLIC' }
+  );
+
+  const titles = userTableTitle?.value ?? { extraUserColumns: [], extraDayColumns: [] };
+  const nightlyVis = nightlyVisibility?.value ?? { extraUserColumns: [], extraDayColumns: [] };
+
+  // Compute which extra day columns are visible in nightly
+  const nightlyExtraDayColumns = titles.extraDayColumns
+    .map((title, index) => ({ title, index, visible: nightlyVis.extraDayColumns[index] ?? false }))
+    .filter((col) => col.visible);
+
+  const extraDayColumnWidths = nightlyExtraDayColumns.map((col) =>
+    getWidthForColumnSize(112, playerPageColumnSizes.value?.dayExtraColumns?.[col.index] ?? 'small')
   );
 
   // Track when column data is ready (only check isSyncing, not value presence)
@@ -283,6 +312,8 @@ const NightlyDaysTable = ({
               columnWidths={columnWidths}
               columnSizes={columnSizes.value}
               onSetColumnSize={setColumnSize}
+              extraDayColumns={nightlyExtraDayColumns.map((c) => c.title)}
+              extraDayColumnWidths={extraDayColumnWidths}
             />
             {users.map((user, index) => (
               <Animated.View key={index} entering={FadeIn.duration(300).delay(index * 50)}>
@@ -300,6 +331,10 @@ const NightlyDaysTable = ({
                   morningMessagesList={morningMessagesList}
                   columnWidths={columnWidths}
                   users={users}
+                  gameId={gameId}
+                  extraDayColumnIndices={nightlyExtraDayColumns.map((c) => c.index)}
+                  extraDayColumnWidths={extraDayColumnWidths}
+                  extraDayColumnTitles={nightlyExtraDayColumns.map((c) => c.title)}
                 />
               </Animated.View>
             ))}

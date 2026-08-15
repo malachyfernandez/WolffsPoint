@@ -76,11 +76,13 @@ const ScriptEditorWithSources = ({
   onOpenChange,
   onSubmit,
   initialScriptText,
+  gameId,
 }: {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   onSubmit: (scriptText: string) => void;
   initialScriptText?: string;
+  gameId?: string;
 }) => {
   const { scriptSources } = useMarkdownRendererInputData();
   return (
@@ -90,6 +92,7 @@ const ScriptEditorWithSources = ({
       onSubmit={onSubmit}
       sources={scriptSources}
       initialScriptText={initialScriptText}
+      gameId={gameId}
     />
   );
 };
@@ -408,6 +411,7 @@ const MarkdownEditorDialog = ({
           }}
           onSubmit={handleUpdateScript}
           initialScriptText={editingScriptBlock?.content}
+          gameId={gameId}
         />
       </InputOptionsProvider>
 

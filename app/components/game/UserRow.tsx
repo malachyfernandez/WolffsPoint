@@ -52,6 +52,7 @@ interface UserRowProps {
   extraUserColumnWidths?: number[];
   userColumnTitles?: string[];
   onTagsAdded?: (tagNames: string[], context: CellContext) => void;
+  onTagsRemoved?: (tagNames: string[], context: CellContext) => void;
 }
 
 const UserRow = ({
@@ -68,6 +69,7 @@ const UserRow = ({
   extraUserColumnWidths,
   userColumnTitles,
   onTagsAdded,
+  onTagsRemoved,
 }: UserRowProps) => {
   const [editingColumns, setEditingColumns] = useState<Record<number, boolean>>({});
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -197,6 +199,7 @@ const UserRow = ({
                     column: userColumnTitles?.[columnIndex] ?? `Column ${columnIndex + 1}`,
                   }}
                   onTagsAdded={onTagsAdded}
+                  onTagsRemoved={onTagsRemoved}
                 />
               </Column>
             </Animated.View>

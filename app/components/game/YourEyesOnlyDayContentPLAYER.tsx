@@ -15,8 +15,8 @@ import { useValue } from '../../../hooks/useData';
 import { PlayerNightSubmission } from '../../../types/multiplayer';
 import { RoleTableItem } from '../../../types/roleTable';
 import { UserTableItem, UserTableTitle } from '../../../types/playerTable';
-import { runMarkdownScriptsWithUpdates } from '../../../utils/runMarkdownScriptsWithUpdates';
-import { TableUpdate } from '../../../app/script/registry';
+import { planMarkdownScriptUpdates } from '../../../utils/runMarkdownScriptsWithUpdates';
+import { PlannedUpdate } from '../../../types/multiplayer';
 import {
   buildScheduledDate,
   defaultGameSchedule,
@@ -214,11 +214,11 @@ const YourEyesOnlyDayContentPLAYER = ({
   );
 
   // Compute planned table updates from the role message script at input time.
-  // This runs the script with the player's current input state and the current
-  // user table, producing a list of cell changes that will be applied at certify
-  // time. By computing here (instead of at certify), we avoid issues with
-  // currentDay being stale and can show the player what their actions will do.
-  const plannedUpdates = useMemo<TableUpdate[]>(() => {
+  // This runs the script in "planning mode" — variables (currentDay, Inputs,
+  // etc.) are resolved to their values, but function calls (tag(), .append(),
+  // etc.) are kept as expression strings. At certify time, these expressions
+  // are evaluated with the cell variable bound to the current cell value.
+  const plannedUpdates = useMemo<PlannedUpdate[]>(() => {
     if (!roleData?.roleMessage?.trim()) return [];
     if (!userTable || userTable.length === 0) return [];
     const actionState = normalizePlayerActionState(submission.value.action);
@@ -226,7 +226,7 @@ const YourEyesOnlyDayContentPLAYER = ({
     const hasInputs = Object.values(actionState).some((v) => v !== undefined && v !== '');
     if (!hasInputs) return [];
     const titles = userTableTitle ?? { extraUserColumns: [], extraDayColumns: [] };
-    const { updates, issues } = runMarkdownScriptsWithUpdates(
+    const { plannedUpdates, issues } = planMarkdownScriptUpdates(
       roleData.roleMessage,
       actionState,
       {
@@ -244,7 +244,7 @@ const YourEyesOnlyDayContentPLAYER = ({
     if (issues.length > 0) {
       console.warn('Planned updates script issues:', issues);
     }
-    return updates;
+    return plannedUpdates;
   }, [
     roleData?.roleMessage,
     submission.value.action,
@@ -278,7 +278,7 @@ const YourEyesOnlyDayContentPLAYER = ({
           ? userTable[update.playerIndex].realName || userTable[update.playerIndex].email
           : 'All players';
       const dayLabel = update.dayIndex !== null ? `Day ${update.dayIndex + 1}, ` : '';
-      return `${playerName} → ${dayLabel}${update.column}: ${update.value}`;
+      return `${playerName} → ${dayLabel}${update.column}: ${update.updateExpression}`;
     });
   }, [plannedUpdates, userTable]);
 

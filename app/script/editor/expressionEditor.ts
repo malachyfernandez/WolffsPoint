@@ -180,6 +180,22 @@ export const renameIdentifierInStatements = (
           ...statement,
           value: statement.value ? renameIdentifier(statement.value, from, to) : undefined,
         };
+      case 'OnTagAddedStatement':
+        return {
+          ...statement,
+          body: {
+            ...statement.body,
+            statements: renameIdentifierInStatements(statement.body.statements, from, to),
+          },
+        };
+      case 'OnTagRemovedStatement':
+        return {
+          ...statement,
+          body: {
+            ...statement.body,
+            statements: renameIdentifierInStatements(statement.body.statements, from, to),
+          },
+        };
       default:
         return statement;
     }

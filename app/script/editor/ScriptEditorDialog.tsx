@@ -11,14 +11,20 @@ import ShadowScrollView from '../../components/ui/ShadowScrollView';
 import { CloseButton } from '../../components/game/markdownEditor';
 import MarkdownEditorDialog from '../../components/game/MarkdownEditorDialog';
 import { parseScript } from '../lang/parser';
-import { printScript, printScriptBlock } from '../lang/printer';
+import { printScript, printScriptBlock, parseScriptBlock } from '../lang/printer';
 import type { Expression, FunctionTemplatePiece, Statement } from '../lang/ast';
-import { editorReducer, initialState, createScript } from './editorReducer';
+import {
+  editorReducer,
+  initialState,
+  createScript,
+  createOnTagAddedStatement,
+} from './editorReducer';
 import type { EditorAction } from './editorReducer';
 import Canvas from './Canvas';
 import InsertModal, { type DefinedFunction, type InsertTarget } from './InsertModal';
 import { createScriptGlobals, type ScriptSourceData } from '../runtime/sources';
 import { traceEntrySource } from './expressionEditor';
+import type { EntryKeysBySource } from './typeInference';
 import { useUndoRedo, useCreateUndoSnapshot } from '../../../hooks/useUndoRedo';
 
 interface ScriptEditorDialogProps {
@@ -31,6 +37,12 @@ interface ScriptEditorDialogProps {
   /** When true, input-creating blocks (select, text, number, checkbox) are hidden.
    *  Used for tag trigger scripts which have no input state storage. */
   hideInputs?: boolean;
+  /** When true, the editor is configured for tag trigger scripts.
+   *  Hides input/display blocks, replaces currentDay with placedDay, and
+   *  shows trigger-specific data sources (placedTag, placedUser, etc.). */
+  isTriggerContext?: boolean;
+  /** Game ID, used to load tag definitions for the tag() function picker. */
+  gameId?: string;
 }
 
 type EditorMode = 'blocks' | 'text';
@@ -237,6 +249,8 @@ const ScriptEditorDialog = ({
   sources,
   title = 'Script Editor',
   hideInputs,
+  isTriggerContext,
+  gameId,
 }: ScriptEditorDialogProps) => {
   const [state, dispatch] = useReducer(editorReducer, createScript(), (ast) => initialState(ast));
   const { executeCommand, undo, redo, canUndo, canRedo } = useUndoRedo();
@@ -256,7 +270,17 @@ const ScriptEditorDialog = ({
   useEffect(() => {
     if (!isOpen) return;
     const trimmed = initialScriptText.trim();
-    const ast = trimmed.length > 0 ? parseScript(trimmed) : createScript();
+    let ast;
+    if (trimmed.length > 0) {
+      // Use parseScriptBlock to unwrap /*script ... script*/ wrapper if present
+      ast = parseScriptBlock(trimmed);
+    } else if (isTriggerContext) {
+      // Default trigger scripts to an OnTagAdded block so it's clear
+      // this is where the tag-added logic goes
+      ast = { ...createScript(), statements: [createOnTagAddedStatement()] };
+    } else {
+      ast = createScript();
+    }
     dispatch({ type: 'REPLACE_AST', ast });
     setTextDraft(trimmed);
     setMode('blocks');
@@ -264,7 +288,7 @@ const ScriptEditorDialog = ({
     setInsertTarget(null);
     setHasModifications(false);
     setIsLeaveConfirmDialogOpen(false);
-  }, [initialScriptText, isOpen]);
+  }, [initialScriptText, isOpen, isTriggerContext]);
 
   // Bridge the reducer's history with the global useUndoRedo system.
   // Computes the new AST by running the reducer manually, applies it via SET_AST
@@ -289,9 +313,9 @@ const ScriptEditorDialog = ({
     () => collectDefinedVariables(state.ast.statements),
     [state.ast.statements]
   );
-  const entryKeysBySource = useMemo(() => {
+  const entryKeysBySource = useMemo<EntryKeysBySource>(() => {
     const globals = createScriptGlobals(sources);
-    const keys = Object.fromEntries(
+    const keys: EntryKeysBySource = Object.fromEntries(
       Object.entries(globals).map(([name, value]) => {
         const sample = Array.isArray(value)
           ? value.find((item) => item && typeof item === 'object')
@@ -308,17 +332,60 @@ const ScriptEditorDialog = ({
       'days',
       ...(sources?.userTableTitle?.extraUserColumns ?? []),
     ];
-    keys.currentPlayer = keys.players;
     keys.roles = ['role', 'doesRoleVote', 'isVisible', 'aboutRole'];
-    keys.Inputs = collectInputLabels(state.ast.statements);
-    keys.InputsWithData = keys.Inputs;
     // Day object keys: built-in fields + extra day column titles
     keys.day = ['vote', 'action', ...(sources?.userTableTitle?.extraDayColumns ?? [])];
     // Column title dropdowns for UpdateCell
     keys._userColumns = sources?.userTableTitle?.extraUserColumns ?? [];
     keys._dayColumns = sources?.userTableTitle?.extraDayColumns ?? [];
+    // Field type metadata: maps "source.field" → ScriptType
+    // This lets the type inference know that players.entry("days") is a list,
+    // players.entry("role") is a string, etc.
+    keys.__fieldTypes = {
+      'players.days': 'list',
+      'players.realName': 'string',
+      'players.email': 'string',
+      'players.userId': 'string',
+      'players.role': 'string',
+      'players.isAlive': 'boolean',
+      'currentPlayer.days': 'list',
+      'currentPlayer.realName': 'string',
+      'currentPlayer.email': 'string',
+      'currentPlayer.userId': 'string',
+      'currentPlayer.role': 'string',
+      'currentPlayer.isAlive': 'boolean',
+      'placedUser.days': 'list',
+      'placedUser.realName': 'string',
+      'placedUser.email': 'string',
+      'placedUser.userId': 'string',
+      'placedUser.role': 'string',
+      'placedUser.isAlive': 'boolean',
+      // Extra user columns are strings (tags, text, etc.)
+      // Extra day columns are strings
+    };
+    // Add types for extra user columns (all strings)
+    for (const col of sources?.userTableTitle?.extraUserColumns ?? []) {
+      keys.__fieldTypes![`players.${col}`] = 'string';
+      keys.__fieldTypes![`currentPlayer.${col}`] = 'string';
+      keys.__fieldTypes![`placedUser.${col}`] = 'string';
+    }
+    if (isTriggerContext) {
+      // Trigger-specific globals
+      keys.placedTag = [];
+      keys.placedUser = keys.players;
+      keys.placedDay = [];
+      keys.placedColumn = [];
+    } else {
+      keys.currentPlayer = keys.players;
+      keys.currentDay = [];
+      keys.dayDates = [];
+      keys.schedule = [];
+      keys.profiles = [];
+      keys.Inputs = collectInputLabels(state.ast.statements);
+      keys.InputsWithData = keys.Inputs;
+    }
     return keys;
-  }, [sources, state.ast.statements]);
+  }, [sources, state.ast.statements, isTriggerContext]);
   const inputSources = useMemo(
     () => collectInputSources(state.ast.statements, entryKeysBySource),
     [state.ast.statements, entryKeysBySource]
@@ -511,7 +578,14 @@ const ScriptEditorDialog = ({
           <ConvexDialog.Overlay />
           <ConvexDialog.Content className="h-[85vh] max-w-5xl" isSwipeable={!hasModifications}>
             <CloseButton onPress={handleAttemptClose} />
-            <DialogHeader text={title} subtext="Build dynamic inputs with blocks or text" />
+            <DialogHeader
+              text={title}
+              subtext={
+                isTriggerContext
+                  ? 'Runs when this tag is added to a cell'
+                  : 'Build dynamic inputs with blocks or text'
+              }
+            />
             <Column className="min-h-0 flex-1 gap-3 pt-3">
               <Row className="justify-between gap-2">
                 <Row className="gap-2">
@@ -592,6 +666,7 @@ const ScriptEditorDialog = ({
                       onDeleteStatement={handleDeleteStatement}
                       entryKeysBySource={entryKeysBySource}
                       inputSources={inputSources}
+                      isTriggerContext={isTriggerContext}
                       onEditMarkdown={(value, onSave) =>
                         setMarkdownEditor({ isOpen: true, value, onSave })
                       }
@@ -621,12 +696,15 @@ const ScriptEditorDialog = ({
               target={insertTarget}
               definedVariables={definedVariables}
               definedFunctions={definedFunctions}
+              entryKeysBySource={entryKeysBySource}
               onInsertStatement={handleInsertStatement}
               onInsertExpression={handleInsertExpression}
               onInsertChainLink={handleInsertChainLink}
               onInsertBuiltinFunction={handleInsertBuiltinFunction}
               onRemove={handleRemove}
               hideInputs={hideInputs}
+              isTriggerContext={isTriggerContext}
+              gameId={gameId}
               onClose={() => setInsertTarget(null)}
             />
           </ConvexDialog.Content>

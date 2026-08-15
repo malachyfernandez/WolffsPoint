@@ -2,6 +2,12 @@ import { interpretScript } from '../app/script/runtime/interpreter';
 import { createScriptGlobals, type ScriptSourceData } from '../app/script/runtime/sources';
 import { TableUpdate } from '../app/script/registry';
 import { UserTableItem, UserTableTitle } from '../types/playerTable';
+import {
+  VOTE_MULTIPLIER_COLUMN,
+  LIVING_STATE_COLUMN,
+  VOTE_COLUMN,
+  ACTION_COLUMN,
+} from './applyTableUpdates';
 
 /**
  * Run a script with table update support.
@@ -33,19 +39,33 @@ export const runScriptWithUpdates = (
     if (idx < 0 || idx >= users.length) return '';
 
     const user = users[idx];
+    const colLower = column.toLowerCase();
 
     if (dayIndex === null) {
+      // Special: livingState is a field on PlayerData
+      if (colLower === LIVING_STATE_COLUMN) {
+        return user.playerData.livingState;
+      }
       const extraUserColumnTitles = titles.extraUserColumns ?? [];
-      const colIdx = extraUserColumnTitles.findIndex(
-        (t) => t.toLowerCase() === column.toLowerCase()
-      );
+      const colIdx = extraUserColumnTitles.findIndex((t) => t.toLowerCase() === colLower);
       if (colIdx === -1) return '';
       return user.playerData.extraColumns?.[colIdx] ?? '';
     } else {
+      // Special built-in fields on DayData
+      if (colLower === VOTE_MULTIPLIER_COLUMN) {
+        const day = user.days?.[dayIndex];
+        return String(day?.voteMultiplier ?? 1);
+      }
+      if (colLower === VOTE_COLUMN) {
+        const day = user.days?.[dayIndex];
+        return day?.vote ?? '';
+      }
+      if (colLower === ACTION_COLUMN) {
+        const day = user.days?.[dayIndex];
+        return typeof day?.action === 'string' ? day.action : '';
+      }
       const extraDayColumnTitles = titles.extraDayColumns ?? [];
-      const colIdx = extraDayColumnTitles.findIndex(
-        (t) => t.toLowerCase() === column.toLowerCase()
-      );
+      const colIdx = extraDayColumnTitles.findIndex((t) => t.toLowerCase() === colLower);
       if (colIdx === -1) return '';
       const day = user.days?.[dayIndex];
       return day?.extraColumns?.[colIdx] ?? '';

@@ -8,8 +8,10 @@ import MarkdownEditorDialog from './MarkdownEditorDialog';
 import ActionEditorDialog from './ActionEditorDialog';
 import VoteEditorDialog, { resolveVoteEmailToName } from './VoteEditorDialog';
 import ActionPills from './ActionPills';
+import TagCellDisplay from './TagCellDisplay';
 import { UserTableItem } from '../../../types/playerTable';
 import { getPlayerActionSummary } from '../../../utils/multiplayer';
+import { useList } from 'hooks/useData';
 
 interface NightlyDayUserRowProps {
   user: UserTableItem;
@@ -29,6 +31,11 @@ interface NightlyDayUserRowProps {
     morningMessage: number;
   };
   users: UserTableItem[];
+  gameId?: string;
+  /** Indices into day.extraColumns for columns shown in nightly. */
+  extraDayColumnIndices?: number[];
+  extraDayColumnWidths?: number[];
+  extraDayColumnTitles?: string[];
 }
 
 const NightlyDayUserRow = ({
@@ -45,10 +52,18 @@ const NightlyDayUserRow = ({
   morningMessagesList,
   columnWidths,
   users,
+  gameId,
+  extraDayColumnIndices = [],
+  extraDayColumnWidths = [],
+  extraDayColumnTitles = [],
 }: NightlyDayUserRowProps) => {
   const [isMessageDialogOpen, setIsMessageDialogOpen] = useState(false);
   const [isActionDialogOpen, setIsActionDialogOpen] = useState(false);
   const [isVoteDialogOpen, setIsVoteDialogOpen] = useState(false);
+
+  const [userTable, setUserTable] = useList<UserTableItem[]>('userTable', gameId ?? '', {
+    privacy: 'PUBLIC',
+  });
 
   const dayData = user.days[dayNumber] || { vote: '', action: '', extraColumns: [] };
   const voteMultiplier = dayData.voteMultiplier ?? 1;
@@ -130,7 +145,7 @@ const NightlyDayUserRow = ({
           </Pressable>
         </Column>
         <Column
-          className={`border-subtle-border h-full items-center justify-center gap-0 border ${isLast ? 'rounded-br-lg' : ''}`}
+          className={`border-subtle-border h-full items-center justify-center gap-0 border ${isLast && extraDayColumnIndices.length === 0 ? 'rounded-br-lg' : ''}`}
           style={{ width: columnWidths.morningMessage }}>
           {getCurrentMorningMessage() ? (
             <Pressable
@@ -181,6 +196,46 @@ const NightlyDayUserRow = ({
             </Pressable>
           )}
         </Column>
+        {extraDayColumnIndices.map((colIdx, i) => {
+          const width = extraDayColumnWidths[i] ?? 112;
+          const value = dayData.extraColumns?.[colIdx] ?? '';
+          const isLastExtra = i === extraDayColumnIndices.length - 1;
+          return (
+            <Column
+              key={i}
+              className={`border-subtle-border h-full items-center justify-center border ${isLast && isLastExtra ? 'rounded-br-lg' : ''}`}
+              style={{ width, position: 'relative', overflow: 'hidden' }}>
+              <TagCellDisplay
+                gameId={gameId ?? ''}
+                value={value}
+                onChange={(newValue) => {
+                  const currentUsers = userTable?.value ?? [];
+                  if (index < 0 || index >= currentUsers.length) return;
+                  const updatedUsers = [...currentUsers];
+                  const u = updatedUsers[index];
+                  const days = [...(u.days ?? [])];
+                  while (days.length <= dayNumber) {
+                    days.push({ vote: '', action: '', extraColumns: [] });
+                  }
+                  const extraColumns = [...(days[dayNumber].extraColumns ?? [])];
+                  while (extraColumns.length <= colIdx) {
+                    extraColumns.push('');
+                  }
+                  extraColumns[colIdx] = newValue;
+                  days[dayNumber] = { ...days[dayNumber], extraColumns };
+                  updatedUsers[index] = { ...u, days };
+                  setUserTable(updatedUsers);
+                }}
+                width={width}
+                cellContext={{
+                  playerIndex: index,
+                  dayIndex: dayNumber,
+                  column: extraDayColumnTitles[i] ?? `Column ${colIdx + 1}`,
+                }}
+              />
+            </Column>
+          );
+        })}
       </Row>
       <MarkdownEditorDialog
         isOpen={isMessageDialogOpen}

@@ -36,6 +36,7 @@ interface DayUserRowProps {
   users: UserTableItem[];
   dayColumnTitles: string[];
   onTagsAdded?: (tagNames: string[], context: CellContext) => void;
+  onTagsRemoved?: (tagNames: string[], context: CellContext) => void;
 }
 
 const DayUserRow = ({
@@ -56,6 +57,7 @@ const DayUserRow = ({
   users,
   dayColumnTitles,
   onTagsAdded,
+  onTagsRemoved,
 }: DayUserRowProps) => {
   const [editingColumns, setEditingColumns] = useState<Record<number, boolean>>({});
   const [isEditingVote, setIsEditingVote] = useState(false);
@@ -161,6 +163,7 @@ const DayUserRow = ({
                   column: dayColumnTitles[columnIndex] ?? `Column ${columnIndex + 1}`,
                 }}
                 onTagsAdded={onTagsAdded}
+                onTagsRemoved={onTagsRemoved}
               />
             </Column>
           </Animated.View>

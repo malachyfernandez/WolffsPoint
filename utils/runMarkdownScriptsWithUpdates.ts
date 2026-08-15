@@ -2,7 +2,7 @@ import { interpretScript } from '../app/script/runtime/interpreter';
 import { createScriptGlobals, type ScriptSourceData } from '../app/script/runtime/sources';
 import { TableUpdate } from '../app/script/registry';
 import { UserTableItem, UserTableTitle } from '../types/playerTable';
-import { MarkdownInputState } from '../types/multiplayer';
+import { MarkdownInputState, PlannedUpdate } from '../types/multiplayer';
 
 /**
  * Extract /*script ... script*\/ blocks from markdown text.
@@ -134,4 +134,52 @@ export const runMarkdownScriptsWithUpdates = (
   }
 
   return { updates: allUpdates, issues: allIssues };
+};
+
+/**
+ * Run all script blocks embedded in a markdown role message in "planning mode".
+ * Instead of collecting final TableUpdate values, this collects PlannedUpdate
+ * objects with partially-evaluated expression strings where all variables
+ * (currentDay, Inputs, etc.) are resolved to their values but function calls
+ * (tag(), .append(), etc.) are kept as-is.
+ *
+ * At certify time, these expressions are evaluated with the cell variable
+ * bound to the current cell value, and the results are applied to the table.
+ */
+export const planMarkdownScriptUpdates = (
+  markdown: string,
+  inputState: MarkdownInputState,
+  source: ScriptSourceData,
+  users: UserTableItem[],
+  titles: UserTableTitle
+): { plannedUpdates: PlannedUpdate[]; issues: string[] } => {
+  const scriptBlocks = extractScriptBlocks(markdown);
+  if (scriptBlocks.length === 0) return { plannedUpdates: [], issues: [] };
+
+  const globals = createScriptGlobals(source);
+  const decodedInputState = decodeInputState(inputState);
+  const getCellValue = buildGetCellValue(users, titles);
+  const allPlannedUpdates: PlannedUpdate[] = [];
+  const allIssues: string[] = [];
+
+  for (const scriptSource of scriptBlocks) {
+    const plannedUpdates: PlannedUpdate[] = [];
+    try {
+      const result = interpretScript(scriptSource, {
+        globals: {
+          ...globals,
+          Inputs: decodedInputState,
+        },
+        inputState: decodedInputState,
+        plannedUpdates,
+        getCellValue,
+      });
+      allPlannedUpdates.push(...plannedUpdates);
+      allIssues.push(...result.issues.map((i) => i.message));
+    } catch (error) {
+      allIssues.push(error instanceof Error ? error.message : 'Script execution failed');
+    }
+  }
+
+  return { plannedUpdates: allPlannedUpdates, issues: allIssues };
 };
