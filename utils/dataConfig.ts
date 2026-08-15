@@ -105,4 +105,9 @@ export const DATA_CONFIG: DataConfigType = {
     privacy: 'PUBLIC',
     defaultValue: [],
   },
+  tagTriggers: {
+    type: 'variable',
+    privacy: 'PUBLIC',
+    defaultValue: {},
+  },
 };

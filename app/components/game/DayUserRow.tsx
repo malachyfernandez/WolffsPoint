@@ -1,13 +1,13 @@
 import React, { useRef, useState, useEffect, useMemo } from 'react';
 import { Pressable, View } from 'react-native';
-import InlineEditableText from '../ui/forms/InlineEditableText';
+import TagCellDisplay from './TagCellDisplay';
+import type { CellContext } from './TagCellEditor';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
 import FontText from '../ui/text/FontText';
 import Animated, { Easing, FadeInDown, FadeOutUp } from 'react-native-reanimated';
 import { UserTableItem } from '../../../types/playerTable';
 import { getPlayerActionSummary } from '../../../utils/multiplayer';
-import { getInnerTextWidth } from './playerTableColumnSizing';
 import ActionPills from './ActionPills';
 import ActionEditorDialog from './ActionEditorDialog';
 import VoteEditorDialog, { resolveVoteEmailToName } from './VoteEditorDialog';
@@ -17,6 +17,7 @@ interface DayUserRowProps {
   index: number;
   isLast: boolean;
   dayNumber: number;
+  gameId: string;
   setVoteValue?: (userIndex: number, newValue: string, voteMultiplier: number) => void;
   setActionValue?: (userIndex: number, newValue: string) => void;
   setExtraColumnValue?: (userIndex: number, columnIndex: number, newValue: string) => void;
@@ -33,6 +34,8 @@ interface DayUserRowProps {
   };
   extraDayColumnWidths: number[];
   users: UserTableItem[];
+  dayColumnTitles: string[];
+  onTagsAdded?: (tagNames: string[], context: CellContext) => void;
 }
 
 const DayUserRow = ({
@@ -40,6 +43,7 @@ const DayUserRow = ({
   index,
   isLast,
   dayNumber,
+  gameId,
   setVoteValue,
   setActionValue,
   setExtraColumnValue,
@@ -50,6 +54,8 @@ const DayUserRow = ({
   dayBaseColumnWidths,
   extraDayColumnWidths,
   users,
+  dayColumnTitles,
+  onTagsAdded,
 }: DayUserRowProps) => {
   const [editingColumns, setEditingColumns] = useState<Record<number, boolean>>({});
   const [isEditingVote, setIsEditingVote] = useState(false);
@@ -135,22 +141,26 @@ const DayUserRow = ({
 
         return (
           <Animated.View
-            className={`${editingColumns[columnIndex] ? 'z-50' : ''}`}
+            className={`h-full ${editingColumns[columnIndex] ? 'z-50' : ''}`}
             key={columnIndex}
             entering={hasMounted.current ? FadeInDown.duration(100).easing(Easing.ease) : undefined}
             exiting={hasMounted.current ? FadeOutUp.duration(100).easing(Easing.ease) : undefined}>
             <Column
               className={`border-subtle-border h-full items-center justify-center gap-4 border ${isLast && isLastVisibleColumn ? 'rounded-br-lg' : ''}`}
-              style={{ width: columnWidth }}>
-              <InlineEditableText
+              style={{ width: columnWidth, position: 'relative', overflow: 'hidden' }}>
+              <TagCellDisplay
+                gameId={gameId}
                 value={column}
                 onChange={(newValue) => setExtraColumnValue?.(index, columnIndex, newValue)}
-                placeholder="UNSET"
-                className="overflow-hidden text-nowrap text-center"
-                style={{ width: getInnerTextWidth(columnWidth, 16) }}
-                weight="medium"
+                width={columnWidth}
                 onEditStart={() => handleColumnEditStart(columnIndex)}
                 onEditEnd={() => handleColumnEditEnd(columnIndex)}
+                cellContext={{
+                  playerIndex: index,
+                  dayIndex: dayNumber,
+                  column: dayColumnTitles[columnIndex] ?? `Column ${columnIndex + 1}`,
+                }}
+                onTagsAdded={onTagsAdded}
               />
             </Column>
           </Animated.View>

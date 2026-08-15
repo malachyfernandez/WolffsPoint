@@ -50,8 +50,16 @@ export type EditorAction =
   | {
       type: 'SET_STATEMENT_FIELD';
       path: number[];
-      field: 'name' | 'parameters' | 'itemName' | 'template';
-      value: string | string[] | FunctionTemplatePiece[];
+      field:
+        | 'name'
+        | 'parameters'
+        | 'itemName'
+        | 'template'
+        | 'columnType'
+        | 'players'
+        | 'dayIndex'
+        | 'updateValue';
+      value: string | string[] | FunctionTemplatePiece[] | Expression;
     }
   | { type: 'DELETE_STATEMENT'; path: number[] }
   | { type: 'UNDO' }
@@ -84,6 +92,8 @@ const getBodyStatements = (stmt: Statement): Statement[] => {
       return stmt.body.statements;
     case 'FunctionStatement':
       return stmt.body.statements;
+    case 'UpdateCellStatement':
+      return stmt.body.statements;
     case 'BlockStatement':
       return stmt.statements;
     default:
@@ -107,6 +117,8 @@ const withBodyStatements = (stmt: Statement, newBody: Statement[]): Statement =>
     case 'ForEachStatement':
       return { ...stmt, body: { ...stmt.body, statements: newBody } };
     case 'FunctionStatement':
+      return { ...stmt, body: { ...stmt.body, statements: newBody } };
+    case 'UpdateCellStatement':
       return { ...stmt, body: { ...stmt.body, statements: newBody } };
     case 'BlockStatement':
       return { ...stmt, statements: newBody };
@@ -416,6 +428,18 @@ export const createForEachStatement = (
   span,
 });
 
+export const createUpdateCellStatement = (): Statement => ({
+  kind: 'UpdateCellStatement',
+  players: { kind: 'NothingLiteral', span },
+  columnType: 'user',
+  dayIndex: { kind: 'IdentifierExpression', name: 'currentDay', span },
+  column: { kind: 'StringLiteral', value: '', span },
+  itemName: 'cellContents',
+  body: { kind: 'BlockStatement', statements: [], span },
+  updateValue: { kind: 'StringLiteral', value: '', span },
+  span,
+});
+
 export const createFunctionStatement = (
   name: string,
   parameters: string[],
@@ -690,6 +714,19 @@ export const editorReducer = (state: EditorState, action: EditorAction): EditorS
         typeof action.value === 'string'
       ) {
         nextStatement = { ...statement, itemName: action.value };
+      } else if (statement.kind === 'UpdateCellStatement') {
+        if (action.field === 'itemName' && typeof action.value === 'string') {
+          nextStatement = { ...statement, itemName: action.value };
+        } else if (action.field === 'columnType' && typeof action.value === 'string') {
+          const ct = action.value === 'user' ? 'user' : 'day';
+          nextStatement = { ...statement, columnType: ct };
+        } else if (action.field === 'players' && !Array.isArray(action.value)) {
+          nextStatement = { ...statement, players: action.value as Expression };
+        } else if (action.field === 'dayIndex' && !Array.isArray(action.value)) {
+          nextStatement = { ...statement, dayIndex: action.value as Expression };
+        } else if (action.field === 'updateValue' && !Array.isArray(action.value)) {
+          nextStatement = { ...statement, updateValue: action.value as Expression };
+        }
       }
       const statements =
         extraStatements !== state.ast.statements

@@ -1,6 +1,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import FontText from '../ui/text/FontText';
 import TagCellDisplay from './TagCellDisplay';
+import type { CellContext } from './TagCellEditor';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
 import CustomCheckbox from '../ui/CustomCheckbox';
@@ -49,6 +50,8 @@ interface UserRowProps {
   isEditing?: boolean;
   gameId: string;
   extraUserColumnWidths?: number[];
+  userColumnTitles?: string[];
+  onTagsAdded?: (tagNames: string[], context: CellContext) => void;
 }
 
 const UserRow = ({
@@ -63,6 +66,8 @@ const UserRow = ({
   setExtraColumnValue,
   userTableColumnVisibility,
   extraUserColumnWidths,
+  userColumnTitles,
+  onTagsAdded,
 }: UserRowProps) => {
   const [editingColumns, setEditingColumns] = useState<Record<number, boolean>>({});
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -186,6 +191,12 @@ const UserRow = ({
                   width={columnWidth}
                   onEditStart={() => handleColumnEditStart(columnIndex)}
                   onEditEnd={() => handleColumnEditEnd(columnIndex)}
+                  cellContext={{
+                    playerIndex: index,
+                    dayIndex: null,
+                    column: userColumnTitles?.[columnIndex] ?? `Column ${columnIndex + 1}`,
+                  }}
+                  onTagsAdded={onTagsAdded}
                 />
               </Column>
             </Animated.View>

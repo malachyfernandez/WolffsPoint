@@ -23,6 +23,14 @@ export interface TagDefinition {
 
 export type TagDefinitionsData = TagDefinition[];
 
+export interface CellContext {
+  playerIndex: number;
+  /** null for player-level columns, 0-based day index for day columns */
+  dayIndex: number | null;
+  /** Column title */
+  column: string;
+}
+
 const getTagDefinitionsKey = (gameId: string) => getGameScopedKey('tagDefinitions', gameId);
 
 interface TagCellEditorProps {
@@ -31,9 +39,21 @@ interface TagCellEditorProps {
   gameId: string;
   value: string;
   onChange: (newValue: string) => void;
+  /** Context for tag triggers (player index, day index, column title) */
+  cellContext?: CellContext;
+  /** Called when new tags are added (for firing tag triggers) */
+  onTagsAdded?: (tagNames: string[], context: CellContext) => void;
 }
 
-const TagCellEditor = ({ isOpen, onOpenChange, gameId, value, onChange }: TagCellEditorProps) => {
+const TagCellEditor = ({
+  isOpen,
+  onOpenChange,
+  gameId,
+  value,
+  onChange,
+  cellContext,
+  onTagsAdded,
+}: TagCellEditorProps) => {
   const [tagDefs, setTagDefs] = useValue<TagDefinitionsData>(getTagDefinitionsKey(gameId), {
     defaultValue: [],
     privacy: 'PUBLIC',
@@ -131,7 +151,18 @@ const TagCellEditor = ({ isOpen, onOpenChange, gameId, value, onChange }: TagCel
   };
 
   const handleSave = () => {
-    onChange(isInTagMode ? encodeTags(selectedTagNames) : encodeText(textValue.trim()));
+    const newValue = isInTagMode ? encodeTags(selectedTagNames) : encodeText(textValue.trim());
+
+    // Detect newly added tags (present in new selection but not in original value)
+    if (isInTagMode && cellContext && onTagsAdded) {
+      const originalTagNames = new Set(parsed.tags.map((t) => t.name));
+      const addedTags = selectedTagNames.filter((name) => !originalTagNames.has(name));
+      if (addedTags.length > 0) {
+        onTagsAdded(addedTags, cellContext);
+      }
+    }
+
+    onChange(newValue);
     onOpenChange(false);
   };
 
@@ -282,6 +313,7 @@ const TagCellEditor = ({ isOpen, onOpenChange, gameId, value, onChange }: TagCel
         onDelete={handleDeleteTagDef}
         editTag={editingTag}
         existingNames={definitions.map((d) => d.name)}
+        gameId={gameId}
       />
     </>
   );

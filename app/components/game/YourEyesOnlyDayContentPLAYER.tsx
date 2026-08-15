@@ -15,6 +15,8 @@ import { useValue } from '../../../hooks/useData';
 import { PlayerNightSubmission } from '../../../types/multiplayer';
 import { RoleTableItem } from '../../../types/roleTable';
 import { UserTableItem, UserTableTitle } from '../../../types/playerTable';
+import { runMarkdownScriptsWithUpdates } from '../../../utils/runMarkdownScriptsWithUpdates';
+import { TableUpdate } from '../../../app/script/registry';
 import {
   buildScheduledDate,
   defaultGameSchedule,
@@ -210,6 +212,76 @@ const YourEyesOnlyDayContentPLAYER = ({
     () => getPlayerActionSummary(submission.value.action),
     [submission.value.action]
   );
+
+  // Compute planned table updates from the role message script at input time.
+  // This runs the script with the player's current input state and the current
+  // user table, producing a list of cell changes that will be applied at certify
+  // time. By computing here (instead of at certify), we avoid issues with
+  // currentDay being stale and can show the player what their actions will do.
+  const plannedUpdates = useMemo<TableUpdate[]>(() => {
+    if (!roleData?.roleMessage?.trim()) return [];
+    if (!userTable || userTable.length === 0) return [];
+    const actionState = normalizePlayerActionState(submission.value.action);
+    // Only run if there's actual input state
+    const hasInputs = Object.values(actionState).some((v) => v !== undefined && v !== '');
+    if (!hasInputs) return [];
+    const titles = userTableTitle ?? { extraUserColumns: [], extraDayColumns: [] };
+    const { updates, issues } = runMarkdownScriptsWithUpdates(
+      roleData.roleMessage,
+      actionState,
+      {
+        capability: 'player',
+        players: userTable,
+        roles: roleTable.value,
+        currentUserId,
+        currentEmail,
+        currentDay: dayIndex,
+        userTableTitle: titles,
+      },
+      userTable,
+      titles
+    );
+    if (issues.length > 0) {
+      console.warn('Planned updates script issues:', issues);
+    }
+    return updates;
+  }, [
+    roleData?.roleMessage,
+    submission.value.action,
+    userTable,
+    userTableTitle,
+    roleTable.value,
+    currentUserId,
+    currentEmail,
+    dayIndex,
+  ]);
+
+  // Persist planned updates into the submission whenever they change
+  useEffect(() => {
+    const current = submission.value.plannedUpdates ?? [];
+    const newJson = JSON.stringify(plannedUpdates);
+    const curJson = JSON.stringify(current);
+    if (newJson !== curJson && (plannedUpdates.length > 0 || current.length > 0)) {
+      setSubmission({
+        ...submission.value,
+        plannedUpdates: plannedUpdates.length > 0 ? plannedUpdates : undefined,
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [plannedUpdates]);
+
+  // Format a planned update into a readable string for display
+  const plannedUpdateSummaries = useMemo(() => {
+    return plannedUpdates.map((update) => {
+      const playerName =
+        update.playerIndex !== null && update.playerIndex < userTable.length
+          ? userTable[update.playerIndex].realName || userTable[update.playerIndex].email
+          : 'All players';
+      const dayLabel = update.dayIndex !== null ? `Day ${update.dayIndex + 1}, ` : '';
+      return `${playerName} → ${dayLabel}${update.column}: ${update.value}`;
+    });
+  }, [plannedUpdates, userTable]);
+
   const voteDeadline = useMemo(
     () => buildScheduledDate(voteDeadlineBaseDate, voteDeadlineTime),
     [voteDeadlineBaseDate, voteDeadlineTime]
@@ -436,6 +508,18 @@ const YourEyesOnlyDayContentPLAYER = ({
               ) : currentActionSummary.trim().length > 0 ? (
                 <FontText variant="subtext">Current action: {currentActionSummary}</FontText>
               ) : null}
+              {plannedUpdateSummaries.length > 0 && (
+                <Column className="gap-1 pt-1">
+                  <FontText variant="subtext" className="text-xs opacity-70">
+                    Will update on certify:
+                  </FontText>
+                  {plannedUpdateSummaries.map((summary, i) => (
+                    <FontText key={i} variant="subtext" className="text-xs">
+                      • {summary}
+                    </FontText>
+                  ))}
+                </Column>
+              )}
             </>
           )}
         </Column>

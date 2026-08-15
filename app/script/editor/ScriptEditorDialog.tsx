@@ -28,6 +28,9 @@ interface ScriptEditorDialogProps {
   onSubmit: (scriptText: string) => void;
   sources?: ScriptSourceData;
   title?: string;
+  /** When true, input-creating blocks (select, text, number, checkbox) are hidden.
+   *  Used for tag trigger scripts which have no input state storage. */
+  hideInputs?: boolean;
 }
 
 type EditorMode = 'blocks' | 'text';
@@ -233,6 +236,7 @@ const ScriptEditorDialog = ({
   onSubmit,
   sources,
   title = 'Script Editor',
+  hideInputs,
 }: ScriptEditorDialogProps) => {
   const [state, dispatch] = useReducer(editorReducer, createScript(), (ast) => initialState(ast));
   const { executeCommand, undo, redo, canUndo, canRedo } = useUndoRedo();
@@ -310,6 +314,9 @@ const ScriptEditorDialog = ({
     keys.InputsWithData = keys.Inputs;
     // Day object keys: built-in fields + extra day column titles
     keys.day = ['vote', 'action', ...(sources?.userTableTitle?.extraDayColumns ?? [])];
+    // Column title dropdowns for UpdateCell
+    keys._userColumns = sources?.userTableTitle?.extraUserColumns ?? [];
+    keys._dayColumns = sources?.userTableTitle?.extraDayColumns ?? [];
     return keys;
   }, [sources, state.ast.statements]);
   const inputSources = useMemo(
@@ -400,8 +407,16 @@ const ScriptEditorDialog = ({
 
   const handleSetStatementField = (
     path: number[],
-    field: 'name' | 'parameters' | 'itemName' | 'template',
-    value: string | string[] | FunctionTemplatePiece[]
+    field:
+      | 'name'
+      | 'parameters'
+      | 'itemName'
+      | 'template'
+      | 'columnType'
+      | 'players'
+      | 'dayIndex'
+      | 'updateValue',
+    value: string | string[] | FunctionTemplatePiece[] | Expression
   ) => {
     dispatchWithUndo({ type: 'SET_STATEMENT_FIELD', path, field, value }, 'Edit field');
   };
@@ -611,6 +626,7 @@ const ScriptEditorDialog = ({
               onInsertChainLink={handleInsertChainLink}
               onInsertBuiltinFunction={handleInsertBuiltinFunction}
               onRemove={handleRemove}
+              hideInputs={hideInputs}
               onClose={() => setInsertTarget(null)}
             />
           </ConvexDialog.Content>

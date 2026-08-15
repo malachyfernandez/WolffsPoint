@@ -73,6 +73,17 @@ export interface ReturnStatement extends NodeBase {
   value?: Expression;
 }
 
+export interface UpdateCellStatement extends NodeBase {
+  kind: 'UpdateCellStatement';
+  players: Expression;
+  columnType: 'user' | 'day';
+  dayIndex: Expression | null;
+  column: Expression;
+  itemName: string;
+  body: BlockStatement;
+  updateValue: Expression;
+}
+
 export interface ErrorStatement extends NodeBase {
   kind: 'ErrorStatement';
   source: string;
@@ -85,6 +96,7 @@ export type Statement =
   | ForEachStatement
   | FunctionStatement
   | ReturnStatement
+  | UpdateCellStatement
   | ErrorStatement;
 
 export interface StringLiteral extends NodeBase {

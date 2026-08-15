@@ -1,3 +1,5 @@
+import type { TableUpdate } from '../app/script/registry';
+
 export type PlayerProfile = {
   gameId: string;
   email: string;
@@ -67,4 +69,7 @@ export type PlayerNightSubmission = {
   action: PlayerActionValue;
   submittedVoteAt: number | null;
   submittedActionAt: number | null;
+  /** Planned table updates computed from role message scripts at input time.
+   * Applied at certify time without re-running scripts. */
+  plannedUpdates?: TableUpdate[];
 };

@@ -17,6 +17,7 @@ import {
   getWidthForColumnSize,
 } from './playerTableColumnSizing';
 import { getTargetDayCount, normalizePlayerPageState } from './playerTableNormalization';
+import { useTagTriggers, type CellContext } from '../../../hooks/useTagTriggers';
 
 interface DaysTableProps {
   gameId: string;
@@ -81,6 +82,20 @@ const DaysTable = ({
 
   const [userTableColumnVisibility, setUserTableColumnVisibility] =
     useList<UserTableColumnVisibility>('userTableColumnVisibility', gameId, { privacy: 'PUBLIC' });
+
+  const titles = userTableTitle?.value ?? { extraUserColumns: [], extraDayColumns: [] };
+  const { fireTagTriggers } = useTagTriggers(gameId, users, titles, (updated) =>
+    setUserTable(updated)
+  );
+
+  const handleTagsAdded = (tagNames: string[], context: CellContext) => {
+    // Compute the projected user table after the cell change, then fire triggers
+    const projectedUsers = users; // cell change already applied via onChange
+    const updated = fireTagTriggers(tagNames, context, projectedUsers);
+    if (updated !== projectedUsers) {
+      setUserTable(updated);
+    }
+  };
 
   const [columnSizes, setColumnSizes] = useValue<PlayerPageColumnSizes>(
     getPlayerPageColumnSizesKey(gameId),
@@ -489,6 +504,7 @@ const DaysTable = ({
                 index={index}
                 isLast={index === users.length - 1}
                 dayNumber={dayNumber}
+                gameId={gameId}
                 setVoteValue={UNDOABLEsetVoteValue}
                 setActionValue={UNDOABLEsetActionValue}
                 setExtraColumnValue={UNDOABLEsetExtraDayColumnValue}
@@ -499,6 +515,8 @@ const DaysTable = ({
                 dayBaseColumnWidths={dayBaseColumnWidths}
                 extraDayColumnWidths={extraDayColumnWidths}
                 users={users}
+                dayColumnTitles={titles.extraDayColumns}
+                onTagsAdded={handleTagsAdded}
               />
             ))}
           </Column>

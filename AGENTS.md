@@ -110,3 +110,56 @@ See `app/components/game/MarkdownEditorDialog.tsx` for the canonical implementat
 - `TagCellEditor.tsx`
 - `AddTagDialog.tsx`
 <!-- unsaved-changes-confirmation-end -->
+
+<!-- scripting-tag-system-start -->
+## Scripting: Tag System, UpdateCell, and Tag Triggers
+
+There are exactly **two places** where scripts run:
+
+1. **Role messages** — embedded in markdown via `/*script ... script*/` blocks, edited in the role message editor (Roles tab). These are the **only** place with input/dropdown/selector blocks (`CreateSelectInput`, `CreateTextInput`, `CreateNumberInput`, `CreateCheckbox`) because only role messages can store input state (the player's submitted action). At certify time, each player's role message script runs with their submitted inputs, and `UpdateCell` blocks collect table updates.
+
+2. **Tag triggers** — stored per-game in `tagTriggers` (keyed by tag name), edited from `AddTagDialog` in edit mode. These run immediately when a tag is added to a cell. They have **no input state**, so input/dropdown blocks are hidden (`hideInputs` prop on `ScriptEditorDialog`). They use special globals (`placedTag`, `placedUser`, `placedDay`, `placedColumn`) and `UpdateCell` to modify the table.
+
+The scripting language has been extended with tag-related features:
+
+### `tag()` builtin
+
+- `tag("Infected")` returns the encoded tag string `[/TAG: "Infected"/]`
+- Use with `.contains()`: `column3.contains(tag("Infected"))` checks if a cell has the "Infected" tag
+- Implemented as a builtin in `interpreter.ts` `evaluateCall` (alongside `Var`)
+- Also appears in `InsertModal.tsx` under the "Data" category
+
+### `UpdateCell` statement block
+
+- Registry: `app/script/registry.ts` — category `'table'`
+- Inputs: PLAYER (expression), DAY (number, null for player columns), COLUMN (string), VALUE (expression), MODE (enum: replace/append/remove)
+- Collects `TableUpdate` side effects via `ctx.collectUpdate()`
+- In `replace` mode, stores the previous cell value in a `previousCell` variable via `ctx.getCellValue()`
+- The interpreter passes `tableUpdates` and `getCellValue` through `InterpreterOptions`
+
+### On Certify integration
+
+- When the operator certifies votes in `NightlyPageOPERATOR.tsx`, each player's role message script (from the role table) is run with that player's submitted input state
+- `UpdateCell` blocks in the role message scripts collect table updates that are applied via `applyTableUpdates()` from `utils/applyTableUpdates.ts`
+- The utility `runMarkdownScriptsWithUpdates()` in `utils/runMarkdownScriptsWithUpdates.ts` extracts `/*script ... script*/` blocks from markdown and runs them with table update support
+- No separate certify script UI — operators write `UpdateCell` blocks directly in the role message editor (the existing scripting place)
+
+### WhenTagAdded trigger system
+
+- Tag trigger scripts are stored per-game in `tagTriggers` (keyed by tag name) via `useValue(getGameScopedKey("tagTriggers", gameId))`
+- When a tag is added in `TagCellEditor`, it calls `onTagsAdded(tagNames, cellContext)`
+- `cellContext` contains `{ playerIndex, dayIndex, column }` — threaded through `TagCellDisplay` → `TagCellEditor`
+- The `useTagTriggers` hook (`hooks/useTagTriggers.ts`) runs trigger scripts and applies table updates
+- Trigger scripts get special globals: `placedTag`, `placedUser`, `placedDay`, `placedColumn`
+- UI: In `AddTagDialog` edit mode, a "When Tag Added — Trigger Script" section lets operators edit the trigger script
+
+### Key files
+
+- `utils/tagEncoding.ts` — parse/encode `[/TAG: "Name"/]` format
+- `utils/applyTableUpdates.ts` — apply TableUpdate[] to UserTableItem[]
+- `utils/runScriptWithUpdates.ts` — run a raw script with table update support (used by tag triggers)
+- `utils/runMarkdownScriptsWithUpdates.ts` — extract script blocks from markdown and run with table update support (used by certify)
+- `hooks/useTagTriggers.ts` — hook for firing tag trigger scripts
+- `app/script/registry.ts` — `UpdateCell` block + `TableUpdate` type
+- `app/script/runtime/interpreter.ts` — `tag()` builtin, `tableUpdates` in result
+<!-- scripting-tag-system-end -->

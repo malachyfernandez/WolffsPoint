@@ -7,7 +7,11 @@ export type ExpressionSlot =
   | { kind: 'ifCondition'; branchIndex?: number }
   | { kind: 'forEachIterable' }
   | { kind: 'returnValue' }
-  | { kind: 'templateDefault'; pieceIndex: number };
+  | { kind: 'templateDefault'; pieceIndex: number }
+  | { kind: 'updateCellPlayers' }
+  | { kind: 'updateCellDayIndex' }
+  | { kind: 'updateCellValue' }
+  | { kind: 'updateCellColumn' };
 
 export type ExpressionPathStep =
   | { kind: 'lambdaBody' }
@@ -280,6 +284,16 @@ const getRootExpression = (statement: Statement, slot: ExpressionSlot): Expressi
     case 'templateDefault':
       if (statement.kind !== 'FunctionStatement' || !statement.template) return undefined;
       return statement.template[slot.pieceIndex]?.defaultExpression;
+    case 'updateCellPlayers':
+      return statement.kind === 'UpdateCellStatement' ? statement.players : undefined;
+    case 'updateCellDayIndex':
+      return statement.kind === 'UpdateCellStatement'
+        ? (statement.dayIndex ?? undefined)
+        : undefined;
+    case 'updateCellValue':
+      return statement.kind === 'UpdateCellStatement' ? statement.updateValue : undefined;
+    case 'updateCellColumn':
+      return statement.kind === 'UpdateCellStatement' ? statement.column : undefined;
   }
 };
 
@@ -334,6 +348,22 @@ const setRootExpression = (
         : statement;
     case 'returnValue':
       return statement.kind === 'ReturnStatement' ? { ...statement, value: expression } : statement;
+    case 'updateCellPlayers':
+      return statement.kind === 'UpdateCellStatement'
+        ? { ...statement, players: expression }
+        : statement;
+    case 'updateCellDayIndex':
+      return statement.kind === 'UpdateCellStatement'
+        ? { ...statement, dayIndex: expression }
+        : statement;
+    case 'updateCellValue':
+      return statement.kind === 'UpdateCellStatement'
+        ? { ...statement, updateValue: expression }
+        : statement;
+    case 'updateCellColumn':
+      return statement.kind === 'UpdateCellStatement'
+        ? { ...statement, column: expression }
+        : statement;
     case 'templateDefault': {
       if (statement.kind !== 'FunctionStatement' || !statement.template) return statement;
       const template = statement.template.map((piece, index) =>

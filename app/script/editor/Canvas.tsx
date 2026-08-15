@@ -58,8 +58,16 @@ interface CanvasProps {
   ) => void;
   onSetStatementField: (
     path: number[],
-    field: 'name' | 'parameters' | 'itemName' | 'template',
-    value: string | string[] | FunctionTemplatePiece[]
+    field:
+      | 'name'
+      | 'parameters'
+      | 'itemName'
+      | 'template'
+      | 'columnType'
+      | 'players'
+      | 'dayIndex'
+      | 'updateValue',
+    value: string | string[] | FunctionTemplatePiece[] | Expression
   ) => void;
   onDeleteStatement: (path: number[]) => void;
   entryKeysBySource?: Record<string, string[]>;
@@ -1173,6 +1181,82 @@ const EntryKeyInput = ({
   );
 };
 
+const ColumnSelectorInput = ({
+  expression,
+  keys,
+  location,
+  contextVariables,
+  entryKeysBySource,
+  definedFunctions,
+  onAdd,
+  onSetExpression,
+  onEditMarkdown,
+}: {
+  expression: Expression;
+  keys: string[];
+  location: ExpressionLocation;
+  contextVariables: string[];
+  entryKeysBySource?: Record<string, string[]>;
+  definedFunctions?: DefinedFunction[];
+  onAdd: CanvasProps['onAdd'];
+  onSetExpression: CanvasProps['onSetExpression'];
+  onEditMarkdown?: CanvasProps['onEditMarkdown'];
+}) => {
+  const isStringLiteral = expression.kind === 'StringLiteral';
+  const value = isStringLiteral
+    ? (expression as { kind: 'StringLiteral'; value: string }).value
+    : '';
+  const isCustom = !isStringLiteral || (value !== '' && !keys.includes(value));
+  const [customMode, setCustomMode] = useState(isCustom);
+
+  if (customMode) {
+    return (
+      <Row className="items-start gap-1">
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => {
+            setCustomMode(false);
+            onSetExpression(location, { kind: 'StringLiteral', value: '', span }, true);
+          }}>
+          <FontText className="text-xs opacity-60">List</FontText>
+        </Pressable>
+        <ExpressionSocket
+          expression={expression}
+          location={location}
+          expectedType="string"
+          contextVariables={contextVariables}
+          entryKeysBySource={entryKeysBySource}
+          definedFunctions={definedFunctions}
+          onAdd={onAdd}
+          onSetExpression={onSetExpression}
+          onEditMarkdown={onEditMarkdown}
+        />
+      </Row>
+    );
+  }
+  return (
+    <AppDropdown
+      options={[
+        ...keys.map((key) => ({ value: key, label: key })),
+        { value: '__custom__', label: 'Custom…' },
+      ]}
+      value={keys.includes(value) ? value : undefined}
+      onValueChange={(next) => {
+        if (next === '__custom__') {
+          setCustomMode(true);
+          onSetExpression(location, { kind: 'StringLiteral', value: '', span }, true);
+        } else {
+          onSetExpression(location, { kind: 'StringLiteral', value: next, span }, true);
+        }
+      }}
+      placeholder="Select column"
+      triggerClassName="min-w-32 !py-1 !px-2 text-sm"
+      isInDialog
+      allowUnselect={false}
+    />
+  );
+};
+
 const MethodArgument = ({
   argument,
   input,
@@ -1563,6 +1647,172 @@ const StatementBlock = ({
           />
         </View>
         <View className="bg-text/10 rounded-b-xl p-2" />
+      </Column>
+    );
+  } else if (statement.kind === 'UpdateCellStatement') {
+    const userColumns = entryKeysBySource?.['_userColumns'] ?? [];
+    const dayColumns = entryKeysBySource?.['_dayColumns'] ?? [];
+    const columnKeys = statement.columnType === 'user' ? userColumns : dayColumns;
+    content = (
+      <Column className="gap-0">
+        {/* Cell selector section (row layout, like normal blocks) */}
+        <View className="rounded-t-xl p-2">
+          <Column className="gap-1">
+            <Row className="items-center justify-between gap-2">
+              <FontText weight="medium" className="text-sm">
+                On Certify =&gt; Update Cell
+              </FontText>
+              <DeleteButton onPress={() => onDeleteStatement(currentPath)} />
+            </Row>
+            {/* Players */}
+            <Row className="items-start gap-2">
+              <FontText variant="subtext" className="pt-1 text-xs">
+                Players
+              </FontText>
+              <ExpressionSocket
+                expression={statement.players}
+                location={{
+                  statementPath: currentPath,
+                  slot: { kind: 'updateCellPlayers' },
+                  expressionPath: [],
+                }}
+                expectedType="expression"
+                contextVariables={contextVariables}
+                entryKeysBySource={entryKeysBySource}
+                definedFunctions={definedFunctions}
+                onAdd={onAdd}
+                onSetExpression={onSetExpression}
+                onEditMarkdown={onEditMarkdown}
+              />
+            </Row>
+            {/* Column type */}
+            <Row className="items-start gap-2">
+              <FontText variant="subtext" className="pt-1 text-xs">
+                Column type
+              </FontText>
+              <AppDropdown
+                options={[
+                  { value: 'user', label: 'All-Game Columns' },
+                  { value: 'day', label: 'Day-Specific Columns' },
+                ]}
+                value={statement.columnType}
+                onValueChange={(next) => {
+                  if (next === 'user' || next === 'day') {
+                    onSetStatementField(currentPath, 'columnType', next);
+                  }
+                }}
+                triggerClassName="min-w-32 !py-1 !px-2 text-sm"
+                isInDialog
+                allowUnselect={false}
+              />
+            </Row>
+            {/* Day index (only for day columns) */}
+            {statement.columnType === 'day' && statement.dayIndex && (
+              <Row className="items-start gap-2">
+                <FontText variant="subtext" className="pt-1 text-xs">
+                  Day index
+                </FontText>
+                <ExpressionSocket
+                  expression={statement.dayIndex}
+                  location={{
+                    statementPath: currentPath,
+                    slot: { kind: 'updateCellDayIndex' },
+                    expressionPath: [],
+                  }}
+                  expectedType="number"
+                  contextVariables={contextVariables}
+                  entryKeysBySource={entryKeysBySource}
+                  definedFunctions={definedFunctions}
+                  onAdd={onAdd}
+                  onSetExpression={onSetExpression}
+                  onEditMarkdown={onEditMarkdown}
+                />
+              </Row>
+            )}
+            {/* Column title dropdown (contextual, like .entry()) with custom mode */}
+            <Row className="items-start gap-2">
+              <FontText variant="subtext" className="pt-1 text-xs">
+                Column
+              </FontText>
+              <ColumnSelectorInput
+                expression={statement.column}
+                keys={columnKeys}
+                location={{
+                  statementPath: currentPath,
+                  slot: { kind: 'updateCellColumn' },
+                  expressionPath: [],
+                }}
+                contextVariables={contextVariables}
+                entryKeysBySource={entryKeysBySource}
+                definedFunctions={definedFunctions}
+                onAdd={onAdd}
+                onSetExpression={onSetExpression}
+                onEditMarkdown={onEditMarkdown}
+              />
+            </Row>
+          </Column>
+        </View>
+        {/* ForEach section (column layout, dark background) */}
+        <View className="bg-text/10 p-2">
+          <Column className="gap-2">
+            <Row className="items-center justify-between gap-2">
+              <FontText weight="medium">For each</FontText>
+              <Row className="items-center gap-2">
+                <FontText variant="subtext" className="text-xs">
+                  cell variable:
+                </FontText>
+                <ReplaceableTextInput
+                  value={statement.itemName}
+                  onChangeText={(value) =>
+                    onSetStatementField(
+                      currentPath,
+                      'itemName',
+                      sanitizeIdentifier(value) || 'cellContents'
+                    )
+                  }
+                  placeholder="cellContents"
+                />
+              </Row>
+            </Row>
+          </Column>
+        </View>
+        <View className="border-subtle-border border-x px-2">
+          <Canvas
+            statements={statement.body.statements}
+            {...{
+              definedVariables: [statement.itemName, ...definedVariables],
+              definedFunctions,
+              onAdd,
+              onSetExpression,
+              onSetStatementField,
+              onDeleteStatement,
+              entryKeysBySource,
+              onEditMarkdown,
+            }}
+            stmtPath={currentPath}
+          />
+        </View>
+        {/* Update with section (dark background) */}
+        <View className="bg-text/10 rounded-b-xl p-2">
+          <Row className="items-center gap-2">
+            <FontText weight="medium">Update with</FontText>
+            <ExpressionSocket
+              expression={statement.updateValue}
+              location={{
+                statementPath: currentPath,
+                slot: { kind: 'updateCellValue' },
+                expressionPath: [],
+              }}
+              expectedType="expression"
+              contextVariables={[statement.itemName, ...contextVariables]}
+              entryKeysBySource={entryKeysBySource}
+              definedFunctions={definedFunctions}
+              onAdd={onAdd}
+              onSetExpression={onSetExpression}
+              onEditMarkdown={onEditMarkdown}
+            />
+          </Row>
+        </View>
       </Column>
     );
   } else if (statement.kind === 'FunctionStatement') {

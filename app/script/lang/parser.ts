@@ -10,6 +10,7 @@ import type {
   SourcePosition,
   SourceSpan,
   Statement,
+  UpdateCellStatement,
 } from './ast';
 import { tokenize, type Token } from './tokens';
 
@@ -78,6 +79,14 @@ class Parser {
     }
     if (this.matchKeyword('RETURN')) {
       return this.parseReturn(this.previous());
+    }
+    // UpdateCell container statement: UpdateCell({ ... }) { body } Return expr;
+    if (
+      this.isName(this.current()) &&
+      this.current().text.toUpperCase() === 'UPDATECELL' &&
+      this.peek(1).text === '('
+    ) {
+      return this.parseUpdateCell(this.current());
     }
     if (this.matchText('{')) {
       return this.parseBlockAfterOpen(this.previous());
@@ -164,6 +173,75 @@ class Parser {
       body,
       span: joinSpan(keyword.span.start, body.span.end),
     };
+  }
+
+  private parseUpdateCell(keyword: Token): Statement {
+    this.advance(); // consume 'UpdateCell'
+    this.consumeText('(', 'Expected ( after UpdateCell');
+    const wrapped = this.matchText('{');
+    // Parse named arguments: PLAYERS, COLUMNTYPE, DAY, COLUMN, ITEM
+    let players: Expression = { kind: 'NothingLiteral', span: keyword.span };
+    let columnType: 'user' | 'day' = 'user';
+    let dayIndex: Expression | null = null;
+    let column: Expression = { kind: 'StringLiteral', value: '', span: keyword.span };
+    let itemName = 'cellContents';
+    const endText = wrapped ? '}' : ')';
+    while (!this.atEnd() && !this.checkText(endText)) {
+      if (this.isName(this.current()) && this.peek(1).text === '=') {
+        const name = this.advance().text.toUpperCase();
+        this.advance(); // consume '='
+        const value = this.parseExpression();
+        switch (name) {
+          case 'PLAYERS':
+            players = value;
+            break;
+          case 'COLUMNTYPE':
+            if (value.kind === 'StringLiteral') {
+              columnType = value.value.toLowerCase() === 'day' ? 'day' : 'user';
+            }
+            break;
+          case 'DAY':
+            dayIndex = value;
+            break;
+          case 'COLUMN':
+            column = value;
+            break;
+          case 'ITEM':
+            if (value.kind === 'StringLiteral') itemName = value.value;
+            break;
+        }
+      }
+      if (!this.matchText(',')) break;
+    }
+    if (wrapped) {
+      this.consumeText('}', 'Expected } after UpdateCell arguments');
+    }
+    this.consumeText(')', 'Expected ) after UpdateCell arguments');
+
+    const body = this.parseRequiredBlock('Expected a block after UpdateCell');
+
+    // Extract the Return statement as updateValue
+    let updateValue: Expression = { kind: 'NothingLiteral', span: body.span };
+    const bodyStatements = [...body.statements];
+    const lastIdx = bodyStatements.length - 1;
+    if (lastIdx >= 0 && bodyStatements[lastIdx].kind === 'ReturnStatement') {
+      const ret = bodyStatements[lastIdx];
+      if (ret.value) updateValue = ret.value;
+      bodyStatements.pop();
+    }
+
+    const result: UpdateCellStatement = {
+      kind: 'UpdateCellStatement',
+      players,
+      columnType,
+      dayIndex,
+      column,
+      itemName,
+      body: { kind: 'BlockStatement', statements: bodyStatements, span: body.span },
+      updateValue,
+      span: joinSpan(keyword.span.start, body.span.end),
+    };
+    return result;
   }
 
   private parseFunction(keyword: Token): Statement {

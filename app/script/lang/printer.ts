@@ -176,6 +176,33 @@ export const printStatement = (statement: Statement, depth: number = 0): string 
     }
     case 'ReturnStatement':
       return `${prefix}Return${statement.value ? ` ${printExpression(statement.value, 0, depth)}` : ''};`;
+    case 'UpdateCellStatement': {
+      const args = [
+        `PLAYERS = ${printExpression(statement.players, 0, depth)}`,
+        `COLUMNTYPE = "${statement.columnType}"`,
+      ];
+      if (statement.dayIndex) {
+        args.push(`DAY = ${printExpression(statement.dayIndex, 0, depth)}`);
+      }
+      args.push(`COLUMN = ${printExpression(statement.column, 0, depth)}`);
+      if (statement.itemName !== 'cellContents') {
+        args.push(`ITEM = ${JSON.stringify(statement.itemName)}`);
+      }
+      const bodyWithReturn: Statement[] = [
+        ...statement.body.statements,
+        {
+          kind: 'ReturnStatement' as const,
+          value: statement.updateValue,
+          span: statement.updateValue.span,
+        },
+      ];
+      const bodyBlock: BlockStatement = {
+        kind: 'BlockStatement' as const,
+        statements: bodyWithReturn,
+        span: statement.body.span,
+      };
+      return `${prefix}UpdateCell({${args.join(', ')}}) ${printBlock(bodyBlock, depth)}`;
+    }
     case 'ErrorStatement':
       return `${prefix}${statement.source}`;
   }

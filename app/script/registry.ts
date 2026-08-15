@@ -34,7 +34,7 @@ export interface StatementBlockDef {
   kind: 'statement';
   description: string;
   inputs: BlockInput[];
-  category: 'variable' | 'input' | 'control' | 'function' | 'display';
+  category: 'variable' | 'input' | 'control' | 'function' | 'display' | 'table';
   execute: (args: Record<string, RuntimeValue>, ctx: StatementContext) => void;
 }
 
@@ -50,12 +50,29 @@ export interface ExpressionBlockDef {
   isProperty?: boolean;
 }
 
+export interface TableUpdate {
+  /** Index into the users array, or null to apply to all players */
+  playerIndex: number | null;
+  /** Day index (0-based), or null for player-level extra columns */
+  dayIndex: number | null;
+  /** Column title (matches the key used in player/day objects) */
+  column: string;
+  /** New value to set/append/remove */
+  value: string;
+  /** How to apply the update */
+  mode: 'replace' | 'append' | 'remove';
+}
+
 export interface StatementContext {
   defineVariable: (name: string, value: RuntimeValue) => void;
   emit: (instruction: Record<string, unknown>) => void;
   getVariable: (name: string) => RuntimeValue;
   getInputState: () => Record<string, unknown>;
   issues: { message: string; span?: unknown }[];
+  /** Collect a table cell update (used by UpdateCell block) */
+  collectUpdate?: (update: TableUpdate) => void;
+  /** Get the current value of a table cell (used by UpdateCell block in replace mode) */
+  getCellValue?: (playerIndex: number | null, dayIndex: number | null, column: string) => string;
 }
 
 export interface ExpressionContext {
@@ -738,6 +755,38 @@ export const EXPRESSION_BLOCKS: ExpressionBlockDef[] = [
     evaluate: (receiver, args) => {
       if (typeof receiver !== 'string') return NOTHING;
       return receiver + str(args[0] ?? NOTHING);
+    },
+  },
+  {
+    id: 'append',
+    name: 'append',
+    kind: 'expression',
+    description: 'Append text to the end of a string',
+    category: 'string',
+    appliesTo: 'string',
+    inputs: [{ name: 'value', label: 'Value', type: 'string', required: true }],
+    evaluate: (receiver, args) => {
+      if (typeof receiver !== 'string') return NOTHING;
+      return receiver + str(args[0] ?? NOTHING);
+    },
+  },
+  {
+    id: 'replace',
+    name: 'replace',
+    kind: 'expression',
+    description: 'Find text and replace it with new text',
+    category: 'string',
+    appliesTo: 'string',
+    inputs: [
+      { name: 'search', label: 'Find', type: 'string', required: true },
+      { name: 'replacement', label: 'Replace with', type: 'string', required: true },
+    ],
+    evaluate: (receiver, args) => {
+      if (typeof receiver !== 'string') return NOTHING;
+      const search = str(args[0] ?? NOTHING);
+      const replacement = str(args[1] ?? NOTHING);
+      if (!search) return receiver;
+      return receiver.split(search).join(replacement);
     },
   },
   {

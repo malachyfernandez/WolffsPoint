@@ -26,6 +26,7 @@ import {
   lookupExpression,
   type StatementContext,
   type ExpressionContext,
+  type TableUpdate,
 } from '../registry';
 
 export type RenderInstructionKind =
@@ -64,6 +65,10 @@ export interface InterpreterOptions {
   inputState?: Record<string, unknown>;
   fuel?: number;
   maxDepth?: number;
+  /** When provided, UpdateCell blocks collect updates here */
+  tableUpdates?: TableUpdate[];
+  /** When provided, UpdateCell blocks can read current cell values */
+  getCellValue?: (playerIndex: number | null, dayIndex: number | null, column: string) => string;
 }
 
 export interface InterpreterResult {
@@ -73,6 +78,7 @@ export interface InterpreterResult {
   inputState: Record<string, unknown>;
   issues: RuntimeIssue[];
   fuelRemaining: number;
+  tableUpdates: TableUpdate[];
 }
 
 interface ReturnSignal {
@@ -114,11 +120,13 @@ class Interpreter {
   private readonly output: RenderInstruction[] = [];
   private readonly issues: RuntimeIssue[] = [];
   private readonly inputState: Record<string, unknown>;
+  private readonly tableUpdates: TableUpdate[];
 
   constructor(private readonly options: InterpreterOptions) {
     this.fuel = Math.max(0, Math.floor(options.fuel ?? 100_000));
     this.maxDepth = Math.max(1, Math.floor(options.maxDepth ?? 32));
     this.inputState = { ...(options.inputState ?? {}) };
+    this.tableUpdates = options.tableUpdates ?? [];
     for (const [name, value] of Object.entries(options.globals ?? {})) {
       this.root.define(name, toRuntimeValue(value));
     }
@@ -149,6 +157,7 @@ class Interpreter {
       inputState: this.inputState,
       issues: this.issues,
       fuelRemaining: this.fuel,
+      tableUpdates: this.tableUpdates,
     };
   }
 
@@ -271,6 +280,106 @@ class Interpreter {
           returned: true,
           value: statement.value ? this.evaluate(statement.value, environment, depth) : NOTHING,
         };
+      case 'UpdateCellStatement': {
+        if (!this.options.getCellValue) {
+          this.issues.push({ message: 'UpdateCell is not available in this context' });
+          return NO_RETURN;
+        }
+        const getCellValue = this.options.getCellValue;
+        const players = this.evaluate(statement.players, environment, depth);
+        const playerList = Array.isArray(players) ? players : [players];
+        const dayNum = statement.dayIndex
+          ? (() => {
+              const d = this.evaluate(statement.dayIndex, environment, depth);
+              return typeof d === 'number' && Number.isFinite(d) ? Math.trunc(d) : null;
+            })()
+          : null;
+        const col = displayValue(this.evaluate(statement.column, environment, depth));
+        if (!col) {
+          this.issues.push({ message: 'UpdateCell requires a column title' });
+          return NO_RETURN;
+        }
+        const playersGlobal = environment.get('players');
+        const playersArr = Array.isArray(playersGlobal) ? playersGlobal : [];
+
+        // Helper: find the index of a player in the players list.
+        // Accepts a player object (with email/realName) or a plain string
+        // (matched against realName or email).
+        const findPlayerIndex = (player: RuntimeValue): number | null => {
+          if (typeof player === 'string') {
+            const lower = player.toLowerCase();
+            for (let i = 0; i < playersArr.length; i++) {
+              const existing = playersArr[i] as Record<string, RuntimeValue>;
+              if (
+                typeof existing.realName === 'string' &&
+                existing.realName.toLowerCase() === lower
+              ) {
+                return i;
+              }
+              if (typeof existing.email === 'string' && existing.email.toLowerCase() === lower) {
+                return i;
+              }
+            }
+            return null;
+          }
+          if (!isRuntimeObject(player)) return null;
+          const p = player as Record<string, RuntimeValue>;
+          const email = typeof p.email === 'string' ? p.email.toLowerCase() : '';
+          const realName = typeof p.realName === 'string' ? p.realName : '';
+          for (let i = 0; i < playersArr.length; i++) {
+            const existing = playersArr[i] as Record<string, RuntimeValue>;
+            if (
+              typeof existing.email === 'string' &&
+              existing.email.toLowerCase() === email &&
+              email
+            ) {
+              return i;
+            }
+            if (
+              typeof existing.realName === 'string' &&
+              existing.realName === realName &&
+              realName
+            ) {
+              return i;
+            }
+          }
+          return null;
+        };
+
+        for (const player of playerList) {
+          const idx = findPlayerIndex(player);
+          if (idx === null) continue;
+
+          // Get the current cell value
+          const currentCellValue = getCellValue(
+            idx,
+            statement.columnType === 'day' ? dayNum : null,
+            col
+          );
+
+          // Create a child environment with the loop variable
+          const child = new Environment(environment);
+          child.define(statement.itemName, currentCellValue);
+
+          // Execute body statements
+          this.executeStatements(statement.body.statements, child, depth);
+
+          // Evaluate the update value
+          const newValue = this.evaluate(statement.updateValue, child, depth);
+          const newValueStr = displayValue(newValue);
+
+          this.tableUpdates.push({
+            playerIndex: idx,
+            dayIndex: statement.columnType === 'day' ? dayNum : null,
+            column: col,
+            value: newValueStr,
+            mode: 'replace',
+          });
+
+          if (this.fuel <= 0) break;
+        }
+        return NO_RETURN;
+      }
       case 'ErrorStatement':
         this.issues.push({
           message: `Skipped invalid statement: ${statement.source}`,
@@ -351,6 +460,8 @@ class Interpreter {
       getVariable: (varName) => environment.get(varName),
       getInputState: () => this.inputState,
       issues: this.issues,
+      collectUpdate: (update) => this.tableUpdates.push(update),
+      getCellValue: this.options.getCellValue,
     };
     try {
       def.execute(named, ctx);
@@ -505,6 +616,15 @@ class Interpreter {
         const rawName = displayValue(this.evaluate(arg.value, environment, depth));
         const varName = rawName.replace(/[^a-zA-Z0-9_]/g, '').replace(/^[0-9]/, '_$&');
         return environment.get(varName);
+      }
+      return NOTHING;
+    }
+    // Builtin: tag("Name") — produce the encoded tag string [/TAG: "Name"/]
+    if (call.callee.kind === 'IdentifierExpression' && normalize(call.callee.name) === 'tag') {
+      const arg = call.arguments[0];
+      if (arg) {
+        const tagName = displayValue(this.evaluate(arg.value, environment, depth));
+        return `[/TAG: "${tagName}"/]`;
       }
       return NOTHING;
     }
@@ -747,6 +867,7 @@ export const interpretScript = (
       inputState: { ...(options.inputState ?? {}) },
       issues: [{ message: error instanceof Error ? error.message : 'Interpreter failed' }],
       fuelRemaining: Math.max(0, Math.floor(options.fuel ?? 100_000)),
+      tableUpdates: options.tableUpdates ?? [],
     };
   }
 };

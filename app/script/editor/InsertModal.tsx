@@ -18,6 +18,7 @@ import {
   createForEachStatement,
   createFunctionStatement,
   createIfStatement,
+  createUpdateCellStatement,
   parseLiteralValue,
 } from './editorReducer';
 import type { ExpressionLocation } from './expressionEditor';
@@ -60,6 +61,9 @@ interface InsertModalProps {
   onRemove: (target: InsertTarget) => void;
   /** When true, built-in functions are hidden (used in sub-editors like template input) */
   hideBuiltinFunctions?: boolean;
+  /** When true, input-creating blocks (select, text, number, checkbox) are hidden.
+   *  Used for tag trigger scripts which have no input state storage. */
+  hideInputs?: boolean;
   onClose: () => void;
 }
 
@@ -102,6 +106,11 @@ const CONTROL_TEMPLATES: { label: string; description: string; build: () => Stat
     label: 'Return',
     description: 'Return a value from a function',
     build: () => ({ kind: 'ReturnStatement', value: { kind: 'NothingLiteral', span }, span }),
+  },
+  {
+    label: 'On Certify => Update Cell',
+    description: 'On certify: loop over cells and update them',
+    build: () => createUpdateCellStatement(),
   },
 ];
 
@@ -314,6 +323,7 @@ const InsertModal = ({
   onInsertChainLink,
   onInsertBuiltinFunction,
   hideBuiltinFunctions,
+  hideInputs,
   onRemove,
   onClose,
 }: InsertModalProps) => {
@@ -427,6 +437,24 @@ const InsertModal = ({
       ...functionItems,
       ...builtinItems,
       ...variableItems,
+      {
+        label: 'tag',
+        description: 'Encode a tag name as a tag string (for .contains checks)',
+        category: 'data',
+        onSelect: () =>
+          selectExpression({
+            kind: 'CallExpression',
+            callee: { kind: 'IdentifierExpression', name: 'tag', span },
+            arguments: [
+              {
+                kind: 'PositionalArgument' as const,
+                value: { kind: 'StringLiteral' as const, value: 'Tag name', span },
+                span,
+              },
+            ],
+            span,
+          }),
+      },
       ...(entryBlock
         ? [
             {
@@ -599,13 +627,17 @@ const InsertModal = ({
   ]);
 
   const filtered = useMemo(() => {
-    if (!search.trim()) return items;
+    let result = items;
+    if (hideInputs) {
+      result = result.filter((item) => item.category !== 'input');
+    }
+    if (!search.trim()) return result;
     const query = search.toLowerCase();
-    return items.filter(
+    return result.filter(
       (item) =>
         item.label.toLowerCase().includes(query) || item.description.toLowerCase().includes(query)
     );
-  }, [items, search]);
+  }, [items, search, hideInputs]);
 
   const grouped = useMemo(
     () =>

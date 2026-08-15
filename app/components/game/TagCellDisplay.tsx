@@ -6,7 +6,7 @@ import TagCellEditor from './TagCellEditor';
 import { useValue } from 'hooks/useData';
 import { getGameScopedKey } from 'utils/multiplayer';
 import { parseCell } from 'utils/tagEncoding';
-import type { TagDefinition } from './TagCellEditor';
+import type { TagDefinition, CellContext } from './TagCellEditor';
 
 interface TagCellDisplayProps {
   gameId: string;
@@ -15,6 +15,10 @@ interface TagCellDisplayProps {
   width: number;
   onEditStart?: () => void;
   onEditEnd?: () => void;
+  /** Context for tag triggers (player index, day index, column title) */
+  cellContext?: CellContext;
+  /** Called when new tags are added (for firing tag triggers) */
+  onTagsAdded?: (tagNames: string[], context: CellContext) => void;
 }
 
 const TagCellDisplay = ({
@@ -24,6 +28,8 @@ const TagCellDisplay = ({
   width,
   onEditStart,
   onEditEnd,
+  cellContext,
+  onTagsAdded,
 }: TagCellDisplayProps) => {
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [tagDefs] = useValue<TagDefinition[]>(getGameScopedKey('tagDefinitions', gameId), {
@@ -104,6 +110,8 @@ const TagCellDisplay = ({
         gameId={gameId}
         value={value}
         onChange={onChange}
+        cellContext={cellContext}
+        onTagsAdded={onTagsAdded}
       />
     </>
   );
