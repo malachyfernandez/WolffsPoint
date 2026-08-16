@@ -390,7 +390,23 @@ const CATEGORY_LABELS: Record<string, string> = {
   boolean: 'Boolean',
   operator: 'Operators',
   math: 'Numbers',
+  suggested: 'Suggested',
 };
+
+/** Blocks that naturally belong in more than one tab. Each entry duplicates the
+ * block into the given secondary category so users find it where they'd look.
+ * The block still appears in its primary category (from the registry). */
+const CROSS_CATEGORY_BLOCKS: { blockId: string; category: string }[] = [
+  // toNumber / toString convert any value — useful from the Data tab too
+  { blockId: 'toNumber', category: 'data' },
+  { blockId: 'toString', category: 'data' },
+  // length works on lists AND text (appliesTo: 'any')
+  { blockId: 'length', category: 'string' },
+  // contains works on lists AND text (appliesTo: 'any')
+  { blockId: 'contains', category: 'string' },
+  // index gets an item at a position in a list — also useful from the List tab
+  { blockId: 'index', category: 'list' },
+];
 
 /** Renders a single modal item. When disabled, shows a hover-following tooltip
  * explaining why (same tooltip system as the script editor canvas). */
@@ -685,6 +701,19 @@ const InsertModal = ({
         onSelect: () => selectExpression(buildMethodExpression(block.id)),
         dividerAfter: block.id === 'sort' || block.id === 'lower',
       })),
+      // Cross-category duplicates: blocks that naturally belong in multiple tabs.
+      // These are copies of existing items with a different category so users
+      // can find them where they'd expect them, regardless of the primary tab.
+      ...CROSS_CATEGORY_BLOCKS.map(({ blockId, category }) => {
+        const block = EXPRESSION_BLOCKS.find((b) => b.id === blockId);
+        if (!block) return null;
+        return {
+          label: block.name,
+          description: block.description,
+          category,
+          onSelect: () => selectExpression(buildMethodExpression(block.id)),
+        };
+      }).filter((item): item is ModalItem => item !== null),
     ];
     const booleanItems: ModalItem[] = [
       {
@@ -825,6 +854,115 @@ const InsertModal = ({
     isTriggerContext,
   ]);
 
+  // ── Suggested tab ──────────────────────────────────────────────────────
+  // Contextual suggestions shown as the first tab for "Add Expression" and
+  // "Add Chain Link". Picks ~6 items based on the expected type / receiver
+  // type and context (trigger vs regular, available variables, swap value).
+  const suggestedItems = useMemo<ModalItem[]>(() => {
+    if (!target) return [];
+    const isTrigger = isTriggerContext;
+    const contextVar = target.contextVariables?.find(Boolean);
+    // In swap mode, don't suggest the value being replaced
+    const swapLabel = target.mode === 'swap' ? target.swapLabel : undefined;
+
+    let labels: string[];
+
+    if (target.kind === 'chainInsert' || target.kind === 'chainSwap') {
+      // Chain link: infer the receiver type to suggest applicable blocks
+      const receiverType: ScriptType = target.chainExpression
+        ? inferExpressionType(
+            target.chainExpression,
+            entryKeysBySource ?? {},
+            target.contextVariables ?? [],
+            {
+              variableSources: target.variableSources,
+              inputSources: target.inputSources,
+              definedFunctions,
+            }
+          )
+        : 'any';
+      switch (receiverType) {
+        case 'list':
+          // On a list: filter/map/first are the most common operations
+          labels = ['filter', 'map', 'first', 'length', 'sort', 'contains'];
+          break;
+        case 'object':
+          // On an object: .entry() is the primary operation
+          labels = ['entry', 'toString', 'toNumber', 'length', 'contains', 'index'];
+          break;
+        case 'string':
+          labels = ['contains', 'length', 'upper', 'lower', 'concat', 'replace'];
+          break;
+        case 'number':
+          labels = ['plus', 'minus', 'times', 'divide', 'toNumber', 'toString'];
+          break;
+        case 'boolean':
+          labels = ['not', 'and', 'or', 'equals', 'not equal', 'isTruthy'];
+          break;
+        default:
+          // 'any' or unknown — show the most generally useful blocks
+          labels = ['entry', 'length', 'contains', 'toString', 'toNumber', 'first'];
+          break;
+      }
+    } else if (target.kind === 'expression') {
+      const expectedType = target.expectedType ?? 'expression';
+      switch (expectedType) {
+        case 'boolean':
+          labels = ['equals', 'not equal', 'and', 'or', 'not', 'true'];
+          break;
+        case 'number':
+          labels = [
+            '0',
+            'plus',
+            'minus',
+            isTrigger ? 'placedDay' : 'currentDay',
+            'length',
+            'toNumber',
+          ];
+          break;
+        case 'string':
+          labels = ['"text"', 'concat', 'toString', 'upper', 'replace', 'Dropdown'];
+          break;
+        case 'list':
+          labels = [
+            'players',
+            'roles',
+            'filter',
+            'map',
+            'sort',
+            ...(isTrigger ? ['placedUser'] : ['InputsWithData']),
+          ];
+          break;
+        case 'expression':
+        default: {
+          const suggestions: string[] = ['players'];
+          if (contextVar) suggestions.push(contextVar);
+          suggestions.push(isTrigger ? 'placedUser' : 'currentPlayer');
+          suggestions.push(isTrigger ? 'placedDay' : 'currentDay');
+          suggestions.push('0');
+          suggestions.push('"text"');
+          labels = suggestions.slice(0, 6);
+          break;
+        }
+      }
+    } else {
+      return []; // statement targets get no suggested tab
+    }
+
+    // Filter out the value being swapped away from
+    if (swapLabel) labels = labels.filter((l) => l !== swapLabel);
+
+    // Match labels to existing items (first match wins) and tag them as 'suggested'
+    const result: ModalItem[] = [];
+    for (const label of labels) {
+      const match = items.find(
+        (item) => item.label === label && !item.disabledReason && item.category !== 'suggested'
+      );
+      if (match) result.push({ ...match, category: 'suggested' });
+    }
+    return result;
+  }, [target, items, isTriggerContext, entryKeysBySource, definedFunctions]);
+
   const filtered = useMemo(() => {
     let result = items;
     if (hideInputs) {
@@ -842,22 +980,35 @@ const InsertModal = ({
     );
   }, [items, search, hideInputs, isTriggerContext]);
 
-  const grouped = useMemo(
-    () =>
-      filtered.reduce<Record<string, ModalItem[]>>((groups, item) => {
-        (groups[item.category] ??= []).push(item);
-        return groups;
-      }, {}),
-    [filtered]
-  );
+  const grouped = useMemo(() => {
+    const groups = filtered.reduce<Record<string, ModalItem[]>>((acc, item) => {
+      (acc[item.category] ??= []).push(item);
+      return acc;
+    }, {});
+    // Prepend suggested items (for expression and chain targets)
+    if (suggestedItems.length > 0) {
+      groups['suggested'] = suggestedItems;
+    }
+    return groups;
+  }, [filtered, suggestedItems]);
 
   const categoryOrder = useMemo(() => {
     const order =
       target?.kind === 'statement'
         ? ['input', 'control', 'display', 'variable']
         : target?.kind === 'chainInsert' || target?.kind === 'chainSwap'
-          ? ['list', 'math', 'operator', 'string', 'boolean', 'data']
-          : ['data', 'variable', 'function', 'math', 'operator', 'boolean', 'list', 'string'];
+          ? ['suggested', 'list', 'math', 'operator', 'string', 'boolean', 'data']
+          : [
+              'suggested',
+              'data',
+              'variable',
+              'function',
+              'math',
+              'operator',
+              'boolean',
+              'list',
+              'string',
+            ];
     return order.filter((category) => grouped[category]?.length);
   }, [target, grouped]);
 
