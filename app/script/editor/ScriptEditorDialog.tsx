@@ -667,6 +667,7 @@ const ScriptEditorDialog = ({
                       entryKeysBySource={entryKeysBySource}
                       inputSources={inputSources}
                       isTriggerContext={isTriggerContext}
+                      gameId={gameId}
                       onEditMarkdown={(value, onSave) =>
                         setMarkdownEditor({ isOpen: true, value, onSave })
                       }

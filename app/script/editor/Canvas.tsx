@@ -1,11 +1,20 @@
 import React, { useEffect, useId, useMemo, useState } from 'react';
 import { Pressable, ScrollView, View, type TextStyle } from 'react-native';
-import { Plus, X } from 'lucide-react-native';
+import { Plus, X, Pencil } from 'lucide-react-native';
 import Column from '../../components/layout/Column';
 import Row from '../../components/layout/Row';
 import FontText from '../../components/ui/text/FontText';
 import AppDropdown from '../../components/ui/forms/AppDropdown';
 import FontTextInput from '../../components/ui/forms/FontTextInput';
+import ShadowScrollView from '../../components/ui/ShadowScrollView';
+import AppButton from '../../components/ui/buttons/AppButton';
+import ConvexDialog from '../../components/ui/dialog/ConvexDialog';
+import { CloseButton } from '../../components/game/markdownEditor';
+import { getTagColor } from '../../components/game/TagPill';
+import AddTagDialog from '../../components/game/AddTagDialog';
+import { useValue } from 'hooks/useData';
+import { getGameScopedKey } from 'utils/multiplayer';
+import type { TagDefinitionsData } from '../../components/game/TagCellEditor';
 import { useTooltip } from './useTooltip';
 import type {
   BinaryOperator,
@@ -41,6 +50,13 @@ const span = emptySpan();
 
 /** Context for input label → data source mapping (used for entry autocomplete tracing). */
 const InputSourcesContext = React.createContext<Record<string, string>>({});
+
+/** Context for tag definitions (used by tag() call rendering). */
+interface TagDefinitionsContextValue {
+  definitions: TagDefinitionsData;
+  gameId?: string;
+}
+const TagDefinitionsContext = React.createContext<TagDefinitionsContextValue | null>(null);
 const BOOLEAN_OPERATORS: BinaryOperator[] = ['==', '!=', '>', '<', '>=', '<=', 'AND', 'OR'];
 const MATH_OPERATORS: BinaryOperator[] = ['+', '-', '*', '/', '%'];
 const isMathOperator = (op: BinaryOperator) => MATH_OPERATORS.includes(op);
@@ -78,6 +94,8 @@ interface CanvasProps {
   onEditMarkdown?: (currentValue: string, onSave: (newValue: string) => void) => void;
   /** When true, UpdateCell blocks show "Update Cell" instead of "On Certify => Update Cell" */
   isTriggerContext?: boolean;
+  /** Game ID, used to load tag definitions for the tag() function dropdown. */
+  gameId?: string;
 }
 
 const appendLocation = (
@@ -468,6 +486,11 @@ const FunctionCallRenderer = ({
   const fnDef = definedFunctions?.find((f) => f.name === fnName);
   const template = fnDef?.template;
   const hasTemplate = template && template.length > 0;
+
+  // Special case: tag() renders with an integrated dropdown
+  if (fnName === 'tag') {
+    return <TagCallRenderer call={call} onSetExpression={onSetExpression} location={location} />;
+  }
 
   // If no template, render the flat argument list
   if (!hasTemplate) {
@@ -1126,6 +1149,198 @@ const EntryKeyInput = ({
       isInDialog
       allowUnselect={false}
     />
+  );
+};
+
+/** Global state to trigger the tag manager modal from anywhere in the Canvas tree. */
+let openTagManagerFn: (() => void) | null = null;
+
+/**
+ * Tag manager modal — list of tags with edit buttons + New Tag.
+ * Rendered once at the Canvas root, triggered by `openTagManagerFn`.
+ */
+const TagManagerModal = ({
+  gameId,
+  tagDefinitions,
+  setTagDefs,
+}: {
+  gameId?: string;
+  tagDefinitions: TagDefinitionsData;
+  setTagDefs: (defs: TagDefinitionsData) => void;
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [isAddTagOpen, setIsAddTagOpen] = useState(false);
+  const [editingTag, setEditingTag] = useState<{ name: string; color: string } | null>(null);
+
+  // Register/unregister the open function so any child can trigger this modal
+  useEffect(() => {
+    openTagManagerFn = () => setIsOpen(true);
+    return () => {
+      openTagManagerFn = null;
+    };
+  }, []);
+
+  return (
+    <>
+      <ConvexDialog.Root
+        isOpen={isOpen}
+        onOpenChange={(open: boolean) => {
+          if (!open) {
+            setIsOpen(false);
+            setEditingTag(null);
+          }
+        }}>
+        <ConvexDialog.Portal>
+          <ConvexDialog.Overlay />
+          <ConvexDialog.Content className="max-w-sm">
+            <CloseButton
+              onPress={() => {
+                setIsOpen(false);
+                setEditingTag(null);
+              }}
+            />
+            <Column className="gap-3 pt-3">
+              <FontText weight="medium" className="text-base">
+                Tags
+              </FontText>
+              <ShadowScrollView className="border-subtle-border max-h-[300px] rounded-lg border">
+                <Column className="gap-1 p-2">
+                  {tagDefinitions.length === 0 ? (
+                    <FontText variant="subtext" className="px-1 py-4 text-center text-xs">
+                      No tags yet
+                    </FontText>
+                  ) : (
+                    tagDefinitions.map((def) => {
+                      const color = getTagColor(def.color);
+                      return (
+                        <Pressable
+                          key={def.name}
+                          onPress={() => {
+                            setEditingTag(def);
+                            setIsAddTagOpen(true);
+                          }}
+                          className="hover:bg-text/5 rounded-lg p-1.5">
+                          <Row className="items-center gap-2">
+                            <View
+                              className="h-3.5 w-3.5 rounded-full"
+                              style={{ backgroundColor: color.bg }}
+                            />
+                            <FontText
+                              className="flex-1 text-xs"
+                              weight="medium"
+                              numberOfLines={1}
+                              ellipsizeMode="tail">
+                              {def.name}
+                            </FontText>
+                            <Pencil size={13} color="rgb(46, 41, 37)" style={{ opacity: 0.7 }} />
+                          </Row>
+                        </Pressable>
+                      );
+                    })
+                  )}
+                </Column>
+              </ShadowScrollView>
+              <AppButton
+                variant="outline"
+                className="h-8 w-full"
+                onPress={() => {
+                  setEditingTag(null);
+                  setIsAddTagOpen(true);
+                }}>
+                <Row className="items-center gap-1">
+                  <Plus size={13} color="rgb(46, 41, 37)" />
+                  <FontText weight="medium" className="text-xs">
+                    New Tag
+                  </FontText>
+                </Row>
+              </AppButton>
+            </Column>
+          </ConvexDialog.Content>
+        </ConvexDialog.Portal>
+      </ConvexDialog.Root>
+
+      <AddTagDialog
+        isOpen={isAddTagOpen}
+        onOpenChange={(open) => {
+          setIsAddTagOpen(open);
+          if (!open) setEditingTag(null);
+        }}
+        onAdd={(name, colorName) => {
+          setTagDefs([...tagDefinitions, { name, color: colorName }]);
+        }}
+        onEdit={(oldName, newName, colorName) => {
+          setTagDefs(
+            tagDefinitions.map((d) =>
+              d.name === oldName ? { name: newName, color: colorName } : d
+            )
+          );
+        }}
+        onDelete={(name) => {
+          setTagDefs(tagDefinitions.filter((d) => d.name !== name));
+        }}
+        editTag={editingTag}
+        existingNames={tagDefinitions.map((d) => d.name)}
+        gameId={gameId}
+      />
+    </>
+  );
+};
+
+/**
+ * Integrated dropdown for the tag() function argument.
+ * Shows all tag definitions + "Edit Tags" at the bottom.
+ */
+const TagCallRenderer = ({
+  call,
+  onSetExpression,
+  location,
+}: {
+  call: CallExpression;
+  onSetExpression: CanvasProps['onSetExpression'];
+  location: ExpressionLocation;
+}) => {
+  const ctx = React.useContext(TagDefinitionsContext);
+  const tagDefs = ctx?.definitions ?? [];
+  const currentValue =
+    call.arguments[0]?.value.kind === 'StringLiteral' ? call.arguments[0].value.value : '';
+
+  const options = tagDefs.map((def) => ({ value: def.name, label: def.name }));
+
+  return (
+    <Row className="items-center gap-1">
+      <FontText weight="medium" className="text-sm">
+        tag
+      </FontText>
+      <AppDropdown
+        options={options}
+        value={tagDefs.some((d) => d.name === currentValue) ? currentValue : undefined}
+        onValueChange={(next) => {
+          onSetExpression(location, {
+            ...call,
+            arguments: [
+              {
+                kind: 'PositionalArgument' as const,
+                value: { kind: 'StringLiteral' as const, value: next, span },
+                span,
+              },
+            ],
+          });
+        }}
+        placeholder="Tag name"
+        triggerClassName="min-w-32 !py-1.5 !px-2 text-sm"
+        isInDialog
+        allowUnselect={false}
+        footer={
+          <Row className="items-center gap-2 px-3 py-2">
+            <Pencil size={14} color="rgb(46, 41, 37)" style={{ opacity: 0.7 }} />
+            <FontText weight="medium" className="text-sm">
+              Edit Tags
+            </FontText>
+          </Row>
+        }
+        onFooterPress={() => openTagManagerFn?.()}
+      />
+    </Row>
   );
 };
 
@@ -1964,53 +2179,79 @@ const Canvas = ({
   stmtPath = [],
   onEditMarkdown,
   isTriggerContext,
-}: CanvasProps) => (
-  <InputSourcesContext.Provider value={inputSources ?? {}}>
-    <Column className="gap-0">
-      {statements.length > 0 && (
-        <PuzzleConnector
-          direction="vertical"
-          tooltip="Add block"
-          onPress={() => onAdd({ kind: 'statement', path: [...stmtPath, 0] })}
-        />
-      )}
-      {statements.map((statement, index) => (
-        <React.Fragment key={`stmt-${stmtPath.join('-')}-${index}`}>
-          <StatementBlock
-            statement={statement}
-            index={index}
-            stmtPath={stmtPath}
-            definedVariables={definedVariables}
-            definedFunctions={definedFunctions}
-            onAdd={onAdd}
-            onSetExpression={onSetExpression}
-            onEditMarkdown={onEditMarkdown}
-            onSetStatementField={onSetStatementField}
-            onDeleteStatement={onDeleteStatement}
-            entryKeysBySource={entryKeysBySource}
-            isTriggerContext={isTriggerContext}
-          />
+  gameId,
+}: CanvasProps) => {
+  // Only load tag definitions at the root level (stmtPath is empty).
+  // Nested Canvas instances inherit the context from the root.
+  const isRoot = stmtPath.length === 0;
+  const tagDefsKey = gameId && isRoot ? getGameScopedKey('tagDefinitions', gameId) : null;
+  const [tagDefs, setTagDefs] = useValue<TagDefinitionsData>(tagDefsKey ?? '__no-game__', {
+    defaultValue: [],
+    privacy: 'PUBLIC',
+  });
+  const tagDefinitions = tagDefs?.value ?? [];
+
+  const inner = (
+    <InputSourcesContext.Provider value={inputSources ?? {}}>
+      <Column className="gap-0">
+        {statements.length > 0 && (
           <PuzzleConnector
             direction="vertical"
             tooltip="Add block"
-            onPress={() => onAdd({ kind: 'statement', path: [...stmtPath, index + 1] })}
+            onPress={() => onAdd({ kind: 'statement', path: [...stmtPath, 0] })}
           />
-        </React.Fragment>
-      ))}
-      {statements.length === 0 && (
-        <Pressable
-          accessibilityRole="button"
-          onPress={() => onAdd({ kind: 'statement', path: [...stmtPath, 0] })}>
-          <View className="border-subtle-border my-2 h-10 w-full flex-row items-center justify-center gap-2 rounded-xl border border-dashed bg-transparent">
-            <FontText className="text-text/40 text-sm">+</FontText>
-            <FontText variant="subtext" className="text-sm">
-              press to add a block
-            </FontText>
-          </View>
-        </Pressable>
-      )}
-    </Column>
-  </InputSourcesContext.Provider>
-);
+        )}
+        {statements.map((statement, index) => (
+          <React.Fragment key={`stmt-${stmtPath.join('-')}-${index}`}>
+            <StatementBlock
+              statement={statement}
+              index={index}
+              stmtPath={stmtPath}
+              definedVariables={definedVariables}
+              definedFunctions={definedFunctions}
+              onAdd={onAdd}
+              onSetExpression={onSetExpression}
+              onEditMarkdown={onEditMarkdown}
+              onSetStatementField={onSetStatementField}
+              onDeleteStatement={onDeleteStatement}
+              entryKeysBySource={entryKeysBySource}
+              isTriggerContext={isTriggerContext}
+            />
+            <PuzzleConnector
+              direction="vertical"
+              tooltip="Add block"
+              onPress={() => onAdd({ kind: 'statement', path: [...stmtPath, index + 1] })}
+            />
+          </React.Fragment>
+        ))}
+        {statements.length === 0 && (
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => onAdd({ kind: 'statement', path: [...stmtPath, 0] })}>
+            <View className="border-subtle-border my-2 h-10 w-full flex-row items-center justify-center gap-2 rounded-xl border border-dashed bg-transparent">
+              <FontText className="text-text/40 text-sm">+</FontText>
+              <FontText variant="subtext" className="text-sm">
+                press to add a block
+              </FontText>
+            </View>
+          </Pressable>
+        )}
+      </Column>
+    </InputSourcesContext.Provider>
+  );
+
+  if (!isRoot) {
+    // Nested Canvas: just render the inner content (inherits tag context from root)
+    return inner;
+  }
+
+  // Root Canvas: provide tag definitions context + render tag manager modal
+  return (
+    <TagDefinitionsContext.Provider value={{ definitions: tagDefinitions, gameId }}>
+      {inner}
+      <TagManagerModal gameId={gameId} tagDefinitions={tagDefinitions} setTagDefs={setTagDefs} />
+    </TagDefinitionsContext.Provider>
+  );
+};
 
 export default Canvas;

@@ -7,7 +7,6 @@ import { useTooltip } from './useTooltip';
 import Row from '../../components/layout/Row';
 import FontText from '../../components/ui/text/FontText';
 import AppButton from '../../components/ui/buttons/AppButton';
-import AppDropdown from '../../components/ui/forms/AppDropdown';
 import { CloseButton } from '../../components/game/markdownEditor';
 import type { BinaryOperator, Expression, FunctionTemplatePiece, Statement } from '../lang/ast';
 import { emptySpan } from '../lang/ast';
@@ -434,8 +433,6 @@ const InsertModal = ({
     fnStatement: Statement;
     callExpression: Expression;
   } | null>(null);
-  const [pendingTagPicker, setPendingTagPicker] = useState(false);
-  const [customTagName, setCustomTagName] = useState('');
   const searchInputRef = useRef<TextInput>(null);
 
   // Load tag definitions for the tag() function picker
@@ -627,28 +624,21 @@ const InsertModal = ({
       ...variableItems,
       {
         label: 'tag',
-        description: 'Encode a tag name as a tag string (for .contains checks)',
+        description: 'Encode a tag name as a tag string',
         category: 'data',
-        skipCloseOnSelect: true,
-        onSelect: () => {
-          // If we have tag definitions, show the picker; otherwise insert directly
-          if (tagDefinitions.length > 0) {
-            setPendingTagPicker(true);
-          } else {
-            selectExpression({
-              kind: 'CallExpression',
-              callee: { kind: 'IdentifierExpression', name: 'tag', span },
-              arguments: [
-                {
-                  kind: 'PositionalArgument' as const,
-                  value: { kind: 'StringLiteral' as const, value: 'Tag name', span },
-                  span,
-                },
-              ],
-              span,
-            });
-          }
-        },
+        onSelect: () =>
+          selectExpression({
+            kind: 'CallExpression',
+            callee: { kind: 'IdentifierExpression', name: 'tag', span },
+            arguments: [
+              {
+                kind: 'PositionalArgument' as const,
+                value: { kind: 'StringLiteral' as const, value: 'Tag name', span },
+                span,
+              },
+            ],
+            span,
+          }),
       },
       ...(entryBlock
         ? [
@@ -1011,108 +1001,6 @@ const InsertModal = ({
                     setPendingBuiltin(null);
                   }}>
                   <FontText weight="medium">Cancel</FontText>
-                </AppButton>
-              </Row>
-            </Column>
-          </ConvexDialog.Content>
-        </ConvexDialog.Portal>
-      </ConvexDialog.Root>
-
-      {/* Tag picker dialog — choose from existing tags or type a custom name */}
-      <ConvexDialog.Root
-        isOpen={pendingTagPicker}
-        onOpenChange={(open: boolean) => {
-          if (!open) {
-            setPendingTagPicker(false);
-            setCustomTagName('');
-          }
-        }}>
-        <ConvexDialog.Portal>
-          <ConvexDialog.Overlay />
-          <ConvexDialog.Content className="max-w-sm">
-            <CloseButton
-              onPress={() => {
-                setPendingTagPicker(false);
-                setCustomTagName('');
-              }}
-            />
-            <Column className="gap-3 pt-3">
-              <FontText weight="medium" className="text-base">
-                Select a tag
-              </FontText>
-              <AppDropdown
-                options={tagDefinitions.map((def) => ({ value: def.name, label: def.name }))}
-                value=""
-                onValueChange={(name) => {
-                  if (name && target) {
-                    onInsertExpression(
-                      {
-                        kind: 'CallExpression',
-                        callee: { kind: 'IdentifierExpression', name: 'tag', span },
-                        arguments: [
-                          {
-                            kind: 'PositionalArgument' as const,
-                            value: { kind: 'StringLiteral' as const, value: name, span },
-                            span,
-                          },
-                        ],
-                        span,
-                      },
-                      target
-                    );
-                  }
-                  setPendingTagPicker(false);
-                  setCustomTagName('');
-                  onClose();
-                }}
-                placeholder="Choose a tag…"
-                triggerClassName="min-w-32 !py-1.5 !px-3 text-sm"
-                isInDialog
-                allowUnselect={false}
-              />
-              <FontText variant="subtext" className="text-center text-xs opacity-60">
-                or type a custom tag name
-              </FontText>
-              <Row className="gap-2">
-                <TextInput
-                  value={customTagName}
-                  onChangeText={setCustomTagName}
-                  placeholder="Custom tag name…"
-                  placeholderTextColor="#0004"
-                  className="bg-text/10 min-w-20 flex-1 rounded-lg px-3 py-2 text-sm"
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                />
-                <AppButton
-                  variant="accent"
-                  className="h-9 px-4"
-                  dropShadow={false}
-                  onPress={() => {
-                    const name = customTagName.trim();
-                    if (name && target) {
-                      onInsertExpression(
-                        {
-                          kind: 'CallExpression',
-                          callee: { kind: 'IdentifierExpression', name: 'tag', span },
-                          arguments: [
-                            {
-                              kind: 'PositionalArgument' as const,
-                              value: { kind: 'StringLiteral' as const, value: name, span },
-                              span,
-                            },
-                          ],
-                          span,
-                        },
-                        target
-                      );
-                    }
-                    setPendingTagPicker(false);
-                    setCustomTagName('');
-                    onClose();
-                  }}>
-                  <FontText weight="medium" color="white">
-                    Add
-                  </FontText>
                 </AppButton>
               </Row>
             </Column>
