@@ -17,6 +17,8 @@ import NightlyCertificationDialog from './NightlyCertificationDialog';
 import { getGameScopedKey, hasPlayerActionContent } from '../../../utils/multiplayer';
 import { PlayerNightSubmission, PlannedUpdate } from '../../../types/multiplayer';
 import { executePlannedUpdates } from '../../../utils/executePlannedUpdates';
+import { fireTagTriggersForNetChanges } from '../../../hooks/useTagTriggers';
+import { useValue } from 'hooks/useData';
 interface NightlyPageOPERATORProps {
   currentUserId: string;
   gameId: string;
@@ -45,6 +47,13 @@ const NightlyPageOPERATOR = ({
 
   // Role table (for role message scripts that may contain UpdateCell blocks)
   const [roleTable] = useList<RoleTableItem[]>('roleTable', gameId, { privacy: 'PUBLIC' });
+
+  // Tag triggers (for firing OnTagAdded/OnTagRemoved during certify)
+  const [tagTriggersRecord] = useValue<Record<string, string>>(
+    getGameScopedKey('tagTriggers', gameId),
+    { defaultValue: {}, privacy: 'PUBLIC' }
+  );
+  const tagTriggers = tagTriggersRecord?.value ?? {};
 
   const [morningMessagesList, setMorningMessagesList] = useList<Record<string, string[]>>(
     'morningMessagesList',
@@ -217,7 +226,18 @@ const NightlyPageOPERATOR = ({
 
     let finalUsers = certifiedUsers;
     if (allPlannedUpdates.length > 0) {
+      const beforePlannedUpdates = certifiedUsers;
       finalUsers = executePlannedUpdates(certifiedUsers, allPlannedUpdates, titles);
+      // Fire tag triggers for any net tag changes caused by the planned updates
+      // (e.g. cellContents.append(tag("Detected")) adds a tag → OnTagAdded runs)
+      if (Object.keys(tagTriggers).length > 0) {
+        finalUsers = fireTagTriggersForNetChanges(
+          beforePlannedUpdates,
+          finalUsers,
+          tagTriggers,
+          titles
+        );
+      }
     }
 
     setUserTable(finalUsers);
