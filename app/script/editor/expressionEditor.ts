@@ -457,16 +457,20 @@ export const updateExpressionAtLocation = (
 export const ENTRY_SOURCE_TRANSITIONS: Record<string, Record<string, string>> = {
   players: { days: 'day' },
   currentplayer: { days: 'day' },
+  placeduser: { days: 'day' },
 };
 
 /** Global data sources — identifiers that are their own source. */
 const GLOBAL_DATA_SOURCES = new Set([
   'players',
   'currentplayer',
+  'placeduser',
   'roles',
   'schedule',
   'profiles',
   'daydates',
+  'inputs',
+  'inputswithdata',
 ]);
 
 /** Apply an .entry(key) transition to a source. Returns the new source or undefined. */

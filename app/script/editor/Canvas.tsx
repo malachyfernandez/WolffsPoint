@@ -645,6 +645,8 @@ export const ExpressionSocket = ({
       replaceMode,
       expectedType: type,
       contextVariables,
+      variableSources: entrySourceMap,
+      inputSources,
     });
 
   if (expression.kind === 'NothingLiteral') {
@@ -987,6 +989,8 @@ export const ExpressionSocket = ({
                     location,
                     linkIndex: index,
                     contextVariables,
+                    variableSources: entrySourceMap,
+                    inputSources,
                     chainExpression: recomposeChain(chain.slice(0, index)),
                   })
                 }>
@@ -1013,6 +1017,8 @@ export const ExpressionSocket = ({
                     location,
                     linkIndex: index,
                     contextVariables,
+                    variableSources: entrySourceMap,
+                    inputSources,
                     chainExpression: recomposeChain(chain.slice(0, index)),
                   })
                 }
@@ -1028,6 +1034,8 @@ export const ExpressionSocket = ({
                   location,
                   linkIndex: index + 1,
                   contextVariables,
+                  variableSources: entrySourceMap,
+                  inputSources,
                   chainExpression: recomposeChain(chain.slice(0, index + 1)),
                 })
               }

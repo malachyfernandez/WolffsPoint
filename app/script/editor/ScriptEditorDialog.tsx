@@ -360,14 +360,24 @@ const ScriptEditorDialog = ({
       'placedUser.userId': 'string',
       'placedUser.role': 'string',
       'placedUser.isAlive': 'boolean',
-      // Extra user columns are strings (tags, text, etc.)
-      // Extra day columns are strings
+      // Roles table fields
+      'roles.role': 'string',
+      'roles.doesRoleVote': 'boolean',
+      'roles.isVisible': 'boolean',
+      'roles.aboutRole': 'string',
+      // Day object fields (built-in)
+      'day.vote': 'string',
+      'day.action': 'string',
     };
     // Add types for extra user columns (all strings)
     for (const col of sources?.userTableTitle?.extraUserColumns ?? []) {
       keys.__fieldTypes![`players.${col}`] = 'string';
       keys.__fieldTypes![`currentPlayer.${col}`] = 'string';
       keys.__fieldTypes![`placedUser.${col}`] = 'string';
+    }
+    // Add types for extra day columns (all strings)
+    for (const col of sources?.userTableTitle?.extraDayColumns ?? []) {
+      keys.__fieldTypes![`day.${col}`] = 'string';
     }
     if (isTriggerContext) {
       // Trigger-specific globals

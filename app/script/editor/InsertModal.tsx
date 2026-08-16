@@ -49,6 +49,12 @@ export interface InsertTarget {
   replaceMode?: 'whole' | 'chainBase';
   expectedType?: InputType;
   contextVariables?: string[];
+  /** Map of variable name → data source name (lambda params, ForEach items).
+   *  Used by type inference to type context variables accurately. */
+  variableSources?: Record<string, string>;
+  /** Map of input label → data source name (from CreateSelectInput LIST args).
+   *  Used by type inference to resolve InputsWithData.entry("X") types. */
+  inputSources?: Record<string, string>;
   linkIndex?: number;
   /** The current chain expression (for chainInsert/chainSwap) — used to infer
    * the receiver type so we can show which blocks are compatible. */
@@ -507,7 +513,12 @@ const InsertModal = ({
         ? inferExpressionType(
             target.chainExpression,
             entryKeysBySource ?? {},
-            target.contextVariables ?? []
+            target.contextVariables ?? [],
+            {
+              variableSources: target.variableSources,
+              inputSources: target.inputSources,
+              definedFunctions,
+            }
           )
         : 'any';
       const chainExpressionItems = EXPRESSION_BLOCKS.map((block) => {
