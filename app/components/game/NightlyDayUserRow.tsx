@@ -4,6 +4,7 @@ import InlineEditableText from '../ui/forms/InlineEditableText';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
 import { Pressable, View } from 'react-native';
+import { Pencil } from 'lucide-react-native';
 import MarkdownEditorDialog from './MarkdownEditorDialog';
 import ActionEditorDialog from './ActionEditorDialog';
 import VoteEditorDialog, { resolveVoteEmailToName } from './VoteEditorDialog';
@@ -164,24 +165,31 @@ const NightlyDayUserRow = ({
               </FontText>
             </Pressable>
           ) : morningMessagesList[user.email.toLowerCase()]?.[dayNumber - 1] ? (
-            <Pressable
-              onPress={() => {
-                const yesterdayMessage =
-                  morningMessagesList[user.email.toLowerCase()]?.[dayNumber - 1];
-                if (yesterdayMessage) {
-                  updateMorningMessage(dayNumber, index, yesterdayMessage);
-                }
-              }}
+            <View
               style={{ width: columnWidths.morningMessage - 8 }}
-              className="h-full items-center justify-center px-2">
-              <FontText
-                weight="medium"
-                className="bg-text max-w-42 overflow-hidden text-nowrap rounded-full px-2 py-1 text-center"
-                color="white"
-                style={{ width: columnWidths.morningMessage - 8 }}>
-                Import Yesterday's
-              </FontText>
-            </Pressable>
+              className="h-full flex-row items-center justify-center gap-1 px-2">
+              <Pressable
+                onPress={() => {
+                  const yesterdayMessage =
+                    morningMessagesList[user.email.toLowerCase()]?.[dayNumber - 1];
+                  if (yesterdayMessage) {
+                    updateMorningMessage(dayNumber, index, yesterdayMessage);
+                  }
+                }}
+                className="min-w-0 flex-1">
+                <FontText
+                  weight="medium"
+                  className="bg-text overflow-hidden text-ellipsis text-nowrap rounded-full px-2 py-1 text-center"
+                  color="white">
+                  Import Yesterday's
+                </FontText>
+              </Pressable>
+              <Pressable
+                onPress={() => setIsMessageDialogOpen(true)}
+                className="bg-text aspect-square h-7 w-7 items-center justify-center rounded-full">
+                <Pencil size={12} color="white" />
+              </Pressable>
+            </View>
           ) : (
             <Pressable
               onPress={() => setIsMessageDialogOpen(true)}

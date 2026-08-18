@@ -368,6 +368,7 @@ const YourEyesOnlyDayContentPLAYER = ({
                       }
                     : undefined
                 }
+                className="w-full"
                 textAlign="center"
                 viewHeightImages={20}
               />
@@ -561,18 +562,6 @@ const YourEyesOnlyDayContentPLAYER = ({
               ) : currentActionSummary.trim().length > 0 ? (
                 <FontText variant="subtext">Current action: {currentActionSummary}</FontText>
               ) : null}
-              {plannedUpdateSummaries.length > 0 && (
-                <Column className="gap-1 pt-1">
-                  <FontText variant="subtext" className="text-xs opacity-70">
-                    Will update on certify:
-                  </FontText>
-                  {plannedUpdateSummaries.map((summary, i) => (
-                    <FontText key={i} variant="subtext" className="text-xs">
-                      • {summary}
-                    </FontText>
-                  ))}
-                </Column>
-              )}
             </>
           )}
         </Column>
