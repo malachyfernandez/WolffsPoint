@@ -144,6 +144,7 @@ const RoleRow = ({
         gameId={gameId}
         showInputs={showInputs}
         showScript
+        hideInputs={false}
         roleName={role.role}
       />
       <MarkdownEditorDialog

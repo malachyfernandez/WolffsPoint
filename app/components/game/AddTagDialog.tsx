@@ -66,14 +66,20 @@ const AddTagDialog = ({
   const [userTable] = useList<UserTableItem[]>('userTable', gameId ?? '', {
     privacy: 'PUBLIC',
   });
+  const [morningMessagesList] = useList<Record<string, string[]>>(
+    'morningMessagesList',
+    gameId ?? '',
+    { privacy: 'PUBLIC' }
+  );
 
   const scriptSources = useMemo<ScriptSourceData>(
     () => ({
       capability: 'operator',
       players: userTable?.value ?? [],
       userTableTitle: userTableTitle?.value,
+      morningMessagesList: morningMessagesList?.value,
     }),
-    [userTable?.value, userTableTitle?.value]
+    [userTable?.value, userTableTitle?.value, morningMessagesList?.value]
   );
 
   // Snapshot of the initial state when the dialog opens, used to detect

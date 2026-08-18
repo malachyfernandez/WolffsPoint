@@ -45,6 +45,11 @@ export function InputOptionsProvider({ gameId, showInputs, children }: InputOpti
     gameId || '__markdown_editor_dialog_no_game__',
     { privacy: 'PUBLIC' }
   );
+  const [morningMessagesList] = useList<Record<string, string[]>>(
+    'morningMessagesList',
+    gameId || '__markdown_editor_dialog_no_game__',
+    { privacy: 'PUBLIC' }
+  );
 
   const playerOptions = useMemo(() => {
     if (!showInputs) {
@@ -81,6 +86,7 @@ export function InputOptionsProvider({ gameId, showInputs, children }: InputOpti
       currentDay: selectedDayIndex?.value ?? 0,
       dayDates: dayDatesArray?.value ?? [],
       userTableTitle: userTableTitle?.value,
+      morningMessagesList: morningMessagesList?.value,
     }),
     [
       userTable?.value,
@@ -88,6 +94,7 @@ export function InputOptionsProvider({ gameId, showInputs, children }: InputOpti
       selectedDayIndex?.value,
       dayDatesArray?.value,
       userTableTitle?.value,
+      morningMessagesList?.value,
     ]
   );
 

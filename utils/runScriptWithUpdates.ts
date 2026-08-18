@@ -7,6 +7,7 @@ import {
   LIVING_STATE_COLUMN,
   VOTE_COLUMN,
   ACTION_COLUMN,
+  MORNING_MESSAGE_COLUMN,
 } from './applyTableUpdates';
 
 /**
@@ -51,6 +52,10 @@ export const runScriptWithUpdates = (
       if (colIdx === -1) return '';
       return user.playerData.extraColumns?.[colIdx] ?? '';
     } else {
+      // Special: morningMessage is stored in a separate structure
+      if (colLower === MORNING_MESSAGE_COLUMN) {
+        return ''; // runScriptWithUpdates doesn't have access to morning messages
+      }
       // Special built-in fields on DayData
       if (colLower === VOTE_MULTIPLIER_COLUMN) {
         const day = user.days?.[dayIndex];

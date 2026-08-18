@@ -679,8 +679,15 @@ const MarkdownRendererContent = ({
     if (scriptSourcesList.length === 0 && inlineInputKeys.size === 0) return;
     const scriptKeys = collectActiveInputKeys(scriptSourcesList, scriptSources, state);
     const allActiveKeys = new Set([...scriptKeys, ...inlineInputKeys]);
-    const staleKeys = Object.keys(state).filter((key) => !allActiveKeys.has(key));
+    const stateKeys = Object.keys(state);
+    const staleKeys = stateKeys.filter((key) => !allActiveKeys.has(key));
     if (staleKeys.length === 0) return;
+    // If there are state keys we don't recognize, another renderer sharing this
+    // state likely owns them. Only prune if we recognize ALL state keys (i.e.,
+    // we are the sole owner). Otherwise pruning would wipe the other renderer's
+    // inputs.
+    const isSoleOwner = stateKeys.every((key) => allActiveKeys.has(key));
+    if (!isSoleOwner) return;
     const pruned: Record<string, string | undefined> = {};
     for (const [key, value] of Object.entries(state)) {
       if (allActiveKeys.has(key)) {

@@ -825,6 +825,12 @@ const InsertModal = ({
         onSelect: () => selectExpression({ kind: 'StringLiteral', value: '', span }),
       },
       {
+        label: 'Markdown',
+        description: 'Markdown text literal',
+        category: 'string',
+        onSelect: () => selectExpression({ kind: 'MarkdownLiteral', value: '', span }),
+      },
+      {
         label: 'Dropdown',
         description: 'Selectable options',
         category: 'string',
@@ -941,7 +947,8 @@ const InsertModal = ({
           suggestions.push(isTrigger ? 'placedDay' : 'currentDay');
           suggestions.push('0');
           suggestions.push('"text"');
-          labels = suggestions.slice(0, 6);
+          suggestions.push('Markdown');
+          labels = suggestions.slice(0, 7);
           break;
         }
       }
@@ -972,13 +979,19 @@ const InsertModal = ({
       // Trigger scripts can't display content or use inputs
       result = result.filter((item) => item.category !== 'input' && item.category !== 'display');
     }
+    // Only show Inputs / InputsWithData data sources once at least one input
+    // has been added to the script.
+    const inputLabels = entryKeysBySource?.Inputs ?? entryKeysBySource?.InputsWithData ?? [];
+    if (inputLabels.length === 0) {
+      result = result.filter((item) => item.label !== 'Inputs' && item.label !== 'InputsWithData');
+    }
     if (!search.trim()) return result;
     const query = search.toLowerCase();
     return result.filter(
       (item) =>
         item.label.toLowerCase().includes(query) || item.description.toLowerCase().includes(query)
     );
-  }, [items, search, hideInputs, isTriggerContext]);
+  }, [items, search, hideInputs, isTriggerContext, entryKeysBySource]);
 
   const grouped = useMemo(() => {
     const groups = filtered.reduce<Record<string, ModalItem[]>>((acc, item) => {

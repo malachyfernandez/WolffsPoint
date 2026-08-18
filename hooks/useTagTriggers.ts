@@ -6,10 +6,13 @@ import { interpretScript } from '../app/script/runtime/interpreter';
 import { createScriptGlobals } from '../app/script/runtime/sources';
 import {
   applyTableUpdates,
+  applyMorningMessageUpdates,
+  isMorningMessage,
   VOTE_MULTIPLIER_COLUMN,
   LIVING_STATE_COLUMN,
   VOTE_COLUMN,
   ACTION_COLUMN,
+  MORNING_MESSAGE_COLUMN,
 } from '../utils/applyTableUpdates';
 import { TableUpdate } from '../app/script/registry';
 import { parseCell } from '../utils/tagEncoding';
@@ -34,7 +37,8 @@ export interface CellContext {
 /** Build a runtime player entry from a UserTableItem (same shape as createScriptGlobals). */
 const buildPlayerEntry = (
   player: UserTableItem,
-  titles: UserTableTitle
+  titles: UserTableTitle,
+  morningMessagesForPlayer?: string[]
 ): Record<string, unknown> => {
   const extraUserColumnTitles = titles.extraUserColumns ?? [];
   const extraDayColumnTitles = titles.extraDayColumns ?? [];
@@ -44,10 +48,11 @@ const buildPlayerEntry = (
     userId: player.userId,
     role: player.role,
     isAlive: player.playerData.livingState === 'alive',
-    days: (player.days ?? []).map((day) => {
+    days: (player.days ?? []).map((day, dayIndex) => {
       const base: Record<string, unknown> = {
         vote: day?.vote ?? '',
         action: day?.action ?? '',
+        morningMessage: morningMessagesForPlayer?.[dayIndex] ?? '',
       };
       const extra = day?.extraColumns ?? [];
       for (let i = 0; i < extraDayColumnTitles.length; i++) {
@@ -64,7 +69,11 @@ const buildPlayerEntry = (
 };
 
 /** Build a getCellValue function that reads from the current user table. */
-const buildGetCellValue = (users: UserTableItem[], titles: UserTableTitle) => {
+const buildGetCellValue = (
+  users: UserTableItem[],
+  titles: UserTableTitle,
+  morningMessagesList?: Record<string, string[]>
+) => {
   const extraUserColumnTitles = titles.extraUserColumns ?? [];
   const extraDayColumnTitles = titles.extraDayColumns ?? [];
   return (playerIndex: number | null, dayIdx: number | null, col: string): string => {
@@ -80,6 +89,10 @@ const buildGetCellValue = (users: UserTableItem[], titles: UserTableTitle) => {
       if (colIdx === -1) return '';
       return user.playerData.extraColumns?.[colIdx] ?? '';
     } else {
+      if (colLower === MORNING_MESSAGE_COLUMN) {
+        if (!morningMessagesList) return '';
+        return morningMessagesList[user.email.toLowerCase()]?.[dayIdx] ?? '';
+      }
       if (colLower === VOTE_MULTIPLIER_COLUMN) {
         const day = user.days?.[dayIdx];
         return String(day?.voteMultiplier ?? 1);
@@ -106,26 +119,39 @@ const buildGetCellValue = (users: UserTableItem[], titles: UserTableTitle) => {
  *
  * @returns The updated user table (may be the same array if no updates).
  */
+/** Result of firing a trigger: updated users + updated morning messages. */
+export interface TriggerResult {
+  users: UserTableItem[];
+  morningMessages?: Record<string, string[]>;
+}
+
 export const fireSingleTagTrigger = (
   tagName: string,
   triggerScript: string,
   context: CellContext,
   users: UserTableItem[],
   titles: UserTableTitle,
-  mode: 'added' | 'removed'
-): UserTableItem[] => {
+  mode: 'added' | 'removed',
+  morningMessagesList?: Record<string, string[]>
+): TriggerResult => {
   const { playerIndex, dayIndex, column } = context;
   const player = users[playerIndex];
-  if (!player) return users;
+  if (!player) return { users, morningMessages: morningMessagesList };
 
   let result = users;
-  const playerEntry = buildPlayerEntry(player, titles);
+  let morningMessages = morningMessagesList;
+  const playerEntry = buildPlayerEntry(
+    player,
+    titles,
+    morningMessages?.[player.email.toLowerCase()]
+  );
 
   const globals = {
     ...createScriptGlobals({
       capability: 'operator',
       players: result as unknown as UserTableItem[],
       userTableTitle: titles,
+      morningMessagesList: morningMessages,
     }),
     placedTag: tagName,
     placedUser: playerEntry,
@@ -133,7 +159,7 @@ export const fireSingleTagTrigger = (
     placedColumn: column,
   };
 
-  const getCellValue = buildGetCellValue(result, titles);
+  const getCellValue = buildGetCellValue(result, titles, morningMessages);
   const updates: TableUpdate[] = [];
   try {
     const triggerResult = interpretScript(triggerScript, {
@@ -156,9 +182,17 @@ export const fireSingleTagTrigger = (
   }
 
   if (updates.length > 0) {
-    result = applyTableUpdates(result, updates, titles);
+    // Separate morning message updates from regular table updates
+    const morningUpdates = updates.filter((u) => isMorningMessage(u.column));
+    const regularUpdates = updates.filter((u) => !isMorningMessage(u.column));
+    if (regularUpdates.length > 0) {
+      result = applyTableUpdates(result, regularUpdates, titles);
+    }
+    if (morningMessages && morningUpdates.length > 0) {
+      morningMessages = applyMorningMessageUpdates(morningMessages, morningUpdates, result);
+    }
   }
-  return result;
+  return { users: result, morningMessages };
 };
 
 /**
@@ -177,15 +211,18 @@ export const fireSingleTagTrigger = (
  * @param afterUsers   The user table after the updates were applied
  * @param tagTriggers  Map of tag name → trigger script text
  * @param titles       Table column titles
- * @returns The user table after all triggers have fired
+ * @param morningMessagesList  Optional morning messages (for triggers that write to morningMessage)
+ * @returns { users, morningMessages } after all triggers have fired
  */
 export const fireTagTriggersForNetChanges = (
   beforeUsers: UserTableItem[],
   afterUsers: UserTableItem[],
   tagTriggers: Record<string, string>,
-  titles: UserTableTitle
-): UserTableItem[] => {
-  if (Object.keys(tagTriggers).length === 0) return afterUsers;
+  titles: UserTableTitle,
+  morningMessagesList?: Record<string, string[]>
+): TriggerResult => {
+  if (Object.keys(tagTriggers).length === 0)
+    return { users: afterUsers, morningMessages: morningMessagesList };
 
   const extraUserColumnTitles = titles.extraUserColumns ?? [];
   const extraDayColumnTitles = titles.extraDayColumns ?? [];
@@ -290,13 +327,14 @@ export const fireTagTriggersForNetChanges = (
     }
   }
 
-  if (changes.length === 0) return afterUsers;
+  if (changes.length === 0) return { users: afterUsers, morningMessages: morningMessagesList };
 
   // Fire triggers iteratively. Each trigger may produce more tag changes
   // (via UpdateCell), which we detect and fire in the next iteration.
   // We cap iterations to prevent infinite loops.
   const MAX_ITERATIONS = 10;
   let result = afterUsers;
+  let resultMorningMessages = morningMessagesList;
 
   for (let iteration = 0; iteration < MAX_ITERATIONS; iteration++) {
     if (changes.length === 0) break;
@@ -309,14 +347,17 @@ export const fireTagTriggersForNetChanges = (
       if (!triggerScript || !triggerScript.trim()) continue;
 
       const before = result;
-      result = fireSingleTagTrigger(
+      const triggerResult = fireSingleTagTrigger(
         change.tagName,
         triggerScript,
         change.context,
         result,
         titles,
-        change.mode
+        change.mode,
+        resultMorningMessages
       );
+      result = triggerResult.users;
+      resultMorningMessages = triggerResult.morningMessages;
 
       // Detect any NEW tag changes caused by this trigger's UpdateCell
       if (result !== before) {
@@ -386,7 +427,7 @@ export const fireTagTriggersForNetChanges = (
     }
   }
 
-  return result;
+  return { users: result, morningMessages: resultMorningMessages };
 };
 
 /**
@@ -428,7 +469,15 @@ export const useTagTriggers = (
       for (const tagName of tagNames) {
         const triggerScript = tagTriggers[tagName];
         if (!triggerScript || !triggerScript.trim()) continue;
-        result = fireSingleTagTrigger(tagName, triggerScript, context, result, titles, mode);
+        const triggerResult = fireSingleTagTrigger(
+          tagName,
+          triggerScript,
+          context,
+          result,
+          titles,
+          mode
+        );
+        result = triggerResult.users;
       }
       return result;
     },

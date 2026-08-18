@@ -3,6 +3,12 @@ import { createScriptGlobals, type ScriptSourceData } from '../app/script/runtim
 import { TableUpdate } from '../app/script/registry';
 import { UserTableItem, UserTableTitle } from '../types/playerTable';
 import { MarkdownInputState, PlannedUpdate } from '../types/multiplayer';
+import {
+  VOTE_MULTIPLIER_COLUMN,
+  VOTE_COLUMN,
+  ACTION_COLUMN,
+  MORNING_MESSAGE_COLUMN,
+} from './applyTableUpdates';
 
 /**
  * Extract /*script ... script*\/ blocks from markdown text.
@@ -63,7 +69,11 @@ const decodeInputState = (state: MarkdownInputState = {}): Record<string, unknow
 /**
  * Build a getCellValue function that reads from the current user table.
  */
-const buildGetCellValue = (users: UserTableItem[], titles: UserTableTitle) => {
+const buildGetCellValue = (
+  users: UserTableItem[],
+  titles: UserTableTitle,
+  morningMessagesList?: Record<string, string[]>
+) => {
   return (playerIndex: number | null, dayIndex: number | null, column: string): string => {
     const indices = playerIndex === null ? users.map((_, i) => i) : [playerIndex];
     if (indices.length === 0) return '';
@@ -71,19 +81,32 @@ const buildGetCellValue = (users: UserTableItem[], titles: UserTableTitle) => {
     if (idx < 0 || idx >= users.length) return '';
 
     const user = users[idx];
+    const colLower = column.toLowerCase();
 
     if (dayIndex === null) {
       const extraUserColumnTitles = titles.extraUserColumns ?? [];
-      const colIdx = extraUserColumnTitles.findIndex(
-        (t) => t.toLowerCase() === column.toLowerCase()
-      );
+      const colIdx = extraUserColumnTitles.findIndex((t) => t.toLowerCase() === colLower);
       if (colIdx === -1) return '';
       return user.playerData.extraColumns?.[colIdx] ?? '';
     } else {
+      if (colLower === MORNING_MESSAGE_COLUMN) {
+        if (!morningMessagesList) return '';
+        return morningMessagesList[user.email.toLowerCase()]?.[dayIndex] ?? '';
+      }
+      if (colLower === VOTE_MULTIPLIER_COLUMN) {
+        const day = user.days?.[dayIndex];
+        return String(day?.voteMultiplier ?? 1);
+      }
+      if (colLower === VOTE_COLUMN) {
+        const day = user.days?.[dayIndex];
+        return day?.vote ?? '';
+      }
+      if (colLower === ACTION_COLUMN) {
+        const day = user.days?.[dayIndex];
+        return typeof day?.action === 'string' ? day.action : '';
+      }
       const extraDayColumnTitles = titles.extraDayColumns ?? [];
-      const colIdx = extraDayColumnTitles.findIndex(
-        (t) => t.toLowerCase() === column.toLowerCase()
-      );
+      const colIdx = extraDayColumnTitles.findIndex((t) => t.toLowerCase() === colLower);
       if (colIdx === -1) return '';
       const day = user.days?.[dayIndex];
       return day?.extraColumns?.[colIdx] ?? '';
@@ -103,14 +126,15 @@ export const runMarkdownScriptsWithUpdates = (
   inputState: MarkdownInputState,
   source: ScriptSourceData,
   users: UserTableItem[],
-  titles: UserTableTitle
+  titles: UserTableTitle,
+  morningMessagesList?: Record<string, string[]>
 ): { updates: TableUpdate[]; issues: string[] } => {
   const scriptBlocks = extractScriptBlocks(markdown);
   if (scriptBlocks.length === 0) return { updates: [], issues: [] };
 
-  const globals = createScriptGlobals(source);
+  const globals = createScriptGlobals({ ...source, morningMessagesList });
   const decodedInputState = decodeInputState(inputState);
-  const getCellValue = buildGetCellValue(users, titles);
+  const getCellValue = buildGetCellValue(users, titles, morningMessagesList);
   const allUpdates: TableUpdate[] = [];
   const allIssues: string[] = [];
 
@@ -151,14 +175,15 @@ export const planMarkdownScriptUpdates = (
   inputState: MarkdownInputState,
   source: ScriptSourceData,
   users: UserTableItem[],
-  titles: UserTableTitle
+  titles: UserTableTitle,
+  morningMessagesList?: Record<string, string[]>
 ): { plannedUpdates: PlannedUpdate[]; issues: string[] } => {
   const scriptBlocks = extractScriptBlocks(markdown);
   if (scriptBlocks.length === 0) return { plannedUpdates: [], issues: [] };
 
-  const globals = createScriptGlobals(source);
+  const globals = createScriptGlobals({ ...source, morningMessagesList });
   const decodedInputState = decodeInputState(inputState);
-  const getCellValue = buildGetCellValue(users, titles);
+  const getCellValue = buildGetCellValue(users, titles, morningMessagesList);
   const allPlannedUpdates: PlannedUpdate[] = [];
   const allIssues: string[] = [];
 

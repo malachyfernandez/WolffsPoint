@@ -16,7 +16,10 @@ import ComprehensiveDaySelector from '../ui/daySelector/ComprehensiveDaySelector
 import NightlyCertificationDialog from './NightlyCertificationDialog';
 import { getGameScopedKey, hasPlayerActionContent } from '../../../utils/multiplayer';
 import { PlayerNightSubmission, PlannedUpdate } from '../../../types/multiplayer';
-import { executePlannedUpdates } from '../../../utils/executePlannedUpdates';
+import {
+  executePlannedUpdates,
+  executeMorningMessagePlannedUpdates,
+} from '../../../utils/executePlannedUpdates';
 import { fireTagTriggersForNetChanges } from '../../../hooks/useTagTriggers';
 import { useValue } from 'hooks/useData';
 interface NightlyPageOPERATORProps {
@@ -225,22 +228,38 @@ const NightlyPageOPERATOR = ({
     }
 
     let finalUsers = certifiedUsers;
+    let finalMorningMessages = morningMessagesList.value ?? {};
     if (allPlannedUpdates.length > 0) {
       const beforePlannedUpdates = certifiedUsers;
+      // Apply regular table updates (skips morningMessage updates)
       finalUsers = executePlannedUpdates(certifiedUsers, allPlannedUpdates, titles);
+      // Apply morning message planned updates separately
+      finalMorningMessages = executeMorningMessagePlannedUpdates(
+        finalMorningMessages,
+        allPlannedUpdates,
+        finalUsers
+      );
       // Fire tag triggers for any net tag changes caused by the planned updates
       // (e.g. cellContents.append(tag("Detected")) adds a tag → OnTagAdded runs)
       if (Object.keys(tagTriggers).length > 0) {
-        finalUsers = fireTagTriggersForNetChanges(
+        const triggerResult = fireTagTriggersForNetChanges(
           beforePlannedUpdates,
           finalUsers,
           tagTriggers,
-          titles
+          titles,
+          finalMorningMessages
         );
+        finalUsers = triggerResult.users;
+        if (triggerResult.morningMessages) {
+          finalMorningMessages = triggerResult.morningMessages;
+        }
       }
     }
 
     setUserTable(finalUsers);
+    if (finalMorningMessages !== (morningMessagesList.value ?? {})) {
+      setMorningMessagesList(finalMorningMessages);
+    }
     setDoSync(true);
   };
 

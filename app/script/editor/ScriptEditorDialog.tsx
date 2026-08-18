@@ -334,10 +334,15 @@ const ScriptEditorDialog = ({
     ];
     keys.roles = ['role', 'doesRoleVote', 'isVisible', 'aboutRole'];
     // Day object keys: built-in fields + extra day column titles
-    keys.day = ['vote', 'action', ...(sources?.userTableTitle?.extraDayColumns ?? [])];
+    keys.day = [
+      'vote',
+      'action',
+      'morningMessage',
+      ...(sources?.userTableTitle?.extraDayColumns ?? []),
+    ];
     // Column title dropdowns for UpdateCell
     keys._userColumns = sources?.userTableTitle?.extraUserColumns ?? [];
-    keys._dayColumns = sources?.userTableTitle?.extraDayColumns ?? [];
+    keys._dayColumns = ['morningMessage', ...(sources?.userTableTitle?.extraDayColumns ?? [])];
     // Field type metadata: maps "source.field" → ScriptType
     // This lets the type inference know that players.entry("days") is a list,
     // players.entry("role") is a string, etc.
@@ -368,6 +373,7 @@ const ScriptEditorDialog = ({
       // Day object fields (built-in)
       'day.vote': 'string',
       'day.action': 'string',
+      'day.morningMessage': 'string',
     };
     // Add types for extra user columns (all strings)
     for (const col of sources?.userTableTitle?.extraUserColumns ?? []) {
@@ -732,6 +738,9 @@ const ScriptEditorDialog = ({
           submitLabel="Save"
           initialMarkdown={markdownEditor.value}
           showScript
+          showInputs
+          hideInputs={hideInputs}
+          gameId={gameId}
           onSubmit={(payload) => {
             markdownEditor.onSave(payload.markdown);
             setMarkdownEditor(null);

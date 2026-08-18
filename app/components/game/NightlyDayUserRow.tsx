@@ -246,6 +246,8 @@ const NightlyDayUserRow = ({
         onSubmit={({ markdown }) => updateMorningMessage(dayNumber, index, markdown)}
         dialogSubtext={`Set the message ${user.realName || 'User'} will see after this day ends.`}
         showScript
+        showInputs
+        hideInputs={false}
         centered={true}
       />
       <ActionEditorDialog

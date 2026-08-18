@@ -201,6 +201,9 @@ const YourEyesOnlyDayContentPLAYER = ({
   const isActionsSkipped = (skipActionsDays ?? []).includes(dayIndex);
   const isSkipVote = submission.value.vote === 'SKIP_VOTE';
   const canVote = !isVoteLocked && roleData?.doesRoleVote !== false;
+  // The morning message the player sees today (written by the operator during
+  // the previous night). This is shown in the Action section with interactive
+  // inputs that feed into the same submission state as the role message.
   const currentMorningMessage = hasSelectedMorning
     ? (morningMessagesList[currentEmail.toLowerCase()]?.[selectedMorningDayIndex] ?? '')
     : '';
@@ -213,40 +216,60 @@ const YourEyesOnlyDayContentPLAYER = ({
     [submission.value.action]
   );
 
-  // Compute planned table updates from the role message script at input time.
-  // This runs the script in "planning mode" — variables (currentDay, Inputs,
-  // etc.) are resolved to their values, but function calls (tag(), .append(),
-  // etc.) are kept as expression strings. At certify time, these expressions
-  // are evaluated with the cell variable bound to the current cell value.
+  // Compute planned table updates from the role message script AND the morning
+  // message script at input time. This runs the scripts in "planning mode" —
+  // variables (currentDay, Inputs, etc.) are resolved to their values, but
+  // function calls (tag(), .append(), etc.) are kept as expression strings.
+  // At certify time, these expressions are evaluated with the cell variable
+  // bound to the current cell value.
   const plannedUpdates = useMemo<PlannedUpdate[]>(() => {
-    if (!roleData?.roleMessage?.trim()) return [];
     if (!userTable || userTable.length === 0) return [];
     const actionState = normalizePlayerActionState(submission.value.action);
     // Only run if there's actual input state
     const hasInputs = Object.values(actionState).some((v) => v !== undefined && v !== '');
     if (!hasInputs) return [];
     const titles = userTableTitle ?? { extraUserColumns: [], extraDayColumns: [] };
-    const { plannedUpdates, issues } = planMarkdownScriptUpdates(
-      roleData.roleMessage,
-      actionState,
-      {
-        capability: 'player',
-        players: userTable,
-        roles: roleTable.value,
-        currentUserId,
-        currentEmail,
-        currentDay: dayIndex,
-        userTableTitle: titles,
-      },
-      userTable,
-      titles
-    );
-    if (issues.length > 0) {
-      console.warn('Planned updates script issues:', issues);
+    const scriptSourceData = {
+      capability: 'player' as const,
+      players: userTable,
+      roles: roleTable.value,
+      currentUserId,
+      currentEmail,
+      currentDay: dayIndex,
+      userTableTitle: titles,
+      morningMessagesList: morningMessagesList,
+    };
+    const allPlanned: PlannedUpdate[] = [];
+    // Role message script
+    if (roleData?.roleMessage?.trim()) {
+      const { plannedUpdates, issues } = planMarkdownScriptUpdates(
+        roleData.roleMessage,
+        actionState,
+        scriptSourceData,
+        userTable,
+        titles,
+        morningMessagesList
+      );
+      if (issues.length > 0) console.warn('Role message script issues:', issues);
+      allPlanned.push(...plannedUpdates);
     }
-    return plannedUpdates;
+    // Morning message script (same input state, same submission)
+    if (currentMorningMessage.trim()) {
+      const { plannedUpdates, issues } = planMarkdownScriptUpdates(
+        currentMorningMessage,
+        actionState,
+        scriptSourceData,
+        userTable,
+        titles,
+        morningMessagesList
+      );
+      if (issues.length > 0) console.warn('Morning message script issues:', issues);
+      allPlanned.push(...plannedUpdates);
+    }
+    return allPlanned;
   }, [
     roleData?.roleMessage,
+    currentMorningMessage,
     submission.value.action,
     userTable,
     userTableTitle,
@@ -254,6 +277,7 @@ const YourEyesOnlyDayContentPLAYER = ({
     currentUserId,
     currentEmail,
     dayIndex,
+    morningMessagesList,
   ]);
 
   // Persist planned updates into the submission whenever they change
@@ -315,11 +339,39 @@ const YourEyesOnlyDayContentPLAYER = ({
             <FontText variant="cardHeader" className="text-center">
               Last Night:
             </FontText>
-            <MarkdownRenderer
-              markdown={currentMorningMessage}
-              textAlign="center"
-              viewHeightImages={20}
-            />
+            <MarkdownRendererInputDataProvider
+              playerOptions={playerOptions}
+              roleOptions={roleOptions}
+              scriptSources={{
+                capability: 'player',
+                players: userTable,
+                roles: roleTable.value,
+                currentUserId,
+                currentEmail,
+                currentDay: dayIndex,
+                dayDates: dayDateStrings,
+                schedule,
+                userTableTitle,
+                morningMessagesList,
+              }}>
+              <MarkdownRenderer
+                markdown={currentMorningMessage}
+                state={currentActionState}
+                setState={
+                  !isActionLocked
+                    ? (nextState) => {
+                        setSubmission({
+                          ...submission.value,
+                          action: nextState,
+                          submittedActionAt: Date.now(),
+                        });
+                      }
+                    : undefined
+                }
+                textAlign="center"
+                viewHeightImages={20}
+              />
+            </MarkdownRendererInputDataProvider>
           </>
         ) : (
           <FontText variant="cardHeader" className="text-center">
@@ -474,6 +526,7 @@ const YourEyesOnlyDayContentPLAYER = ({
                       dayDates: dayDateStrings,
                       schedule,
                       userTableTitle,
+                      morningMessagesList,
                     }}>
                     {roleData?.roleMessage?.trim().length ? (
                       <MarkdownRenderer

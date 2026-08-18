@@ -14,16 +14,24 @@ export interface ScriptSourceData {
   schedule?: Record<string, unknown>;
   profiles?: unknown[];
   userTableTitle?: UserTableTitle;
+  /** Morning messages keyed by email → array indexed by day.
+   *  When provided, each day entry gets a `morningMessage` field. */
+  morningMessagesList?: Record<string, string[]>;
 }
 
 /**
  * Convert a DayData into a flat runtime object with extra columns merged in
  * using their column titles as keys. e.g. { vote, action, Infected: "Y", ... }
  */
-const dayEntry = (day: DayData | undefined, extraDayColumnTitles: string[]) => {
+const dayEntry = (
+  day: DayData | undefined,
+  extraDayColumnTitles: string[],
+  morningMessage?: string
+) => {
   const base: Record<string, unknown> = {
     vote: day?.vote ?? '',
     action: day?.action ?? '',
+    morningMessage: morningMessage ?? '',
   };
   const extra = day?.extraColumns ?? [];
   for (let i = 0; i < extraDayColumnTitles.length; i++) {
@@ -39,7 +47,11 @@ const dayEntry = (day: DayData | undefined, extraDayColumnTitles: string[]) => {
  * Extra user columns are merged in using their titles as keys.
  * Day objects also have extra day columns merged in using their titles as keys.
  */
-const playerEntry = (player: UserTableItem, titles?: UserTableTitle) => {
+const playerEntry = (
+  player: UserTableItem,
+  titles?: UserTableTitle,
+  morningMessagesForPlayer?: string[]
+) => {
   const extraUserColumnTitles = titles?.extraUserColumns ?? [];
   const extraDayColumnTitles = titles?.extraDayColumns ?? [];
 
@@ -49,7 +61,9 @@ const playerEntry = (player: UserTableItem, titles?: UserTableTitle) => {
     userId: player.userId,
     role: player.role,
     isAlive: player.playerData.livingState === 'alive',
-    days: (player.days ?? []).map((day) => dayEntry(day, extraDayColumnTitles)),
+    days: (player.days ?? []).map((day, dayIndex) =>
+      dayEntry(day, extraDayColumnTitles, morningMessagesForPlayer?.[dayIndex])
+    ),
   };
 
   const extra = player.playerData.extraColumns ?? [];
@@ -74,7 +88,13 @@ export const SCRIPT_GLOBAL_NAMES = [
 
 export const createScriptGlobals = (source: ScriptSourceData = {}): Record<string, unknown> => {
   const capability = source.capability ?? 'newser';
-  const players = (source.players ?? []).map((entry) => playerEntry(entry, source.userTableTitle));
+  const players = (source.players ?? []).map((entry) =>
+    playerEntry(
+      entry,
+      source.userTableTitle,
+      source.morningMessagesList?.[entry.email.toLowerCase()]
+    )
+  );
   const currentPlayer = players.find((entry) => {
     const e = entry as Record<string, unknown>;
     if (source.currentUserId && e.userId === source.currentUserId) {

@@ -6,6 +6,7 @@ import {
   LIVING_STATE_COLUMN,
   VOTE_COLUMN,
   ACTION_COLUMN,
+  MORNING_MESSAGE_COLUMN,
 } from './applyTableUpdates';
 
 /**
@@ -42,7 +43,9 @@ export const executePlannedUpdates = (
 
       // Get the current cell value
       const { cellValue, colIdx, isDayColumn } = getCellInfo(result, idx, dayIndex, column, titles);
-      if (colIdx === -1) continue;
+      // Skip morning message updates (colIdx -6) — they're handled separately
+      // by the caller via applyMorningMessageUpdates
+      if (colIdx === -1 || colIdx === -6) continue;
 
       // Parse and evaluate the update expression
       const newValue = evaluateUpdateExpression(updateExpression, itemName, cellValue);
@@ -88,6 +91,10 @@ const getCellInfo = (
       isDayColumn: false,
     };
   } else {
+    // Special: morningMessage is stored separately (not in the user table)
+    if (colLower === MORNING_MESSAGE_COLUMN) {
+      return { cellValue: '', colIdx: -6, isDayColumn: true };
+    }
     // Special built-in fields on DayData
     if (colLower === VOTE_MULTIPLIER_COLUMN) {
       const day = user.days?.[dayIndex];
@@ -218,6 +225,49 @@ const applyCellValue = (
       ...user,
       days,
     };
+  }
+
+  return result;
+};
+
+/**
+ * Execute morning message planned updates against a morning messages list.
+ * Morning messages are stored separately from the user table, keyed by
+ * email → array indexed by day. This function evaluates the planned update
+ * expressions and applies them.
+ *
+ * @param morningMessagesList  Current morning messages
+ * @param plannedUpdates  All planned updates (only morningMessage ones are applied)
+ * @param users  The user table (for resolving playerIndex → email)
+ * @returns Updated morning messages list
+ */
+export const executeMorningMessagePlannedUpdates = (
+  morningMessagesList: Record<string, string[]>,
+  plannedUpdates: PlannedUpdate[],
+  users: UserTableItem[]
+): Record<string, string[]> => {
+  let result = { ...morningMessagesList };
+
+  for (const update of plannedUpdates) {
+    if (update.column.toLowerCase() !== MORNING_MESSAGE_COLUMN) continue;
+    if (update.dayIndex === null) continue;
+
+    const indices = update.playerIndex === null ? users.map((_, i) => i) : [update.playerIndex];
+    for (const idx of indices) {
+      if (idx < 0 || idx >= users.length) continue;
+      const user = users[idx];
+      const email = user.email.toLowerCase();
+      const messages = [...(result[email] ?? [])];
+      while (messages.length <= update.dayIndex) messages.push('');
+      const cellValue = messages[update.dayIndex] ?? '';
+      const newValue = evaluateUpdateExpression(
+        update.updateExpression,
+        update.itemName,
+        cellValue
+      );
+      messages[update.dayIndex] = newValue;
+      result[email] = messages;
+    }
   }
 
   return result;

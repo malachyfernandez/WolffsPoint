@@ -61,6 +61,10 @@ interface MarkdownEditorDialogProps {
   gameId?: string;
   showInputs?: boolean;
   showScript?: boolean;
+  /** When true (default), input-creating blocks are hidden in the script editor.
+   *  Pass false only for editors that support player input state (role messages,
+   *  morning messages). */
+  hideInputs?: boolean;
   isPreviewSideBySide?: boolean;
   includeTitle?: boolean;
   dialogSubtext?: string;
@@ -77,12 +81,14 @@ const ScriptEditorWithSources = ({
   onSubmit,
   initialScriptText,
   gameId,
+  hideInputs,
 }: {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   onSubmit: (scriptText: string) => void;
   initialScriptText?: string;
   gameId?: string;
+  hideInputs?: boolean;
 }) => {
   const { scriptSources } = useMarkdownRendererInputData();
   return (
@@ -93,6 +99,7 @@ const ScriptEditorWithSources = ({
       sources={scriptSources}
       initialScriptText={initialScriptText}
       gameId={gameId}
+      hideInputs={hideInputs}
     />
   );
 };
@@ -108,6 +115,7 @@ const MarkdownEditorDialog = ({
   gameId,
   showInputs = false,
   showScript = false,
+  hideInputs = true,
   isPreviewSideBySide = false,
   includeTitle = false,
   dialogSubtext,
@@ -412,6 +420,7 @@ const MarkdownEditorDialog = ({
           onSubmit={handleUpdateScript}
           initialScriptText={editingScriptBlock?.content}
           gameId={gameId}
+          hideInputs={hideInputs}
         />
       </InputOptionsProvider>
 

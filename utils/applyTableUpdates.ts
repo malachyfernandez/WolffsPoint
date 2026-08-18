@@ -11,6 +11,7 @@ export const VOTE_MULTIPLIER_COLUMN = 'votemultiplier';
 export const LIVING_STATE_COLUMN = 'livingstate';
 export const VOTE_COLUMN = 'vote';
 export const ACTION_COLUMN = 'action';
+export const MORNING_MESSAGE_COLUMN = 'morningmessage';
 
 /** Columns whose updates should be applied last (vote/action are high-impact). */
 const LAST_PRIORITY_COLUMNS = new Set([VOTE_COLUMN, ACTION_COLUMN]);
@@ -21,6 +22,8 @@ const isVoteMultiplier = (column: string): boolean =>
 const isLivingState = (column: string): boolean => column.toLowerCase() === LIVING_STATE_COLUMN;
 const isVote = (column: string): boolean => column.toLowerCase() === VOTE_COLUMN;
 const isAction = (column: string): boolean => column.toLowerCase() === ACTION_COLUMN;
+export const isMorningMessage = (column: string): boolean =>
+  column.toLowerCase() === MORNING_MESSAGE_COLUMN;
 
 /**
  * Apply a list of TableUpdates to a user table.
@@ -190,4 +193,42 @@ const applyCellValueMode = (current: string, value: string, mode: string): strin
   }
 
   return current;
+};
+
+/**
+ * Apply morning message updates to a morning messages list.
+ * Morning messages are stored separately from the user table, keyed by
+ * email → array indexed by day. This function applies TableUpdate entries
+ * that target the "morningMessage" column.
+ *
+ * @param morningMessagesList  Current morning messages keyed by email
+ * @param updates  All table updates (only morningMessage ones are applied)
+ * @param users  The user table (for resolving playerIndex → email)
+ * @returns Updated morning messages list
+ */
+export const applyMorningMessageUpdates = (
+  morningMessagesList: Record<string, string[]>,
+  updates: TableUpdate[],
+  users: UserTableItem[]
+): Record<string, string[]> => {
+  let result = { ...morningMessagesList };
+  for (const update of updates) {
+    if (!isMorningMessage(update.column)) continue;
+    if (update.dayIndex === null) continue;
+    const indices = update.playerIndex === null ? users.map((_, i) => i) : [update.playerIndex];
+    for (const idx of indices) {
+      if (idx < 0 || idx >= users.length) continue;
+      const user = users[idx];
+      const email = user.email.toLowerCase();
+      const messages = [...(result[email] ?? [])];
+      while (messages.length <= update.dayIndex) messages.push('');
+      messages[update.dayIndex] = applyCellValueMode(
+        messages[update.dayIndex] ?? '',
+        update.value,
+        update.mode
+      );
+      result[email] = messages;
+    }
+  }
+  return result;
 };
