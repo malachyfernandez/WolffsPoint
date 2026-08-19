@@ -28,6 +28,8 @@ interface TabbedLayoutProps {
   centered?: boolean;
   showPreviewAsPlayer?: boolean;
   onPreviewAsPlayer?: () => void;
+  /** Custom preview renderer. If provided, replaces the default markdown preview. */
+  renderPreview?: () => React.ReactNode;
 }
 
 export function TabbedLayout({
@@ -51,6 +53,7 @@ export function TabbedLayout({
   centered = false,
   showPreviewAsPlayer = false,
   onPreviewAsPlayer,
+  renderPreview,
 }: TabbedLayoutProps) {
   return (
     <Tabs value={activeTab} onValueChange={onTabChange} className="h-full flex-1">
@@ -77,16 +80,20 @@ export function TabbedLayout({
       </Tabs.Content>
 
       <Tabs.Content value="preview" className="flex-1">
-        <TownSquareComposerPreviewPane
-          includeTitle={includeTitle}
-          markdown={draftBody}
-          markdownInputState={previewInputState}
-          setMarkdownInputState={setPreviewInputState}
-          title={draftTitle}
-          centered={centered}
-          showPreviewAsPlayer={showPreviewAsPlayer}
-          onPreviewAsPlayer={onPreviewAsPlayer}
-        />
+        {renderPreview ? (
+          renderPreview()
+        ) : (
+          <TownSquareComposerPreviewPane
+            includeTitle={includeTitle}
+            markdown={draftBody}
+            markdownInputState={previewInputState}
+            setMarkdownInputState={setPreviewInputState}
+            title={draftTitle}
+            centered={centered}
+            showPreviewAsPlayer={showPreviewAsPlayer}
+            onPreviewAsPlayer={onPreviewAsPlayer}
+          />
+        )}
       </Tabs.Content>
     </Tabs>
   );

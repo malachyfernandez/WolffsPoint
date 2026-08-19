@@ -24,6 +24,8 @@ interface SideBySideLayoutProps {
   centered?: boolean;
   showPreviewAsPlayer?: boolean;
   onPreviewAsPlayer?: () => void;
+  /** Custom preview renderer. If provided, replaces the default markdown preview. */
+  renderPreview?: () => React.ReactNode;
 }
 
 export function SideBySideLayout({
@@ -45,6 +47,7 @@ export function SideBySideLayout({
   centered = false,
   showPreviewAsPlayer = false,
   onPreviewAsPlayer,
+  renderPreview,
 }: SideBySideLayoutProps) {
   return (
     <Row className="min-h-0 flex-1 gap-4">
@@ -63,16 +66,20 @@ export function SideBySideLayout({
       />
 
       <Column className="min-w-0 flex-1 gap-4">
-        <PreviewPaneSideBySide
-          markdown={draftBody}
-          title={draftTitle}
-          includeTitle={includeTitle}
-          inputState={previewInputState}
-          setInputState={setPreviewInputState}
-          centered={centered}
-          showPreviewAsPlayer={showPreviewAsPlayer}
-          onPreviewAsPlayer={onPreviewAsPlayer}
-        />
+        {renderPreview ? (
+          renderPreview()
+        ) : (
+          <PreviewPaneSideBySide
+            markdown={draftBody}
+            title={draftTitle}
+            includeTitle={includeTitle}
+            inputState={previewInputState}
+            setInputState={setPreviewInputState}
+            centered={centered}
+            showPreviewAsPlayer={showPreviewAsPlayer}
+            onPreviewAsPlayer={onPreviewAsPlayer}
+          />
+        )}
       </Column>
     </Row>
   );

@@ -32,6 +32,8 @@ interface MainContentProps {
   centered?: boolean;
   showPreviewAsPlayer?: boolean;
   onPreviewAsPlayer?: () => void;
+  /** Custom preview renderer. If provided, replaces the default markdown preview. */
+  renderPreview?: () => React.ReactNode;
 }
 
 export function MainContent({
@@ -59,6 +61,7 @@ export function MainContent({
   centered = false,
   showPreviewAsPlayer = false,
   onPreviewAsPlayer,
+  renderPreview,
 }: MainContentProps) {
   const { width } = useWindowDimensions();
   const isSideBySide = width > 800;
@@ -95,6 +98,7 @@ export function MainContent({
           centered={centered}
           showPreviewAsPlayer={showPreviewAsPlayer}
           onPreviewAsPlayer={onPreviewAsPlayer}
+          renderPreview={renderPreview}
         />
       ) : (
         <TabbedLayout
@@ -118,6 +122,7 @@ export function MainContent({
           centered={centered}
           showPreviewAsPlayer={showPreviewAsPlayer}
           onPreviewAsPlayer={onPreviewAsPlayer}
+          renderPreview={renderPreview}
         />
       )}
     </Column>
