@@ -664,7 +664,7 @@ const InsertModal = ({
       label: `${fn.name}(${fn.parameters.join(', ')})`,
       description: 'Custom function',
       category: 'function',
-      previewStatement: createFunctionStatement('fn', []),
+      previewExpression: buildFunctionCall(fn),
       onSelect: () => selectExpression(buildFunctionCall(fn)),
     }));
     // Built-in functions: only show if not already defined and not hidden
@@ -680,7 +680,7 @@ const InsertModal = ({
               category: 'function',
               dividerAfter: index === arr.length - 1,
               skipCloseOnSelect: true,
-              previewStatement: createFunctionStatement('fn', []),
+              previewExpression: callExpression,
               onSelect: () => {
                 setPendingBuiltin({ fnStatement, callExpression });
                 if (hasSeenBuiltinInfo) {
@@ -709,7 +709,7 @@ const InsertModal = ({
               description: 'Saved function',
               category: 'function',
               skipCloseOnSelect: true,
-              previewStatement: createFunctionStatement('fn', []),
+              previewExpression: callExpression,
               onSelect: () => {
                 setPendingBuiltin({ fnStatement, callExpression });
                 if (hasSeenBuiltinInfo) {
@@ -1000,6 +1000,22 @@ const InsertModal = ({
             kind: 'DropdownLiteral',
             options: ['Option 1', 'Option 2'],
             value: 'Option 1',
+            span,
+          }),
+      },
+      {
+        label: 'List',
+        description: 'List of string items',
+        category: 'string',
+        previewExpression: {
+          kind: 'ListLiteral' as const,
+          items: ['Item 1', 'Item 2'],
+          span,
+        },
+        onSelect: () =>
+          selectExpression({
+            kind: 'ListLiteral',
+            items: ['Item 1', 'Item 2'],
             span,
           }),
       },

@@ -332,6 +332,8 @@ const inferBaseType = (expr: Expression, ctx: TypeCtx): TypeInfo => {
       return { type: 'nothing', source: undefined };
     case 'ListExpression':
       return { type: 'list', source: undefined };
+    case 'ListLiteral':
+      return { type: 'list', source: undefined };
     case 'DropdownLiteral':
       return { type: 'string', source: undefined };
     case 'IdentifierExpression': {

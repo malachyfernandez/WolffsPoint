@@ -24,6 +24,7 @@ import type {
   Expression,
   FunctionTemplatePiece,
   IdentifierExpression,
+  ListLiteral,
   NamedArgument,
   Statement,
 } from '../lang/ast';
@@ -44,6 +45,7 @@ import {
   type ExpressionPathStep,
 } from './expressionEditor';
 import DropdownLiteralEditor from './DropdownLiteralEditor';
+import ListLiteralEditor from './ListLiteralEditor';
 import FunctionTemplateEditor from './FunctionTemplateEditor';
 
 const span = emptySpan();
@@ -595,6 +597,10 @@ interface ExpressionSocketProps {
   onAdd: (target: InsertTarget) => void;
   onSetExpression: CanvasProps['onSetExpression'];
   onEditMarkdown?: CanvasProps['onEditMarkdown'];
+  /** When true, renders just the block(s) without chain scaffolding
+   * (PuzzleConnectors, bg-black/5 wrapper, NothingLiteral base sockets).
+   * Used by BlockPreview in the InsertModal. */
+  preview?: boolean;
 }
 
 export const ExpressionSocket = ({
@@ -611,6 +617,7 @@ export const ExpressionSocket = ({
   onAdd,
   onSetExpression,
   onEditMarkdown,
+  preview = false,
 }: ExpressionSocketProps) => {
   const chain = useMemo(() => decomposeChain(expression), [expression]);
   const inputSources = React.useContext(InputSourcesContext);
@@ -635,6 +642,7 @@ export const ExpressionSocket = ({
       return callee;
     }
     if (expression.kind === 'MemberExpression') return `.${expression.property}`;
+    if (expression.kind === 'ListLiteral') return 'List';
     return expression.kind;
   })();
   const openExpressionModal = (
@@ -837,6 +845,20 @@ export const ExpressionSocket = ({
     );
   }
 
+  if (expression.kind === 'ListLiteral') {
+    return (
+      <Swapable
+        label={expressionLabel}
+        variant="block"
+        onSwap={() => openExpressionModal('whole', expectedType)}>
+        <ListLiteralEditor
+          expression={expression}
+          onEditItems={(next) => onSetExpression(location, next, true)}
+        />
+      </Swapable>
+    );
+  }
+
   const base = chain[0];
   // Label for the chain BASE (e.g. "players" in players.filter().map()), as
   // opposed to `expressionLabel` which describes the WHOLE expression (e.g.
@@ -939,7 +961,7 @@ export const ExpressionSocket = ({
 
   const isChain = chain.length > 1;
   const ChainContent = (
-    <Row className="items-center gap-0 rounded-lg bg-black/5">
+    <Row className={`items-center gap-0 ${preview ? '' : 'rounded-lg bg-black/5'}`}>
       {chain.map((link, index) => {
         const nextLink = chain[index + 1];
         const nextDefinition =
@@ -965,10 +987,12 @@ export const ExpressionSocket = ({
           <React.Fragment key={index}>
             {link.type === 'base' ? (
               link.expr.kind === 'NothingLiteral' ? (
-                <BooleanSocket
-                  onAdd={() => openExpressionModal('chainBase')}
-                  tooltip="Add expression"
-                />
+                preview ? null : (
+                  <BooleanSocket
+                    onAdd={() => openExpressionModal('chainBase')}
+                    tooltip="Add expression"
+                  />
+                )
               ) : link.expr.kind === 'IdentifierExpression' ? (
                 <Swapable
                   label={chainBaseLabel}
@@ -1050,29 +1074,31 @@ export const ExpressionSocket = ({
                 }
               />
             )}
-            <PuzzleConnector
-              direction="horizontal"
-              type={nextDefinition?.appliesTo === 'list' ? 'list' : expectedType}
-              tooltip="Add to chain"
-              onPress={() =>
-                onAdd({
-                  kind: 'chainInsert',
-                  location,
-                  linkIndex: index + 1,
-                  contextVariables,
-                  variableSources: entrySourceMap,
-                  inputSources,
-                  chainExpression: recomposeChain(chain.slice(0, index + 1)),
-                })
-              }
-            />
+            {!preview && (
+              <PuzzleConnector
+                direction="horizontal"
+                type={nextDefinition?.appliesTo === 'list' ? 'list' : expectedType}
+                tooltip="Add to chain"
+                onPress={() =>
+                  onAdd({
+                    kind: 'chainInsert',
+                    location,
+                    linkIndex: index + 1,
+                    contextVariables,
+                    variableSources: entrySourceMap,
+                    inputSources,
+                    chainExpression: recomposeChain(chain.slice(0, index + 1)),
+                  })
+                }
+              />
+            )}
           </React.Fragment>
         );
       })}
     </Row>
   );
 
-  return isOuterExpression ? (
+  return isOuterExpression && !preview ? (
     <ScrollView horizontal showsHorizontalScrollIndicator contentContainerStyle={{ flexGrow: 1 }}>
       {ChainContent}
     </ScrollView>
@@ -2291,36 +2317,41 @@ export const BlockPreview = ({
 }: BlockPreviewProps) => {
   if (statement) {
     return (
-      <View pointerEvents="none">
-        <StatementBlock
-          statement={statement}
-          index={0}
-          stmtPath={[]}
-          definedVariables={definedVariables}
-          definedFunctions={definedFunctions}
-          onAdd={noop}
-          onSetExpression={noop}
-          onSetStatementField={noop}
-          onDeleteStatement={noop}
-          entryKeysBySource={entryKeysBySource}
-          isTriggerContext={isTriggerContext}
-        />
-      </View>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ flexGrow: 1 }}>
+        <View pointerEvents="none">
+          <StatementBlock
+            statement={statement}
+            index={0}
+            stmtPath={[]}
+            definedVariables={definedVariables}
+            definedFunctions={definedFunctions}
+            onAdd={noop}
+            onSetExpression={noop}
+            onSetStatementField={noop}
+            onDeleteStatement={noop}
+            entryKeysBySource={entryKeysBySource}
+            isTriggerContext={isTriggerContext}
+          />
+        </View>
+      </ScrollView>
     );
   }
   if (expression) {
     return (
-      <View pointerEvents="none">
-        <ExpressionSocket
-          expression={expression}
-          location={noopLocation}
-          contextVariables={definedVariables}
-          entryKeysBySource={entryKeysBySource}
-          definedFunctions={definedFunctions}
-          onAdd={noop}
-          onSetExpression={noop}
-        />
-      </View>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ flexGrow: 1 }}>
+        <View pointerEvents="none">
+          <ExpressionSocket
+            expression={expression}
+            location={noopLocation}
+            contextVariables={definedVariables}
+            entryKeysBySource={entryKeysBySource}
+            definedFunctions={definedFunctions}
+            onAdd={noop}
+            onSetExpression={noop}
+            preview
+          />
+        </View>
+      </ScrollView>
     );
   }
   return null;

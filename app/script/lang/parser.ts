@@ -475,6 +475,27 @@ class Parser {
           span: joinSpan(token.span.start, close.span.end),
         };
       }
+      if (token.text === 'List' && this.current().text === '(') {
+        this.consumeText('(', 'Expected ( after List');
+        this.consumeText('[', 'Expected [ for List items');
+        const items: string[] = [];
+        while (!this.atEnd() && !this.checkText(']')) {
+          const itemExpr = this.parseExpression();
+          if (itemExpr.kind === 'StringLiteral') {
+            items.push(itemExpr.value);
+          }
+          if (!this.matchText(',')) {
+            break;
+          }
+        }
+        this.consumeText(']', 'Expected ] after List items');
+        const close = this.consumeText(')', 'Expected ) after List');
+        return {
+          kind: 'ListLiteral',
+          items,
+          span: joinSpan(token.span.start, close.span.end),
+        };
+      }
       if (this.matchText('=>')) {
         const body = this.checkText('{')
           ? this.parseRequiredBlock('Expected lambda body')

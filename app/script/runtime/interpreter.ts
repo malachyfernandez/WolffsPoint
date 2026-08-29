@@ -559,6 +559,7 @@ class Interpreter {
       case 'NothingLiteral':
       case 'MarkdownLiteral':
       case 'DropdownLiteral':
+      case 'ListLiteral':
         return expr;
 
       case 'IdentifierExpression':
@@ -684,6 +685,8 @@ class Interpreter {
           return expression.value;
         case 'DropdownLiteral':
           return expression.value;
+        case 'ListLiteral':
+          return expression.items;
         case 'NothingLiteral':
         case 'ErrorExpression':
           return NOTHING;

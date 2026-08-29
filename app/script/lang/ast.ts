@@ -222,6 +222,11 @@ export interface DropdownLiteral extends NodeBase {
   value: string;
 }
 
+export interface ListLiteral extends NodeBase {
+  kind: 'ListLiteral';
+  items: string[];
+}
+
 export type Expression =
   | StringLiteral
   | NumberLiteral
@@ -237,6 +242,7 @@ export type Expression =
   | LambdaExpression
   | MarkdownLiteral
   | DropdownLiteral
+  | ListLiteral
   | ErrorExpression;
 
 export const positionAt = (

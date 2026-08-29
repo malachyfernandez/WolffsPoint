@@ -57,6 +57,9 @@ export const printExpression = (
     case 'DropdownLiteral':
       result = `Dropdown(${JSON.stringify(expression.value)}, [${expression.options.map((o) => JSON.stringify(o)).join(', ')}])`;
       break;
+    case 'ListLiteral':
+      result = `List([${expression.items.map((i) => JSON.stringify(i)).join(', ')}])`;
+      break;
     case 'NumberLiteral':
       result = Number.isFinite(expression.value) ? String(expression.value) : '0';
       break;
