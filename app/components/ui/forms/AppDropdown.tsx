@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { Platform, Pressable } from 'react-native';
-import { Dialog, Popover } from 'heroui-native';
+import { Popover } from 'heroui-native';
 import { ChevronDown } from 'lucide-react-native';
 import Column from '../../layout/Column';
 import { WebDropdownPortal } from '../../../../contexts/WebDropdownProvider';
@@ -9,6 +9,7 @@ import AppDropdownItem from './dropdown/AppDropdownItem';
 import AppDropdownMenu from './dropdown/AppDropdownMenu';
 import AppDropdownTrigger from './dropdown/AppDropdownTrigger';
 import FontText from '../text/FontText';
+import ConvexDialog from '../dialog/ConvexDialog';
 
 export interface AppDropdownOption {
   value: string;
@@ -282,10 +283,10 @@ const AppDropdown = ({
             disabled={disabled}
           />
 
-          <Dialog isOpen={isOpen} onOpenChange={setIsOpen}>
-            <Dialog.Portal>
-              <Dialog.Overlay className="bg-black/20" />
-              <Dialog.Content className="border-border bg-background mx-auto w-[min(90vw,22rem)] max-w-sm rounded border-2 p-1">
+          <ConvexDialog.Root isOpen={isOpen} onOpenChange={setIsOpen}>
+            <ConvexDialog.Portal>
+              <ConvexDialog.Overlay />
+              <ConvexDialog.Content className="max-w-sm">
                 {React.createElement(
                   'div',
                   {
@@ -296,9 +297,9 @@ const AppDropdown = ({
                   },
                   dialogDropdownList
                 )}
-              </Dialog.Content>
-            </Dialog.Portal>
-          </Dialog>
+              </ConvexDialog.Content>
+            </ConvexDialog.Portal>
+          </ConvexDialog.Root>
         </>
       );
     }
