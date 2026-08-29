@@ -1,6 +1,7 @@
 import React, { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { Pressable, View, TextInput } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import type { SavedFunction } from 'hooks/useSavedFunctions';
 import ConvexDialog from '../../components/ui/dialog/ConvexDialog';
 import ShadowScrollView from '../../components/ui/ShadowScrollView';
 import Column from '../../components/layout/Column';
@@ -97,6 +98,8 @@ interface InsertModalProps {
   isTriggerContext?: boolean;
   /** Game ID, used to load tag definitions for the tag() function picker. */
   gameId?: string;
+  /** User-saved functions to show alongside built-in functions. */
+  savedFunctions?: SavedFunction[];
   onClose: () => void;
 }
 
@@ -450,6 +453,7 @@ const InsertModal = ({
   hideInputs,
   isTriggerContext,
   gameId,
+  savedFunctions,
   onRemove,
   onClose,
 }: InsertModalProps) => {
@@ -642,6 +646,32 @@ const InsertModal = ({
             };
           }
         );
+    // Saved functions: user-saved functions, shown like built-in functions.
+    // Only show if not already defined in the current script.
+    const savedItems: ModalItem[] = hideBuiltinFunctions
+      ? []
+      : (savedFunctions ?? [])
+          .filter((saved) => !existingFnNames.has(saved.name))
+          .map((saved) => {
+            const fnStatement = parseBuiltinFunction(saved.source);
+            const callExpression = buildBuiltinCall(saved.source);
+            return {
+              label: saved.name,
+              description: 'Saved function',
+              category: 'function',
+              skipCloseOnSelect: true,
+              onSelect: () => {
+                setPendingBuiltin({ fnStatement, callExpression });
+                if (hasSeenBuiltinInfo) {
+                  onInsertBuiltinFunction(fnStatement, callExpression, target);
+                  setPendingBuiltin(null);
+                  onClose();
+                } else {
+                  setShowBuiltinInfo(true);
+                }
+              },
+            };
+          });
     const seenVariables = new Set<string>();
     const variableItems: ModalItem[] = [
       ...(target.contextVariables ?? []).filter(Boolean).map((name) => {
@@ -670,6 +700,7 @@ const InsertModal = ({
     const sharedItems: ModalItem[] = [
       ...functionItems,
       ...builtinItems,
+      ...savedItems,
       ...variableItems,
       {
         label: 'tag',
@@ -830,7 +861,7 @@ const InsertModal = ({
       },
     ];
     if (target.expectedType === 'boolean')
-      return [...functionItems, ...builtinItems, ...variableItems, ...booleanItems];
+      return [...functionItems, ...builtinItems, ...savedItems, ...variableItems, ...booleanItems];
     return [
       {
         label: '0',
@@ -881,6 +912,7 @@ const InsertModal = ({
     tagDefinitions,
     isTriggerContext,
     hasSeenBuiltinInfo,
+    savedFunctions,
     onClose,
   ]);
 

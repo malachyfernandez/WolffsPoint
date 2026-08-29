@@ -1,6 +1,6 @@
 import React, { useEffect, useId, useMemo, useState } from 'react';
 import { Pressable, ScrollView, View, type TextStyle } from 'react-native';
-import { Plus, X, Pencil } from 'lucide-react-native';
+import { Plus, X, Pencil, Bookmark, BookmarkCheck } from 'lucide-react-native';
 import Column from '../../components/layout/Column';
 import Row from '../../components/layout/Row';
 import FontText from '../../components/ui/text/FontText';
@@ -29,7 +29,7 @@ import type {
 } from '../lang/ast';
 import { emptySpan } from '../lang/ast';
 import { parseExpression } from '../lang/parser';
-import { printExpression } from '../lang/printer';
+import { printExpression, printStatement } from '../lang/printer';
 import type { BlockInput, InputType } from '../registry';
 import { EXPRESSION_BLOCKS, STATEMENT_BLOCKS } from '../registry';
 import type { DefinedFunction, InsertTarget } from './InsertModal';
@@ -96,6 +96,12 @@ interface CanvasProps {
   isTriggerContext?: boolean;
   /** Game ID, used to load tag definitions for the tag() function dropdown. */
   gameId?: string;
+  /** Names of functions the user has saved to their library. */
+  savedFunctionNames?: string[];
+  /** Save a function to the user's library (by printing its source). */
+  onSaveFunction?: (name: string, source: string) => void;
+  /** Remove a function from the user's library. */
+  onUnsaveFunction?: (name: string) => void;
 }
 
 const appendLocation = (
@@ -1614,6 +1620,33 @@ const DeleteButton = ({ onPress }: { onPress: () => void }) => {
   );
 };
 
+const SaveFunctionButton = ({
+  isSaved,
+  onSave,
+  onUnsave,
+}: {
+  isSaved: boolean;
+  onSave: () => void;
+  onUnsave: () => void;
+}) => {
+  const tooltipId = useId();
+  const { setHovered } = useTooltip(tooltipId, isSaved ? 'Saved' : 'Save to library');
+  return (
+    <Pressable
+      accessibilityRole="button"
+      onPress={isSaved ? onUnsave : onSave}
+      className={isSaved ? 'bg-green-500/20 rounded' : ''}
+      onHoverIn={() => setHovered(true)}
+      onHoverOut={() => setHovered(false)}>
+      {isSaved ? (
+        <BookmarkCheck size={16} color="#1a1a1a" />
+      ) : (
+        <Bookmark size={16} color="#1a1a1a" />
+      )}
+    </Pressable>
+  );
+};
+
 const StatementBlock = ({
   statement,
   index,
@@ -1627,6 +1660,9 @@ const StatementBlock = ({
   entryKeysBySource,
   onEditMarkdown,
   isTriggerContext,
+  savedFunctionNames,
+  onSaveFunction,
+  onUnsaveFunction,
 }: Omit<CanvasProps, 'statements'> & { statement: Statement; index: number }) => {
   const currentPath = [...stmtPath!, index];
   const contextVariables = definedVariables;
@@ -1757,6 +1793,9 @@ const StatementBlock = ({
               entryKeysBySource,
               onEditMarkdown,
               isTriggerContext,
+              savedFunctionNames,
+              onSaveFunction,
+              onUnsaveFunction,
             }}
             stmtPath={currentPath}
           />
@@ -1816,6 +1855,9 @@ const StatementBlock = ({
               entryKeysBySource,
               onEditMarkdown,
               isTriggerContext,
+              savedFunctionNames,
+              onSaveFunction,
+              onUnsaveFunction,
             }}
             stmtPath={currentPath}
           />
@@ -1969,6 +2011,9 @@ const StatementBlock = ({
               entryKeysBySource,
               onEditMarkdown,
               isTriggerContext,
+              savedFunctionNames,
+              onSaveFunction,
+              onUnsaveFunction,
             }}
             stmtPath={currentPath}
           />
@@ -2020,6 +2065,9 @@ const StatementBlock = ({
               entryKeysBySource,
               onEditMarkdown,
               isTriggerContext,
+              savedFunctionNames,
+              onSaveFunction,
+              onUnsaveFunction,
             }}
             stmtPath={currentPath}
           />
@@ -2051,6 +2099,9 @@ const StatementBlock = ({
               entryKeysBySource,
               onEditMarkdown,
               isTriggerContext,
+              savedFunctionNames,
+              onSaveFunction,
+              onUnsaveFunction,
             }}
             stmtPath={currentPath}
           />
@@ -2075,7 +2126,18 @@ const StatementBlock = ({
           <Column className="gap-2">
             <Row className="items-center justify-between">
               <FontText weight="medium">Function</FontText>
-              <DeleteButton onPress={() => onDeleteStatement(currentPath)} />
+              <Row className="items-center gap-1">
+                {onSaveFunction && onUnsaveFunction && (
+                  <SaveFunctionButton
+                    isSaved={savedFunctionNames?.includes(statement.name) ?? false}
+                    onSave={() =>
+                      onSaveFunction(statement.name, printStatement(statement))
+                    }
+                    onUnsave={() => onUnsaveFunction(statement.name)}
+                  />
+                )}
+                <DeleteButton onPress={() => onDeleteStatement(currentPath)} />
+              </Row>
             </Row>
             <FunctionTemplateEditor
               template={statement.template ?? []}
@@ -2101,6 +2163,9 @@ const StatementBlock = ({
               entryKeysBySource,
               onEditMarkdown,
               isTriggerContext,
+              savedFunctionNames,
+              onSaveFunction,
+              onUnsaveFunction,
             }}
             stmtPath={currentPath}
           />
@@ -2188,6 +2253,9 @@ const Canvas = ({
   onEditMarkdown,
   isTriggerContext,
   gameId,
+  savedFunctionNames,
+  onSaveFunction,
+  onUnsaveFunction,
 }: CanvasProps) => {
   // Only load tag definitions at the root level (stmtPath is empty).
   // Nested Canvas instances inherit the context from the root.
@@ -2224,6 +2292,9 @@ const Canvas = ({
               onDeleteStatement={onDeleteStatement}
               entryKeysBySource={entryKeysBySource}
               isTriggerContext={isTriggerContext}
+              savedFunctionNames={savedFunctionNames}
+              onSaveFunction={onSaveFunction}
+              onUnsaveFunction={onUnsaveFunction}
             />
             <PuzzleConnector
               direction="vertical"

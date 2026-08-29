@@ -26,6 +26,7 @@ import { createScriptGlobals, type ScriptSourceData } from '../runtime/sources';
 import { traceEntrySource } from './expressionEditor';
 import type { EntryKeysBySource } from './typeInference';
 import { useUndoRedo, useCreateUndoSnapshot } from '../../../hooks/useUndoRedo';
+import { useSavedFunctions } from '../../../hooks/useSavedFunctions';
 
 interface ScriptEditorDialogProps {
   isOpen: boolean;
@@ -266,6 +267,8 @@ const ScriptEditorDialog = ({
   } | null>(null);
   const [hasModifications, setHasModifications] = useState(false);
   const [isLeaveConfirmDialogOpen, setIsLeaveConfirmDialogOpen] = useState(false);
+  const { savedFunctions, savedFunctionNames, saveFunction, unsaveFunction } =
+    useSavedFunctions();
 
   useEffect(() => {
     if (!isOpen) return;
@@ -684,6 +687,9 @@ const ScriptEditorDialog = ({
                       inputSources={inputSources}
                       isTriggerContext={isTriggerContext}
                       gameId={gameId}
+                      savedFunctionNames={savedFunctionNames}
+                      onSaveFunction={saveFunction}
+                      onUnsaveFunction={unsaveFunction}
                       onEditMarkdown={(value, onSave) =>
                         setMarkdownEditor({ isOpen: true, value, onSave })
                       }
@@ -722,6 +728,7 @@ const ScriptEditorDialog = ({
               hideInputs={hideInputs}
               isTriggerContext={isTriggerContext}
               gameId={gameId}
+              savedFunctions={savedFunctions}
               onClose={() => setInsertTarget(null)}
             />
           </ConvexDialog.Content>

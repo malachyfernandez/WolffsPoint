@@ -115,4 +115,9 @@ export const DATA_CONFIG: DataConfigType = {
     privacy: 'PUBLIC',
     defaultValue: {},
   },
+  savedFunctions: {
+    type: 'variable',
+    privacy: 'PRIVATE',
+    defaultValue: [],
+  },
 };
