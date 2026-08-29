@@ -541,7 +541,6 @@ const InsertModal = ({
               label: block.name,
               description: block.description,
               category: block.category,
-              previewStatement: buildStatementFromRegistry(block.id),
               onSelect: () =>
                 onInsertStatement(
                   buildStatementFromRegistry(block.id),
@@ -568,7 +567,6 @@ const InsertModal = ({
           label: template.label,
           description: template.description,
           category: 'control',
-          previewStatement: template.build(),
           onSelect: () =>
             onInsertStatement(template.build(), target.path ?? [], target.mode === 'swap'),
         })),
