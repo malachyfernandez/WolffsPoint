@@ -680,101 +680,121 @@ export const ExpressionSocket = ({
   if (expression.kind === 'BinaryExpression') {
     const operandType = ['AND', 'OR'].includes(expression.operator) ? 'boolean' : 'expression';
     const operatorSet = isMathOperator(expression.operator) ? MATH_OPERATORS : BOOLEAN_OPERATORS;
-    return (
+    const binaryContent = (
+      <Row
+        className="items-center gap-1"
+        style={{ borderRadius: expectedType === 'boolean' ? 0 : 6 }}>
+        <ExpressionSocket
+          expression={expression.left}
+          location={appendLocation(location, { kind: 'binaryLeft' })}
+          expectedType={operandType}
+          contextVariables={contextVariables}
+          entryKeysBySource={entryKeysBySource}
+          entrySource={entrySource}
+          entrySourceMap={entrySourceMap}
+          isOuterExpression={false}
+          definedFunctions={definedFunctions}
+          label="left side"
+          onAdd={onAdd}
+          onSetExpression={onSetExpression}
+          onEditMarkdown={onEditMarkdown}
+        />
+        <AppDropdown
+          options={operatorSet.map((operator) => ({ value: operator, label: operator }))}
+          value={expression.operator}
+          onValueChange={(operator) =>
+            onSetExpression(
+              location,
+              { ...expression, operator: operator as BinaryOperator },
+              true
+            )
+          }
+          triggerClassName="min-w-16 !py-1 !px-2 text-sm"
+          isInDialog
+          allowUnselect={false}
+        />
+        <ExpressionSocket
+          expression={expression.right}
+          location={appendLocation(location, { kind: 'binaryRight' })}
+          expectedType={operandType}
+          contextVariables={contextVariables}
+          entryKeysBySource={entryKeysBySource}
+          entrySource={entrySource}
+          entrySourceMap={entrySourceMap}
+          isOuterExpression={false}
+          definedFunctions={definedFunctions}
+          label="right side"
+          onAdd={onAdd}
+          onSetExpression={onSetExpression}
+          onEditMarkdown={onEditMarkdown}
+        />
+      </Row>
+    );
+    const binarySwapable = (
       <Swapable
         label={expressionLabel}
         variant="block"
         onSwap={() => openExpressionModal('whole', expectedType)}>
-        <Row
-          className="items-center gap-1"
-          style={{ borderRadius: expectedType === 'boolean' ? 0 : 6 }}>
-          <ExpressionSocket
-            expression={expression.left}
-            location={appendLocation(location, { kind: 'binaryLeft' })}
-            expectedType={operandType}
-            contextVariables={contextVariables}
-            entryKeysBySource={entryKeysBySource}
-            entrySource={entrySource}
-            entrySourceMap={entrySourceMap}
-            isOuterExpression={false}
-            definedFunctions={definedFunctions}
-            label="left side"
-            onAdd={onAdd}
-            onSetExpression={onSetExpression}
-            onEditMarkdown={onEditMarkdown}
-          />
-          <AppDropdown
-            options={operatorSet.map((operator) => ({ value: operator, label: operator }))}
-            value={expression.operator}
-            onValueChange={(operator) =>
-              onSetExpression(
-                location,
-                { ...expression, operator: operator as BinaryOperator },
-                true
-              )
-            }
-            triggerClassName="min-w-16 !py-1 !px-2 text-sm"
-            isInDialog
-            allowUnselect={false}
-          />
-          <ExpressionSocket
-            expression={expression.right}
-            location={appendLocation(location, { kind: 'binaryRight' })}
-            expectedType={operandType}
-            contextVariables={contextVariables}
-            entryKeysBySource={entryKeysBySource}
-            entrySource={entrySource}
-            entrySourceMap={entrySourceMap}
-            isOuterExpression={false}
-            definedFunctions={definedFunctions}
-            label="right side"
-            onAdd={onAdd}
-            onSetExpression={onSetExpression}
-            onEditMarkdown={onEditMarkdown}
-          />
-        </Row>
+        {binaryContent}
       </Swapable>
+    );
+    return isOuterExpression ? (
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ flexGrow: 1 }}>
+        {binarySwapable}
+      </ScrollView>
+    ) : (
+      binarySwapable
     );
   }
 
   if (expression.kind === 'UnaryExpression') {
-    return (
+    const unaryContent = (
+      <Row
+        className="items-center gap-1"
+        style={{ borderRadius: expectedType === 'boolean' ? 0 : 6 }}>
+        <FontText weight="medium" className="text-sm">
+          {expression.operator === 'ISTRUTHY'
+            ? 'isTruthy'
+            : expression.operator === 'ISFALSY'
+              ? 'isFalsy'
+              : expression.operator}
+        </FontText>
+        <ExpressionSocket
+          expression={expression.operand}
+          location={appendLocation(location, { kind: 'unaryOperand' })}
+          expectedType={
+            expression.operator === 'NOT'
+              ? 'boolean'
+              : expression.operator === 'ISTRUTHY' || expression.operator === 'ISFALSY'
+                ? 'expression'
+                : 'number'
+          }
+          contextVariables={contextVariables}
+          entryKeysBySource={entryKeysBySource}
+          entrySource={entrySource}
+          entrySourceMap={entrySourceMap}
+          isOuterExpression={false}
+          definedFunctions={definedFunctions}
+          onAdd={onAdd}
+          onSetExpression={onSetExpression}
+          onEditMarkdown={onEditMarkdown}
+        />
+      </Row>
+    );
+    const unarySwapable = (
       <Swapable
         label={expressionLabel}
         variant="block"
         onSwap={() => openExpressionModal('whole', expectedType)}>
-        <Row
-          className="items-center gap-1"
-          style={{ borderRadius: expectedType === 'boolean' ? 0 : 6 }}>
-          <FontText weight="medium" className="text-sm">
-            {expression.operator === 'ISTRUTHY'
-              ? 'isTruthy'
-              : expression.operator === 'ISFALSY'
-                ? 'isFalsy'
-                : expression.operator}
-          </FontText>
-          <ExpressionSocket
-            expression={expression.operand}
-            location={appendLocation(location, { kind: 'unaryOperand' })}
-            expectedType={
-              expression.operator === 'NOT'
-                ? 'boolean'
-                : expression.operator === 'ISTRUTHY' || expression.operator === 'ISFALSY'
-                  ? 'expression'
-                  : 'number'
-            }
-            contextVariables={contextVariables}
-            entryKeysBySource={entryKeysBySource}
-            entrySource={entrySource}
-            entrySourceMap={entrySourceMap}
-            isOuterExpression={false}
-            definedFunctions={definedFunctions}
-            onAdd={onAdd}
-            onSetExpression={onSetExpression}
-            onEditMarkdown={onEditMarkdown}
-          />
-        </Row>
+        {unaryContent}
       </Swapable>
+    );
+    return isOuterExpression ? (
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ flexGrow: 1 }}>
+        {unarySwapable}
+      </ScrollView>
+    ) : (
+      unarySwapable
     );
   }
 
@@ -2237,6 +2257,73 @@ const StatementBlock = ({
       {content}
     </Swapable>
   );
+};
+
+// ── BlockPreview ────────────────────────────────────────────────────────
+// Renders a Statement or Expression as a non-interactive visual preview,
+// using the exact same rendering as the Canvas but with pointer events
+// disabled and no-op callbacks. Used in the InsertModal to show users what
+// a block will look like before they insert it.
+
+const noop = () => {};
+const noopLocation: ExpressionLocation = {
+  statementPath: [0],
+  slot: { kind: 'callArg', name: '' },
+  expressionPath: [],
+};
+
+interface BlockPreviewProps {
+  statement?: Statement;
+  expression?: Expression;
+  entryKeysBySource?: Record<string, string[]>;
+  definedFunctions?: DefinedFunction[];
+  definedVariables?: string[];
+  isTriggerContext?: boolean;
+}
+
+export const BlockPreview = ({
+  statement,
+  expression,
+  entryKeysBySource,
+  definedFunctions,
+  definedVariables = [],
+  isTriggerContext,
+}: BlockPreviewProps) => {
+  if (statement) {
+    return (
+      <View pointerEvents="none">
+        <StatementBlock
+          statement={statement}
+          index={0}
+          stmtPath={[]}
+          definedVariables={definedVariables}
+          definedFunctions={definedFunctions}
+          onAdd={noop}
+          onSetExpression={noop}
+          onSetStatementField={noop}
+          onDeleteStatement={noop}
+          entryKeysBySource={entryKeysBySource}
+          isTriggerContext={isTriggerContext}
+        />
+      </View>
+    );
+  }
+  if (expression) {
+    return (
+      <View pointerEvents="none">
+        <ExpressionSocket
+          expression={expression}
+          location={noopLocation}
+          contextVariables={definedVariables}
+          entryKeysBySource={entryKeysBySource}
+          definedFunctions={definedFunctions}
+          onAdd={noop}
+          onSetExpression={noop}
+        />
+      </View>
+    );
+  }
+  return null;
 };
 
 const Canvas = ({

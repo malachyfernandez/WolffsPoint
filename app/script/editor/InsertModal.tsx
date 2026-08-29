@@ -31,6 +31,7 @@ import {
   parseLiteralValue,
 } from './editorReducer';
 import type { ExpressionLocation } from './expressionEditor';
+import { BlockPreview } from './Canvas';
 import {
   inferExpressionType,
   inferBlockResultType,
@@ -384,6 +385,9 @@ interface ModalItem {
   /** When set, the item is shown greyed out and not clickable.
    * The string is shown as a tooltip explaining why it's disabled. */
   disabledReason?: string;
+  /** AST node to render as a visual preview (non-interactive). */
+  previewStatement?: Statement;
+  previewExpression?: Expression;
 }
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -418,9 +422,24 @@ const CROSS_CATEGORY_BLOCKS: { blockId: string; category: string }[] = [
 
 /** Renders a single modal item. When disabled, shows a hover-following tooltip
  * explaining why (same tooltip system as the script editor canvas). */
-const ModalItemRow = ({ item, onSelect }: { item: ModalItem; onSelect: () => void }) => {
+const ModalItemRow = ({
+  item,
+  onSelect,
+  entryKeysBySource,
+  definedFunctions,
+  definedVariables,
+  isTriggerContext,
+}: {
+  item: ModalItem;
+  onSelect: () => void;
+  entryKeysBySource?: Record<string, string[]>;
+  definedFunctions?: DefinedFunction[];
+  definedVariables?: string[];
+  isTriggerContext?: boolean;
+}) => {
   const tooltipId = useId();
   const { setHovered } = useTooltip(tooltipId, item.disabledReason);
+  const hasPreview = item.previewStatement || item.previewExpression;
   return (
     <Pressable
       onPress={() => !item.disabledReason && onSelect()}
@@ -429,9 +448,20 @@ const ModalItemRow = ({ item, onSelect }: { item: ModalItem; onSelect: () => voi
       className={`border-subtle-border rounded-lg border px-3 py-2 ${
         item.disabledReason ? 'opacity-40' : 'hover:bg-text/5'
       }`}>
-      <FontText weight="medium" className="text-sm">
-        {item.label}
-      </FontText>
+      {hasPreview ? (
+        <BlockPreview
+          statement={item.previewStatement}
+          expression={item.previewExpression}
+          entryKeysBySource={entryKeysBySource}
+          definedFunctions={definedFunctions}
+          definedVariables={definedVariables}
+          isTriggerContext={isTriggerContext}
+        />
+      ) : (
+        <FontText weight="medium" className="text-sm">
+          {item.label}
+        </FontText>
+      )}
       <FontText variant="subtext" className="text-xs">
         {item.disabledReason ?? item.description}
       </FontText>
@@ -511,6 +541,7 @@ const InsertModal = ({
               label: block.name,
               description: block.description,
               category: block.category,
+              previewStatement: buildStatementFromRegistry(block.id),
               onSelect: () =>
                 onInsertStatement(
                   buildStatementFromRegistry(block.id),
@@ -537,6 +568,7 @@ const InsertModal = ({
           label: template.label,
           description: template.description,
           category: 'control',
+          previewStatement: template.build(),
           onSelect: () =>
             onInsertStatement(template.build(), target.path ?? [], target.mode === 'swap'),
         })),
@@ -563,6 +595,7 @@ const InsertModal = ({
           label: block.name,
           description: block.description,
           category: block.category,
+          previewExpression: buildMethodExpression(block.id),
           onSelect: () => onInsertChainLink(target, block.id),
           disabledReason,
         };
@@ -580,6 +613,13 @@ const InsertModal = ({
           label,
           description,
           category: 'math',
+          previewExpression: {
+            kind: 'BinaryExpression' as const,
+            operator,
+            left: { kind: 'NothingLiteral' as const, span },
+            right: defaultRightForOperator(operator),
+            span,
+          },
           onSelect: () =>
             onInsertExpression(
               {
@@ -596,6 +636,13 @@ const InsertModal = ({
           label,
           description: operator,
           category: 'operator',
+          previewExpression: {
+            kind: 'BinaryExpression' as const,
+            operator,
+            left: { kind: 'NothingLiteral' as const, span },
+            right: defaultRightForOperator(operator),
+            span,
+          },
           onSelect: () =>
             onInsertExpression(
               {
@@ -617,6 +664,7 @@ const InsertModal = ({
       label: `${fn.name}(${fn.parameters.join(', ')})`,
       description: 'Custom function',
       category: 'function',
+      previewStatement: createFunctionStatement('fn', []),
       onSelect: () => selectExpression(buildFunctionCall(fn)),
     }));
     // Built-in functions: only show if not already defined and not hidden
@@ -632,6 +680,7 @@ const InsertModal = ({
               category: 'function',
               dividerAfter: index === arr.length - 1,
               skipCloseOnSelect: true,
+              previewStatement: createFunctionStatement('fn', []),
               onSelect: () => {
                 setPendingBuiltin({ fnStatement, callExpression });
                 if (hasSeenBuiltinInfo) {
@@ -660,6 +709,7 @@ const InsertModal = ({
               description: 'Saved function',
               category: 'function',
               skipCloseOnSelect: true,
+              previewStatement: createFunctionStatement('fn', []),
               onSelect: () => {
                 setPendingBuiltin({ fnStatement, callExpression });
                 if (hasSeenBuiltinInfo) {
@@ -680,6 +730,7 @@ const InsertModal = ({
           label: name,
           description: 'Variable',
           category: 'variable',
+          previewExpression: { kind: 'IdentifierExpression' as const, name, span },
           onSelect: () => selectExpression({ kind: 'IdentifierExpression', name, span }),
         };
       }),
@@ -689,6 +740,7 @@ const InsertModal = ({
           label: name,
           description: 'Variable',
           category: 'variable',
+          previewExpression: buildVariableReference(name),
           onSelect: () => selectExpression(buildVariableReference(name)),
         })),
     ];
@@ -697,6 +749,18 @@ const InsertModal = ({
     const otherExpressionBlocks = EXPRESSION_BLOCKS.filter(
       (b) => b.id !== 'entry' && b.id !== 'index'
     );
+    const tagExpression: Expression = {
+      kind: 'CallExpression',
+      callee: { kind: 'IdentifierExpression', name: 'tag', span },
+      arguments: [
+        {
+          kind: 'PositionalArgument' as const,
+          value: { kind: 'StringLiteral' as const, value: 'Tag name', span },
+          span,
+        },
+      ],
+      span,
+    };
     const sharedItems: ModalItem[] = [
       ...functionItems,
       ...builtinItems,
@@ -706,19 +770,8 @@ const InsertModal = ({
         label: 'tag',
         description: 'Encode a tag name as a tag string',
         category: 'data',
-        onSelect: () =>
-          selectExpression({
-            kind: 'CallExpression',
-            callee: { kind: 'IdentifierExpression', name: 'tag', span },
-            arguments: [
-              {
-                kind: 'PositionalArgument' as const,
-                value: { kind: 'StringLiteral' as const, value: 'Tag name', span },
-                span,
-              },
-            ],
-            span,
-          }),
+        previewExpression: tagExpression,
+        onSelect: () => selectExpression(tagExpression),
       },
       ...(entryBlock
         ? [
@@ -726,6 +779,7 @@ const InsertModal = ({
               label: entryBlock.name,
               description: entryBlock.description,
               category: 'data',
+              previewExpression: buildMethodExpression(entryBlock.id),
               onSelect: () => selectExpression(buildMethodExpression(entryBlock.id)),
             },
           ]
@@ -736,6 +790,7 @@ const InsertModal = ({
               label: indexBlock.name,
               description: indexBlock.description,
               category: 'data',
+              previewExpression: buildMethodExpression(indexBlock.id),
               onSelect: () => selectExpression(buildMethodExpression(indexBlock.id)),
               dividerAfter: true,
             },
@@ -745,46 +800,57 @@ const InsertModal = ({
         label: source.name,
         description: source.description,
         category: 'data',
+        previewExpression: { kind: 'IdentifierExpression' as const, name: source.name, span },
         onSelect: () => selectExpression({ kind: 'IdentifierExpression', name: source.name, span }),
       })),
       ...otherExpressionBlocks.map((block) => ({
         label: block.name,
         description: block.description,
         category: block.category,
+        previewExpression: buildMethodExpression(block.id),
         onSelect: () => selectExpression(buildMethodExpression(block.id)),
         dividerAfter: block.id === 'sort' || block.id === 'lower',
       })),
       // Cross-category duplicates: blocks that naturally belong in multiple tabs.
       // These are copies of existing items with a different category so users
       // can find them where they'd expect them, regardless of the primary tab.
-      ...CROSS_CATEGORY_BLOCKS.map(({ blockId, category }) => {
+      ...(CROSS_CATEGORY_BLOCKS.map(({ blockId, category }) => {
         const block = EXPRESSION_BLOCKS.find((b) => b.id === blockId);
         if (!block) return null;
         return {
           label: block.name,
           description: block.description,
           category,
+          previewExpression: buildMethodExpression(block.id),
           onSelect: () => selectExpression(buildMethodExpression(block.id)),
-        };
-      }).filter((item): item is ModalItem => item !== null),
+        } as ModalItem;
+      }).filter((item): item is ModalItem => item !== null)),
     ];
     const booleanItems: ModalItem[] = [
       {
         label: 'true',
         description: 'Boolean',
         category: 'boolean',
+        previewExpression: { kind: 'BooleanLiteral' as const, value: true, span },
         onSelect: () => selectExpression({ kind: 'BooleanLiteral', value: true, span }),
       },
       {
         label: 'false',
         description: 'Boolean',
         category: 'boolean',
+        previewExpression: { kind: 'BooleanLiteral' as const, value: false, span },
         onSelect: () => selectExpression({ kind: 'BooleanLiteral', value: false, span }),
       },
       {
         label: 'isTruthy',
         description: 'Check if value is truthy',
         category: 'boolean',
+        previewExpression: {
+          kind: 'UnaryExpression' as const,
+          operator: 'ISTRUTHY',
+          operand: { kind: 'NothingLiteral' as const, span },
+          span,
+        },
         onSelect: () =>
           selectExpression({
             kind: 'UnaryExpression',
@@ -797,6 +863,12 @@ const InsertModal = ({
         label: 'isFalsy',
         description: 'Check if value is falsy',
         category: 'boolean',
+        previewExpression: {
+          kind: 'UnaryExpression' as const,
+          operator: 'ISFALSY',
+          operand: { kind: 'NothingLiteral' as const, span },
+          span,
+        },
         onSelect: () =>
           selectExpression({
             kind: 'UnaryExpression',
@@ -810,6 +882,13 @@ const InsertModal = ({
         description: operator,
         category: 'operator',
         dividerAfter: operator === '<=',
+        previewExpression: {
+          kind: 'BinaryExpression' as const,
+          operator,
+          left: { kind: 'NothingLiteral' as const, span },
+          right: { kind: 'NothingLiteral' as const, span },
+          span,
+        },
         onSelect: () =>
           selectExpression({
             kind: 'BinaryExpression',
@@ -823,6 +902,12 @@ const InsertModal = ({
         label: 'not',
         description: 'Negate a boolean',
         category: 'operator',
+        previewExpression: {
+          kind: 'UnaryExpression' as const,
+          operator: 'NOT',
+          operand: { kind: 'NothingLiteral' as const, span },
+          span,
+        },
         onSelect: () =>
           selectExpression({
             kind: 'UnaryExpression',
@@ -837,6 +922,13 @@ const InsertModal = ({
         label,
         description,
         category: 'math',
+        previewExpression: {
+          kind: 'BinaryExpression' as const,
+          operator,
+          left: { kind: 'NothingLiteral' as const, span },
+          right: { kind: 'NothingLiteral' as const, span },
+          span,
+        },
         onSelect: () =>
           selectExpression({
             kind: 'BinaryExpression',
@@ -851,6 +943,12 @@ const InsertModal = ({
         description: 'Negate a number',
         category: 'math',
         dividerAfter: true,
+        previewExpression: {
+          kind: 'UnaryExpression' as const,
+          operator: '-',
+          operand: { kind: 'NothingLiteral' as const, span },
+          span,
+        },
         onSelect: () =>
           selectExpression({
             kind: 'UnaryExpression',
@@ -868,6 +966,7 @@ const InsertModal = ({
         description: 'Number',
         category: 'math',
         dividerAfter: true,
+        previewExpression: { kind: 'NumberLiteral' as const, value: 0, span },
         onSelect: () => selectExpression({ kind: 'NumberLiteral', value: 0, span }),
       },
       {
@@ -875,12 +974,14 @@ const InsertModal = ({
         description: 'Text',
         category: 'string',
         dividerAfter: true,
+        previewExpression: { kind: 'StringLiteral' as const, value: '', span },
         onSelect: () => selectExpression({ kind: 'StringLiteral', value: '', span }),
       },
       {
         label: 'Markdown',
         description: 'Markdown text literal',
         category: 'string',
+        previewExpression: { kind: 'MarkdownLiteral' as const, value: '', span },
         onSelect: () => selectExpression({ kind: 'MarkdownLiteral', value: '', span }),
       },
       {
@@ -888,6 +989,12 @@ const InsertModal = ({
         description: 'Selectable options',
         category: 'string',
         dividerAfter: true,
+        previewExpression: {
+          kind: 'DropdownLiteral' as const,
+          options: ['Option 1', 'Option 2'],
+          value: 'Option 1',
+          span,
+        },
         onSelect: () =>
           selectExpression({
             kind: 'DropdownLiteral',
@@ -1159,7 +1266,14 @@ const InsertModal = ({
               nestedScrollEnabled>
               {visibleItems.map((item, index) => (
                 <React.Fragment key={`${item.category}-${item.label}-${index}`}>
-                  <ModalItemRow item={item} onSelect={() => handleSelect(item)} />
+                  <ModalItemRow
+                    item={item}
+                    onSelect={() => handleSelect(item)}
+                    entryKeysBySource={entryKeysBySource}
+                    definedFunctions={definedFunctions}
+                    definedVariables={definedVariables}
+                    isTriggerContext={isTriggerContext}
+                  />
                   {item.dividerAfter && (
                     <View className="border-subtle-border my-1 h-px border-t" />
                   )}
