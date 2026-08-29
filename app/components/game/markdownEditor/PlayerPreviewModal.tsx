@@ -143,7 +143,7 @@ const PlayerPreviewModal = ({
             subtext={roleName ? `Role: ${roleName}` : 'Select any player to preview as'}
           />
 
-          <Column className="gap-3 pt-3">
+          <Column className="min-h-0 flex-1 gap-3 pt-3">
             {/* Player selector — filtered by role if roleName is provided */}
             {!hasRolePlayers ? (
               <View className="border-subtle-border bg-text/5 rounded-lg border p-4">
