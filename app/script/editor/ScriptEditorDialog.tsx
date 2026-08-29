@@ -729,6 +729,7 @@ const ScriptEditorDialog = ({
               isTriggerContext={isTriggerContext}
               gameId={gameId}
               savedFunctions={savedFunctions}
+              onUnsaveFunction={unsaveFunction}
               onClose={() => setInsertTarget(null)}
             />
           </ConvexDialog.Content>

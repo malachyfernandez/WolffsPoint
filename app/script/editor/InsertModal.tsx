@@ -1,8 +1,10 @@
 import React, { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { Pressable, View, TextInput } from 'react-native';
+import { X } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { SavedFunction } from 'hooks/useSavedFunctions';
 import ConvexDialog from '../../components/ui/dialog/ConvexDialog';
+import UnsavedChangesDialog from '../../components/ui/dialog/UnsavedChangesDialog';
 import ShadowScrollView from '../../components/ui/ShadowScrollView';
 import Column from '../../components/layout/Column';
 import { useTooltip } from './useTooltip';
@@ -13,6 +15,7 @@ import { CloseButton } from '../../components/game/markdownEditor';
 import type { BinaryOperator, Expression, FunctionTemplatePiece, Statement } from '../lang/ast';
 import { emptySpan } from '../lang/ast';
 import { parseScript } from '../lang/parser';
+import { printStatement } from '../lang/printer';
 import type { InputType } from '../registry';
 import { STATEMENT_BLOCKS, EXPRESSION_BLOCKS } from '../registry';
 import { useValue } from 'hooks/useData';
@@ -101,6 +104,8 @@ interface InsertModalProps {
   gameId?: string;
   /** User-saved functions to show alongside built-in functions. */
   savedFunctions?: SavedFunction[];
+  /** Called when the user clicks the X button on a saved function item. */
+  onUnsaveFunction?: (name: string) => void;
   onClose: () => void;
 }
 
@@ -253,6 +258,18 @@ const parseBuiltinFunction = (source: string): Statement => {
   return ast.statements[0];
 };
 
+/** Build a DefinedFunction from a parsed function source, for preview rendering. */
+const buildDefinedFunction = (source: string): DefinedFunction | undefined => {
+  const fnStatement = parseBuiltinFunction(source);
+  if (fnStatement.kind !== 'FunctionStatement') return undefined;
+  return {
+    name: fnStatement.name,
+    parameters: fnStatement.parameters,
+    template: fnStatement.template,
+    bodyStatements: fnStatement.body.statements,
+  };
+};
+
 /** Build a call expression for a built-in function from its source. */
 const buildBuiltinCall = (source: string): Expression => {
   const fnStatement = parseBuiltinFunction(source);
@@ -388,6 +405,13 @@ interface ModalItem {
   /** AST node to render as a visual preview (non-interactive). */
   previewStatement?: Statement;
   previewExpression?: Expression;
+  /** Additional function definitions needed to render the preview correctly
+   * (e.g. the function being previewed, which isn't in the script yet). */
+  previewDefinedFunctions?: DefinedFunction[];
+  /** When true, the item is highlighted green to indicate it matches a saved function. */
+  isSavedMatch?: boolean;
+  /** When set, renders an X button in the top-right corner that calls this handler. */
+  onUnsave?: () => void;
 }
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -445,15 +469,30 @@ const ModalItemRow = ({
       onPress={() => !item.disabledReason && onSelect()}
       onHoverIn={() => item.disabledReason && setHovered(true)}
       onHoverOut={() => setHovered(false)}
-      className={`border-subtle-border rounded-lg border px-3 py-2 ${
-        item.disabledReason ? 'opacity-40' : 'hover:bg-text/5'
+      className={`relative border-subtle-border rounded-lg border px-3 py-2 ${
+        item.disabledReason
+          ? 'opacity-40'
+          : item.isSavedMatch
+            ? 'border-green-500/40 bg-green-500/5 hover:bg-green-500/10'
+            : 'hover:bg-text/5'
       }`}>
+      {item.onUnsave && (
+        <Pressable
+          onPress={(e) => {
+            e.stopPropagation();
+            item.onUnsave?.();
+          }}
+          className="absolute right-1 top-1 z-10 h-6 w-6 items-center justify-center rounded-full bg-text/10 hover:bg-red-500/20">
+          <X size={14} color="rgb(46, 41, 37)" />
+        </Pressable>
+      )}
       {hasPreview ? (
         <BlockPreview
           statement={item.previewStatement}
           expression={item.previewExpression}
           entryKeysBySource={entryKeysBySource}
           definedFunctions={definedFunctions}
+          previewDefinedFunctions={item.previewDefinedFunctions}
           definedVariables={definedVariables}
           isTriggerContext={isTriggerContext}
         />
@@ -484,6 +523,7 @@ const InsertModal = ({
   isTriggerContext,
   gameId,
   savedFunctions,
+  onUnsaveFunction,
   onRemove,
   onClose,
 }: InsertModalProps) => {
@@ -495,6 +535,7 @@ const InsertModal = ({
     fnStatement: Statement;
     callExpression: Expression;
   } | null>(null);
+  const [unsaveConfirm, setUnsaveConfirm] = useState<string | null>(null);
   const searchInputRef = useRef<TextInput>(null);
 
   // Load whether the user has already seen the built-in function explanation.
@@ -658,13 +699,29 @@ const InsertModal = ({
     }
     const selectExpression = (expression: Expression) => onInsertExpression(expression, target);
     const existingFnNames = new Set(definedFunctions.map((fn) => fn.name));
-    const functionItems = definedFunctions.map((fn) => ({
-      label: `${fn.name}(${fn.parameters.join(', ')})`,
-      description: 'Custom function',
-      category: 'function',
-      previewExpression: buildFunctionCall(fn),
-      onSelect: () => selectExpression(buildFunctionCall(fn)),
-    }));
+    // Build a set of printed saved function sources for matching.
+    const savedSources = new Set((savedFunctions ?? []).map((s) => s.source.trim()));
+    const functionItems = definedFunctions.map((fn) => {
+      // Reconstruct the FunctionStatement to print and compare with saved sources.
+      const fnStatement: Statement = {
+        kind: 'FunctionStatement',
+        name: fn.name,
+        parameters: fn.parameters,
+        template: fn.template,
+        body: { kind: 'BlockStatement', statements: fn.bodyStatements ?? [], span },
+        span,
+      };
+      const printed = printStatement(fnStatement).trim();
+      const isSavedMatch = savedSources.has(printed);
+      return {
+        label: `${fn.name}(${fn.parameters.join(', ')})`,
+        description: 'Custom function',
+        category: 'function',
+        previewExpression: buildFunctionCall(fn),
+        isSavedMatch,
+        onSelect: () => selectExpression(buildFunctionCall(fn)),
+      };
+    });
     // Built-in functions: only show if not already defined and not hidden
     const builtinItems: ModalItem[] = hideBuiltinFunctions
       ? []
@@ -672,6 +729,7 @@ const InsertModal = ({
           (builtin, index, arr) => {
             const fnStatement = parseBuiltinFunction(builtin.source);
             const callExpression = buildBuiltinCall(builtin.source);
+            const previewFnDef = buildDefinedFunction(builtin.source);
             return {
               label: builtin.name,
               description: builtin.description,
@@ -679,6 +737,7 @@ const InsertModal = ({
               dividerAfter: index === arr.length - 1,
               skipCloseOnSelect: true,
               previewExpression: callExpression,
+              previewDefinedFunctions: previewFnDef ? [previewFnDef] : undefined,
               onSelect: () => {
                 setPendingBuiltin({ fnStatement, callExpression });
                 if (hasSeenBuiltinInfo) {
@@ -702,12 +761,17 @@ const InsertModal = ({
           .map((saved) => {
             const fnStatement = parseBuiltinFunction(saved.source);
             const callExpression = buildBuiltinCall(saved.source);
+            const previewFnDef = buildDefinedFunction(saved.source);
             return {
               label: saved.name,
               description: 'Saved function',
               category: 'function',
               skipCloseOnSelect: true,
               previewExpression: callExpression,
+              previewDefinedFunctions: previewFnDef ? [previewFnDef] : undefined,
+              onUnsave: onUnsaveFunction
+                ? () => setUnsaveConfirm(saved.name)
+                : undefined,
               onSelect: () => {
                 setPendingBuiltin({ fnStatement, callExpression });
                 if (hasSeenBuiltinInfo) {
@@ -1034,6 +1098,7 @@ const InsertModal = ({
     isTriggerContext,
     hasSeenBuiltinInfo,
     savedFunctions,
+    onUnsaveFunction,
     onClose,
   ]);
 
@@ -1212,6 +1277,7 @@ const InsertModal = ({
   };
 
   return (
+    <>
     <ConvexDialog.Root
       isOpen={isOpen}
       onOpenChange={(open: boolean) => {
@@ -1366,6 +1432,21 @@ const InsertModal = ({
         </ConvexDialog.Portal>
       </ConvexDialog.Root>
     </ConvexDialog.Root>
+
+    <UnsavedChangesDialog
+      isOpen={unsaveConfirm !== null}
+      onOpenChange={(open) => { if (!open) setUnsaveConfirm(null); }}
+      onStay={() => setUnsaveConfirm(null)}
+      onLeave={() => {
+        if (unsaveConfirm && onUnsaveFunction) onUnsaveFunction(unsaveConfirm);
+        setUnsaveConfirm(null);
+      }}
+      title="Remove Saved Function"
+      message={`Remove this function from your saved functions? It won't affect any scripts already using it.`}
+      stayLabel="Cancel"
+      leaveLabel="Remove"
+    />
+    </>
   );
 };
 

@@ -2303,6 +2303,9 @@ interface BlockPreviewProps {
   expression?: Expression;
   entryKeysBySource?: Record<string, string[]>;
   definedFunctions?: DefinedFunction[];
+  /** Additional function definitions to make available for the preview render
+   * (e.g. the function being previewed, which isn't in the script yet). */
+  previewDefinedFunctions?: DefinedFunction[];
   definedVariables?: string[];
   isTriggerContext?: boolean;
 }
@@ -2312,9 +2315,14 @@ export const BlockPreview = ({
   expression,
   entryKeysBySource,
   definedFunctions,
+  previewDefinedFunctions,
   definedVariables = [],
   isTriggerContext,
 }: BlockPreviewProps) => {
+  const allFunctions = useMemo(
+    () => [...(definedFunctions ?? []), ...(previewDefinedFunctions ?? [])],
+    [definedFunctions, previewDefinedFunctions]
+  );
   if (statement) {
     return (
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ flexGrow: 1 }}>
@@ -2324,7 +2332,7 @@ export const BlockPreview = ({
             index={0}
             stmtPath={[]}
             definedVariables={definedVariables}
-            definedFunctions={definedFunctions}
+            definedFunctions={allFunctions}
             onAdd={noop}
             onSetExpression={noop}
             onSetStatementField={noop}
@@ -2345,7 +2353,7 @@ export const BlockPreview = ({
             location={noopLocation}
             contextVariables={definedVariables}
             entryKeysBySource={entryKeysBySource}
-            definedFunctions={definedFunctions}
+            definedFunctions={allFunctions}
             onAdd={noop}
             onSetExpression={noop}
             preview

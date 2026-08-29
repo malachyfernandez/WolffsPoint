@@ -11,25 +11,38 @@ interface UnsavedChangesDialogProps {
     onOpenChange: (open: boolean) => void;
     onStay: () => void;
     onLeave: () => void;
+    title?: string;
+    message?: string;
+    stayLabel?: string;
+    leaveLabel?: string;
 }
 
-const UnsavedChangesDialog = ({ isOpen, onOpenChange, onStay, onLeave }: UnsavedChangesDialogProps) => {
+const UnsavedChangesDialog = ({
+    isOpen,
+    onOpenChange,
+    onStay,
+    onLeave,
+    title = 'Unsaved Changes',
+    message = 'You have unsaved changes. Are you sure you want to leave without saving?',
+    stayLabel = 'Stay',
+    leaveLabel = 'Leave',
+}: UnsavedChangesDialogProps) => {
         return (
         <ConvexDialog.Root isOpen={isOpen} onOpenChange={onOpenChange}>
             <ConvexDialog.Portal>
                 <ConvexDialog.Overlay />
                 <ConvexDialog.Content className='max-w-md p-6'>
-                    <DialogHeader text="Unsaved Changes" />
+                    <DialogHeader text={title} />
                     <Column className='gap-4 pt-4'>
                         <FontText className='text-center'>
-                            You have unsaved changes. Are you sure you want to leave without saving?
+                            {message}
                         </FontText>
                         <Row className='gap-4 justify-center pt-4'>
                             <AppButton variant='outline' className='w-24' onPress={onStay}>
-                                <FontText weight='medium'>Stay</FontText>
+                                <FontText weight='medium'>{stayLabel}</FontText>
                             </AppButton>
                             <AppButton variant='filled' className='w-24' onPress={onLeave}>
-                                <FontText weight='medium' color='white'>Leave</FontText>
+                                <FontText weight='medium' color='white'>{leaveLabel}</FontText>
                             </AppButton>
                         </Row>
                     </Column>
