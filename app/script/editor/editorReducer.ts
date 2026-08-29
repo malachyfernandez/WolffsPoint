@@ -472,7 +472,18 @@ export const createUpdateCellStatement = (): Statement => ({
     arguments: [
       {
         kind: 'PositionalArgument',
-        value: { kind: 'StringLiteral', value: '', span },
+        value: {
+          kind: 'CallExpression',
+          callee: { kind: 'IdentifierExpression', name: 'tag', span },
+          arguments: [
+            {
+              kind: 'PositionalArgument',
+              value: { kind: 'StringLiteral', value: '', span },
+              span,
+            },
+          ],
+          span,
+        },
         span,
       },
     ],
@@ -501,7 +512,18 @@ export const createTriggerUpdateCellStatement = (): Statement => ({
     arguments: [
       {
         kind: 'PositionalArgument',
-        value: { kind: 'StringLiteral', value: '', span },
+        value: {
+          kind: 'CallExpression',
+          callee: { kind: 'IdentifierExpression', name: 'tag', span },
+          arguments: [
+            {
+              kind: 'PositionalArgument',
+              value: { kind: 'StringLiteral', value: '', span },
+              span,
+            },
+          ],
+          span,
+        },
         span,
       },
     ],
