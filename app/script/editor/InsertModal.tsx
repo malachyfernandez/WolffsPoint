@@ -1,5 +1,6 @@
 import React, { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { Pressable, View, TextInput } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import ConvexDialog from '../../components/ui/dialog/ConvexDialog';
 import ShadowScrollView from '../../components/ui/ShadowScrollView';
 import Column from '../../components/layout/Column';
@@ -100,6 +101,10 @@ interface InsertModalProps {
 }
 
 const span = emptySpan();
+
+/** AsyncStorage key tracking whether the user has seen the built-in function
+ * explanation dialog at least once. */
+const BUILTIN_INFO_SEEN_KEY = 'script:builtinInfoSeen';
 
 const CONTROL_TEMPLATES: {
   label: string;
@@ -451,11 +456,21 @@ const InsertModal = ({
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [showBuiltinInfo, setShowBuiltinInfo] = useState(false);
+  const [hasSeenBuiltinInfo, setHasSeenBuiltinInfo] = useState(true);
   const [pendingBuiltin, setPendingBuiltin] = useState<{
     fnStatement: Statement;
     callExpression: Expression;
   } | null>(null);
   const searchInputRef = useRef<TextInput>(null);
+
+  // Load whether the user has already seen the built-in function explanation.
+  // Defaults to true (skip dialog) until storage confirms it hasn't been seen,
+  // so returning users never see the dialog flash.
+  useEffect(() => {
+    AsyncStorage.getItem(BUILTIN_INFO_SEEN_KEY).then((seen) => {
+      setHasSeenBuiltinInfo(seen === 'true');
+    });
+  }, []);
 
   // Load tag definitions for the tag() function picker
   const tagDefsKey = gameId ? getGameScopedKey('tagDefinitions', gameId) : null;
@@ -615,7 +630,14 @@ const InsertModal = ({
               skipCloseOnSelect: true,
               onSelect: () => {
                 setPendingBuiltin({ fnStatement, callExpression });
-                setShowBuiltinInfo(true);
+                if (hasSeenBuiltinInfo) {
+                  // Already seen the explanation — insert immediately.
+                  onInsertBuiltinFunction(fnStatement, callExpression, target);
+                  setPendingBuiltin(null);
+                  onClose();
+                } else {
+                  setShowBuiltinInfo(true);
+                }
               },
             };
           }
@@ -858,6 +880,8 @@ const InsertModal = ({
     onInsertBuiltinFunction,
     tagDefinitions,
     isTriggerContext,
+    hasSeenBuiltinInfo,
+    onClose,
   ]);
 
   // ── Suggested tab ──────────────────────────────────────────────────────
@@ -1142,11 +1166,8 @@ const InsertModal = ({
                 Built-in Functions
               </FontText>
               <FontText variant="subtext" className="text-sm leading-5">
-                Built-in functions are pre-made functions for common tasks. When you use one, the
-                full function code is added to the bottom of your script so you can see and modify
-                it like any other function. Once added, it becomes a regular function — you'll find
-                it in the function list as normal, and it won't appear in the built-in section
-                again.
+                This adds the full function code to your script so you can edit it. It then works
+                like any custom function.
               </FontText>
               <Row className="gap-2">
                 <AppButton
@@ -1160,6 +1181,8 @@ const InsertModal = ({
                         target
                       );
                     }
+                    setHasSeenBuiltinInfo(true);
+                    AsyncStorage.setItem(BUILTIN_INFO_SEEN_KEY, 'true');
                     setShowBuiltinInfo(false);
                     setPendingBuiltin(null);
                     onClose();
