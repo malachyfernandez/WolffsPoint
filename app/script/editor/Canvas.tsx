@@ -34,6 +34,7 @@ import { printExpression, printStatement } from '../lang/printer';
 import type { BlockInput, InputType } from '../registry';
 import { EXPRESSION_BLOCKS, STATEMENT_BLOCKS } from '../registry';
 import type { DefinedFunction, InsertTarget } from './InsertModal';
+import { BUILTIN_FUNCTION_NAMES } from './InsertModal';
 import {
   applyEntryTransition,
   decomposeChain,
@@ -104,6 +105,13 @@ interface CanvasProps {
   onSaveFunction?: (name: string, source: string) => void;
   /** Remove a function from the user's library. */
   onUnsaveFunction?: (name: string) => void;
+  /** Called when the user clicks a locked (saved/built-in) function.
+   * Opens the decouple dialog. */
+  onLockedFunctionClick?: (path: number[], functionName: string, isBuiltin: boolean) => void;
+  /** Names of functions that have been decoupled (no longer locked) in this
+   * editing session. Used to exclude both saved and built-in functions from
+   * the lock check. */
+  decoupledFunctionNames?: string[];
   /** Set a comment on a statement at the given path. */
   onSetComment?: (path: number[], comment: string) => void;
 }
@@ -181,6 +189,7 @@ const Swapable = ({
   variant = 'block',
   isFunction = false,
   indent = 0,
+  tooltipText,
 }: {
   label: string;
   onSwap: () => void;
@@ -188,9 +197,10 @@ const Swapable = ({
   variant?: 'statement' | 'block' | 'piece' | 'bare';
   isFunction?: boolean;
   indent?: number;
+  tooltipText?: string;
 }) => {
   const id = useId();
-  const { hovered, setHovered } = useTooltip(id, `Change ${label}`);
+  const { hovered, setHovered } = useTooltip(id, tooltipText ?? `Change ${label}`);
 
   // `textured` variants get the paper background + hover overlay layers.
   // `bare` is the only flat variant (used for inline elements with no border).
@@ -1711,6 +1721,8 @@ const StatementBlock = ({
   savedFunctionNames,
   onSaveFunction,
   onUnsaveFunction,
+  onLockedFunctionClick,
+  decoupledFunctionNames,
   onSetComment,
 }: Omit<CanvasProps, 'statements'> & { statement: Statement; index: number }) => {
   const currentPath = [...stmtPath!, index];
@@ -1728,7 +1740,21 @@ const StatementBlock = ({
     if (statement.kind === 'ReturnStatement') return 'Return';
     return statement.kind;
   })();
-  const swapStatement = () =>
+  const isSavedFunction = savedFunctionNames?.includes(
+    statement.kind === 'FunctionStatement' ? statement.name : ''
+  ) ?? false;
+  const isBuiltinFunction =
+    statement.kind === 'FunctionStatement' && BUILTIN_FUNCTION_NAMES.has(statement.name);
+  const isDecoupled =
+    statement.kind === 'FunctionStatement' &&
+    (decoupledFunctionNames?.includes(statement.name) ?? false);
+  const isLockedFunction =
+    (isSavedFunction || isBuiltinFunction) && !isDecoupled && !!onLockedFunctionClick;
+  const swapStatement = () => {
+    if (isLockedFunction && statement.kind === 'FunctionStatement') {
+      onLockedFunctionClick!(currentPath, statement.name, isBuiltinFunction);
+      return;
+    }
     onAdd({
       kind: 'statement',
       mode: 'swap',
@@ -1736,6 +1762,7 @@ const StatementBlock = ({
       path: currentPath,
       contextVariables,
     });
+  };
   let content: React.ReactNode;
 
   if (
@@ -1845,6 +1872,8 @@ const StatementBlock = ({
               savedFunctionNames,
               onSaveFunction,
               onUnsaveFunction,
+              onLockedFunctionClick,
+              decoupledFunctionNames,
               onSetComment,
             }}
             stmtPath={currentPath}
@@ -1908,6 +1937,8 @@ const StatementBlock = ({
               savedFunctionNames,
               onSaveFunction,
               onUnsaveFunction,
+              onLockedFunctionClick,
+              decoupledFunctionNames,
               onSetComment,
             }}
             stmtPath={currentPath}
@@ -2065,6 +2096,8 @@ const StatementBlock = ({
               savedFunctionNames,
               onSaveFunction,
               onUnsaveFunction,
+              onLockedFunctionClick,
+              decoupledFunctionNames,
               onSetComment,
             }}
             stmtPath={currentPath}
@@ -2120,6 +2153,8 @@ const StatementBlock = ({
               savedFunctionNames,
               onSaveFunction,
               onUnsaveFunction,
+              onLockedFunctionClick,
+              decoupledFunctionNames,
               onSetComment,
             }}
             stmtPath={currentPath}
@@ -2155,6 +2190,8 @@ const StatementBlock = ({
               savedFunctionNames,
               onSaveFunction,
               onUnsaveFunction,
+              onLockedFunctionClick,
+              decoupledFunctionNames,
               onSetComment,
             }}
             stmtPath={currentPath}
@@ -2175,22 +2212,28 @@ const StatementBlock = ({
       ? statement.body.statements.slice(0, -1)
       : statement.body.statements;
     content = (
+      <View pointerEvents={isLockedFunction ? 'none' : 'auto'}>
       <Column className="gap-0">
         <View className="bg-text/10 rounded-t-xl p-2">
           <Column className="gap-2">
             <Row className="items-center justify-between">
               <FontText weight="medium">Function</FontText>
               <Row className="items-center gap-1">
-                {onSaveFunction && onUnsaveFunction && (
+                {onSaveFunction && onUnsaveFunction && !isLockedFunction && (
                   <SaveFunctionButton
-                    isSaved={savedFunctionNames?.includes(statement.name) ?? false}
+                    isSaved={isSavedFunction && !isDecoupled}
                     onSave={() =>
                       onSaveFunction(statement.name, printStatement(statement))
                     }
                     onUnsave={() => onUnsaveFunction(statement.name)}
                   />
                 )}
-                <DeleteButton onPress={() => onDeleteStatement(currentPath)} />
+                {isLockedFunction && (isSavedFunction || isBuiltinFunction) && (
+                  <View className="bg-green-500/20 rounded">
+                    <BookmarkCheck size={16} color="#1a1a1a" />
+                  </View>
+                )}
+                {!isLockedFunction && <DeleteButton onPress={() => onDeleteStatement(currentPath)} />}
               </Row>
             </Row>
             <FunctionTemplateEditor
@@ -2220,6 +2263,8 @@ const StatementBlock = ({
               savedFunctionNames,
               onSaveFunction,
               onUnsaveFunction,
+              onLockedFunctionClick,
+              decoupledFunctionNames,
               onSetComment,
             }}
             stmtPath={currentPath}
@@ -2250,6 +2295,7 @@ const StatementBlock = ({
           </Row>
         </View>
       </Column>
+      </View>
     );
   } else if (statement.kind === 'ReturnStatement') {
     content = (
@@ -2356,7 +2402,8 @@ const StatementBlock = ({
           variant="statement"
           onSwap={swapStatement}
           isFunction={isFunction}
-          indent={0}>
+          indent={0}
+          tooltipText={isLockedFunction ? 'Click to edit' : undefined}>
           {content}
         </Swapable>
       </View>
@@ -2461,6 +2508,8 @@ const Canvas = ({
   savedFunctionNames,
   onSaveFunction,
   onUnsaveFunction,
+  onLockedFunctionClick,
+  decoupledFunctionNames,
   onSetComment,
 }: CanvasProps) => {
   // Only load tag definitions at the root level (stmtPath is empty).
@@ -2501,6 +2550,8 @@ const Canvas = ({
               savedFunctionNames={savedFunctionNames}
               onSaveFunction={onSaveFunction}
               onUnsaveFunction={onUnsaveFunction}
+              onLockedFunctionClick={onLockedFunctionClick}
+              decoupledFunctionNames={decoupledFunctionNames}
               onSetComment={onSetComment}
             />
             <PuzzleConnector

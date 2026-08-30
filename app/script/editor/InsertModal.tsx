@@ -252,6 +252,12 @@ const BUILTIN_FUNCTIONS: BuiltinFunction[] = [
   },
 ];
 
+/** Names of all built-in functions. Used to identify locked/built-in
+ * function statements in the script editor. */
+export const BUILTIN_FUNCTION_NAMES: ReadonlySet<string> = new Set(
+  BUILTIN_FUNCTIONS.map((fn) => fn.name)
+);
+
 /** Parse a built-in function source into its FunctionStatement AST node. */
 const parseBuiltinFunction = (source: string): Statement => {
   const ast = parseScript(source);

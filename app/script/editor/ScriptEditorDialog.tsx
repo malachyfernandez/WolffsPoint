@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
-import { TextInput, View } from 'react-native';
+import { Pressable, TextInput, View } from 'react-native';
 import ConvexDialog from '../../components/ui/dialog/ConvexDialog';
 import DialogHeader from '../../components/ui/dialog/DialogHeader';
 import UnsavedChangesDialog from '../../components/ui/dialog/UnsavedChangesDialog';
@@ -21,7 +21,7 @@ import {
 } from './editorReducer';
 import type { EditorAction } from './editorReducer';
 import Canvas from './Canvas';
-import InsertModal, { type DefinedFunction, type InsertTarget } from './InsertModal';
+import InsertModal, { type DefinedFunction, type InsertTarget, BUILTIN_FUNCTION_NAMES } from './InsertModal';
 import { createScriptGlobals, type ScriptSourceData } from '../runtime/sources';
 import { traceEntrySource } from './expressionEditor';
 import type { EntryKeysBySource } from './typeInference';
@@ -267,6 +267,13 @@ const ScriptEditorDialog = ({
   } | null>(null);
   const [hasModifications, setHasModifications] = useState(false);
   const [isLeaveConfirmDialogOpen, setIsLeaveConfirmDialogOpen] = useState(false);
+  const [decoupleDialog, setDecoupleDialog] = useState<{
+    path: number[];
+    functionName: string;
+    isBuiltin: boolean;
+  } | null>(null);
+  const [decoupledFunctions, setDecoupledFunctions] = useState<string[]>([]);
+  const [nameCollision, setNameCollision] = useState<string | null>(null);
   const { savedFunctions, savedFunctionNames, saveFunction, unsaveFunction } =
     useSavedFunctions();
 
@@ -291,6 +298,9 @@ const ScriptEditorDialog = ({
     setInsertTarget(null);
     setHasModifications(false);
     setIsLeaveConfirmDialogOpen(false);
+    setDecoupleDialog(null);
+    setDecoupledFunctions([]);
+    setNameCollision(null);
   }, [initialScriptText, isOpen, isTriggerContext]);
 
   // Bridge the reducer's history with the global useUndoRedo system.
@@ -515,6 +525,46 @@ const ScriptEditorDialog = ({
     dispatchWithUndo({ type: 'SET_COMMENT', path, comment }, comment ? 'Add comment' : 'Remove comment');
   };
 
+  const handleLockedFunctionClick = (path: number[], functionName: string, isBuiltin: boolean) => {
+    setDecoupleDialog({ path, functionName, isBuiltin });
+  };
+
+  const handleSaveFunction = (name: string, source: string) => {
+    // Check if the name is already in use by a built-in function or another
+    // saved function (with a different source — same name + same source is a re-save).
+    if (BUILTIN_FUNCTION_NAMES.has(name)) {
+      setNameCollision(name);
+      return;
+    }
+    const existing = savedFunctions.find((fn) => fn.name === name);
+    if (existing && existing.source !== source) {
+      setNameCollision(name);
+      return;
+    }
+    // Re-saving a decoupled function should re-lock it — remove from decoupled list.
+    setDecoupledFunctions((prev) => prev.filter((n) => n !== name));
+    saveFunction(name, source);
+  };
+
+  const handleDecouple = (mode: 'remove' | 'decouple') => {
+    if (!decoupleDialog) return;
+    if (mode === 'remove') {
+      unsaveFunction(decoupleDialog.functionName);
+    }
+    // Both modes unlock the function in the script — no AST change needed,
+    // since the lock is purely a UI state based on savedFunctionNames /
+    // BUILTIN_FUNCTION_NAMES. Removing from library makes it no longer match.
+    // For built-in functions, there's nothing to remove — decoupling just
+    // means the user accepts it's no longer treated as locked. We track this
+    // by adding the function name to a "decoupled" set.
+    setDecoupledFunctions((prev) =>
+      prev.includes(decoupleDialog.functionName)
+        ? prev
+        : [...prev, decoupleDialog.functionName]
+    );
+    setDecoupleDialog(null);
+  };
+
   const handleInsertChainLink = (target: InsertTarget, blockId: string) => {
     if (!target.location) return;
     dispatchWithUndo(
@@ -692,8 +742,10 @@ const ScriptEditorDialog = ({
                       isTriggerContext={isTriggerContext}
                       gameId={gameId}
                       savedFunctionNames={savedFunctionNames}
-                      onSaveFunction={saveFunction}
+                      onSaveFunction={handleSaveFunction}
                       onUnsaveFunction={unsaveFunction}
+                      onLockedFunctionClick={handleLockedFunctionClick}
+                      decoupledFunctionNames={decoupledFunctions}
                       onSetComment={handleSetComment}
                       onEditMarkdown={(value, onSave) =>
                         setMarkdownEditor({ isOpen: true, value, onSave })
@@ -767,6 +819,86 @@ const ScriptEditorDialog = ({
         onStay={handleCancelLeave}
         onLeave={handleConfirmLeave}
       />
+
+      {/* Decouple / remove saved function dialog */}
+      <ConvexDialog.Root
+        isOpen={decoupleDialog !== null}
+        onOpenChange={(open: boolean) => {
+          if (!open) setDecoupleDialog(null);
+        }}>
+        <ConvexDialog.Portal>
+          <ConvexDialog.Overlay />
+          <ConvexDialog.Content className="max-w-lg">
+            <CloseButton onPress={() => setDecoupleDialog(null)} />
+            <Column className="gap-3 pt-3">
+              <FontText weight="medium" className="text-base">
+                {decoupleDialog?.isBuiltin ? 'Edit Built-in Function' : 'Edit Saved Function'}
+              </FontText>
+              <FontText variant="subtext" className="text-sm leading-5">
+                {decoupleDialog?.isBuiltin
+                  ? 'This function stays in your script but is no longer treated as a built-in. You can edit it freely.'
+                  : 'The function stays in all existing code — it just won\u2019t be in your library anymore.'}
+              </FontText>
+              <Column className="gap-2">
+                {decoupleDialog?.isBuiltin ? (
+                  <Pressable
+                    onPress={() => handleDecouple('decouple')}
+                    className="border-subtle-border items-center rounded-lg border py-2.5">
+                    <FontText weight="medium">De-couple</FontText>
+                  </Pressable>
+                ) : (
+                  <>
+                    <Pressable
+                      onPress={() => handleDecouple('remove')}
+                      className="border-subtle-border items-center rounded-lg border py-2.5">
+                      <FontText weight="medium">Remove from library</FontText>
+                    </Pressable>
+                    <Pressable
+                      onPress={() => handleDecouple('decouple')}
+                      className="border-subtle-border items-center rounded-lg border py-2.5">
+                      <FontText weight="medium">Keep and de-couple</FontText>
+                    </Pressable>
+                  </>
+                )}
+                <Pressable
+                  onPress={() => setDecoupleDialog(null)}
+                  className="border-subtle-border items-center rounded-lg border py-2.5">
+                  <FontText weight="medium">Cancel</FontText>
+                </Pressable>
+              </Column>
+            </Column>
+          </ConvexDialog.Content>
+        </ConvexDialog.Portal>
+      </ConvexDialog.Root>
+
+      {/* Name collision dialog */}
+      <ConvexDialog.Root
+        isOpen={nameCollision !== null}
+        onOpenChange={(open: boolean) => {
+          if (!open) setNameCollision(null);
+        }}>
+        <ConvexDialog.Portal>
+          <ConvexDialog.Overlay />
+          <ConvexDialog.Content className="max-w-md">
+            <CloseButton onPress={() => setNameCollision(null)} />
+            <Column className="gap-3 pt-3">
+              <FontText weight="medium" className="text-base">
+                Name already in use
+              </FontText>
+              <FontText variant="subtext" className="text-sm leading-5">
+                {nameCollision && BUILTIN_FUNCTION_NAMES.has(nameCollision)
+                  ? `\u201C${nameCollision}\u201D is a built-in function. Choose a different name.`
+                  : `A saved function called \u201C${nameCollision}\u201D already exists. Choose a different name.`}
+              </FontText>
+              <Pressable
+                onPress={() => setNameCollision(null)}
+                className="border-subtle-border items-center rounded-lg border py-2.5">
+                <FontText weight="medium">OK</FontText>
+              </Pressable>
+            </Column>
+          </ConvexDialog.Content>
+        </ConvexDialog.Portal>
+      </ConvexDialog.Root>
     </>
   );
 };
