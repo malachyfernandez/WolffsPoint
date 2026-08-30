@@ -428,14 +428,13 @@ export const setExpressionAtLocation = (
   );
 };
 
-export const updateExpressionAtLocation = (
+export const getExpressionAtLocation = (
   statement: Statement,
-  location: ExpressionLocation,
-  update: (expression: Expression) => Expression
-): Statement => {
-  const root =
-    getRootExpression(statement, location.slot) ?? ({ kind: 'NothingLiteral', span } as Expression);
-  const current = location.expressionPath.reduce<Expression | undefined>((expression, step) => {
+  location: ExpressionLocation
+): Expression | undefined => {
+  const root = getRootExpression(statement, location.slot);
+  if (!root) return undefined;
+  return location.expressionPath.reduce<Expression | undefined>((expression, step) => {
     if (!expression) return undefined;
     switch (step.kind) {
       case 'lambdaBody':
@@ -472,6 +471,14 @@ export const updateExpressionAtLocation = (
       }
     }
   }, root);
+};
+
+export const updateExpressionAtLocation = (
+  statement: Statement,
+  location: ExpressionLocation,
+  update: (expression: Expression) => Expression
+): Statement => {
+  const current = getExpressionAtLocation(statement, location);
   return current ? setExpressionAtLocation(statement, location, update(current)) : statement;
 };
 

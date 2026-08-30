@@ -1,5 +1,5 @@
-import React, { useEffect, useId, useMemo, useState } from 'react';
-import { Pressable, ScrollView, View, type TextStyle } from 'react-native';
+import React, { useEffect, useId, useMemo, useRef, useState } from 'react';
+import { Animated, Pressable, ScrollView, View, type TextStyle } from 'react-native';
 import { Plus, X, Pencil, Bookmark, BookmarkCheck, MessageCircle } from 'lucide-react-native';
 import Column from '../../components/layout/Column';
 import Row from '../../components/layout/Row';
@@ -115,7 +115,32 @@ interface CanvasProps {
   decoupledFunctionNames?: string[];
   /** Set a comment on a statement at the given path. */
   onSetComment?: (path: number[], comment: string) => void;
+  moveTool?: MoveToolControls;
 }
+
+export type ExpressionMoveTarget =
+  | { kind: 'whole'; location: ExpressionLocation; expression: Expression }
+  | { kind: 'chainLink'; location: ExpressionLocation; linkIndex: number; link: ChainLink };
+
+export interface MoveToolControls {
+  operation: 'move' | 'clone';
+  phase: 'collect' | 'place';
+  category: 'expression' | 'block' | null;
+  getOriginalExpressionLocation: (location: ExpressionLocation) => ExpressionLocation;
+  getOriginalLinkIndex: (location: ExpressionLocation, currentIndex: number) => number;
+  getLinkMarkers: (location: ExpressionLocation, currentBoundary: number) => number[];
+  getWholeMarker: (location: ExpressionLocation) => number | undefined;
+  getOriginalStatementPath: (currentPath: number[]) => number[];
+  getBlockMarkers: (currentParentPath: number[], currentBoundary: number) => number[];
+  onPickExpression: (target: ExpressionMoveTarget) => void;
+  onPickBlock: (path: number[], statement: Statement) => void;
+  onReturn: (number: number) => void;
+  canPlaceExpression: (target: { location: ExpressionLocation; linkIndex?: number }) => boolean;
+  onPlaceExpression: (target: { location: ExpressionLocation; linkIndex?: number }) => void;
+  onPlaceBlock: (path: number[]) => void;
+}
+
+const MoveToolContext = React.createContext<MoveToolControls | null>(null);
 
 const appendLocation = (
   location: ExpressionLocation,
@@ -183,6 +208,45 @@ const HoverOverlay = ({ radius = 12 }: { radius?: number }) => (
   />
 );
 
+const MoveNumberMarker = ({ number }: { number: number }) => {
+  const moveTool = React.useContext(MoveToolContext);
+  const animation = useRef(new Animated.Value(0)).current;
+  const tooltipId = useId();
+  const { setHovered } = useTooltip(tooltipId, `Click to return ${number}`);
+  useEffect(() => {
+    Animated.spring(animation, {
+      toValue: 1,
+      useNativeDriver: true,
+      speed: 22,
+      bounciness: 7,
+    }).start();
+  }, [animation]);
+  return (
+    <View
+      style={{ alignSelf: 'center' }}
+      {...({
+        onPointerDown: (event: PointerEvent) => {
+          event.preventDefault();
+          event.stopPropagation();
+          moveTool?.onReturn(number);
+        },
+      } as Record<string, unknown>)}>
+      <Animated.View style={{ opacity: animation, transform: [{ scale: animation }] }}>
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => moveTool?.onReturn(number)}
+          onHoverIn={() => setHovered(true)}
+          onHoverOut={() => setHovered(false)}
+          className="border-subtle-border bg-text/10 h-7 w-7 items-center justify-center rounded-full border">
+          <FontText weight="medium" className="text-xs">
+            {number}
+          </FontText>
+        </Pressable>
+      </Animated.View>
+    </View>
+  );
+};
+
 const Swapable = ({
   label,
   onSwap,
@@ -191,6 +255,7 @@ const Swapable = ({
   isFunction = false,
   indent = 0,
   tooltipText,
+  moveTarget,
 }: {
   label: string;
   onSwap: () => void;
@@ -199,9 +264,29 @@ const Swapable = ({
   isFunction?: boolean;
   indent?: number;
   tooltipText?: string;
+  moveTarget?: ExpressionMoveTarget | { kind: 'block'; path: number[]; statement: Statement };
 }) => {
+  const moveTool = React.useContext(MoveToolContext);
+  const resolvedMoveTarget =
+    moveTarget && moveTarget.kind !== 'block' && moveTool
+      ? {
+          ...moveTarget,
+          location: moveTool.getOriginalExpressionLocation(moveTarget.location),
+        }
+      : moveTarget;
+  const moveKind = moveTarget?.kind === 'block' ? 'block' : moveTarget ? 'expression' : undefined;
+  const canPick =
+    !!moveTool &&
+    moveTool.phase === 'collect' &&
+    !!moveKind &&
+    (moveTool.category === null || moveTool.category === moveKind);
   const id = useId();
-  const { hovered, setHovered } = useTooltip(id, tooltipText ?? `Change ${label}`);
+  const action = moveTool
+    ? moveTool.phase === 'place'
+      ? undefined
+      : `${moveTool.operation === 'move' ? 'Move' : 'Clone'} ${label}`
+    : (tooltipText ?? `Change ${label}`);
+  const { hovered, setHovered } = useTooltip(id, action);
 
   // `textured` variants get the paper background + hover overlay layers.
   // `bare` is the only flat variant (used for inline elements with no border).
@@ -236,14 +321,35 @@ const Swapable = ({
     <View
       style={{ marginLeft: indent }}
       className={containerClassName}
-      {...({ 'data-swapable': true } as Record<string, unknown>)}
+      {...({ 'data-swapable': true, 'data-move-kind': moveKind } as Record<string, unknown>)}
       {...({
+        onPointerDown: (e: PointerEvent) => {
+          if (!moveTool || !canPick || !resolvedMoveTarget) return;
+          const target = e.target as HTMLElement;
+          const current = e.currentTarget as HTMLElement;
+          const selector = moveTool.category
+            ? `[data-move-kind="${moveTool.category}"]`
+            : '[data-move-kind]';
+          if (target.closest(selector) !== current) return;
+          e.preventDefault();
+          e.stopPropagation();
+          if (resolvedMoveTarget.kind === 'block')
+            moveTool.onPickBlock(resolvedMoveTarget.path, resolvedMoveTarget.statement);
+          else moveTool.onPickExpression(resolvedMoveTarget);
+        },
         onMouseOver: (e: MouseEvent) => {
           const target = e.target as HTMLElement;
           const current = e.currentTarget as HTMLElement;
-          const swapableEl = target.closest('[data-swapable]');
+          const selector = moveTool?.category
+            ? `[data-move-kind="${moveTool.category}"]`
+            : '[data-swapable]';
+          const swapableEl = target.closest(selector);
           const interactiveEl = target.closest(INTERACTIVE_SELECTOR);
-          if (interactiveEl || (swapableEl && swapableEl !== current)) {
+          if (
+            (interactiveEl && !moveTool) ||
+            (swapableEl && swapableEl !== current) ||
+            (!canPick && moveTool)
+          ) {
             setHovered(false);
           } else {
             setHovered(true);
@@ -257,9 +363,13 @@ const Swapable = ({
         onClick: (e: MouseEvent) => {
           const target = e.target as HTMLElement;
           const current = e.currentTarget as HTMLElement;
-          const swapableEl = target.closest('[data-swapable]');
+          const selector = moveTool?.category
+            ? `[data-move-kind="${moveTool.category}"]`
+            : '[data-swapable]';
+          const swapableEl = target.closest(selector);
           const interactiveEl = target.closest(INTERACTIVE_SELECTOR);
-          if (interactiveEl || (swapableEl && swapableEl !== current)) return;
+          if ((interactiveEl && !moveTool) || (swapableEl && swapableEl !== current)) return;
+          if (moveTool) return;
           e.preventDefault();
           e.stopPropagation();
           onSwap();
@@ -277,30 +387,59 @@ const PuzzleConnector = ({
   type = 'expression',
   onPress,
   tooltip,
+  placeTarget,
 }: {
   direction: 'vertical' | 'horizontal';
   type?: InputType;
   onPress: () => void;
   tooltip?: string;
+  placeTarget?:
+    | { kind: 'expression'; location: ExpressionLocation; linkIndex: number }
+    | { kind: 'block'; path: number[] };
 }) => {
+  const moveTool = React.useContext(MoveToolContext);
+  const validPlace =
+    !!moveTool &&
+    moveTool.phase === 'place' &&
+    !!placeTarget &&
+    (placeTarget.kind === 'block'
+      ? moveTool.category === 'block'
+      : moveTool.category === 'expression' && moveTool.canPlaceExpression(placeTarget));
   const tooltipId = useId();
-  const { hovered, setHovered } = useTooltip(tooltipId, tooltip);
+  const { hovered, setHovered } = useTooltip(
+    tooltipId,
+    moveTool ? (validPlace ? 'Place here' : undefined) : tooltip
+  );
   const isVertical = direction === 'vertical';
   const isList = type === 'list';
+  const disabled = !!moveTool && !validPlace;
+  const handlePress = () => {
+    if (!moveTool) return onPress();
+    if (!validPlace || !placeTarget) return;
+    if (placeTarget.kind === 'block') moveTool.onPlaceBlock(placeTarget.path);
+    else moveTool.onPlaceExpression(placeTarget);
+  };
   return (
     <Pressable
       accessibilityRole="button"
-      onPress={onPress}
-      onHoverIn={() => setHovered(true)}
+      disabled={disabled}
+      onPress={handlePress}
+      onHoverIn={() => !disabled && setHovered(true)}
       onHoverOut={() => setHovered(false)}
       className={`relative m-0 h-7 w-7 items-center justify-center ${isVertical ? 'my-1 w-full' : ''}`}>
       <View
-        className={`border-subtle-border items-center justify-center border transition-all ${
+        className={`items-center justify-center border transition-all ${
           isList ? 'rounded-[3px]' : 'rounded-full'
         } ${
-          hovered ? 'bg-text/10 h-7 w-7' : isVertical ? 'bg-text/20 h-3 w-2' : 'bg-text/20 h-2 w-3'
-        }`}>
-        {hovered && <Plus size={14} color="#1a1a1a" />}
+          validPlace
+            ? 'h-7 w-7 border-green-800 bg-green-700'
+            : hovered
+              ? 'border-subtle-border bg-text/10 h-7 w-7'
+              : isVertical
+                ? 'border-subtle-border bg-text/20 h-3 w-2'
+                : 'border-subtle-border bg-text/20 h-2 w-3'
+        } ${disabled ? 'opacity-30' : ''}`}>
+        {(hovered || validPlace) && <Plus size={14} color={validPlace ? '#fff' : '#1a1a1a'} />}
       </View>
     </Pressable>
   );
@@ -459,17 +598,44 @@ const ParsedTextInput = ({
   );
 };
 
-const BooleanSocket = ({ onAdd, tooltip }: { onAdd: () => void; tooltip?: string }) => {
+const BooleanSocket = ({
+  onAdd,
+  tooltip,
+  location,
+  linkIndex,
+}: {
+  onAdd: () => void;
+  tooltip?: string;
+  location?: ExpressionLocation;
+  linkIndex?: number;
+}) => {
+  const moveTool = React.useContext(MoveToolContext);
+  const validPlace =
+    !!moveTool &&
+    moveTool.phase === 'place' &&
+    moveTool.category === 'expression' &&
+    !!location &&
+    moveTool.canPlaceExpression({ location, linkIndex });
   const tooltipId = useId();
-  const { setHovered } = useTooltip(tooltipId, tooltip);
+  const { setHovered } = useTooltip(
+    tooltipId,
+    moveTool ? (validPlace ? 'Place here' : undefined) : tooltip
+  );
   return (
     <Pressable
       accessibilityRole="button"
-      onPress={onAdd}
-      onHoverIn={() => setHovered(true)}
+      disabled={!!moveTool && !validPlace}
+      onPress={() => {
+        if (moveTool && location) moveTool.onPlaceExpression({ location, linkIndex });
+        else onAdd();
+      }}
+      onHoverIn={() => (!moveTool || validPlace) && setHovered(true)}
       onHoverOut={() => setHovered(false)}>
-      <View className="border-subtle-border h-8 min-w-16 items-center justify-center rounded border border-dashed bg-transparent px-3">
-        <FontText className="text-text/40 text-sm">+</FontText>
+      <View
+        className={`h-8 min-w-16 items-center justify-center rounded border border-dashed px-3 ${
+          validPlace ? 'border-green-800 bg-green-700' : 'border-subtle-border bg-transparent'
+        } ${moveTool && !validPlace ? 'opacity-30' : ''}`}>
+        <FontText className={`text-sm ${validPlace ? 'text-white' : 'text-text/40'}`}>+</FontText>
       </View>
     </Pressable>
   );
@@ -614,6 +780,7 @@ interface ExpressionSocketProps {
    * (PuzzleConnectors, bg-black/5 wrapper, NothingLiteral base sockets).
    * Used by BlockPreview in the InsertModal. */
   preview?: boolean;
+  suppressMoveMarker?: boolean;
 }
 
 export const ExpressionSocket = ({
@@ -631,9 +798,37 @@ export const ExpressionSocket = ({
   onSetExpression,
   onEditMarkdown,
   preview = false,
+  suppressMoveMarker = false,
 }: ExpressionSocketProps) => {
   const chain = useMemo(() => decomposeChain(expression), [expression]);
   const inputSources = React.useContext(InputSourcesContext);
+  const moveTool = React.useContext(MoveToolContext);
+  const wholeMarker = suppressMoveMarker ? undefined : moveTool?.getWholeMarker(location);
+  if (wholeMarker !== undefined) {
+    if (moveTool?.operation === 'move') return <MoveNumberMarker number={wholeMarker} />;
+    return (
+      <Row className="items-center gap-1">
+        <MoveNumberMarker number={wholeMarker} />
+        <ExpressionSocket
+          expression={expression}
+          location={location}
+          expectedType={expectedType}
+          contextVariables={contextVariables}
+          label={label}
+          entryKeysBySource={entryKeysBySource}
+          entrySource={entrySource}
+          entrySourceMap={entrySourceMap}
+          isOuterExpression={isOuterExpression}
+          definedFunctions={definedFunctions}
+          onAdd={onAdd}
+          onSetExpression={onSetExpression}
+          onEditMarkdown={onEditMarkdown}
+          preview={preview}
+          suppressMoveMarker
+        />
+      </Row>
+    );
+  }
   const expressionLabel = (() => {
     if (expression.kind === 'BooleanLiteral') return String(expression.value);
     if (expression.kind === 'BinaryExpression') return expression.operator;
@@ -681,6 +876,7 @@ export const ExpressionSocket = ({
       <BooleanSocket
         onAdd={() => openExpressionModal('whole', expectedType)}
         tooltip={`Add ${label}`}
+        location={location}
       />
     );
   }
@@ -689,6 +885,7 @@ export const ExpressionSocket = ({
     return (
       <Swapable
         label={expressionLabel}
+        moveTarget={{ kind: 'whole', location, expression }}
         variant="piece"
         onSwap={() => openExpressionModal('whole', 'boolean')}>
         <FontText weight="medium" className="text-sm">
@@ -724,11 +921,7 @@ export const ExpressionSocket = ({
           options={operatorSet.map((operator) => ({ value: operator, label: operator }))}
           value={expression.operator}
           onValueChange={(operator) =>
-            onSetExpression(
-              location,
-              { ...expression, operator: operator as BinaryOperator },
-              true
-            )
+            onSetExpression(location, { ...expression, operator: operator as BinaryOperator }, true)
           }
           triggerClassName="min-w-16 !py-1 !px-2 text-sm"
           isInDialog
@@ -754,13 +947,17 @@ export const ExpressionSocket = ({
     const binarySwapable = (
       <Swapable
         label={expressionLabel}
+        moveTarget={{ kind: 'whole', location, expression }}
         variant="block"
         onSwap={() => openExpressionModal('whole', expectedType)}>
         {binaryContent}
       </Swapable>
     );
     return isOuterExpression ? (
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ flexGrow: 1 }}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{ flexGrow: 1 }}>
         {binarySwapable}
       </ScrollView>
     ) : (
@@ -805,13 +1002,17 @@ export const ExpressionSocket = ({
     const unarySwapable = (
       <Swapable
         label={expressionLabel}
+        moveTarget={{ kind: 'whole', location, expression }}
         variant="block"
         onSwap={() => openExpressionModal('whole', expectedType)}>
         {unaryContent}
       </Swapable>
     );
     return isOuterExpression ? (
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ flexGrow: 1 }}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{ flexGrow: 1 }}>
         {unarySwapable}
       </ScrollView>
     ) : (
@@ -825,6 +1026,7 @@ export const ExpressionSocket = ({
     return (
       <Swapable
         label={expressionLabel}
+        moveTarget={{ kind: 'whole', location, expression }}
         variant="block"
         onSwap={() => openExpressionModal('whole', expectedType)}>
         <Column className="gap-2">
@@ -834,9 +1036,8 @@ export const ExpressionSocket = ({
               onEditMarkdown?.(expression.value, (newValue) => {
                 const variables = getMarkdownVariableNames(newValue).map((name) => ({
                   name,
-                  expression:
-                    expression.variables?.find((variable) => variable.name === name)?.expression ??
-                    { kind: 'NothingLiteral' as const, span },
+                  expression: expression.variables?.find((variable) => variable.name === name)
+                    ?.expression ?? { kind: 'NothingLiteral' as const, span },
                 }));
                 onSetExpression(
                   location,
@@ -890,6 +1091,7 @@ export const ExpressionSocket = ({
     return (
       <Swapable
         label={expressionLabel}
+        moveTarget={{ kind: 'whole', location, expression }}
         variant="block"
         onSwap={() => openExpressionModal('whole', expectedType)}>
         <DropdownLiteralEditor
@@ -905,6 +1107,7 @@ export const ExpressionSocket = ({
     return (
       <Swapable
         label={expressionLabel}
+        moveTarget={{ kind: 'whole', location, expression }}
         variant="block"
         onSwap={() => openExpressionModal('whole', expectedType)}>
         <ListLiteralEditor
@@ -959,12 +1162,25 @@ export const ExpressionSocket = ({
       base.expr.kind === 'NumberLiteral' ||
       base.expr.kind === 'NothingLiteral');
 
+  if (moveTool && isSingleLiteral && base.type === 'base' && base.expr.kind !== 'NothingLiteral') {
+    return (
+      <Swapable
+        label={expressionLabel}
+        moveTarget={{ kind: 'whole', location, expression }}
+        variant="piece"
+        onSwap={() => openExpressionModal('whole', expectedType)}>
+        <FontText className="text-sm">{printExpression(expression)}</FontText>
+      </Swapable>
+    );
+  }
+
   if (isSingleLiteral && base.type === 'base') {
     if (expectedType === 'boolean')
       return (
         <BooleanSocket
           onAdd={() => openExpressionModal('whole', 'boolean')}
           tooltip={`Add ${label}`}
+          location={location}
         />
       );
     if (expectedType === 'string' || base.expr.kind === 'StringLiteral') {
@@ -1041,17 +1257,28 @@ export const ExpressionSocket = ({
         }
         return (
           <React.Fragment key={index}>
+            {moveTool?.getLinkMarkers(location, index).map((number) => (
+              <MoveNumberMarker key={`move-${number}`} number={number} />
+            ))}
             {link.type === 'base' ? (
               link.expr.kind === 'NothingLiteral' ? (
                 preview ? null : (
                   <BooleanSocket
                     onAdd={() => openExpressionModal('chainBase')}
                     tooltip="Add expression"
+                    location={location}
+                    linkIndex={0}
                   />
                 )
               ) : link.expr.kind === 'IdentifierExpression' ? (
                 <Swapable
                   label={chainBaseLabel}
+                  moveTarget={{
+                    kind: 'chainLink',
+                    location,
+                    linkIndex: moveTool?.getOriginalLinkIndex(location, index) ?? index,
+                    link,
+                  }}
                   variant="piece"
                   onSwap={() => openExpressionModal('chainBase', expectedType, chainBaseLabel)}>
                   <FontText className="text-sm">{printExpression(link.expr)}</FontText>
@@ -1060,6 +1287,12 @@ export const ExpressionSocket = ({
                 link.expr.callee.kind === 'IdentifierExpression' ? (
                 <Swapable
                   label={chainBaseLabel}
+                  moveTarget={{
+                    kind: 'chainLink',
+                    location,
+                    linkIndex: moveTool?.getOriginalLinkIndex(location, index) ?? index,
+                    link,
+                  }}
                   variant="block"
                   onSwap={() => openExpressionModal('chainBase', expectedType, chainBaseLabel)}>
                   <FunctionCallRenderer
@@ -1078,6 +1311,12 @@ export const ExpressionSocket = ({
               ) : (
                 <Swapable
                   label={chainBaseLabel}
+                  moveTarget={{
+                    kind: 'chainLink',
+                    location,
+                    linkIndex: moveTool?.getOriginalLinkIndex(location, index) ?? index,
+                    link,
+                  }}
                   variant="block"
                   onSwap={() => openExpressionModal('chainBase', expectedType, chainBaseLabel)}>
                   <FontText className="text-sm">{printExpression(link.expr)}</FontText>
@@ -1086,6 +1325,12 @@ export const ExpressionSocket = ({
             ) : link.type === 'property' ? (
               <Swapable
                 label={`.${link.name}`}
+                moveTarget={{
+                  kind: 'chainLink',
+                  location,
+                  linkIndex: moveTool?.getOriginalLinkIndex(location, index) ?? index,
+                  link,
+                }}
                 variant="piece"
                 onSwap={() =>
                   onAdd({
@@ -1135,6 +1380,7 @@ export const ExpressionSocket = ({
                 direction="horizontal"
                 type={nextDefinition?.appliesTo === 'list' ? 'list' : expectedType}
                 tooltip="Add to chain"
+                placeTarget={{ kind: 'expression', location, linkIndex: index + 1 }}
                 onPress={() =>
                   onAdd({
                     kind: 'chainInsert',
@@ -1151,6 +1397,9 @@ export const ExpressionSocket = ({
           </React.Fragment>
         );
       })}
+      {moveTool?.getLinkMarkers(location, chain.length).map((number) => (
+        <MoveNumberMarker key={`move-${number}`} number={number} />
+      ))}
     </Row>
   );
 
@@ -1193,8 +1442,18 @@ const MethodLink = ({
   const definition = EXPRESSION_BLOCKS.find(
     (block) => block.id.toLowerCase() === link.name.toLowerCase()
   );
+  const moveTool = React.useContext(MoveToolContext);
   return (
-    <Swapable label={`.${link.name}`} variant="block" onSwap={onSwapWhole}>
+    <Swapable
+      label={`.${link.name}`}
+      moveTarget={{
+        kind: 'chainLink',
+        location,
+        linkIndex: moveTool?.getOriginalLinkIndex(location, linkIndex) ?? linkIndex,
+        link,
+      }}
+      variant="block"
+      onSwap={onSwapWhole}>
       <Row className="items-center gap-1.5">
         <FontText className="text-sm">.{link.name}</FontText>
         {link.args.map((argument, argumentIndex) => (
@@ -1737,7 +1996,7 @@ const SaveFunctionButton = ({
     <Pressable
       accessibilityRole="button"
       onPress={isSaved ? onUnsave : onSave}
-      className={isSaved ? 'bg-green-500/20 rounded' : ''}
+      className={isSaved ? 'rounded bg-green-500/20' : ''}
       onHoverIn={() => setHovered(true)}
       onHoverOut={() => setHovered(false)}>
       {isSaved ? (
@@ -1769,7 +2028,9 @@ const StatementBlock = ({
   decoupledFunctionNames,
   onSetComment,
 }: Omit<CanvasProps, 'statements'> & { statement: Statement; index: number }) => {
+  const moveTool = React.useContext(MoveToolContext);
   const currentPath = [...stmtPath!, index];
+  const originalPath = moveTool?.getOriginalStatementPath(currentPath) ?? currentPath;
   const contextVariables = definedVariables;
   const statementLabel = (() => {
     if (
@@ -1784,9 +2045,9 @@ const StatementBlock = ({
     if (statement.kind === 'ReturnStatement') return 'Return';
     return statement.kind;
   })();
-  const isSavedFunction = savedFunctionNames?.includes(
-    statement.kind === 'FunctionStatement' ? statement.name : ''
-  ) ?? false;
+  const isSavedFunction =
+    savedFunctionNames?.includes(statement.kind === 'FunctionStatement' ? statement.name : '') ??
+    false;
   const isBuiltinFunction =
     statement.kind === 'FunctionStatement' && BUILTIN_FUNCTION_NAMES.has(statement.name);
   const isDecoupled =
@@ -2257,88 +2518,88 @@ const StatementBlock = ({
       : statement.body.statements;
     content = (
       <View pointerEvents={isLockedFunction ? 'none' : 'auto'}>
-      <Column className="gap-0">
-        <View className="bg-text/10 rounded-t-xl p-2">
-          <Column className="gap-2">
-            <Row className="items-center justify-between">
-              <FontText weight="medium">Function</FontText>
-              <Row className="items-center gap-1">
-                {onSaveFunction && onUnsaveFunction && !isLockedFunction && (
-                  <SaveFunctionButton
-                    isSaved={isSavedFunction && !isDecoupled}
-                    onSave={() =>
-                      onSaveFunction(statement.name, printStatement(statement))
-                    }
-                    onUnsave={() => onUnsaveFunction(statement.name)}
-                  />
-                )}
-                {isLockedFunction && (isSavedFunction || isBuiltinFunction) && (
-                  <View className="bg-green-500/20 rounded">
-                    <BookmarkCheck size={16} color="#1a1a1a" />
-                  </View>
-                )}
-                {!isLockedFunction && <DeleteButton onPress={() => onDeleteStatement(currentPath)} />}
+        <Column className="gap-0">
+          <View className="bg-text/10 rounded-t-xl p-2">
+            <Column className="gap-2">
+              <Row className="items-center justify-between">
+                <FontText weight="medium">Function</FontText>
+                <Row className="items-center gap-1">
+                  {onSaveFunction && onUnsaveFunction && !isLockedFunction && (
+                    <SaveFunctionButton
+                      isSaved={isSavedFunction && !isDecoupled}
+                      onSave={() => onSaveFunction(statement.name, printStatement(statement))}
+                      onUnsave={() => onUnsaveFunction(statement.name)}
+                    />
+                  )}
+                  {isLockedFunction && (isSavedFunction || isBuiltinFunction) && (
+                    <View className="rounded bg-green-500/20">
+                      <BookmarkCheck size={16} color="#1a1a1a" />
+                    </View>
+                  )}
+                  {!isLockedFunction && (
+                    <DeleteButton onPress={() => onDeleteStatement(currentPath)} />
+                  )}
+                </Row>
               </Row>
-            </Row>
-            <FunctionTemplateEditor
-              template={statement.template ?? []}
-              onChange={(template) => onSetStatementField(currentPath, 'template', template)}
-              statementPath={currentPath}
-              contextVariables={contextVariables}
-              definedFunctions={definedFunctions}
-              entryKeysBySource={entryKeysBySource}
-              onEditMarkdown={onEditMarkdown}
-            />
-          </Column>
-        </View>
-        <View className="border-subtle-border border-x px-2">
-          <Canvas
-            statements={bodyStatements}
-            {...{
-              definedVariables: [...statement.parameters, ...definedVariables],
-              definedFunctions,
-              onAdd,
-              onSetExpression,
-              onSetStatementField,
-              onDeleteStatement,
-              entryKeysBySource,
-              onEditMarkdown,
-              isTriggerContext,
-              savedFunctionNames,
-              onSaveFunction,
-              onUnsaveFunction,
-              onLockedFunctionClick,
-              decoupledFunctionNames,
-              onSetComment,
-            }}
-            stmtPath={currentPath}
-          />
-        </View>
-        <View className="bg-text/10 rounded-b-xl p-2">
-          <Row className="items-center gap-2">
-            <FontText weight="medium">Return</FontText>
-            {returnStatement?.kind === 'ReturnStatement' ? (
-              <ExpressionSocket
-                expression={returnStatement.value ?? { kind: 'NothingLiteral', span }}
-                location={{
-                  statementPath: [...currentPath, returnIndex],
-                  slot: { kind: 'returnValue' },
-                  expressionPath: [],
-                }}
-                expectedType="expression"
-                contextVariables={[...statement.parameters, ...contextVariables]}
-                entryKeysBySource={entryKeysBySource}
+              <FunctionTemplateEditor
+                template={statement.template ?? []}
+                onChange={(template) => onSetStatementField(currentPath, 'template', template)}
+                statementPath={currentPath}
+                contextVariables={contextVariables}
                 definedFunctions={definedFunctions}
-                onAdd={onAdd}
-                onSetExpression={onSetExpression}
+                entryKeysBySource={entryKeysBySource}
                 onEditMarkdown={onEditMarkdown}
               />
-            ) : (
-              <FontText variant="subtext">Add a Return block</FontText>
-            )}
-          </Row>
-        </View>
-      </Column>
+            </Column>
+          </View>
+          <View className="border-subtle-border border-x px-2">
+            <Canvas
+              statements={bodyStatements}
+              {...{
+                definedVariables: [...statement.parameters, ...definedVariables],
+                definedFunctions,
+                onAdd,
+                onSetExpression,
+                onSetStatementField,
+                onDeleteStatement,
+                entryKeysBySource,
+                onEditMarkdown,
+                isTriggerContext,
+                savedFunctionNames,
+                onSaveFunction,
+                onUnsaveFunction,
+                onLockedFunctionClick,
+                decoupledFunctionNames,
+                onSetComment,
+              }}
+              stmtPath={currentPath}
+            />
+          </View>
+          <View className="bg-text/10 rounded-b-xl p-2">
+            <Row className="items-center gap-2">
+              <FontText weight="medium">Return</FontText>
+              {returnStatement?.kind === 'ReturnStatement' ? (
+                <ExpressionSocket
+                  expression={returnStatement.value ?? { kind: 'NothingLiteral', span }}
+                  location={{
+                    statementPath: [...currentPath, returnIndex],
+                    slot: { kind: 'returnValue' },
+                    expressionPath: [],
+                  }}
+                  expectedType="expression"
+                  contextVariables={[...statement.parameters, ...contextVariables]}
+                  entryKeysBySource={entryKeysBySource}
+                  definedFunctions={definedFunctions}
+                  onAdd={onAdd}
+                  onSetExpression={onSetExpression}
+                  onEditMarkdown={onEditMarkdown}
+                />
+              ) : (
+                <FontText variant="subtext">Add a Return block</FontText>
+              )}
+            </Row>
+          </View>
+        </Column>
       </View>
     );
   } else if (statement.kind === 'ReturnStatement') {
@@ -2397,7 +2658,7 @@ const StatementBlock = ({
     <View style={{ marginLeft: stmtPath!.length * 12 }}>
       {showCommentBlock && (
         <View className="mb-1 ml-2 flex-row items-start gap-1">
-          <View className="bg-text/5 border-subtle-border relative rounded-lg border p-2 flex-1">
+          <View className="bg-text/5 border-subtle-border relative flex-1 rounded-lg border p-2">
             {hasComment && (
               <Pressable
                 onPress={handleCommentDelete}
@@ -2415,11 +2676,15 @@ const StatementBlock = ({
                 placeholder="Write a comment..."
                 autoFocus
                 autoGrow
-                className="text-xs italic text-text"
+                className="text-text text-xs italic"
                 style={{ minHeight: 20, paddingTop: 0, paddingBottom: 0 }}
               />
             ) : (
-              <Pressable onPress={() => { setCommentDraft(statement.comment ?? ''); setIsEditingComment(true); }}>
+              <Pressable
+                onPress={() => {
+                  setCommentDraft(statement.comment ?? '');
+                  setIsEditingComment(true);
+                }}>
                 <FontText variant="subtext" className="text-xs italic">
                   {statement.comment}
                 </FontText>
@@ -2443,6 +2708,7 @@ const StatementBlock = ({
         )}
         <Swapable
           label={statementLabel}
+          moveTarget={{ kind: 'block', path: originalPath, statement }}
           variant="statement"
           onSwap={swapStatement}
           isFunction={isFunction}
@@ -2495,7 +2761,10 @@ export const BlockPreview = ({
   );
   if (statement) {
     return (
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ flexGrow: 1 }}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{ flexGrow: 1 }}>
         <View pointerEvents="none">
           <StatementBlock
             statement={statement}
@@ -2516,7 +2785,10 @@ export const BlockPreview = ({
   }
   if (expression) {
     return (
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ flexGrow: 1 }}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{ flexGrow: 1 }}>
         <View pointerEvents="none">
           <ExpressionSocket
             expression={expression}
@@ -2555,7 +2827,10 @@ const Canvas = ({
   onLockedFunctionClick,
   decoupledFunctionNames,
   onSetComment,
+  moveTool,
 }: CanvasProps) => {
+  const inheritedMoveTool = React.useContext(MoveToolContext);
+  const activeMoveTool = moveTool ?? inheritedMoveTool;
   // Only load tag definitions at the root level (stmtPath is empty).
   // Nested Canvas instances inherit the context from the root.
   const isRoot = stmtPath.length === 0;
@@ -2570,14 +2845,24 @@ const Canvas = ({
     <InputSourcesContext.Provider value={inputSources ?? {}}>
       <Column className="gap-0">
         {statements.length > 0 && (
-          <PuzzleConnector
-            direction="vertical"
-            tooltip="Add block"
-            onPress={() => onAdd({ kind: 'statement', path: [...stmtPath, 0] })}
-          />
+          <>
+            {activeMoveTool?.getBlockMarkers(stmtPath, 0).map((number) => (
+              <MoveNumberMarker key={`move-${number}`} number={number} />
+            ))}
+            <PuzzleConnector
+              direction="vertical"
+              tooltip="Add block"
+              placeTarget={{ kind: 'block', path: [...stmtPath, 0] }}
+              onPress={() => onAdd({ kind: 'statement', path: [...stmtPath, 0] })}
+            />
+          </>
         )}
         {statements.map((statement, index) => (
           <React.Fragment key={`stmt-${stmtPath.join('-')}-${index}`}>
+            {index > 0 &&
+              activeMoveTool
+                ?.getBlockMarkers(stmtPath, index)
+                .map((number) => <MoveNumberMarker key={`move-${number}`} number={number} />)}
             <StatementBlock
               statement={statement}
               index={index}
@@ -2601,15 +2886,39 @@ const Canvas = ({
             <PuzzleConnector
               direction="vertical"
               tooltip="Add block"
+              placeTarget={{ kind: 'block', path: [...stmtPath, index + 1] }}
               onPress={() => onAdd({ kind: 'statement', path: [...stmtPath, index + 1] })}
             />
           </React.Fragment>
         ))}
+        {statements.length > 0 &&
+          activeMoveTool
+            ?.getBlockMarkers(stmtPath, statements.length)
+            .map((number) => <MoveNumberMarker key={`move-${number}`} number={number} />)}
+        {statements.length === 0 &&
+          activeMoveTool
+            ?.getBlockMarkers(stmtPath, 0)
+            .map((number) => <MoveNumberMarker key={`move-${number}`} number={number} />)}
         {statements.length === 0 && (
           <Pressable
             accessibilityRole="button"
-            onPress={() => onAdd({ kind: 'statement', path: [...stmtPath, 0] })}>
-            <View className="border-subtle-border my-2 h-10 w-full flex-row items-center justify-center gap-2 rounded-xl border border-dashed bg-transparent">
+            disabled={
+              !!activeMoveTool &&
+              (activeMoveTool.phase !== 'place' || activeMoveTool.category !== 'block')
+            }
+            onPress={() => {
+              if (activeMoveTool?.phase === 'place' && activeMoveTool.category === 'block') {
+                activeMoveTool.onPlaceBlock([...stmtPath, 0]);
+              } else if (!activeMoveTool) {
+                onAdd({ kind: 'statement', path: [...stmtPath, 0] });
+              }
+            }}>
+            <View
+              className={`my-2 h-10 w-full flex-row items-center justify-center gap-2 rounded-xl border border-dashed ${
+                activeMoveTool?.phase === 'place' && activeMoveTool.category === 'block'
+                  ? 'border-green-800 bg-green-700'
+                  : 'border-subtle-border bg-transparent'
+              } ${activeMoveTool && (activeMoveTool.phase !== 'place' || activeMoveTool.category !== 'block') ? 'opacity-30' : ''}`}>
               <FontText className="text-text/40 text-sm">+</FontText>
               <FontText variant="subtext" className="text-sm">
                 press to add a block
@@ -2628,10 +2937,12 @@ const Canvas = ({
 
   // Root Canvas: provide tag definitions context + render tag manager modal
   return (
-    <TagDefinitionsContext.Provider value={{ definitions: tagDefinitions, gameId }}>
-      {inner}
-      <TagManagerModal gameId={gameId} tagDefinitions={tagDefinitions} setTagDefs={setTagDefs} />
-    </TagDefinitionsContext.Provider>
+    <MoveToolContext.Provider value={activeMoveTool}>
+      <TagDefinitionsContext.Provider value={{ definitions: tagDefinitions, gameId }}>
+        {inner}
+        <TagManagerModal gameId={gameId} tagDefinitions={tagDefinitions} setTagDefs={setTagDefs} />
+      </TagDefinitionsContext.Provider>
+    </MoveToolContext.Provider>
   );
 };
 

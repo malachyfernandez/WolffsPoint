@@ -137,7 +137,7 @@ const withBodyStatements = (stmt: Statement, newBody: Statement[]): Statement =>
   }
 };
 
-const insertStatementInList = (
+export const insertStatementInList = (
   statements: Statement[],
   path: number[],
   newStmt: Statement
@@ -159,7 +159,7 @@ const insertStatementInList = (
   return result;
 };
 
-const deleteStatementInList = (statements: Statement[], path: number[]): Statement[] => {
+export const deleteStatementInList = (statements: Statement[], path: number[]): Statement[] => {
   if (path.length === 0) return statements;
   if (path.length === 1) {
     const result = [...statements];
@@ -177,7 +177,10 @@ const deleteStatementInList = (statements: Statement[], path: number[]): Stateme
   return result;
 };
 
-const getStatementAtPath = (statements: Statement[], path: number[]): Statement | undefined => {
+export const getStatementAtPath = (
+  statements: Statement[],
+  path: number[]
+): Statement | undefined => {
   if (path.length === 0) return undefined;
   if (path.length === 1) return statements[path[0]];
   const parent = statements[path[0]];
@@ -185,7 +188,7 @@ const getStatementAtPath = (statements: Statement[], path: number[]): Statement 
   return getStatementAtPath(getBodyStatements(parent), path.slice(1));
 };
 
-const replaceStatementAtPath = (
+export const replaceStatementAtPath = (
   statements: Statement[],
   path: number[],
   newStmt: Statement

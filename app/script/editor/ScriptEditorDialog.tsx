@@ -1,5 +1,5 @@
-import React, { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
-import { Pressable, TextInput, View } from 'react-native';
+import React, { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
+import { Animated, Pressable, ScrollView, TextInput, View } from 'react-native';
 import ConvexDialog from '../../components/ui/dialog/ConvexDialog';
 import DialogHeader from '../../components/ui/dialog/DialogHeader';
 import UnsavedChangesDialog from '../../components/ui/dialog/UnsavedChangesDialog';
@@ -12,18 +12,36 @@ import { CloseButton } from '../../components/game/markdownEditor';
 import MarkdownEditorDialog from '../../components/game/MarkdownEditorDialog';
 import { parseScript } from '../lang/parser';
 import { printScript, printScriptBlock, parseScriptBlock } from '../lang/printer';
-import type { Expression, FunctionTemplatePiece, Statement } from '../lang/ast';
+import type { Expression, FunctionTemplatePiece, Script, Statement } from '../lang/ast';
+import { emptySpan } from '../lang/ast';
 import {
   editorReducer,
   initialState,
   createScript,
   createOnTagAddedStatement,
+  deleteStatementInList,
+  getStatementAtPath,
+  insertStatementInList,
+  replaceStatementAtPath,
 } from './editorReducer';
 import type { EditorAction } from './editorReducer';
-import Canvas from './Canvas';
-import InsertModal, { type DefinedFunction, type InsertTarget, BUILTIN_FUNCTION_NAMES } from './InsertModal';
+import Canvas, { BlockPreview, type ExpressionMoveTarget, type MoveToolControls } from './Canvas';
+import InsertModal, {
+  type DefinedFunction,
+  type InsertTarget,
+  BUILTIN_FUNCTION_NAMES,
+} from './InsertModal';
 import { createScriptGlobals, type ScriptSourceData } from '../runtime/sources';
-import { traceEntrySource } from './expressionEditor';
+import {
+  decomposeChain,
+  getExpressionAtLocation,
+  recomposeChain,
+  setExpressionAtLocation,
+  traceEntrySource,
+  type ChainLink,
+  type ExpressionLocation,
+} from './expressionEditor';
+import { useTooltip } from './useTooltip';
 import type { EntryKeysBySource } from './typeInference';
 import { useUndoRedo, useCreateUndoSnapshot } from '../../../hooks/useUndoRedo';
 import { useSavedFunctions } from '../../../hooks/useSavedFunctions';
@@ -242,6 +260,248 @@ const collectInputLabels = (statements: Statement[], acc: string[] = []): string
   return acc;
 };
 
+type MoveSelection =
+  | {
+      kind: 'whole';
+      number: number;
+      location: ExpressionLocation;
+      expression: Expression;
+    }
+  | {
+      kind: 'chainLink';
+      number: number;
+      location: ExpressionLocation;
+      linkIndex: number;
+      link: ChainLink;
+    }
+  | { kind: 'block'; number: number; path: number[]; statement: Statement };
+
+interface MoveSession {
+  operation: 'move' | 'clone';
+  phase: 'collect' | 'place';
+  category: 'expression' | 'block' | null;
+  baseline: Script;
+  selections: MoveSelection[];
+  nextNumber: number;
+}
+
+const locationKey = (location: ExpressionLocation) =>
+  JSON.stringify([location.statementPath, location.slot, location.expressionPath]);
+
+const sameLocation = (left: ExpressionLocation, right: ExpressionLocation) =>
+  locationKey(left) === locationKey(right);
+
+const isPathPrefix = (prefix: number[], path: number[]) =>
+  prefix.length <= path.length && prefix.every((part, index) => path[index] === part);
+
+const expressionPathIsPrefix = (
+  prefix: ExpressionLocation['expressionPath'],
+  path: ExpressionLocation['expressionPath']
+) =>
+  prefix.length <= path.length &&
+  prefix.every((step, index) => JSON.stringify(step) === JSON.stringify(path[index]));
+
+const expressionLocationsOverlap = (left: ExpressionLocation, right: ExpressionLocation) =>
+  JSON.stringify([left.statementPath, left.slot]) ===
+    JSON.stringify([right.statementPath, right.slot]) &&
+  (expressionPathIsPrefix(left.expressionPath, right.expressionPath) ||
+    expressionPathIsPrefix(right.expressionPath, left.expressionPath));
+
+const setScriptExpression = (
+  script: Script,
+  location: ExpressionLocation,
+  expression: Expression
+): Script => {
+  const statement = getStatementAtPath(script.statements, location.statementPath);
+  if (!statement) return script;
+  return {
+    ...script,
+    statements: replaceStatementAtPath(
+      script.statements,
+      location.statementPath,
+      setExpressionAtLocation(statement, location, expression)
+    ),
+  };
+};
+
+const deriveSessionAst = (session: MoveSession): Script => {
+  if (session.operation === 'clone') return session.baseline;
+  if (session.category === 'block') {
+    const selections = session.selections
+      .filter(
+        (selection): selection is Extract<MoveSelection, { kind: 'block' }> =>
+          selection.kind === 'block'
+      )
+      .sort((left, right) => {
+        const lengthDifference = right.path.length - left.path.length;
+        if (lengthDifference !== 0) return lengthDifference;
+        return right.path
+          .join('.')
+          .localeCompare(left.path.join('.'), undefined, { numeric: true });
+      });
+    return {
+      ...session.baseline,
+      statements: selections.reduce(
+        (statements, selection) => deleteStatementInList(statements, selection.path),
+        session.baseline.statements
+      ),
+    };
+  }
+  let next = session.baseline;
+  const expressionSelections = session.selections.filter(
+    (selection): selection is Exclude<MoveSelection, { kind: 'block' }> =>
+      selection.kind !== 'block'
+  );
+  const grouped = new Map<string, typeof expressionSelections>();
+  expressionSelections.forEach((selection) => {
+    const key = locationKey(selection.location);
+    grouped.set(key, [...(grouped.get(key) ?? []), selection]);
+  });
+  grouped.forEach((selections) => {
+    const location = selections[0].location;
+    const statement = getStatementAtPath(next.statements, location.statementPath);
+    const expression = statement ? getExpressionAtLocation(statement, location) : undefined;
+    if (!expression) return;
+    if (selections.some((selection) => selection.kind === 'whole')) {
+      next = setScriptExpression(next, location, { kind: 'NothingLiteral', span: expression.span });
+      return;
+    }
+    const removed = new Set(
+      selections
+        .filter(
+          (selection): selection is Extract<MoveSelection, { kind: 'chainLink' }> =>
+            selection.kind === 'chainLink'
+        )
+        .map((selection) => selection.linkIndex)
+    );
+    const remaining = decomposeChain(expression).filter((_, index) => !removed.has(index));
+    if (remaining.length > 0 && remaining[0].type !== 'base') {
+      remaining.unshift({ type: 'base', expr: { kind: 'NothingLiteral', span: emptySpan() } });
+    }
+    next = setScriptExpression(next, location, recomposeChain(remaining));
+  });
+  return next;
+};
+
+const composeShelfExpression = (selections: MoveSelection[]): Expression | null => {
+  const expressionSelections = selections.filter(
+    (selection): selection is Exclude<MoveSelection, { kind: 'block' }> =>
+      selection.kind !== 'block'
+  );
+  if (expressionSelections.length === 0) return null;
+  const links: ChainLink[] = [];
+  for (const selection of expressionSelections) {
+    const nextLinks =
+      selection.kind === 'chainLink' ? [selection.link] : decomposeChain(selection.expression);
+    const base = nextLinks[0]?.type === 'base' ? nextLinks[0] : undefined;
+    if (links.length === 0) {
+      if (!base) links.push({ type: 'base', expr: { kind: 'NothingLiteral', span: emptySpan() } });
+      links.push(...nextLinks);
+      continue;
+    }
+    if (base && base.expr.kind !== 'NothingLiteral') {
+      const currentBase = links[0];
+      if (currentBase?.type !== 'base' || currentBase.expr.kind !== 'NothingLiteral') return null;
+      links[0] = base;
+      links.push(...nextLinks.slice(1));
+      continue;
+    }
+    links.push(...(base ? nextLinks.slice(1) : nextLinks));
+  }
+  return recomposeChain(links);
+};
+
+const statementLabel = (statement: Statement) => {
+  if (
+    statement.kind === 'ExpressionStatement' &&
+    statement.expression.kind === 'CallExpression' &&
+    statement.expression.callee.kind === 'IdentifierExpression'
+  )
+    return statement.expression.callee.name;
+  if (statement.kind === 'IfStatement') return 'If / Else';
+  if (statement.kind === 'ForEachStatement') return `For each ${statement.itemName}`;
+  if (statement.kind === 'FunctionStatement') return `Function ${statement.name}`;
+  if (statement.kind === 'OnTagAddedStatement') return 'On Tag Added';
+  if (statement.kind === 'OnTagRemovedStatement') return 'On Tag Removed';
+  if (statement.kind === 'UpdateCellStatement') return 'Update Cell';
+  if (statement.kind === 'ReturnStatement') return 'Return';
+  return statement.kind;
+};
+
+const ShelfItem = ({
+  selection,
+  onReturn,
+  entryKeysBySource,
+  definedFunctions,
+}: {
+  selection: MoveSelection;
+  onReturn: () => void;
+  entryKeysBySource: EntryKeysBySource;
+  definedFunctions: DefinedFunction[];
+}) => {
+  const tooltipId = React.useId();
+  const { setHovered } = useTooltip(tooltipId, `Click to return ${selection.number}`);
+  const animation = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.spring(animation, {
+      toValue: 1,
+      useNativeDriver: true,
+      speed: 22,
+      bounciness: 7,
+    }).start();
+  }, [animation]);
+  return (
+    <View
+      {...({
+        onPointerDown: (event: PointerEvent) => {
+          event.preventDefault();
+          event.stopPropagation();
+          onReturn();
+        },
+      } as Record<string, unknown>)}>
+      <Animated.View style={{ opacity: animation, transform: [{ scale: animation }] }}>
+        <Pressable
+          onPress={onReturn}
+          onHoverIn={() => setHovered(true)}
+          onHoverOut={() => setHovered(false)}
+          className="border-subtle-border bg-inner-background rounded-xl border p-1.5">
+          {selection.kind === 'block' ? (
+            <Row className="items-center gap-2 px-2 py-1">
+              <View className="bg-text/10 h-6 w-6 items-center justify-center rounded-full">
+                <FontText weight="medium" className="text-xs">
+                  {selection.number}
+                </FontText>
+              </View>
+              <FontText weight="medium" className="text-sm">
+                {statementLabel(selection.statement)}
+              </FontText>
+            </Row>
+          ) : (
+            <BlockPreview
+              expression={
+                selection.kind === 'whole'
+                  ? selection.expression
+                  : recomposeChain([
+                      {
+                        type: 'base',
+                        expr:
+                          selection.link.type === 'base'
+                            ? selection.link.expr
+                            : { kind: 'NothingLiteral', span: emptySpan() },
+                      },
+                      ...(selection.link.type === 'base' ? [] : [selection.link]),
+                    ])
+              }
+              entryKeysBySource={entryKeysBySource}
+              definedFunctions={definedFunctions}
+            />
+          )}
+        </Pressable>
+      </Animated.View>
+    </View>
+  );
+};
+
 const ScriptEditorDialog = ({
   isOpen,
   onOpenChange,
@@ -257,6 +517,7 @@ const ScriptEditorDialog = ({
   const { executeCommand, undo, redo, canUndo, canRedo } = useUndoRedo();
   const createUndoSnapshot = useCreateUndoSnapshot();
   const [mode, setMode] = useState<EditorMode>('blocks');
+  const [moveSession, setMoveSession] = useState<MoveSession | null>(null);
   const [textDraft, setTextDraft] = useState('');
   const [parseError, setParseError] = useState<string | null>(null);
   const [insertTarget, setInsertTarget] = useState<InsertTarget | null>(null);
@@ -274,8 +535,7 @@ const ScriptEditorDialog = ({
   } | null>(null);
   const [decoupledFunctions, setDecoupledFunctions] = useState<string[]>([]);
   const [nameCollision, setNameCollision] = useState<string | null>(null);
-  const { savedFunctions, savedFunctionNames, saveFunction, unsaveFunction } =
-    useSavedFunctions();
+  const { savedFunctions, savedFunctionNames, saveFunction, unsaveFunction } = useSavedFunctions();
 
   useEffect(() => {
     if (!isOpen) return;
@@ -294,6 +554,7 @@ const ScriptEditorDialog = ({
     dispatch({ type: 'REPLACE_AST', ast });
     setTextDraft(trimmed);
     setMode('blocks');
+    setMoveSession(null);
     setParseError(null);
     setInsertTarget(null);
     setHasModifications(false);
@@ -321,6 +582,301 @@ const ScriptEditorDialog = ({
     },
     [state, createUndoSnapshot, executeCommand]
   );
+
+  const commitMoveSession = useCallback(
+    (session: MoveSession, ast: Script) => {
+      const before = createUndoSnapshot(session.baseline);
+      const after = createUndoSnapshot(ast);
+      executeCommand({
+        action: () => dispatch({ type: 'SET_AST', ast: after }),
+        undoAction: () => dispatch({ type: 'SET_AST', ast: before }),
+        description: session.operation === 'move' ? 'Move selection' : 'Clone selection',
+      });
+      setHasModifications(true);
+      setMoveSession(null);
+    },
+    [createUndoSnapshot, executeCommand]
+  );
+
+  const startMoveSession = (operation: 'move' | 'clone') => {
+    setInsertTarget(null);
+    setMoveSession({
+      operation,
+      phase: 'collect',
+      category: null,
+      baseline: createUndoSnapshot(state.ast),
+      selections: [],
+      nextNumber: 1,
+    });
+  };
+
+  const cancelMoveSession = () => {
+    if (moveSession) dispatch({ type: 'SET_AST', ast: moveSession.baseline });
+    setMoveSession(null);
+  };
+
+  const updateMoveSession = (update: (session: MoveSession) => MoveSession) => {
+    if (!moveSession) return;
+    const next = update(moveSession);
+    dispatch({ type: 'SET_AST', ast: deriveSessionAst(next) });
+    setMoveSession(next);
+  };
+
+  const handlePickExpression = (target: ExpressionMoveTarget) => {
+    updateMoveSession((session) => {
+      if (session.phase !== 'collect' || session.category === 'block') return session;
+      const expressionSelections = session.selections.filter(
+        (selection): selection is Exclude<MoveSelection, { kind: 'block' }> =>
+          selection.kind !== 'block'
+      );
+      if (
+        expressionSelections.some(
+          (selection) =>
+            (target.kind === 'chainLink' &&
+              selection.kind === 'chainLink' &&
+              sameLocation(selection.location, target.location) &&
+              selection.linkIndex === target.linkIndex) ||
+            (target.kind === 'whole' &&
+              selection.kind === 'whole' &&
+              sameLocation(selection.location, target.location)) ||
+            (!sameLocation(selection.location, target.location) &&
+              expressionLocationsOverlap(selection.location, target.location)) ||
+            (sameLocation(selection.location, target.location) && selection.kind !== target.kind)
+        )
+      )
+        return session;
+      const selection: MoveSelection = { ...target, number: session.nextNumber };
+      return {
+        ...session,
+        category: 'expression',
+        selections: [...session.selections, selection],
+        nextNumber: session.nextNumber + 1,
+      };
+    });
+  };
+
+  const handlePickBlock = (path: number[], statement: Statement) => {
+    updateMoveSession((session) => {
+      if (session.phase !== 'collect' || session.category === 'expression') return session;
+      if (
+        session.selections.some(
+          (selection) =>
+            selection.kind === 'block' &&
+            (isPathPrefix(selection.path, path) || isPathPrefix(path, selection.path))
+        )
+      )
+        return session;
+      return {
+        ...session,
+        category: 'block',
+        selections: [
+          ...session.selections,
+          { kind: 'block', number: session.nextNumber, path, statement },
+        ],
+        nextNumber: session.nextNumber + 1,
+      };
+    });
+  };
+
+  const handleReturnSelection = (number: number) => {
+    updateMoveSession((session) => ({
+      ...session,
+      phase: 'collect',
+      category: session.selections.length === 1 ? null : session.category,
+      selections: session.selections.filter((selection) => selection.number !== number),
+    }));
+  };
+
+  const shelfExpression = useMemo(
+    () => (moveSession ? composeShelfExpression(moveSession.selections) : null),
+    [moveSession]
+  );
+
+  const canPlaceExpression = useCallback(
+    (target: { location: ExpressionLocation; linkIndex?: number }) => {
+      if (!moveSession || moveSession.category !== 'expression' || !shelfExpression) return false;
+      const links = decomposeChain(shelfExpression);
+      const hasConcreteBase = links[0]?.type === 'base' && links[0].expr.kind !== 'NothingLiteral';
+      if (target.linkIndex === undefined || target.linkIndex === 0) return hasConcreteBase;
+      return (
+        links[0]?.type === 'base' && links[0].expr.kind === 'NothingLiteral' && links.length > 1
+      );
+    },
+    [moveSession, shelfExpression]
+  );
+
+  const handlePlaceExpression = (target: { location: ExpressionLocation; linkIndex?: number }) => {
+    if (!moveSession || !canPlaceExpression(target) || !shelfExpression) return;
+    let next = deriveSessionAst(moveSession);
+    if (target.linkIndex === undefined) {
+      next = setScriptExpression(next, target.location, shelfExpression);
+    } else {
+      const statement = getStatementAtPath(next.statements, target.location.statementPath);
+      const expression = statement
+        ? getExpressionAtLocation(statement, target.location)
+        : undefined;
+      if (!expression) return;
+      const chain = decomposeChain(expression);
+      const shelfLinks = decomposeChain(shelfExpression);
+      if (target.linkIndex === 0) {
+        next = setScriptExpression(
+          next,
+          target.location,
+          recomposeChain([...shelfLinks, ...chain.slice(1)])
+        );
+      } else {
+        chain.splice(target.linkIndex, 0, ...shelfLinks.slice(1));
+        next = setScriptExpression(next, target.location, recomposeChain(chain));
+      }
+    }
+    commitMoveSession(moveSession, next);
+  };
+
+  const handlePlaceBlock = (path: number[]) => {
+    if (!moveSession || moveSession.category !== 'block') return;
+    const statements = moveSession.selections
+      .filter(
+        (selection): selection is Extract<MoveSelection, { kind: 'block' }> =>
+          selection.kind === 'block'
+      )
+      .map((selection) => selection.statement);
+    if (statements.length === 0) return;
+    const base = deriveSessionAst(moveSession);
+    const insertionIndex = path[path.length - 1] ?? base.statements.length;
+    const parentPath = path.slice(0, -1);
+    const nextStatements = statements.reduce(
+      (current, statement, index) =>
+        insertStatementInList(current, [...parentPath, insertionIndex + index], statement),
+      base.statements
+    );
+    commitMoveSession(moveSession, { ...base, statements: nextStatements });
+  };
+
+  const moveToolControls: MoveToolControls | undefined = (() => {
+    if (!moveSession) return undefined;
+    const expressionSelections = moveSession.selections.filter(
+      (selection): selection is Exclude<MoveSelection, { kind: 'block' }> =>
+        selection.kind !== 'block'
+    );
+    const blockSelections = moveSession.selections.filter(
+      (selection): selection is Extract<MoveSelection, { kind: 'block' }> =>
+        selection.kind === 'block'
+    );
+    const selectedLinkIndexes = (location: ExpressionLocation) =>
+      expressionSelections
+        .filter(
+          (selection): selection is Extract<MoveSelection, { kind: 'chainLink' }> =>
+            selection.kind === 'chainLink' && sameLocation(selection.location, location)
+        )
+        .map((selection) => selection.linkIndex)
+        .sort((left, right) => left - right);
+    const originalExpressionLocation = (location: ExpressionLocation) => {
+      if (moveSession.operation === 'clone') return location;
+      const expressionPath: ExpressionLocation['expressionPath'] = [];
+      location.expressionPath.forEach((step) => {
+        if (step.kind !== 'chainArgument') {
+          expressionPath.push(step);
+          return;
+        }
+        const chainLocation = { ...location, expressionPath: [...expressionPath] };
+        let linkIndex = step.linkIndex;
+        selectedLinkIndexes(chainLocation).forEach((index) => {
+          if (index <= linkIndex) linkIndex++;
+        });
+        expressionPath.push({ ...step, linkIndex });
+      });
+      return { ...location, expressionPath };
+    };
+    const originalStatementPath = (currentPath: number[]) => {
+      if (moveSession.operation === 'clone') return currentPath;
+      const original: number[] = [];
+      currentPath.forEach((currentIndex) => {
+        const removed = blockSelections
+          .filter(
+            (selection) =>
+              selection.path.length === original.length + 1 &&
+              original.every((part, index) => selection.path[index] === part)
+          )
+          .map((selection) => selection.path[original.length])
+          .sort((left, right) => left - right);
+        let candidate = currentIndex;
+        removed.forEach((index) => {
+          if (index <= candidate) candidate++;
+        });
+        original.push(candidate);
+      });
+      return original;
+    };
+    return {
+      operation: moveSession.operation,
+      phase: moveSession.phase,
+      category: moveSession.category,
+      getOriginalExpressionLocation: originalExpressionLocation,
+      getOriginalLinkIndex: (location, currentIndex) => {
+        if (moveSession.operation === 'clone') return currentIndex;
+        const removed = selectedLinkIndexes(originalExpressionLocation(location));
+        let candidate = currentIndex;
+        removed.forEach((index) => {
+          if (index <= candidate) candidate++;
+        });
+        return candidate;
+      },
+      getLinkMarkers: (location, currentBoundary) => {
+        const originalLocation = originalExpressionLocation(location);
+        return expressionSelections
+          .filter(
+            (selection): selection is Extract<MoveSelection, { kind: 'chainLink' }> =>
+              selection.kind === 'chainLink' && sameLocation(selection.location, originalLocation)
+          )
+          .filter((selection) => {
+            if (moveSession.operation === 'clone')
+              return selection.linkIndex + 1 === currentBoundary;
+            const removed = selectedLinkIndexes(originalLocation);
+            return (
+              selection.linkIndex -
+                removed.filter((index) => index < selection.linkIndex).length ===
+              currentBoundary
+            );
+          })
+          .map((selection) => selection.number);
+      },
+      getWholeMarker: (location) => {
+        const originalLocation = originalExpressionLocation(location);
+        return expressionSelections.find(
+          (selection) =>
+            selection.kind === 'whole' && sameLocation(selection.location, originalLocation)
+        )?.number;
+      },
+      getOriginalStatementPath: originalStatementPath,
+      getBlockMarkers: (currentParentPath, currentBoundary) => {
+        const parent = originalStatementPath(currentParentPath);
+        return blockSelections
+          .filter(
+            (selection) =>
+              selection.path.length === parent.length + 1 &&
+              parent.every((part, index) => selection.path[index] === part)
+          )
+          .filter((selection) => {
+            const index = selection.path[parent.length];
+            if (moveSession.operation === 'clone') return index + 1 === currentBoundary;
+            const earlier = blockSelections.filter(
+              (candidate) =>
+                candidate.path.length === parent.length + 1 &&
+                parent.every((part, partIndex) => candidate.path[partIndex] === part) &&
+                candidate.path[parent.length] < index
+            ).length;
+            return index - earlier === currentBoundary;
+          })
+          .map((selection) => selection.number);
+      },
+      onPickExpression: handlePickExpression,
+      onPickBlock: handlePickBlock,
+      onReturn: handleReturnSelection,
+      canPlaceExpression,
+      onPlaceExpression: handlePlaceExpression,
+      onPlaceBlock: handlePlaceBlock,
+    };
+  })();
 
   const definedVariables = useMemo(
     () => collectDefinedVariables(state.ast.statements),
@@ -437,6 +993,7 @@ const ScriptEditorDialog = ({
   };
 
   const handleSwitchMode = (newMode: EditorMode) => {
+    if (moveSession && newMode === 'text') return;
     if (newMode === 'blocks' && mode === 'text') {
       try {
         const ast = textDraft.trim().length > 0 ? parseScript(textDraft) : createScript();
@@ -491,6 +1048,7 @@ const ScriptEditorDialog = ({
     expression: Expression,
     trackHistory = false
   ) => {
+    if (moveSession) return;
     if (trackHistory) {
       dispatchWithUndo(
         { type: 'SET_EXPRESSION', location, expression, trackHistory: true },
@@ -514,15 +1072,21 @@ const ScriptEditorDialog = ({
       | 'updateValue',
     value: string | string[] | FunctionTemplatePiece[] | Expression
   ) => {
+    if (moveSession) return;
     dispatchWithUndo({ type: 'SET_STATEMENT_FIELD', path, field, value }, 'Edit field');
   };
 
   const handleDeleteStatement = (path: number[]) => {
+    if (moveSession) return;
     dispatchWithUndo({ type: 'DELETE_STATEMENT', path }, 'Delete block');
   };
 
   const handleSetComment = (path: number[], comment: string) => {
-    dispatchWithUndo({ type: 'SET_COMMENT', path, comment }, comment ? 'Add comment' : 'Remove comment');
+    if (moveSession) return;
+    dispatchWithUndo(
+      { type: 'SET_COMMENT', path, comment },
+      comment ? 'Add comment' : 'Remove comment'
+    );
   };
 
   const handleLockedFunctionClick = (path: number[], functionName: string, isBuiltin: boolean) => {
@@ -558,9 +1122,7 @@ const ScriptEditorDialog = ({
     // means the user accepts it's no longer treated as locked. We track this
     // by adding the function name to a "decoupled" set.
     setDecoupledFunctions((prev) =>
-      prev.includes(decoupleDialog.functionName)
-        ? prev
-        : [...prev, decoupleDialog.functionName]
+      prev.includes(decoupleDialog.functionName) ? prev : [...prev, decoupleDialog.functionName]
     );
     setDecoupleDialog(null);
   };
@@ -669,7 +1231,7 @@ const ScriptEditorDialog = ({
                         className="h-8 px-3"
                         onPress={undo}
                         dropShadow={false}
-                        disabled={!canUndo}>
+                        disabled={!canUndo || !!moveSession}>
                         <FontText className="text-sm">Undo</FontText>
                       </AppButton>
                       <AppButton
@@ -677,7 +1239,7 @@ const ScriptEditorDialog = ({
                         className="h-8 px-3"
                         onPress={redo}
                         dropShadow={false}
-                        disabled={!canRedo}>
+                        disabled={!canRedo || !!moveSession}>
                         <FontText className="text-sm">Redo</FontText>
                       </AppButton>
                     </>
@@ -697,6 +1259,7 @@ const ScriptEditorDialog = ({
                     variant={mode === 'text' ? 'filled' : 'outline'}
                     className="h-8 px-3"
                     onPress={() => handleSwitchMode('text')}
+                    disabled={!!moveSession}
                     dropShadow={false}>
                     <FontText className="text-sm" color={mode === 'text' ? 'white' : undefined}>
                       Text
@@ -733,7 +1296,10 @@ const ScriptEditorDialog = ({
                       statements={state.ast.statements}
                       definedVariables={definedVariables}
                       definedFunctions={definedFunctions}
-                      onAdd={(target) => setInsertTarget(target)}
+                      onAdd={(target) => {
+                        if (!moveSession) setInsertTarget(target);
+                      }}
+                      moveTool={moveToolControls}
                       onSetExpression={handleSetExpression}
                       onSetStatementField={handleSetStatementField}
                       onDeleteStatement={handleDeleteStatement}
@@ -753,21 +1319,99 @@ const ScriptEditorDialog = ({
                     />
                   </ShadowScrollView>
                 )}
+                {moveSession && moveSession.selections.length > 0 && (
+                  <View className="border-subtle-border bg-background/95 absolute bottom-3 left-3 right-3 z-30 rounded-2xl border p-2 shadow-lg">
+                    <Row className="mb-1 items-center justify-between px-1">
+                      <FontText weight="medium" className="text-xs">
+                        {moveSession.operation === 'move' ? 'Moving' : 'Cloning'}{' '}
+                        {moveSession.category === 'block' ? 'blocks' : 'expressions'}
+                      </FontText>
+                      <FontText variant="subtext" className="text-xs">
+                        {moveSession.phase === 'place'
+                          ? 'Choose a green target'
+                          : 'Click an item to return it'}
+                      </FontText>
+                    </Row>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                      <Row className="items-center gap-1">
+                        {moveSession.selections.map((selection) => (
+                          <ShelfItem
+                            key={selection.number}
+                            selection={selection}
+                            onReturn={() => handleReturnSelection(selection.number)}
+                            entryKeysBySource={entryKeysBySource}
+                            definedFunctions={definedFunctions}
+                          />
+                        ))}
+                      </Row>
+                    </ScrollView>
+                  </View>
+                )}
               </View>
 
-              <Row className="justify-end gap-4 pt-2">
-                <AppButton variant="outline" className="w-28" onPress={handleAttemptClose}>
-                  <FontText weight="medium">Cancel</FontText>
-                </AppButton>
-                <AppButton
-                  variant="filled"
-                  className="w-36"
-                  disabled={!canSubmit}
-                  onPress={handleSubmit}>
-                  <FontText weight="medium" color="white">
-                    Save Script
-                  </FontText>
-                </AppButton>
+              <Row className="items-center justify-between gap-4 pt-2">
+                <Row className="gap-2">
+                  {mode === 'blocks' &&
+                    (moveSession ? (
+                      <>
+                        <AppButton
+                          variant="outline"
+                          className="h-8 px-3"
+                          onPress={cancelMoveSession}
+                          dropShadow={false}>
+                          <FontText className="text-sm">Cancel</FontText>
+                        </AppButton>
+                        <AppButton
+                          variant="filled"
+                          className="h-8 px-3"
+                          disabled={
+                            moveSession.selections.length === 0 ||
+                            (moveSession.category === 'expression' && !shelfExpression)
+                          }
+                          onPress={() =>
+                            setMoveSession((current) =>
+                              current ? { ...current, phase: 'place' } : current
+                            )
+                          }
+                          dropShadow={false}>
+                          <FontText className="text-sm" color="white">
+                            Place
+                          </FontText>
+                        </AppButton>
+                      </>
+                    ) : (
+                      <>
+                        <AppButton
+                          variant="outline"
+                          className="h-8 px-3"
+                          onPress={() => startMoveSession('move')}
+                          dropShadow={false}>
+                          <FontText className="text-sm">Move</FontText>
+                        </AppButton>
+                        <AppButton
+                          variant="outline"
+                          className="h-8 px-3"
+                          onPress={() => startMoveSession('clone')}
+                          dropShadow={false}>
+                          <FontText className="text-sm">Clone</FontText>
+                        </AppButton>
+                      </>
+                    ))}
+                </Row>
+                <Row className="gap-4">
+                  <AppButton variant="outline" className="w-28" onPress={handleAttemptClose}>
+                    <FontText weight="medium">Cancel</FontText>
+                  </AppButton>
+                  <AppButton
+                    variant="filled"
+                    className="w-36"
+                    disabled={!canSubmit || !!moveSession}
+                    onPress={handleSubmit}>
+                    <FontText weight="medium" color="white">
+                      Save Script
+                    </FontText>
+                  </AppButton>
+                </Row>
               </Row>
             </Column>
 
