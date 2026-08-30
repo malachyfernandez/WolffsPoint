@@ -45,7 +45,7 @@ export interface ExpressionBlockDef {
   description: string;
   inputs: BlockInput[];
   category: 'list' | 'number' | 'string' | 'boolean' | 'data' | 'operator' | 'object' | 'math';
-  appliesTo?: 'list' | 'number' | 'string' | 'any';
+  appliesTo?: 'list' | 'object' | 'number' | 'string' | 'any';
   evaluate: (receiver: RuntimeValue, args: RuntimeValue[], ctx: ExpressionContext) => RuntimeValue;
   isProperty?: boolean;
 }
@@ -795,7 +795,7 @@ export const EXPRESSION_BLOCKS: ExpressionBlockDef[] = [
     kind: 'expression',
     description: 'Get a field from an object',
     category: 'data',
-    appliesTo: 'any',
+    appliesTo: 'object',
     inputs: [{ name: 'key', label: 'Key', type: 'string', required: true }],
     evaluate: (receiver, args) => {
       if (!isRuntimeObject(receiver)) return NOTHING;
@@ -811,7 +811,7 @@ export const EXPRESSION_BLOCKS: ExpressionBlockDef[] = [
     kind: 'expression',
     description: 'Get an item at a position in a list',
     category: 'data',
-    appliesTo: 'any',
+    appliesTo: 'list',
     inputs: [{ name: 'position', label: 'Position', type: 'number', required: true, default: 0 }],
     evaluate: (receiver, args) => {
       if (!Array.isArray(receiver) && typeof receiver !== 'string') return NOTHING;

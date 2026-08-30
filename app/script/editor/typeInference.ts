@@ -46,6 +46,7 @@ export interface InferTypeOptions {
 /** Convert an `appliesTo` value from ExpressionBlockDef to a ScriptType. */
 export const appliesToType = (appliesTo: ExpressionBlockDef['appliesTo']): ScriptType => {
   if (appliesTo === 'list') return 'list';
+  if (appliesTo === 'object') return 'object';
   if (appliesTo === 'number') return 'number';
   if (appliesTo === 'string') return 'string';
   return 'any';
