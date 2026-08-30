@@ -1,148 +1,104 @@
-# Context: Horizontal Scroll Bug for BinaryExpression in Script Editor
+# Context: Comment Button on Statement Blocks in Script Editor
 
 ## The Task
 
-Fix a bug where horizontal scrolling breaks when a BinaryExpression (e.g. `==`, `+`, `-`, `AND`, etc.) is the outermost expression in a statement argument slot. Without the BinaryExpression (just a chain like `players.entry("X").entry("")`), horizontal scrolling works fine. Adding any binary operator (`==`, `+`, etc.) as the outer expression makes it unscrollable.
+Add a comment button to the top-left corner of every "outer" statement block (not expressions) in the script editor's block-based visual editor. The button is a small circle with a comment bubble icon (`MessageCircle` from lucide). When pressed, it creates an editable comment block that appears above the statement with a thin connecting line. The comment is typed into a text input. Comments are persisted in the script source as `// comment text` lines above the statement.
 
-## The Bug
+## What's Been Implemented (all code is written and committed)
 
-### What works (chain only, no binary operator)
+The full implementation is done across 7 files. Lint and typecheck pass. The parser/printer round-trip has been verified. **However, the comment circle button is not appearing in the rendered UI** — this is the current bug to fix.
 
-When an expression is a plain chain (e.g. `dataDaysToday(players, 0, ...).entry("Infected").entry("")`), the rendered DOM is:
+### The Bug
 
+The user reports the comment circle button is not visible. Inspecting the rendered HTML, the `data-swapable` div appears as the outermost element of each statement block with no wrapper View or comment button Pressable around it. This means either:
+
+1. **The dev server needs a restart** (hot reload may not have picked up the structural changes to `StatementBlock`'s return)
+2. **`onSetComment` is falsy** — the comment button is conditionally rendered with `{onSetComment && (...)}`. If the prop isn't reaching `StatementBlock`, the button won't render. But the wrapper `<View className="relative">` should still appear even without the button, and it's also missing from the HTML.
+3. **The code isn't being executed at all** — the HTML structure matches the OLD code (where `Swapable` was the direct return with `indent={stmtPath!.length * 12}`), not the new code (which wraps in `<View style={{marginLeft:...}}>` → `<View className="relative">` → Pressable + Swapable).
+
+**Most likely cause**: The app needs a full restart/rebuild, not just hot reload. The structural change to `StatementBlock`'s return value (from returning `<Swapable>` directly to returning a wrapper `<View>`) is the kind of change that hot reload sometimes fails to apply.
+
+**First thing to try**: Restart the dev server and check if the button appears. If it still doesn't, add a `console.log` in `StatementBlock` to verify the new code is executing.
+
+## Architecture & How Comments Work
+
+### Data Model
+Comments are stored as an optional `comment?: string` field on `NodeBase` (the base interface for all AST nodes) in `app/script/lang/ast.ts`. This is the safest approach — no new statement types, no structural AST changes, just an optional string field on every node.
+
+### Text Format
+Comments are saved as `// comment text` lines above the statement in the script source code. Example:
 ```
-<div class="flex-row items-start gap-2">  <!-- ArgRow -->
-  <div>Value</div>  <!-- label -->
-  <div class="r-overflowX-lltvgl ...">  <!-- ScrollView horizontal, OUTERMOST -->
-    <div style="flex-grow: 1">
-      <div class="flex-row items-center gap-0 rounded-lg bg-black/5">  <!-- chain Row -->
-        ...chain links...
-      </div>
-    </div>
-  </div>
-</div>
-```
-
-The `ScrollView` is the outermost element wrapping the chain content. No `Swapable` wrapper. This scrolls correctly.
-
-### What's broken (BinaryExpression as outer expression)
-
-When the expression has a binary operator (e.g. `chain == nothing`), the rendered DOM is:
-
-```
-<div class="flex-row items-start gap-2">  <!-- ArgRow -->
-  <div>Value</div>  <!-- label -->
-  <div data-swapable class="... overflow-hidden ...">  <!-- Swapable, has overflow-hidden! -->
-    <div class="relative">
-      <div class="r-overflowX-lltvgl ...">  <!-- ScrollView horizontal, INSIDE Swapable -->
-        <div style="flex-grow: 1">
-          <div class="flex-row items-center gap-1">  <!-- BinaryExpression Row -->
-            ...left operand (chain)...
-            ...operator dropdown...
-            ...right operand...
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
+// This is a comment
+If (true) {
+  // Inner comment
+  Return;
+}
 ```
 
-The `ScrollView` is **inside** the `Swapable`, which has `overflow-hidden`. This prevents horizontal scrolling from working.
+### Pipeline (7 files)
 
-### Root cause
+1. **`app/script/lang/ast.ts`** — Added `comment?: string` to `NodeBase` interface (line ~20). All statement and expression nodes inherit this.
 
-The `Swapable` component (Canvas.tsx ~line 173) has `overflow-hidden` in its className for all variants (piece, block, statement). This is needed to clip the paper texture and hover overlay to rounded corners.
+2. **`app/script/lang/tokens.ts`** — Added `Comment` to `TokenKind` union (line ~12). The tokenizer now emits `Comment` tokens for `//` comments instead of skipping them (lines ~79-89). The token's `value` field holds the trimmed comment text.
 
-For chain expressions, when `isOuterExpression` is true, the code at Canvas.tsx ~line 1055 wraps the chain in `<ScrollView horizontal>` **without** a Swapable wrapper — the ScrollView is outermost.
+3. **`app/script/lang/parser.ts`** — Added `collectComments()` method (lines ~71-78) that skips `Comment` tokens and returns their concatenated text. `parseStatement()` (line ~86) calls `collectComments()` first, then attaches the result to the parsed statement via `stmt.comment = comment` (line ~132). `parseBlockAfterOpen` and `parseRequiredBlock` were updated to handle `null` returns from `parseStatement` (since trailing comments with no statement after them return `null`).
 
-For BinaryExpressions, the code at Canvas.tsx ~line 680 returns a `<Swapable>` wrapping the content. A previous fix added `<ScrollView horizontal>` **inside** the Swapable. This is wrong — the `overflow-hidden` on the Swapable constrains/clips the ScrollView.
+4. **`app/script/lang/printer.ts`** — `printStatement()` (line ~143) now builds a `commentStr` from `statement.comment` (splitting on newlines, prefixing each line with `// `), and prepends it to every statement type's output. Multi-line comments are supported.
 
-### What was tried (wrong approach)
+5. **`app/script/editor/editorReducer.ts`** — Added `SET_COMMENT` action type (line ~76): `{ type: 'SET_COMMENT'; path: number[]; comment: string }`. The handler (lines ~893-907) uses `getStatementAtPath` and `replaceStatementAtPath` to set/unset the comment field. Setting an empty string clears the comment (`comment: action.comment || undefined`). Supports undo/redo via the standard `past`/`future` snapshot pattern.
 
-Added `<ScrollView horizontal>` inside the `<Swapable>` for BinaryExpression when `isOuterExpression` is true:
+6. **`app/script/editor/Canvas.tsx`** — The main UI changes:
+   - Added `onSetComment?: (path: number[], comment: string) => void` to `CanvasProps` (line ~108)
+   - Added `MessageCircle` to lucide imports (line 3)
+   - `Canvas` component destructures and passes `onSetComment` to `StatementBlock` (line ~2490)
+   - `StatementBlock` (line ~1696) now has `onSetComment` in its props
+   - `StatementBlock` return (lines ~2300-2350) was changed from returning `<Swapable>` directly to a wrapper structure:
+     ```jsx
+     <View style={{ marginLeft: stmtPath!.length * 12 }}>
+       {showCommentBlock && <comment block with text input>}
+       {showCommentBlock && <connecting line>}
+       <View className="relative">
+         {onSetComment && <Pressable comment button with MessageCircle icon>}
+         <Swapable indent={0}>
+           {content}
+         </Swapable>
+       </View>
+     </View>
+     ```
+   - The comment button: `absolute -left-2 -top-2 z-20 h-5 w-5 rounded-full`, shows `MessageCircle` size 10. Background is `bg-text/10` normally, `bg-text/20` if a comment exists.
+   - The comment block: appears above the statement, has `bg-text/5 border-subtle-border rounded-lg border p-2`, contains a `FontTextInput` (multiline) when editing or a `FontText` when displaying.
+   - The connecting line: `marginLeft: 14, width: 2, height: 8, backgroundColor: 'rgb(0,0,0,0.15)'`
+   - `useState` manages `isEditingComment` and `commentDraft`
+   - `handleCommentSave` calls `onSetComment?.(currentPath, commentDraft.trim())` on blur
+   - All 6 recursive `<Canvas>` spread props inside If/ForEach/Function/UpdateCell/OnTagAdded/OnTagRemoved bodies were updated to include `onSetComment`
+   - `BlockPreview` (line ~2395) does NOT pass `onSetComment` (previews are non-interactive)
 
-```tsx
-// WRONG - ScrollView inside Swapable, overflow-hidden clips it
-<Swapable>
-  {isOuterExpression ? (
-    <ScrollView horizontal>{binaryContent}</ScrollView>
-  ) : (
-    binaryContent
-  )}
-</Swapable>
-```
+7. **`app/script/editor/ScriptEditorDialog.tsx`** — Added `handleSetComment` handler (lines ~513-515):
+   ```ts
+   const handleSetComment = (path: number[], comment: string) => {
+     dispatchWithUndo({ type: 'SET_COMMENT', path, comment }, comment ? 'Add comment' : 'Remove comment');
+   };
+   ```
+   Passed to `<Canvas>` as `onSetComment={handleSetComment}` (line ~693).
 
-This does not work because the Swapable's `overflow-hidden` prevents the ScrollView from expanding/scrolling.
+## Key Concepts
 
-### Likely correct approach
+- **StatementBlock**: The React component in `Canvas.tsx` that renders each top-level statement (If, ForEach, Function, CreateMarkdown, UpdateCell, etc.) as a visual block. It wraps content in a `Swapable` component.
+- **Swapable**: A wrapper component that makes blocks clickable to swap/replace. Has `data-swapable` attribute. Handles hover states and paper texture.
+- **ExpressionSocket**: Renders expression slots within statements (arguments, conditions, etc.). These are NOT statement blocks — comments only apply to statements, not expressions.
+- **stmtPath**: Array of indices representing the path to a statement in the AST tree (e.g., `[0]` = first top-level statement, `[0, 1]` = second statement inside the first statement's body).
+- **dispatchWithUndo**: Wrapper in `ScriptEditorDialog.tsx` that dispatches a reducer action and records an undo snapshot with a description string.
+- **BlockPreview**: A non-interactive version of StatementBlock/ExpressionSocket used in InsertModal previews. Does not have comment support (intentionally).
 
-Move the ScrollView **outside** the Swapable, matching how chains do it:
+## Verification Done
 
-```tsx
-// Correct - ScrollView outside Swapable
-return isOuterExpression ? (
-  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ flexGrow: 1 }}>
-    <Swapable label={expressionLabel} variant="block" onSwap={...}>
-      {binaryContent}
-    </Swapable>
-  </ScrollView>
-) : (
-  <Swapable label={expressionLabel} variant="block" onSwap={...}>
-    {binaryContent}
-  </Swapable>
-);
-```
+- `npx eslint` on all 7 files: 0 errors (1 pre-existing error in Canvas.tsx line 870 about useMemo conditional call — unrelated)
+- `npx tsc --noEmit`: 0 errors in script/ files (pre-existing errors in other files unrelated)
+- Parser/printer round-trip verified: `// comment\nIf (true) { Return; }` parses with `comment` field set, prints back identically, re-parses correctly
+- Multi-line comments and nested comments inside blocks verified
 
-The same pattern should likely be applied to UnaryExpression too (Canvas.tsx ~line 746), which has the same structure (Swapable wrapping a Row with inner ExpressionSockets).
+## What Hasn't Been Verified
 
-## Codebase Structure
-
-### Key files
-
-- **`app/script/editor/Canvas.tsx`** — Main rendering component for the script editor
-  - `Swapable` component (~line 173): Wraps expression/statement blocks with border, paper texture, hover overlay. Has `overflow-hidden` on all variants.
-  - `ExpressionSocket` component (~line 600): Renders an expression. Has `isOuterExpression` prop (default true). When false, inner expressions don't get ScrollView wrappers.
-  - Chain rendering (~line 920): `ChainContent` is a `<Row>` with chain links. At ~line 1055, if `isOuterExpression`, wraps in `<ScrollView horizontal>` with no Swapable.
-  - BinaryExpression rendering (~line 680): Returns `<Swapable>` wrapping a `<Row>` with left ExpressionSocket, operator AppDropdown, right ExpressionSocket. Currently has a broken ScrollView-inside-Swapable fix.
-  - UnaryExpression rendering (~line 746): Similar structure to BinaryExpression — `<Swapable>` wrapping a `<Row>` with operator text and operand ExpressionSocket. No ScrollView at all currently.
-  - `BlockPreview` component (~line 2241): Renders a non-interactive preview of a statement/expression for use in InsertModal. Uses `pointerEvents="none"` and no-op callbacks.
-
-- **`app/script/editor/InsertModal.tsx`** — The insert block picker modal
-  - `ModalItem` interface (~line 377): Has `previewStatement?` and `previewExpression?` fields for rendering visual previews.
-  - `ModalItemRow` component (~line 423): Renders each item. If preview AST node exists, renders `<BlockPreview>` instead of text label, with description below.
-  - All items in the useMemo (~line 530+) now have `previewStatement` or `previewExpression` fields.
-  - Function items (custom, built-in, saved) use `previewStatement: createFunctionStatement('fn', [])` — a plain empty function block.
-  - Chain insert/swap binary operator previews use `{ kind: 'NothingLiteral' }` for left side (not `target.chainExpression`) so the preview doesn't show existing context.
-
-- **`app/script/editor/editorReducer.ts`** — AST creation helpers
-  - `createFunctionStatement(name, parameters, body?)` (~line 547): Creates a FunctionStatement AST node. Requires name and parameters arguments.
-
-### Key concepts
-
-- **`isOuterExpression`**: A prop on `ExpressionSocket`. When true (default), the expression is at the top level of a slot and gets a horizontal ScrollView wrapper for chains. When false (inner expressions like binary left/right), no ScrollView.
-- **`Swapable`**: Visual wrapper with border, paper texture, hover overlay. Has `overflow-hidden` to clip decorative layers. Variants: `piece` (small), `block` (medium), `statement` (large), `bare` (no styling).
-- **Chain**: A sequence of method calls like `players.filter(...).first`. Decomposed into links by `decomposeChain()`. Each link is a Swapable piece connected by PuzzleConnector buttons.
-- **BinaryExpression**: An expression like `left + right` or `left == right`. Rendered as a Row with left ExpressionSocket, operator dropdown, right ExpressionSocket.
-- **`overflow-hidden` on Swapable**: Needed to clip the PaperTexture and HoverOverlay absolute-positioned layers to the rounded border. This is what prevents ScrollView-inside-Swapable from working.
-
-### The `overflow-hidden` constraint
-
-The Swapable uses `overflow-hidden` to clip decorative layers (PaperTexture, HoverOverlay) to rounded corners. This means any ScrollView placed inside a Swapable will be clipped and won't scroll properly. The solution is to place the ScrollView outside the Swapable, so the Swapable's `overflow-hidden` only clips its own decorative layers, not the scroll container.
-
-## Current state of the code
-
-The BinaryExpression rendering (Canvas.tsx ~line 680) currently has a broken fix where `<ScrollView horizontal>` is placed inside `<Swapable>`. This needs to be changed to place the ScrollView outside the Swapable.
-
-The UnaryExpression rendering (Canvas.tsx ~line 746) has no ScrollView at all and likely needs the same fix.
-
-The chain rendering (Canvas.tsx ~line 1055) is the reference implementation — ScrollView outside, no Swapable for outer expressions.
-
-## Other completed work (context, don't touch)
-
-- BlockPreview component added to Canvas.tsx for InsertModal previews
-- All InsertModal items now have preview AST nodes
-- Function previews show plain empty function (`createFunctionStatement('fn', [])`)
-- Chain insert/swap binary operator previews use NothingLiteral (not existing context)
-- Saved functions persist via Convex `useValue('savedFunctions')` in `useSavedFunctions.ts`
-- `savedFunctions` config added to `utils/dataConfig.ts`
+- **The UI actually rendering the comment button** — this is the current blocker. The code is written but the button doesn't appear in the browser.
+- **Clicking the button and typing a comment** — can't test until the button appears
+- **The comment persisting through text mode toggle** (blocks → text → blocks) — should work since comments are in the AST and printer, but not yet tested end-to-end

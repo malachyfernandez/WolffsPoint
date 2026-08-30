@@ -142,11 +142,18 @@ const printBlock = (block: BlockStatement, depth: number): string => {
 
 export const printStatement = (statement: Statement, depth: number = 0): string => {
   const prefix = indent(depth);
+  const commentPrefix = indent(depth);
+  const commentStr = statement.comment
+    ? statement.comment
+        .split('\n')
+        .map((line) => `${commentPrefix}// ${line}`)
+        .join('\n') + '\n'
+    : '';
   switch (statement.kind) {
     case 'BlockStatement':
-      return `${prefix}${printBlock(statement, depth)}`;
+      return `${commentStr}${prefix}${printBlock(statement, depth)}`;
     case 'ExpressionStatement':
-      return `${prefix}${printExpression(statement.expression, 0, depth)};`;
+      return `${commentStr}${prefix}${printExpression(statement.expression, 0, depth)};`;
     case 'IfStatement': {
       const first = statement.branches[0];
       let result = `${prefix}If (${printExpression(first.condition, 0, depth)}) ${printBlock(first.body, depth)}`;
@@ -156,10 +163,10 @@ export const printStatement = (statement: Statement, depth: number = 0): string 
       if (statement.elseBody) {
         result += ` Else ${printBlock(statement.elseBody, depth)}`;
       }
-      return result;
+      return `${commentStr}${result}`;
     }
     case 'ForEachStatement':
-      return `${prefix}ForEach (${statement.itemName} in ${printExpression(statement.iterable, 0, depth)}) ${printBlock(statement.body, depth)}`;
+      return `${commentStr}${prefix}ForEach (${statement.itemName} in ${printExpression(statement.iterable, 0, depth)}) ${printBlock(statement.body, depth)}`;
     case 'FunctionStatement': {
       let templateStr = '';
       if (statement.template && statement.template.length > 0) {
@@ -175,10 +182,10 @@ export const printStatement = (statement: Statement, depth: number = 0): string 
         });
         templateStr = ` template(${pieces.join(', ')})`;
       }
-      return `${prefix}Function ${statement.name}(${statement.parameters.join(', ')})${templateStr} ${printBlock(statement.body, depth)}`;
+      return `${commentStr}${prefix}Function ${statement.name}(${statement.parameters.join(', ')})${templateStr} ${printBlock(statement.body, depth)}`;
     }
     case 'ReturnStatement':
-      return `${prefix}Return${statement.value ? ` ${printExpression(statement.value, 0, depth)}` : ''};`;
+      return `${commentStr}${prefix}Return${statement.value ? ` ${printExpression(statement.value, 0, depth)}` : ''};`;
     case 'UpdateCellStatement': {
       const args = [
         `PLAYERS = ${printExpression(statement.players, 0, depth)}`,
@@ -204,15 +211,15 @@ export const printStatement = (statement: Statement, depth: number = 0): string 
         statements: bodyWithReturn,
         span: statement.body.span,
       };
-      return `${prefix}UpdateCell({${args.join(', ')}}) ${printBlock(bodyBlock, depth)}`;
+      return `${commentStr}${prefix}UpdateCell({${args.join(', ')}}) ${printBlock(bodyBlock, depth)}`;
     }
     case 'ErrorStatement':
-      return `${prefix}${statement.source}`;
+      return `${commentStr}${prefix}${statement.source}`;
     case 'OnTagAddedStatement': {
-      return `${prefix}OnTagAdded ${printBlock(statement.body, depth)}`;
+      return `${commentStr}${prefix}OnTagAdded ${printBlock(statement.body, depth)}`;
     }
     case 'OnTagRemovedStatement': {
-      return `${prefix}OnTagRemoved ${printBlock(statement.body, depth)}`;
+      return `${commentStr}${prefix}OnTagRemoved ${printBlock(statement.body, depth)}`;
     }
   }
 };

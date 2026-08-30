@@ -72,7 +72,8 @@ export type EditorAction =
       fnStatement: Statement;
       location: ExpressionLocation;
       expression: Expression;
-    };
+    }
+  | { type: 'SET_COMMENT'; path: number[]; comment: string };
 
 const span = emptySpan();
 
@@ -879,6 +880,18 @@ export const editorReducer = (state: EditorState, action: EditorAction): EditorS
     }
     case 'DELETE_STATEMENT': {
       const newStatements = deleteStatementInList(state.ast.statements, action.path);
+      return {
+        ...state,
+        ast: { ...state.ast, statements: newStatements },
+        past: [...state.past, state.ast].slice(-50),
+        future: [],
+      };
+    }
+    case 'SET_COMMENT': {
+      const existing = getStatementAtPath(state.ast.statements, action.path);
+      if (!existing) return state;
+      const updated = { ...existing, comment: action.comment || undefined };
+      const newStatements = replaceStatementAtPath(state.ast.statements, action.path, updated);
       return {
         ...state,
         ast: { ...state.ast, statements: newStatements },

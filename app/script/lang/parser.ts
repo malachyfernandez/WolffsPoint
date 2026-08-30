@@ -56,10 +56,11 @@ class Parser {
     const statements: Statement[] = [];
     while (!this.atEnd()) {
       const before = this.index;
-      statements.push(this.parseStatement());
+      const stmt = this.parseStatement();
       if (this.index === before) {
         this.advance();
       }
+      if (stmt) statements.push(stmt);
     }
     return {
       kind: 'Script',
@@ -69,54 +70,67 @@ class Parser {
     };
   }
 
-  private parseStatement(): Statement {
+  /** Skip Comment tokens and return their concatenated text (trimmed). */
+  private collectComments(): string | undefined {
+    const parts: string[] = [];
+    while (this.current().kind === 'Comment') {
+      const text = this.current().value;
+      if (typeof text === 'string') parts.push(text);
+      this.advance();
+    }
+    if (parts.length === 0) return undefined;
+    return parts.join('\n').trim() || undefined;
+  }
+
+  private parseStatement(): Statement | null {
+    // Collect any comments preceding this statement.
+    const comment = this.collectComments();
+    if (this.atEnd()) return null;
+    let stmt: Statement;
     if (this.matchKeyword('IF')) {
-      return this.parseIf(this.previous());
-    }
-    if (this.matchKeyword('FOREACH')) {
-      return this.parseForEach(this.previous());
-    }
-    if (this.matchKeyword('FUNCTION')) {
-      return this.parseFunction(this.previous());
-    }
-    if (this.matchKeyword('RETURN')) {
-      return this.parseReturn(this.previous());
-    }
-    // UpdateCell container statement: UpdateCell({ ... }) { body } Return expr;
-    if (
+      stmt = this.parseIf(this.previous());
+    } else if (this.matchKeyword('FOREACH')) {
+      stmt = this.parseForEach(this.previous());
+    } else if (this.matchKeyword('FUNCTION')) {
+      stmt = this.parseFunction(this.previous());
+    } else if (this.matchKeyword('RETURN')) {
+      stmt = this.parseReturn(this.previous());
+    } else if (
+      // UpdateCell container statement: UpdateCell({ ... }) { body } Return expr;
       this.isName(this.current()) &&
       this.current().text.toUpperCase() === 'UPDATECELL' &&
       this.peek(1).text === '('
     ) {
-      return this.parseUpdateCell(this.current());
-    }
-    // OnTagAdded container statement: OnTagAdded { body }
-    if (
+      stmt = this.parseUpdateCell(this.current());
+    } else if (
+      // OnTagAdded container statement: OnTagAdded { body }
       this.isName(this.current()) &&
       this.current().text.toUpperCase() === 'ONTAGADDED' &&
       this.peek(1).text === '{'
     ) {
-      return this.parseOnTagAdded(this.current());
-    }
-    // OnTagRemoved container statement: OnTagRemoved { body }
-    if (
+      stmt = this.parseOnTagAdded(this.current());
+    } else if (
+      // OnTagRemoved container statement: OnTagRemoved { body }
       this.isName(this.current()) &&
       this.current().text.toUpperCase() === 'ONTAGREMOVED' &&
       this.peek(1).text === '{'
     ) {
-      return this.parseOnTagRemoved(this.current());
+      stmt = this.parseOnTagRemoved(this.current());
+    } else if (this.matchText('{')) {
+      stmt = this.parseBlockAfterOpen(this.previous());
+    } else {
+      const start = this.current().span.start;
+      const expression = this.parseExpression();
+      const end = this.consumeOptionalSemicolon(expression.span.end);
+      if (expression.kind === 'ErrorExpression') {
+        this.synchronize();
+        stmt = { kind: 'ErrorStatement', source: expression.source, span: joinSpan(start, end) };
+      } else {
+        stmt = { kind: 'ExpressionStatement', expression, span: joinSpan(start, end) };
+      }
     }
-    if (this.matchText('{')) {
-      return this.parseBlockAfterOpen(this.previous());
-    }
-    const start = this.current().span.start;
-    const expression = this.parseExpression();
-    const end = this.consumeOptionalSemicolon(expression.span.end);
-    if (expression.kind === 'ErrorExpression') {
-      this.synchronize();
-      return { kind: 'ErrorStatement', source: expression.source, span: joinSpan(start, end) };
-    }
-    return { kind: 'ExpressionStatement', expression, span: joinSpan(start, end) };
+    if (comment) stmt.comment = comment;
+    return stmt;
   }
 
   private parseIf(keyword: Token): Statement {
@@ -370,14 +384,16 @@ class Parser {
     }
     this.error(this.current(), message);
     const statement = this.parseStatement();
-    return { kind: 'BlockStatement', statements: [statement], span: statement.span };
+    const stmt = statement ?? { kind: 'ErrorStatement' as const, source: '', span: this.current().span };
+    return { kind: 'BlockStatement', statements: [stmt], span: stmt.span };
   }
 
   private parseBlockAfterOpen(open: Token): BlockStatement {
     const statements: Statement[] = [];
     while (!this.atEnd() && !this.checkText('}')) {
       const before = this.index;
-      statements.push(this.parseStatement());
+      const stmt = this.parseStatement();
+      if (stmt) statements.push(stmt);
       if (this.index === before) {
         this.advance();
       }

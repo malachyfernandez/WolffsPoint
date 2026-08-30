@@ -1,6 +1,6 @@
 import React, { useEffect, useId, useMemo, useState } from 'react';
 import { Pressable, ScrollView, View, type TextStyle } from 'react-native';
-import { Plus, X, Pencil, Bookmark, BookmarkCheck } from 'lucide-react-native';
+import { Plus, X, Pencil, Bookmark, BookmarkCheck, MessageCircle } from 'lucide-react-native';
 import Column from '../../components/layout/Column';
 import Row from '../../components/layout/Row';
 import FontText from '../../components/ui/text/FontText';
@@ -104,6 +104,8 @@ interface CanvasProps {
   onSaveFunction?: (name: string, source: string) => void;
   /** Remove a function from the user's library. */
   onUnsaveFunction?: (name: string) => void;
+  /** Set a comment on a statement at the given path. */
+  onSetComment?: (path: number[], comment: string) => void;
 }
 
 const appendLocation = (
@@ -1709,6 +1711,7 @@ const StatementBlock = ({
   savedFunctionNames,
   onSaveFunction,
   onUnsaveFunction,
+  onSetComment,
 }: Omit<CanvasProps, 'statements'> & { statement: Statement; index: number }) => {
   const currentPath = [...stmtPath!, index];
   const contextVariables = definedVariables;
@@ -1842,6 +1845,7 @@ const StatementBlock = ({
               savedFunctionNames,
               onSaveFunction,
               onUnsaveFunction,
+              onSetComment,
             }}
             stmtPath={currentPath}
           />
@@ -1904,6 +1908,7 @@ const StatementBlock = ({
               savedFunctionNames,
               onSaveFunction,
               onUnsaveFunction,
+              onSetComment,
             }}
             stmtPath={currentPath}
           />
@@ -2060,6 +2065,7 @@ const StatementBlock = ({
               savedFunctionNames,
               onSaveFunction,
               onUnsaveFunction,
+              onSetComment,
             }}
             stmtPath={currentPath}
           />
@@ -2114,6 +2120,7 @@ const StatementBlock = ({
               savedFunctionNames,
               onSaveFunction,
               onUnsaveFunction,
+              onSetComment,
             }}
             stmtPath={currentPath}
           />
@@ -2148,6 +2155,7 @@ const StatementBlock = ({
               savedFunctionNames,
               onSaveFunction,
               onUnsaveFunction,
+              onSetComment,
             }}
             stmtPath={currentPath}
           />
@@ -2212,6 +2220,7 @@ const StatementBlock = ({
               savedFunctionNames,
               onSaveFunction,
               onUnsaveFunction,
+              onSetComment,
             }}
             stmtPath={currentPath}
           />
@@ -2273,15 +2282,85 @@ const StatementBlock = ({
     statement.kind === 'FunctionStatement' ||
     statement.kind === 'IfStatement' ||
     statement.kind === 'ForEachStatement';
+  const [isEditingComment, setIsEditingComment] = useState(false);
+  const [commentDraft, setCommentDraft] = useState(statement.comment ?? '');
+  const hasComment = !!statement.comment;
+  const showCommentBlock = hasComment || isEditingComment;
+
+  const handleCommentPress = () => {
+    setCommentDraft(statement.comment ?? '');
+    setIsEditingComment(true);
+  };
+
+  const handleCommentSave = () => {
+    onSetComment?.(currentPath, commentDraft.trim());
+    setIsEditingComment(false);
+  };
+
+  const handleCommentDelete = () => {
+    setCommentDraft('');
+    onSetComment?.(currentPath, '');
+    setIsEditingComment(false);
+  };
+
   return (
-    <Swapable
-      label={statementLabel}
-      variant="statement"
-      onSwap={swapStatement}
-      isFunction={isFunction}
-      indent={stmtPath!.length * 12}>
-      {content}
-    </Swapable>
+    <View style={{ marginLeft: stmtPath!.length * 12 }}>
+      {showCommentBlock && (
+        <View className="mb-1 ml-2 flex-row items-start gap-1">
+          <View className="bg-text/5 border-subtle-border relative rounded-lg border p-2 flex-1">
+            {hasComment && (
+              <Pressable
+                onPress={handleCommentDelete}
+                className="absolute -right-1.5 -top-1.5 z-20 h-4 w-4 items-center justify-center rounded-full"
+                style={{ backgroundColor: 'rgb(140, 134, 125)' }}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                <X size={9} color="rgb(46, 41, 37)" />
+              </Pressable>
+            )}
+            {isEditingComment ? (
+              <FontTextInput
+                value={commentDraft}
+                onChangeText={setCommentDraft}
+                onBlur={handleCommentSave}
+                placeholder="Write a comment..."
+                autoFocus
+                autoGrow
+                className="text-xs italic text-text"
+                style={{ minHeight: 20, paddingTop: 0, paddingBottom: 0 }}
+              />
+            ) : (
+              <Pressable onPress={() => { setCommentDraft(statement.comment ?? ''); setIsEditingComment(true); }}>
+                <FontText variant="subtext" className="text-xs italic">
+                  {statement.comment}
+                </FontText>
+              </Pressable>
+            )}
+          </View>
+        </View>
+      )}
+      {showCommentBlock && (
+        <View style={{ marginLeft: 14, width: 2, height: 8, backgroundColor: 'rgb(0,0,0,0.15)' }} />
+      )}
+      <View className="relative">
+        {onSetComment && !isEditingComment && (
+          <Pressable
+            onPress={handleCommentPress}
+            className="absolute -left-2 -top-2 z-20 h-5 w-5 items-center justify-center rounded-full"
+            style={{ backgroundColor: 'rgb(140, 134, 125)' }}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <MessageCircle size={10} color="rgb(46, 41, 37)" />
+          </Pressable>
+        )}
+        <Swapable
+          label={statementLabel}
+          variant="statement"
+          onSwap={swapStatement}
+          isFunction={isFunction}
+          indent={0}>
+          {content}
+        </Swapable>
+      </View>
+    </View>
   );
 };
 
@@ -2382,6 +2461,7 @@ const Canvas = ({
   savedFunctionNames,
   onSaveFunction,
   onUnsaveFunction,
+  onSetComment,
 }: CanvasProps) => {
   // Only load tag definitions at the root level (stmtPath is empty).
   // Nested Canvas instances inherit the context from the root.
@@ -2421,6 +2501,7 @@ const Canvas = ({
               savedFunctionNames={savedFunctionNames}
               onSaveFunction={onSaveFunction}
               onUnsaveFunction={onUnsaveFunction}
+              onSetComment={onSetComment}
             />
             <PuzzleConnector
               direction="vertical"

@@ -33,6 +33,8 @@ const FontTextInput = ({
     onKeyDown,
     onSubmitEditing,
     submitBehavior,
+    onBlur,
+    autoFocus,
     ...props
 }: FontTextInputProps) => {
     const [fontsLoaded] = useFonts({
@@ -78,6 +80,8 @@ const FontTextInput = ({
                 ref={textareaRef}
                 placeholder={placeholder}
                 value={typeof value === 'string' ? value : ''}
+                autoFocus={autoFocus}
+                onBlur={onBlur ? () => onBlur({ nativeEvent: { text: typeof value === 'string' ? value : '' } } as any) : undefined}
                 onChange={(event) => {
                     resizeTextarea(event.currentTarget);
                     onChangeText?.(event.target.value);
@@ -103,8 +107,8 @@ const FontTextInput = ({
                 style={{
                     fontFamily: fontsLoaded ? 'LibreBaskerville' : undefined,
                     fontWeight: WEIGHT_MAP[weight] as '400' | '500' | '700',
+                    minHeight: 44,
                     ...(style as React.CSSProperties),
-                    minHeight: 44
                 }}
             />
         );

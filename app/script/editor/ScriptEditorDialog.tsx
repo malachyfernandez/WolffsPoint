@@ -511,6 +511,10 @@ const ScriptEditorDialog = ({
     dispatchWithUndo({ type: 'DELETE_STATEMENT', path }, 'Delete block');
   };
 
+  const handleSetComment = (path: number[], comment: string) => {
+    dispatchWithUndo({ type: 'SET_COMMENT', path, comment }, comment ? 'Add comment' : 'Remove comment');
+  };
+
   const handleInsertChainLink = (target: InsertTarget, blockId: string) => {
     if (!target.location) return;
     dispatchWithUndo(
@@ -595,7 +599,7 @@ const ScriptEditorDialog = ({
         </ConvexDialog.Trigger>
         <ConvexDialog.Portal>
           <ConvexDialog.Overlay />
-          <ConvexDialog.Content className="h-[85vh] max-w-5xl" isSwipeable={!hasModifications}>
+          <ConvexDialog.Content className="h-[85vh] max-w-5xl" isSwipeable={false}>
             <CloseButton onPress={handleAttemptClose} />
             <DialogHeader
               text={title}
@@ -690,6 +694,7 @@ const ScriptEditorDialog = ({
                       savedFunctionNames={savedFunctionNames}
                       onSaveFunction={saveFunction}
                       onUnsaveFunction={unsaveFunction}
+                      onSetComment={handleSetComment}
                       onEditMarkdown={(value, onSave) =>
                         setMarkdownEditor({ isOpen: true, value, onSave })
                       }

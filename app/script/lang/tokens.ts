@@ -9,6 +9,7 @@ export type TokenKind =
   | 'Punctuation'
   | 'Operator'
   | 'Unknown'
+  | 'Comment'
   | 'EOF';
 
 export interface Token {
@@ -76,9 +77,14 @@ export const tokenize = (source: string): TokenizeResult => {
       continue;
     }
     if (character === '/' && source[offset + 1] === '/') {
+      const commentStart = position();
+      advance();
+      advance();
+      let commentText = '';
       while (offset < source.length && source[offset] !== '\n') {
-        advance();
+        commentText += advance();
       }
+      push('Comment', commentStart, commentText, commentText.trim());
       continue;
     }
     if (character === '/' && source[offset + 1] === '*') {

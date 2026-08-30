@@ -17,6 +17,8 @@ export interface Diagnostic {
 
 export interface NodeBase {
   span: SourceSpan;
+  /** Optional comment text associated with this node (rendered above it). */
+  comment?: string;
 }
 
 export interface Script extends NodeBase {
