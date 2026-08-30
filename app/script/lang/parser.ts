@@ -14,6 +14,7 @@ import type {
   Statement,
   UpdateCellStatement,
 } from './ast';
+import { getMarkdownVariableNames } from '../markdownVariables';
 import { tokenize, type Token } from './tokens';
 
 export interface ParseResult {
@@ -384,7 +385,11 @@ class Parser {
     }
     this.error(this.current(), message);
     const statement = this.parseStatement();
-    const stmt = statement ?? { kind: 'ErrorStatement' as const, source: '', span: this.current().span };
+    const stmt = statement ?? {
+      kind: 'ErrorStatement' as const,
+      source: '',
+      span: this.current().span,
+    };
     return { kind: 'BlockStatement', statements: [stmt], span: stmt.span };
   }
 
@@ -430,7 +435,17 @@ class Parser {
       return { kind: 'StringLiteral', value: String(token.value ?? ''), span: token.span };
     }
     if (token.kind === 'BacktickString') {
-      return { kind: 'MarkdownLiteral', value: String(token.value ?? ''), span: token.span };
+      const value = String(token.value ?? '');
+      const variables = getMarkdownVariableNames(value).map((name) => ({
+        name,
+        expression: { kind: 'NothingLiteral' as const, span: token.span },
+      }));
+      return {
+        kind: 'MarkdownLiteral',
+        value,
+        variables: variables.length > 0 ? variables : undefined,
+        span: token.span,
+      };
     }
     if (token.kind === 'Number') {
       return {
@@ -466,6 +481,40 @@ class Parser {
       };
     }
     if (this.isName(token)) {
+      if (token.text === 'Markdown' && this.current().text === '(') {
+        this.consumeText('(', 'Expected ( after Markdown');
+        const valueExpression = this.parseExpression();
+        const parsedVariables: { name: string; expression: Expression }[] = [];
+        while (this.matchText(',')) {
+          const nameToken = this.advance();
+          if (nameToken.kind !== 'String') {
+            this.error(nameToken, 'Expected markdown variable name');
+          }
+          this.consumeText('=', 'Expected = after markdown variable name');
+          parsedVariables.push({
+            name: nameToken.kind === 'String' ? String(nameToken.value ?? '') : '',
+            expression: this.parseExpression(),
+          });
+        }
+        const close = this.consumeText(')', 'Expected ) after Markdown');
+        if (valueExpression.kind !== 'MarkdownLiteral') {
+          this.error(token, 'Markdown requires a backtick string');
+        }
+        const value = valueExpression.kind === 'MarkdownLiteral' ? valueExpression.value : '';
+        const variables = getMarkdownVariableNames(value).map(
+          (name) =>
+            parsedVariables.find((variable) => variable.name === name) ?? {
+              name,
+              expression: { kind: 'NothingLiteral' as const, span: valueExpression.span },
+            }
+        );
+        return {
+          kind: 'MarkdownLiteral',
+          value,
+          variables: variables.length > 0 ? variables : undefined,
+          span: joinSpan(token.span.start, close.span.end),
+        };
+      }
       if (token.text === 'Dropdown' && this.current().text === '(') {
         this.consumeText('(', 'Expected ( after Dropdown');
         const valueExpr = this.parseExpression();

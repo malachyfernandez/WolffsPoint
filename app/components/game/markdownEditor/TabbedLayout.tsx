@@ -25,6 +25,7 @@ interface TabbedLayoutProps {
   onInput: () => void;
   onMore: () => void;
   onScript?: () => void;
+  onVariable?: () => void;
   centered?: boolean;
   showPreviewAsPlayer?: boolean;
   onPreviewAsPlayer?: () => void;
@@ -50,6 +51,7 @@ export function TabbedLayout({
   onInput,
   onMore,
   onScript,
+  onVariable,
   centered = false,
   showPreviewAsPlayer = false,
   onPreviewAsPlayer,
@@ -67,6 +69,7 @@ export function TabbedLayout({
             onLink={onLink}
             onMore={onMore}
             onScript={onScript}
+            onVariable={onVariable}
             showInputs={showInputs}
           />
         </Column>

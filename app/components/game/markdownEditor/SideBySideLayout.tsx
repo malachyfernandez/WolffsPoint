@@ -21,6 +21,7 @@ interface SideBySideLayoutProps {
   onInput: () => void;
   onMore: () => void;
   onScript?: () => void;
+  onVariable?: () => void;
   centered?: boolean;
   showPreviewAsPlayer?: boolean;
   onPreviewAsPlayer?: () => void;
@@ -44,6 +45,7 @@ export function SideBySideLayout({
   onInput,
   onMore,
   onScript,
+  onVariable,
   centered = false,
   showPreviewAsPlayer = false,
   onPreviewAsPlayer,
@@ -63,6 +65,7 @@ export function SideBySideLayout({
         onInput={onInput}
         onMore={onMore}
         onScript={onScript}
+        onVariable={onVariable}
       />
 
       <Column className="min-w-0 flex-1 gap-4">

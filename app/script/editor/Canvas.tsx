@@ -31,6 +31,7 @@ import type {
 import { emptySpan } from '../lang/ast';
 import { parseExpression } from '../lang/parser';
 import { printExpression, printStatement } from '../lang/printer';
+import { getMarkdownVariableNames } from '../markdownVariables';
 import type { BlockInput, InputType } from '../registry';
 import { EXPRESSION_BLOCKS, STATEMENT_BLOCKS } from '../registry';
 import type { DefinedFunction, InsertTarget } from './InsertModal';
@@ -820,24 +821,67 @@ export const ExpressionSocket = ({
 
   if (expression.kind === 'MarkdownLiteral') {
     const previewText = expression.value.trim() || 'Empty markdown';
+    const variableNames = getMarkdownVariableNames(expression.value);
     return (
       <Swapable
         label={expressionLabel}
         variant="block"
         onSwap={() => openExpressionModal('whole', expectedType)}>
-        <Pressable
-          accessibilityRole="button"
-          onPress={() =>
-            onEditMarkdown?.(expression.value, (newValue) =>
-              onSetExpression(location, { kind: 'MarkdownLiteral', value: newValue, span }, true)
-            )
-          }
-          className="border-subtle-border max-h-32 overflow-hidden rounded-lg border p-2">
-          <FontText className="text-sm">
-            {previewText.slice(0, 200)}
-            {previewText.length > 200 ? '…' : ''}
-          </FontText>
-        </Pressable>
+        <Column className="gap-2">
+          <Pressable
+            accessibilityRole="button"
+            onPress={() =>
+              onEditMarkdown?.(expression.value, (newValue) => {
+                const variables = getMarkdownVariableNames(newValue).map((name) => ({
+                  name,
+                  expression:
+                    expression.variables?.find((variable) => variable.name === name)?.expression ??
+                    { kind: 'NothingLiteral' as const, span },
+                }));
+                onSetExpression(
+                  location,
+                  {
+                    ...expression,
+                    value: newValue,
+                    variables: variables.length > 0 ? variables : undefined,
+                  },
+                  true
+                );
+              })
+            }
+            className="border-subtle-border max-h-32 overflow-hidden rounded-lg border p-2">
+            <FontText className="text-sm">
+              {previewText.slice(0, 200)}
+              {previewText.length > 200 ? '…' : ''}
+            </FontText>
+          </Pressable>
+          {variableNames.map((name) => (
+            <Row key={name} className="items-center gap-2">
+              <FontText variant="subtext" className="text-xs">
+                {name}
+              </FontText>
+              <ExpressionSocket
+                expression={
+                  expression.variables?.find((variable) => variable.name === name)?.expression ?? {
+                    kind: 'NothingLiteral',
+                    span,
+                  }
+                }
+                location={appendLocation(location, { kind: 'markdownVariable', name })}
+                contextVariables={contextVariables}
+                entryKeysBySource={entryKeysBySource}
+                entrySource={entrySource}
+                entrySourceMap={entrySourceMap}
+                isOuterExpression={false}
+                definedFunctions={definedFunctions}
+                label={name}
+                onAdd={onAdd}
+                onSetExpression={onSetExpression}
+                onEditMarkdown={onEditMarkdown}
+              />
+            </Row>
+          ))}
+        </Column>
       </Swapable>
     );
   }
@@ -877,7 +921,7 @@ export const ExpressionSocket = ({
   // ".map"). Used for the base's tooltip + the swap modal title so clicking
   // the base targets the base, not the last link.
   const chainBaseLabel = base.type === 'base' ? printExpression(base.expr) : expressionLabel;
-  const chainBaseSource = useMemo(() => {
+  const chainBaseSource = (() => {
     if (base.type !== 'base') return entrySource;
     // Identifier: look up in entrySourceMap (lambda params, variables)
     if (base.expr.kind === 'IdentifierExpression') {
@@ -907,7 +951,7 @@ export const ExpressionSocket = ({
       if (traced) return traced;
     }
     return entrySource;
-  }, [base, entrySource, entrySourceMap, definedFunctions, inputSources]);
+  })();
   const isSingleLiteral =
     chain.length === 1 &&
     base.type === 'base' &&

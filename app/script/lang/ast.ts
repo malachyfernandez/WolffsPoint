@@ -213,9 +213,15 @@ export interface ErrorExpression extends NodeBase {
   source: string;
 }
 
+export interface MarkdownVariableBinding {
+  name: string;
+  expression: Expression;
+}
+
 export interface MarkdownLiteral extends NodeBase {
   kind: 'MarkdownLiteral';
   value: string;
+  variables?: MarkdownVariableBinding[];
 }
 
 export interface DropdownLiteral extends NodeBase {

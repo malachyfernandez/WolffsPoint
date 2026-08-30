@@ -1,5 +1,14 @@
 import React from 'react';
-import { Bold, ChevronDown, Code, ImagePlus, Italic, Link2, MoreHorizontal } from 'lucide-react-native';
+import {
+    Bold,
+    ChevronDown,
+    Code,
+    ImagePlus,
+    Italic,
+    Link2,
+    MoreHorizontal,
+    Variable,
+} from 'lucide-react-native';
 import TownSquareToolbarButton, { TownSquareToolbarButtonGroup } from './TownSquareToolbarButton';
 import Row from '../../layout/Row';
 
@@ -11,6 +20,7 @@ interface TownSquareComposerToolbarProps {
     onLink: () => void;
     onMore: () => void;
     onScript?: () => void;
+    onVariable?: () => void;
     showInputs?: boolean;
 }
 
@@ -24,6 +34,7 @@ const TownSquareComposerToolbar = ({
     onLink,
     onMore,
     onScript,
+    onVariable,
     showInputs = false,
 }: TownSquareComposerToolbarProps) => {
     return (
@@ -45,17 +56,24 @@ const TownSquareComposerToolbar = ({
                     <TownSquareToolbarButton isFirst={true} onPress={onLink}>
                         <Link2 color={iconColor} size={20} strokeWidth={2.5} />
                     </TownSquareToolbarButton>
-                    <TownSquareToolbarButton isLast={!showInputs && !onScript} onPress={onImage}>
+                    <TownSquareToolbarButton
+                        isLast={!showInputs && !onScript && !onVariable}
+                        onPress={onImage}>
                         <ImagePlus color={iconColor} size={20} strokeWidth={2.5} />
                     </TownSquareToolbarButton>
                     {showInputs ? (
-                        <TownSquareToolbarButton isLast={!onScript} onPress={onInput}>
+                        <TownSquareToolbarButton isLast={!onScript && !onVariable} onPress={onInput}>
                             <ChevronDown color={iconColor} size={20} strokeWidth={2.5} />
                         </TownSquareToolbarButton>
                     ) : null}
                     {onScript ? (
-                        <TownSquareToolbarButton isLast={true} onPress={onScript}>
+                        <TownSquareToolbarButton isLast={!onVariable} onPress={onScript}>
                             <Code color={iconColor} size={20} strokeWidth={2.5} />
+                        </TownSquareToolbarButton>
+                    ) : null}
+                    {onVariable ? (
+                        <TownSquareToolbarButton isLast={true} onPress={onVariable}>
+                            <Variable color={iconColor} size={20} strokeWidth={2.5} />
                         </TownSquareToolbarButton>
                     ) : null}
                 </TownSquareToolbarButtonGroup>

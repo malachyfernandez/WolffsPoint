@@ -1,104 +1,142 @@
-# Context: Comment Button on Statement Blocks in Script Editor
+# Context: Fix Markdown Editor TextInput Height Recalculation Causing Cursor Jump
 
 ## The Task
 
-Add a comment button to the top-left corner of every "outer" statement block (not expressions) in the script editor's block-based visual editor. The button is a small circle with a comment bubble icon (`MessageCircle` from lucide). When pressed, it creates an editable comment block that appears above the statement with a thin connecting line. The comment is typed into a text input. Comments are persisted in the script source as `// comment text` lines above the statement.
+The generic `MarkdownEditorDialog` component contains a multiline `TextInput` whose height is dynamically recalculated to fit its content. The current height-recalculation logic causes the **cursor to jump to the bottom** of the text every time the height is re-evaluated (which fires on nearly every keystroke that changes the line count).
 
-## What's Been Implemented (all code is written and committed)
+### What happened (history)
 
-The full implementation is done across 7 files. Lint and typecheck pass. The parser/printer round-trip has been verified. **However, the comment circle button is not appearing in the rendered UI** — this is the current bug to fix.
+1. **Originally** the TextInput had no dynamic height — just a CSS `min-h-[50vh]` class. Large loaded text was cut off because the TextInput didn't grow to fit.
 
-### The Bug
+2. **Line-count-based height was added** (commit `4a6f0e8a6`): height was computed inline as `Math.max(120, value.split('\n').length * 24 + 32)`. This fixed the cutoff for most cases but was imperfect — line wrapping meant the actual rendered height could exceed the line-count estimate, so some text was still cut off.
 
-The user reports the comment circle button is not visible. Inspecting the rendered HTML, the `data-swapable` div appears as the outermost element of each statement block with no wrapper View or comment button Pressable around it. This means either:
+3. **"Improved" height calculation was added** (commit `d000cf378`): introduced `onContentSizeChange` to track the actual rendered content height, plus kept the line-count-based `minHeight`, and used `Math.max(minHeight, contentHeight)`. This is the **current code**. It fixed the cutoff problem thoroughly, but **introduced the cursor-jumping bug** — the cursor jumps to the bottom every time the height changes.
 
-1. **The dev server needs a restart** (hot reload may not have picked up the structural changes to `StatementBlock`'s return)
-2. **`onSetComment` is falsy** — the comment button is conditionally rendered with `{onSetComment && (...)}`. If the prop isn't reaching `StatementBlock`, the button won't render. But the wrapper `<View className="relative">` should still appear even without the button, and it's also missing from the HTML.
-3. **The code isn't being executed at all** — the HTML structure matches the OLD code (where `Swapable` was the direct return with `indent={stmtPath!.length * 12}`), not the new code (which wraps in `<View style={{marginLeft:...}}>` → `<View className="relative">` → Pressable + Swapable).
+### The goal
 
-**Most likely cause**: The app needs a full restart/rebuild, not just hot reload. The structural change to `StatementBlock`'s return value (from returning `<Swapable>` directly to returning a wrapper `<View>`) is the kind of change that hot reload sometimes fails to apply.
+Keep the thorough whole-document height re-evaluation (so large text loaded into the editor is never cut off), but **stop the cursor from jumping** when the height is recalculated during typing. The height should still grow/shrink correctly, but the recalculation must not disrupt the cursor position or cause a jarring re-layout on every keystroke.
 
-**First thing to try**: Restart the dev server and check if the button appears. If it still doesn't, add a `console.log` in `StatementBlock` to verify the new code is executing.
+---
 
-## Architecture & How Comments Work
+## Where Things Sit
 
-### Data Model
-Comments are stored as an optional `comment?: string` field on `NodeBase` (the base interface for all AST nodes) in `app/script/lang/ast.ts`. This is the safest approach — no new statement types, no structural AST changes, just an optional string field on every node.
+### The TextInput with the height logic
 
-### Text Format
-Comments are saved as `// comment text` lines above the statement in the script source code. Example:
+**File:** `app/components/game/townSquare/TownSquareComposerEditorPane.tsx` (37 lines total — the entire file is relevant)
+
+This is the component that renders the actual `TextInput` and contains all the height logic. Current code:
+
+```tsx
+const TownSquareComposerEditorPane = ({ onBodyChange, onSelectionChange, value }: TownSquareComposerEditorPaneProps) => {
+    const [contentHeight, setContentHeight] = useState(0);       // from onContentSizeChange
+    const lineCount = value.split('\n').length;                   // recomputed every render
+    const minHeight = Math.max(120, lineCount * 24 + 32);        // line-count estimate
+    const height = Math.max(minHeight, contentHeight);           // final height
+
+    return (
+        <Column className='gap-2 flex-1 grow min-w-0'>
+            <TextInput
+                multiline={true}
+                className='min-w-0 min-h-[50vh] rounded-3xl bg-text/10 overflow-hidden p-4 text-base text-text'
+                onChangeText={onBodyChange}
+                onContentSizeChange={(event) => setContentHeight(event.nativeEvent.contentSize.height)}
+                onSelectionChange={(event) => onSelectionChange(event.nativeEvent.selection)}
+                placeholder='Write the thread the way you want it to look.'
+                placeholderTextColor='#0004'
+                scrollEnabled={false}
+                style={{ lineHeight: 24, textAlignVertical: 'top', height }}
+                value={value}
+            />
+        </Column>
+    );
+};
 ```
-// This is a comment
-If (true) {
-  // Inner comment
-  Return;
-}
+
+**Why the cursor jumps:** The `height` value changes on nearly every keystroke. There are two sources of change:
+- `lineCount` (and thus `minHeight`) changes whenever a newline is added/removed — recomputed synchronously on every render from `value`.
+- `contentHeight` changes via `onContentSizeChange`, which fires asynchronously after the native text layout updates. This can fire even when line count doesn't change (e.g., text wrapping changes).
+
+Each time `height` changes, the `style` prop changes, the TextInput re-layouts natively, and the cursor/scroll position resets to the bottom. The double-update (synchronous `minHeight` change + asynchronous `contentHeight` change) makes it worse.
+
+### How this component is used
+
+`TownSquareComposerEditorPane` is used in two places inside the markdown editor:
+
+1. **`EditorPane`** (`app/components/game/markdownEditor/EditorPane.tsx`) — wraps it in a `ShadowScrollView` with the toolbar above it. Used by `SideBySideLayout` (wide screens).
+
+2. **`TabbedLayout`** (`app/components/game/markdownEditor/TabbedLayout.tsx`) — wraps it directly in a `ShadowScrollView` with the toolbar above it. Used by `MainContent` (narrow screens).
+
+Both pass `value={draftBody}`, `onBodyChange={setDraftBody}`, and `onSelectionChange={setSelection}` from the parent `MarkdownEditorDialog`.
+
+### The parent dialog that owns the text state
+
+**File:** `app/components/game/MarkdownEditorDialog.tsx`
+
+Key state (line ~135-140):
+```tsx
+const [draftBody, setDraftBody] = useState('');
+const [selection, setSelection] = useState<SelectionRange>(emptySelection);
 ```
 
-### Pipeline (7 files)
+- `draftBody` is the markdown text being edited. It's set from `initialMarkdown` when the dialog opens (line ~166) and updated via `onBodyChange` (which is `setDraftBody`).
+- `selection` tracks the cursor position as `{ start, end }`. It's updated via `onSelectionChange` from the TextInput. It's used by `runBodyUpdate` (line ~254) to insert/wrap text at the cursor for toolbar actions (bold, italic, link, etc.).
 
-1. **`app/script/lang/ast.ts`** — Added `comment?: string` to `NodeBase` interface (line ~20). All statement and expression nodes inherit this.
+The `selection` state is managed here, not inside `TownSquareComposerEditorPane`. The cursor jumping happens at the native TextInput level — the React `selection` state isn't being reset, but the native view's scroll/cursor position is disrupted by the height change.
 
-2. **`app/script/lang/tokens.ts`** — Added `Comment` to `TokenKind` union (line ~12). The tokenizer now emits `Comment` tokens for `//` comments instead of skipping them (lines ~79-89). The token's `value` field holds the trimmed comment text.
+### The ShadowScrollView wrapper
 
-3. **`app/script/lang/parser.ts`** — Added `collectComments()` method (lines ~71-78) that skips `Comment` tokens and returns their concatenated text. `parseStatement()` (line ~86) calls `collectComments()` first, then attaches the result to the parsed statement via `stmt.comment = comment` (line ~132). `parseBlockAfterOpen` and `parseRequiredBlock` were updated to handle `null` returns from `parseStatement` (since trailing comments with no statement after them return `null`).
+Both `EditorPane` and `TabbedLayout` wrap the `TownSquareComposerEditorPane` in a `ShadowScrollView` (from `app/components/ui/ShadowScrollView`). The TextInput itself has `scrollEnabled={false}`, so scrolling is handled by the outer `ShadowScrollView`. This means the TextInput grows to full content height and the ScrollView scrolls — the height calculation is what makes the TextInput tall enough to show all content.
 
-4. **`app/script/lang/printer.ts`** — `printStatement()` (line ~143) now builds a `commentStr` from `statement.comment` (splitting on newlines, prefixing each line with `// `), and prepends it to every statement type's output. Multi-line comments are supported.
+### Selection utilities
 
-5. **`app/script/editor/editorReducer.ts`** — Added `SET_COMMENT` action type (line ~76): `{ type: 'SET_COMMENT'; path: number[]; comment: string }`. The handler (lines ~893-907) uses `getStatementAtPath` and `replaceStatementAtPath` to set/unset the comment field. Setting an empty string clears the comment (`comment: action.comment || undefined`). Supports undo/redo via the standard `past`/`future` snapshot pattern.
+**File:** `app/components/game/townSquare/townSquareUtils.ts`
 
-6. **`app/script/editor/Canvas.tsx`** — The main UI changes:
-   - Added `onSetComment?: (path: number[], comment: string) => void` to `CanvasProps` (line ~108)
-   - Added `MessageCircle` to lucide imports (line 3)
-   - `Canvas` component destructures and passes `onSetComment` to `StatementBlock` (line ~2490)
-   - `StatementBlock` (line ~1696) now has `onSetComment` in its props
-   - `StatementBlock` return (lines ~2300-2350) was changed from returning `<Swapable>` directly to a wrapper structure:
-     ```jsx
-     <View style={{ marginLeft: stmtPath!.length * 12 }}>
-       {showCommentBlock && <comment block with text input>}
-       {showCommentBlock && <connecting line>}
-       <View className="relative">
-         {onSetComment && <Pressable comment button with MessageCircle icon>}
-         <Swapable indent={0}>
-           {content}
-         </Swapable>
-       </View>
-     </View>
-     ```
-   - The comment button: `absolute -left-2 -top-2 z-20 h-5 w-5 rounded-full`, shows `MessageCircle` size 10. Background is `bg-text/10` normally, `bg-text/20` if a comment exists.
-   - The comment block: appears above the statement, has `bg-text/5 border-subtle-border rounded-lg border p-2`, contains a `FontTextInput` (multiline) when editing or a `FontText` when displaying.
-   - The connecting line: `marginLeft: 14, width: 2, height: 8, backgroundColor: 'rgb(0,0,0,0.15)'`
-   - `useState` manages `isEditingComment` and `commentDraft`
-   - `handleCommentSave` calls `onSetComment?.(currentPath, commentDraft.trim())` on blur
-   - All 6 recursive `<Canvas>` spread props inside If/ForEach/Function/UpdateCell/OnTagAdded/OnTagRemoved bodies were updated to include `onSetComment`
-   - `BlockPreview` (line ~2395) does NOT pass `onSetComment` (previews are non-interactive)
+- `SelectionRange` type: `{ start: number; end: number }` (line 3)
+- `emptySelection`: `{ start: 0, end: 0 }` (line 48)
+- `insertAtSelection`, `wrapSelection` — used by toolbar handlers to modify text at the cursor
 
-7. **`app/script/editor/ScriptEditorDialog.tsx`** — Added `handleSetComment` handler (lines ~513-515):
-   ```ts
-   const handleSetComment = (path: number[], comment: string) => {
-     dispatchWithUndo({ type: 'SET_COMMENT', path, comment }, comment ? 'Add comment' : 'Remove comment');
-   };
-   ```
-   Passed to `<Canvas>` as `onSetComment={handleSetComment}` (line ~693).
+---
 
-## Key Concepts
+## Key Terminology
 
-- **StatementBlock**: The React component in `Canvas.tsx` that renders each top-level statement (If, ForEach, Function, CreateMarkdown, UpdateCell, etc.) as a visual block. It wraps content in a `Swapable` component.
-- **Swapable**: A wrapper component that makes blocks clickable to swap/replace. Has `data-swapable` attribute. Handles hover states and paper texture.
-- **ExpressionSocket**: Renders expression slots within statements (arguments, conditions, etc.). These are NOT statement blocks — comments only apply to statements, not expressions.
-- **stmtPath**: Array of indices representing the path to a statement in the AST tree (e.g., `[0]` = first top-level statement, `[0, 1]` = second statement inside the first statement's body).
-- **dispatchWithUndo**: Wrapper in `ScriptEditorDialog.tsx` that dispatches a reducer action and records an undo snapshot with a description string.
-- **BlockPreview**: A non-interactive version of StatementBlock/ExpressionSocket used in InsertModal previews. Does not have comment support (intentionally).
+- **MarkdownEditorDialog** — The generic markdown editor dialog component (`app/components/game/MarkdownEditorDialog.tsx`). Used for role messages, morning messages, script editor markdown literals, town square posts, etc. It owns the `draftBody` and `selection` state.
+- **TownSquareComposerEditorPane** — The actual `TextInput` component (`app/components/game/townSquare/TownSquareComposerEditorPane.tsx`). Despite the "TownSquare" name, it's used by the generic markdown editor. Contains the height logic.
+- **contentHeight** — State tracking the actual rendered height of the TextInput content, updated via `onContentSizeChange`. Starts at 0.
+- **minHeight** — Line-count-based height estimate: `Math.max(120, lineCount * 24 + 32)`. The `24` is the `lineHeight` and `32` is padding.
+- **onContentSizeChange** — React Native TextInput event that fires when the rendered content size changes. Fires asynchronously after native layout.
+- **scrollEnabled={false}** — The TextInput doesn't scroll itself; the outer `ShadowScrollView` handles scrolling. The TextInput must be tall enough to show all content.
 
-## Verification Done
+---
 
-- `npx eslint` on all 7 files: 0 errors (1 pre-existing error in Canvas.tsx line 870 about useMemo conditional call — unrelated)
-- `npx tsc --noEmit`: 0 errors in script/ files (pre-existing errors in other files unrelated)
-- Parser/printer round-trip verified: `// comment\nIf (true) { Return; }` parses with `comment` field set, prints back identically, re-parses correctly
-- Multi-line comments and nested comments inside blocks verified
+## Constraints & Design Principles
 
-## What Hasn't Been Verified
+- Follow the app's existing conventions: ConvexDialog, FontText/FontTextInput, lucide icons, Tailwind classes, Column/Row layout components.
+- The fix should be localized to `TownSquareComposerEditorPane.tsx` (or minimally touch the parent if needed).
+- The height must still grow to fit large loaded text (the cutoff bug must not return).
+- The cursor must not jump when typing.
+- React Native `TextInput` on both iOS and Android must be considered — the cursor-jump behavior may differ between platforms.
+- See `utils/about-parts-of-this-codebase/about-this-codebase.md` for general codebase conventions.
+- See `AGENTS.md` for project rules (unsaved-changes confirmation pattern, etc. — though this fix likely doesn't need a new dialog).
 
-- **The UI actually rendering the comment button** — this is the current blocker. The code is written but the button doesn't appear in the browser.
-- **Clicking the button and typing a comment** — can't test until the button appears
-- **The comment persisting through text mode toggle** (blocks → text → blocks) — should work since comments are in the AST and printer, but not yet tested end-to-end
+---
+
+## Possible Approaches (not prescriptive — pick what works)
+
+1. **Only grow, never shrink during editing:** Track the max content height seen and only update `contentHeight` when it increases. This prevents height "flicker" that might cause cursor jumps. Reset only when the value changes externally (e.g., dialog reopens with new `initialMarkdown`).
+
+2. **Debounce `contentHeight` updates:** Don't update `contentHeight` on every `onContentSizeChange` fire — debounce or throttle it so the height only recalculates after typing settles.
+
+3. **Only use `onContentSizeChange` for initial sizing, then rely on line-count:** Use `contentHeight` only for the initial load (to fix cutoff), then switch to line-count-based height during active editing (which was the pre-d000cf378 behavior that didn't jump).
+
+4. **Preserve scroll/cursor position explicitly:** After a height change, programmatically restore the scroll position or selection. This is fragile but might work.
+
+5. **Avoid changing the `style.height` prop unless the change is significant:** Only update `height` if the new value differs by more than a threshold (e.g., one line height = 24px), reducing unnecessary re-layouts.
+
+---
+
+## Files to Change
+
+- **`app/components/game/townSquare/TownSquareComposerEditorPane.tsx`** — Primary file. The height logic lives here.
+- Possibly **`app/components/game/MarkdownEditorDialog.tsx`** — if the fix needs to signal "external value change" vs "user typing" (e.g., passing a `key` or a ref to reset height state on dialog open).
+
+No other files should need changes.

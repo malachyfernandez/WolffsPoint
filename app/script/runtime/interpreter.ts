@@ -7,7 +7,8 @@ import type {
   Statement,
 } from '../lang/ast';
 import { parseScript } from '../lang/parser';
-import { parseScriptBlock } from '../lang/printer';
+import { parseScriptBlock, printExpression } from '../lang/printer';
+import { substituteMarkdownVariables } from '../markdownVariables';
 import {
   displayValue,
   isInputsWithData,
@@ -29,7 +30,6 @@ import {
   type ExpressionContext,
   type TableUpdate,
 } from '../registry';
-import { printExpression } from '../lang/printer';
 import type { PlannedUpdate } from '../../../types/multiplayer';
 
 export type RenderInstructionKind =
@@ -681,8 +681,15 @@ class Interpreter {
         case 'NumberLiteral':
         case 'BooleanLiteral':
           return expression.value;
-        case 'MarkdownLiteral':
-          return expression.value;
+        case 'MarkdownLiteral': {
+          const values = new Map(
+            expression.variables?.map((variable) => [
+              variable.name,
+              displayValue(this.evaluate(variable.expression, environment, depth)),
+            ]) ?? []
+          );
+          return substituteMarkdownVariables(expression.value, values);
+        }
         case 'DropdownLiteral':
           return expression.value;
         case 'ListLiteral':

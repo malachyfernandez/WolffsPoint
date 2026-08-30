@@ -329,6 +329,14 @@ const syncFunctionCallArity = (
       case 'LambdaExpression':
         if (expression.body.kind === 'BlockStatement') return expression;
         return { ...expression, body: syncExpression(expression.body) };
+      case 'MarkdownLiteral':
+        return {
+          ...expression,
+          variables: expression.variables?.map((variable) => ({
+            ...variable,
+            expression: syncExpression(variable.expression),
+          })),
+        };
       default:
         return expression;
     }

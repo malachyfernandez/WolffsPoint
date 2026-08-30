@@ -22,6 +22,7 @@ export type ExpressionPathStep =
   | { kind: 'indexObject' }
   | { kind: 'indexValue' }
   | { kind: 'callArgument'; index: number }
+  | { kind: 'markdownVariable'; name: string }
   | { kind: 'chainBase' }
   | { kind: 'chainArgument'; linkIndex: number; argumentIndex: number };
 
@@ -116,6 +117,14 @@ export const renameIdentifier = (expression: Expression, from: string, to: strin
       if (expression.parameters.includes(from) || expression.body.kind === 'BlockStatement')
         return expression;
       return { ...expression, body: renameIdentifier(expression.body, from, to) };
+    case 'MarkdownLiteral':
+      return {
+        ...expression,
+        variables: expression.variables?.map((variable) => ({
+          ...variable,
+          expression: renameIdentifier(variable.expression, from, to),
+        })),
+      };
     default:
       return expression;
   }
@@ -256,6 +265,21 @@ export const replaceExpressionAtPath = (
       return expression.kind === 'CallExpression'
         ? { ...expression, arguments: replaceArgument(expression.arguments, step.index, replace) }
         : expression;
+    case 'markdownVariable':
+      if (expression.kind !== 'MarkdownLiteral') return expression;
+      return {
+        ...expression,
+        variables: expression.variables?.some((variable) => variable.name === step.name)
+          ? expression.variables.map((variable) =>
+              variable.name === step.name
+                ? { ...variable, expression: replace(variable.expression) }
+                : variable
+            )
+          : [
+              ...(expression.variables ?? []),
+              { name: step.name, expression: replace({ kind: 'NothingLiteral', span }) },
+            ],
+      };
     case 'chainArgument': {
       const chain = decomposeChain(expression);
       const link = chain[step.linkIndex];
@@ -433,6 +457,10 @@ export const updateExpressionAtLocation = (
       case 'callArgument':
         return expression.kind === 'CallExpression'
           ? expression.arguments[step.index]?.value
+          : undefined;
+      case 'markdownVariable':
+        return expression.kind === 'MarkdownLiteral'
+          ? expression.variables?.find((variable) => variable.name === step.name)?.expression
           : undefined;
       case 'chainArgument': {
         const link = decomposeChain(expression)[step.linkIndex];

@@ -19,6 +19,8 @@ import ScriptEditorDialog from '../../script/editor/ScriptEditorDialog';
 import { useMarkdownRendererInputData } from '../ui/markdown/MarkdownRenderer';
 import { InputOptionsProvider } from './markdownEditor/InputOptionsProvider';
 import PlayerPreviewModal from './markdownEditor/PlayerPreviewModal';
+import MarkdownVariableDialog from './markdownEditor/MarkdownVariableDialog';
+import { createMarkdownVariableMarker } from '../../script/markdownVariables';
 
 /** Find all `/*script ... script*\/` blocks in the markdown text. */
 const findScriptBlocks = (text: string): { start: number; end: number; content: string }[] => {
@@ -61,6 +63,7 @@ interface MarkdownEditorDialogProps {
   gameId?: string;
   showInputs?: boolean;
   showScript?: boolean;
+  showVariables?: boolean;
   /** When true (default), input-creating blocks are hidden in the script editor.
    *  Pass false only for editors that support player input state (role messages,
    *  morning messages). */
@@ -115,6 +118,7 @@ const MarkdownEditorDialog = ({
   gameId,
   showInputs = false,
   showScript = false,
+  showVariables = false,
   hideInputs = true,
   isPreviewSideBySide = false,
   includeTitle = false,
@@ -138,6 +142,7 @@ const MarkdownEditorDialog = ({
   const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false);
   const [isImageDialogOpen, setIsImageDialogOpen] = useState(false);
   const [isInputDialogOpen, setIsInputDialogOpen] = useState(false);
+  const [isVariableDialogOpen, setIsVariableDialogOpen] = useState(false);
   const [isLeaveConfirmDialogOpen, setIsLeaveConfirmDialogOpen] = useState(false);
   const [isScriptDialogOpen, setIsScriptDialogOpen] = useState(false);
   const [editingScriptBlock, setEditingScriptBlock] = useState<{
@@ -166,6 +171,7 @@ const MarkdownEditorDialog = ({
     setIsLinkDialogOpen(false);
     setIsImageDialogOpen(false);
     setIsInputDialogOpen(false);
+    setIsVariableDialogOpen(false);
     setIsLeaveConfirmDialogOpen(false);
     setEditingScriptBlock(null);
     setPreviewInputState({});
@@ -291,6 +297,7 @@ const MarkdownEditorDialog = ({
   const handleInput = () => setIsInputDialogOpen(true);
   const handleMore = () => setIsMoreDialogOpen(true);
   const handleScript = () => setIsScriptDialogOpen(true);
+  const handleVariable = () => setIsVariableDialogOpen(true);
 
   // Detect if the cursor is inside a `/*script ... script*/` block.
   const cursorScriptBlock = useMemo(
@@ -359,6 +366,7 @@ const MarkdownEditorDialog = ({
                 onInput={handleInput}
                 onMore={handleMore}
                 onScript={showScript ? handleScript : undefined}
+                onVariable={showVariables ? handleVariable : undefined}
                 centered={centered}
                 showPreviewAsPlayer={findScriptBlocks(draftBody).length > 0}
                 onPreviewAsPlayer={handlePreviewAsPlayer}
@@ -408,6 +416,16 @@ const MarkdownEditorDialog = ({
         runBodyUpdate={runBodyUpdate}
         onConfirmLeave={handleConfirmLeave}
         onCancelLeave={handleCancelLeave}
+      />
+
+      <MarkdownVariableDialog
+        isOpen={isVariableDialogOpen}
+        onOpenChange={setIsVariableDialogOpen}
+        onInsert={(name) =>
+          runBodyUpdate((value, range) =>
+            insertAtSelection(value, range, createMarkdownVariableMarker(name))
+          )
+        }
       />
 
       <InputOptionsProvider gameId={gameId} showInputs>

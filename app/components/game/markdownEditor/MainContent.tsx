@@ -29,6 +29,7 @@ interface MainContentProps {
   onInput: () => void;
   onMore: () => void;
   onScript?: () => void;
+  onVariable?: () => void;
   centered?: boolean;
   showPreviewAsPlayer?: boolean;
   onPreviewAsPlayer?: () => void;
@@ -58,6 +59,7 @@ export function MainContent({
   onInput,
   onMore,
   onScript,
+  onVariable,
   centered = false,
   showPreviewAsPlayer = false,
   onPreviewAsPlayer,
@@ -95,6 +97,7 @@ export function MainContent({
           onInput={onInput}
           onMore={onMore}
           onScript={onScript}
+          onVariable={onVariable}
           centered={centered}
           showPreviewAsPlayer={showPreviewAsPlayer}
           onPreviewAsPlayer={onPreviewAsPlayer}
@@ -119,6 +122,7 @@ export function MainContent({
           onInput={onInput}
           onMore={onMore}
           onScript={onScript}
+          onVariable={onVariable}
           centered={centered}
           showPreviewAsPlayer={showPreviewAsPlayer}
           onPreviewAsPlayer={onPreviewAsPlayer}

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { TextInput, View } from 'react-native';
+import { Platform, TextInput } from 'react-native';
 import Column from '../../layout/Column';
-import FontText from '../../ui/text/FontText';
+import FontTextInput from '../../ui/forms/FontTextInput';
 import { SelectionRange } from './townSquareUtils';
 
 interface TownSquareComposerEditorPaneProps {
@@ -16,11 +16,28 @@ const TownSquareComposerEditorPane = ({ onBodyChange, onSelectionChange, value }
     const minHeight = Math.max(120, lineCount * 24 + 32);
     const height = Math.max(minHeight, contentHeight);
 
+    if (Platform.OS === 'web') {
+        return (
+            <Column className='gap-2 flex-1 grow min-w-0'>
+                <FontTextInput
+                    autoGrow
+                    multiline
+                    className='min-w-0 rounded-3xl bg-text/10 p-4 text-base text-text'
+                    onChangeText={onBodyChange}
+                    onSelectionChange={(event) => onSelectionChange(event.nativeEvent.selection)}
+                    placeholder='Write the thread the way you want it to look.'
+                    style={{ lineHeight: '24px', minHeight: '50vh' } as any}
+                    value={value}
+                />
+            </Column>
+        );
+    }
+
     return (
         <Column className='gap-2 flex-1 grow min-w-0'>
             <TextInput
                 multiline={true}
-                className='min-w-0 min-h-[50vh] rounded-[24px] bg-text/10 overflow-hidden p-4 text-base text-text'
+                className='min-w-0 min-h-[50vh] rounded-3xl bg-text/10 overflow-hidden p-4 text-base text-text'
                 onChangeText={onBodyChange}
                 onContentSizeChange={(event) => setContentHeight(event.nativeEvent.contentSize.height)}
                 onSelectionChange={(event) => onSelectionChange(event.nativeEvent.selection)}

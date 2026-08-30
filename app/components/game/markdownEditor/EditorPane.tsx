@@ -17,6 +17,7 @@ interface EditorPaneProps {
     onInput: () => void;
     onMore: () => void;
     onScript?: () => void;
+    onVariable?: () => void;
 }
 
 export function EditorPane({
@@ -31,6 +32,7 @@ export function EditorPane({
     onInput,
     onMore,
     onScript,
+    onVariable,
 }: EditorPaneProps) {
     return (
         <Column className='gap-1 flex-1 min-w-0'>
@@ -42,6 +44,7 @@ export function EditorPane({
                 onLink={onLink}
                 onMore={onMore}
                 onScript={onScript}
+                onVariable={onVariable}
                 showInputs={showInputs}
             />
             <ShadowScrollView className='flex-1' scrollViewClassName='flex-1 rounded-[24px] py-4'>

@@ -804,6 +804,7 @@ const ScriptEditorDialog = ({
           initialMarkdown={markdownEditor.value}
           showScript
           showInputs
+          showVariables
           hideInputs={hideInputs}
           gameId={gameId}
           onSubmit={(payload) => {

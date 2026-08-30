@@ -1,3 +1,4 @@
+import { getMarkdownVariableNames } from '../markdownVariables';
 import type { BlockStatement, CallArgument, Expression, Script, Statement } from './ast';
 import { parseScript } from './parser';
 
@@ -51,9 +52,24 @@ export const printExpression = (
     case 'StringLiteral':
       result = JSON.stringify(expression.value);
       break;
-    case 'MarkdownLiteral':
-      result = `\`${expression.value.replace(/\\/g, '\\\\').replace(/`/g, '\\`')}\``;
+    case 'MarkdownLiteral': {
+      const markdown = `\`${expression.value.replace(/\\/g, '\\\\').replace(/`/g, '\\`')}\``;
+      const variableNames = getMarkdownVariableNames(expression.value);
+      if (variableNames.length === 0) {
+        result = markdown;
+        break;
+      }
+      const bindings = variableNames.map((name) => {
+        const binding = expression.variables?.find((variable) => variable.name === name);
+        const value = binding?.expression ?? {
+          kind: 'NothingLiteral' as const,
+          span: expression.span,
+        };
+        return `${JSON.stringify(name)} = ${printExpression(value, 0, depth)}`;
+      });
+      result = `Markdown(${markdown}, ${bindings.join(', ')})`;
       break;
+    }
     case 'DropdownLiteral':
       result = `Dropdown(${JSON.stringify(expression.value)}, [${expression.options.map((o) => JSON.stringify(o)).join(', ')}])`;
       break;

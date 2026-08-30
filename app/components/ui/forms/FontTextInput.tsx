@@ -28,6 +28,7 @@ const FontTextInput = ({
     autoGrow = false,
     variant = 'default',
     onChangeText,
+    onSelectionChange,
     value,
     placeholder,
     onKeyDown,
@@ -74,6 +75,31 @@ const FontTextInput = ({
         };
     }, [autoGrow, fontsLoaded, resizeTextarea, value]);
 
+    useLayoutEffect(() => {
+        if (Platform.OS !== 'web' || !autoGrow || !textareaRef.current) {
+            return;
+        }
+
+        const textarea = textareaRef.current;
+        let width = textarea.getBoundingClientRect().width;
+        const handleResize = () => resizeTextarea(textarea);
+        const resizeObserver = new ResizeObserver(([entry]) => {
+            if (entry.contentRect.width === width) {
+                return;
+            }
+
+            width = entry.contentRect.width;
+            handleResize();
+        });
+        resizeObserver.observe(textarea);
+        window.addEventListener('resize', handleResize);
+
+        return () => {
+            resizeObserver.disconnect();
+            window.removeEventListener('resize', handleResize);
+        };
+    }, [autoGrow, resizeTextarea]);
+
     if (Platform.OS === 'web' && autoGrow) {
         return (
             <textarea
@@ -85,6 +111,16 @@ const FontTextInput = ({
                 onChange={(event) => {
                     resizeTextarea(event.currentTarget);
                     onChangeText?.(event.target.value);
+                }}
+                onSelect={(event) => {
+                    onSelectionChange?.({
+                        nativeEvent: {
+                            selection: {
+                                start: event.currentTarget.selectionStart,
+                                end: event.currentTarget.selectionEnd,
+                            },
+                        },
+                    } as any);
                 }}
                 onKeyDown={(event) => {
                     onKeyDown?.(event);
