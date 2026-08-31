@@ -1102,13 +1102,6 @@ const InsertModal = ({
         onSelect: () => selectExpression({ kind: 'StringLiteral', value: '', span }),
       },
       {
-        label: 'Markdown',
-        description: 'Markdown text literal',
-        category: 'string',
-        previewExpression: { kind: 'MarkdownLiteral' as const, value: '', span },
-        onSelect: () => selectExpression({ kind: 'MarkdownLiteral', value: '', span }),
-      },
-      {
         label: 'Dropdown',
         description: 'Selectable options',
         category: 'string',
