@@ -1457,12 +1457,19 @@ const InsertModal = ({
     }
     if (!search.trim()) return result;
     const query = search.toLowerCase();
-    return result.filter(
-      (item) =>
-        item.label.toLowerCase().includes(query) ||
-        item.description.toLowerCase().includes(query) ||
-        item.searchTerms?.some((term) => term.toLowerCase().includes(query))
-    );
+    const seen = new Set<string>();
+    return result
+      .filter(
+        (item) =>
+          item.label.toLowerCase().includes(query) ||
+          item.description.toLowerCase().includes(query) ||
+          item.searchTerms?.some((term) => term.toLowerCase().includes(query))
+      )
+      .filter((item) => {
+        if (seen.has(item.label)) return false;
+        seen.add(item.label);
+        return true;
+      });
   }, [items, search, hideInputs, allowVoteInput, isTriggerContext, entryKeysBySource]);
 
   const grouped = useMemo(() => {
