@@ -112,10 +112,6 @@ const DropdownLiteralEditor = ({
     setIsEditDialogOpen(false);
   };
 
-  const handleCancelLeave = () => {
-    setIsLeaveConfirmOpen(false);
-  };
-
   return (
     <>
       <AppDropdown
@@ -232,8 +228,8 @@ const DropdownLiteralEditor = ({
       <UnsavedChangesDialog
         isOpen={isLeaveConfirmOpen}
         onOpenChange={setIsLeaveConfirmOpen}
-        onStay={handleCancelLeave}
-        onLeave={handleConfirmLeave}
+        onSave={handleSave}
+        onDiscard={handleConfirmLeave}
       />
     </>
   );

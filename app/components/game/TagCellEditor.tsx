@@ -122,10 +122,6 @@ const TagCellEditor = ({
     onOpenChange(false);
   };
 
-  const handleCancelLeave = () => {
-    setIsLeaveConfirmOpen(false);
-  };
-
   const toggleTag = (name: string) => {
     setSelectedTagNames((prev) =>
       prev.includes(name) ? prev.filter((n) => n !== name) : [...prev, name]
@@ -309,8 +305,8 @@ const TagCellEditor = ({
       <UnsavedChangesDialog
         isOpen={isLeaveConfirmOpen}
         onOpenChange={setIsLeaveConfirmOpen}
-        onStay={handleCancelLeave}
-        onLeave={handleConfirmLeave}
+        onSave={handleSave}
+        onDiscard={handleConfirmLeave}
       />
 
       <AddTagDialog

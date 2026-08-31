@@ -158,10 +158,6 @@ const PlayerProfileDialogNEW = ({
     onOpenChange(false);
   };
 
-  const handleCancelLeave = () => {
-    setIsLeaveConfirmDialogOpen(false);
-  };
-
   const handleSave = () => {
     if (!canSave || !hasUnsavedChanges) {
       return;
@@ -361,8 +357,8 @@ const PlayerProfileDialogNEW = ({
       <UnsavedChangesDialog
         isOpen={isLeaveConfirmDialogOpen}
         onOpenChange={setIsLeaveConfirmDialogOpen}
-        onStay={handleCancelLeave}
-        onLeave={handleConfirmLeave}
+        onSave={handleSave}
+        onDiscard={handleConfirmLeave}
       />
     </>
   );
@@ -420,10 +416,6 @@ const SocialsDialog = ({ isOpen, onOpenChange, onSave, initialSocials }: Socials
   const handleConfirmLeave = () => {
     setIsLeaveConfirmDialogOpen(false);
     onOpenChange(false);
-  };
-
-  const handleCancelLeave = () => {
-    setIsLeaveConfirmDialogOpen(false);
   };
 
   const handleSave = () => {
@@ -552,8 +544,8 @@ const SocialsDialog = ({ isOpen, onOpenChange, onSave, initialSocials }: Socials
       <UnsavedChangesDialog
         isOpen={isLeaveConfirmDialogOpen}
         onOpenChange={setIsLeaveConfirmDialogOpen}
-        onStay={handleCancelLeave}
-        onLeave={handleConfirmLeave}
+        onSave={handleSave}
+        onDiscard={handleConfirmLeave}
       />
     </ConvexDialog.Root>
   );

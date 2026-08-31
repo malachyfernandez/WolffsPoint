@@ -92,8 +92,8 @@ const MarkdownVariableDialog = ({
       <UnsavedChangesDialog
         isOpen={isLeaveConfirmOpen}
         onOpenChange={setIsLeaveConfirmOpen}
-        onStay={() => setIsLeaveConfirmOpen(false)}
-        onLeave={() => {
+        onSave={handleSubmit}
+        onDiscard={() => {
           setIsLeaveConfirmOpen(false);
           onOpenChange(false);
         }}

@@ -3,6 +3,7 @@ import { Animated, Pressable, ScrollView, TextInput, View } from 'react-native';
 import ConvexDialog from '../../components/ui/dialog/ConvexDialog';
 import DialogHeader from '../../components/ui/dialog/DialogHeader';
 import UnsavedChangesDialog from '../../components/ui/dialog/UnsavedChangesDialog';
+import ConfirmDialog from '../../components/ui/dialog/ConfirmDialog';
 import Column from '../../components/layout/Column';
 import Row from '../../components/layout/Row';
 import AppButton from '../../components/ui/buttons/AppButton';
@@ -1262,10 +1263,6 @@ const ScriptEditorDialog = ({
     onOpenChange(false);
   };
 
-  const handleCancelLeave = () => {
-    setIsLeaveConfirmDialogOpen(false);
-  };
-
   const canSubmit =
     mode === 'text' ? textDraft.trim().length > 0 && !parseError : state.ast.statements.length > 0;
 
@@ -1543,25 +1540,23 @@ const ScriptEditorDialog = ({
       <UnsavedChangesDialog
         isOpen={isLeaveConfirmDialogOpen}
         onOpenChange={setIsLeaveConfirmDialogOpen}
-        onStay={handleCancelLeave}
-        onLeave={handleConfirmLeave}
+        onSave={handleSubmit}
+        onDiscard={handleConfirmLeave}
       />
 
-      <UnsavedChangesDialog
+      <ConfirmDialog
         isOpen={expressionSwapTarget !== null}
         onOpenChange={(open) => {
           if (!open) setExpressionSwapTarget(null);
         }}
-        onStay={() => setExpressionSwapTarget(null)}
-        onLeave={handleConfirmExpressionSwap}
+        onConfirm={handleConfirmExpressionSwap}
         title="Swap expressions?"
         message={
           expressionSwapTarget && shelfExpression
             ? `Swapping ${printExpression(expressionSwapTarget.expression)} with ${printExpression(shelfExpression)}`
             : ''
         }
-        stayLabel="Cancel"
-        leaveLabel="Swap"
+        confirmLabel="Swap"
       />
 
       {/* Decouple / remove saved function dialog */}

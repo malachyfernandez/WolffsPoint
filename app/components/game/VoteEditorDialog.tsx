@@ -112,10 +112,6 @@ const VoteEditorDialog = ({
     onOpenChange(false);
   };
 
-  const handleCancelLeave = () => {
-    setIsLeaveConfirmDialogOpen(false);
-  };
-
   const handleMultiplierChange = (text: string) => {
     // Allow optional leading - and digits only
     const cleaned = text.replace(/[^0-9-]/g, '').replace(/(?!^)-/g, '');
@@ -215,8 +211,8 @@ const VoteEditorDialog = ({
       <UnsavedChangesDialog
         isOpen={isLeaveConfirmDialogOpen}
         onOpenChange={setIsLeaveConfirmDialogOpen}
-        onStay={handleCancelLeave}
-        onLeave={handleConfirmLeave}
+        onSave={handleSubmit}
+        onDiscard={handleConfirmLeave}
       />
     </>
   );

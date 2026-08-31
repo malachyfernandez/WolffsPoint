@@ -87,10 +87,6 @@ const ListLiteralEditor = ({ expression, onEditItems }: ListLiteralEditorProps) 
     setIsEditDialogOpen(false);
   };
 
-  const handleCancelLeave = () => {
-    setIsLeaveConfirmOpen(false);
-  };
-
   const summary =
     expression.items.length === 0
       ? 'Empty list'
@@ -207,8 +203,8 @@ const ListLiteralEditor = ({ expression, onEditItems }: ListLiteralEditorProps) 
       <UnsavedChangesDialog
         isOpen={isLeaveConfirmOpen}
         onOpenChange={setIsLeaveConfirmOpen}
-        onStay={handleCancelLeave}
-        onLeave={handleConfirmLeave}
+        onSave={handleSave}
+        onDiscard={handleConfirmLeave}
       />
     </>
   );

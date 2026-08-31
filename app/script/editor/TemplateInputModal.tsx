@@ -180,10 +180,6 @@ const TemplateInputModal = ({
     onOpenChange(false);
   };
 
-  const handleCancelLeave = () => {
-    setShowLeaveConfirm(false);
-  };
-
   // Dummy location for the draft expression socket
   const draftLocation: ExpressionLocation = {
     statementPath: [],
@@ -260,8 +256,8 @@ const TemplateInputModal = ({
       <UnsavedChangesDialog
         isOpen={showLeaveConfirm}
         onOpenChange={setShowLeaveConfirm}
-        onStay={handleCancelLeave}
-        onLeave={handleConfirmLeave}
+        onSave={handleDone}
+        onDiscard={handleConfirmLeave}
       />
 
       {/* Local InsertModal — updates the draft directly, not the reducer */}

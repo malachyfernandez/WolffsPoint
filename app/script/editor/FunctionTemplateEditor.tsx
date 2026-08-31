@@ -193,8 +193,15 @@ const FunctionTemplateEditor = ({
     closeInlineModals();
   };
 
-  const handleCancelLeave = () => {
+  // Save the currently-open inline modal's draft, then close the confirm.
+  const handleInlineSave = () => {
     setShowLeaveConfirm(false);
+    if (newTextOpen) handleDoneNewText();
+    else if (newInputOpen) {
+      // The new-input modal manages its own save via onDone; close confirm only.
+      // (handleDoneNewInput is invoked by the modal's onDone callback.)
+    } else if (editTextOpen) handleSaveEditText();
+    else if (editInputOpen) handleSaveEditInput();
   };
 
   // --- Picker → next modal transitions ---
@@ -486,8 +493,8 @@ const FunctionTemplateEditor = ({
       <UnsavedChangesDialog
         isOpen={showLeaveConfirm}
         onOpenChange={setShowLeaveConfirm}
-        onStay={handleCancelLeave}
-        onLeave={handleConfirmLeave}
+        onSave={handleInlineSave}
+        onDiscard={handleConfirmLeave}
       />
     </Column>
   );

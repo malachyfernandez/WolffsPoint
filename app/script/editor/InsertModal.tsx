@@ -4,7 +4,7 @@ import { X } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { SavedFunction } from 'hooks/useSavedFunctions';
 import ConvexDialog from '../../components/ui/dialog/ConvexDialog';
-import UnsavedChangesDialog from '../../components/ui/dialog/UnsavedChangesDialog';
+import ConfirmDialog from '../../components/ui/dialog/ConfirmDialog';
 import ShadowScrollView from '../../components/ui/ShadowScrollView';
 import Column from '../../components/layout/Column';
 import { useTooltip } from './useTooltip';
@@ -1495,18 +1495,17 @@ const InsertModal = ({
       </ConvexDialog.Root>
     </ConvexDialog.Root>
 
-    <UnsavedChangesDialog
+    <ConfirmDialog
       isOpen={unsaveConfirm !== null}
       onOpenChange={(open) => { if (!open) setUnsaveConfirm(null); }}
-      onStay={() => setUnsaveConfirm(null)}
-      onLeave={() => {
+      onConfirm={() => {
         if (unsaveConfirm && onUnsaveFunction) onUnsaveFunction(unsaveConfirm);
         setUnsaveConfirm(null);
       }}
       title="Remove Saved Function"
       message={`Remove this function from your saved functions? It won't affect any scripts already using it.`}
-      stayLabel="Cancel"
-      leaveLabel="Remove"
+      confirmLabel="Remove"
+      danger
     />
     </>
   );

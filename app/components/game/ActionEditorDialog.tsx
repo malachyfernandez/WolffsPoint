@@ -79,10 +79,6 @@ const ActionEditorDialog = ({
     onOpenChange(false);
   };
 
-  const handleCancelLeave = () => {
-    setIsLeaveConfirmDialogOpen(false);
-  };
-
   return (
     <>
       <ConvexDialog.Root isOpen={isOpen} onOpenChange={handleOpenChange}>
@@ -153,8 +149,8 @@ const ActionEditorDialog = ({
       <UnsavedChangesDialog
         isOpen={isLeaveConfirmDialogOpen}
         onOpenChange={setIsLeaveConfirmDialogOpen}
-        onStay={handleCancelLeave}
-        onLeave={handleConfirmLeave}
+        onSave={handleSubmit}
+        onDiscard={handleConfirmLeave}
       />
     </>
   );

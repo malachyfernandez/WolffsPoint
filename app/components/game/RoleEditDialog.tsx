@@ -92,10 +92,6 @@ const RoleEditDialog = ({
     onOpenChange(false);
   };
 
-  const handleCancelLeave = () => {
-    setIsLeaveConfirmDialogOpen(false);
-  };
-
   return (
     <>
       <ConvexDialog.Root isOpen={isOpen} onOpenChange={handleOpenChange}>
@@ -179,8 +175,8 @@ const RoleEditDialog = ({
       <UnsavedChangesDialog
         isOpen={isLeaveConfirmDialogOpen}
         onOpenChange={setIsLeaveConfirmDialogOpen}
-        onStay={handleCancelLeave}
-        onLeave={handleConfirmLeave}
+        onSave={handleSave}
+        onDiscard={handleConfirmLeave}
       />
     </>
   );

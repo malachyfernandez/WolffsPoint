@@ -34,7 +34,7 @@ interface SubDialogsProps {
     ) => { value: string; selection: SelectionRange }
   ) => void;
   onConfirmLeave: () => void;
-  onCancelLeave: () => void;
+  onSave: () => void;
 }
 
 export function SubDialogs({
@@ -53,7 +53,7 @@ export function SubDialogs({
   setIsLeaveConfirmDialogOpen,
   runBodyUpdate,
   onConfirmLeave,
-  onCancelLeave,
+  onSave,
 }: SubDialogsProps) {
   return (
     <>
@@ -99,8 +99,8 @@ export function SubDialogs({
       <UnsavedChangesDialog
         isOpen={isLeaveConfirmDialogOpen}
         onOpenChange={setIsLeaveConfirmDialogOpen}
-        onStay={onCancelLeave}
-        onLeave={onConfirmLeave}
+        onSave={onSave}
+        onDiscard={onConfirmLeave}
       />
     </>
   );

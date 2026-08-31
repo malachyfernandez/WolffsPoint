@@ -243,10 +243,6 @@ const MarkdownEditorDialog = ({
     onOpenChange(false);
   };
 
-  const handleCancelLeave = () => {
-    setIsLeaveConfirmDialogOpen(false);
-  };
-
   const selectedText = useMemo(() => {
     return draftBody.slice(selection.start, selection.end);
   }, [draftBody, selection.end, selection.start]);
@@ -415,7 +411,7 @@ const MarkdownEditorDialog = ({
         setIsLeaveConfirmDialogOpen={setIsLeaveConfirmDialogOpen}
         runBodyUpdate={runBodyUpdate}
         onConfirmLeave={handleConfirmLeave}
-        onCancelLeave={handleCancelLeave}
+        onSave={handleSubmit}
       />
 
       <MarkdownVariableDialog

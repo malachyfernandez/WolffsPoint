@@ -128,10 +128,6 @@ const AddTagDialog = ({
     onOpenChange(false);
   };
 
-  const handleCancelLeave = () => {
-    setIsLeaveConfirmOpen(false);
-  };
-
   const trimmedName = name.trim();
   // In edit mode, don't count the tag's own name as a duplicate
   const namesToCheck = isEditMode
@@ -297,8 +293,8 @@ const AddTagDialog = ({
       <UnsavedChangesDialog
         isOpen={isLeaveConfirmOpen}
         onOpenChange={setIsLeaveConfirmOpen}
-        onStay={handleCancelLeave}
-        onLeave={handleConfirmLeave}
+        onSave={handleSubmit}
+        onDiscard={handleConfirmLeave}
       />
 
       {isEditMode && editTag && gameId && (
