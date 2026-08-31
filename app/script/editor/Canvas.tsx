@@ -126,9 +126,7 @@ export interface MoveToolControls {
   operation: 'move' | 'clone';
   phase: 'collect' | 'place';
   category: 'expression' | 'block' | null;
-  getOriginalExpressionLocation: (location: ExpressionLocation) => ExpressionLocation;
-  getOriginalLinkIndex: (location: ExpressionLocation, currentIndex: number) => number;
-  getLinkMarkers: (location: ExpressionLocation, currentBoundary: number) => number[];
+  getLinkMarkers: (location: ExpressionLocation, linkIndex: number) => number[];
   getWholeMarker: (location: ExpressionLocation) => number | undefined;
   getOriginalStatementPath: (currentPath: number[]) => number[];
   getBlockMarkers: (currentParentPath: number[], currentBoundary: number) => number[];
@@ -267,13 +265,6 @@ const Swapable = ({
   moveTarget?: ExpressionMoveTarget | { kind: 'block'; path: number[]; statement: Statement };
 }) => {
   const moveTool = React.useContext(MoveToolContext);
-  const resolvedMoveTarget =
-    moveTarget && moveTarget.kind !== 'block' && moveTool
-      ? {
-          ...moveTarget,
-          location: moveTool.getOriginalExpressionLocation(moveTarget.location),
-        }
-      : moveTarget;
   const moveKind = moveTarget?.kind === 'block' ? 'block' : moveTarget ? 'expression' : undefined;
   const canPick =
     !!moveTool &&
@@ -324,7 +315,7 @@ const Swapable = ({
       {...({ 'data-swapable': true, 'data-move-kind': moveKind } as Record<string, unknown>)}
       {...({
         onPointerDown: (e: PointerEvent) => {
-          if (!moveTool || !canPick || !resolvedMoveTarget) return;
+          if (!moveTool || !canPick || !moveTarget) return;
           const target = e.target as HTMLElement;
           const current = e.currentTarget as HTMLElement;
           const selector = moveTool.category
@@ -333,9 +324,9 @@ const Swapable = ({
           if (target.closest(selector) !== current) return;
           e.preventDefault();
           e.stopPropagation();
-          if (resolvedMoveTarget.kind === 'block')
-            moveTool.onPickBlock(resolvedMoveTarget.path, resolvedMoveTarget.statement);
-          else moveTool.onPickExpression(resolvedMoveTarget);
+          if (moveTarget.kind === 'block')
+            moveTool.onPickBlock(moveTarget.path, moveTarget.statement);
+          else moveTool.onPickExpression(moveTarget);
         },
         onMouseOver: (e: MouseEvent) => {
           const target = e.target as HTMLElement;
@@ -1255,12 +1246,13 @@ export const ExpressionSocket = ({
             }
           }
         }
+        const linkMarkers = moveTool?.getLinkMarkers(location, index) ?? [];
         return (
           <React.Fragment key={index}>
-            {moveTool?.getLinkMarkers(location, index).map((number) => (
+            {linkMarkers.map((number) => (
               <MoveNumberMarker key={`move-${number}`} number={number} />
             ))}
-            {link.type === 'base' ? (
+            {moveTool?.operation === 'move' && linkMarkers.length > 0 ? null : link.type === 'base' ? (
               link.expr.kind === 'NothingLiteral' ? (
                 preview ? null : (
                   <BooleanSocket
@@ -1276,7 +1268,7 @@ export const ExpressionSocket = ({
                   moveTarget={{
                     kind: 'chainLink',
                     location,
-                    linkIndex: moveTool?.getOriginalLinkIndex(location, index) ?? index,
+                    linkIndex: index,
                     link,
                   }}
                   variant="piece"
@@ -1290,7 +1282,7 @@ export const ExpressionSocket = ({
                   moveTarget={{
                     kind: 'chainLink',
                     location,
-                    linkIndex: moveTool?.getOriginalLinkIndex(location, index) ?? index,
+                    linkIndex: index,
                     link,
                   }}
                   variant="block"
@@ -1314,7 +1306,7 @@ export const ExpressionSocket = ({
                   moveTarget={{
                     kind: 'chainLink',
                     location,
-                    linkIndex: moveTool?.getOriginalLinkIndex(location, index) ?? index,
+                    linkIndex: index,
                     link,
                   }}
                   variant="block"
@@ -1328,7 +1320,7 @@ export const ExpressionSocket = ({
                 moveTarget={{
                   kind: 'chainLink',
                   location,
-                  linkIndex: moveTool?.getOriginalLinkIndex(location, index) ?? index,
+                  linkIndex: index,
                   link,
                 }}
                 variant="piece"
@@ -1397,9 +1389,6 @@ export const ExpressionSocket = ({
           </React.Fragment>
         );
       })}
-      {moveTool?.getLinkMarkers(location, chain.length).map((number) => (
-        <MoveNumberMarker key={`move-${number}`} number={number} />
-      ))}
     </Row>
   );
 
@@ -1449,7 +1438,7 @@ const MethodLink = ({
       moveTarget={{
         kind: 'chainLink',
         location,
-        linkIndex: moveTool?.getOriginalLinkIndex(location, linkIndex) ?? linkIndex,
+        linkIndex,
         link,
       }}
       variant="block"

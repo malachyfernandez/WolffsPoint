@@ -385,6 +385,11 @@ const deriveSessionAst = (session: MoveSession): Script => {
   return next;
 };
 
+const deriveSessionCanvasAst = (session: MoveSession): Script =>
+  session.phase === 'collect' && session.category === 'expression'
+    ? session.baseline
+    : deriveSessionAst(session);
+
 const composeShelfExpression = (selections: MoveSelection[]): Expression | null => {
   const expressionSelections = selections.filter(
     (selection): selection is Exclude<MoveSelection, { kind: 'block' }> =>
@@ -657,7 +662,7 @@ const ScriptEditorDialog = ({
   const updateMoveSession = (update: (session: MoveSession) => MoveSession) => {
     if (!moveSession) return;
     const next = update(moveSession);
-    dispatch({ type: 'SET_AST', ast: deriveSessionAst(next) });
+    dispatch({ type: 'SET_AST', ast: deriveSessionCanvasAst(next) });
     setMoveSession(next);
   };
 
@@ -743,8 +748,17 @@ const ScriptEditorDialog = ({
       showToast(placeDisabledReason);
       return;
     }
-    setMoveSession((current) => (current ? { ...current, phase: 'place' } : current));
-  }, [moveSession, placeDisabledReason, showToast]);
+    const next = { ...moveSession, phase: 'place' as const };
+    dispatch({ type: 'SET_AST', ast: deriveSessionCanvasAst(next) });
+    setMoveSession(next);
+  }, [dispatch, moveSession, placeDisabledReason, showToast]);
+
+  const handleBackToCollect = useCallback(() => {
+    if (!moveSession) return;
+    const next = { ...moveSession, phase: 'collect' as const };
+    dispatch({ type: 'SET_AST', ast: deriveSessionCanvasAst(next) });
+    setMoveSession(next);
+  }, [dispatch, moveSession]);
 
   useEffect(() => {
     if (!isOpen || mode !== 'blocks' || typeof window === 'undefined') return;
@@ -844,31 +858,6 @@ const ScriptEditorDialog = ({
       (selection): selection is Extract<MoveSelection, { kind: 'block' }> =>
         selection.kind === 'block'
     );
-    const selectedLinkIndexes = (location: ExpressionLocation) =>
-      expressionSelections
-        .filter(
-          (selection): selection is Extract<MoveSelection, { kind: 'chainLink' }> =>
-            selection.kind === 'chainLink' && sameLocation(selection.location, location)
-        )
-        .map((selection) => selection.linkIndex)
-        .sort((left, right) => left - right);
-    const originalExpressionLocation = (location: ExpressionLocation) => {
-      if (moveSession.operation === 'clone') return location;
-      const expressionPath: ExpressionLocation['expressionPath'] = [];
-      location.expressionPath.forEach((step) => {
-        if (step.kind !== 'chainArgument') {
-          expressionPath.push(step);
-          return;
-        }
-        const chainLocation = { ...location, expressionPath: [...expressionPath] };
-        let linkIndex = step.linkIndex;
-        selectedLinkIndexes(chainLocation).forEach((index) => {
-          if (index <= linkIndex) linkIndex++;
-        });
-        expressionPath.push({ ...step, linkIndex });
-      });
-      return { ...location, expressionPath };
-    };
     const originalStatementPath = (currentPath: number[]) => {
       if (moveSession.operation === 'clone') return currentPath;
       const original: number[] = [];
@@ -893,42 +882,24 @@ const ScriptEditorDialog = ({
       operation: moveSession.operation,
       phase: moveSession.phase,
       category: moveSession.category,
-      getOriginalExpressionLocation: originalExpressionLocation,
-      getOriginalLinkIndex: (location, currentIndex) => {
-        if (moveSession.operation === 'clone') return currentIndex;
-        const removed = selectedLinkIndexes(originalExpressionLocation(location));
-        let candidate = currentIndex;
-        removed.forEach((index) => {
-          if (index <= candidate) candidate++;
-        });
-        return candidate;
-      },
-      getLinkMarkers: (location, currentBoundary) => {
-        const originalLocation = originalExpressionLocation(location);
-        return expressionSelections
-          .filter(
-            (selection): selection is Extract<MoveSelection, { kind: 'chainLink' }> =>
-              selection.kind === 'chainLink' && sameLocation(selection.location, originalLocation)
-          )
-          .filter((selection) => {
-            if (moveSession.operation === 'clone')
-              return selection.linkIndex + 1 === currentBoundary;
-            const removed = selectedLinkIndexes(originalLocation);
-            return (
-              selection.linkIndex -
-                removed.filter((index) => index < selection.linkIndex).length ===
-              currentBoundary
-            );
-          })
-          .map((selection) => selection.number);
-      },
-      getWholeMarker: (location) => {
-        const originalLocation = originalExpressionLocation(location);
-        return expressionSelections.find(
-          (selection) =>
-            selection.kind === 'whole' && sameLocation(selection.location, originalLocation)
-        )?.number;
-      },
+      getLinkMarkers: (location, linkIndex) =>
+        moveSession.phase === 'collect'
+          ? expressionSelections
+              .filter(
+                (selection): selection is Extract<MoveSelection, { kind: 'chainLink' }> =>
+                  selection.kind === 'chainLink' &&
+                  sameLocation(selection.location, location) &&
+                  selection.linkIndex === linkIndex
+              )
+              .map((selection) => selection.number)
+          : [],
+      getWholeMarker: (location) =>
+        moveSession.phase === 'collect'
+          ? expressionSelections.find(
+              (selection) =>
+                selection.kind === 'whole' && sameLocation(selection.location, location)
+            )?.number
+          : undefined,
       getOriginalStatementPath: originalStatementPath,
       getBlockMarkers: (currentParentPath, currentBoundary) => {
         const parent = originalStatementPath(currentParentPath);
@@ -1435,28 +1406,40 @@ const ScriptEditorDialog = ({
                 <Row className="gap-2">
                   {mode === 'blocks' &&
                     (moveSession ? (
-                      <>
+                      moveSession.phase === 'place' ? (
                         <AppButton
-                          variant="outline"
-                          className="h-8 px-3"
-                          onPress={cancelMoveSession}
+                          variant="filled"
+                          className="h-8 px-4"
+                          onPress={handleBackToCollect}
                           dropShadow={false}>
-                          <FontText className="text-sm">Cancel</FontText>
+                          <FontText className="text-sm" color="white">
+                            Back to {moveSession.operation === 'move' ? 'Move' : 'Clone'}
+                          </FontText>
                         </AppButton>
-                        <View
-                          onPointerEnter={() => setPlaceHovered(true)}
-                          onPointerLeave={() => setPlaceHovered(false)}>
+                      ) : (
+                        <>
                           <AppButton
-                            variant="filled"
-                            className={`h-8 px-3 ${placeDisabledReason ? 'opacity-50' : ''}`}
-                            onPress={handleEnterPlacePhase}
+                            variant="outline"
+                            className="h-8 px-3"
+                            onPress={cancelMoveSession}
                             dropShadow={false}>
-                            <FontText className="text-sm" color="white">
-                              Place
-                            </FontText>
+                            <FontText className="text-sm">Cancel</FontText>
                           </AppButton>
-                        </View>
-                      </>
+                          <View
+                            onPointerEnter={() => setPlaceHovered(true)}
+                            onPointerLeave={() => setPlaceHovered(false)}>
+                            <AppButton
+                              variant="filled"
+                              className={`h-8 px-3 ${placeDisabledReason ? 'opacity-50' : ''}`}
+                              onPress={handleEnterPlacePhase}
+                              dropShadow={false}>
+                              <FontText className="text-sm" color="white">
+                                Place
+                              </FontText>
+                            </AppButton>
+                          </View>
+                        </>
+                      )
                     ) : (
                       <>
                         <View
