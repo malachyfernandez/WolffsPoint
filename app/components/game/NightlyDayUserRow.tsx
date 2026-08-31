@@ -253,6 +253,7 @@ const NightlyDayUserRow = ({
         initialMarkdown={getCurrentMorningMessage()}
         onSubmit={({ markdown }) => updateMorningMessage(dayNumber, index, markdown)}
         dialogSubtext={`Set the message ${user.realName || 'User'} will see after this day ends.`}
+        gameId={gameId}
         showScript
         showInputs
         hideInputs={false}

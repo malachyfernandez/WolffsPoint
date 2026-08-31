@@ -10,9 +10,11 @@ import Column from '../layout/Column';
 import Row from '../layout/Row';
 import FontText from '../ui/text/FontText';
 import MarkdownRenderer from '../ui/markdown/MarkdownRenderer';
+import { InputOptionsProvider } from './markdownEditor/InputOptionsProvider';
 import AppButton from '../ui/buttons/AppButton';
 import MarkdownEditorDialog from './MarkdownEditorDialog';
 import { TownSquareAuthorAvatar, TownSquareAuthorName } from './townSquare/TownSquareAuthorIdentity';
+import { useCanEditScripts } from '../../../hooks/useCanEditScripts';
 
 interface TownSquarePostDialogProps {
     gameId: string;
@@ -24,6 +26,7 @@ interface TownSquarePostDialogProps {
 
 const TownSquarePostDialog = ({ gameId, isOpen, onOpenChange, post, currentProfile }: TownSquarePostDialogProps) => {
     const [isCommentDialogOpen, setIsCommentDialogOpen] = useState(false);
+    const canEditScripts = useCanEditScripts(gameId, currentProfile.userId);
     const setComment = useListSet<TownSquareComment>();
     const commentKey = getGameScopedKey('townSquareComments', gameId);
     const comments = useFindListItems<TownSquareComment>(commentKey, {
@@ -61,7 +64,9 @@ const TownSquarePostDialog = ({ gameId, isOpen, onOpenChange, post, currentProfi
                                     </Column>
                                 </Row>
                                 <Column className='gap-4 rounded-xl border border-subtle-border bg-white p-4'>
-                                    <MarkdownRenderer markdown={post.markdown} />
+                                    <InputOptionsProvider gameId={gameId} showInputs={false}>
+                                        <MarkdownRenderer markdown={post.markdown} />
+                                    </InputOptionsProvider>
                                 </Column>
                                 <Row className='gap-4 justify-between items-center'>
                                     <FontText weight='medium'>Comments</FontText>
@@ -78,7 +83,9 @@ const TownSquarePostDialog = ({ gameId, isOpen, onOpenChange, post, currentProfi
                                                     <TownSquareAuthorName gameId={comment.value.gameId} userId={comment.value.authorUserId} weight='medium' />
                                                     <FontText variant='subtext'>{new Date(comment.value.createdAt).toLocaleString()}</FontText>
                                                 </Row>
-                                                <MarkdownRenderer markdown={comment.value.markdown} />
+                                                <InputOptionsProvider gameId={gameId} showInputs={false}>
+                                                    <MarkdownRenderer markdown={comment.value.markdown} />
+                                                </InputOptionsProvider>
                                             </Column>
                                         </Row>
                                     )) : (
@@ -96,6 +103,8 @@ const TownSquarePostDialog = ({ gameId, isOpen, onOpenChange, post, currentProfi
                 title='Add comment'
                 submitLabel='Post comment'
                 requireMarkdown={true}
+                gameId={gameId}
+                showScript={canEditScripts}
                 onSubmit={({ markdown, plainText }) => {
                     const commentId = createClientId('comment');
                     setComment({

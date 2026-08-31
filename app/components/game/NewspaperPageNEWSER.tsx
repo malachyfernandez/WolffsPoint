@@ -241,7 +241,7 @@ const NewspaperPageNEWSER = ({ currentUserId, gameId }: NewspaperPageNEWSERProps
                                 </Tabs.Content>
                                 <Tabs.Content value='writing' className='flex-1'>
                                     {currentUserId === leavingDayOwner.ownerUserId ? (
-                                        <NewspaperWritingView gameId={getNewspaperDayItemId(gameId, leavingDayIndex)} />
+                                        <NewspaperWritingView gameId={getNewspaperDayItemId(gameId, leavingDayIndex)} realGameId={gameId} />
                                     ) : (
                                         <PlaceholderCard>
                                             <Column className='gap-3 items-center'>
@@ -267,7 +267,7 @@ const NewspaperPageNEWSER = ({ currentUserId, gameId }: NewspaperPageNEWSERProps
                             </Tabs.Content>
                             <Tabs.Content value='writing' className='flex-1'>
                                 {currentUserId === selectedDayOwner.ownerUserId ? (
-                                    <NewspaperWritingView gameId={currentDayItemId} />
+                                    <NewspaperWritingView gameId={currentDayItemId} realGameId={gameId} />
                                 ) : (
                                     <PlaceholderCard>
                                         <Column className='gap-3 items-center'>

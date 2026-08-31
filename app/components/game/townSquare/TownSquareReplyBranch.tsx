@@ -3,6 +3,7 @@ import { Pressable, useWindowDimensions } from 'react-native';
 import Column from '../../layout/Column';
 import Row from '../../layout/Row';
 import MarkdownRenderer from '../../ui/markdown/MarkdownRenderer';
+import { InputOptionsProvider } from '../markdownEditor/InputOptionsProvider';
 import FontText from '../../ui/text/FontText';
 import DeleteConfirmationDialog from '../DeleteRoleConfirmationDialog';
 import { TownSquareAuthorAvatar, TownSquareAuthorName } from './TownSquareAuthorIdentity';
@@ -55,7 +56,9 @@ const TownSquareReplyBranch = ({
                                     <TownSquareAuthorName gameId={node.gameId} userId={node.authorUserId} weight='medium' />
                                     <FontText variant='subtext'>{formatTimestamp(node.createdAt)}</FontText>
                                 </Column>
-                                <MarkdownRenderer markdown={node.bodyMarkdownResolved} />
+                                <InputOptionsProvider gameId={node.gameId} showInputs={false}>
+                                    <MarkdownRenderer markdown={node.bodyMarkdownResolved} />
+                                </InputOptionsProvider>
                                 <Row className='gap-4 items-center flex-wrap gap-y-1'>
                                     {!isPlayerDead && (
                                         <Pressable onPress={() => onReply(node)}>

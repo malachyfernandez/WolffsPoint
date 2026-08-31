@@ -146,6 +146,7 @@ const RoleRow = ({
         showScript
         hideInputs={false}
         roleName={role.role}
+        showPreviewAsPlayerOption
       />
       <MarkdownEditorDialog
         isOpen={isAboutRoleDialogOpen}
@@ -154,6 +155,7 @@ const RoleRow = ({
         submitLabel="Save About"
         initialMarkdown={role.aboutRole}
         onSubmit={({ markdown }) => setAboutRole(index, markdown)}
+        gameId={gameId}
         showScript
         centered={true}
       />

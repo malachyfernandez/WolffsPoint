@@ -3,6 +3,7 @@ import { Pressable, View } from 'react-native';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
 import MarkdownRenderer from '../ui/markdown/MarkdownRenderer';
+import { InputOptionsProvider } from './markdownEditor/InputOptionsProvider';
 import { useList, useValue } from 'hooks/useData';
 import { createUndoSnapshot, useUndoRedo } from 'hooks/useUndoRedo';
 import { useToast } from 'contexts/ToastContext';
@@ -17,6 +18,9 @@ import { Usepaper } from 'types/usepaper';
 
 interface NewspaperWritingViewProps {
   gameId: string; // This will now be in format "originalGameId-day-year-month-day"
+  /** The actual game ID (not the composite newspaper day ID). Used for loading
+   *  script data (players, roles, etc.) via InputOptionsProvider. */
+  realGameId?: string;
 }
 
 const defaultUsepaper: Usepaper = {
@@ -27,7 +31,7 @@ const minimumUsepaper: Usepaper = {
   columns: ['', ''],
 };
 
-const NewspaperWritingView = ({ gameId }: NewspaperWritingViewProps) => {
+const NewspaperWritingView = ({ gameId, realGameId }: NewspaperWritingViewProps) => {
   const { executeCommand } = useUndoRedo();
   const { showToast } = useToast();
   const [selectedColumnIndex, setSelectedColumnIndex] = useState<number | null>(null);
@@ -126,7 +130,9 @@ const NewspaperWritingView = ({ gameId }: NewspaperWritingViewProps) => {
                     <Column className="h-full justify-between gap-4">
                       <Column className="gap-3">
                         {columnMarkdown.trim().length > 0 ? (
-                          <MarkdownRenderer markdown={columnMarkdown} textAlign="justify" />
+                          <InputOptionsProvider gameId={realGameId ?? gameId} showInputs={false}>
+                            <MarkdownRenderer markdown={columnMarkdown} textAlign="justify" />
+                          </InputOptionsProvider>
                         ) : (
                           <NewspaperColumnEmptyState />
                         )}
@@ -155,6 +161,7 @@ const NewspaperWritingView = ({ gameId }: NewspaperWritingViewProps) => {
           submitLabel="Save Column"
           initialMarkdown={newspaperColumns[selectedColumnIndex] ?? ''}
           onSubmit={({ markdown }) => setColumnMarkdown(selectedColumnIndex, markdown)}
+          gameId={realGameId ?? gameId}
           showScript
           isPreviewSideBySide={true}
         />

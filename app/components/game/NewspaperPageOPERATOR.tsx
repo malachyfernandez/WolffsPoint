@@ -281,7 +281,7 @@ const NewspaperPageOPERATOR = ({ currentUserId, gameId }: NewspaperPageOPERATORP
                         <FontText weight='medium' color='white'>Give back control</FontText>
                     </AppButton>
                 </Row>
-                <NewspaperWritingView gameId={getNewspaperDayItemId(gameId, dayIndex)} />
+                <NewspaperWritingView gameId={getNewspaperDayItemId(gameId, dayIndex)} realGameId={gameId} />
             </Column>
         );
     };

@@ -3,6 +3,7 @@ import { View } from 'react-native';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
 import MarkdownRenderer from '../ui/markdown/MarkdownRenderer';
+import { InputOptionsProvider } from './markdownEditor/InputOptionsProvider';
 import FontText from '../ui/text/FontText';
 import LoadingText from '../ui/loading/LoadingText';
 import PressLogo from '../ui/icons/Press';
@@ -68,7 +69,9 @@ const NewspaperViewingView = ({ dayIndex, gameId, ownerUserId, TILE_SIZE, roundB
                                     className='gap-4 flex-1 shrink'
                                 >
                                     {columnMarkdown.trim().length > 0 ? (
-                                        <MarkdownRenderer markdown={columnMarkdown} textAlign='justify' />
+                                        <InputOptionsProvider gameId={gameId} showInputs={false}>
+                                            <MarkdownRenderer markdown={columnMarkdown} textAlign='justify' />
+                                        </InputOptionsProvider>
                                     ) : (
                                         <FontText variant='subtext' className='text-muted text-center'>
                                             Empty column

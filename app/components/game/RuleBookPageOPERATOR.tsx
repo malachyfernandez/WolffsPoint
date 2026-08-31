@@ -5,6 +5,7 @@ import Column from '../layout/Column';
 import Row from '../layout/Row';
 import FontText from '../ui/text/FontText';
 import MarkdownRenderer from '../ui/markdown/MarkdownRenderer';
+import { InputOptionsProvider } from './markdownEditor/InputOptionsProvider';
 import { useValue } from '../../../hooks/useData';
 import { getGameScopedKey } from '../../../utils/multiplayer';
 import MarkdownEditorDialog from './MarkdownEditorDialog';
@@ -48,7 +49,9 @@ const RuleBookPageOPERATOR = ({ gameId, onBack }: RuleBookPageOPERATORProps) => 
             onPress={() => setIsEditDialogOpen(true)}
             className="bg-text/5 min-h-[220px] flex-1 rounded-3xl p-4">
             {ruleBookData?.value?.content?.trim()?.length > 0 ? (
-              <MarkdownRenderer markdown={ruleBookData.value.content} />
+              <InputOptionsProvider gameId={gameId} showInputs={false}>
+                <MarkdownRenderer markdown={ruleBookData.value.content} />
+              </InputOptionsProvider>
             ) : (
               <Column className="min-h-[180px] items-center justify-center gap-4">
                 <FontText variant="subtext">No rule book written yet. Tap to edit.</FontText>
@@ -66,6 +69,7 @@ const RuleBookPageOPERATOR = ({ gameId, onBack }: RuleBookPageOPERATORProps) => 
         title="Rule Book"
         submitLabel="Save Rule Book"
         initialMarkdown={ruleBookData?.value?.content || ''}
+        gameId={gameId}
         showScript
         onSubmit={({ markdown }) =>
           setRuleBookData({

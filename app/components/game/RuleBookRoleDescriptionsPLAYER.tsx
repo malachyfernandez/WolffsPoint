@@ -3,6 +3,7 @@ import Column from '../layout/Column';
 import Row from '../layout/Row';
 import FontText from '../ui/text/FontText';
 import MarkdownRenderer from '../ui/markdown/MarkdownRenderer';
+import { InputOptionsProvider } from './markdownEditor/InputOptionsProvider';
 import { useFindListItems, useFindValues } from '../../../hooks/useData';
 import { getGameScopedKey } from '../../../utils/multiplayer';
 import { RoleTableItem } from '../../../types/roleTable';
@@ -80,11 +81,13 @@ const RuleBookRoleDescriptionsPLAYER = ({ gameId }: RuleBookRoleDescriptionsPLAY
             key={roles.indexOf(role)}
             className={`items-start gap-4 py-4 ${index < orderedRoles.length - 1 ? 'border-border/15 border-b' : ''}`}>
             <Column className="flex-1 gap-4">
-              <MarkdownRenderer
-                markdown={role.aboutRole}
-                textAlign="center"
-                viewHeightImages={30}
-              />
+              <InputOptionsProvider gameId={gameId} showInputs={false}>
+                <MarkdownRenderer
+                  markdown={role.aboutRole}
+                  textAlign="center"
+                  viewHeightImages={30}
+                />
+              </InputOptionsProvider>
             </Column>
           </Row>
         ))}

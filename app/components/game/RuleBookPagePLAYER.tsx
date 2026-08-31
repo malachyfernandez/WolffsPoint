@@ -4,6 +4,7 @@ import Column from '../layout/Column';
 import FontText from '../ui/text/FontText';
 import LoadingText from '../ui/loading/LoadingText';
 import MarkdownRenderer from '../ui/markdown/MarkdownRenderer';
+import { InputOptionsProvider } from './markdownEditor/InputOptionsProvider';
 import { useFindListItems, useFindValues } from '../../../hooks/useData';
 import { getGameScopedKey } from '../../../utils/multiplayer';
 import RuleBookRoleDescriptionsPLAYER from './RuleBookRoleDescriptionsPLAYER';
@@ -44,7 +45,9 @@ const RuleBookPagePLAYER = ({ gameId }: RuleBookPagePLAYERProps) => {
                 <Column className='gap-2'>
                     <FontText weight='bold' className='text-xl'>Rule Book</FontText>
                     {ruleBookMarkdown.trim().length > 0 ? (
-                        <MarkdownRenderer markdown={ruleBookMarkdown} />
+                        <InputOptionsProvider gameId={gameId} showInputs={false}>
+                            <MarkdownRenderer markdown={ruleBookMarkdown} />
+                        </InputOptionsProvider>
                     ) : (
                         <FontText variant='subtext'>The operator has not written the rule book yet.</FontText>
                     )}

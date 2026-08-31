@@ -6,6 +6,7 @@ import Column from '../../layout/Column';
 import Row from '../../layout/Row';
 import AppButton from '../../ui/buttons/AppButton';
 import MarkdownRenderer from '../../ui/markdown/MarkdownRenderer';
+import { InputOptionsProvider } from '../markdownEditor/InputOptionsProvider';
 import FontText from '../../ui/text/FontText';
 import { TownSquareAuthorAvatar, TownSquareAuthorName } from './TownSquareAuthorIdentity';
 import TownSquareReplyBranch from './TownSquareReplyBranch';
@@ -84,7 +85,9 @@ const TownSquareThreadDetailView = ({
                                 </Column>
                             </Row>
 
-                            <MarkdownRenderer markdown={selectedThread.bodyMarkdownResolved} />
+                            <InputOptionsProvider gameId={selectedThread.gameId} showInputs={false}>
+                                <MarkdownRenderer markdown={selectedThread.bodyMarkdownResolved} />
+                            </InputOptionsProvider>
 
                             <Row className='gap-4 items-center flex-wrap justify-between border-b border-border/20 pb-4'>
                                 {isAnnouncement ? (

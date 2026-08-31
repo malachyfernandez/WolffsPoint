@@ -11,6 +11,7 @@ import TownSquareThreadListView from './townSquare/TownSquareThreadListView';
 import { ThreadViewModel, truncateText } from './townSquare/townSquareUtils';
 import { useTownSquareForum } from './townSquare/useTownSquareForum';
 import LoadingContainer from '../ui/loading/LoadingContainer';
+import { useCanEditScripts } from '../../../hooks/useCanEditScripts';
 
 interface TownSquarePagePLAYERProps {
     gameId: string;
@@ -21,6 +22,7 @@ type TownSquareScreenState = 'list' | 'thread';
 
 const TownSquarePagePLAYER = ({ gameId, currentProfile }: TownSquarePagePLAYERProps) => {
     const { isPlayerDead } = usePlayerStatus();
+    const canEditScripts = useCanEditScripts(gameId, currentProfile.userId);
     const [isThreadComposerOpen, setIsThreadComposerOpen] = useState(false);
     const [isAnnouncementComposerOpen, setIsAnnouncementComposerOpen] = useState(false);
     const [isThreadEditComposerOpen, setIsThreadEditComposerOpen] = useState(false);
@@ -192,6 +194,8 @@ const TownSquarePagePLAYER = ({ gameId, currentProfile }: TownSquarePagePLAYERPr
                         onSubmit={createThread}
                         submitLabel='Publish'
                         title='Create thread'
+                        gameId={gameId}
+                        showScript={canEditScripts}
                     />
 
                     <MarkdownEditorDialog
@@ -203,6 +207,8 @@ const TownSquarePagePLAYER = ({ gameId, currentProfile }: TownSquarePagePLAYERPr
                         onSubmit={createAnnouncement}
                         submitLabel='Publish'
                         title='Create announcement'
+                        gameId={gameId}
+                        showScript={canEditScripts}
                     />
 
                     <MarkdownEditorDialog
@@ -226,6 +232,8 @@ const TownSquarePagePLAYER = ({ gameId, currentProfile }: TownSquarePagePLAYERPr
                         }}
                         submitLabel='Save changes'
                         title='Edit thread'
+                        gameId={gameId}
+                        showScript={canEditScripts}
                     />
 
                     <MarkdownEditorDialog
@@ -256,6 +264,8 @@ const TownSquarePagePLAYER = ({ gameId, currentProfile }: TownSquarePagePLAYERPr
                         }}
                         submitLabel='Post reply'
                         title='Write reply'
+                        gameId={gameId}
+                        showScript={canEditScripts}
                     />
 
                     <MarkdownEditorDialog
@@ -281,6 +291,8 @@ const TownSquarePagePLAYER = ({ gameId, currentProfile }: TownSquarePagePLAYERPr
                         }}
                         submitLabel='Save changes'
                         title='Edit reply'
+                        gameId={gameId}
+                        showScript={canEditScripts}
                     />
                 </>
             )}

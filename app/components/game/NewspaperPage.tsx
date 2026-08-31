@@ -146,7 +146,7 @@ const NewspaperPage = ({ gameId }: NewspaperPageProps) => {
 
             {/* Newspaper Content for Selected Day */}
             <Column className='gap-4 flex-1'>
-                <NewspaperWritingView gameId={`${gameId}-${currentDayKey}`} />
+                <NewspaperWritingView gameId={`${gameId}-${currentDayKey}`} realGameId={gameId} />
             </Column>
         </Column>
     );

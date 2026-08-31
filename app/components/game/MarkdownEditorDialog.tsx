@@ -76,6 +76,10 @@ interface MarkdownEditorDialogProps {
   requireMarkdown?: boolean;
   centered?: boolean;
   roleName?: string;
+  /** When true, shows the "Preview as Player" button. Only the role message
+   *  editor should pass this — it saves the markdown and opens a preview modal
+   *  that renders the message as a specific player would see it. */
+  showPreviewAsPlayerOption?: boolean;
 }
 
 const ScriptEditorWithSources = ({
@@ -128,6 +132,7 @@ const MarkdownEditorDialog = ({
   requireMarkdown = false,
   centered = false,
   roleName,
+  showPreviewAsPlayerOption = false,
 }: MarkdownEditorDialogProps) => {
   const { executeCommand } = useUndoRedo();
   const createUndoSnapshot = useCreateUndoSnapshot();
@@ -364,7 +369,7 @@ const MarkdownEditorDialog = ({
                 onScript={showScript ? handleScript : undefined}
                 onVariable={showVariables ? handleVariable : undefined}
                 centered={centered}
-                showPreviewAsPlayer={findScriptBlocks(draftBody).length > 0}
+                showPreviewAsPlayer={showPreviewAsPlayerOption && findScriptBlocks(draftBody).length > 0}
                 onPreviewAsPlayer={handlePreviewAsPlayer}
               />
               <Row className="-mx-3 items-center justify-between gap-4 pt-4 sm:mx-0">

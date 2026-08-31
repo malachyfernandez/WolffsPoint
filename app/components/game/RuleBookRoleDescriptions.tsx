@@ -210,6 +210,7 @@ const RuleBookRoleDescriptions = ({ gameId }: RuleBookRoleDescriptionsProps) => 
         title={`About ${editingRoleIndex !== null ? roles[editingRoleIndex]?.role || 'Role' : 'Role'}`}
         submitLabel="Save About"
         initialMarkdown={editingRoleIndex !== null ? roles[editingRoleIndex]?.aboutRole || '' : ''}
+        gameId={gameId}
         showScript
         onSubmit={({ markdown }) => {
           if (editingRoleIndex !== null) {
