@@ -66,6 +66,7 @@ export type TownSquarePost = {
   plainText?: string;
   createdAt: number;
   postType?: 'thread' | 'announcement';
+  isPinned?: boolean;
 };
 
 export type TownSquareComment = {

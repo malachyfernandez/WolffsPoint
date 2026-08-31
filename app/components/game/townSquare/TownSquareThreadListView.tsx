@@ -13,12 +13,14 @@ import TownSquareThreadListItem from './TownSquareThreadListItem';
 
 interface TownSquareThreadListViewProps {
     isLoading: boolean;
+    isOperator: boolean;
     isPlayerDead: boolean;
     listScrollRef: RefObject<ScrollView | null>;
     onNewAnnouncement: () => void;
     onNewThread: () => void;
     onOpenThread: (thread: ThreadViewModel) => void;
     onScrollYChange: (scrollY: number) => void;
+    onTogglePin: (postId: string) => void;
     readStateSnapshot: TownSquareReadState;
     threads: ThreadViewModel[];
 }
@@ -27,12 +29,14 @@ const fadeIn = { opacity: [0, 1] as [number, number], duration: 300 };
 
 const TownSquareThreadListView = ({
     isLoading,
+    isOperator,
     isPlayerDead,
     listScrollRef,
     onNewAnnouncement,
     onNewThread,
     onOpenThread,
     onScrollYChange,
+    onTogglePin,
     readStateSnapshot,
     threads,
 }: TownSquareThreadListViewProps) => {
@@ -133,7 +137,9 @@ const TownSquareThreadListView = ({
                                             key={thread.postId}
                                             index={index}
                                             isLast={index === threads.length - 1}
+                                            isOperator={isOperator}
                                             onPress={() => onOpenThread(thread)}
+                                            onTogglePin={() => onTogglePin(thread.postId)}
                                             readStateSnapshot={readStateSnapshot}
                                             thread={thread}
                                         />

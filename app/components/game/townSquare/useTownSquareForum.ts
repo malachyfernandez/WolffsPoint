@@ -59,7 +59,15 @@ export const useTownSquareForum = ({ currentProfile, gameId, selectedPostId }: U
             .map((record) => {
                 const post = record.value;
                 const bodyMarkdownResolved = getPostBodyMarkdown(post);
-                const plainText = post.plainText?.trim() || stripMarkdownSyntax(bodyMarkdownResolved);
+                // Strip /*script ... script*/ blocks from the raw markdown BEFORE
+                // stripMarkdownSyntax runs, because that function replaces * with
+                // spaces (turning /*script into / script) which breaks detection.
+                const markdownWithoutScripts = bodyMarkdownResolved.replace(/\/\*script[\s\S]*?script\*\//gi, '');
+                const storedPlainText = post.plainText?.trim() ?? '';
+                // Also clean stored plainText which may have already been degraded
+                // by stripMarkdownSyntax (/*script → / script).
+                const cleanedStoredText = storedPlainText.replace(/\/\s*script[\s\S]*?script\s*\*\//gi, '').replace(/\/\s*script[\s\S]*$/gi, '').trim();
+                const plainText = cleanedStoredText || stripMarkdownSyntax(markdownWithoutScripts);
                 const matchingReplies = replies.filter((reply) => reply.postId === post.postId);
                 const latestReplyAt = matchingReplies.reduce((maxValue, reply) => Math.max(maxValue, reply.createdAt), post.createdAt);
                 const threadReadState = readState.value[post.postId];
@@ -76,7 +84,13 @@ export const useTownSquareForum = ({ currentProfile, gameId, selectedPostId }: U
                     titleResolved: post.title?.trim() || truncateText(plainText || 'Untitled thread', 56),
                 };
             })
-            .sort((left, right) => right.latestActivityAt - left.latestActivityAt);
+            .sort((left, right) => {
+                // Pinned threads always go to the top
+                const leftPinned = left.isPinned ? 1 : 0;
+                const rightPinned = right.isPinned ? 1 : 0;
+                if (leftPinned !== rightPinned) return rightPinned - leftPinned;
+                return right.latestActivityAt - left.latestActivityAt;
+            });
     }, [posts, readState.value, replies]);
 
     const selectedThread = useMemo(() => {
@@ -394,6 +408,23 @@ export const useTownSquareForum = ({ currentProfile, gameId, selectedPostId }: U
         return createThread(payload, 'announcement');
     };
 
+    const togglePin = (postId: string) => {
+        const existingPost = posts?.find((record) => record.value.postId === postId)?.value;
+        if (!existingPost) return;
+        setPost({
+            itemId: postId,
+            key: postKey,
+            overwriteStoredConfig: true,
+            privacy: 'PUBLIC',
+            searchKeys: ['title', 'plainText', 'markdown'],
+            sortKey: 'createdAt',
+            value: {
+                ...existingPost,
+                isPinned: !existingPost.isPinned,
+            },
+        });
+    };
+
     return {
         createAnnouncement,
         createReply,
@@ -408,6 +439,7 @@ export const useTownSquareForum = ({ currentProfile, gameId, selectedPostId }: U
         selectedThread,
         selectedThreadReplyTree,
         threads,
+        togglePin,
         updateReply,
         updateThread,
     };

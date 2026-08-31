@@ -12,6 +12,7 @@ import { ThreadViewModel, truncateText } from './townSquare/townSquareUtils';
 import { useTownSquareForum } from './townSquare/useTownSquareForum';
 import LoadingContainer from '../ui/loading/LoadingContainer';
 import { useCanEditScripts } from '../../../hooks/useCanEditScripts';
+import { useGameOperatorUserId } from '../../../hooks/useGameOperatorUserId';
 
 interface TownSquarePagePLAYERProps {
     gameId: string;
@@ -23,6 +24,8 @@ type TownSquareScreenState = 'list' | 'thread';
 const TownSquarePagePLAYER = ({ gameId, currentProfile }: TownSquarePagePLAYERProps) => {
     const { isPlayerDead } = usePlayerStatus();
     const canEditScripts = useCanEditScripts(gameId, currentProfile.userId);
+    const { operatorUserId } = useGameOperatorUserId(gameId);
+    const isOperator = operatorUserId === currentProfile.userId;
     const [isThreadComposerOpen, setIsThreadComposerOpen] = useState(false);
     const [isAnnouncementComposerOpen, setIsAnnouncementComposerOpen] = useState(false);
     const [isThreadEditComposerOpen, setIsThreadEditComposerOpen] = useState(false);
@@ -47,6 +50,7 @@ const TownSquarePagePLAYER = ({ gameId, currentProfile }: TownSquarePagePLAYERPr
         selectedThread,
         selectedThreadReplyTree,
         threads,
+        togglePin,
         updateReply,
         updateThread,
     } = useTownSquareForum({
@@ -124,13 +128,15 @@ const TownSquarePagePLAYER = ({ gameId, currentProfile }: TownSquarePagePLAYERPr
                 <LayoutStateAnimatedView.Option page={1} stateValue='list'>
                     <TownSquareThreadListView
                         isLoading={isLoading}
+                        isOperator={isOperator}
                         isPlayerDead={isPlayerDead}
                         listScrollRef={listScrollRef}
                         onNewAnnouncement={() => setIsAnnouncementComposerOpen(true)}
                         onNewThread={() => setIsThreadComposerOpen(true)}
                         onOpenThread={openThread}
-                        readStateSnapshot={readState}
                         onScrollYChange={setThreadListScrollY}
+                        onTogglePin={togglePin}
+                        readStateSnapshot={readState}
                         threads={threads}
                     />
                 </LayoutStateAnimatedView.Option>

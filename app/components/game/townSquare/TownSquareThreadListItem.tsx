@@ -1,6 +1,6 @@
 import React from 'react';
 import { Pressable, View } from 'react-native';
-import { ChevronRight } from 'lucide-react-native';
+import { ChevronRight, Pin } from 'lucide-react-native';
 import Column from '../../layout/Column';
 import Row from '../../layout/Row';
 import FontText from '../../ui/text/FontText';
@@ -10,17 +10,29 @@ import { ThreadViewModel, TownSquareReadState, formatTimestamp } from './townSqu
 interface TownSquareThreadListItemProps {
     index: number;
     isLast: boolean;
+    isOperator: boolean;
     onPress: () => void;
+    onTogglePin: () => void;
     readStateSnapshot: TownSquareReadState;
     thread: ThreadViewModel;
 }
 
-const TownSquareThreadListItem = ({ index, isLast, onPress, readStateSnapshot, thread }: TownSquareThreadListItemProps) => {
+const TownSquareThreadListItem = ({ index, isLast, isOperator, onPress, onTogglePin, readStateSnapshot, thread }: TownSquareThreadListItemProps) => {
     const threadReadState = readStateSnapshot[thread.postId];
     const isNeverViewed = !threadReadState;
     // Only show new replies for threads that were previously viewed (not brand new threads)
     const newReplyCount = threadReadState ? Math.max(0, thread.replyCount - threadReadState.replyCount) : 0;
     const hasNewReplies = !isNeverViewed && newReplyCount > 0;
+    const isPinned = thread.isPinned === true;
+
+    const pinIcon = isPinned ? (
+        <View className='items-center justify-center rounded-full bg-yellow-400 p-1'>
+            <Pin size={12} color="#1a1a1a" fill="#1a1a1a" />
+        </View>
+    ) : (
+        <Pin size={16} color="#1a1a1a" />
+    );
+
     return (
         <Pressable onPress={onPress}>
             <Row className={`gap-4 items-start px-1 py-5 ${!isLast || index === 0 ? 'border-b border-border/20' : ''}`}>
@@ -39,7 +51,6 @@ const TownSquareThreadListItem = ({ index, isLast, onPress, readStateSnapshot, t
                                 )}
                             </Row>
                             <FontText variant='subtext' className='hidden md:flex'>{formatTimestamp(thread.createdAt)}</FontText>
-                            {/* HERE */}
                         </Row>
                         <TownSquareAuthorName gameId={thread.gameId} userId={thread.authorUserId} varient='subtext' />
                     </Column>
@@ -65,6 +76,14 @@ const TownSquareThreadListItem = ({ index, isLast, onPress, readStateSnapshot, t
                                     )}
                                     <FontText variant='subtext' className='md:hidden'>{formatTimestamp(thread.createdAt)}</FontText>
                                 </>
+                            )}
+                            {/* Pin icon — bottom left corner. Operators can press to toggle. */}
+                            {isOperator ? (
+                                <Pressable onPress={onTogglePin} hitSlop={8}>
+                                    {pinIcon}
+                                </Pressable>
+                            ) : (
+                                isPinned ? pinIcon : null
                             )}
                         </Row>
                     </Column>
