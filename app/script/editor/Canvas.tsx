@@ -9,6 +9,8 @@ import FontTextInput from '../../components/ui/forms/FontTextInput';
 import ShadowScrollView from '../../components/ui/ShadowScrollView';
 import AppButton from '../../components/ui/buttons/AppButton';
 import ConvexDialog from '../../components/ui/dialog/ConvexDialog';
+import DialogHeader from '../../components/ui/dialog/DialogHeader';
+import UnsavedChangesDialog from '../../components/ui/dialog/UnsavedChangesDialog';
 import { CloseButton } from '../../components/game/markdownEditor';
 import { getTagColor } from '../../components/game/TagPill';
 import AddTagDialog from '../../components/game/AddTagDialog';
@@ -54,6 +56,9 @@ const span = emptySpan();
 
 /** Context for input label → data source mapping (used for entry autocomplete tracing). */
 const InputSourcesContext = React.createContext<Record<string, string>>({});
+const VariableRenameContext = React.createContext<((from: string, to: string) => void) | null>(
+  null
+);
 
 /** Context for tag definitions (used by tag() call rendering). */
 interface TagDefinitionsContextValue {
@@ -71,6 +76,7 @@ const sanitizeIdentifier = (value: string) =>
 interface CanvasProps {
   statements: Statement[];
   definedVariables: string[];
+  variableNames?: string[];
   definedFunctions?: DefinedFunction[];
   onAdd: (target: InsertTarget) => void;
   onSetExpression: (
@@ -92,6 +98,7 @@ interface CanvasProps {
     value: string | string[] | FunctionTemplatePiece[] | Expression
   ) => void;
   onDeleteStatement: (path: number[]) => void;
+  onRenameVariable?: (from: string, to: string) => void;
   entryKeysBySource?: Record<string, string[]>;
   inputSources?: Record<string, string>;
   stmtPath?: number[];
@@ -1287,7 +1294,8 @@ export const ExpressionSocket = ({
             {linkMarkers.map((number) => (
               <MoveNumberMarker key={`move-${number}`} number={number} />
             ))}
-            {moveTool?.operation === 'move' && linkMarkers.length > 0 ? null : link.type === 'base' ? (
+            {moveTool?.operation === 'move' && linkMarkers.length > 0 ? null : link.type ===
+              'base' ? (
               link.expr.kind === 'NothingLiteral' ? (
                 preview ? null : (
                   <BooleanSocket
@@ -1548,6 +1556,199 @@ const EntryKeyInput = ({
       isInDialog
       allowUnselect={false}
     />
+  );
+};
+
+const ADD_NEW_VARIABLE_VALUE = '__add-new-variable__';
+
+const VariableRenameModal = ({
+  variableName,
+  existingVariables,
+  onOpenChange,
+  onRename,
+}: {
+  variableName: string | null;
+  existingVariables: string[];
+  onOpenChange: (open: boolean) => void;
+  onRename: (from: string, to: string) => void;
+}) => {
+  const [draftName, setDraftName] = useState('');
+  const [initialName, setInitialName] = useState('');
+  const [isLeaveConfirmOpen, setIsLeaveConfirmOpen] = useState(false);
+
+  useEffect(() => {
+    if (!variableName) return;
+    setDraftName(variableName);
+    setInitialName(variableName);
+    setIsLeaveConfirmOpen(false);
+  }, [variableName]);
+
+  const hasUnsavedChanges = draftName.trim() !== initialName.trim();
+  const sanitizedName = sanitizeIdentifier(draftName);
+  const hasCollision = existingVariables.some(
+    (name) => name !== variableName && name.toLowerCase() === sanitizedName.toLowerCase()
+  );
+  const canSubmit = Boolean(variableName && sanitizedName && !hasCollision);
+  const closeWithoutSaving = () => {
+    setIsLeaveConfirmOpen(false);
+    onOpenChange(false);
+  };
+  const handleDone = () => {
+    if (!variableName || !canSubmit) return;
+    if (sanitizedName !== variableName) onRename(variableName, sanitizedName);
+    setInitialName(sanitizedName);
+    onOpenChange(false);
+  };
+  const handleAttemptClose = () => {
+    if (hasUnsavedChanges) setIsLeaveConfirmOpen(true);
+    else onOpenChange(false);
+  };
+  const handleOpenChange = (open: boolean) => {
+    if (!open) handleAttemptClose();
+    else onOpenChange(true);
+  };
+
+  return (
+    <>
+      <ConvexDialog.Root isOpen={variableName !== null} onOpenChange={handleOpenChange}>
+        <ConvexDialog.Portal>
+          <ConvexDialog.Overlay />
+          <ConvexDialog.Content className="max-w-md p-6" isSwipeable={false}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Cancel rename"
+              onPress={handleAttemptClose}
+              className="bg-text-inverted/10 hover:bg-text-inverted/15 absolute right-0 top-0 z-10 h-10 w-10 items-center justify-center rounded-full">
+              <X size={18} color="rgb(246, 238, 219)" />
+            </Pressable>
+            <DialogHeader text="Rename Variable" />
+            <Column className="gap-4 p-5">
+              <Column className="gap-1">
+                <FontText weight="medium">Variable name</FontText>
+                <FontTextInput
+                  autoFocus
+                  className="border-subtle-border bg-background w-full rounded-xl border px-4 py-3"
+                  value={draftName}
+                  onChangeText={(next) => setDraftName(sanitizeIdentifier(next))}
+                  onSubmitEditing={handleDone}
+                  placeholder="Variable name"
+                />
+              </Column>
+              {hasCollision && (
+                <FontText className="text-sm text-red-600">
+                  A variable already uses this name.
+                </FontText>
+              )}
+              <Row className="justify-end gap-4 pt-2">
+                <AppButton variant="outline" className="w-32 px-6" onPress={handleAttemptClose}>
+                  <FontText weight="medium">Cancel</FontText>
+                </AppButton>
+                <AppButton
+                  variant="filled"
+                  className="w-32 px-6"
+                  disabled={!canSubmit}
+                  onPress={handleDone}>
+                  <FontText weight="medium" color="white">
+                    Done
+                  </FontText>
+                </AppButton>
+              </Row>
+            </Column>
+          </ConvexDialog.Content>
+        </ConvexDialog.Portal>
+      </ConvexDialog.Root>
+      <UnsavedChangesDialog
+        isOpen={isLeaveConfirmOpen}
+        onOpenChange={setIsLeaveConfirmOpen}
+        onSave={handleDone}
+        onDiscard={closeWithoutSaving}
+        title="Rename Variable?"
+        message="Save the variable name change before closing?"
+        saveLabel="Save"
+        discardLabel="Discard"
+      />
+    </>
+  );
+};
+
+const VariableNameInput = ({
+  expression,
+  definedVariables,
+  onChange,
+}: {
+  expression: Expression;
+  definedVariables: string[];
+  onChange: (expression: Expression) => void;
+}) => {
+  const value = expression.kind === 'StringLiteral' ? expression.value : '';
+  const variables = [...new Set(definedVariables)];
+  const [custom, setCustom] = useState(
+    variables.length === 0 || Boolean(value && !variables.includes(value))
+  );
+  const [customValue, setCustomValue] = useState(value);
+  const [renamingVariable, setRenamingVariable] = useState<string | null>(null);
+  const onRenameVariable = React.useContext(VariableRenameContext);
+
+  useEffect(() => {
+    setCustomValue(value);
+  }, [value]);
+
+  if (custom) {
+    return (
+      <Row className="items-center gap-1">
+        <ReplaceableTextInput
+          value={customValue}
+          onChangeText={(next) => {
+            const sanitized = sanitizeIdentifier(next);
+            setCustomValue(sanitized);
+            onChange({ kind: 'StringLiteral', value: sanitized, span });
+          }}
+          placeholder="Variable name"
+          minWidth={110}
+        />
+        <Pressable accessibilityRole="button" onPress={() => setCustom(false)}>
+          <FontText className="text-xs opacity-60">List</FontText>
+        </Pressable>
+      </Row>
+    );
+  }
+
+  return (
+    <>
+      <AppDropdown
+        options={[
+          ...variables.map((variable) => ({ value: variable, label: variable })),
+          { value: ADD_NEW_VARIABLE_VALUE, label: 'Add new…' },
+        ]}
+        value={variables.includes(value) ? value : undefined}
+        onValueChange={(next) => {
+          if (next === ADD_NEW_VARIABLE_VALUE) {
+            setCustomValue('');
+            setCustom(true);
+          } else {
+            onChange({ kind: 'StringLiteral', value: sanitizeIdentifier(next), span });
+          }
+        }}
+        placeholder="Select variable"
+        triggerClassName="min-w-32 !py-1 !px-2 text-sm"
+        isInDialog
+        allowUnselect={false}
+        renderOptionAction={(option) =>
+          option.value !== ADD_NEW_VARIABLE_VALUE && onRenameVariable ? (
+            <Pencil size={14} color="rgb(46, 41, 37)" />
+          ) : null
+        }
+        onOptionAction={(option) => setRenamingVariable(option.value)}
+      />
+      <VariableRenameModal
+        variableName={renamingVariable}
+        existingVariables={variables}
+        onOpenChange={(open) => {
+          if (!open) setRenamingVariable(null);
+        }}
+        onRename={(from, to) => onRenameVariable?.(from, to)}
+      />
+    </>
   );
 };
 
@@ -1953,9 +2154,11 @@ const ArgRow = ({
   input,
   location,
   contextVariables,
+  definedVariables,
   entryKeysBySource,
   entrySourceMap,
   definedFunctions,
+  blockName,
   onAdd,
   onSetExpression,
   onEditMarkdown,
@@ -1964,9 +2167,11 @@ const ArgRow = ({
   input?: BlockInput;
   location: ExpressionLocation;
   contextVariables: string[];
+  definedVariables: string[];
   entryKeysBySource?: Record<string, string[]>;
   entrySourceMap?: Record<string, string>;
   definedFunctions?: DefinedFunction[];
+  blockName: string;
   onAdd: CanvasProps['onAdd'];
   onSetExpression: CanvasProps['onSetExpression'];
   onEditMarkdown?: CanvasProps['onEditMarkdown'];
@@ -1975,19 +2180,27 @@ const ArgRow = ({
     <FontText variant="subtext" className="pt-1 text-xs">
       {input?.label ?? argument.name}
     </FontText>
-    <ExpressionSocket
-      expression={argument.value}
-      location={location}
-      expectedType={input?.type}
-      contextVariables={contextVariables}
-      entryKeysBySource={entryKeysBySource}
-      entrySourceMap={entrySourceMap}
-      definedFunctions={definedFunctions}
-      label={input?.label ?? argument.name}
-      onAdd={onAdd}
-      onSetExpression={onSetExpression}
-      onEditMarkdown={onEditMarkdown}
-    />
+    {blockName.toUpperCase() === 'VARIABLE' && argument.name.toUpperCase() === 'NAME' ? (
+      <VariableNameInput
+        expression={argument.value}
+        definedVariables={definedVariables}
+        onChange={(next) => onSetExpression(location, next)}
+      />
+    ) : (
+      <ExpressionSocket
+        expression={argument.value}
+        location={location}
+        expectedType={input?.type}
+        contextVariables={contextVariables}
+        entryKeysBySource={entryKeysBySource}
+        entrySourceMap={entrySourceMap}
+        definedFunctions={definedFunctions}
+        label={input?.label ?? argument.name}
+        onAdd={onAdd}
+        onSetExpression={onSetExpression}
+        onEditMarkdown={onEditMarkdown}
+      />
+    )}
   </Row>
 );
 
@@ -2037,6 +2250,7 @@ const StatementBlock = ({
   index,
   stmtPath,
   definedVariables,
+  variableNames,
   definedFunctions,
   onAdd,
   onSetExpression,
@@ -2056,6 +2270,7 @@ const StatementBlock = ({
   const currentPath = [...stmtPath!, index];
   const originalPath = moveTool?.getOriginalStatementPath(currentPath) ?? currentPath;
   const contextVariables = definedVariables;
+  const declaredVariableNames = variableNames ?? definedVariables;
   const statementLabel = (() => {
     if (
       statement.kind === 'ExpressionStatement' &&
@@ -2149,8 +2364,10 @@ const StatementBlock = ({
               expressionPath: [],
             }}
             contextVariables={contextVariables}
+            definedVariables={declaredVariableNames}
             entryKeysBySource={entryKeysBySource}
             definedFunctions={definedFunctions}
+            blockName={calleeName}
             onAdd={onAdd}
             onSetExpression={onSetExpression}
             onEditMarkdown={onEditMarkdown}
@@ -2190,6 +2407,7 @@ const StatementBlock = ({
             statements={statement.branches[0]?.body.statements ?? []}
             {...{
               definedVariables,
+              variableNames: declaredVariableNames,
               definedFunctions,
               onAdd,
               onSetExpression,
@@ -2255,6 +2473,7 @@ const StatementBlock = ({
             statements={statement.body.statements}
             {...{
               definedVariables: [statement.itemName, ...definedVariables],
+              variableNames: declaredVariableNames,
               definedFunctions,
               onAdd,
               onSetExpression,
@@ -2414,6 +2633,7 @@ const StatementBlock = ({
             statements={statement.body.statements}
             {...{
               definedVariables: [statement.itemName, ...definedVariables],
+              variableNames: declaredVariableNames,
               definedFunctions,
               onAdd,
               onSetExpression,
@@ -2471,6 +2691,7 @@ const StatementBlock = ({
             statements={statement.body.statements}
             {...{
               definedVariables,
+              variableNames: declaredVariableNames,
               definedFunctions,
               onAdd,
               onSetExpression,
@@ -2508,6 +2729,7 @@ const StatementBlock = ({
             statements={statement.body.statements}
             {...{
               definedVariables,
+              variableNames: declaredVariableNames,
               definedFunctions,
               onAdd,
               onSetExpression,
@@ -2581,6 +2803,7 @@ const StatementBlock = ({
               statements={bodyStatements}
               {...{
                 definedVariables: [...statement.parameters, ...definedVariables],
+                variableNames: declaredVariableNames,
                 definedFunctions,
                 onAdd,
                 onSetExpression,
@@ -2834,11 +3057,13 @@ export const BlockPreview = ({
 const Canvas = ({
   statements,
   definedVariables,
+  variableNames,
   definedFunctions,
   onAdd,
   onSetExpression,
   onSetStatementField,
   onDeleteStatement,
+  onRenameVariable,
   entryKeysBySource,
   inputSources,
   stmtPath = [],
@@ -2854,7 +3079,9 @@ const Canvas = ({
   moveTool,
 }: CanvasProps) => {
   const inheritedMoveTool = React.useContext(MoveToolContext);
+  const inheritedRenameVariable = React.useContext(VariableRenameContext);
   const activeMoveTool = moveTool ?? inheritedMoveTool;
+  const activeRenameVariable = onRenameVariable ?? inheritedRenameVariable;
   // Only load tag definitions at the root level (stmtPath is empty).
   // Nested Canvas instances inherit the context from the root.
   const isRoot = stmtPath.length === 0;
@@ -2866,92 +3093,95 @@ const Canvas = ({
   const tagDefinitions = tagDefs?.value ?? [];
 
   const inner = (
-    <InputSourcesContext.Provider value={inputSources ?? {}}>
-      <Column className="gap-0">
-        {statements.length > 0 && (
-          <>
-            {activeMoveTool?.getBlockMarkers(stmtPath, 0).map((number) => (
-              <MoveNumberMarker key={`move-${number}`} number={number} />
-            ))}
-            <PuzzleConnector
-              direction="vertical"
-              tooltip="Add block"
-              placeTarget={{ kind: 'block', path: [...stmtPath, 0] }}
-              onPress={() => onAdd({ kind: 'statement', path: [...stmtPath, 0] })}
-            />
-          </>
-        )}
-        {statements.map((statement, index) => (
-          <React.Fragment key={`stmt-${stmtPath.join('-')}-${index}`}>
-            {index > 0 &&
-              activeMoveTool
-                ?.getBlockMarkers(stmtPath, index)
-                .map((number) => <MoveNumberMarker key={`move-${number}`} number={number} />)}
-            <StatementBlock
-              statement={statement}
-              index={index}
-              stmtPath={stmtPath}
-              definedVariables={definedVariables}
-              definedFunctions={definedFunctions}
-              onAdd={onAdd}
-              onSetExpression={onSetExpression}
-              onEditMarkdown={onEditMarkdown}
-              onSetStatementField={onSetStatementField}
-              onDeleteStatement={onDeleteStatement}
-              entryKeysBySource={entryKeysBySource}
-              isTriggerContext={isTriggerContext}
-              savedFunctionNames={savedFunctionNames}
-              onSaveFunction={onSaveFunction}
-              onUnsaveFunction={onUnsaveFunction}
-              onLockedFunctionClick={onLockedFunctionClick}
-              decoupledFunctionNames={decoupledFunctionNames}
-              onSetComment={onSetComment}
-            />
-            <PuzzleConnector
-              direction="vertical"
-              tooltip="Add block"
-              placeTarget={{ kind: 'block', path: [...stmtPath, index + 1] }}
-              onPress={() => onAdd({ kind: 'statement', path: [...stmtPath, index + 1] })}
-            />
-          </React.Fragment>
-        ))}
-        {statements.length > 0 &&
-          activeMoveTool
-            ?.getBlockMarkers(stmtPath, statements.length)
-            .map((number) => <MoveNumberMarker key={`move-${number}`} number={number} />)}
-        {statements.length === 0 &&
-          activeMoveTool
-            ?.getBlockMarkers(stmtPath, 0)
-            .map((number) => <MoveNumberMarker key={`move-${number}`} number={number} />)}
-        {statements.length === 0 && (
-          <Pressable
-            accessibilityRole="button"
-            disabled={
-              !!activeMoveTool &&
-              (activeMoveTool.phase !== 'place' || activeMoveTool.category !== 'block')
-            }
-            onPress={() => {
-              if (activeMoveTool?.phase === 'place' && activeMoveTool.category === 'block') {
-                activeMoveTool.onPlaceBlock([...stmtPath, 0]);
-              } else if (!activeMoveTool) {
-                onAdd({ kind: 'statement', path: [...stmtPath, 0] });
+    <VariableRenameContext.Provider value={activeRenameVariable}>
+      <InputSourcesContext.Provider value={inputSources ?? {}}>
+        <Column className="gap-0">
+          {statements.length > 0 && (
+            <>
+              {activeMoveTool?.getBlockMarkers(stmtPath, 0).map((number) => (
+                <MoveNumberMarker key={`move-${number}`} number={number} />
+              ))}
+              <PuzzleConnector
+                direction="vertical"
+                tooltip="Add block"
+                placeTarget={{ kind: 'block', path: [...stmtPath, 0] }}
+                onPress={() => onAdd({ kind: 'statement', path: [...stmtPath, 0] })}
+              />
+            </>
+          )}
+          {statements.map((statement, index) => (
+            <React.Fragment key={`stmt-${stmtPath.join('-')}-${index}`}>
+              {index > 0 &&
+                activeMoveTool
+                  ?.getBlockMarkers(stmtPath, index)
+                  .map((number) => <MoveNumberMarker key={`move-${number}`} number={number} />)}
+              <StatementBlock
+                statement={statement}
+                index={index}
+                stmtPath={stmtPath}
+                definedVariables={definedVariables}
+                variableNames={variableNames ?? definedVariables}
+                definedFunctions={definedFunctions}
+                onAdd={onAdd}
+                onSetExpression={onSetExpression}
+                onEditMarkdown={onEditMarkdown}
+                onSetStatementField={onSetStatementField}
+                onDeleteStatement={onDeleteStatement}
+                entryKeysBySource={entryKeysBySource}
+                isTriggerContext={isTriggerContext}
+                savedFunctionNames={savedFunctionNames}
+                onSaveFunction={onSaveFunction}
+                onUnsaveFunction={onUnsaveFunction}
+                onLockedFunctionClick={onLockedFunctionClick}
+                decoupledFunctionNames={decoupledFunctionNames}
+                onSetComment={onSetComment}
+              />
+              <PuzzleConnector
+                direction="vertical"
+                tooltip="Add block"
+                placeTarget={{ kind: 'block', path: [...stmtPath, index + 1] }}
+                onPress={() => onAdd({ kind: 'statement', path: [...stmtPath, index + 1] })}
+              />
+            </React.Fragment>
+          ))}
+          {statements.length > 0 &&
+            activeMoveTool
+              ?.getBlockMarkers(stmtPath, statements.length)
+              .map((number) => <MoveNumberMarker key={`move-${number}`} number={number} />)}
+          {statements.length === 0 &&
+            activeMoveTool
+              ?.getBlockMarkers(stmtPath, 0)
+              .map((number) => <MoveNumberMarker key={`move-${number}`} number={number} />)}
+          {statements.length === 0 && (
+            <Pressable
+              accessibilityRole="button"
+              disabled={
+                !!activeMoveTool &&
+                (activeMoveTool.phase !== 'place' || activeMoveTool.category !== 'block')
               }
-            }}>
-            <View
-              className={`my-2 h-10 w-full flex-row items-center justify-center gap-2 rounded-xl border border-dashed ${
-                activeMoveTool?.phase === 'place' && activeMoveTool.category === 'block'
-                  ? 'border-green-800 bg-green-700'
-                  : 'border-subtle-border bg-transparent'
-              } ${activeMoveTool && (activeMoveTool.phase !== 'place' || activeMoveTool.category !== 'block') ? 'opacity-30' : ''}`}>
-              <FontText className="text-text/40 text-sm">+</FontText>
-              <FontText variant="subtext" className="text-sm">
-                press to add a block
-              </FontText>
-            </View>
-          </Pressable>
-        )}
-      </Column>
-    </InputSourcesContext.Provider>
+              onPress={() => {
+                if (activeMoveTool?.phase === 'place' && activeMoveTool.category === 'block') {
+                  activeMoveTool.onPlaceBlock([...stmtPath, 0]);
+                } else if (!activeMoveTool) {
+                  onAdd({ kind: 'statement', path: [...stmtPath, 0] });
+                }
+              }}>
+              <View
+                className={`my-2 h-10 w-full flex-row items-center justify-center gap-2 rounded-xl border border-dashed ${
+                  activeMoveTool?.phase === 'place' && activeMoveTool.category === 'block'
+                    ? 'border-green-800 bg-green-700'
+                    : 'border-subtle-border bg-transparent'
+                } ${activeMoveTool && (activeMoveTool.phase !== 'place' || activeMoveTool.category !== 'block') ? 'opacity-30' : ''}`}>
+                <FontText className="text-text/40 text-sm">+</FontText>
+                <FontText variant="subtext" className="text-sm">
+                  press to add a block
+                </FontText>
+              </View>
+            </Pressable>
+          )}
+        </Column>
+      </InputSourcesContext.Provider>
+    </VariableRenameContext.Provider>
   );
 
   if (!isRoot) {

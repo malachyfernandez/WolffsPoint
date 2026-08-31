@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useId, useRef, useState } from 'react';
-import { Platform, Pressable } from 'react-native';
+import { Platform, Pressable, View } from 'react-native';
 import { Popover } from 'heroui-native';
 import { ChevronDown } from 'lucide-react-native';
 import Column from '../../layout/Column';
@@ -34,6 +34,8 @@ interface AppDropdownProps {
   unselectLabel?: string;
   footer?: React.ReactNode;
   onFooterPress?: () => void;
+  renderOptionAction?: (option: AppDropdownOption) => React.ReactNode;
+  onOptionAction?: (option: AppDropdownOption) => void;
 }
 
 interface WebDropdownMenuPosition {
@@ -64,6 +66,8 @@ const AppDropdown = ({
   unselectLabel = '— None —',
   footer,
   onFooterPress,
+  renderOptionAction,
+  onOptionAction,
 }: AppDropdownProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedValue, setSelectedValue] = useState(value ?? '');
@@ -193,6 +197,33 @@ const AppDropdown = ({
     };
   }, [closeDropdown, isInDialog, isOpen, updateWebMenuPosition]);
 
+  const renderOption = (option: AppDropdownOption, selectedClassName: string) => {
+    const action = renderOptionAction?.(option);
+    return (
+      <View key={option.value} className="relative w-full">
+        <AppDropdownItem
+          className={`${itemClassName} ${action ? 'pr-11' : ''}`.trim()}
+          isSelected={option.value === selectedValue}
+          label={option.label}
+          onSelect={() => handleValueChange(option.value)}
+          selectedClassName={selectedClassName}
+        />
+        {action && (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`Edit ${option.label}`}
+            className="absolute bottom-0 right-1 top-0 items-center justify-center px-2"
+            onPress={() => {
+              closeDropdown();
+              onOptionAction?.(option);
+            }}>
+            {action}
+          </Pressable>
+        )}
+      </View>
+    );
+  };
+
   const dropdownList =
     options.length || allowUnselect ? (
       <Column className="w-full gap-1">
@@ -205,16 +236,7 @@ const AppDropdown = ({
             selectedClassName={selectedItemClassName}
           />
         )}
-        {options.map((option) => (
-          <AppDropdownItem
-            key={option.value}
-            className={itemClassName}
-            isSelected={option.value === selectedValue}
-            label={option.label}
-            onSelect={() => handleValueChange(option.value)}
-            selectedClassName={selectedItemClassName}
-          />
-        ))}
+        {options.map((option) => renderOption(option, selectedItemClassName))}
       </Column>
     ) : (
       <AppDropdownEmptyState className={emptyStateClassName} text={emptyText} />
@@ -232,16 +254,7 @@ const AppDropdown = ({
             selectedClassName={selectedItemClassName || 'bg-accent'}
           />
         )}
-        {options.map((option) => (
-          <AppDropdownItem
-            key={option.value}
-            className={itemClassName}
-            isSelected={option.value === selectedValue}
-            label={option.label}
-            onSelect={() => handleValueChange(option.value)}
-            selectedClassName={selectedItemClassName || 'bg-accent'}
-          />
-        ))}
+        {options.map((option) => renderOption(option, selectedItemClassName || 'bg-accent'))}
         {footer && (
           <Pressable
             accessibilityRole="button"

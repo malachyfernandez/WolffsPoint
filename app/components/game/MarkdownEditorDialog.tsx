@@ -164,7 +164,6 @@ const MarkdownEditorDialog = ({
     {}
   );
   const [isPlayerPreviewOpen, setIsPlayerPreviewOpen] = useState(false);
-  const [savedMarkdownForPreview, setSavedMarkdownForPreview] = useState('');
 
   useEffect(() => {
     if (!isOpen) {
@@ -289,7 +288,6 @@ const MarkdownEditorDialog = ({
       plainText: stripMarkdownSyntax(markdownToSave),
       title: includeTitle ? draftTitle.trim() : undefined,
     });
-    setSavedMarkdownForPreview(markdownToSave);
     setEditingStartText(markdownToSave);
     setIsPlayerPreviewOpen(true);
   };
@@ -374,9 +372,7 @@ const MarkdownEditorDialog = ({
                 onScript={showScript ? handleScript : undefined}
                 onVariable={showVariables ? handleVariable : undefined}
                 centered={centered}
-                showPreviewAsPlayer={
-                  showPreviewAsPlayerOption && findScriptBlocks(draftBody).length > 0
-                }
+                showPreviewAsPlayer={showPreviewAsPlayerOption}
                 onPreviewAsPlayer={handlePreviewAsPlayer}
               />
               <Row className="-mx-3 items-center justify-between gap-4 pt-4 sm:mx-0">
@@ -451,13 +447,12 @@ const MarkdownEditorDialog = ({
         />
       </InputOptionsProvider>
 
-      {gameId && (
+      {gameId && roleName !== undefined && (
         <PlayerPreviewModal
           isOpen={isPlayerPreviewOpen}
           onOpenChange={setIsPlayerPreviewOpen}
           gameId={gameId}
           roleName={roleName}
-          markdown={savedMarkdownForPreview}
         />
       )}
     </>

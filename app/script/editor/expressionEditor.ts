@@ -189,6 +189,13 @@ export const renameIdentifierInStatements = (
           ...statement,
           value: statement.value ? renameIdentifier(statement.value, from, to) : undefined,
         };
+      case 'UpdateCellStatement':
+        return {
+          ...statement,
+          players: renameIdentifier(statement.players, from, to),
+          dayIndex: statement.dayIndex ? renameIdentifier(statement.dayIndex, from, to) : null,
+          updateValue: renameIdentifier(statement.updateValue, from, to),
+        };
       case 'OnTagAddedStatement':
         return {
           ...statement,

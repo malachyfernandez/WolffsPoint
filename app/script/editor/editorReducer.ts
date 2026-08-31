@@ -63,6 +63,7 @@ export type EditorAction =
       value: string | string[] | FunctionTemplatePiece[] | Expression;
     }
   | { type: 'DELETE_STATEMENT'; path: number[] }
+  | { type: 'RENAME_VARIABLE'; from: string; to: string }
   | { type: 'UNDO' }
   | { type: 'REDO' }
   | { type: 'REPLACE_AST'; ast: Script }
@@ -595,6 +596,80 @@ export const deriveFunctionMetaFromTemplate = (template: FunctionTemplatePiece[]
   return { name, parameters };
 };
 
+const renameVariableDeclarations = (
+  statements: Statement[],
+  from: string,
+  to: string
+): Statement[] =>
+  statements.map((statement): Statement => {
+    if (statement.kind === 'ExpressionStatement') {
+      const expression = statement.expression;
+      if (
+        expression.kind === 'CallExpression' &&
+        expression.callee.kind === 'IdentifierExpression' &&
+        expression.callee.name.toUpperCase() === 'VARIABLE'
+      ) {
+        return {
+          ...statement,
+          expression: {
+            ...expression,
+            arguments: expression.arguments.map((argument) =>
+              argument.kind === 'NamedArgument' &&
+              argument.name.toUpperCase() === 'NAME' &&
+              argument.value.kind === 'StringLiteral' &&
+              sanitizeIdentifier(argument.value.value) === from
+                ? {
+                    ...argument,
+                    value: { ...argument.value, value: to },
+                  }
+                : argument
+            ),
+          },
+        };
+      }
+      return statement;
+    }
+    if (statement.kind === 'BlockStatement') {
+      return {
+        ...statement,
+        statements: renameVariableDeclarations(statement.statements, from, to),
+      };
+    }
+    if (statement.kind === 'IfStatement') {
+      return {
+        ...statement,
+        branches: statement.branches.map((branch) => ({
+          ...branch,
+          body: {
+            ...branch.body,
+            statements: renameVariableDeclarations(branch.body.statements, from, to),
+          },
+        })),
+        elseBody: statement.elseBody
+          ? {
+              ...statement.elseBody,
+              statements: renameVariableDeclarations(statement.elseBody.statements, from, to),
+            }
+          : undefined,
+      };
+    }
+    if (
+      statement.kind === 'ForEachStatement' ||
+      statement.kind === 'FunctionStatement' ||
+      statement.kind === 'OnTagAddedStatement' ||
+      statement.kind === 'OnTagRemovedStatement'
+    ) {
+      return {
+        ...statement,
+        body: {
+          ...statement.body,
+          statements: renameVariableDeclarations(statement.body.statements, from, to),
+        },
+      };
+    }
+    return statement;
+  });
+
 export const initialState = (ast: Script): EditorState => ({
   ast,
   past: [],
@@ -622,6 +697,18 @@ export const editorReducer = (state: EditorState, action: EditorAction): EditorS
         action.path,
         action.statement
       );
+      return {
+        ast: { ...state.ast, statements },
+        past: [...state.past, state.ast].slice(-50),
+        future: [],
+      };
+    }
+    case 'RENAME_VARIABLE': {
+      const from = sanitizeIdentifier(action.from);
+      const to = sanitizeIdentifier(action.to);
+      if (!from || !to || from === to) return state;
+      const renamedReferences = renameIdentifierInStatements(state.ast.statements, from, to);
+      const statements = renameVariableDeclarations(renamedReferences, from, to);
       return {
         ast: { ...state.ast, statements },
         past: [...state.past, state.ast].slice(-50),

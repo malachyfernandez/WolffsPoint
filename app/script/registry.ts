@@ -226,7 +226,7 @@ export const STATEMENT_BLOCKS: StatementBlockDef[] = [
     description: 'Define a named variable',
     category: 'variable',
     inputs: [
-      { name: 'NAME', label: 'Name', type: 'string', required: true, default: 'newVariable' },
+      { name: 'NAME', label: 'Name', type: 'string', required: true, default: '' },
       { name: 'VALUE', label: 'Value', type: 'expression', required: true, default: 'nothing' },
     ],
     execute: (args, ctx) => {

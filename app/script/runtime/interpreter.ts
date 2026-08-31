@@ -111,6 +111,18 @@ class Environment {
     this.values.set(normalize(name), { name, value });
   }
 
+  assignOrDefine(name: string, value: RuntimeValue): void {
+    const key = normalize(name);
+    const existing = this.values.get(key);
+    if (existing) {
+      this.values.set(key, { ...existing, value });
+    } else if (this.parent?.has(name)) {
+      this.parent.assignOrDefine(name, value);
+    } else {
+      this.define(name, value);
+    }
+  }
+
   get(name: string): RuntimeValue {
     return this.values.get(normalize(name))?.value ?? this.parent?.get(name) ?? NOTHING;
   }
@@ -475,7 +487,7 @@ class Interpreter {
       }
     }
     const ctx: StatementContext = {
-      defineVariable: (varName, value) => environment.define(varName, value),
+      defineVariable: (varName, value) => environment.assignOrDefine(varName, value),
       emit: (instruction) => {
         const key = String(
           instruction.key ||

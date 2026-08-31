@@ -257,7 +257,6 @@ const RoleTable = ({
         showScript
         hideInputs={false}
         allowVoteInput
-        showPreviewAsPlayerOption
       />
     </>
   );

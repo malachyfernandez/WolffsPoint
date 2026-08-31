@@ -1131,6 +1131,11 @@ const ScriptEditorDialog = ({
     }
   };
 
+  const handleRenameVariable = (from: string, to: string) => {
+    if (moveSession) return;
+    dispatchWithUndo({ type: 'RENAME_VARIABLE', from, to }, `Rename ${from} to ${to}`);
+  };
+
   const handleSetStatementField = (
     path: number[],
     field:
@@ -1371,6 +1376,7 @@ const ScriptEditorDialog = ({
                       onSetExpression={handleSetExpression}
                       onSetStatementField={handleSetStatementField}
                       onDeleteStatement={handleDeleteStatement}
+                      onRenameVariable={handleRenameVariable}
                       entryKeysBySource={entryKeysBySource}
                       inputSources={inputSources}
                       isTriggerContext={isTriggerContext}

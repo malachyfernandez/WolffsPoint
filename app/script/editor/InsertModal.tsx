@@ -852,26 +852,26 @@ const InsertModal = ({
             };
           });
     const seenVariables = new Set<string>();
+    const isUnseenVariable = (name: string) => {
+      if (!name || seenVariables.has(name)) return false;
+      seenVariables.add(name);
+      return true;
+    };
     const variableItems: ModalItem[] = [
-      ...(target.contextVariables ?? []).filter(Boolean).map((name) => {
-        seenVariables.add(name);
-        return {
-          label: name,
-          description: 'Variable',
-          category: 'variable',
-          previewExpression: { kind: 'IdentifierExpression' as const, name, span },
-          onSelect: () => selectExpression({ kind: 'IdentifierExpression', name, span }),
-        };
-      }),
-      ...definedVariables
-        .filter((name) => !seenVariables.has(name))
-        .map((name) => ({
-          label: name,
-          description: 'Variable',
-          category: 'variable',
-          previewExpression: buildVariableReference(name),
-          onSelect: () => selectExpression(buildVariableReference(name)),
-        })),
+      ...(target.contextVariables ?? []).filter(isUnseenVariable).map((name) => ({
+        label: name,
+        description: 'Variable',
+        category: 'variable',
+        previewExpression: { kind: 'IdentifierExpression' as const, name, span },
+        onSelect: () => selectExpression({ kind: 'IdentifierExpression', name, span }),
+      })),
+      ...definedVariables.filter(isUnseenVariable).map((name) => ({
+        label: name,
+        description: 'Variable',
+        category: 'variable',
+        previewExpression: buildVariableReference(name),
+        onSelect: () => selectExpression(buildVariableReference(name)),
+      })),
     ];
     const entryBlock = EXPRESSION_BLOCKS.find((b) => b.id === 'entry');
     const indexBlock = EXPRESSION_BLOCKS.find((b) => b.id === 'index');
