@@ -986,15 +986,40 @@ export const ExpressionSocket = ({
         {binaryContent}
       </Swapable>
     );
+    const binaryWithConnector = (
+      <Row className={`items-center gap-0 ${preview ? '' : 'rounded-lg bg-black/5'}`}>
+        {binarySwapable}
+        {!preview && (
+          <PuzzleConnector
+            direction="horizontal"
+            type={expectedType}
+            tooltip="Wrap expression"
+            placeTarget={{ kind: 'expression', location, linkIndex: 1 }}
+            onPress={() =>
+              onAdd({
+                kind: 'chainInsert',
+                location,
+                linkIndex: 1,
+                contextVariables,
+                variableSources: entrySourceMap,
+                inputSources,
+                chainExpression: expression,
+                excludeProperties: true,
+              })
+            }
+          />
+        )}
+      </Row>
+    );
     return isOuterExpression ? (
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={{ flexGrow: 1 }}>
-        {binarySwapable}
+        {binaryWithConnector}
       </ScrollView>
     ) : (
-      binarySwapable
+      binaryWithConnector
     );
   }
 
@@ -1041,15 +1066,40 @@ export const ExpressionSocket = ({
         {unaryContent}
       </Swapable>
     );
+    const unaryWithConnector = (
+      <Row className={`items-center gap-0 ${preview ? '' : 'rounded-lg bg-black/5'}`}>
+        {unarySwapable}
+        {!preview && (
+          <PuzzleConnector
+            direction="horizontal"
+            type={expectedType}
+            tooltip="Wrap expression"
+            placeTarget={{ kind: 'expression', location, linkIndex: 1 }}
+            onPress={() =>
+              onAdd({
+                kind: 'chainInsert',
+                location,
+                linkIndex: 1,
+                contextVariables,
+                variableSources: entrySourceMap,
+                inputSources,
+                chainExpression: expression,
+                excludeProperties: true,
+              })
+            }
+          />
+        )}
+      </Row>
+    );
     return isOuterExpression ? (
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={{ flexGrow: 1 }}>
-        {unarySwapable}
+        {unaryWithConnector}
       </ScrollView>
     ) : (
-      unarySwapable
+      unaryWithConnector
     );
   }
 

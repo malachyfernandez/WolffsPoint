@@ -68,6 +68,7 @@ export interface InsertTarget {
    *  Used by type inference to resolve InputsWithData.entry("X") types. */
   inputSources?: Record<string, string>;
   linkIndex?: number;
+  excludeProperties?: boolean;
   /** The current chain expression (for chainInsert/chainSwap) — used to infer
    * the receiver type so we can show which blocks are compatible. */
   chainExpression?: Expression;
@@ -673,7 +674,9 @@ const InsertModal = ({
             }
           )
         : 'any';
-      const chainExpressionItems = EXPRESSION_BLOCKS.map((block) => {
+      const chainExpressionItems = EXPRESSION_BLOCKS.filter(
+        (block) => !target.excludeProperties || !block.isProperty
+      ).map((block) => {
         const blockType = appliesToType(block.appliesTo);
         const disabledReason = explainIncompatibility(receiverType, block);
         return {
