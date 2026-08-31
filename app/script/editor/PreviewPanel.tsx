@@ -9,6 +9,7 @@ import MarkdownRenderer, {
 } from '../../components/ui/markdown/MarkdownRenderer';
 import { printScript } from '../lang/printer';
 import { interpretScript } from '../runtime/interpreter';
+import { decodeStoredInputState } from '../runtime/values';
 import { createScriptGlobals, type ScriptSourceData } from '../runtime/sources';
 import type { Script } from '../lang/ast';
 import type { RoleTableItem } from '../../../types/roleTable';
@@ -18,22 +19,6 @@ interface PreviewPanelProps {
   sources?: ScriptSourceData;
   isInDialog?: boolean;
 }
-
-const decodeInputState = (
-  state: Record<string, string | undefined> = {}
-): Record<string, unknown> =>
-  Object.fromEntries(
-    Object.entries(state).map(([key, value]) => {
-      if (value?.startsWith('[') || value?.startsWith('{')) {
-        try {
-          return [key, JSON.parse(value)];
-        } catch {
-          return [key, value];
-        }
-      }
-      return [key, value];
-    })
-  );
 
 const PreviewPanel = ({ ast, sources, isInDialog = true }: PreviewPanelProps) => {
   const [previewState, setPreviewState] = useState<Record<string, string | undefined>>({});
@@ -106,7 +91,7 @@ const PreviewPanel = ({ ast, sources, isInDialog = true }: PreviewPanelProps) =>
   );
 
   const result = useMemo(() => {
-    const inputState = decodeInputState(previewState);
+    const inputState = decodeStoredInputState(previewState);
     return interpretScript(ast, {
       globals: {
         ...createScriptGlobals(previewSources),

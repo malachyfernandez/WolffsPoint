@@ -25,6 +25,8 @@ const normalizeSizeColumns = (values: ColumnSizeOption[] | undefined, targetLeng
 const normalizeDay = (day: DayData | undefined, targetDayColumns: number): DayData => {
   return {
     vote: day?.vote ?? '',
+    voteInputs: day?.voteInputs,
+    voteInputKey: day?.voteInputKey,
     action: day?.action ?? '',
     voteMultiplier: day?.voteMultiplier,
     extraColumns: normalizeStringColumns(day?.extraColumns, targetDayColumns),

@@ -6,6 +6,7 @@ import Row from '../layout/Row';
 import AppButton from '../ui/buttons/AppButton';
 import RoleEditDialog from './RoleEditDialog';
 import MarkdownEditorDialog from './MarkdownEditorDialog';
+import VoteEnableDialog from './VoteEnableDialog';
 import DeleteConfirmationDialog from './DeleteRoleConfirmationDialog';
 import { RoleTableItem } from 'types/roleTable';
 
@@ -18,6 +19,8 @@ interface RoleRowProps {
   setDoesRoleVote: (roleIndex: number, newDoesRoleVote: boolean) => void;
   setHiddenFromRulebook: (roleIndex: number, value: boolean) => void;
   setRoleMessage: (roleIndex: number, newRoleMessage: string) => void;
+  setVoteMessage: (roleIndex: number, newVoteMessage: string) => void;
+  defaultVoteMessage: string;
   setAboutRole: (roleIndex: number, newAboutRole: string) => void;
   onDeleteRole: (roleIndex: number) => void;
   onEditStart?: () => void;
@@ -35,6 +38,8 @@ const RoleRow = ({
   setDoesRoleVote,
   setHiddenFromRulebook,
   setRoleMessage,
+  setVoteMessage,
+  defaultVoteMessage,
   setAboutRole,
   onDeleteRole,
   onEditStart,
@@ -44,6 +49,8 @@ const RoleRow = ({
 }: RoleRowProps) => {
   const [isRoleInfoDialogOpen, setIsRoleInfoDialogOpen] = useState(false);
   const [isRoleMessageDialogOpen, setIsRoleMessageDialogOpen] = useState(false);
+  const [isVoteEnableDialogOpen, setIsVoteEnableDialogOpen] = useState(false);
+  const [isVoteMessageDialogOpen, setIsVoteMessageDialogOpen] = useState(false);
   const [isAboutRoleDialogOpen, setIsAboutRoleDialogOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
 
@@ -85,6 +92,27 @@ const RoleRow = ({
                 </FontText>
               ) : (
                 <FontText className="opacity-50">Role message...</FontText>
+              )}
+            </FontText>
+          </Pressable>
+        </Column>
+        <Column className="border-subtle-border h-full w-64 items-center justify-center gap-4 border">
+          <Pressable
+            onPress={() => setIsVoteEnableDialogOpen(true)}
+            className="h-full w-60 items-center justify-center">
+            <FontText
+              weight="medium"
+              className="w-60 overflow-hidden text-nowrap text-center"
+              style={{ textDecorationLine: 'underline', textDecorationStyle: 'dotted' }}>
+              {role.doesRoleVote === false ? (
+                <FontText className="text-center opacity-50">Cannot vote</FontText>
+              ) : role.voteMessage ? (
+                <FontText className="text-center">
+                  {role.voteMessage.slice(0, 30)}
+                  {role.voteMessage.length > 30 ? '...' : ''}
+                </FontText>
+              ) : (
+                <FontText className="text-center opacity-50">Using default</FontText>
               )}
             </FontText>
           </Pressable>
@@ -145,6 +173,30 @@ const RoleRow = ({
         showInputs={showInputs}
         showScript
         hideInputs={false}
+        roleName={role.role}
+        showPreviewAsPlayerOption
+      />
+      <VoteEnableDialog
+        isOpen={isVoteEnableDialogOpen}
+        onOpenChange={setIsVoteEnableDialogOpen}
+        roleName={role.role || ''}
+        doesRoleVote={role.doesRoleVote !== false}
+        onSetDoesRoleVote={(value) => setDoesRoleVote(index, value)}
+        onContinueToEditor={() => setIsVoteMessageDialogOpen(true)}
+      />
+      <MarkdownEditorDialog
+        isOpen={isVoteMessageDialogOpen}
+        onOpenChange={setIsVoteMessageDialogOpen}
+        title={`${role.role || 'Role'} Vote Message`}
+        submitLabel="Save Override"
+        initialMarkdown={role.voteMessage ?? defaultVoteMessage}
+        onSubmit={({ markdown }) => setVoteMessage(index, markdown)}
+        dialogSubtext="Saving creates an override for this role. Save an empty message to inherit the default."
+        gameId={gameId}
+        showInputs={showInputs}
+        showScript
+        hideInputs={false}
+        allowVoteInput
         roleName={role.role}
         showPreviewAsPlayerOption
       />

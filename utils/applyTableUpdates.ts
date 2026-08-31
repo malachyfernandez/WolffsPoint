@@ -111,7 +111,11 @@ export const applyTableUpdates = (
           day.voteMultiplier = isNaN(parsed) ? 1 : parsed;
         } else if (isVote(column)) {
           // vote is a string field on DayData
-          day.vote = applyCellValueMode(day.vote ?? '', value, mode);
+          day.vote = applyCellValueMode(
+            Array.isArray(day.vote) ? JSON.stringify(day.vote) : (day.vote ?? ''),
+            value,
+            mode
+          );
         } else if (isAction(column)) {
           // action is a string field on DayData (MarkdownInputState is also string-compatible)
           day.action = applyCellValueMode(

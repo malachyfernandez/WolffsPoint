@@ -7,6 +7,7 @@ import Row from '../layout/Row';
 import FontText from '../ui/text/FontText';
 import Animated, { Easing, FadeInDown, FadeOutUp } from 'react-native-reanimated';
 import { UserTableItem } from '../../../types/playerTable';
+import { VoteValue } from '../../../types/multiplayer';
 import { getPlayerActionSummary } from '../../../utils/multiplayer';
 import ActionPills from './ActionPills';
 import ActionEditorDialog from './ActionEditorDialog';
@@ -18,7 +19,7 @@ interface DayUserRowProps {
   isLast: boolean;
   dayNumber: number;
   gameId: string;
-  setVoteValue?: (userIndex: number, newValue: string, voteMultiplier: number) => void;
+  setVoteValue?: (userIndex: number, newValue: VoteValue, voteMultiplier: number) => void;
   setActionValue?: (userIndex: number, newValue: string) => void;
   setExtraColumnValue?: (userIndex: number, columnIndex: number, newValue: string) => void;
   userTableColumnVisibility?: {
@@ -183,6 +184,8 @@ const DayUserRow = ({
         title={`${user.realName || 'User'} Vote`}
         initialVote={dayData.vote || ''}
         initialVoteMultiplier={dayData.voteMultiplier ?? 1}
+        voteInputs={dayData.voteInputs}
+        voteInputKey={dayData.voteInputKey}
         onSubmit={(vote, multiplier) => setVoteValue?.(index, vote, multiplier)}
         dialogSubtext={`Set the vote target for ${user.realName || 'User'}.`}
         users={users}

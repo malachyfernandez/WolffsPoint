@@ -193,6 +193,18 @@ const formatSelectOption = (item: RuntimeValue): Record<string, unknown> => {
   return { value: display, label: display };
 };
 
+const formatVoteSelectOption = (item: RuntimeValue): Record<string, unknown> => {
+  if (!isPlayerObject(item)) return formatSelectOption(item);
+  const obj = item as Record<string, RuntimeValue>;
+  const realName = String(obj.realName ?? '');
+  const email = typeof obj.email === 'string' ? obj.email : realName;
+  return {
+    value: email,
+    label: realName && email ? `${realName} (${email})` : realName || email,
+    meta: { ...obj },
+  };
+};
+
 const sortList = (
   list: RuntimeValue[],
   comparator: RuntimeValue,
@@ -246,6 +258,35 @@ export const STATEMENT_BLOCKS: StatementBlockDef[] = [
         options,
         numberSelectable: Math.max(1, Math.floor(numSelectable)),
         multiple: numSelectable > 1,
+      });
+    },
+  },
+  {
+    id: 'CreateSelectVoteInput',
+    name: 'CreateSelectVoteInput',
+    kind: 'statement',
+    description: 'Selectable vote input',
+    category: 'input',
+    inputs: [
+      { name: 'LIST', label: 'Options', type: 'list', required: true },
+      { name: 'LABEL', label: 'Label', type: 'string', default: 'Vote' },
+      { name: 'NUMSELECTABLE', label: 'Max selectable', type: 'number', default: 1 },
+      { name: 'MULTIPLYER', label: 'Vote multiplier', type: 'number', default: 1 },
+    ],
+    execute: (args, ctx) => {
+      const label = str(args.label ?? NOTHING) || 'Vote';
+      const list = Array.isArray(args.list) ? args.list : [];
+      const numSelectable = num(args.numselectable) ?? 1;
+      const voteMultiplier = num(args.multiplyer ?? args.multiplier) ?? 1;
+      ctx.emit({
+        kind: 'select',
+        key: label,
+        label,
+        options: list.map(formatVoteSelectOption),
+        numberSelectable: Math.max(1, Math.floor(numSelectable)),
+        multiple: numSelectable > 1,
+        voteInput: true,
+        voteMultiplier,
       });
     },
   },

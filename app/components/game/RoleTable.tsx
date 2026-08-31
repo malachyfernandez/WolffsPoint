@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
+import { Pressable } from 'react-native';
 import FontText from '../ui/text/FontText';
 import { useList } from 'hooks/useData';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
 import RoleRow from './RoleRow';
+import MarkdownEditorDialog from './MarkdownEditorDialog';
 import { createUndoSnapshot, useUndoRedo } from 'hooks/useUndoRedo';
-import { RoleTableItem } from 'types/roleTable';
+import { DEFAULT_VOTE_MESSAGE, RoleTableItem } from 'types/roleTable';
 
 interface RoleTableProps {
   gameId: string;
@@ -28,6 +30,7 @@ const RoleTable = ({
 }: RoleTableProps) => {
   const { executeCommand } = useUndoRedo();
   const [editingRow, setEditingRow] = useState<number | null>(null);
+  const [isDefaultVoteMessageOpen, setIsDefaultVoteMessageOpen] = useState(false);
 
   const handleRowEditStart = (rowIndex: number) => {
     setEditingRow(rowIndex);
@@ -42,6 +45,14 @@ const RoleTable = ({
   const [roleTable, setRoleTable] = useList<RoleTableItem[]>('roleTable', gameId, {
     privacy: 'PUBLIC',
   });
+  const [defaultVoteMessage, setDefaultVoteMessage] = useList<string>(
+    'voteMessageDefault',
+    gameId,
+    {
+      privacy: 'PUBLIC',
+      defaultValue: DEFAULT_VOTE_MESSAGE,
+    }
+  );
 
   const roles = roleTable?.value ?? [];
   const visibleRoles = roles.filter((role) => role.isVisible !== false);
@@ -119,6 +130,23 @@ const RoleTable = ({
     });
   };
 
+  const UNDOABLEsetVoteMessage = (roleIndex: number, newVoteMessage: string) => {
+    const previousRoleTable = createUndoSnapshot(roleTable?.value ?? []);
+    if (roleIndex < 0 || roleIndex >= previousRoleTable.length) return;
+
+    const nextRoleTable = createUndoSnapshot(previousRoleTable);
+    nextRoleTable[roleIndex] = {
+      ...nextRoleTable[roleIndex],
+      voteMessage: newVoteMessage.trim() ? newVoteMessage : undefined,
+    };
+
+    executeCommand({
+      action: () => setRoleTable(createUndoSnapshot(nextRoleTable)),
+      undoAction: () => setRoleTable(createUndoSnapshot(previousRoleTable)),
+      description: 'Set Vote Message',
+    });
+  };
+
   const UNDOABLEsetAboutRole = (roleIndex: number, newAboutRole: string) => {
     const previousRoleTable = createUndoSnapshot(roleTable?.value ?? []);
     if (roleIndex < 0 || roleIndex >= previousRoleTable.length) return;
@@ -154,54 +182,84 @@ const RoleTable = ({
   };
 
   return (
-    <Column className="gap-0">
-      <Row className="gap-0">
-        <Column className={`border-border w-min gap-0 rounded border-2 ${className || ''}`}>
-          {/* Title Row */}
-          <Row className={`bg-background border-border h-12 w-min gap-0 rounded-t-lg border-b-2`}>
-            <Column className="h-full w-32 items-center justify-center gap-4">
-              <FontText weight="medium" className="text-center">
-                Role
-              </FontText>
-            </Column>
-            <Column className="h-full w-64 items-center justify-center gap-4">
-              <FontText weight="medium" className="text-center">
-                Role Message
-              </FontText>
-            </Column>
-            <Column className="h-full w-64 items-center justify-center gap-4">
-              <FontText weight="medium" className="text-center">
-                About Role
-              </FontText>
-            </Column>
-          </Row>
+    <>
+      <Column className="gap-0">
+        <Row className="gap-0">
+          <Column className={`border-border w-min gap-0 rounded border-2 ${className || ''}`}>
+            {/* Title Row */}
+            <Row className={`bg-background border-border h-12 w-min gap-0 rounded-t-lg border-b-2`}>
+              <Column className="h-full w-32 items-center justify-center gap-4">
+                <FontText weight="medium" className="text-center">
+                  Role
+                </FontText>
+              </Column>
+              <Column className="h-full w-64 items-center justify-center gap-4">
+                <FontText weight="medium" className="text-center">
+                  Role Message
+                </FontText>
+              </Column>
+              <Column className="h-full w-64 items-center justify-center gap-4">
+                <Pressable
+                  onPress={() => setIsDefaultVoteMessageOpen(true)}
+                  className="h-full w-full items-center justify-center">
+                  <FontText
+                    weight="medium"
+                    className="text-center"
+                    style={{ textDecorationLine: 'underline', textDecorationStyle: 'dotted' }}>
+                    Vote Message
+                  </FontText>
+                </Pressable>
+              </Column>
+              <Column className="h-full w-64 items-center justify-center gap-4">
+                <FontText weight="medium" className="text-center">
+                  About Role
+                </FontText>
+              </Column>
+            </Row>
 
-          {visibleRoles.map((role, index) => {
-            // Find the actual index in the full roles array
-            const actualIndex = roles.findIndex((r) => r === role);
-            return (
-              <RoleRow
-                key={actualIndex}
-                gameId={gameId}
-                role={role}
-                index={actualIndex}
-                isLast={index === visibleRoles.length - 1}
-                setRoleName={UNDOABLEsetRoleName}
-                setDoesRoleVote={UNDOABLEsetDoesRoleVote}
-                setHiddenFromRulebook={UNDOABLEsetHiddenFromRulebook}
-                setRoleMessage={UNDOABLEsetRoleMessage}
-                setAboutRole={UNDOABLEsetAboutRole}
-                onDeleteRole={UNDOABLEdeleteRole}
-                onEditStart={() => handleRowEditStart(actualIndex)}
-                onEditEnd={handleRowEditEnd}
-                isEditing={editingRow === actualIndex}
-                showInputs={showInputs}
-              />
-            );
-          })}
-        </Column>
-      </Row>
-    </Column>
+            {visibleRoles.map((role, index) => {
+              // Find the actual index in the full roles array
+              const actualIndex = roles.findIndex((r) => r === role);
+              return (
+                <RoleRow
+                  key={actualIndex}
+                  gameId={gameId}
+                  role={role}
+                  index={actualIndex}
+                  isLast={index === visibleRoles.length - 1}
+                  setRoleName={UNDOABLEsetRoleName}
+                  setDoesRoleVote={UNDOABLEsetDoesRoleVote}
+                  setHiddenFromRulebook={UNDOABLEsetHiddenFromRulebook}
+                  setRoleMessage={UNDOABLEsetRoleMessage}
+                  setVoteMessage={UNDOABLEsetVoteMessage}
+                  defaultVoteMessage={defaultVoteMessage?.value ?? DEFAULT_VOTE_MESSAGE}
+                  setAboutRole={UNDOABLEsetAboutRole}
+                  onDeleteRole={UNDOABLEdeleteRole}
+                  onEditStart={() => handleRowEditStart(actualIndex)}
+                  onEditEnd={handleRowEditEnd}
+                  isEditing={editingRow === actualIndex}
+                  showInputs={showInputs}
+                />
+              );
+            })}
+          </Column>
+        </Row>
+      </Column>
+      <MarkdownEditorDialog
+        isOpen={isDefaultVoteMessageOpen}
+        onOpenChange={setIsDefaultVoteMessageOpen}
+        title="Default Vote Message"
+        submitLabel="Save Default"
+        initialMarkdown={defaultVoteMessage?.value ?? DEFAULT_VOTE_MESSAGE}
+        onSubmit={({ markdown }) => setDefaultVoteMessage(markdown)}
+        gameId={gameId}
+        showInputs={showInputs}
+        showScript
+        hideInputs={false}
+        allowVoteInput
+        showPreviewAsPlayerOption
+      />
+    </>
   );
 };
 

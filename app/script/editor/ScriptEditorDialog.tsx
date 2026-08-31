@@ -59,6 +59,7 @@ interface ScriptEditorDialogProps {
   /** When true, input-creating blocks (select, text, number, checkbox) are hidden.
    *  Used for tag trigger scripts which have no input state storage. */
   hideInputs?: boolean;
+  allowVoteInput?: boolean;
   /** When true, the editor is configured for tag trigger scripts.
    *  Hides input/display blocks, replaces currentDay with placedDay, and
    *  shows trigger-specific data sources (placedTag, placedUser, etc.). */
@@ -188,7 +189,9 @@ const collectInputSources = (
       stmt.kind === 'ExpressionStatement' &&
       stmt.expression.kind === 'CallExpression' &&
       stmt.expression.callee.kind === 'IdentifierExpression' &&
-      stmt.expression.callee.name.toLowerCase() === 'createselectinput'
+      ['createselectinput', 'createselectvoteinput'].includes(
+        stmt.expression.callee.name.toLowerCase()
+      )
     ) {
       const labelArg = stmt.expression.arguments.find(
         (a) => a.kind === 'NamedArgument' && a.name.toLowerCase() === 'label'
@@ -231,6 +234,7 @@ const INPUT_STATEMENT_IDS = new Set([
   'createnumberinput',
   'createcheckbox',
   'createselectinput',
+  'createselectvoteinput',
 ]);
 
 /** Collect LABEL values from all input-creating statements in the script. */
@@ -518,6 +522,7 @@ const ScriptEditorDialog = ({
   sources,
   title = 'Script Editor',
   hideInputs,
+  allowVoteInput = false,
   isTriggerContext,
   gameId,
 }: ScriptEditorDialogProps) => {
@@ -1506,6 +1511,7 @@ const ScriptEditorDialog = ({
               onInsertBuiltinFunction={handleInsertBuiltinFunction}
               onRemove={handleRemove}
               hideInputs={hideInputs}
+              allowVoteInput={allowVoteInput}
               isTriggerContext={isTriggerContext}
               gameId={gameId}
               savedFunctions={savedFunctions}
@@ -1529,6 +1535,7 @@ const ScriptEditorDialog = ({
           showInputs
           showVariables
           hideInputs={hideInputs}
+          allowVoteInput={allowVoteInput}
           gameId={gameId}
           onSubmit={(payload) => {
             markdownEditor.onSave(payload.markdown);

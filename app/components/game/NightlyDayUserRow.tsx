@@ -11,6 +11,7 @@ import VoteEditorDialog, { resolveVoteEmailToName } from './VoteEditorDialog';
 import ActionPills from './ActionPills';
 import TagCellDisplay from './TagCellDisplay';
 import { UserTableItem } from '../../../types/playerTable';
+import { VoteValue } from '../../../types/multiplayer';
 import { getPlayerActionSummary } from '../../../utils/multiplayer';
 import { useList } from 'hooks/useData';
 
@@ -19,7 +20,7 @@ interface NightlyDayUserRowProps {
   index: number;
   isLast: boolean;
   dayNumber: number;
-  setVoteValue?: (userIndex: number, newValue: string, voteMultiplier: number) => void;
+  setVoteValue?: (userIndex: number, newValue: VoteValue, voteMultiplier: number) => void;
   setActionValue?: (userIndex: number, newValue: string) => void;
   updateMorningMessage: (dayIndex: number, userIndex: number, value: string) => void;
   onEditStart?: () => void;
@@ -181,7 +182,7 @@ const NightlyDayUserRow = ({
                   weight="medium"
                   className="bg-text overflow-hidden text-ellipsis text-nowrap rounded-full px-2 py-1 text-center"
                   color="white">
-                  Import Yesterday's
+                  Import Yesterday&apos;s
                 </FontText>
               </Pressable>
               <Pressable
@@ -273,6 +274,8 @@ const NightlyDayUserRow = ({
         title={`${user.realName || 'User'} Vote`}
         initialVote={dayData.vote || ''}
         initialVoteMultiplier={voteMultiplier}
+        voteInputs={dayData.voteInputs}
+        voteInputKey={dayData.voteInputKey}
         onSubmit={(vote, multiplier) => setVoteValue?.(index, vote, multiplier)}
         dialogSubtext={`Set the vote target for ${user.realName || 'User'}.`}
         users={users}

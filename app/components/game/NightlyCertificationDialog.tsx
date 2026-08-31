@@ -8,9 +8,19 @@ import FontText from '../ui/text/FontText';
 import AppButton from '../ui/buttons/AppButton';
 import { PlayerNightSubmission } from '../../../types/multiplayer';
 import { UserTableItem } from '../../../types/playerTable';
-import { getPlayerActionSummary } from '../../../utils/multiplayer';
+import { getPlayerActionSummary, normalizeVoteTargets } from '../../../utils/multiplayer';
 import ActionPills from './ActionPills';
 import { resolveVoteEmailToName } from './VoteEditorDialog';
+
+const formatInputValue = (value: string) => {
+  try {
+    const parsed = JSON.parse(value);
+    if (Array.isArray(parsed)) return parsed.join(', ');
+  } catch {
+    return value;
+  }
+  return value;
+};
 
 const formatPlannedUpdate = (
   update: NonNullable<PlayerNightSubmission['plannedUpdates']>[number],
@@ -29,7 +39,8 @@ interface NightlyCertificationDialogProps {
   onOpenChange: (open: boolean) => void;
   users: UserTableItem[];
   submissionsByEmail: Record<string, PlayerNightSubmission>;
-  onCertify: () => void;
+  onCertifyVotes: () => void;
+  onCertifyActions: () => void;
 }
 
 const NightlyCertificationDialog = ({
@@ -37,7 +48,8 @@ const NightlyCertificationDialog = ({
   onOpenChange,
   users,
   submissionsByEmail,
-  onCertify,
+  onCertifyVotes,
+  onCertifyActions,
 }: NightlyCertificationDialogProps) => {
   return (
     <ConvexDialog.Root isOpen={isOpen} onOpenChange={onOpenChange}>
@@ -56,62 +68,81 @@ const NightlyCertificationDialog = ({
             subtext="Review what each player submitted before you certify it into the operator table."
           />
           <ScrollView className="pb-4 pt-2 sm:p-4">
-            <Column className="gap-2">
-              <Row className="border-subtle-border gap-4 border-b pb-2">
-                <FontText weight="medium" className="flex-1">
-                  Player
-                </FontText>
-                <FontText weight="medium" className="flex-1">
-                  Vote
-                </FontText>
-                <FontText weight="medium" className="flex-1">
-                  Action
-                </FontText>
-                <FontText weight="medium" className="flex-1">
-                  Cell Updates
-                </FontText>
-              </Row>
+            <Column className="gap-3">
               {users.map((user) => {
                 const submission = submissionsByEmail[user.email.toLowerCase()];
-                const rawVote = submission?.vote ?? '';
-                const resolvedVote = resolveVoteEmailToName(rawVote, users);
+                const resolvedVote = normalizeVoteTargets(submission?.vote)
+                  .map((vote) => resolveVoteEmailToName(vote, users))
+                  .join(', ');
                 const actionSummary = getPlayerActionSummary(submission?.action);
-                const plannedUpdates = submission?.plannedUpdates ?? [];
+                const voteUpdates = submission?.votePlannedUpdates ?? [];
+                const actionUpdates = submission?.plannedUpdates ?? [];
+                const supplementalVoteInputs = Object.entries(submission?.voteInputs ?? {}).filter(
+                  ([key, value]) => key !== submission?.voteInputKey && value?.trim()
+                );
 
                 return (
-                  <Row
+                  <Column
                     key={user.email}
-                    className="border-subtle-border items-start gap-4 border-b py-2">
-                    <Column className="flex-1 gap-0">
-                      <FontText weight="medium" className="overflow-hidden text-nowrap">
+                    className="border-subtle-border gap-3 rounded-lg border p-3">
+                    <Column className="gap-0">
+                      <FontText weight="medium">
                         {user.realName || <FontText className="opacity-50">No Name</FontText>}
                       </FontText>
-                      <FontText variant="subtext" className="overflow-hidden text-nowrap">
+                      <FontText variant="subtext">
                         {user.role || <FontText className="opacity-50">No role</FontText>}
                       </FontText>
                     </Column>
-                    <FontText weight="medium" className="flex-1">
-                      {submission?.vote?.trim() ? resolvedVote : '—'}
-                    </FontText>
-                    <Column className="flex-1 items-center justify-center">
-                      {actionSummary ? (
-                        <ActionPills actionText={actionSummary} />
-                      ) : (
-                        <FontText className="opacity-50">—</FontText>
-                      )}
-                    </Column>
-                    <Column className="flex-1 gap-0.5">
-                      {plannedUpdates.length > 0 ? (
-                        plannedUpdates.map((update, i) => (
-                          <FontText key={i} variant="subtext" className="text-xs">
-                            • {formatPlannedUpdate(update, users)}
+                    <Row className="items-start gap-4" style={{ flexWrap: 'wrap' }}>
+                      <Column className="min-w-[240px] flex-1 gap-2">
+                        <FontText weight="medium">Vote</FontText>
+                        <FontText>{resolvedVote || '—'}</FontText>
+                        {submission?.voteMultiplier !== undefined &&
+                          submission.voteMultiplier !== 1 && (
+                            <FontText variant="subtext">
+                              {submission.voteMultiplier}x weight
+                            </FontText>
+                          )}
+                        {supplementalVoteInputs.map(([label, value]) => (
+                          <FontText key={label} variant="subtext">
+                            {label}: {formatInputValue(value || '')}
                           </FontText>
-                        ))
-                      ) : (
-                        <FontText className="opacity-50">—</FontText>
-                      )}
-                    </Column>
-                  </Row>
+                        ))}
+                        <Column className="gap-0.5">
+                          <FontText variant="subtext">Vote cell updates</FontText>
+                          {voteUpdates.length > 0 ? (
+                            voteUpdates.map((update, index) => (
+                              <FontText key={index} variant="subtext" className="text-xs">
+                                • {formatPlannedUpdate(update, users)}
+                              </FontText>
+                            ))
+                          ) : (
+                            <FontText className="opacity-50">—</FontText>
+                          )}
+                        </Column>
+                      </Column>
+                      <Column className="min-w-[240px] flex-1 gap-2">
+                        <FontText weight="medium">Action</FontText>
+                        {actionSummary ? (
+                          <ActionPills actionText={actionSummary} />
+                        ) : (
+                          <FontText className="opacity-50">—</FontText>
+                        )}
+                        <Column className="gap-0.5">
+                          <FontText variant="subtext">Action cell updates</FontText>
+                          {actionUpdates.length > 0 ? (
+                            actionUpdates.map((update, index) => (
+                              <FontText key={index} variant="subtext" className="text-xs">
+                                • {formatPlannedUpdate(update, users)}
+                              </FontText>
+                            ))
+                          ) : (
+                            <FontText className="opacity-50">—</FontText>
+                          )}
+                        </Column>
+                      </Column>
+                    </Row>
+                  </Column>
                 );
               })}
             </Column>
@@ -122,13 +153,24 @@ const NightlyCertificationDialog = ({
             </AppButton>
             <AppButton
               variant="black"
-              className="w-36"
+              className="px-6 py-2"
               onPress={() => {
-                onCertify();
+                onCertifyVotes();
                 onOpenChange(false);
               }}>
               <FontText weight="medium" color="white">
-                Add To Table
+                Add Votes To Table
+              </FontText>
+            </AppButton>
+            <AppButton
+              variant="black"
+              className="px-6 py-2"
+              onPress={() => {
+                onCertifyActions();
+                onOpenChange(false);
+              }}>
+              <FontText weight="medium" color="white">
+                Add Actions To Table
               </FontText>
             </AppButton>
           </Row>

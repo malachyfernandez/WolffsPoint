@@ -14,7 +14,11 @@ import ShadowScrollView from '../ui/ShadowScrollView';
 import { View, useWindowDimensions } from 'react-native';
 import ComprehensiveDaySelector from '../ui/daySelector/ComprehensiveDaySelector';
 import NightlyCertificationDialog from './NightlyCertificationDialog';
-import { getGameScopedKey, hasPlayerActionContent } from '../../../utils/multiplayer';
+import {
+  getGameScopedKey,
+  hasPlayerActionContent,
+  hasVoteContent,
+} from '../../../utils/multiplayer';
 import { PlayerNightSubmission, PlannedUpdate } from '../../../types/multiplayer';
 import {
   executePlannedUpdates,
@@ -95,12 +99,11 @@ const NightlyPageOPERATOR = ({
     PlayerNightSubmission
   >;
 
-  const currentDayIndex = selectedDayIndex.value;
-  const voteCount = users.filter(
-    (user) => (user.days[currentDayIndex]?.vote ?? '').trim().length > 0
+  const voteCount = users.filter((user) =>
+    hasVoteContent(submissionsByEmail[user.email.toLowerCase()]?.vote)
   ).length;
   const actionCount = users.filter((user) =>
-    hasPlayerActionContent(user.days[currentDayIndex]?.action)
+    hasPlayerActionContent(submissionsByEmail[user.email.toLowerCase()]?.action)
   ).length;
 
   // Shared day dates array (same as players tab)
@@ -189,10 +192,9 @@ const NightlyPageOPERATOR = ({
     }
   };
 
-  const certifySubmissions = () => {
+  const certifySubmissions = (type: 'votes' | 'actions') => {
     const certifiedUsers = users.map((user) => {
       const submission = submissionsByEmail[user.email.toLowerCase()];
-
       const nextDays = [...(user.days ?? [])];
 
       while (nextDays.length <= selectedDayIndex.value) {
@@ -202,15 +204,18 @@ const NightlyPageOPERATOR = ({
       if (submission) {
         nextDays[selectedDayIndex.value] = {
           ...nextDays[selectedDayIndex.value],
-          vote: submission.vote,
-          action: submission.action,
+          ...(type === 'votes'
+            ? {
+                vote: submission.vote,
+                voteInputs: submission.voteInputs,
+                voteInputKey: submission.voteInputKey,
+                voteMultiplier: submission.voteMultiplier ?? 1,
+              }
+            : { action: submission.action }),
         };
       }
 
-      return {
-        ...user,
-        days: nextDays,
-      };
+      return { ...user, days: nextDays };
     });
 
     // Execute planned updates that were computed at input time (stored in each
@@ -223,14 +228,14 @@ const NightlyPageOPERATOR = ({
 
     for (const user of certifiedUsers) {
       const submission = submissionsByEmail[user.email.toLowerCase()];
-      if (!submission?.plannedUpdates) continue;
-      allPlannedUpdates.push(...submission.plannedUpdates);
+      const updates =
+        type === 'votes' ? submission?.votePlannedUpdates : submission?.plannedUpdates;
+      if (updates) allPlannedUpdates.push(...updates);
     }
 
     let finalUsers = certifiedUsers;
     let finalMorningMessages = morningMessagesList.value ?? {};
     if (allPlannedUpdates.length > 0) {
-      const beforePlannedUpdates = certifiedUsers;
       // Apply regular table updates (skips morningMessage updates)
       finalUsers = executePlannedUpdates(certifiedUsers, allPlannedUpdates, titles);
       // Apply morning message planned updates separately
@@ -243,7 +248,7 @@ const NightlyPageOPERATOR = ({
       // (e.g. cellContents.append(tag("Detected")) adds a tag → OnTagAdded runs)
       if (Object.keys(tagTriggers).length > 0) {
         const triggerResult = fireTagTriggersForNetChanges(
-          beforePlannedUpdates,
+          certifiedUsers,
           finalUsers,
           tagTriggers,
           titles,
@@ -257,7 +262,7 @@ const NightlyPageOPERATOR = ({
     }
 
     setUserTable(finalUsers);
-    if (finalMorningMessages !== (morningMessagesList.value ?? {})) {
+    if (JSON.stringify(finalMorningMessages) !== JSON.stringify(morningMessagesList.value ?? {})) {
       setMorningMessagesList(finalMorningMessages);
     }
     setDoSync(true);
@@ -375,7 +380,8 @@ const NightlyPageOPERATOR = ({
                 onOpenChange={setIsCertificationDialogOpen}
                 users={users}
                 submissionsByEmail={submissionsByEmail}
-                onCertify={certifySubmissions}
+                onCertifyVotes={() => certifySubmissions('votes')}
+                onCertifyActions={() => certifySubmissions('actions')}
               />
             </Column>
           </Animated.View>

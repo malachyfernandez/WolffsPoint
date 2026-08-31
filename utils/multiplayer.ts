@@ -1,4 +1,9 @@
-import { GameSchedule, MarkdownInputState, PlayerActionValue } from '../types/multiplayer';
+import {
+  GameSchedule,
+  MarkdownInputState,
+  PlayerActionValue,
+  VoteValue,
+} from '../types/multiplayer';
 
 const DEFAULT_SCHEDULE: GameSchedule = {
   nightlyDeadlineTime: '22:00',
@@ -301,6 +306,26 @@ export const normalizePlayerActionState = (
 
   return action;
 };
+
+export const normalizeVoteTargets = (vote: VoteValue | undefined): string[] => {
+  const uniqueTargets = (targets: string[]) => [
+    ...new Set(targets.map((target) => target.trim()).filter(Boolean)),
+  ];
+  if (Array.isArray(vote)) return uniqueTargets(vote);
+  if (!vote?.trim()) return [];
+  if (vote.trim().startsWith('[')) {
+    try {
+      const parsed = JSON.parse(vote);
+      if (Array.isArray(parsed)) return uniqueTargets(parsed.map(String));
+    } catch {
+      return [vote.trim()];
+    }
+  }
+  return [vote.trim()];
+};
+
+export const hasVoteContent = (vote: VoteValue | undefined) =>
+  normalizeVoteTargets(vote).length > 0;
 
 export const getPlayerActionSummary = (action: PlayerActionValue | undefined) => {
   if (!action) {

@@ -23,6 +23,7 @@ import {
 } from './playerTableColumnSizing';
 import { getTargetDayCount, normalizePlayerPageState } from './playerTableNormalization';
 import { useTagTriggers, type CellContext } from '../../../hooks/useTagTriggers';
+import { VoteValue } from '../../../types/multiplayer';
 
 interface DaysTableProps {
   gameId: string;
@@ -274,7 +275,7 @@ const DaysTable = ({
   ]);
   const UNDOABLEsetVoteValue = (
     userIndex: number,
-    newVoteValue: string,
+    newVoteValue: VoteValue,
     voteMultiplier: number
   ) => {
     const previousUserTable = createUndoSnapshot(userTable?.value ?? []);

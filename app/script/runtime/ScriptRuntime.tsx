@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { parseScript } from '../lang/parser';
 import type { Script } from '../lang/ast';
 import { interpretScript } from './interpreter';
+import { decodeStoredInputState } from './values';
 import { ScriptRenderers } from './renderers';
 import { createScriptGlobals, ScriptSourceData } from './sources';
 
@@ -19,22 +20,6 @@ const cachedParse = (source: string): Script => {
   scriptCache.set(source, parsed);
   return parsed;
 };
-
-const decodeInputState = (
-  state: Record<string, string | undefined> = {}
-): Record<string, unknown> =>
-  Object.fromEntries(
-    Object.entries(state).map(([key, value]) => {
-      if (value?.startsWith('[') || value?.startsWith('{')) {
-        try {
-          return [key, JSON.parse(value)];
-        } catch {
-          return [key, value];
-        }
-      }
-      return [key, value];
-    })
-  );
 
 export interface ScriptRuntimeProps {
   source: string;
@@ -54,7 +39,7 @@ const ScriptRuntime = ({
   renderMarkdown,
 }: ScriptRuntimeProps) => {
   const ast = useMemo(() => cachedParse(source), [source]);
-  const inputState = useMemo(() => decodeInputState(state), [state]);
+  const inputState = useMemo(() => decodeStoredInputState(state), [state]);
   const result = useMemo(
     () =>
       interpretScript(ast, {
@@ -89,20 +74,7 @@ export const collectActiveInputKeys = (
   inputState?: Record<string, unknown>
 ): Set<string> => {
   const keys = new Set<string>();
-  const decoded = inputState
-    ? Object.fromEntries(
-        Object.entries(inputState).map(([key, value]) => {
-          if (typeof value === 'string' && (value.startsWith('[') || value.startsWith('{'))) {
-            try {
-              return [key, JSON.parse(value)];
-            } catch {
-              return [key, value];
-            }
-          }
-          return [key, value];
-        })
-      )
-    : {};
+  const decoded = decodeStoredInputState(inputState);
   for (const source of sources) {
     try {
       const ast = cachedParse(source);

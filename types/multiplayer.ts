@@ -40,6 +40,8 @@ export type MarkdownInputState = Record<string, string | undefined>;
 
 export type PlayerActionValue = string | MarkdownInputState;
 
+export type VoteValue = string | string[];
+
 export type GameSchedule = {
   nightlyDeadlineTime?: string;
   actionDeadlineTime?: string;
@@ -88,11 +90,15 @@ export type PlayerNightSubmission = {
   dayIndex: number;
   playerEmail: string;
   playerUserId: string;
-  vote: string;
+  vote: VoteValue;
+  voteInputs?: MarkdownInputState;
+  voteInputKey?: string;
+  voteMultiplier?: number;
   action: PlayerActionValue;
   submittedVoteAt: number | null;
   submittedActionAt: number | null;
   /** Planned table updates computed from role message scripts at input time.
    * Stores partially-evaluated expressions that are executed at certify time. */
   plannedUpdates?: PlannedUpdate[];
+  votePlannedUpdates?: PlannedUpdate[];
 };

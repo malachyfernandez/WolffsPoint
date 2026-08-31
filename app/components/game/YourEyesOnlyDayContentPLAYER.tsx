@@ -3,7 +3,6 @@ import { Pressable, View } from 'react-native';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
 import FontText from '../ui/text/FontText';
-import AppDropdown from '../ui/forms/AppDropdown';
 import MarkdownRenderer, {
   MarkdownRendererInputDataProvider,
 } from '../ui/markdown/MarkdownRenderer';
@@ -12,11 +11,13 @@ import { useGameOperatorUserId } from '../../../hooks/useGameOperatorUserId';
 import { useSharedListValue } from '../../../hooks/useSharedListValue';
 import { useSharedVariableValue } from '../../../hooks/useSharedVariableValue';
 import { useValue } from '../../../hooks/useData';
-import { PlayerNightSubmission } from '../../../types/multiplayer';
-import { RoleTableItem } from '../../../types/roleTable';
+import { PlannedUpdate, PlayerNightSubmission } from '../../../types/multiplayer';
+import { DEFAULT_VOTE_MESSAGE, RoleTableItem } from '../../../types/roleTable';
 import { UserTableItem, UserTableTitle } from '../../../types/playerTable';
-import { planMarkdownScriptUpdates } from '../../../utils/runMarkdownScriptsWithUpdates';
-import { PlannedUpdate } from '../../../types/multiplayer';
+import {
+  inspectMarkdownVoteInput,
+  planMarkdownScriptUpdates,
+} from '../../../utils/runMarkdownScriptsWithUpdates';
 import {
   buildScheduledDate,
   defaultGameSchedule,
@@ -29,6 +30,7 @@ import {
   getDayReleaseDate,
   getGameScopedKey,
   getPlayerActionSummary,
+  normalizeVoteTargets,
   isDayContentReleased,
   isNightWindowOpen,
   normalizeGameSchedule,
@@ -99,6 +101,12 @@ const YourEyesOnlyDayContentPLAYER = ({
     defaultValue: [],
     userIds: operatorUserIds,
   });
+  const { value: defaultVoteMessage } = useSharedListValue<string>({
+    key: 'voteMessageDefault',
+    itemId: gameId,
+    defaultValue: DEFAULT_VOTE_MESSAGE,
+    userIds: operatorUserIds,
+  });
   const scheduleRecord = useSharedVariableValue({
     key: getGameScopedKey('gameSchedule', gameId),
     defaultValue: defaultGameSchedule,
@@ -108,7 +116,10 @@ const YourEyesOnlyDayContentPLAYER = ({
 
   const dayDates = useMemo(() => parseStoredDayDates(dayDateStrings), [dayDateStrings]);
   const currentDayIndex = useMemo(() => getCurrentPlayableDayIndex(dayDates), [dayDates]);
-  const schedule = normalizeGameSchedule(scheduleRecord.value ?? defaultGameSchedule);
+  const schedule = useMemo(
+    () => normalizeGameSchedule(scheduleRecord.value ?? defaultGameSchedule),
+    [scheduleRecord.value]
+  );
   const selectedDayEndDate = useMemo(
     () => getDayEndDate(dayDates, dayIndex, numberOfRealDaysPerInGameDay),
     [dayDates, dayIndex, numberOfRealDaysPerInGameDay]
@@ -125,6 +136,9 @@ const YourEyesOnlyDayContentPLAYER = ({
     [currentEmail, userTable]
   );
   const roleData = roleTable.value.find((roleItem) => roleItem.role === matchingPlayer?.role);
+  const voteMessage = roleData?.voteMessage?.trim()
+    ? roleData.voteMessage
+    : defaultVoteMessage || DEFAULT_VOTE_MESSAGE;
   const voteDeadlineTime =
     schedule.voteDeadlineTime ?? defaultGameSchedule.voteDeadlineTime ?? '22:00';
   const actionDeadlineTime =
@@ -157,12 +171,6 @@ const YourEyesOnlyDayContentPLAYER = ({
     }
   );
 
-  const voteOptions = userTable
-    .filter((user) => user.playerData.livingState !== 'dead')
-    .map((user) => ({
-      value: user.email,
-      label: user.realName || user.email,
-    }));
   const playerOptions = userTable.map((user) => ({
     value: user.realName,
     label: `${user.realName}${user.playerData.livingState === 'dead' ? ' (dead)' : ''}`,
@@ -211,6 +219,23 @@ const YourEyesOnlyDayContentPLAYER = ({
     () => normalizePlayerActionState(submission.value.action),
     [submission.value.action]
   );
+  const currentVoteState = useMemo(() => {
+    if (submission.value.voteInputs) return submission.value.voteInputs;
+    const targets = normalizeVoteTargets(submission.value.vote);
+    if (targets.length === 0 || targets[0] === 'SKIP_VOTE') return {};
+    return { Vote: targets.length === 1 ? targets[0] : JSON.stringify(targets) };
+  }, [submission.value.vote, submission.value.voteInputs]);
+  const currentVoteSummary = useMemo(
+    () =>
+      normalizeVoteTargets(submission.value.vote)
+        .map(
+          (target) =>
+            userTable.find((user) => user.email.toLowerCase() === target.toLowerCase())?.realName ||
+            target
+        )
+        .join(', '),
+    [submission.value.vote, userTable]
+  );
   const currentActionSummary = useMemo(
     () => getPlayerActionSummary(submission.value.action),
     [submission.value.action]
@@ -236,6 +261,8 @@ const YourEyesOnlyDayContentPLAYER = ({
       currentUserId,
       currentEmail,
       currentDay: dayIndex,
+      dayDates: dayDateStrings,
+      schedule,
       userTableTitle: titles,
       morningMessagesList: morningMessagesList,
     };
@@ -277,22 +304,69 @@ const YourEyesOnlyDayContentPLAYER = ({
     currentUserId,
     currentEmail,
     dayIndex,
+    dayDateStrings,
+    schedule,
     morningMessagesList,
+  ]);
+
+  const votePlannedUpdates = useMemo<PlannedUpdate[]>(() => {
+    if (isSkipVote || !userTable.length || !voteMessage.trim()) return [];
+    const hasInputs = Object.values(currentVoteState).some(
+      (value) => value !== undefined && value !== ''
+    );
+    if (!hasInputs) return [];
+    const { plannedUpdates, issues } = planMarkdownScriptUpdates(
+      voteMessage,
+      currentVoteState,
+      {
+        capability: 'player',
+        players: userTable,
+        roles: roleTable.value,
+        currentUserId,
+        currentEmail,
+        currentDay: dayIndex,
+        dayDates: dayDateStrings,
+        schedule,
+        userTableTitle,
+        morningMessagesList,
+      },
+      userTable,
+      userTableTitle,
+      morningMessagesList
+    );
+    if (issues.length > 0) console.warn('Vote message script issues:', issues);
+    return plannedUpdates;
+  }, [
+    currentEmail,
+    currentUserId,
+    currentVoteState,
+    dayIndex,
+    dayDateStrings,
+    isSkipVote,
+    schedule,
+    morningMessagesList,
+    roleTable.value,
+    userTable,
+    userTableTitle,
+    voteMessage,
   ]);
 
   // Persist planned updates into the submission whenever they change
   useEffect(() => {
-    const current = submission.value.plannedUpdates ?? [];
-    const newJson = JSON.stringify(plannedUpdates);
-    const curJson = JSON.stringify(current);
-    if (newJson !== curJson && (plannedUpdates.length > 0 || current.length > 0)) {
+    const currentActionUpdates = submission.value.plannedUpdates ?? [];
+    const currentVoteUpdates = submission.value.votePlannedUpdates ?? [];
+    if (
+      JSON.stringify(plannedUpdates) !== JSON.stringify(currentActionUpdates) ||
+      JSON.stringify(votePlannedUpdates) !== JSON.stringify(currentVoteUpdates)
+    ) {
       setSubmission({
         ...submission.value,
         plannedUpdates: plannedUpdates.length > 0 ? plannedUpdates : undefined,
+        votePlannedUpdates: votePlannedUpdates.length > 0 ? votePlannedUpdates : undefined,
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [plannedUpdates]);
+  }, [plannedUpdates, votePlannedUpdates]);
 
   // Format a planned update into a readable string for display
   const plannedUpdateSummaries = useMemo(() => {
@@ -423,38 +497,87 @@ const YourEyesOnlyDayContentPLAYER = ({
                     className="text-sm uppercase tracking-[0.24em] opacity-60">
                     Vote
                   </FontText>
-                  <AppDropdown
-                    options={voteOptions}
-                    value={isSkipVote ? '' : submission.value.vote}
-                    onValueChange={(value) => {
-                      if (isVoteLocked || roleData?.doesRoleVote === false || isSkipVote) {
-                        return;
+                  <MarkdownRendererInputDataProvider
+                    playerOptions={playerOptions}
+                    roleOptions={roleOptions}
+                    scriptSources={{
+                      capability: 'player',
+                      players: userTable,
+                      roles: roleTable.value,
+                      currentUserId,
+                      currentEmail,
+                      currentDay: dayIndex,
+                      dayDates: dayDateStrings,
+                      schedule,
+                      userTableTitle,
+                      morningMessagesList,
+                    }}>
+                    <MarkdownRenderer
+                      markdown={voteMessage}
+                      state={currentVoteState}
+                      setState={
+                        !isVoteLocked && roleData?.doesRoleVote !== false && !isSkipVote
+                          ? (nextState) => {
+                              const voteInput = inspectMarkdownVoteInput(voteMessage, nextState, {
+                                capability: 'player',
+                                players: userTable,
+                                roles: roleTable.value,
+                                currentUserId,
+                                currentEmail,
+                                currentDay: dayIndex,
+                                dayDates: dayDateStrings,
+                                schedule,
+                                userTableTitle,
+                                morningMessagesList,
+                              });
+                              const targets = voteInput
+                                ? normalizeVoteTargets(nextState[voteInput.key])
+                                : [];
+                              setSubmission({
+                                ...submission.value,
+                                vote:
+                                  targets.length > 1
+                                    ? targets
+                                    : targets.length === 1
+                                      ? targets[0]
+                                      : '',
+                                voteInputs: nextState,
+                                voteInputKey: voteInput?.key,
+                                voteMultiplier: voteInput?.multiplier ?? 1,
+                                submittedVoteAt: Date.now(),
+                              });
+                            }
+                          : undefined
                       }
-
-                      setSubmission({
-                        ...submission.value,
-                        vote: value,
-                        submittedVoteAt: Date.now(),
-                      });
-                    }}
-                    placeholder={
-                      roleData?.doesRoleVote === false
-                        ? 'This role does not vote'
-                        : isSkipVote
-                          ? 'Vote skipped'
-                          : 'Choose a player'
-                    }
-                    triggerClassName="rounded-2xl border border-border/15 bg-none px-4 py-4"
-                    contentClassName="border border-border/15"
-                    disabled={isVoteLocked || roleData?.doesRoleVote === false || isSkipVote}
-                  />
+                    />
+                  </MarkdownRendererInputDataProvider>
                   {canVote && (
                     <Pressable
                       onPress={() => {
                         if (isSkipVote) {
+                          const voteInput = inspectMarkdownVoteInput(
+                            voteMessage,
+                            currentVoteState,
+                            {
+                              capability: 'player',
+                              players: userTable,
+                              roles: roleTable.value,
+                              currentUserId,
+                              currentEmail,
+                              currentDay: dayIndex,
+                              dayDates: dayDateStrings,
+                              schedule,
+                              userTableTitle,
+                              morningMessagesList,
+                            }
+                          );
+                          const targets = voteInput
+                            ? normalizeVoteTargets(currentVoteState[voteInput.key])
+                            : [];
                           setSubmission({
                             ...submission.value,
-                            vote: '',
+                            vote: targets.length > 1 ? targets : targets[0] || '',
+                            voteMultiplier: voteInput?.multiplier ?? 1,
                             submittedVoteAt: Date.now(),
                           });
                         } else {
@@ -485,13 +608,13 @@ const YourEyesOnlyDayContentPLAYER = ({
               </ChainWraper>
               {isSkipVote ? (
                 <FontText variant="subtext">You have skipped your vote.</FontText>
-              ) : !!submission.value.vote ? (
-                <FontText variant="subtext">Saved vote: {submission.value.vote}</FontText>
+              ) : currentVoteSummary ? (
+                <FontText variant="subtext">Saved vote: {currentVoteSummary}</FontText>
               ) : roleData?.doesRoleVote === false ? (
                 <FontText variant="subtext">This role doesn&apos;t submit a vote.</FontText>
               ) : isVoteLocked ? (
                 <FontText variant="subtext">
-                  Saved vote: {submission.value.vote || 'No vote submitted.'}
+                  Saved vote: {currentVoteSummary || 'No vote submitted.'}
                 </FontText>
               ) : null}
             </>

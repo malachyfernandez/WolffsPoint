@@ -1,5 +1,6 @@
 import { interpretScript } from '../app/script/runtime/interpreter';
 import { createScriptGlobals, type ScriptSourceData } from '../app/script/runtime/sources';
+import { decodeStoredInputState } from '../app/script/runtime/values';
 import { TableUpdate } from '../app/script/registry';
 import { UserTableItem, UserTableTitle } from '../types/playerTable';
 import { MarkdownInputState, PlannedUpdate } from '../types/multiplayer';
@@ -53,18 +54,7 @@ const extractScriptBlocks = (markdown: string): string[] => {
  * Mirrors decodeInputState in ScriptRuntime.tsx.
  */
 const decodeInputState = (state: MarkdownInputState = {}): Record<string, unknown> =>
-  Object.fromEntries(
-    Object.entries(state).map(([key, value]) => {
-      if (value?.startsWith('[') || value?.startsWith('{')) {
-        try {
-          return [key, JSON.parse(value)];
-        } catch {
-          return [key, value];
-        }
-      }
-      return [key, value];
-    })
-  );
+  decodeStoredInputState(state);
 
 /**
  * Build a getCellValue function that reads from the current user table.
@@ -99,7 +89,7 @@ const buildGetCellValue = (
       }
       if (colLower === VOTE_COLUMN) {
         const day = user.days?.[dayIndex];
-        return day?.vote ?? '';
+        return Array.isArray(day?.vote) ? JSON.stringify(day.vote) : (day?.vote ?? '');
       }
       if (colLower === ACTION_COLUMN) {
         const day = user.days?.[dayIndex];
@@ -158,6 +148,33 @@ export const runMarkdownScriptsWithUpdates = (
   }
 
   return { updates: allUpdates, issues: allIssues };
+};
+
+export const inspectMarkdownVoteInput = (
+  markdown: string,
+  inputState: MarkdownInputState,
+  source: ScriptSourceData
+): { key: string; multiplier: number } | null => {
+  const globals = createScriptGlobals(source);
+  const decodedInputState = decodeInputState(inputState);
+
+  for (const scriptSource of extractScriptBlocks(markdown)) {
+    try {
+      const result = interpretScript(scriptSource, {
+        globals: { ...globals, Inputs: decodedInputState },
+        inputState: decodedInputState,
+      });
+      const voteInput = result.output.find((instruction) => instruction.props.voteInput === true);
+      if (voteInput) {
+        const multiplier = Number(voteInput.props.voteMultiplier ?? 1);
+        return { key: voteInput.key, multiplier: Number.isFinite(multiplier) ? multiplier : 1 };
+      }
+    } catch {
+      continue;
+    }
+  }
+
+  return null;
 };
 
 /**

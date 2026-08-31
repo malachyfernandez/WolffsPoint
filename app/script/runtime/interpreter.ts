@@ -19,6 +19,7 @@ import {
   NOTHING,
   runtimeEquals,
   toExternalValue,
+  toNumber,
   toRuntimeValue,
   type RuntimeFunction,
   type RuntimeValue,
@@ -112,6 +113,10 @@ class Environment {
 
   get(name: string): RuntimeValue {
     return this.values.get(normalize(name))?.value ?? this.parent?.get(name) ?? NOTHING;
+  }
+
+  has(name: string): boolean {
+    return this.values.has(normalize(name)) || this.parent?.has(name) === true;
   }
 
   snapshot(): Record<string, RuntimeValue> {
@@ -698,6 +703,12 @@ class Interpreter {
         case 'ErrorExpression':
           return NOTHING;
         case 'IdentifierExpression':
+          if (!environment.has(expression.name)) {
+            this.issues.push({
+              message: `Unknown variable or function: ${expression.name}`,
+              span: expression.span,
+            });
+          }
           return environment.get(expression.name);
         case 'ListExpression':
           return expression.items.map((item) => this.evaluate(item, environment, depth));
@@ -779,13 +790,22 @@ class Interpreter {
       return !runtimeEquals(left, right);
     }
     if (['>', '<', '>=', '<='].includes(operator)) {
-      if ((typeof left !== 'number' && typeof left !== 'string') || typeof left !== typeof right) {
-        return false;
+      // Scratch-style: try numeric comparison first, fall back to string
+      const ln = toNumber(left);
+      const rn = toNumber(right);
+      if (ln !== undefined && rn !== undefined) {
+        if (operator === '>') return ln > rn;
+        if (operator === '<') return ln < rn;
+        if (operator === '>=') return ln >= rn;
+        return ln <= rn;
       }
-      if (operator === '>') return left > right;
-      if (operator === '<') return left < right;
-      if (operator === '>=') return left >= right;
-      return left <= right;
+      // Fall back to string comparison
+      const ls = displayValue(left);
+      const rs = displayValue(right);
+      if (operator === '>') return ls > rs;
+      if (operator === '<') return ls < rs;
+      if (operator === '>=') return ls >= rs;
+      return ls <= rs;
     }
     if (operator === '+' && (typeof left === 'string' || typeof right === 'string')) {
       return displayValue(left) + displayValue(right);
@@ -1022,16 +1042,7 @@ class Interpreter {
   }
 
   private number(value: RuntimeValue): number | undefined {
-    if (typeof value === 'number') return Number.isFinite(value) ? value : undefined;
-    if (typeof value === 'boolean') return value ? 1 : 0;
-    if (typeof value === 'string') {
-      const trimmed = value.trim();
-      if (trimmed === '') return 0;
-      const parsed = Number(trimmed);
-      return Number.isFinite(parsed) ? parsed : undefined;
-    }
-    if (isNothing(value)) return 0;
-    return undefined;
+    return toNumber(value);
   }
 
   private namedArguments(

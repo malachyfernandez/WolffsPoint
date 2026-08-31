@@ -68,6 +68,7 @@ interface MarkdownEditorDialogProps {
    *  Pass false only for editors that support player input state (role messages,
    *  morning messages). */
   hideInputs?: boolean;
+  allowVoteInput?: boolean;
   isPreviewSideBySide?: boolean;
   includeTitle?: boolean;
   dialogSubtext?: string;
@@ -89,6 +90,7 @@ const ScriptEditorWithSources = ({
   initialScriptText,
   gameId,
   hideInputs,
+  allowVoteInput,
 }: {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
@@ -96,6 +98,7 @@ const ScriptEditorWithSources = ({
   initialScriptText?: string;
   gameId?: string;
   hideInputs?: boolean;
+  allowVoteInput?: boolean;
 }) => {
   const { scriptSources } = useMarkdownRendererInputData();
   return (
@@ -107,6 +110,7 @@ const ScriptEditorWithSources = ({
       initialScriptText={initialScriptText}
       gameId={gameId}
       hideInputs={hideInputs}
+      allowVoteInput={allowVoteInput}
     />
   );
 };
@@ -124,6 +128,7 @@ const MarkdownEditorDialog = ({
   showScript = false,
   showVariables = false,
   hideInputs = true,
+  allowVoteInput = false,
   isPreviewSideBySide = false,
   includeTitle = false,
   dialogSubtext,
@@ -369,7 +374,9 @@ const MarkdownEditorDialog = ({
                 onScript={showScript ? handleScript : undefined}
                 onVariable={showVariables ? handleVariable : undefined}
                 centered={centered}
-                showPreviewAsPlayer={showPreviewAsPlayerOption && findScriptBlocks(draftBody).length > 0}
+                showPreviewAsPlayer={
+                  showPreviewAsPlayerOption && findScriptBlocks(draftBody).length > 0
+                }
                 onPreviewAsPlayer={handlePreviewAsPlayer}
               />
               <Row className="-mx-3 items-center justify-between gap-4 pt-4 sm:mx-0">
@@ -440,6 +447,7 @@ const MarkdownEditorDialog = ({
           initialScriptText={editingScriptBlock?.content}
           gameId={gameId}
           hideInputs={hideInputs}
+          allowVoteInput={allowVoteInput}
         />
       </InputOptionsProvider>
 

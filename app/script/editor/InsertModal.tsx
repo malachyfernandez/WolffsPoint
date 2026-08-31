@@ -102,6 +102,7 @@ interface InsertModalProps {
   /** When true, input-creating blocks (select, text, number, checkbox) are hidden.
    *  Used for tag trigger scripts which have no input state storage. */
   hideInputs?: boolean;
+  allowVoteInput?: boolean;
   /** When true, the editor is configured for tag trigger scripts.
    *  Hides irrelevant data sources (currentDay, Inputs, etc.) and shows
    *  trigger-specific ones (placedTag, placedUser, placedDay, placedColumn). */
@@ -427,7 +428,12 @@ const CHAIN_WRAPPING_UNARY_OPERATORS: {
     category: 'boolean',
   },
   { label: 'negate', operator: '-', description: 'Negate a number', category: 'math' },
-  { label: 'positive', operator: '+', description: 'Convert a value to a number', category: 'math' },
+  {
+    label: 'positive',
+    operator: '+',
+    description: 'Convert a value to a number',
+    category: 'math',
+  },
 ];
 
 interface ModalItem {
@@ -508,7 +514,7 @@ const ModalItemRow = ({
       onPress={() => !item.disabledReason && onSelect()}
       onHoverIn={() => item.disabledReason && setHovered(true)}
       onHoverOut={() => setHovered(false)}
-      className={`relative border-subtle-border rounded-lg border px-3 py-2 ${
+      className={`border-subtle-border relative rounded-lg border px-3 py-2 ${
         item.disabledReason
           ? 'opacity-40'
           : item.isSavedMatch
@@ -521,7 +527,7 @@ const ModalItemRow = ({
             e.stopPropagation();
             item.onUnsave?.();
           }}
-          className="absolute right-1 top-1 z-10 h-6 w-6 items-center justify-center rounded-full bg-text/10 hover:bg-red-500/20">
+          className="bg-text/10 absolute right-1 top-1 z-10 h-6 w-6 items-center justify-center rounded-full hover:bg-red-500/20">
           <X size={14} color="rgb(46, 41, 37)" />
         </Pressable>
       )}
@@ -559,6 +565,7 @@ const InsertModal = ({
   onInsertBuiltinFunction,
   hideBuiltinFunctions,
   hideInputs,
+  allowVoteInput = false,
   isTriggerContext,
   gameId,
   savedFunctions,
@@ -831,9 +838,7 @@ const InsertModal = ({
               skipCloseOnSelect: true,
               previewExpression: callExpression,
               previewDefinedFunctions: previewFnDef ? [previewFnDef] : undefined,
-              onUnsave: onUnsaveFunction
-                ? () => setUnsaveConfirm(saved.name)
-                : undefined,
+              onUnsave: onUnsaveFunction ? () => setUnsaveConfirm(saved.name) : undefined,
               onSelect: () => {
                 setPendingBuiltin({ fnStatement, callExpression });
                 if (hasSeenBuiltinInfo) {
@@ -938,7 +943,7 @@ const InsertModal = ({
       // Cross-category duplicates: blocks that naturally belong in multiple tabs.
       // These are copies of existing items with a different category so users
       // can find them where they'd expect them, regardless of the primary tab.
-      ...(CROSS_CATEGORY_BLOCKS.map(({ blockId, category }) => {
+      ...CROSS_CATEGORY_BLOCKS.map(({ blockId, category }) => {
         const block = EXPRESSION_BLOCKS.find((b) => b.id === blockId);
         if (!block) return null;
         return {
@@ -948,7 +953,7 @@ const InsertModal = ({
           previewExpression: buildMethodExpression(block.id),
           onSelect: () => selectExpression(buildMethodExpression(block.id)),
         } as ModalItem;
-      }).filter((item): item is ModalItem => item !== null)),
+      }).filter((item): item is ModalItem => item !== null),
     ];
     const booleanItems: ModalItem[] = [
       {
@@ -1272,6 +1277,9 @@ const InsertModal = ({
     if (hideInputs) {
       result = result.filter((item) => item.category !== 'input');
     }
+    if (!allowVoteInput) {
+      result = result.filter((item) => item.label !== 'CreateSelectVoteInput');
+    }
     if (isTriggerContext) {
       // Trigger scripts can't display content or use inputs
       result = result.filter((item) => item.category !== 'input' && item.category !== 'display');
@@ -1288,7 +1296,7 @@ const InsertModal = ({
       (item) =>
         item.label.toLowerCase().includes(query) || item.description.toLowerCase().includes(query)
     );
-  }, [items, search, hideInputs, isTriggerContext, entryKeysBySource]);
+  }, [items, search, hideInputs, allowVoteInput, isTriggerContext, entryKeysBySource]);
 
   const grouped = useMemo(() => {
     const groups = filtered.reduce<Record<string, ModalItem[]>>((acc, item) => {
@@ -1333,173 +1341,175 @@ const InsertModal = ({
 
   return (
     <>
-    <ConvexDialog.Root
-      isOpen={isOpen}
-      onOpenChange={(open: boolean) => {
-        if (!open) onClose();
-      }}>
-      <ConvexDialog.Trigger asChild>
-        <View />
-      </ConvexDialog.Trigger>
-      <ConvexDialog.Portal>
-        <ConvexDialog.Overlay />
-        <ConvexDialog.Content className="h-[85vh] max-w-md">
-          <CloseButton onPress={onClose} />
-          <Column className="min-h-0 flex-1 gap-3 pt-3">
-            <FontText weight="medium" className="text-base">
-              {target?.mode === 'swap'
-                ? `Swap ${target.kind === 'statement' ? 'Block' : 'Expression'}${target.swapLabel ? `: ${target.swapLabel}` : ''}`
-                : target?.kind === 'statement'
-                  ? 'Add Block'
-                  : target?.kind === 'chainInsert'
-                    ? 'Add Chain Link'
-                    : 'Add Expression'}
-            </FontText>
-            {target?.mode === 'swap' && (
-              <AppButton
-                variant="red"
-                className="h-9 w-full"
-                dropShadow={false}
-                onPress={() => {
-                  onRemove(target);
-                  onClose();
-                }}>
-                <FontText weight="bold" className="text-sm text-red-500">
-                  Remove
-                </FontText>
-              </AppButton>
-            )}
-            <TextInput
-              ref={searchInputRef}
-              value={search}
-              onChangeText={setSearch}
-              placeholder="Search..."
-              placeholderTextColor="#0004"
-              className="bg-text/10 rounded-lg px-3 py-2 text-sm"
-              autoCapitalize="none"
-              autoCorrect={false}
-            />
-            {!search.trim() && categoryOrder.length > 1 && (
-              <Row className="flex-wrap gap-1">
-                {categoryOrder.map((category) => (
-                  <Pressable
-                    key={category}
-                    onPress={() => setActiveCategory(category)}
-                    className={`rounded-lg px-3 py-1.5 ${effectiveCategory === category ? 'bg-accent' : 'bg-text/10'}`}>
-                    <FontText
-                      className="text-xs"
-                      color={effectiveCategory === category ? 'white' : undefined}>
-                      {CATEGORY_LABELS[category] ?? category}
-                    </FontText>
-                  </Pressable>
-                ))}
-              </Row>
-            )}
-            <ShadowScrollView
-              className="min-h-0 flex-1"
-              contentContainerStyle={{ gap: 6 }}
-              nestedScrollEnabled>
-              {visibleItems.map((item, index) => (
-                <React.Fragment key={`${item.category}-${item.label}-${index}`}>
-                  <ModalItemRow
-                    item={item}
-                    onSelect={() => handleSelect(item)}
-                    entryKeysBySource={entryKeysBySource}
-                    definedFunctions={definedFunctions}
-                    definedVariables={definedVariables}
-                    isTriggerContext={isTriggerContext}
-                  />
-                  {item.dividerAfter && (
-                    <View className="border-subtle-border my-1 h-px border-t" />
-                  )}
-                </React.Fragment>
-              ))}
-              {visibleItems.length === 0 && (
-                <FontText variant="subtext" className="py-4 text-center">
-                  No matching blocks
-                </FontText>
-              )}
-            </ShadowScrollView>
-          </Column>
-        </ConvexDialog.Content>
-      </ConvexDialog.Portal>
-
-      {/* First-time explanation dialog for built-in functions */}
       <ConvexDialog.Root
-        isOpen={showBuiltinInfo}
+        isOpen={isOpen}
         onOpenChange={(open: boolean) => {
-          if (!open) {
-            setShowBuiltinInfo(false);
-            setPendingBuiltin(null);
-          }
+          if (!open) onClose();
         }}>
+        <ConvexDialog.Trigger asChild>
+          <View />
+        </ConvexDialog.Trigger>
         <ConvexDialog.Portal>
           <ConvexDialog.Overlay />
-          <ConvexDialog.Content className="max-w-md">
-            <CloseButton
-              onPress={() => {
-                setShowBuiltinInfo(false);
-                setPendingBuiltin(null);
-              }}
-            />
-            <Column className="gap-3 pt-3">
+          <ConvexDialog.Content className="h-[85vh] max-w-md">
+            <CloseButton onPress={onClose} />
+            <Column className="min-h-0 flex-1 gap-3 pt-3">
               <FontText weight="medium" className="text-base">
-                Built-in Functions
+                {target?.mode === 'swap'
+                  ? `Swap ${target.kind === 'statement' ? 'Block' : 'Expression'}${target.swapLabel ? `: ${target.swapLabel}` : ''}`
+                  : target?.kind === 'statement'
+                    ? 'Add Block'
+                    : target?.kind === 'chainInsert'
+                      ? 'Add Chain Link'
+                      : 'Add Expression'}
               </FontText>
-              <FontText variant="subtext" className="text-sm leading-5">
-                This adds the full function code to your script so you can edit it. It then works
-                like any custom function.
-              </FontText>
-              <Row className="gap-2">
+              {target?.mode === 'swap' && (
                 <AppButton
-                  variant="accent"
-                  className="flex-1"
+                  variant="red"
+                  className="h-9 w-full"
+                  dropShadow={false}
                   onPress={() => {
-                    if (pendingBuiltin && target) {
-                      onInsertBuiltinFunction(
-                        pendingBuiltin.fnStatement,
-                        pendingBuiltin.callExpression,
-                        target
-                      );
-                    }
-                    setHasSeenBuiltinInfo(true);
-                    AsyncStorage.setItem(BUILTIN_INFO_SEEN_KEY, 'true');
-                    setShowBuiltinInfo(false);
-                    setPendingBuiltin(null);
+                    onRemove(target);
                     onClose();
                   }}>
-                  <FontText weight="medium" color="white">
-                    Add function
+                  <FontText weight="bold" className="text-sm text-red-500">
+                    Remove
                   </FontText>
                 </AppButton>
-                <AppButton
-                  variant="secondary"
-                  className="flex-1"
-                  onPress={() => {
-                    setShowBuiltinInfo(false);
-                    setPendingBuiltin(null);
-                  }}>
-                  <FontText weight="medium">Cancel</FontText>
-                </AppButton>
-              </Row>
+              )}
+              <TextInput
+                ref={searchInputRef}
+                value={search}
+                onChangeText={setSearch}
+                placeholder="Search..."
+                placeholderTextColor="#0004"
+                className="bg-text/10 rounded-lg px-3 py-2 text-sm"
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+              {!search.trim() && categoryOrder.length > 1 && (
+                <Row className="flex-wrap gap-1">
+                  {categoryOrder.map((category) => (
+                    <Pressable
+                      key={category}
+                      onPress={() => setActiveCategory(category)}
+                      className={`rounded-lg px-3 py-1.5 ${effectiveCategory === category ? 'bg-accent' : 'bg-text/10'}`}>
+                      <FontText
+                        className="text-xs"
+                        color={effectiveCategory === category ? 'white' : undefined}>
+                        {CATEGORY_LABELS[category] ?? category}
+                      </FontText>
+                    </Pressable>
+                  ))}
+                </Row>
+              )}
+              <ShadowScrollView
+                className="min-h-0 flex-1"
+                contentContainerStyle={{ gap: 6 }}
+                nestedScrollEnabled>
+                {visibleItems.map((item, index) => (
+                  <React.Fragment key={`${item.category}-${item.label}-${index}`}>
+                    <ModalItemRow
+                      item={item}
+                      onSelect={() => handleSelect(item)}
+                      entryKeysBySource={entryKeysBySource}
+                      definedFunctions={definedFunctions}
+                      definedVariables={definedVariables}
+                      isTriggerContext={isTriggerContext}
+                    />
+                    {item.dividerAfter && (
+                      <View className="border-subtle-border my-1 h-px border-t" />
+                    )}
+                  </React.Fragment>
+                ))}
+                {visibleItems.length === 0 && (
+                  <FontText variant="subtext" className="py-4 text-center">
+                    No matching blocks
+                  </FontText>
+                )}
+              </ShadowScrollView>
             </Column>
           </ConvexDialog.Content>
         </ConvexDialog.Portal>
-      </ConvexDialog.Root>
-    </ConvexDialog.Root>
 
-    <ConfirmDialog
-      isOpen={unsaveConfirm !== null}
-      onOpenChange={(open) => { if (!open) setUnsaveConfirm(null); }}
-      onConfirm={() => {
-        if (unsaveConfirm && onUnsaveFunction) onUnsaveFunction(unsaveConfirm);
-        setUnsaveConfirm(null);
-      }}
-      title="Remove Saved Function"
-      message={`Remove this function from your saved functions? It won't affect any scripts already using it.`}
-      confirmLabel="Remove"
-      danger
-    />
+        {/* First-time explanation dialog for built-in functions */}
+        <ConvexDialog.Root
+          isOpen={showBuiltinInfo}
+          onOpenChange={(open: boolean) => {
+            if (!open) {
+              setShowBuiltinInfo(false);
+              setPendingBuiltin(null);
+            }
+          }}>
+          <ConvexDialog.Portal>
+            <ConvexDialog.Overlay />
+            <ConvexDialog.Content className="max-w-md">
+              <CloseButton
+                onPress={() => {
+                  setShowBuiltinInfo(false);
+                  setPendingBuiltin(null);
+                }}
+              />
+              <Column className="gap-3 pt-3">
+                <FontText weight="medium" className="text-base">
+                  Built-in Functions
+                </FontText>
+                <FontText variant="subtext" className="text-sm leading-5">
+                  This adds the full function code to your script so you can edit it. It then works
+                  like any custom function.
+                </FontText>
+                <Row className="gap-2">
+                  <AppButton
+                    variant="accent"
+                    className="flex-1"
+                    onPress={() => {
+                      if (pendingBuiltin && target) {
+                        onInsertBuiltinFunction(
+                          pendingBuiltin.fnStatement,
+                          pendingBuiltin.callExpression,
+                          target
+                        );
+                      }
+                      setHasSeenBuiltinInfo(true);
+                      AsyncStorage.setItem(BUILTIN_INFO_SEEN_KEY, 'true');
+                      setShowBuiltinInfo(false);
+                      setPendingBuiltin(null);
+                      onClose();
+                    }}>
+                    <FontText weight="medium" color="white">
+                      Add function
+                    </FontText>
+                  </AppButton>
+                  <AppButton
+                    variant="secondary"
+                    className="flex-1"
+                    onPress={() => {
+                      setShowBuiltinInfo(false);
+                      setPendingBuiltin(null);
+                    }}>
+                    <FontText weight="medium">Cancel</FontText>
+                  </AppButton>
+                </Row>
+              </Column>
+            </ConvexDialog.Content>
+          </ConvexDialog.Portal>
+        </ConvexDialog.Root>
+      </ConvexDialog.Root>
+
+      <ConfirmDialog
+        isOpen={unsaveConfirm !== null}
+        onOpenChange={(open) => {
+          if (!open) setUnsaveConfirm(null);
+        }}
+        onConfirm={() => {
+          if (unsaveConfirm && onUnsaveFunction) onUnsaveFunction(unsaveConfirm);
+          setUnsaveConfirm(null);
+        }}
+        title="Remove Saved Function"
+        message={`Remove this function from your saved functions? It won't affect any scripts already using it.`}
+        confirmLabel="Remove"
+        danger
+      />
     </>
   );
 };

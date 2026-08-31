@@ -63,7 +63,7 @@ export const runScriptWithUpdates = (
       }
       if (colLower === VOTE_COLUMN) {
         const day = user.days?.[dayIndex];
-        return day?.vote ?? '';
+        return Array.isArray(day?.vote) ? JSON.stringify(day.vote) : (day?.vote ?? '');
       }
       if (colLower === ACTION_COLUMN) {
         const day = user.days?.[dayIndex];

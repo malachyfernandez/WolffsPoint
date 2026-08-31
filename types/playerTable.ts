@@ -1,4 +1,4 @@
-import { PlayerActionValue } from './multiplayer';
+import { MarkdownInputState, PlayerActionValue, VoteValue } from './multiplayer';
 
 export type PlayerData = {
   livingState: 'alive' | 'dead';
@@ -6,7 +6,9 @@ export type PlayerData = {
 };
 
 export type DayData = {
-  vote?: string;
+  vote?: VoteValue;
+  voteInputs?: MarkdownInputState;
+  voteInputKey?: string;
   voteMultiplier?: number;
   action?: PlayerActionValue;
   extraColumns?: string[];

@@ -117,7 +117,11 @@ const MultiSelectDropdown = ({
                       disabled={atLimit}
                       onPress={() => toggle(option.value)}
                       className={`flex-row items-center gap-3 rounded-lg px-3 py-2.5 ${isSelected ? 'bg-text/5' : atLimit ? 'opacity-40' : ''}`}>
-                      <CustomCheckbox checked={isSelected} onChange={() => {}} monochrome />
+                      <CustomCheckbox
+                        checked={isSelected}
+                        onChange={() => toggle(option.value)}
+                        monochrome
+                      />
                       <FontText>{option.label}</FontText>
                     </Pressable>
                   );

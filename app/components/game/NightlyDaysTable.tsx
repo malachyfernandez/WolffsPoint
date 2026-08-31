@@ -20,6 +20,7 @@ import {
   defaultPlayerPageColumnSizes,
   getPlayerPageColumnSizesKey,
 } from './playerTableColumnSizing';
+import { VoteValue } from '../../../types/multiplayer';
 
 interface NightlyDaysTableProps {
   gameId: string;
@@ -153,7 +154,7 @@ const NightlyDaysTable = ({
 
   const users = userTable?.value ?? [];
 
-  const setVoteValue = (userIndex: number, newVoteValue: string, voteMultiplier: number) => {
+  const setVoteValue = (userIndex: number, newVoteValue: VoteValue, voteMultiplier: number) => {
     const updatedUsers = [...users];
     if (userIndex >= 0 && userIndex < updatedUsers.length) {
       const user = updatedUsers[userIndex];
@@ -180,7 +181,7 @@ const NightlyDaysTable = ({
 
   const UNDOABLEsetVoteValue = (
     userIndex: number,
-    newVoteValue: string,
+    newVoteValue: VoteValue,
     voteMultiplier: number
   ) => {
     const previousUserTable = createUndoSnapshot(userTable?.value ?? []);

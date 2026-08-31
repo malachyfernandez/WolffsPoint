@@ -12,6 +12,7 @@ import { UserTableItem } from '../../../types/playerTable';
 import {
   getGameScopedKey,
   normalizeGameSchedule,
+  normalizeVoteTargets,
   defaultGameSchedule,
 } from '../../../utils/multiplayer';
 import ConvexDialog from '../ui/dialog/ConvexDialog';
@@ -300,27 +301,27 @@ const NewspaperPreviousDayVoteSummary = ({
     const targetDay = dayIndex - 1;
 
     players.forEach((player) => {
-      const vote = player.days?.[targetDay]?.vote?.trim() ?? '';
-      if (!vote) {
-        return;
-      }
+      const votes = normalizeVoteTargets(player.days?.[targetDay]?.vote);
+      if (votes.length === 0) return;
 
       const multiplier = player.days?.[targetDay]?.voteMultiplier ?? 1;
 
-      if (vote === 'SKIP_VOTE') {
+      if (votes.length === 1 && votes[0] === 'SKIP_VOTE') {
         skipVotes += 1;
         skipVoterList.push(player);
         return;
       }
 
-      const voteKey = vote.toLowerCase();
-      voteCounts.set(voteKey, (voteCounts.get(voteKey) ?? 0) + multiplier);
-      const existing = votersMap.get(voteKey);
-      if (existing) {
-        existing.push(player);
-      } else {
-        votersMap.set(voteKey, [player]);
-      }
+      votes.forEach((vote) => {
+        const voteKey = vote.toLowerCase();
+        voteCounts.set(voteKey, (voteCounts.get(voteKey) ?? 0) + multiplier);
+        const existing = votersMap.get(voteKey);
+        if (existing) {
+          existing.push(player);
+        } else {
+          votersMap.set(voteKey, [player]);
+        }
+      });
     });
 
     const rows = players

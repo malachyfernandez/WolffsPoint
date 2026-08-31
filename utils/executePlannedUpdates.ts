@@ -102,7 +102,11 @@ const getCellInfo = (
     }
     if (colLower === VOTE_COLUMN) {
       const day = user.days?.[dayIndex];
-      return { cellValue: day?.vote ?? '', colIdx: -3, isDayColumn: true };
+      return {
+        cellValue: Array.isArray(day?.vote) ? JSON.stringify(day.vote) : (day?.vote ?? ''),
+        colIdx: -3,
+        isDayColumn: true,
+      };
     }
     if (colLower === ACTION_COLUMN) {
       const day = user.days?.[dayIndex];
