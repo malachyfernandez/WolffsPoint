@@ -1419,6 +1419,11 @@ const InsertModal = ({
           break;
         }
       }
+      // If inputs have been added to the script, suggest the input data source
+      const inputKeys = entryKeysBySource?.Inputs ?? entryKeysBySource?.InputsWithData ?? [];
+      if (inputKeys.length > 0 && !labels.includes('InputsWithData')) {
+        labels = ['InputsWithData', ...labels];
+      }
     } else {
       return []; // statement targets get no suggested tab
     }
