@@ -6,6 +6,7 @@ import UnsavedChangesDialog from '../../components/ui/dialog/UnsavedChangesDialo
 import Column from '../../components/layout/Column';
 import Row from '../../components/layout/Row';
 import AppButton from '../../components/ui/buttons/AppButton';
+import KeyCap from '../../components/ui/KeyCap';
 import FontText from '../../components/ui/text/FontText';
 import ShadowScrollView from '../../components/ui/ShadowScrollView';
 import { CloseButton } from '../../components/game/markdownEditor';
@@ -45,6 +46,7 @@ import { useTooltip } from './useTooltip';
 import type { EntryKeysBySource } from './typeInference';
 import { useUndoRedo, useCreateUndoSnapshot } from '../../../hooks/useUndoRedo';
 import { useSavedFunctions } from '../../../hooks/useSavedFunctions';
+import { useToast } from '../../../contexts/ToastContext';
 
 interface ScriptEditorDialogProps {
   isOpen: boolean;
@@ -536,6 +538,40 @@ const ScriptEditorDialog = ({
   const [decoupledFunctions, setDecoupledFunctions] = useState<string[]>([]);
   const [nameCollision, setNameCollision] = useState<string | null>(null);
   const { savedFunctions, savedFunctionNames, saveFunction, unsaveFunction } = useSavedFunctions();
+  const { showToast } = useToast();
+  const moveTooltipId = React.useId();
+  const cloneTooltipId = React.useId();
+  const placeTooltipId = React.useId();
+  const moveTooltipContent = useMemo(
+    () => (
+      <>
+        Move
+        <KeyCap>M</KeyCap>
+      </>
+    ),
+    []
+  );
+  const cloneTooltipContent = useMemo(
+    () => (
+      <>
+        Clone
+        <KeyCap>C</KeyCap>
+      </>
+    ),
+    []
+  );
+  const placeTooltipContent = useMemo(
+    () => (
+      <>
+        Place
+        <KeyCap>P</KeyCap>
+      </>
+    ),
+    []
+  );
+  const { setHovered: setMoveHovered } = useTooltip(moveTooltipId, moveTooltipContent);
+  const { setHovered: setCloneHovered } = useTooltip(cloneTooltipId, cloneTooltipContent);
+  const { setHovered: setPlaceHovered } = useTooltip(placeTooltipId, placeTooltipContent);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -598,17 +634,20 @@ const ScriptEditorDialog = ({
     [createUndoSnapshot, executeCommand]
   );
 
-  const startMoveSession = (operation: 'move' | 'clone') => {
-    setInsertTarget(null);
-    setMoveSession({
-      operation,
-      phase: 'collect',
-      category: null,
-      baseline: createUndoSnapshot(state.ast),
-      selections: [],
-      nextNumber: 1,
-    });
-  };
+  const startMoveSession = useCallback(
+    (operation: 'move' | 'clone') => {
+      setInsertTarget(null);
+      setMoveSession({
+        operation,
+        phase: 'collect',
+        category: null,
+        baseline: createUndoSnapshot(state.ast),
+        selections: [],
+        nextNumber: 1,
+      });
+    },
+    [createUndoSnapshot, state.ast]
+  );
 
   const cancelMoveSession = () => {
     if (moveSession) dispatch({ type: 'SET_AST', ast: moveSession.baseline });
@@ -691,6 +730,49 @@ const ScriptEditorDialog = ({
     () => (moveSession ? composeShelfExpression(moveSession.selections) : null),
     [moveSession]
   );
+  const placeDisabledReason = moveSession
+    ? moveSession.selections.length === 0
+      ? 'Select something to place first.'
+      : moveSession.category === 'expression' && !shelfExpression
+        ? "These expressions can't be combined into one. Return one and try again."
+        : null
+    : null;
+  const handleEnterPlacePhase = useCallback(() => {
+    if (!moveSession) return;
+    if (placeDisabledReason) {
+      showToast(placeDisabledReason);
+      return;
+    }
+    setMoveSession((current) => (current ? { ...current, phase: 'place' } : current));
+  }, [moveSession, placeDisabledReason, showToast]);
+
+  useEffect(() => {
+    if (!isOpen || mode !== 'blocks' || typeof window === 'undefined') return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.repeat || event.metaKey || event.ctrlKey || event.altKey) return;
+
+      const target = event.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)
+      ) {
+        return;
+      }
+
+      const key = event.key.toLowerCase();
+      if (!moveSession && (key === 'm' || key === 'c')) {
+        event.preventDefault();
+        startMoveSession(key === 'm' ? 'move' : 'clone');
+      } else if (key === 'p' && moveSession?.phase === 'collect') {
+        event.preventDefault();
+        handleEnterPlacePhase();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleEnterPlacePhase, isOpen, mode, moveSession, startMoveSession]);
 
   const canPlaceExpression = useCallback(
     (target: { location: ExpressionLocation; linkIndex?: number }) => {
@@ -1361,40 +1443,44 @@ const ScriptEditorDialog = ({
                           dropShadow={false}>
                           <FontText className="text-sm">Cancel</FontText>
                         </AppButton>
-                        <AppButton
-                          variant="filled"
-                          className="h-8 px-3"
-                          disabled={
-                            moveSession.selections.length === 0 ||
-                            (moveSession.category === 'expression' && !shelfExpression)
-                          }
-                          onPress={() =>
-                            setMoveSession((current) =>
-                              current ? { ...current, phase: 'place' } : current
-                            )
-                          }
-                          dropShadow={false}>
-                          <FontText className="text-sm" color="white">
-                            Place
-                          </FontText>
-                        </AppButton>
+                        <View
+                          onPointerEnter={() => setPlaceHovered(true)}
+                          onPointerLeave={() => setPlaceHovered(false)}>
+                          <AppButton
+                            variant="filled"
+                            className={`h-8 px-3 ${placeDisabledReason ? 'opacity-50' : ''}`}
+                            onPress={handleEnterPlacePhase}
+                            dropShadow={false}>
+                            <FontText className="text-sm" color="white">
+                              Place
+                            </FontText>
+                          </AppButton>
+                        </View>
                       </>
                     ) : (
                       <>
-                        <AppButton
-                          variant="outline"
-                          className="h-8 px-3"
-                          onPress={() => startMoveSession('move')}
-                          dropShadow={false}>
-                          <FontText className="text-sm">Move</FontText>
-                        </AppButton>
-                        <AppButton
-                          variant="outline"
-                          className="h-8 px-3"
-                          onPress={() => startMoveSession('clone')}
-                          dropShadow={false}>
-                          <FontText className="text-sm">Clone</FontText>
-                        </AppButton>
+                        <View
+                          onPointerEnter={() => setMoveHovered(true)}
+                          onPointerLeave={() => setMoveHovered(false)}>
+                          <AppButton
+                            variant="outline"
+                            className="h-8 px-3"
+                            onPress={() => startMoveSession('move')}
+                            dropShadow={false}>
+                            <FontText className="text-sm">Move</FontText>
+                          </AppButton>
+                        </View>
+                        <View
+                          onPointerEnter={() => setCloneHovered(true)}
+                          onPointerLeave={() => setCloneHovered(false)}>
+                          <AppButton
+                            variant="outline"
+                            className="h-8 px-3"
+                            onPress={() => startMoveSession('clone')}
+                            dropShadow={false}>
+                            <FontText className="text-sm">Clone</FontText>
+                          </AppButton>
+                        </View>
                       </>
                     ))}
                 </Row>
