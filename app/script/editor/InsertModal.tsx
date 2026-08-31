@@ -631,8 +631,8 @@ const InsertModal = ({
         ...CONTROL_TEMPLATES.filter((template) => {
           // OnTagAdded/OnTagRemoved are only available at the trigger root level
           if (template.triggerOnly === true) return isTriggerRootLevel;
-          // On Certify is only in non-trigger context
-          if (template.triggerOnly === false) return !isTriggerContext;
+          // On Certify is only in non-trigger context, and only when inputs are allowed
+          if (template.triggerOnly === false) return !isTriggerContext && !hideInputs;
           // Update Cell (trigger variant) is only inside trigger blocks
           if (template.triggerOnly === 'inside') {
             return isTriggerContext && !isTriggerRootLevel;
