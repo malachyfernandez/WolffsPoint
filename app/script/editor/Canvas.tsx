@@ -135,6 +135,10 @@ export interface MoveToolControls {
   onReturn: (number: number) => void;
   canPlaceExpression: (target: { location: ExpressionLocation; linkIndex?: number }) => boolean;
   onPlaceExpression: (target: { location: ExpressionLocation; linkIndex?: number }) => void;
+  onRequestExpressionSwap: (target: {
+    location: ExpressionLocation;
+    expression: Expression;
+  }) => void;
   onPlaceBlock: (path: number[]) => void;
 }
 
@@ -271,10 +275,17 @@ const Swapable = ({
     moveTool.phase === 'collect' &&
     !!moveKind &&
     (moveTool.category === null || moveTool.category === moveKind);
+  const canPlaceWhole =
+    !!moveTool &&
+    moveTool.phase === 'place' &&
+    moveTarget?.kind === 'whole' &&
+    moveTool.canPlaceExpression({ location: moveTarget.location });
   const id = useId();
   const action = moveTool
     ? moveTool.phase === 'place'
-      ? undefined
+      ? canPlaceWhole
+        ? 'Swap here'
+        : undefined
       : `${moveTool.operation === 'move' ? 'Move' : 'Clone'} ${label}`
     : (tooltipText ?? `Change ${label}`);
   const { hovered, setHovered } = useTooltip(id, action);
@@ -328,6 +339,21 @@ const Swapable = ({
             moveTool.onPickBlock(moveTarget.path, moveTarget.statement);
           else moveTool.onPickExpression(moveTarget);
         },
+        onClickCapture: (e: MouseEvent) => {
+          if (!canPlaceWhole || moveTarget?.kind !== 'whole') return;
+          const target = e.target as HTMLElement;
+          const current = e.currentTarget as HTMLElement;
+          const selector = moveTool?.category
+            ? `[data-move-kind="${moveTool.category}"]`
+            : '[data-swapable]';
+          if (target.closest(selector) !== current) return;
+          e.preventDefault();
+          e.stopPropagation();
+          moveTool?.onRequestExpressionSwap({
+            location: moveTarget.location,
+            expression: moveTarget.expression,
+          });
+        },
         onMouseOver: (e: MouseEvent) => {
           const target = e.target as HTMLElement;
           const current = e.currentTarget as HTMLElement;
@@ -339,7 +365,7 @@ const Swapable = ({
           if (
             (interactiveEl && !moveTool) ||
             (swapableEl && swapableEl !== current) ||
-            (!canPick && moveTool)
+            (!canPick && !canPlaceWhole && moveTool)
           ) {
             setHovered(false);
           } else {
@@ -360,7 +386,16 @@ const Swapable = ({
           const swapableEl = target.closest(selector);
           const interactiveEl = target.closest(INTERACTIVE_SELECTOR);
           if ((interactiveEl && !moveTool) || (swapableEl && swapableEl !== current)) return;
-          if (moveTool) return;
+          if (moveTool) {
+            if (!canPlaceWhole || moveTarget?.kind !== 'whole') return;
+            e.preventDefault();
+            e.stopPropagation();
+            moveTool.onRequestExpressionSwap({
+              location: moveTarget.location,
+              expression: moveTarget.expression,
+            });
+            return;
+          }
           e.preventDefault();
           e.stopPropagation();
           onSwap();

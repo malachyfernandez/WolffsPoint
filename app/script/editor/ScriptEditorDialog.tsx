@@ -12,7 +12,7 @@ import ShadowScrollView from '../../components/ui/ShadowScrollView';
 import { CloseButton } from '../../components/game/markdownEditor';
 import MarkdownEditorDialog from '../../components/game/MarkdownEditorDialog';
 import { parseScript } from '../lang/parser';
-import { printScript, printScriptBlock, parseScriptBlock } from '../lang/printer';
+import { printExpression, printScript, printScriptBlock, parseScriptBlock } from '../lang/printer';
 import type { Expression, FunctionTemplatePiece, Script, Statement } from '../lang/ast';
 import { emptySpan } from '../lang/ast';
 import {
@@ -535,6 +535,10 @@ const ScriptEditorDialog = ({
   } | null>(null);
   const [hasModifications, setHasModifications] = useState(false);
   const [isLeaveConfirmDialogOpen, setIsLeaveConfirmDialogOpen] = useState(false);
+  const [expressionSwapTarget, setExpressionSwapTarget] = useState<{
+    location: ExpressionLocation;
+    expression: Expression;
+  } | null>(null);
   const [decoupleDialog, setDecoupleDialog] = useState<{
     path: number[];
     functionName: string;
@@ -600,6 +604,7 @@ const ScriptEditorDialog = ({
     setInsertTarget(null);
     setHasModifications(false);
     setIsLeaveConfirmDialogOpen(false);
+    setExpressionSwapTarget(null);
     setDecoupleDialog(null);
     setDecoupledFunctions([]);
     setNameCollision(null);
@@ -828,6 +833,13 @@ const ScriptEditorDialog = ({
     commitMoveSession(moveSession, next);
   };
 
+  const handleConfirmExpressionSwap = () => {
+    if (!expressionSwapTarget) return;
+    const target = expressionSwapTarget;
+    setExpressionSwapTarget(null);
+    handlePlaceExpression({ location: target.location });
+  };
+
   const handlePlaceBlock = (path: number[]) => {
     if (!moveSession || moveSession.category !== 'block') return;
     const statements = moveSession.selections
@@ -927,6 +939,7 @@ const ScriptEditorDialog = ({
       onReturn: handleReturnSelection,
       canPlaceExpression,
       onPlaceExpression: handlePlaceExpression,
+      onRequestExpressionSwap: setExpressionSwapTarget,
       onPlaceBlock: handlePlaceBlock,
     };
   })();
@@ -1532,6 +1545,23 @@ const ScriptEditorDialog = ({
         onOpenChange={setIsLeaveConfirmDialogOpen}
         onStay={handleCancelLeave}
         onLeave={handleConfirmLeave}
+      />
+
+      <UnsavedChangesDialog
+        isOpen={expressionSwapTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setExpressionSwapTarget(null);
+        }}
+        onStay={() => setExpressionSwapTarget(null)}
+        onLeave={handleConfirmExpressionSwap}
+        title="Swap expressions?"
+        message={
+          expressionSwapTarget && shelfExpression
+            ? `Swapping ${printExpression(expressionSwapTarget.expression)} with ${printExpression(shelfExpression)}`
+            : ''
+        }
+        stayLabel="Cancel"
+        leaveLabel="Swap"
       />
 
       {/* Decouple / remove saved function dialog */}

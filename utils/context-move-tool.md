@@ -1,104 +1,116 @@
-# Context: Move Tool — Fix Chain-Link Removal Bugs & Simplify Marker Rendering
+# Context: Move Tool — Place-as-Swap, English Operator Labels, and `not` as a Chain-Wrapping Block
 
 ## What is being asked
 
-The Move/Clone/Place tool in the script editor has bugs and over-complicated rendering logic for showing where moved expressions used to be. Two bugs to fix, plus a requested simplification of the rendering approach. **Do not run verification (tsc/prettier/eslint/browser tests) — just build the changes.**
+Three related changes to the script editor's expression system. **Do not run verification (tsc/prettier/eslint/browser tests) — just build the changes.** This file is the only context the new thread receives; it is self-contained.
 
-### Bug 1: Removing chain links in sequence misindexes and fails to remove subsequent links
+### Task 1: Allow "place as swap" during the move/clone Place phase
 
-Repro with this script block:
+Today, during the Place phase of a Move/Clone session, you can only place the moving expression **into** an existing expression's empty slots — i.e. into a `BooleanSocket` (the empty "+" placeholder) or onto a green `PuzzleConnector` (the "+" between/around chain links and blocks). You can place into either argument of a `==` expression, but you **cannot** click the `==` block itself to swap it with the moving expression.
 
-```
-UpdateCell({PLAYERS = Inputs.entry("Select"), COLUMNTYPE = "user", DAY = currentDay, COLUMN = "Column 1"}) {
-  Return cellContents.append(tag("Infected"));
-}
-```
+**Requested:** During Place phase, clicking a whole expression block (the same `Swapable` you'd click to swap it normally) should **swap** that expression with the moving/shelf expression — replacing it entirely. This is the "place onto the block itself" path, complementing the existing "place into an argument" path.
 
-Start a Move session. Click `Inputs` (the base of the chain `Inputs.entry("Select")`), then click `entry("Select")` (the `.entry("Select")` method link).
+**Confirmation dialog required:** Before performing a swap, show a confirmation dialog with a Cancel button. It should explain what is being swapped, e.g. `"Swapping == with players.entry(\"Select\")"` — i.e. describe the existing expression being replaced and the incoming shelf expression. Use the existing `UnsavedChangesDialog` component (see below) or a small confirm dialog following the same pattern.
 
-- Clicking `Inputs` works: it's removed from the expression and a numbered marker appears; the item appears on the shelf at the bottom.
-- Clicking `entry("Select")` **after that** is broken: the marker "moves down to the bottom row" but **the `entry("Select")` link is NOT actually removed** from the expression. So the second pick fails to remove the link it should.
+### Task 2: Replace operator symbol labels with English names
 
-Root cause is in the original-index remapping logic (`getOriginalLinkIndex`, `getLinkMarkers`, `getOriginalExpressionLocation`, and `deriveSessionAst`). After the first chain link is removed, the remaining chain reindexes (the link that was at index 1 is now at index 0), and the mapping between "current rendered index" and "original selection linkIndex" breaks, so the second pick either targets the wrong link or no link.
+The operator dropdown in `BinaryExpression` rendering currently shows the raw symbols (`==`, `!=`, `>`, `<`, `>=`, `<=`, `AND`, `OR`, `+`, `-`, `*`, `/`, `%`) as both the option labels and the displayed value. Replace these with English names everywhere they're shown to the user:
 
-### Bug 2: Removing ALL chain links leaves the empty "plus button" with no number marker
+- `==` → equals
+- `!=` → not equal
+- `>` → greater than
+- `<` → less than
+- `>=` → at least
+- `<=` → at most
+- `AND` → and
+- `OR` → or
+- `+` → plus
+- `-` → minus
+- `*` → times
+- `/` → divide
+- `%` → modulo
 
-When you remove every link in a chain expression, what's left is a `NothingLiteral` base. That renders as the square "add expression" plus button (the `BooleanSocket` / empty-base placeholder). In that state **no number marker is shown**, even though the whole expression slot has effectively been emptied by the move.
+The `InsertModal` already has English-label operator lists (`BOOLEAN_OPERATORS` and `MATH_OPERATORS` with `label` fields) — reuse those mappings. The `Canvas` `BinaryExpression` renderer's `AppDropdown` is where the symbol labels currently leak through. Also check the `expressionLabel` used for tooltips/swap labels.
 
-This happens because `getWholeMarker` only matches selections of `kind: 'whole'`. When you remove links one at a time they are `kind: 'chainLink'` selections, and once the chain is fully emptied there is no `whole` selection covering that location, so no marker renders — just the bare plus button.
+### Task 3: Add `not` (and other single-input prefix operators) as chain-attachable blocks that wrap the chain
 
-### Requested simplification: stop doing the fancy contextual plus/marker fill-in
+Today, when you have a chain expression like `players.entry("Select")` and you click the green "+" after it, the InsertModal offers chain links (`.filter(...)`, `.length`, etc.) AND binary operators (`equals`, `plus`, …). Picking a binary operator **wraps** the current chain as the left operand: `players.entry("Select") == ___`. The whole chain becomes the left side of a new `BinaryExpression`. This wrapping behavior is implemented in `InsertModal` (~line 648-704).
 
-The current rendering tries to be clever: it removes moved links from the AST (`deriveSessionAst`), reindexes the remaining chain, then uses `getOriginalLinkIndex` / `getLinkMarkers` / `getOriginalExpressionLocation` to map the *current* rendered indices back to the *original* selection indices so markers appear at the right spot and picks target the right original link. This contextual remapping is the source of Bug 1 and is more complexity than the feature needs.
+**Requested:** Add `not` the same way — as a chain-attachable block that **wraps** the current chain expression as its operand, producing `NOT (players.entry("Select"))`. The `UnaryExpression` with `operator: 'NOT'` already exists in the AST and is parsed/printed/evaluated.
 
-**Preferred approach:** For rendering purposes, treat a moved expression/link as if you're **replacing that block with a NEW block that is just a circle labeled "1" or "2"** (the `MoveNumberMarker`). I.e. the marker simply sits in the slot where the expression was, in original-index order, without reindexing the remaining chain or remapping indices. Don't do the contextual "fill in the gap with a plus" logic that doesn't make sense when we're just replacing expressions with numbers.
+Generalize: there are several **single-input starting expressions** (prefix operators that don't start with a dot) — `NOT`, `isTruthy`, `isFalsy`, and unary `-`/`+`. All of these should be offered as chain-wrapping blocks the same way binary operators are, since they consume the preceding expression as their single operand. (`NOT` is the primary one the user wants; the others follow the same pattern.)
 
-If implementing this simplification cleanly turns out to be *more* complicated than the current approach, you don't have to do the full rewrite — but you should at minimum fix Bugs 1 and 2 and remove the contextual plus-filling behavior that produces wrong results. The user does **not** want the fancy contextual stuff that "doesn't make sense when we're just replacing expressions with numbers."
+## Terminology & concepts
 
-## How the move tool works (architecture)
+- **Move/Clone session**: A modal editing mode in the script editor. `operation: 'move' | 'clone'`, `phase: 'collect' | 'place'`. Collect = pick up expressions/blocks onto a shelf (numbered markers replace them). Place = drop the shelf expression into the canvas via green targets.
+- **Shelf expression**: The combined expression built from picked selections (`composeShelfExpression`), shown at the bottom; placed via green targets.
+- **Chain**: A method-chain expression `base.method().property`. `decomposeChain` → `[base, .method(), .property, ...]`; `recomposeChain` reassembles. Index 0 is the base.
+- **Chain-wrapping operator**: An operator that, when "attached after" a chain, wraps the entire chain as one of its operands (binary: left operand; unary: the operand). This is distinct from a chain *link* (a `.method()` that extends the chain).
+- **`Swapable`**: The wrapper around every expression/block that handles hover, click-to-swap, and move picking. During Place phase its `onClick` is disabled (`if (moveTool) return;`), so today you cannot click a whole block to place onto it — only green connectors/sockets work.
+- **`BooleanSocket`**: The empty "+" placeholder for an empty expression slot; doubles as a green place target during Place.
+- **`PuzzleConnector`**: The "+" between chain links / blocks; doubles as a green place target during Place.
+- **`MoveNumberMarker`**: The numbered circle shown where a moved item was during Collect.
 
-### State (`app/script/editor/ScriptEditorDialog.tsx`)
+## Where things sit in the codebase
 
-- **`MoveSelection`** (~line 263): union of:
-  - `{ kind: 'whole'; number; location: ExpressionLocation; expression: Expression }` — a whole expression picked up
-  - `{ kind: 'chainLink'; number; location; linkIndex: number; link: ChainLink }` — one link of a method chain (base or `.method()`/`.property`)
-  - `{ kind: 'block'; number; path: number[]; statement: Statement }` — a whole statement block
-- **`MoveSession`** (~line 281): `{ operation: 'move' | 'clone'; phase: 'collect' | 'place'; category: 'expression' | 'block' | null; baseline: Script; selections: MoveSelection[]; nextNumber: number }`
-- **`deriveSessionAst(session)`** (~line 329): computes the AST shown in the canvas during a *move* session by removing picked items from `session.baseline`. For expressions: `whole` selections → replace with `NothingLiteral`; `chainLink` selections → drop those links from the chain and recompose (prepends a `NothingLiteral` base if the first remaining link isn't a base). For blocks: deletes the picked statements. **For clone, returns `baseline` unchanged** (nothing removed from the canvas).
-- **`composeShelfExpression(selections)`** (~line 388): combines expression selections into one `Expression | null` for placing. Returns `null` when fragments are incompatible (e.g. two concrete bases).
-- **`moveToolControls`** (~line 837): builds the `MoveToolControls` object passed to `Canvas` via context. This is where the buggy remapping lives:
-  - `getOriginalExpressionLocation(location)` (~855): walks the expression path and, for each `chainArgument` step, adds back the count of removed links at or before that index — mapping a *current* (post-removal) location back to its *original* location.
-  - `getOriginalLinkIndex(location, currentIndex)` (~897): maps a current chain link index back to its original index by adding back removed link indexes ≤ it.
-  - `getLinkMarkers(location, currentBoundary)` (~906): returns the marker numbers to render *before* the link at `currentBoundary` — filtering chainLink selections whose original index maps to that boundary.
-  - `getWholeMarker(location)` (~925): returns the marker number for a `whole` selection at that (original) location.
-  - `getOriginalStatementPath` / `getBlockMarkers`: the block equivalents.
-- Handlers: `startMoveSession` (~637), `cancelMoveSession` (~652), `handlePickExpression` (~664), `handlePickBlock` (~697), `handleReturnSelection` (~720), `handlePlaceExpression` / `handlePlaceBlock`.
+### Move tool state & handlers — `app/script/editor/ScriptEditorDialog.tsx`
 
-### Rendering (`app/script/editor/Canvas.tsx`)
+- **`MoveSelection`** (~265): `{ kind: 'whole' | 'chainLink' | 'block'; number; location/linkIndex; expression/link/statement }`.
+- **`MoveSession`** (~281): `{ operation; phase; category; baseline; selections; nextNumber }`.
+- **`deriveSessionAst`** (~329): AST with picked items removed (used for Place-phase canvas + final commit). `whole` → `NothingLiteral`; `chainLink` → drop link + recompose; `block` → delete statement. Clone returns baseline unchanged.
+- **`deriveSessionCanvasAst`** (~388): During `collect` + expression category, returns `baseline` (stable indices for markers); otherwise `deriveSessionAst`.
+- **`composeShelfExpression`** (~393): Combines selections into one `Expression | null`.
+- **`canPlaceExpression`** (~784): Validates a place target against the shelf expression (concrete base required for whole/base placement; `NothingLiteral` base + links for mid-chain).
+- **`handlePlaceExpression`** (~797): Commits a placement. `linkIndex === undefined` → replace whole expression at location; `0` → replace base keeping rest of chain; else → splice shelf links into chain. **This is where swap-on-whole-block would hook in** (the `linkIndex === undefined` branch already replaces the whole expression — Task 1 needs to make whole-expression Swapables *invoke* this branch during Place, with a confirm dialog).
+- **`handleEnterPlacePhase`** (~745): Switches collect→place, re-derives canvas AST. **`handleBackToCollect`** (~755): place→collect.
+- **`moveToolControls`** (~840): Builds `MoveToolControls`. `getLinkMarkers`/`getWholeMarker` return markers only during `collect` (empty/undefined during place). `canPlaceExpression`/`onPlaceExpression`/`onPlaceBlock` exposed here.
+- **Confirmation dialog state**: `isLeaveConfirmDialogOpen` (~537) uses `UnsavedChangesDialog`. A new confirm state (e.g. `swapConfirm`) + dialog should be added for Task 1.
 
-- **`MoveToolControls`** interface (~line 125): the contract above.
-- **`MoveToolContext`** (~line 143): React context providing `MoveToolControls` to all swapable elements.
-- **`MoveNumberMarker`** (~line 211): the numbered circle shown where a moved item was. `onPointerDown`/`onPress` calls `moveTool.onReturn(number)` to return it to the shelf. This is the "circle labeled 1/2" the user wants to use as the replacement rendering.
-- **`Swapable`** (~line 250): wraps every expression/block. `onPointerDown` (~326) handles move picking (calls `onPickExpression`/`onPickBlock` with the *resolved* move target, whose location is passed through `getOriginalExpressionLocation`). `onClick` (~363) handles normal swap when no move session.
-- **`ExpressionSocket`** (~line 802): the whole-expression renderer. At ~806 it checks `getWholeMarker(location)`:
-  - if `move` → returns just `<MoveNumberMarker>` (replaces the whole expression with the circle)
-  - if `clone` → renders the marker **plus** the original expression side by side (clone keeps the original).
-- **Chain rendering** (~line 1258-1402): iterates `decomposeChain(expression)` links. Before each link at `index` it renders `getLinkMarkers(location, index)` markers (~1260). Each link's `moveTarget.linkIndex` is set to `getOriginalLinkIndex(location, index) ?? index` (~1279, 1293, 1317, 1331). After the last link it renders `getLinkMarkers(location, chain.length)` markers (~1400). The empty `NothingLiteral` base renders as the square plus button (`BooleanSocket` / "Add expression") at ~1264-1272 — this is what shows with no marker in Bug 2.
-- **Block markers** (~line 2846-2901): `getBlockMarkers` rendered between/around statement blocks, same pattern.
+### Rendering — `app/script/editor/Canvas.tsx`
 
-### The chain data model (`app/script/editor/expressionEditor.ts`)
+- **`MoveToolControls`** interface (~125): `getLinkMarkers`, `getWholeMarker`, `canPlaceExpression`, `onPlaceExpression`, etc. **Task 1 may need a new method here** (e.g. `onPlaceExpression` already takes `{ location, linkIndex? }` — a whole-block swap is `linkIndex === undefined`, so no new method strictly required; the Swapable just needs to call it during Place).
+- **`Swapable`** (~250): `onPointerDown` (~315) handles **collect** picking (`canPick` requires `phase === 'collect'`). `onClick` (~354) handles normal swap but **early-returns when `moveTool` is active** (`if (moveTool) return;`). **Task 1: add a Place-phase click path** that, when `moveTool.phase === 'place'` and the target is a `whole` expression, calls `moveTool.onPlaceExpression({ location })` (after confirm). The `moveTarget` is already passed to every whole-expression Swapable.
+- **`PuzzleConnector`** (~376): Green place target; `validPlace` checks `canPlaceExpression`; calls `onPlaceExpression({ location, linkIndex })`.
+- **`BooleanSocket`** (~592): Empty-slot placeholder; also a green place target via `canPlaceExpression({ location, linkIndex })`.
+- **`BinaryExpression` rendering** (~889): Renders left `ExpressionSocket` + operator `AppDropdown` + right `ExpressionSocket`, wrapped in a `Swapable` with `moveTarget={{ kind: 'whole', location, expression }}`. The `AppDropdown` options use raw symbols: `operatorSet.map((operator) => ({ value: operator, label: operator }))` (~912). **Task 2: replace `label: operator` with English names.** `expressionLabel` (~825) returns `expression.operator` for BinaryExpression — also needs the English name.
+- **`UnaryExpression` rendering** (~959): Renders operator text + operand `ExpressionSocket`, wrapped in `Swapable` with `moveTarget={{ kind: 'whole', ... }}`. Operator text shows `isTruthy`/`isFalsy`/`NOT`/`-`/`+` (~964-969). **Task 2/3: show English names; ensure `not` renders as "not".**
+- **`BOOLEAN_OPERATORS`/`MATH_OPERATORS`** (~64-65): Raw symbol arrays used for `operatorSet` and `isMathOperator`.
 
-- `decomposeChain(expression): ChainLink[]` — splits a chained expression into `[base, .method(), .property, ...]` links. Index 0 is the base.
-- `recomposeChain(links): Expression` — joins links back into an expression.
-- `ChainLink` type: `{ type: 'base'; expr: Expression } | { type: 'method' | 'property'; name: string; args?: ... }`.
-- `ExpressionLocation`: `{ statementPath: number[]; slot: ...; expressionPath: ExpressionPathStep[] }`. `expressionPath` steps include `{ kind: 'chainArgument'; linkIndex: number }` for descending into a chain link.
+### Operator definitions & chain-wrapping — `app/script/editor/InsertModal.tsx`
 
-## What to change
+- **`BOOLEAN_OPERATORS`** (~381): `{ label, operator }[]` with English labels (equals, not equal, greater than, less than, at least, at most, and, or). **Reuse this for Task 2 labels.**
+- **`MATH_OPERATORS`** (~392): `{ label, operator, description }[]` (plus, minus, times, divide, modulo). **Reuse for Task 2.**
+- **Chain-attach item building** (~622-704): For `chainInsert`/`chainSwap` targets, builds chain-link items from `EXPRESSION_BLOCKS` + binary-operator items that wrap `target.chainExpression` as the left operand (~648-702). **Task 3: add unary-operator items here** that wrap `target.chainExpression` as the operand: `{ kind: 'UnaryExpression', operator: 'NOT', operand: target.chainExpression ?? NothingLiteral, span }`. Do the same for `isTruthy`/`isFalsy` (and unary `-`/`+` if desired). These call `onInsertExpression(expr, target)`.
 
-The core idea of the simplification: **don't reindex the chain and don't remap indices.** Keep the original chain intact in the rendered AST (or at least keep original indices stable), and render a `MoveNumberMarker` in the slot of each picked link in original-index order. Picking should target the original link index directly.
+### AST / parser / printer — `app/script/lang/`
 
-Concretely, the likely changes:
+- **`ast.ts`**: `UnaryExpression` (~146) `operator: 'NOT' | '-' | '+' | 'ISTRUTHY' | 'ISFALSY'`, `operand`. `BinaryOperator` (~152). `BinaryExpression` (~167) `left`/`right`.
+- **`parser.ts`** (~458-482): Parses `NOT`/`-`/`+` and `isTruthy`/`isFalsy` as prefix unary operators (precedence 7). `NOT` is a keyword token.
+- **`printer.ts`** (~94-103): Prints `NOT ` / `isTruthy ` / `isFalsy ` prefix. **Task 2 may want to keep printer as-is (source form) but show English in UI only** — confirm whether the user wants printed source to change too; the request is about UI labels, so likely keep printer using `NOT`/symbols for valid source, and only change UI display.
+- **`types.ts`** (~45): `UnaryExpression` with `NOT` → boolean; others → number.
 
-1. **`deriveSessionAst`** (~line 329): for `chainLink` selections, instead of removing the link and recomposing (which reindexes the remaining links), either (a) keep the link in place but mark it as moved so the renderer swaps it for a marker, or (b) replace the moved link with a sentinel that renders as a marker. The goal is that original link indices stay stable so `getOriginalLinkIndex`/`getOriginalExpressionLocation` become identity (or unnecessary). For `whole` selections, replacing with `NothingLiteral` is fine (that already renders a marker via `getWholeMarker`).
+### Editor reducer — `app/script/editor/editorReducer.ts`
 
-2. **`moveToolControls` remapping** (~line 855-931): with stable indices, `getOriginalLinkIndex` and `getOriginalExpressionLocation` can return their input unchanged (or be removed), and `getLinkMarkers` simplifies to "return the numbers of chainLink selections at this location whose `linkIndex === currentBoundary`" without the removed-count arithmetic. `getWholeMarker` stays as-is.
+- `INSERT_CHAIN_LINK_AT` (~698) and `REPLACE_CHAIN_LINK_AT` (~717): handle chain link insert/replace. Whole-expression replacement during place goes through `setScriptExpression` in `handlePlaceExpression` (not the reducer) — `linkIndex === undefined` branch.
 
-3. **Chain rendering** (~line 1258-1402): render a `MoveNumberMarker` in place of a picked link (when `getLinkMarkers` returns a number for that index, or check a direct "is this linkIndex picked" predicate) **instead of** rendering the link plus a marker before it. For the fully-emptied chain (Bug 2), ensure a marker still renders — e.g. when all links are picked, show the marker rather than the bare `NothingLiteral` plus button. The `BooleanSocket` empty-base plus (~1264) should not appear without a marker when the base was moved.
+### Confirmation dialog — `app/components/ui/dialog/UnsavedChangesDialog.tsx`
 
-4. **`Swapable` move target** (~line 270-276, 326-338): since indices are now stable, `resolvedMoveTarget` no longer needs `getOriginalExpressionLocation` remapping — pass the location through directly.
+Reusable confirm dialog. Props: `isOpen`, `onOpenChange`, `onStay`, `onLeave`, `title?`, `message?`, `stayLabel?`, `leaveLabel?`. Defaults: title "Unsaved Changes", stay "Stay", leave "Leave". **For Task 1, render it with a custom title/message like `Swapping <existing> with <shelf>`**, `stayLabel="Cancel"`, `leaveLabel="Swap"`. `onLeave` performs the swap via `handlePlaceExpression({ location })` (no linkIndex → whole replacement). Pattern is already used in `ScriptEditorDialog` for unsaved-changes-on-close (~537, ~1238-1254).
 
-If a clean simplification isn't feasible, at minimum: fix Bug 1 (second chain-link pick must remove the correct link) and Bug 2 (fully-emptied chain shows a marker, not a bare plus), and remove the contextual plus-filling that produces wrong markers.
+## Implementation notes & decisions
 
-## Constraints
-
-- **Do not run verification.** No `npx tsc --noEmit`, no prettier, no eslint, no Puppeteer browser tests. Just make the changes.
-- Keep the existing toast/keyboard-shortcut/key-cap-tooltip work from the previous session intact — those are done and unrelated to this task.
-- `MoveNumberMarker` is the desired "circle labeled 1/2" rendering — reuse it, don't reinvent it.
-- Clone mode (`operation === 'clone'`) keeps the original expression in place and shows the marker alongside it (see `ExpressionSocket` ~807-830). Don't break clone; the simplification mainly concerns move mode where items are removed.
-- The shelf at the bottom (the row of picked `ShelfItem`s) and Place phase are unaffected by this task — only the in-canvas marker rendering and pick targeting during collect phase.
+- **Task 1 (place-as-swap):** The cleanest hook is `Swapable`'s click handler. Today it early-returns when `moveTool` is set. Add: if `moveTool.phase === 'place'` and `moveTarget.kind === 'whole'` and `moveTool.canPlaceExpression({ location: moveTarget.location })`, then instead of swapping, open the confirm dialog; on confirm call `moveTool.onPlaceExpression({ location: moveTarget.location })` (no `linkIndex` → `handlePlaceExpression` replaces the whole expression). The `handlePlaceExpression` `linkIndex === undefined` branch already does `setScriptExpression(next, target.location, shelfExpression)` on the derived AST — exactly a swap. Need a way to surface the confirm dialog from inside `Canvas`/`Swapable`: either lift a callback into `MoveToolControls` (e.g. `onRequestSwap(target)`) that `ScriptEditorDialog` implements by opening the confirm dialog, or manage confirm state in `ScriptEditorDialog` and pass an `onPlaceExpression` that itself opens the confirm. Prefer keeping confirm state in `ScriptEditorDialog` (where the dialog is rendered) and have `Swapable` call `moveTool.onPlaceExpression` only after confirm — so expose a `requestPlaceExpression(target)` on `MoveToolControls` that opens the confirm, vs the direct `onPlaceExpression`. Decide and stay consistent.
+- **Task 2 (English labels):** Add a shared `OPERATOR_LABELS: Record<BinaryOperator, string>` (and unary equivalent) — derive from the existing `BOOLEAN_OPERATORS`/`MATH_OPERATORS` arrays in `InsertModal`, or duplicate the map in `Canvas`. Use it in the `AppDropdown` options (`label: OPERATOR_LABELS[operator]`) and in `expressionLabel` for BinaryExpression/UnaryExpression. Keep the `value` as the real operator symbol so `onValueChange` keeps working.
+- **Task 3 (`not` wrapping):** In `InsertModal`'s chain-attach section (~704), after the binary operator items, add unary operator items: `[{ label: 'not', operator: 'NOT' }, { label: 'isTruthy', operator: 'ISTRUTHY' }, { label: 'isFalsy', operator: 'ISFALSY' }]` (and optionally unary minus/plus). Each `onSelect` calls `onInsertExpression({ kind: 'UnaryExpression', operator, operand: target.chainExpression ?? NothingLiteral, span }, target)`. Category `'operator'` (or `'boolean'` for `not`). Preview expression: `{ kind: 'UnaryExpression', operator, operand: NothingLiteral, span }`. These wrap the chain just like binary operators do.
+- **Do not break clone mode** — clone keeps originals in place; swap-as-place should still work (it places a copy, leaving originals on the shelf).
+- **Keep the existing toast/keyboard-shortcut/key-cap-tooltip work intact.**
+- **Do not run verification.**
 
 ## Key files
 
-- `app/script/editor/ScriptEditorDialog.tsx` — `deriveSessionAst` (~329), `moveToolControls` (~837-961), pick/return handlers
-- `app/script/editor/Canvas.tsx` — `MoveNumberMarker` (~211), `Swapable` (~250), `ExpressionSocket` wholeMarker (~802-831), chain rendering (~1258-1402), block markers (~2846-2901)
-- `app/script/editor/expressionEditor.ts` — `decomposeChain` / `recomposeChain` / `ChainLink` / `ExpressionLocation`
+- `app/script/editor/ScriptEditorDialog.tsx` — move session state, `handlePlaceExpression` (~797), `handleEnterPlacePhase`/`handleBackToCollect`, `moveToolControls` (~840), confirm dialog state (~537)
+- `app/script/editor/Canvas.tsx` — `Swapable` onClick (~354), `PuzzleConnector` (~376), `BooleanSocket` (~592), `BinaryExpression` render (~889, dropdown ~912), `UnaryExpression` render (~959), `expressionLabel` (~825), `BOOLEAN_OPERATORS`/`MATH_OPERATORS` (~64)
+- `app/script/editor/InsertModal.tsx` — `BOOLEAN_OPERATORS` (~381), `MATH_OPERATORS` (~392), chain-attach item building (~622-704)
+- `app/script/lang/ast.ts` — `UnaryExpression` (~146), `BinaryOperator` (~152), `BinaryExpression` (~167)
+- `app/script/lang/parser.ts` (~458-482), `printer.ts` (~94-103), `types.ts` (~45)
+- `app/components/ui/dialog/UnsavedChangesDialog.tsx` — reusable confirm dialog

@@ -12,7 +12,13 @@ import Row from '../../components/layout/Row';
 import FontText from '../../components/ui/text/FontText';
 import AppButton from '../../components/ui/buttons/AppButton';
 import { CloseButton } from '../../components/game/markdownEditor';
-import type { BinaryOperator, Expression, FunctionTemplatePiece, Statement } from '../lang/ast';
+import type {
+  BinaryOperator,
+  Expression,
+  FunctionTemplatePiece,
+  Statement,
+  UnaryExpression,
+} from '../lang/ast';
 import { emptySpan } from '../lang/ast';
 import { parseScript } from '../lang/parser';
 import { printStatement } from '../lang/printer';
@@ -378,7 +384,7 @@ const buildMethodExpression = (id: string): Expression => {
   };
 };
 
-const BOOLEAN_OPERATORS: { label: string; operator: BinaryOperator }[] = [
+export const BOOLEAN_OPERATORS: { label: string; operator: BinaryOperator }[] = [
   { label: 'equals', operator: '==' },
   { label: 'not equal', operator: '!=' },
   { label: 'greater than', operator: '>' },
@@ -389,12 +395,39 @@ const BOOLEAN_OPERATORS: { label: string; operator: BinaryOperator }[] = [
   { label: 'or', operator: 'OR' },
 ];
 
-const MATH_OPERATORS: { label: string; operator: BinaryOperator; description: string }[] = [
+export const MATH_OPERATORS: {
+  label: string;
+  operator: BinaryOperator;
+  description: string;
+}[] = [
   { label: 'plus', operator: '+', description: 'Add two values' },
   { label: 'minus', operator: '-', description: 'Subtract two values' },
   { label: 'times', operator: '*', description: 'Multiply two values' },
   { label: 'divide', operator: '/', description: 'Divide two values' },
   { label: 'modulo', operator: '%', description: 'Remainder of division' },
+];
+
+const CHAIN_WRAPPING_UNARY_OPERATORS: {
+  label: string;
+  operator: UnaryExpression['operator'];
+  description: string;
+  category: string;
+}[] = [
+  { label: 'not', operator: 'NOT', description: 'Negate a boolean', category: 'operator' },
+  {
+    label: 'isTruthy',
+    operator: 'ISTRUTHY',
+    description: 'Check if value is truthy',
+    category: 'boolean',
+  },
+  {
+    label: 'isFalsy',
+    operator: 'ISFALSY',
+    description: 'Check if value is falsy',
+    category: 'boolean',
+  },
+  { label: 'negate', operator: '-', description: 'Negate a number', category: 'math' },
+  { label: 'positive', operator: '+', description: 'Convert a value to a number', category: 'math' },
 ];
 
 interface ModalItem {
@@ -679,7 +712,7 @@ const InsertModal = ({
         })),
         ...BOOLEAN_OPERATORS.map(({ label, operator }) => ({
           label,
-          description: operator,
+          description: label,
           category: 'operator',
           previewExpression: {
             kind: 'BinaryExpression' as const,
@@ -701,7 +734,30 @@ const InsertModal = ({
             ),
         })),
       ];
-      return [...chainExpressionItems, ...binaryOperatorItems];
+      const unaryOperatorItems: ModalItem[] = CHAIN_WRAPPING_UNARY_OPERATORS.map(
+        ({ label, operator, description, category }) => ({
+          label,
+          description,
+          category,
+          previewExpression: {
+            kind: 'UnaryExpression' as const,
+            operator,
+            operand: { kind: 'NothingLiteral' as const, span },
+            span,
+          },
+          onSelect: () =>
+            onInsertExpression(
+              {
+                kind: 'UnaryExpression',
+                operator,
+                operand: target.chainExpression ?? { kind: 'NothingLiteral', span },
+                span,
+              },
+              target
+            ),
+        })
+      );
+      return [...chainExpressionItems, ...binaryOperatorItems, ...unaryOperatorItems];
     }
     const selectExpression = (expression: Expression) => onInsertExpression(expression, target);
     const existingFnNames = new Set(definedFunctions.map((fn) => fn.name));
@@ -947,7 +1003,7 @@ const InsertModal = ({
       },
       ...BOOLEAN_OPERATORS.map(({ label, operator }) => ({
         label,
-        description: operator,
+        description: label,
         category: 'operator',
         dividerAfter: operator === '<=',
         previewExpression: {
