@@ -131,20 +131,24 @@ const CONTROL_TEMPLATES: {
    *  When 'inside', only show inside trigger blocks (not at root level).
    *  When undefined, show in both contexts (but not at trigger root level). */
   triggerOnly?: boolean | 'inside';
+  searchTerms?: string[];
 }[] = [
   {
     label: 'If / Else',
     description: 'Run code when a condition is met',
+    searchTerms: ['if', 'else', 'condition', 'when', 'branch', 'conditional', 'then'],
     build: () => createIfStatement({ kind: 'NothingLiteral', span }),
   },
   {
     label: 'ForEach',
     description: 'Loop through a list',
+    searchTerms: ['foreach', 'for each', 'loop', 'iterate', 'each', 'every', 'repeat', 'over'],
     build: () => createForEachStatement('Item', parseLiteralValue('players')),
   },
   {
     label: 'Function',
     description: 'Reusable function with a return value',
+    searchTerms: ['function', 'fn', 'method', 'reusable', 'def', 'define', 'subroutine'],
     build: () => ({
       kind: 'FunctionStatement' as const,
       name: 'fn',
@@ -167,11 +171,13 @@ const CONTROL_TEMPLATES: {
   {
     label: 'Return',
     description: 'Return a value from a function',
+    searchTerms: ['return', 'output', 'result', 'yield', 'give back', 'send back'],
     build: () => ({ kind: 'ReturnStatement', value: { kind: 'NothingLiteral', span }, span }),
   },
   {
     label: 'On Certify => Update Cell',
     description: 'On certify: loop over cells and update them',
+    searchTerms: ['certify', 'update cell', 'on certify', 'vote', 'tally', 'results'],
     build: () => createUpdateCellStatement(),
     /** Only shown in regular (non-trigger) scripts */
     triggerOnly: false,
@@ -179,6 +185,7 @@ const CONTROL_TEMPLATES: {
   {
     label: 'Update Cell',
     description: 'Loop over cells and update them',
+    searchTerms: ['update cell', 'update', 'modify cell', 'change cell', 'set cell', 'write cell'],
     build: () => createTriggerUpdateCellStatement(),
     /** Only shown inside trigger blocks (not at root level) */
     triggerOnly: 'inside',
@@ -186,6 +193,7 @@ const CONTROL_TEMPLATES: {
   {
     label: 'On Tag Added',
     description: 'Runs when this tag is added to a cell',
+    searchTerms: ['on tag added', 'tag added', 'when tag', 'trigger', 'placed', 'event'],
     build: () => createOnTagAddedStatement(),
     /** Only shown in trigger scripts */
     triggerOnly: true,
@@ -193,38 +201,100 @@ const CONTROL_TEMPLATES: {
   {
     label: 'On Tag Removed',
     description: 'Runs when this tag is removed from a cell',
+    searchTerms: [
+      'on tag removed',
+      'tag removed',
+      'when tag removed',
+      'trigger',
+      'unplaced',
+      'event',
+    ],
     build: () => createOnTagRemovedStatement(),
     /** Only shown in trigger scripts */
     triggerOnly: true,
   },
 ];
 
-const DATA_SOURCES: { name: string; description: string }[] = [
-  { name: 'players', description: 'All players in the game' },
-  { name: 'roles', description: 'All roles in the game' },
-  { name: 'currentPlayer', description: 'The player running this script' },
-  { name: 'currentDay', description: 'Current day number' },
-  { name: 'dayDates', description: 'Dates for each day' },
-  { name: 'schedule', description: 'Game schedule' },
-  { name: 'profiles', description: 'Player profiles' },
-  { name: 'Inputs', description: 'Selected input values (e.g. player name)' },
+const DATA_SOURCES: { name: string; description: string; searchTerms?: string[] }[] = [
+  {
+    name: 'players',
+    description: 'All players in the game',
+    searchTerms: ['players', 'people', 'users', 'participants'],
+  },
+  {
+    name: 'roles',
+    description: 'All roles in the game',
+    searchTerms: ['roles', 'characters', 'parts', 'positions'],
+  },
+  {
+    name: 'currentPlayer',
+    description: 'The player running this script',
+    searchTerms: ['current player', 'me', 'my', 'self', 'this player', 'active player'],
+  },
+  {
+    name: 'currentDay',
+    description: 'Current day number',
+    searchTerms: ['current day', 'today', 'day', 'now', 'present day'],
+  },
+  {
+    name: 'dayDates',
+    description: 'Dates for each day',
+    searchTerms: ['day dates', 'dates', 'calendar', 'schedule dates'],
+  },
+  {
+    name: 'schedule',
+    description: 'Game schedule',
+    searchTerms: ['schedule', 'timetable', 'agenda', 'calendar', 'program'],
+  },
+  {
+    name: 'profiles',
+    description: 'Player profiles',
+    searchTerms: ['profiles', 'player profiles', 'user profiles', 'info', 'details'],
+  },
+  {
+    name: 'Inputs',
+    description: 'Selected input values (e.g. player name)',
+    searchTerms: ['inputs', 'selected', 'submitted', 'responses', 'answers'],
+  },
   {
     name: 'InputsWithData',
     description: 'Full data for selected inputs (e.g. player object with role, email, days)',
+    searchTerms: ['inputs with data', 'full input data', 'input details', 'input objects'],
   },
 ];
 
 /** Data sources available in tag trigger scripts. */
-const TRIGGER_DATA_SOURCES: { name: string; description: string }[] = [
-  { name: 'players', description: 'All players in the game' },
-  { name: 'roles', description: 'All roles in the game' },
-  { name: 'placedTag', description: 'The tag that was added' },
-  { name: 'placedUser', description: 'The player the tag was placed on' },
+const TRIGGER_DATA_SOURCES: { name: string; description: string; searchTerms?: string[] }[] = [
+  {
+    name: 'players',
+    description: 'All players in the game',
+    searchTerms: ['players', 'people', 'users', 'participants'],
+  },
+  {
+    name: 'roles',
+    description: 'All roles in the game',
+    searchTerms: ['roles', 'characters', 'parts', 'positions'],
+  },
+  {
+    name: 'placedTag',
+    description: 'The tag that was added',
+    searchTerms: ['placed tag', 'tag', 'added tag', 'current tag', 'this tag'],
+  },
+  {
+    name: 'placedUser',
+    description: 'The player the tag was placed on',
+    searchTerms: ['placed user', 'user', 'player', 'target', 'tagged player'],
+  },
   {
     name: 'placedDay',
     description: 'The day index the tag was placed on (or nothing for player columns)',
+    searchTerms: ['placed day', 'day', 'day index', 'when', 'which day'],
   },
-  { name: 'placedColumn', description: 'The column title the tag was placed in' },
+  {
+    name: 'placedColumn',
+    description: 'The column title the tag was placed in',
+    searchTerms: ['placed column', 'column', 'which column', 'field', 'cell column'],
+  },
 ];
 
 /**
@@ -437,6 +507,72 @@ const CHAIN_WRAPPING_UNARY_OPERATORS: {
   },
 ];
 
+/** Extra search keywords for operators, keyed by operator string.
+ *  Used only for search matching — never displayed. */
+const OPERATOR_SEARCH_TERMS: Record<string, string[]> = {
+  '==': ['==', 'equal', 'equals', 'is', 'same', 'identical'],
+  '!=': ['!=', 'not equal', 'different', 'unequal', 'not same'],
+  '>': ['>', 'greater', 'gt', 'more', 'larger', 'bigger'],
+  '<': ['<', 'less', 'lt', 'smaller', 'fewer', 'lower'],
+  '>=': ['>=', 'greater or equal', 'ge', 'gte', 'at least', 'minimum'],
+  '<=': ['<=', 'less or equal', 'le', 'lte', 'at most', 'maximum'],
+  AND: ['and', '&&', 'both', 'also', 'conjunction'],
+  OR: ['or', '||', 'either', 'union', 'disjunction'],
+  '+': ['+', 'plus', 'add', 'addition', 'sum', 'combine'],
+  '-': ['-', 'minus', 'subtract', 'subtraction', 'difference', 'take away'],
+  '*': ['*', 'times', 'multiply', 'multiplication', 'product', 'by'],
+  '/': ['/', 'divide', 'division', 'quotient', 'over'],
+  '%': ['%', 'modulo', 'mod', 'remainder', 'percent'],
+  NOT: ['not', '!', 'negate', 'negation', 'inverse', 'opposite', 'flip'],
+  ISTRUTHY: ['istruthy', 'truthy', 'true', 'is true', 'check true', 'boolean'],
+  ISFALSY: ['isfalsy', 'falsy', 'false', 'is false', 'check false', 'empty'],
+};
+
+/** Extra search keywords for expression blocks, keyed by block id.
+ *  Used only for search matching — never displayed. */
+const BLOCK_SEARCH_TERMS: Record<string, string[]> = {
+  filter: ['filter', 'where', 'select', 'condition', 'keep', 'matching'],
+  map: ['map', 'transform', 'convert', 'apply', 'change', 'remap'],
+  sort: ['sort', 'order', 'arrange', 'ranking', 'organize'],
+  length: ['length', 'size', 'count', 'number of', 'how many'],
+  first: ['first', 'head', 'top', 'initial', 'beginning'],
+  last: ['last', 'tail', 'bottom', 'final', 'end'],
+  get: ['get', 'index', 'at', 'element', 'nth', 'pick', 'retrieve'],
+  contains: ['contains', 'includes', 'has', 'in', 'member'],
+  count: ['count', 'number', 'size', 'tally', 'total'],
+  join: ['join', 'concat', 'combine', 'string', 'csv', 'merge'],
+  Round: ['round', 'floor', 'ceil', 'ceiling', 'integer', 'truncate'],
+  abs: ['abs', 'absolute', 'magnitude', 'positive value'],
+  MinMax: ['min', 'max', 'minimum', 'maximum', 'smallest', 'largest'],
+  toPowerOf: ['power', 'pow', 'exponent', 'raise', 'square', 'cube', 'exp'],
+  Root: ['root', 'sqrt', 'square root', 'cbrt', 'cube root', 'radical'],
+  toNumber: ['tonumber', 'number', 'convert', 'parse', 'numeric', 'to number'],
+  Trig: ['trig', 'sin', 'cos', 'tan', 'sine', 'cosine', 'tangent', 'arcsin', 'arccos', 'arctan'],
+  LogExp: ['log', 'logarithm', 'ln', 'exp', 'exponential', 'log2', 'log10'],
+  Sign: ['sign', 'trunc', 'truncate', 'integer part'],
+  toString: ['tostring', 'string', 'text', 'convert to text', 'display', 'to text'],
+  upper: ['upper', 'uppercase', 'capital', 'caps', 'capitalize'],
+  lower: ['lower', 'lowercase', 'small', 'minuscule'],
+  startsWith: ['startswith', 'starts', 'begins', 'prefix'],
+  endsWith: ['endswith', 'ends', 'suffix'],
+  concat: ['concat', 'combine', 'join', 'append', 'add to string', 'glue'],
+  replace: ['replace', 'substitute', 'swap', 'find and replace', 'overwrite'],
+  entry: ['entry', 'key', 'field', 'property', 'lookup', 'get value', 'access'],
+  index: ['index', 'at', 'position', 'nth', 'get item', 'element'],
+};
+
+/** Extra search keywords for statement blocks, keyed by block id. */
+const STATEMENT_SEARCH_TERMS: Record<string, string[]> = {
+  Variable: ['variable', 'var', 'set', 'assign', 'store', 'define', 'let'],
+  CreateSelectInput: ['select', 'dropdown', 'input', 'choice', 'options', 'picker', 'menu'],
+  CreateSelectVoteInput: ['vote', 'select', 'input', 'poll', 'election', 'ballot', 'voting'],
+  CreateTextInput: ['text', 'input', 'field', 'type', 'textbox', 'string input', 'write'],
+  CreateNumberInput: ['number', 'input', 'field', 'numeric', 'integer', 'counter', 'digit'],
+  CreateCheckbox: ['checkbox', 'toggle', 'boolean', 'check', 'switch', 'on off', 'tick'],
+  CreateMarkdown: ['markdown', 'text', 'display', 'render', 'format', 'rich text', 'content'],
+  CreateDivider: ['divider', 'separator', 'line', 'break', 'hr', 'spacing', 'visual break'],
+};
+
 interface ModalItem {
   label: string;
   description: string;
@@ -458,6 +594,8 @@ interface ModalItem {
   isSavedMatch?: boolean;
   /** When set, renders an X button in the top-right corner that calls this handler. */
   onUnsave?: () => void;
+  /** Extra keywords used only for search matching — never displayed. */
+  searchTerms?: string[];
 }
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -629,6 +767,7 @@ const InsertModal = ({
               label: block.name,
               description: block.description,
               category: block.category,
+              searchTerms: STATEMENT_SEARCH_TERMS[block.id],
               onSelect: () =>
                 onInsertStatement(
                   buildStatementFromRegistry(block.id),
@@ -655,6 +794,7 @@ const InsertModal = ({
           label: template.label,
           description: template.description,
           category: 'control',
+          searchTerms: template.searchTerms,
           onSelect: () =>
             onInsertStatement(template.build(), target.path ?? [], target.mode === 'swap'),
         })),
@@ -686,6 +826,7 @@ const InsertModal = ({
           previewExpression: buildMethodExpression(block.id),
           onSelect: () => onInsertChainLink(target, block.id),
           disabledReason,
+          searchTerms: BLOCK_SEARCH_TERMS[block.id],
         };
       });
       // Binary operators: wrap the current chain expression as the left operand
@@ -701,6 +842,7 @@ const InsertModal = ({
           label,
           description,
           category: 'math',
+          searchTerms: OPERATOR_SEARCH_TERMS[operator],
           previewExpression: {
             kind: 'BinaryExpression' as const,
             operator,
@@ -724,6 +866,7 @@ const InsertModal = ({
           label,
           description: label,
           category: 'operator',
+          searchTerms: OPERATOR_SEARCH_TERMS[operator],
           previewExpression: {
             kind: 'BinaryExpression' as const,
             operator,
@@ -749,6 +892,7 @@ const InsertModal = ({
           label,
           description,
           category,
+          searchTerms: OPERATOR_SEARCH_TERMS[operator],
           previewExpression: {
             kind: 'UnaryExpression' as const,
             operator,
@@ -902,6 +1046,7 @@ const InsertModal = ({
         label: 'tag',
         description: 'Encode a tag name as a tag string',
         category: 'data',
+        searchTerms: ['tag', 'label', 'marker', 'badge'],
         previewExpression: tagExpression,
         onSelect: () => selectExpression(tagExpression),
       },
@@ -911,6 +1056,7 @@ const InsertModal = ({
               label: entryBlock.name,
               description: entryBlock.description,
               category: 'data',
+              searchTerms: BLOCK_SEARCH_TERMS['entry'],
               previewExpression: buildMethodExpression(entryBlock.id),
               onSelect: () => selectExpression(buildMethodExpression(entryBlock.id)),
             },
@@ -922,6 +1068,7 @@ const InsertModal = ({
               label: indexBlock.name,
               description: indexBlock.description,
               category: 'data',
+              searchTerms: BLOCK_SEARCH_TERMS['index'],
               previewExpression: buildMethodExpression(indexBlock.id),
               onSelect: () => selectExpression(buildMethodExpression(indexBlock.id)),
               dividerAfter: true,
@@ -932,6 +1079,7 @@ const InsertModal = ({
         label: source.name,
         description: source.description,
         category: 'data',
+        searchTerms: source.searchTerms,
         previewExpression: { kind: 'IdentifierExpression' as const, name: source.name, span },
         onSelect: () => selectExpression({ kind: 'IdentifierExpression', name: source.name, span }),
       })),
@@ -939,6 +1087,7 @@ const InsertModal = ({
         label: block.name,
         description: block.description,
         category: block.category,
+        searchTerms: BLOCK_SEARCH_TERMS[block.id],
         previewExpression: buildMethodExpression(block.id),
         onSelect: () => selectExpression(buildMethodExpression(block.id)),
         dividerAfter: block.id === 'sort' || block.id === 'lower',
@@ -953,6 +1102,7 @@ const InsertModal = ({
           label: block.name,
           description: block.description,
           category,
+          searchTerms: BLOCK_SEARCH_TERMS[block.id],
           previewExpression: buildMethodExpression(block.id),
           onSelect: () => selectExpression(buildMethodExpression(block.id)),
         } as ModalItem;
@@ -963,6 +1113,7 @@ const InsertModal = ({
         label: 'true',
         description: 'Boolean',
         category: 'boolean',
+        searchTerms: ['true', 'yes', 'on', '1', 'correct'],
         previewExpression: { kind: 'BooleanLiteral' as const, value: true, span },
         onSelect: () => selectExpression({ kind: 'BooleanLiteral', value: true, span }),
       },
@@ -970,6 +1121,7 @@ const InsertModal = ({
         label: 'false',
         description: 'Boolean',
         category: 'boolean',
+        searchTerms: ['false', 'no', 'off', '0', 'wrong'],
         previewExpression: { kind: 'BooleanLiteral' as const, value: false, span },
         onSelect: () => selectExpression({ kind: 'BooleanLiteral', value: false, span }),
       },
@@ -977,6 +1129,7 @@ const InsertModal = ({
         label: 'isTruthy',
         description: 'Check if value is truthy',
         category: 'boolean',
+        searchTerms: OPERATOR_SEARCH_TERMS['ISTRUTHY'],
         previewExpression: {
           kind: 'UnaryExpression' as const,
           operator: 'ISTRUTHY',
@@ -995,6 +1148,7 @@ const InsertModal = ({
         label: 'isFalsy',
         description: 'Check if value is falsy',
         category: 'boolean',
+        searchTerms: OPERATOR_SEARCH_TERMS['ISFALSY'],
         previewExpression: {
           kind: 'UnaryExpression' as const,
           operator: 'ISFALSY',
@@ -1013,6 +1167,7 @@ const InsertModal = ({
         label,
         description: label,
         category: 'operator',
+        searchTerms: OPERATOR_SEARCH_TERMS[operator],
         dividerAfter: operator === '<=',
         previewExpression: {
           kind: 'BinaryExpression' as const,
@@ -1034,6 +1189,7 @@ const InsertModal = ({
         label: 'not',
         description: 'Negate a boolean',
         category: 'operator',
+        searchTerms: OPERATOR_SEARCH_TERMS['NOT'],
         previewExpression: {
           kind: 'UnaryExpression' as const,
           operator: 'NOT',
@@ -1054,6 +1210,7 @@ const InsertModal = ({
         label,
         description,
         category: 'math',
+        searchTerms: OPERATOR_SEARCH_TERMS[operator],
         previewExpression: {
           kind: 'BinaryExpression' as const,
           operator,
@@ -1074,6 +1231,7 @@ const InsertModal = ({
         label: 'negate',
         description: 'Negate a number',
         category: 'math',
+        searchTerms: ['negate', '-', 'negative', 'opposite', 'invert', 'flip sign'],
         dividerAfter: true,
         previewExpression: {
           kind: 'UnaryExpression' as const,
@@ -1097,6 +1255,7 @@ const InsertModal = ({
         label: '0',
         description: 'Number',
         category: 'math',
+        searchTerms: ['number', '0', 'zero', 'integer', 'numeric', 'digit'],
         dividerAfter: true,
         previewExpression: { kind: 'NumberLiteral' as const, value: 0, span },
         onSelect: () => selectExpression({ kind: 'NumberLiteral', value: 0, span }),
@@ -1105,6 +1264,7 @@ const InsertModal = ({
         label: '"text"',
         description: 'Text',
         category: 'string',
+        searchTerms: ['text', 'string', 'words', 'characters', 'quote', 'literal'],
         dividerAfter: true,
         previewExpression: { kind: 'StringLiteral' as const, value: '', span },
         onSelect: () => selectExpression({ kind: 'StringLiteral', value: '', span }),
@@ -1113,6 +1273,7 @@ const InsertModal = ({
         label: 'Dropdown',
         description: 'Selectable options',
         category: 'string',
+        searchTerms: ['dropdown', 'select', 'options', 'choice', 'picker', 'menu'],
         dividerAfter: true,
         previewExpression: {
           kind: 'DropdownLiteral' as const,
@@ -1132,6 +1293,7 @@ const InsertModal = ({
         label: 'List',
         description: 'List of string items',
         category: 'string',
+        searchTerms: ['list', 'array', 'collection', 'items', 'set'],
         previewExpression: {
           kind: 'ListLiteral' as const,
           items: ['Item 1', 'Item 2'],
@@ -1297,7 +1459,9 @@ const InsertModal = ({
     const query = search.toLowerCase();
     return result.filter(
       (item) =>
-        item.label.toLowerCase().includes(query) || item.description.toLowerCase().includes(query)
+        item.label.toLowerCase().includes(query) ||
+        item.description.toLowerCase().includes(query) ||
+        item.searchTerms?.some((term) => term.toLowerCase().includes(query))
     );
   }, [items, search, hideInputs, allowVoteInput, isTriggerContext, entryKeysBySource]);
 
