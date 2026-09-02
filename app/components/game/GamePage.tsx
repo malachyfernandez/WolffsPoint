@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import Column from '../layout/Column';
 import { Platform, View, useWindowDimensions } from 'react-native';
 import { useFindListItems, useFindValues } from 'hooks/useData';
@@ -9,7 +9,7 @@ import PlayerGamePage from './PlayerGamePage';
 import FontText from '../ui/text/FontText';
 import LoadingText from '../ui/loading/LoadingText';
 import WolffspointIcon from '../icons/WolffspointIcon';
-import Animated, { runOnJS, useAnimatedScrollHandler } from 'react-native-reanimated';
+import Animated, { useAnimatedScrollHandler, useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
 import { NewserAssignment, PublicUserData, getNewserAssignmentKey, resolveValidNewserAssignment } from '../../../utils/newspaperControl';
 import FadeInAfterDelay from '../ui/loading/FadeInAfterDelay';
 
@@ -19,19 +19,21 @@ interface GamePageProps {
 }
 
 const GamePage = ({ gameId, currentUserId }: GamePageProps) => {
-    const [scrollAmount, setScrollAmount] = useState(0);
+    const scrollAmount = useSharedValue(0);
     const { width: screenWidth } = useWindowDimensions();
-
-    const updateScrollAmount = (nextScrollAmount: number) => {
-        setScrollAmount(nextScrollAmount);
-    };
 
     const handleScroll = useAnimatedScrollHandler({
         onScroll: (event) => {
-            const nextScrollAmount = event.contentOffset.y;
-            runOnJS(updateScrollAmount)(nextScrollAmount);
+            scrollAmount.value = event.contentOffset.y;
         },
     });
+
+    // Calculate blur amount based on scroll (0px blur at top, 8px blur when scrolled 100px)
+    const logoBlurStyle = useAnimatedStyle(() => ({
+        filter: Platform.OS === 'web'
+            ? `blur(${Math.min(Math.max((scrollAmount.value / 100) * 8, 0), 8)}px)`
+            : undefined,
+    }) as any);
 
     const ownedGameRows = useFindListItems('games', {
         itemId: gameId,
@@ -71,8 +73,6 @@ const GamePage = ({ gameId, currentUserId }: GamePageProps) => {
 
     const isNewser = !isOperator && validNewser?.userId === currentUserId;
 
-    // Calculate blur amount based on scroll (0px blur at top, 8px blur when scrolled 100px)
-    const blurAmount = Math.min(Math.max((scrollAmount / 100) * 8, 0), 8);
     const logoWidth = Math.min(screenWidth * .97, 760);
     const logoHeight = (logoWidth / 522) * 183;
     const baseHeight = 183;
@@ -82,11 +82,11 @@ const GamePage = ({ gameId, currentUserId }: GamePageProps) => {
     return (
         <Column className='gap-4 w-full h-screen'>
             <View className='absolute top-20 w-full items-center'>
-                <View style={Platform.OS === 'web' ? { width: logoWidth, height: logoHeight, filter: `blur(${blurAmount}px)`, transform: `translateY(${translateY}px)` } : undefined}>
+                <Animated.View style={[Platform.OS === 'web' ? { width: logoWidth, height: logoHeight, transform: `translateY(${translateY}px)` } : undefined, logoBlurStyle]}>
                     <FadeInAfterDelay delayMs={200}>
                         <WolffspointIcon width={logoWidth} height={logoHeight} />
                     </FadeInAfterDelay>
-                </View>
+                </Animated.View>
             </View>
             <FadeInAfterDelay delayMs={100}>
 

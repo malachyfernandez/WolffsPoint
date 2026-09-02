@@ -3,15 +3,30 @@ import { createRoot, type Root } from 'react-dom/client';
 
 // Global mouse position tracker — listens on document so it works regardless of
 // which element is under the cursor.
+let globalMouseSubscriberCount = 0;
+let lastMousePosition = { x: 0, y: 0 };
+
+const handleGlobalMouseMove = (event: MouseEvent) => {
+  lastMousePosition = { x: event.clientX, y: event.clientY };
+  if (sharedTooltip?.style.opacity === '1') {
+    moveTooltip(event.clientX, event.clientY);
+  }
+};
+
 const useGlobalMouse = () => {
-  const [pos, setPos] = useState({ x: 0, y: 0 });
   useEffect(() => {
     if (typeof document === 'undefined') return;
-    const handler = (e: MouseEvent) => setPos({ x: e.clientX, y: e.clientY });
-    document.addEventListener('mousemove', handler);
-    return () => document.removeEventListener('mousemove', handler);
+    if (globalMouseSubscriberCount === 0) {
+      document.addEventListener('mousemove', handleGlobalMouseMove);
+    }
+    globalMouseSubscriberCount += 1;
+    return () => {
+      globalMouseSubscriberCount -= 1;
+      if (globalMouseSubscriberCount === 0) {
+        document.removeEventListener('mousemove', handleGlobalMouseMove);
+      }
+    };
   }, []);
-  return pos;
 };
 
 // Shared tooltip element — one DOM node appended to document.body, reused.
@@ -35,6 +50,7 @@ const showTooltip = (id: string, content: ReactNode) => {
   }
   tooltipOwner = id;
   sharedTooltipRoot?.render(content);
+  moveTooltip(lastMousePosition.x, lastMousePosition.y);
   sharedTooltip.style.opacity = '1';
 };
 
@@ -42,12 +58,12 @@ const hideTooltip = (id: string) => {
   if (sharedTooltip && tooltipOwner === id) sharedTooltip.style.opacity = '0';
 };
 
-const moveTooltip = (x: number, y: number) => {
+function moveTooltip(x: number, y: number) {
   if (sharedTooltip) {
     sharedTooltip.style.left = `${x + 14}px`;
     sharedTooltip.style.top = `${y + 14}px`;
   }
-};
+}
 
 /**
  * Hook for any element that wants a hover-following tooltip.
@@ -59,7 +75,7 @@ const moveTooltip = (x: number, y: number) => {
  */
 export const useTooltip = (id: string, content: ReactNode | undefined) => {
   const [hovered, setHovered] = useState(false);
-  const mousePos = useGlobalMouse();
+  useGlobalMouse();
   useEffect(() => {
     if (hovered && content) {
       showTooltip(id, content);
@@ -67,9 +83,6 @@ export const useTooltip = (id: string, content: ReactNode | undefined) => {
       hideTooltip(id);
     }
   }, [hovered, id, content]);
-  useEffect(() => {
-    if (hovered) moveTooltip(mousePos.x, mousePos.y);
-  }, [hovered, mousePos]);
   useEffect(() => () => hideTooltip(id), [id]);
   return { hovered, setHovered };
 };
