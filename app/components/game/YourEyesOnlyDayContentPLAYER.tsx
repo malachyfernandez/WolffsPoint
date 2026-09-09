@@ -391,17 +391,30 @@ const YourEyesOnlyDayContentPLAYER = ({
 
   // Determine which deadline comes first
   const isVoteFirst = voteDeadline.getTime() <= actionDeadline.getTime();
-  const isVotePrimary = isVoteFirst && !(isVoteLocked && !isActionLocked); // Single selector for UI control - can be extended with extra criteria
+  const bothSkipped = isVotingSkipped && isActionsSkipped;
+  // A skipped deadline can never be primary. If both are skipped, neither is
+  // primary and the countdown renders as SKIPPED. If only one is skipped, the
+  // other deadline stays primary for the whole day (no switch-over).
+  const isVotePrimary = bothSkipped
+    ? false
+    : isVotingSkipped
+      ? false
+      : isActionsSkipped
+        ? true
+        : isVoteFirst && !(isVoteLocked && !isActionLocked);
   const primaryDeadline = isVotePrimary ? voteDeadline : actionDeadline;
-  const primaryCountdown = (isVotePrimary ? isVoteLocked : isActionLocked)
-    ? 'LOCKED'
-    : formatCountdown(primaryDeadline, now);
+  const primaryCountdown = bothSkipped
+    ? 'SKIPPED'
+    : (isVotePrimary ? isVoteLocked : isActionLocked)
+      ? 'LOCKED'
+      : formatCountdown(primaryDeadline, now);
   const primaryLabel = isVotePrimary ? 'VOTE' : 'ACTION';
   const primaryTimeLabel = isVotePrimary ? voteDeadlineTime : actionDeadlineTime;
   const secondaryDeadline = isVotePrimary ? actionDeadline : voteDeadline;
   const secondaryTimeLabel = isVotePrimary ? actionDeadlineTime : voteDeadlineTime;
   const secondaryIsLocked = isVotePrimary ? isActionLocked : isVoteLocked;
   const secondaryLabel = isVotePrimary ? 'Actions' : 'Voting';
+  const secondarySkipped = isVotePrimary ? isActionsSkipped : isVotingSkipped;
   const primaryDateLabel = formatContextualDateLabel(primaryDeadline, undefined, now, 'lower');
   const secondaryDateLabel = formatContextualDateLabel(secondaryDeadline, undefined, now, 'lower');
 
@@ -456,22 +469,36 @@ const YourEyesOnlyDayContentPLAYER = ({
       </Column>
 
       <Column className="items-center gap-1">
-        <FontText weight="bold" className="text-lg tracking-[0.45em]">
-          {primaryLabel}
-        </FontText>
-        <FontText weight="bold" className="leading-14 text-5xl">
-          {primaryCountdown}
-        </FontText>
-        <FontText variant="subtext">
-          {primaryLabel === 'VOTE'
-            ? `Voting due ${primaryDateLabel} at ${formatTimeLabel(primaryTimeLabel)}.`
-            : `Actions due ${primaryDateLabel} at ${formatTimeLabel(primaryTimeLabel)}.`}
-        </FontText>
-        <FontText variant="subtext">
-          {secondaryIsLocked
-            ? `${secondaryLabel} due ${secondaryDateLabel} at ${formatTimeLabel(secondaryTimeLabel)}.`
-            : `${secondaryLabel} due in ${formatRelativeDuration(secondaryDeadline, now)} (${formatTimeLabel(secondaryTimeLabel)}).`}
-        </FontText>
+        {bothSkipped ? (
+          <>
+            <FontText weight="bold" className="leading-14 text-5xl">
+              SKIPPED
+            </FontText>
+            <FontText variant="subtext">Voting skipped this day</FontText>
+            <FontText variant="subtext">Actions skipped this day</FontText>
+          </>
+        ) : (
+          <>
+            <FontText weight="bold" className="text-lg tracking-[0.45em]">
+              {primaryLabel}
+            </FontText>
+            <FontText weight="bold" className="leading-14 text-5xl">
+              {primaryCountdown}
+            </FontText>
+            <FontText variant="subtext">
+              {primaryLabel === 'VOTE'
+                ? `Voting due ${primaryDateLabel} at ${formatTimeLabel(primaryTimeLabel)}.`
+                : `Actions due ${primaryDateLabel} at ${formatTimeLabel(primaryTimeLabel)}.`}
+            </FontText>
+            <FontText variant="subtext">
+              {secondarySkipped
+                ? `${secondaryLabel} skipped this day`
+                : secondaryIsLocked
+                  ? `${secondaryLabel} due ${secondaryDateLabel} at ${formatTimeLabel(secondaryTimeLabel)}.`
+                  : `${secondaryLabel} due in ${formatRelativeDuration(secondaryDeadline, now)} (${formatTimeLabel(secondaryTimeLabel)}).`}
+            </FontText>
+          </>
+        )}
       </Column>
 
       <Row className="items-start gap-4" style={{ flexWrap: 'wrap' }}>
