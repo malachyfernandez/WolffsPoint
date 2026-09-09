@@ -228,7 +228,7 @@ const NewspaperPageNEWSER = ({ currentUserId, gameId }: NewspaperPageNEWSERProps
             </View>
 
             <Column className='gap-4 max-w-[950px] w-full self-center'>
-                <View style={styles.animatedContentContainer}>
+                <View style={styles.animatedContentContainer} className='px-2 sm:px-0'>
                     {leavingDayIndex != null ? (
                         <Animated.View
                             key={`leaving-${leavingDayIndex}`}

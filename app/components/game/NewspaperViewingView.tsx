@@ -84,7 +84,7 @@ const NewspaperViewingView = ({ dayIndex, gameId, ownerUserId, TILE_SIZE, roundB
     }
 
     return (
-        <View className=''>
+        <View className='sm:mx-0 -mx-2'>
             <ShadowScrollView extensionPercent={0} direction='horizontal' className='w-full' scrollViewClassName='w-full px-5' horizontal>
                 <View className={`py-4 ${roundBottom ? 'rounded-2xl' : 'rounded-t-2xl'}`} style={{
                     // @ts-ignore: web-only CSS
