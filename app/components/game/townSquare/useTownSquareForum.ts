@@ -84,6 +84,13 @@ export const useTownSquareForum = ({ currentProfile, gameId, selectedPostId }: U
                     titleResolved: post.title?.trim() || truncateText(plainText || 'Untitled thread', 56),
                 };
             })
+            // Deduplicate by postId — the backend can return multiple list-item
+            // records that share the same postId (e.g. a double form submission).
+            // They are the same logical thread (replies are matched by postId), so
+            // only keep one entry per postId.
+            .filter((thread, index, array) => {
+                return array.findIndex((other) => other.postId === thread.postId) === index;
+            })
             .sort((left, right) => {
                 // Pinned threads always go to the top
                 const leftPinned = left.isPinned ? 1 : 0;
