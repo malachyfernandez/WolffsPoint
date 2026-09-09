@@ -134,7 +134,7 @@ const NewspaperWritingView = ({
   return (
     <>
       <Column className="w-full gap-4 px-4">
-        <Row className="items-center justify-between gap-2 flex-wrap">
+        <Row className="items-center justify-between gap-x-2 gap-y-6 flex-wrap">
           <Pressable onPress={toggleSkip} className="flex-row items-center gap-2 px-4">
             <View
               className={`h-5 w-5 items-center justify-center rounded border ${isSkipped ? 'bg-text border-text' : 'border-border bg-background'}`}>
