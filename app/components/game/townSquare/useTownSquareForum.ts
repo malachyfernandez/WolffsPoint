@@ -14,7 +14,6 @@ import {
     stripMarkdownSyntax,
     truncateText,
 } from './townSquareUtils';
-
 interface UseTownSquareForumParams {
     currentProfile: PlayerProfile;
     gameId: string;
@@ -137,6 +136,41 @@ export const useTownSquareForum = ({ currentProfile, gameId, selectedPostId }: U
         const replyCount = replies.filter((reply) => reply.postId === postId).length;
         markThreadReadWithCount(postId, replyCount);
     }, [markThreadReadWithCount, replies]);
+
+    // Total unread items: never-viewed threads (1 each) + new replies on viewed threads
+    const unreadCount = useMemo(() => {
+        return threads.reduce((total, thread) => {
+            const threadReadState = readState.value[thread.postId];
+            if (!threadReadState) {
+                // Never viewed — the post itself is unread
+                return total + 1;
+            }
+            // Viewed — count new replies since last read
+            const newReplies = Math.max(0, thread.replyCount - (threadReadState.replyCount ?? 0));
+            return total + newReplies;
+        }, 0);
+    }, [threads, readState.value]);
+
+    const markAllRead = useCallback(() => {
+        if (threads.length === 0) {
+            return;
+        }
+        const previousReadState = createUndoSnapshot(readState.value ?? {});
+        const now = Date.now();
+        const nextReadState: TownSquareReadState = { ...previousReadState };
+        for (const thread of threads) {
+            nextReadState[thread.postId] = {
+                replyCount: thread.replyCount,
+                lastReadAt: now,
+            };
+        }
+
+        executeCommand({
+            action: () => setReadState(createUndoSnapshot(nextReadState)),
+            undoAction: () => setReadState(createUndoSnapshot(previousReadState)),
+            description: 'Mark all as read',
+        });
+    }, [executeCommand, readState.value, setReadState, threads]);
 
     const createThread = (
         { markdown, plainText, title }: ComposerSubmitPayload,
@@ -439,6 +473,7 @@ export const useTownSquareForum = ({ currentProfile, gameId, selectedPostId }: U
         deleteReply,
         deleteThread,
         isLoading,
+        markAllRead,
         markThreadRead,
         markThreadReadWithCount,
         readState: readState.value ?? {},
@@ -447,6 +482,7 @@ export const useTownSquareForum = ({ currentProfile, gameId, selectedPostId }: U
         selectedThreadReplyTree,
         threads,
         togglePin,
+        unreadCount,
         updateReply,
         updateThread,
     };

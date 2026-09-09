@@ -44,6 +44,7 @@ const TownSquarePagePLAYER = ({ gameId, currentProfile }: TownSquarePagePLAYERPr
         deleteReply,
         deleteThread,
         isLoading,
+        markAllRead,
         markThreadReadWithCount,
         readState,
         replies,
@@ -51,6 +52,7 @@ const TownSquarePagePLAYER = ({ gameId, currentProfile }: TownSquarePagePLAYERPr
         selectedThreadReplyTree,
         threads,
         togglePin,
+        unreadCount,
         updateReply,
         updateThread,
     } = useTownSquareForum({
@@ -131,6 +133,7 @@ const TownSquarePagePLAYER = ({ gameId, currentProfile }: TownSquarePagePLAYERPr
                         isOperator={isOperator}
                         isPlayerDead={isPlayerDead}
                         listScrollRef={listScrollRef}
+                        onMarkAllRead={markAllRead}
                         onNewAnnouncement={() => setIsAnnouncementComposerOpen(true)}
                         onNewThread={() => setIsThreadComposerOpen(true)}
                         onOpenThread={openThread}
@@ -138,6 +141,7 @@ const TownSquarePagePLAYER = ({ gameId, currentProfile }: TownSquarePagePLAYERPr
                         onTogglePin={togglePin}
                         readStateSnapshot={readState}
                         threads={threads}
+                        unreadCount={unreadCount}
                     />
                 </LayoutStateAnimatedView.Option>
 

@@ -1,5 +1,5 @@
 import React, { RefObject, useMemo } from 'react';
-import { ScrollView, useWindowDimensions } from 'react-native';
+import { Pressable, ScrollView, useWindowDimensions } from 'react-native';
 import ShadowScrollView from '../../ui/ShadowScrollView';
 import { Plus } from 'lucide-react-native';
 import StateAnimatedView from '../../ui/StateAnimatedView';
@@ -16,6 +16,7 @@ interface TownSquareThreadListViewProps {
     isOperator: boolean;
     isPlayerDead: boolean;
     listScrollRef: RefObject<ScrollView | null>;
+    onMarkAllRead: () => void;
     onNewAnnouncement: () => void;
     onNewThread: () => void;
     onOpenThread: (thread: ThreadViewModel) => void;
@@ -23,6 +24,7 @@ interface TownSquareThreadListViewProps {
     onTogglePin: (postId: string) => void;
     readStateSnapshot: TownSquareReadState;
     threads: ThreadViewModel[];
+    unreadCount: number;
 }
 
 const fadeIn = { opacity: [0, 1] as [number, number], duration: 300 };
@@ -32,6 +34,7 @@ const TownSquareThreadListView = ({
     isOperator,
     isPlayerDead,
     listScrollRef,
+    onMarkAllRead,
     onNewAnnouncement,
     onNewThread,
     onOpenThread,
@@ -39,6 +42,7 @@ const TownSquareThreadListView = ({
     onTogglePin,
     readStateSnapshot,
     threads,
+    unreadCount,
 }: TownSquareThreadListViewProps) => {
     const hasLoaded = useMemo(() => !isLoading, [isLoading]);
     const { width } = useWindowDimensions();
@@ -105,6 +109,20 @@ const TownSquareThreadListView = ({
             <Column className='gap-3 flex-1'>
                 <Row className='gap-4 items-center justify-between border-b border-border/20 pb-3'>
                     <FontText variant='subtext'>{`${threads.length} thread${threads.length === 1 ? '' : 's'}`}</FontText>
+                    {unreadCount > 0 && (
+                        <Pressable
+                            onPress={onMarkAllRead}
+                            hitSlop={8}
+                            className='active:opacity-70'
+                        >
+                            <FontText
+                                variant='subtext'
+                                className='border border-border/30 rounded-full px-3 py-1'
+                            >
+                                {`Mark all ${unreadCount} as read`}
+                            </FontText>
+                        </Pressable>
+                    )}
                 </Row>
 
                 <StateAnimatedView.Container stateVar={hasLoaded} className='flex-1'>
