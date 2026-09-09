@@ -269,7 +269,7 @@ const NewspaperPageOPERATOR = ({ currentUserId, gameId }: NewspaperPageOPERATORP
                     </AppButton>
                     <FontText variant='subtext' className='text-center max-w-[420px]'>
                         {selectedDayOwner.validNewser?.email
-                            ? `The Newser currently owns this day. Taking control lets you edit the newspaper directly. Use "Import draft from newser" in the writing tab to copy their draft.`
+                            ? `The Newser currently owns this day. Taking control lets you edit the newspaper directly.`
                             : 'Assign a Newser in Config before using the shared newspaper-control flow.'}
                     </FontText>
                 </Column>
