@@ -35,6 +35,14 @@ const NewspaperViewingView = ({ dayIndex, gameId, ownerUserId, TILE_SIZE, roundB
 
     const isLoading = usepaperRecords === undefined;
 
+    const resolvedUsepaper = usepaperRecords?.[0]?.value?.columns?.length
+        ? usepaperRecords[0].value
+        : minimumUsepaper;
+
+    const isSkipped = Boolean(resolvedUsepaper.skipped);
+    const newspaperColumns = resolvedUsepaper.columns;
+    const hasContent = newspaperColumns.some(column => column.trim().length > 0);
+
     if (isLoading) {
         return (
             <Column className='gap-4 items-center justify-center py-24'>
@@ -42,12 +50,6 @@ const NewspaperViewingView = ({ dayIndex, gameId, ownerUserId, TILE_SIZE, roundB
             </Column>
         );
     }
-
-    const resolvedUsepaper = usepaperRecords?.[0]?.value?.columns?.length
-        ? usepaperRecords[0].value
-        : minimumUsepaper;
-
-    const isSkipped = Boolean(resolvedUsepaper.skipped);
 
     if (isSkipped) {
         return (
@@ -65,9 +67,21 @@ const NewspaperViewingView = ({ dayIndex, gameId, ownerUserId, TILE_SIZE, roundB
         );
     }
 
-    const newspaperColumns = resolvedUsepaper.columns;
-
-    const hasContent = newspaperColumns.some(column => column.trim().length > 0);
+    if (!hasContent) {
+        return (
+            <PlaceholderCard>
+                <Column className='gap-3 items-center'>
+                    <Newspaper size={48} color='rgb(46, 41, 37)' />
+                    <FontText weight='bold' className='text-xl text-center'>
+                        No newspaper yet
+                    </FontText>
+                    <FontText variant='subtext' className='text-center'>
+                        The newspaper hasn't been made for this day. Check back later.
+                    </FontText>
+                </Column>
+            </PlaceholderCard>
+        );
+    }
 
     return (
         <View className=''>
@@ -88,14 +102,10 @@ const NewspaperViewingView = ({ dayIndex, gameId, ownerUserId, TILE_SIZE, roundB
                                     key={columnIndex}
                                     className='gap-4 flex-1 shrink'
                                 >
-                                    {columnMarkdown.trim().length > 0 ? (
+                                    {columnMarkdown.trim().length > 0 && (
                                         <InputOptionsProvider gameId={gameId} showInputs={false}>
                                             <MarkdownRenderer markdown={columnMarkdown} textAlign='justify' />
                                         </InputOptionsProvider>
-                                    ) : (
-                                        <FontText variant='subtext' className='text-muted text-center'>
-                                            Empty column
-                                        </FontText>
                                     )}
                                 </Column>
                             ))}
