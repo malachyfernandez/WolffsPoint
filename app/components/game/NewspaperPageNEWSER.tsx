@@ -10,14 +10,15 @@ import FontText from '../ui/text/FontText';
 import PlaceholderCard from '../ui/PlaceholderCard';
 import { useGameOperatorUserId } from '../../../hooks/useGameOperatorUserId';
 import { useSharedListValue } from '../../../hooks/useSharedListValue';
-import { useFindListItems } from 'hooks/useData';
-import { getNewspaperDayItemId } from '../../../utils/newspaperControl';
+import { useFindListItems, useValue } from 'hooks/useData';
+import { getNewspaperDayItemId, getNewserAcceptedKey, NewserAccepted } from '../../../utils/newspaperControl';
 import { useNewspaperDayOwner } from './useNewspaperDayOwner';
 import { Usepaper } from '../../../types/usepaper';
 import { Newspaper } from 'lucide-react-native';
 
 interface NewspaperPageNEWSERProps {
     currentUserId: string;
+    currentEmail: string;
     gameId: string;
 }
 
@@ -25,7 +26,7 @@ type AnimationDirection = 'left' | 'right';
 
 const TILE_SIZE = 600;
 
-const NewspaperPageNEWSER = ({ currentUserId, gameId }: NewspaperPageNEWSERProps) => {
+const NewspaperPageNEWSER = ({ currentUserId, currentEmail, gameId }: NewspaperPageNEWSERProps) => {
     const [activeTab, setActiveTab] = useState<'writing' | 'viewing'>('writing');
     const [selectedDayIndex, setSelectedDayIndex] = useState(0);
     const { width } = useWindowDimensions();
@@ -72,6 +73,43 @@ const NewspaperPageNEWSER = ({ currentUserId, gameId }: NewspaperPageNEWSERProps
         ? operatorDraftRecords[0].value
         : null;
     const isOperatorDraftLoading = operatorDraftRecords === undefined;
+
+    // Write a "newser accepted" record under the newser's own userId so the
+    // operator can discover the newser's userId even when the operator's
+    // userData query doesn't include the newser's record. The newser writes
+    // this; the operator reads it via useFindValues in useNewspaperDayOwner.
+    const [accepted, setAccepted] = useValue<NewserAccepted>(getNewserAcceptedKey(gameId), {
+        defaultValue: { email: '', userId: '', gameId, acceptedAt: 0 },
+        privacy: 'PUBLIC',
+    });
+
+    useEffect(() => {
+        if (!currentEmail || !currentUserId) {
+            return;
+        }
+
+        const current = accepted.value;
+        if (
+            current.email === currentEmail
+            && current.userId === currentUserId
+            && current.gameId === gameId
+        ) {
+            return;
+        }
+
+        console.log('[NewspaperPageNEWSER] Writing newser acceptance record', {
+            email: currentEmail,
+            userId: currentUserId,
+            gameId,
+        });
+
+        setAccepted({
+            email: currentEmail,
+            userId: currentUserId,
+            gameId,
+            acceptedAt: Date.now(),
+        });
+    }, [accepted, currentEmail, currentUserId, gameId, setAccepted]);
 
     const slideDistance = useMemo(() => Math.min(Math.max(width * 0.12, 24), 72), [width]);
     const transitionDuration = 240;

@@ -38,7 +38,7 @@ const NewserGamePage = ({ gameId, currentUserId }: NewserGamePageProps) => {
                     <PaperContainer>
                         <Animated.View key={activeTab} entering={FadeIn.duration(300)} className='w-full min-w-0'>
                             {activeTab === 'townSquare' && <TownSquarePagePLAYER gameId={gameId} currentProfile={profile} />}
-                            {activeTab === 'newspaper' && <NewspaperPageNEWSER currentUserId={currentUserId} gameId={gameId} />}
+                            {activeTab === 'newspaper' && <NewspaperPageNEWSER currentUserId={currentUserId} currentEmail={currentEmail} gameId={gameId} />}
                             {activeTab === 'ruleBook' && <RuleBookPagePLAYER gameId={gameId} />}
                             {activeTab === 'phoneBook' && (
                                 <PhoneBookPagePLAYER

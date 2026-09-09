@@ -81,7 +81,7 @@ const ImportDraftDialog = ({
                             </AppButton>
                             <AppButton
                                 variant='filled'
-                                className='w-full sm:w-auto sm:min-w-[260px]'
+                                className='w-full sm:w-auto sm:min-w-[320px] px-6'
                                 disabled={isLoading || !hasContent}
                                 onPress={() => {
                                     onConfirmImport();

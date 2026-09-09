@@ -6,6 +6,13 @@ export type NewserAssignment = {
     assignedAt: number;
 };
 
+export type NewserAccepted = {
+    email: string;
+    userId: string;
+    gameId: string;
+    acceptedAt: number;
+};
+
 export type PublicUserData = {
     email?: string;
     name?: string;
@@ -24,6 +31,10 @@ export type NewspaperControlState = {
 
 export const getNewserAssignmentKey = (gameId: string) => {
     return getGameScopedKey('newserAssignment', gameId);
+};
+
+export const getNewserAcceptedKey = (gameId: string) => {
+    return getGameScopedKey('newserAccepted', gameId);
 };
 
 export const getNewspaperControlKey = (gameId: string) => {
@@ -72,9 +83,11 @@ export const resolveJoinedUserByEmail = ({
 export const resolveValidNewserAssignment = ({
     assignment,
     userDatas,
+    acceptedRecords,
 }: {
     assignment?: NewserAssignment | null;
     userDatas: PublicUserData[];
+    acceptedRecords?: NewserAccepted[];
 }) => {
     const assignmentEmail = normalizeNewserEmail(assignment?.email ?? '');
 
@@ -98,6 +111,23 @@ export const resolveValidNewserAssignment = ({
             email: assignment.email?.trim() || assignmentEmail,
             userId: assignment.userId,
         };
+    }
+
+    // Fall back to the newser's own acceptance record if one matches the
+    // assignment email. The newser writes this under their own userId when
+    // they visit the newser page, so the operator can discover their userId
+    // even when the operator's userData query doesn't include the newser.
+    if (acceptedRecords?.length) {
+        const matchingAccepted = acceptedRecords.find((record) => {
+            return normalizeNewserEmail(record.email ?? '') === assignmentEmail && Boolean(record.userId);
+        });
+
+        if (matchingAccepted?.userId) {
+            return {
+                email: matchingAccepted.email?.trim() || assignmentEmail,
+                userId: matchingAccepted.userId,
+            };
+        }
     }
 
     return null;

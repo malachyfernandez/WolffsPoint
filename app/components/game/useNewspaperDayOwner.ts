@@ -1,12 +1,15 @@
 import { useMemo } from 'react';
 import { useFindListItems, useFindValues } from '../../../hooks/useData';
 import {
+    NewserAccepted,
     NewserAssignment,
     NewspaperControlState,
     PublicUserData,
     getNewspaperDayControlItemId,
+    getNewserAcceptedKey,
     getNewserAssignmentKey,
     getNewspaperControlKey,
+    normalizeNewserEmail,
     resolveNewspaperOwnerUserId,
     resolveValidNewserAssignment,
 } from '../../../utils/newspaperControl';
@@ -35,13 +38,33 @@ export const useNewspaperDayOwner = ({ gameId, dayIndex, disabled = false }: Use
         userIds: operatorUserId ? [operatorUserId] : undefined,
         returnTop: 1,
     });
+    const acceptedRecords = useFindValues<NewserAccepted>(getNewserAcceptedKey(gameId), {
+        returnTop: 50,
+    });
 
     const validNewser = useMemo(() => {
-        return resolveValidNewserAssignment({
-            assignment: assignmentRecords?.[0]?.value,
-            userDatas: userDataRecords?.map((record) => record.value) ?? [],
+        const assignment = assignmentRecords?.[0]?.value;
+        const userDatas = userDataRecords?.map((record) => record.value) ?? [];
+        const accepted = acceptedRecords?.map((record) => record.value) ?? [];
+        const result = resolveValidNewserAssignment({
+            assignment,
+            userDatas,
+            acceptedRecords: accepted,
         });
-    }, [assignmentRecords, userDataRecords]);
+        // Debug logging for newser resolution
+        console.log('[useNewspaperDayOwner] newser resolution:', {
+            gameId,
+            dayIndex,
+            operatorUserId,
+            assignmentEmail: assignment?.email,
+            assignmentUserId: assignment?.userId,
+            userDataCount: userDatas.length,
+            acceptedCount: accepted.length,
+            acceptedDetailed: JSON.stringify(accepted.map(a => ({ email: a.email, userId: a.userId }))),
+            resolvedResult: result,
+        });
+        return result;
+    }, [assignmentRecords, userDataRecords, acceptedRecords, gameId, dayIndex, operatorUserId]);
 
     const ownerUserId = useMemo(() => {
         if (disabled || !operatorUserId) {
@@ -60,6 +83,7 @@ export const useNewspaperDayOwner = ({ gameId, dayIndex, disabled = false }: Use
         || assignmentRecords === undefined
         || userDataRecords === undefined
         || controlRecords === undefined
+        || acceptedRecords === undefined
     );
 
     return {
