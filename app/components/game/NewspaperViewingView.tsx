@@ -6,7 +6,9 @@ import MarkdownRenderer from '../ui/markdown/MarkdownRenderer';
 import { InputOptionsProvider } from './markdownEditor/InputOptionsProvider';
 import FontText from '../ui/text/FontText';
 import LoadingText from '../ui/loading/LoadingText';
+import PlaceholderCard from '../ui/PlaceholderCard';
 import PressLogo from '../ui/icons/Press';
+import { Newspaper } from 'lucide-react-native';
 import { useFindListItems } from 'hooks/useData';
 import ShadowScrollView from '../ui/ShadowScrollView';
 import { Usepaper } from 'types/usepaper';
@@ -44,6 +46,24 @@ const NewspaperViewingView = ({ dayIndex, gameId, ownerUserId, TILE_SIZE, roundB
     const resolvedUsepaper = usepaperRecords?.[0]?.value?.columns?.length
         ? usepaperRecords[0].value
         : minimumUsepaper;
+
+    const isSkipped = Boolean(resolvedUsepaper.skipped);
+
+    if (isSkipped) {
+        return (
+            <PlaceholderCard>
+                <Column className='gap-3 items-center'>
+                    <Newspaper size={48} color='rgb(46, 41, 37)' />
+                    <FontText weight='bold' className='text-xl text-center'>
+                        No newspaper for this day
+                    </FontText>
+                    <FontText variant='subtext' className='text-center'>
+                        The newspaper has been skipped for this day.
+                    </FontText>
+                </Column>
+            </PlaceholderCard>
+        );
+    }
 
     const newspaperColumns = resolvedUsepaper.columns;
 

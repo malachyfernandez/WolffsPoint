@@ -3,6 +3,7 @@ import { Pressable, View } from 'react-native';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
 import MarkdownRenderer from '../ui/markdown/MarkdownRenderer';
+import FontText from '../ui/text/FontText';
 import { InputOptionsProvider } from './markdownEditor/InputOptionsProvider';
 import { useList, useValue } from 'hooks/useData';
 import { createUndoSnapshot, useUndoRedo } from 'hooks/useUndoRedo';
@@ -45,6 +46,19 @@ const NewspaperWritingView = ({ gameId, realGameId }: NewspaperWritingViewProps)
   const resolvedUsepaper = newspaper?.value?.columns?.length ? newspaper.value : minimumUsepaper;
 
   const newspaperColumns = resolvedUsepaper.columns;
+  const isSkipped = Boolean(resolvedUsepaper.skipped);
+
+  const toggleSkip = () => {
+    const previousUsepaper = createUndoSnapshot(resolvedUsepaper);
+    const nextUsepaper = createUndoSnapshot(previousUsepaper);
+    nextUsepaper.skipped = !isSkipped;
+
+    executeCommand({
+      action: () => setNewspaper(createUndoSnapshot(nextUsepaper)),
+      undoAction: () => setNewspaper(createUndoSnapshot(previousUsepaper)),
+      description: isSkipped ? 'Unskip newspaper' : 'Skip newspaper',
+    });
+  };
 
   const setColumnMarkdown = (columnIndex: number, markdown: string) => {
     const previousUsepaper = createUndoSnapshot(resolvedUsepaper);
@@ -108,6 +122,21 @@ const NewspaperWritingView = ({ gameId, realGameId }: NewspaperWritingViewProps)
         scrollViewClassName="w-full px-4"
         horizontal>
         <Column className="w-[910px] gap-4">
+          <Row className="items-center justify-center gap-2">
+            <Pressable onPress={toggleSkip} className="flex-row items-center gap-2">
+              <View
+                className={`h-5 w-5 items-center justify-center rounded border ${isSkipped ? 'bg-text border-text' : 'border-border bg-background'}`}>
+                {isSkipped && (
+                  <FontText weight="bold" color="white" className="text-xs">
+                    ✓
+                  </FontText>
+                )}
+              </View>
+              <FontText weight="medium" className={isSkipped ? '' : 'opacity-70'}>
+                Skip newspaper for this day
+              </FontText>
+            </Pressable>
+          </Row>
           <View className="items-center justify-center px-8">
             <PressLogo width="100%" />
           </View>
