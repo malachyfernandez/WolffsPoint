@@ -33,7 +33,7 @@ const NewspaperDayView = ({ gameId, dayIndex, ownerUserId, isLeaving }: Newspape
         <Column className='gap-0 min-h-[760px]'>
             <NewspaperViewingView dayIndex={dayIndex} gameId={gameId} ownerUserId={ownerUserId} TILE_SIZE={TILE_SIZE} roundBottom={!showVoteSummary} />
             {showVoteSummary && (
-                <View className='px-5'>
+                <View className='px-5 sm:mx-0 -mx-2'>
                     <View className='rounded-b-2xl' style={{
                         // @ts-ignore: web-only CSS
                         backgroundImage: "url('https://d9tic9wqq4.ufs.sh/f/e3bq9j1bOXyi6QFuqBSV3IcVxmF4QjUoPvCOdS2HLawpi0Ey')",

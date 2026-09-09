@@ -6,6 +6,7 @@ import Column from '../../layout/Column';
 import Row from '../../layout/Row';
 import AppButton from '../../ui/buttons/AppButton';
 import FontText from '../../ui/text/FontText';
+import ShadowScrollView from '../../ui/ShadowScrollView';
 import { Usepaper } from '../../../../types/usepaper';
 import NewspaperZoomableView from './NewspaperZoomableView';
 
@@ -65,14 +66,18 @@ const ImportDraftDialog = ({
                                 </FontText>
                             </View>
                         ) : (
-                            <View className='flex-1'>
+                            <ShadowScrollView
+                                direction='vertical'
+                                className='flex-1 min-h-0'
+                                scrollViewClassName='w-full'
+                            >
                                 <NewspaperZoomableView
                                     columns={columns}
                                     gameId={realGameId}
                                     TILE_SIZE={TILE_SIZE}
                                     roundBottom
                                 />
-                            </View>
+                            </ShadowScrollView>
                         )}
 
                         <Row className='flex-wrap justify-end gap-x-4 gap-y-3 pt-2'>
