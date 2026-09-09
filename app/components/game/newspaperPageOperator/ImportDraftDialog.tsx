@@ -75,8 +75,8 @@ const ImportDraftDialog = ({
                             </View>
                         )}
 
-                        <Row className='justify-end gap-4 pt-2'>
-                            <AppButton variant='outline' className='w-28' onPress={() => onOpenChange(false)}>
+                        <Row className='flex-wrap justify-end gap-x-4 gap-y-3 pt-2'>
+                            <AppButton variant='outline' className='w-full sm:w-28' onPress={() => onOpenChange(false)}>
                                 <FontText weight='medium'>Cancel</FontText>
                             </AppButton>
                             <AppButton
