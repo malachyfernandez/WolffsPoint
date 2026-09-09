@@ -1,6 +1,6 @@
-import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Pressable, View } from 'react-native';
-import Animated, { useAnimatedStyle, useSharedValue, withTiming, Easing } from 'react-native-reanimated';
+import Animated, { useAnimatedReaction, useAnimatedRef, useAnimatedStyle, useSharedValue, withTiming, Easing, scrollTo } from 'react-native-reanimated';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
 import MarkdownRenderer from '../ui/markdown/MarkdownRenderer';
@@ -54,11 +54,11 @@ const NewspaperViewingView = ({ dayIndex, gameId, ownerUserId, TILE_SIZE, roundB
 
     const [zoom, setZoom] = useState(1);
     const [containerWidth, setContainerWidth] = useState(0);
-    const [scrollX, setScrollX] = useState(0);
-    const [pendingScrollX, setPendingScrollX] = useState<number | null>(null);
 
     const animatedZoom = useSharedValue(1);
-    const scrollViewRef = useRef<any>(null);
+    const animatedScrollX = useSharedValue(0);
+    const centerUnscaled = useSharedValue(0);
+    const scrollViewRef = useAnimatedRef<any>();
 
     const singleColumnWidth = useMemo(() => {
         const n = Math.max(newspaperColumns.length, 1);
@@ -81,27 +81,25 @@ const NewspaperViewingView = ({ dayIndex, gameId, ownerUserId, TILE_SIZE, roundB
     };
 
     useEffect(() => {
+        centerUnscaled.value = 0;
         setZoom(defaultZoom);
         animateTo(defaultZoom);
-        setPendingScrollX(0);
     }, [defaultZoom]);
 
-    // After width updates in the DOM, set scroll position to keep center point centered
-    useLayoutEffect(() => {
-        if (pendingScrollX !== null && scrollViewRef.current) {
-            scrollViewRef.current.scrollTo({ x: pendingScrollX, y: 0, animated: false });
-            setPendingScrollX(null);
-        }
-    }, [pendingScrollX]);
+    // Animate scroll position in sync with zoom — keeps the content point
+    // under the viewport center stationary throughout the zoom animation.
+    useAnimatedReaction(
+        () => animatedZoom.value,
+        (z) => {
+            const targetX = Math.max(0, centerUnscaled.value * z - viewportWidth / 2);
+            scrollTo(scrollViewRef, targetX, 0, false);
+        },
+    );
 
     const zoomTo = (nextZoom: number) => {
-        // Calculate the unscaled content point at the center of the viewport
-        const centerScaled = scrollX + viewportWidth / 2;
-        const centerUnscaled = centerScaled / zoom;
-        // New scroll position so that same content point stays centered
-        const newScrollX = Math.max(0, centerUnscaled * nextZoom - viewportWidth / 2);
+        // Capture the unscaled content point at the viewport center before zooming
+        centerUnscaled.value = (animatedScrollX.value + viewportWidth / 2) / zoom;
         setZoom(nextZoom);
-        setPendingScrollX(newScrollX);
         animateTo(nextZoom);
     };
 
@@ -116,6 +114,9 @@ const NewspaperViewingView = ({ dayIndex, gameId, ownerUserId, TILE_SIZE, roundB
     const animatedScaleStyle = useAnimatedStyle(() => ({
         transform: [{ scale: animatedZoom.value }],
         transformOrigin: 'left top',
+    }));
+    const animatedWidthStyle = useAnimatedStyle(() => ({
+        width: NEWSPAPER_WIDTH * animatedZoom.value,
     }));
 
     const zoomButtonClass = 'h-9 w-9 items-center justify-center rounded-full border border-border/30 active:bg-text/5';
@@ -191,9 +192,9 @@ const NewspaperViewingView = ({ dayIndex, gameId, ownerUserId, TILE_SIZE, roundB
                         scrollViewClassName='w-full px-5'
                         horizontal
                         scrollEventThrottle={16}
-                        onScroll={(e: any) => setScrollX(e.nativeEvent.contentOffset.x)}
+                        onScroll={(e: any) => { animatedScrollX.value = e.nativeEvent.contentOffset.x; }}
                     >
-                        <View style={{ width: NEWSPAPER_WIDTH * zoom }}>
+                        <Animated.View style={animatedWidthStyle}>
                             <Animated.View
                                 className={`py-4 ${roundBottom ? 'rounded-2xl' : 'rounded-t-2xl'}`}
                                 style={[animatedScaleStyle, {
@@ -224,7 +225,7 @@ const NewspaperViewingView = ({ dayIndex, gameId, ownerUserId, TILE_SIZE, roundB
                                     </Row>
                                 </Column>
                             </Animated.View>
-                        </View>
+                        </Animated.View>
                     </ShadowScrollView>
                 </>
             )}
