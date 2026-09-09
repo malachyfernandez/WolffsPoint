@@ -30,6 +30,7 @@ const NewspaperZoomableView = ({ columns, gameId, TILE_SIZE, roundBottom }: News
     const animatedZoom = useSharedValue(1);
     const animatedScrollX = useSharedValue(0);
     const centerUnscaled = useSharedValue(0);
+    const unscaledContentHeight = useSharedValue(0);
     const scrollViewRef = useAnimatedRef<any>();
 
     const singleColumnWidth = useMemo(() => {
@@ -94,6 +95,7 @@ const NewspaperZoomableView = ({ columns, gameId, TILE_SIZE, roundBottom }: News
     }));
     const animatedWidthStyle = useAnimatedStyle(() => ({
         width: NEWSPAPER_WIDTH * animatedZoom.value,
+        height: unscaledContentHeight.value * animatedZoom.value,
     }));
 
     const zoomButtonClass = 'h-9 w-9 items-center justify-center rounded-full border border-border/30 active:bg-text/5';
@@ -140,6 +142,7 @@ const NewspaperZoomableView = ({ columns, gameId, TILE_SIZE, roundBottom }: News
                     >
                         <Animated.View style={animatedWidthStyle}>
                             <Animated.View
+                                onLayout={(e) => { unscaledContentHeight.value = e.nativeEvent.layout.height; }}
                                 className={`py-4 ${roundBottom ? 'rounded-2xl' : 'rounded-t-2xl'}`}
                                 style={[animatedScaleStyle, {
                                     width: NEWSPAPER_WIDTH,
