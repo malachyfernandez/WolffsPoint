@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import Animated, { useAnimatedReaction, useAnimatedRef, useAnimatedStyle, useSharedValue, withTiming, Easing, scrollTo } from 'react-native-reanimated';
 import Column from '../../layout/Column';
@@ -32,6 +32,7 @@ const NewspaperZoomableView = ({ columns, gameId, TILE_SIZE, roundBottom }: News
     const centerUnscaled = useSharedValue(0);
     const unscaledContentHeight = useSharedValue(0);
     const scrollViewRef = useAnimatedRef<any>();
+    const hasInitializedRef = useRef(false);
 
     const singleColumnWidth = useMemo(() => {
         const n = Math.max(columns.length, 1);
@@ -64,8 +65,18 @@ const NewspaperZoomableView = ({ columns, gameId, TILE_SIZE, roundBottom }: News
     useEffect(() => {
         centerUnscaled.value = 0;
         setZoom(defaultZoom);
-        animateTo(defaultZoom);
-    }, [defaultZoom]);
+        if (!hasInitializedRef.current) {
+            // Skip animation until the container has been measured and
+            // defaultZoom reflects the real available width (not the
+            // initial placeholder of 1).
+            animatedZoom.value = defaultZoom;
+            if (containerWidth > 0) {
+                hasInitializedRef.current = true;
+            }
+        } else {
+            animateTo(defaultZoom);
+        }
+    }, [defaultZoom, containerWidth]);
 
     useAnimatedReaction(
         () => animatedZoom.value,
