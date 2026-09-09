@@ -21,9 +21,10 @@ const DisableableButton = ({
     className = '',
     enabledVariant = 'filled',
 }: DisableableButtonProps) => {
+    const widthClass = className.match(/(?:^|\s)(min-w-\S+)/)?.[1] ?? 'w-32';
     return isEnabled ? (
         <AppButton 
-            className={`w-32 h-12 ${className}`} 
+            className={`h-12 ${widthClass} ${className}`} 
             variant={enabledVariant} 
             onPress={onPress}
         >
@@ -35,7 +36,7 @@ const DisableableButton = ({
         <StatusButton 
             buttonText={enabledText}
             buttonAltText={disabledText}
-            className={`w-32 h-12 ${className}`}
+            className={`h-12 ${widthClass} ${className}`}
         />
     );
 };

@@ -1,0 +1,132 @@
+import React from 'react';
+import { View } from 'react-native';
+import ConvexDialog from '../../ui/dialog/ConvexDialog';
+import DialogHeader from '../../ui/dialog/DialogHeader';
+import Column from '../../layout/Column';
+import Row from '../../layout/Row';
+import AppButton from '../../ui/buttons/AppButton';
+import FontText from '../../ui/text/FontText';
+import ShadowScrollView from '../../ui/ShadowScrollView';
+import MarkdownRenderer from '../../ui/markdown/MarkdownRenderer';
+import { InputOptionsProvider } from '../markdownEditor/InputOptionsProvider';
+import PressLogo from '../../ui/icons/Press';
+import { Usepaper } from '../../../../types/usepaper';
+
+interface ImportDraftDialogProps {
+    isOpen: boolean;
+    onOpenChange: (open: boolean) => void;
+    /** The draft to preview (already loaded). */
+    draft: Usepaper | null;
+    /** Whether the draft is still loading. */
+    isLoading: boolean;
+    /** Display label for whose draft this is (e.g. "Newser" or "Operator"). */
+    sourceLabel: string;
+    /** Game ID for markdown rendering context. */
+    realGameId: string;
+    onConfirmImport: () => void;
+}
+
+const TILE_SIZE = 600;
+
+const ImportDraftDialog = ({
+    isOpen,
+    onOpenChange,
+    draft,
+    isLoading,
+    sourceLabel,
+    realGameId,
+    onConfirmImport,
+}: ImportDraftDialogProps) => {
+    const columns = draft?.columns ?? [];
+    const hasContent = columns.some((c) => c.trim().length > 0);
+
+    return (
+        <ConvexDialog.Root isOpen={isOpen} onOpenChange={onOpenChange}>
+            <ConvexDialog.Portal>
+                <ConvexDialog.Overlay />
+                <ConvexDialog.Content className='h-[90vh]'>
+                    <ConvexDialog.Close
+                        iconProps={{ color: 'rgb(246, 238, 219)' }}
+                        className='bg-text-inverted/10 hover:bg-text-inverted/15 absolute right-0 top-0 z-10 h-10 w-10 rounded-full'
+                    />
+                    <DialogHeader
+                        text={`Import ${sourceLabel} Draft`}
+                        subtext='Preview the draft below before replacing your newspaper'
+                    />
+
+                    <Column className='min-h-0 flex-1 gap-3 pt-3'>
+                        {isLoading ? (
+                            <View className='border-subtle-border bg-text/5 rounded-lg border p-8'>
+                                <FontText variant='subtext' className='text-center'>
+                                    Loading draft…
+                                </FontText>
+                            </View>
+                        ) : !hasContent ? (
+                            <View className='border-subtle-border bg-text/5 rounded-lg border p-8'>
+                                <FontText variant='subtext' className='text-center'>
+                                    The {sourceLabel.toLowerCase()} draft is blank.
+                                </FontText>
+                            </View>
+                        ) : (
+                            <ShadowScrollView
+                                className='flex-1'
+                                scrollViewClassName='flex-1 px-4 py-4'
+                            >
+                                <View
+                                    className='py-4 rounded-2xl'
+                                    style={{
+                                        // @ts-ignore: web-only CSS
+                                        backgroundImage: "url('https://d9tic9wqq4.ufs.sh/f/e3bq9j1bOXyi6QFuqBSV3IcVxmF4QjUoPvCOdS2HLawpi0Ey')",
+                                        backgroundRepeat: 'repeat',
+                                        backgroundSize: `${TILE_SIZE}px ${TILE_SIZE}px`,
+                                    }}
+                                >
+                                    <Column className='gap-4 w-[910px]'>
+                                        <View className='items-center justify-center px-8'>
+                                            <PressLogo width='100%' />
+                                        </View>
+                                        <Row className='gap-4 w-full p-4'>
+                                            {columns.map((columnMarkdown, columnIndex) => (
+                                                <Column
+                                                    key={columnIndex}
+                                                    className='gap-4 flex-1 shrink'
+                                                >
+                                                    {columnMarkdown.trim().length > 0 && (
+                                                        <InputOptionsProvider gameId={realGameId} showInputs={false}>
+                                                            <MarkdownRenderer markdown={columnMarkdown} textAlign='justify' />
+                                                        </InputOptionsProvider>
+                                                    )}
+                                                </Column>
+                                            ))}
+                                        </Row>
+                                    </Column>
+                                </View>
+                            </ShadowScrollView>
+                        )}
+
+                        <Row className='justify-end gap-4 pt-2'>
+                            <AppButton variant='outline' className='w-28' onPress={() => onOpenChange(false)}>
+                                <FontText weight='medium'>Cancel</FontText>
+                            </AppButton>
+                            <AppButton
+                                variant='accent'
+                                className='w-full sm:w-auto sm:min-w-[260px]'
+                                disabled={isLoading || !hasContent}
+                                onPress={() => {
+                                    onConfirmImport();
+                                    onOpenChange(false);
+                                }}
+                            >
+                                <FontText weight='medium' color='white'>
+                                    {`Replace Newspaper With ${sourceLabel} Draft`}
+                                </FontText>
+                            </AppButton>
+                        </Row>
+                    </Column>
+                </ConvexDialog.Content>
+            </ConvexDialog.Portal>
+        </ConvexDialog.Root>
+    );
+};
+
+export default ImportDraftDialog;

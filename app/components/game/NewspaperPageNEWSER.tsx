@@ -10,8 +10,10 @@ import FontText from '../ui/text/FontText';
 import PlaceholderCard from '../ui/PlaceholderCard';
 import { useGameOperatorUserId } from '../../../hooks/useGameOperatorUserId';
 import { useSharedListValue } from '../../../hooks/useSharedListValue';
+import { useFindListItems } from 'hooks/useData';
 import { getNewspaperDayItemId } from '../../../utils/newspaperControl';
 import { useNewspaperDayOwner } from './useNewspaperDayOwner';
+import { Usepaper } from '../../../types/usepaper';
 import { Newspaper } from 'lucide-react-native';
 
 interface NewspaperPageNEWSERProps {
@@ -59,6 +61,17 @@ const NewspaperPageNEWSER = ({ currentUserId, gameId }: NewspaperPageNEWSERProps
         disabled: leavingDayIndex === null,
     });
     const currentDayItemId = getNewspaperDayItemId(gameId, selectedDayIndex);
+
+    // Load the operator's draft so the newser can import it when they have control
+    const operatorDraftRecords = useFindListItems<Usepaper>('newspaper', {
+        itemId: currentDayItemId,
+        userIds: operatorUserId ? [operatorUserId] : [''],
+        returnTop: 1,
+    });
+    const operatorDraft = operatorDraftRecords?.[0]?.value?.columns?.length
+        ? operatorDraftRecords[0].value
+        : null;
+    const isOperatorDraftLoading = operatorDraftRecords === undefined;
 
     const slideDistance = useMemo(() => Math.min(Math.max(width * 0.12, 24), 72), [width]);
     const transitionDuration = 240;
@@ -241,7 +254,14 @@ const NewspaperPageNEWSER = ({ currentUserId, gameId }: NewspaperPageNEWSERProps
                                 </Tabs.Content>
                                 <Tabs.Content value='writing' className='flex-1'>
                                     {currentUserId === leavingDayOwner.ownerUserId ? (
-                                        <NewspaperWritingView gameId={getNewspaperDayItemId(gameId, leavingDayIndex)} realGameId={gameId} />
+                                        <NewspaperWritingView
+                                            gameId={getNewspaperDayItemId(gameId, leavingDayIndex)}
+                                            realGameId={gameId}
+                                            importSourceLabel='Operator'
+                                            importDraft={operatorDraft}
+                                            isImportDraftLoading={isOperatorDraftLoading}
+                                            onImportDraft={() => {}}
+                                        />
                                     ) : (
                                         <PlaceholderCard>
                                             <Column className='gap-3 items-center'>
@@ -267,7 +287,14 @@ const NewspaperPageNEWSER = ({ currentUserId, gameId }: NewspaperPageNEWSERProps
                             </Tabs.Content>
                             <Tabs.Content value='writing' className='flex-1'>
                                 {currentUserId === selectedDayOwner.ownerUserId ? (
-                                    <NewspaperWritingView gameId={currentDayItemId} realGameId={gameId} />
+                                    <NewspaperWritingView
+                                        gameId={currentDayItemId}
+                                        realGameId={gameId}
+                                        importSourceLabel='Operator'
+                                        importDraft={operatorDraft}
+                                        isImportDraftLoading={isOperatorDraftLoading}
+                                        onImportDraft={() => {}}
+                                    />
                                 ) : (
                                     <PlaceholderCard>
                                         <Column className='gap-3 items-center'>

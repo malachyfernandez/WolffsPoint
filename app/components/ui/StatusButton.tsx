@@ -46,7 +46,7 @@ export default function StatusButton({ buttonText, buttonAltText, className }: S
 
   return (
     <View className={`transition-all ${className || ''}`} style={{ transform: [{ translateX: shakeOffset }] }}>
-      <AppButton variant="grey" className={`h-10 w-28 ${className || ''}`} onPress={buttonPress}>
+      <AppButton variant="grey" className={`h-10 ${className || ''}`} onPress={buttonPress}>
         <FontText weight='medium' color='white'>{trueButtonText}</FontText>
       </AppButton>
     </View>

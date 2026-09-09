@@ -14,6 +14,8 @@ import NewspaperColumnEmptyState from './newspaperPageOperator/NewspaperColumnEm
 import NewspaperColumnFooter from './newspaperPageOperator/NewspaperColumnFooter';
 import NewspaperColumnHeader from './newspaperPageOperator/NewspaperColumnHeader';
 import NewspaperPageHeader from './newspaperPageOperator/NewspaperPageHeader';
+import ImportDraftDialog from './newspaperPageOperator/ImportDraftDialog';
+import DisableableButton from '../ui/buttons/DisableableButton';
 import PressLogo from '../ui/icons/Press';
 import { Usepaper } from 'types/usepaper';
 
@@ -22,6 +24,14 @@ interface NewspaperWritingViewProps {
   /** The actual game ID (not the composite newspaper day ID). Used for loading
    *  script data (players, roles, etc.) via InputOptionsProvider. */
   realGameId?: string;
+  /** When provided, shows an "Import draft from [sourceLabel]" button. */
+  importSourceLabel?: string;
+  /** The other person's draft to preview in the import dialog, or null if blank. */
+  importDraft?: Usepaper | null;
+  /** Whether the other person's draft is still loading. */
+  isImportDraftLoading?: boolean;
+  /** Called when the user confirms importing the draft. */
+  onImportDraft?: (draft: Usepaper) => void;
 }
 
 const defaultUsepaper: Usepaper = {
@@ -32,11 +42,19 @@ const minimumUsepaper: Usepaper = {
   columns: ['', ''],
 };
 
-const NewspaperWritingView = ({ gameId, realGameId }: NewspaperWritingViewProps) => {
+const NewspaperWritingView = ({
+  gameId,
+  realGameId,
+  importSourceLabel,
+  importDraft,
+  isImportDraftLoading,
+  onImportDraft,
+}: NewspaperWritingViewProps) => {
   const { executeCommand } = useUndoRedo();
   const { showToast } = useToast();
   const [selectedColumnIndex, setSelectedColumnIndex] = useState<number | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
 
   const [newspaper, setNewspaper] = useList<Usepaper>('newspaper', gameId, {
     privacy: 'PUBLIC',
@@ -115,6 +133,36 @@ const NewspaperWritingView = ({ gameId, realGameId }: NewspaperWritingViewProps)
 
   return (
     <>
+      <Column className="w-full gap-4 px-4">
+        <Row className="items-center justify-between gap-2 flex-wrap">
+          <Pressable onPress={toggleSkip} className="flex-row items-center gap-2 px-4">
+            <View
+              className={`h-5 w-5 items-center justify-center rounded border ${isSkipped ? 'bg-text border-text' : 'border-border bg-background'}`}>
+              {isSkipped && (
+                <FontText weight="bold" color="white" className="text-xs">
+                  ✓
+                </FontText>
+              )}
+            </View>
+            <FontText weight="medium" className={isSkipped ? '' : 'opacity-70'}>
+              Skip newspaper for this day
+            </FontText>
+          </Pressable>
+          {importSourceLabel && onImportDraft && (
+            <DisableableButton
+              isEnabled={Boolean(importDraft?.columns?.some((c) => c.trim().length > 0))}
+              enabledText={`Import draft from ${importSourceLabel}`}
+              disabledText={`${importSourceLabel} draft is blank`}
+              onPress={() => setIsImportDialogOpen(true)}
+              className="min-w-[240px] px-4"
+              enabledVariant="outline-alt"
+            />
+          )}
+        </Row>
+        <View className='border-b border-border/20' />
+        <NewspaperPageHeader onAddColumn={addColumn} />
+      </Column>
+
       <ShadowScrollView
         direction="horizontal"
         extensionPercent={0}
@@ -122,25 +170,9 @@ const NewspaperWritingView = ({ gameId, realGameId }: NewspaperWritingViewProps)
         scrollViewClassName="w-full px-4"
         horizontal>
         <Column className="w-[910px] gap-4">
-          <Row className="items-center justify-center gap-2">
-            <Pressable onPress={toggleSkip} className="flex-row items-center gap-2">
-              <View
-                className={`h-5 w-5 items-center justify-center rounded border ${isSkipped ? 'bg-text border-text' : 'border-border bg-background'}`}>
-                {isSkipped && (
-                  <FontText weight="bold" color="white" className="text-xs">
-                    ✓
-                  </FontText>
-                )}
-              </View>
-              <FontText weight="medium" className={isSkipped ? '' : 'opacity-70'}>
-                Skip newspaper for this day
-              </FontText>
-            </Pressable>
-          </Row>
           <View className="items-center justify-center px-8">
             <PressLogo width="100%" />
           </View>
-          <NewspaperPageHeader onAddColumn={addColumn} />
           <View className="w-full">
             <Row className="border-border w-full items-stretch gap-0 overflow-hidden rounded-xl border-2">
               {newspaperColumns.map((columnMarkdown, columnIndex) => (
@@ -193,6 +225,29 @@ const NewspaperWritingView = ({ gameId, realGameId }: NewspaperWritingViewProps)
           gameId={realGameId ?? gameId}
           showScript
           isPreviewSideBySide={true}
+        />
+      )}
+
+      {importSourceLabel && onImportDraft && (
+        <ImportDraftDialog
+          isOpen={isImportDialogOpen}
+          onOpenChange={setIsImportDialogOpen}
+          draft={importDraft ?? null}
+          isLoading={Boolean(isImportDraftLoading)}
+          sourceLabel={importSourceLabel}
+          realGameId={realGameId ?? gameId}
+          onConfirmImport={() => {
+            if (importDraft) {
+              const previousUsepaper = createUndoSnapshot(resolvedUsepaper);
+              const importedDraft = createUndoSnapshot(importDraft);
+              executeCommand({
+                action: () => setNewspaper(createUndoSnapshot(importedDraft)),
+                undoAction: () => setNewspaper(createUndoSnapshot(previousUsepaper)),
+                description: `Import ${importSourceLabel} Draft`,
+              });
+              onImportDraft(importDraft);
+            }
+          }}
         />
       )}
     </>

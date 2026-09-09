@@ -31,9 +31,8 @@ const NEWSPAPER_WIDTH = 910;
 const CONTENT_PADDING = 32; // p-4 * 2 sides
 const COLUMN_GAP = 16; // gap-4
 const SCROLL_PADDING = 40; // px-5 * 2 sides
-const ZOOM_STEP = 0.15;
-const MIN_ZOOM = 0.2;
-const MAX_ZOOM = 1.5;
+const ZOOM_FACTOR = 1.25; // multiplicative step for consistent feel
+const MAX_ZOOM = 3;
 
 const NewspaperViewingView = ({ dayIndex, gameId, ownerUserId, TILE_SIZE, roundBottom }: NewspaperViewingViewProps) => {
     const usepaperRecords = useFindListItems<Usepaper>("newspaper", {
@@ -65,11 +64,22 @@ const NewspaperViewingView = ({ dayIndex, gameId, ownerUserId, TILE_SIZE, roundB
         return (NEWSPAPER_WIDTH - CONTENT_PADDING - (n - 1) * COLUMN_GAP) / n;
     }, [newspaperColumns.length]);
 
+    // Min zoom = full newspaper width fills the viewport (can't zoom out past this)
+    const minZoom = useMemo(() => {
+        if (!containerWidth) return 0.2;
+        return (containerWidth - SCROLL_PADDING) / NEWSPAPER_WIDTH;
+    }, [containerWidth]);
+
     const defaultZoom = useMemo(() => {
         if (!containerWidth) return 1;
         const availableWidth = containerWidth - SCROLL_PADDING;
-        return Math.min(Math.max((availableWidth / singleColumnWidth) * 0.85, MIN_ZOOM), 1);
-    }, [containerWidth, singleColumnWidth]);
+        // If a single column + buffer already fits at 100% zoom, keep 100%
+        if (singleColumnWidth / 0.85 <= availableWidth) {
+            return 1;
+        }
+        // Otherwise zoom out to fit a single column (with a little breathing room)
+        return Math.max((availableWidth / singleColumnWidth) * 0.85, minZoom);
+    }, [containerWidth, singleColumnWidth, minZoom]);
 
     const viewportWidth = Math.max(containerWidth - SCROLL_PADDING, 0);
 
@@ -103,11 +113,11 @@ const NewspaperViewingView = ({ dayIndex, gameId, ownerUserId, TILE_SIZE, roundB
         animateTo(nextZoom);
     };
 
-    const zoomIn = () => zoomTo(Math.min(zoom + ZOOM_STEP, MAX_ZOOM));
-    const zoomOut = () => zoomTo(Math.max(zoom - ZOOM_STEP, MIN_ZOOM));
+    const zoomIn = () => zoomTo(Math.min(zoom * ZOOM_FACTOR, MAX_ZOOM));
+    const zoomOut = () => zoomTo(Math.max(zoom / ZOOM_FACTOR, minZoom));
     const resetZoom = () => zoomTo(defaultZoom);
 
-    const isAtMinZoom = zoom <= MIN_ZOOM + 0.001;
+    const isAtMinZoom = zoom <= minZoom + 0.001;
     const isAtMaxZoom = zoom >= MAX_ZOOM - 0.001;
     const isAtDefault = Math.abs(zoom - defaultZoom) < 0.001;
 

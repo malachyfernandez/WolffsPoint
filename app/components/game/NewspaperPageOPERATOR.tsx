@@ -7,14 +7,13 @@ import Row from '../layout/Row';
 import AppButton from '../ui/buttons/AppButton';
 import FontText from '../ui/text/FontText';
 import NewspaperWritingView from './NewspaperWritingView';
-import { useList, useFindListItems } from 'hooks/useData';
-import { useListSet } from 'hooks/useData';
+import { useFindListItems, useListSet } from 'hooks/useData';
 import { useGameOperatorUserId } from '../../../hooks/useGameOperatorUserId';
 import { useSharedListValue } from '../../../hooks/useSharedListValue';
 import OperatorDayNavigation from '../ui/daySelector/OperatorDayNavigation';
 import NewspaperDayView from './NewspaperDayView';
-import { Usepaper } from '../../../types/usepaper';
 import { useNewspaperDayOwner } from './useNewspaperDayOwner';
+import { Usepaper } from '../../../types/usepaper';
 import { NewspaperControlState, getNewspaperControlKey, getNewspaperDayControlItemId, getNewspaperDayItemId } from '../../../utils/newspaperControl';
 
 interface NewspaperPageOPERATORProps {
@@ -26,9 +25,6 @@ type AnimationDirection = 'left' | 'right';
 
 // Configurable tile size for the paper background texture (in pixels)
 const TILE_SIZE = 600;
-const minimumUsepaper: Usepaper = {
-    columns: ['', ''],
-};
 
 const NewspaperPageOPERATOR = ({ currentUserId, gameId }: NewspaperPageOPERATORProps) => {
     const [activeTab, setActiveTab] = useState<'writing' | 'viewing'>('viewing');
@@ -73,14 +69,19 @@ const NewspaperPageOPERATOR = ({ currentUserId, gameId }: NewspaperPageOPERATORP
         dayIndex: leavingDayIndex ?? 0,
         disabled: leavingDayIndex === null,
     });
-    const [, setOperatorUsepaper] = useList<Usepaper>("newspaper", currentDayItemId, { privacy: "PUBLIC", defaultValue: minimumUsepaper });
     const setOperatorSelectedDayIndex = useListSet<number>();
     const setNewspaperControl = useListSet<NewspaperControlState>();
-    const selectedNewserUsepaper = useFindListItems<Usepaper>("newspaper", {
+
+    // Load the newser's draft so the operator can import it when they have control
+    const newserDraftRecords = useFindListItems<Usepaper>('newspaper', {
         itemId: currentDayItemId,
         userIds: selectedDayOwner.validNewser?.userId ? [selectedDayOwner.validNewser.userId] : [''],
         returnTop: 1,
     });
+    const newserDraft = newserDraftRecords?.[0]?.value?.columns?.length
+        ? newserDraftRecords[0].value
+        : null;
+    const isNewserDraftLoading = newserDraftRecords === undefined;
 
     const enteringOpacity = useSharedValue(1);
     const enteringTranslateX = useSharedValue(0);
@@ -206,9 +207,6 @@ const NewspaperPageOPERATOR = ({ currentUserId, gameId }: NewspaperPageOPERATORP
     const selectedOwnerUserId = selectedDayOwner.ownerUserId;
     const leavingOwnerUserId = leavingDayOwner.ownerUserId;
     const operatorHasControl = selectedOwnerUserId === currentUserId;
-    const selectedNewserUsepaperValue = selectedNewserUsepaper?.[0]?.value?.columns?.length
-        ? selectedNewserUsepaper[0].value
-        : minimumUsepaper;
 
     const writeControlState = (ownerType: 'newser' | 'operator', ownerUserId: string) => {
         return setNewspaperControl({
@@ -226,7 +224,6 @@ const NewspaperPageOPERATOR = ({ currentUserId, gameId }: NewspaperPageOPERATORP
     };
 
     const takeControl = () => {
-        setOperatorUsepaper(selectedNewserUsepaperValue);
         void writeControlState('operator', currentUserId);
     };
 
@@ -262,7 +259,7 @@ const NewspaperPageOPERATOR = ({ currentUserId, gameId }: NewspaperPageOPERATORP
                     </AppButton>
                     <FontText variant='subtext' className='text-center max-w-[420px]'>
                         {selectedDayOwner.validNewser?.email
-                            ? `The Newser currently owns this day. Taking control copies their current draft into the operator newspaper for Day ${dayIndex + 1}.`
+                            ? `The Newser currently owns this day. Taking control lets you edit the newspaper directly. Use "Import draft from newser" in the writing tab to copy their draft.`
                             : 'Assign a Newser in Config before using the shared newspaper-control flow.'}
                     </FontText>
                 </Column>
@@ -281,7 +278,14 @@ const NewspaperPageOPERATOR = ({ currentUserId, gameId }: NewspaperPageOPERATORP
                         <FontText weight='medium' color='white'>Give back control</FontText>
                     </AppButton>
                 </Row>
-                <NewspaperWritingView gameId={getNewspaperDayItemId(gameId, dayIndex)} realGameId={gameId} />
+                <NewspaperWritingView
+                    gameId={getNewspaperDayItemId(gameId, dayIndex)}
+                    realGameId={gameId}
+                    importSourceLabel='Newser'
+                    importDraft={newserDraft}
+                    isImportDraftLoading={isNewserDraftLoading}
+                    onImportDraft={() => {}}
+                />
             </Column>
         );
     };
