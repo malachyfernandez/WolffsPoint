@@ -155,7 +155,7 @@ const NewspaperWritingView = ({
               disabledText={`${importSourceLabel} draft is blank`}
               onPress={() => setIsImportDialogOpen(true)}
               className="min-w-[240px] px-4"
-              enabledVariant="outline-alt"
+              enabledVariant="outline"
             />
           )}
         </Row>

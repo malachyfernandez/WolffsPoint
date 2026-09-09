@@ -6,11 +6,8 @@ import Column from '../../layout/Column';
 import Row from '../../layout/Row';
 import AppButton from '../../ui/buttons/AppButton';
 import FontText from '../../ui/text/FontText';
-import ShadowScrollView from '../../ui/ShadowScrollView';
-import MarkdownRenderer from '../../ui/markdown/MarkdownRenderer';
-import { InputOptionsProvider } from '../markdownEditor/InputOptionsProvider';
-import PressLogo from '../../ui/icons/Press';
 import { Usepaper } from '../../../../types/usepaper';
+import NewspaperZoomableView from './NewspaperZoomableView';
 
 interface ImportDraftDialogProps {
     isOpen: boolean;
@@ -68,40 +65,14 @@ const ImportDraftDialog = ({
                                 </FontText>
                             </View>
                         ) : (
-                            <ShadowScrollView
-                                className='flex-1'
-                                scrollViewClassName='flex-1 px-4 py-4'
-                            >
-                                <View
-                                    className='py-4 rounded-2xl'
-                                    style={{
-                                        // @ts-ignore: web-only CSS
-                                        backgroundImage: "url('https://d9tic9wqq4.ufs.sh/f/e3bq9j1bOXyi6QFuqBSV3IcVxmF4QjUoPvCOdS2HLawpi0Ey')",
-                                        backgroundRepeat: 'repeat',
-                                        backgroundSize: `${TILE_SIZE}px ${TILE_SIZE}px`,
-                                    }}
-                                >
-                                    <Column className='gap-4 w-[910px]'>
-                                        <View className='items-center justify-center px-8'>
-                                            <PressLogo width='100%' />
-                                        </View>
-                                        <Row className='gap-4 w-full p-4'>
-                                            {columns.map((columnMarkdown, columnIndex) => (
-                                                <Column
-                                                    key={columnIndex}
-                                                    className='gap-4 flex-1 shrink'
-                                                >
-                                                    {columnMarkdown.trim().length > 0 && (
-                                                        <InputOptionsProvider gameId={realGameId} showInputs={false}>
-                                                            <MarkdownRenderer markdown={columnMarkdown} textAlign='justify' />
-                                                        </InputOptionsProvider>
-                                                    )}
-                                                </Column>
-                                            ))}
-                                        </Row>
-                                    </Column>
-                                </View>
-                            </ShadowScrollView>
+                            <View className='flex-1'>
+                                <NewspaperZoomableView
+                                    columns={columns}
+                                    gameId={realGameId}
+                                    TILE_SIZE={TILE_SIZE}
+                                    roundBottom
+                                />
+                            </View>
                         )}
 
                         <Row className='justify-end gap-4 pt-2'>
@@ -109,7 +80,7 @@ const ImportDraftDialog = ({
                                 <FontText weight='medium'>Cancel</FontText>
                             </AppButton>
                             <AppButton
-                                variant='accent'
+                                variant='filled'
                                 className='w-full sm:w-auto sm:min-w-[260px]'
                                 disabled={isLoading || !hasContent}
                                 onPress={() => {

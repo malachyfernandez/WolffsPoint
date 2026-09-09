@@ -82,10 +82,25 @@ export const resolveValidNewserAssignment = ({
         return null;
     }
 
-    return resolveJoinedUserByEmail({
+    const resolved = resolveJoinedUserByEmail({
         email: assignmentEmail,
         userDatas,
     });
+
+    // Fall back to the userId stored in the assignment if email-based
+    // resolution fails (e.g. userData records not yet loaded or mismatch)
+    if (resolved) {
+        return resolved;
+    }
+
+    if (assignment?.userId) {
+        return {
+            email: assignment.email?.trim() || assignmentEmail,
+            userId: assignment.userId,
+        };
+    }
+
+    return null;
 };
 
 export const resolveNewspaperOwnerUserId = ({
