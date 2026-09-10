@@ -28,7 +28,7 @@ interface MarkdownRendererProps {
   headingIdPrefix?: string;
 }
 
-type MarkdownBlock =
+export type MarkdownBlock =
   | { type: 'heading'; level: number; text: string }
   | { type: 'paragraph'; text: string }
   | { type: 'list'; ordered: boolean; items: string[] }
@@ -518,7 +518,7 @@ const renderInlineMarkdown = (text: string, keyPrefix: string) => {
     });
 };
 
-const parseMarkdown = (markdown: string): MarkdownBlock[] => {
+export const parseMarkdown = (markdown: string): MarkdownBlock[] => {
   const processedMarkdown = markdown
     .replace(/\r\n/g, '\n')
     .split('\n')

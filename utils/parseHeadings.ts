@@ -1,61 +1,45 @@
+import { parseMarkdown } from '../app/components/ui/markdown/MarkdownRenderer';
+
 export interface MarkdownHeading {
-    /** 1-based index of the block in the parsed markdown (matches the id assigned by MarkdownRenderer) */
+    /** Index of the block in the parsed markdown (matches the id assigned by MarkdownRenderer) */
     blockIndex: number;
     level: number;
     text: string;
 }
 
 /**
- * Extracts headings from markdown text, matching the same parsing logic
- * used by MarkdownRenderer (#{1,3} at the start of a line).
- *
- * The `blockIndex` corresponds to the index of the heading block in the
- * full parsed markdown, which matches the id format `${prefix}-heading-${blockIndex}`
+ * Extracts headings from markdown text by using the exact same `parseMarkdown`
+ * function that MarkdownRenderer uses to render the content. This guarantees
+ * that the `blockIndex` matches the id format `${prefix}-heading-${blockIndex}`
  * assigned by MarkdownRenderer when `headingIdPrefix` is provided.
+ *
+ * Previously this function independently parsed lines and used the LINE number
+ * as the block index, which diverged from MarkdownRenderer's BLOCK index
+ * whenever multi-line blocks (lists, quotes, script blocks) appeared before a
+ * heading — causing the TOC to scroll to the wrong element.
  */
 export const parseHeadings = (markdown: string): MarkdownHeading[] => {
     if (!markdown) {
         return [];
     }
 
-    const lines = markdown.replace(/\r\n/g, '\n').split('\n');
+    const blocks = parseMarkdown(markdown);
     const headings: MarkdownHeading[] = [];
-
-    let index = 0;
-    while (index < lines.length) {
-        const line = lines[index];
-
-        // Skip code fences (same logic as MarkdownRenderer)
-        if (line.trim().startsWith('```')) {
-            index += 1;
-            while (index < lines.length && !lines[index].trim().startsWith('```')) {
-                index += 1;
-            }
-            index += 1;
-            continue;
-        }
-
-        // Skip script blocks
-        if (line.includes('/*script')) {
-            index += 1;
-            while (index < lines.length && !lines[index].includes('script*/')) {
-                index += 1;
-            }
-            index += 1;
-            continue;
-        }
-
-        const headingMatch = line.match(/^(#{1,3})\s+(.*)$/);
-        if (headingMatch) {
+    blocks.forEach((block, index) => {
+        if (block.type === 'heading') {
             headings.push({
                 blockIndex: index,
-                level: headingMatch[1].length,
-                text: headingMatch[2].trim(),
+                level: block.level,
+                text: block.text.trim(),
             });
         }
+    });
 
-        index += 1;
-    }
+    console.log('[TOC] parseHeadings', {
+        totalBlocks: blocks.length,
+        headingCount: headings.length,
+        headings: headings.map((h) => ({ blockIndex: h.blockIndex, level: h.level, text: h.text })),
+    });
 
     return headings;
 };
@@ -66,10 +50,22 @@ export const parseHeadings = (markdown: string): MarkdownHeading[] => {
  */
 export const scrollToHeading = (headingIdPrefix: string, blockIndex: number) => {
     const id = `${headingIdPrefix}-heading-${blockIndex}`;
+    console.log('[TOC] scrollToHeading', { id });
     if (typeof document !== 'undefined') {
         const el = document.getElementById(id);
+        console.log('[TOC] scrollToHeading getElementById', { id, found: !!el });
         if (el) {
-            scrollParentToElement(el);
+            scrollParentToElement(el, id);
+        } else {
+            // Log what heading IDs actually exist so we can diagnose mismatches.
+            const existingIds: string[] = [];
+            document.querySelectorAll('[id]').forEach((n) => {
+                const idAttr = (n as HTMLElement).getAttribute('id');
+                if (idAttr && idAttr.includes('heading')) {
+                    existingIds.push(idAttr);
+                }
+            });
+            console.log('[TOC] scrollToHeading — element NOT found. Existing heading IDs:', existingIds);
         }
     }
 };
@@ -95,35 +91,89 @@ const findScrollParent = (el: HTMLElement | null): HTMLElement | null => {
  * buffer above. Does NOT use scrollIntoView (which would also scroll the
  * window and push the page up/off-screen).
  */
-const scrollParentToElement = (el: HTMLElement, buffer = 80) => {
+const scrollParentToElement = (el: HTMLElement, idForLog: string, buffer = 80) => {
     const elRect = el.getBoundingClientRect();
     const scrollParent = findScrollParent(el);
+
+    console.log('[TOC] scrollParentToElement', {
+        id: idForLog,
+        elRectTop: elRect.top,
+        elRectBottom: elRect.bottom,
+        elHeight: elRect.height,
+        windowScrollY: window.scrollY,
+        bodyOverflow: typeof document !== 'undefined' ? window.getComputedStyle(document.body).overflowY : 'n/a',
+        hasScrollParent: !!scrollParent,
+    });
 
     // No scrollable ancestor found — the page relies on the window for
     // scrolling. Scroll the window directly (NOT scrollIntoView, which would
     // also scroll intermediate ancestors and push the page up/off-screen).
     if (!scrollParent) {
         const offset = elRect.top + window.scrollY - buffer;
-        window.scrollTo({ top: Math.max(0, offset), behavior: 'smooth' });
+        const clamped = Math.max(0, offset);
+        console.log('[TOC] scrollParentToElement — no scroll parent, scrolling window', { offset, clamped });
+        window.scrollTo({ top: clamped, behavior: 'smooth' });
+        setTimeout(() => {
+            console.log('[TOC] scrollParentToElement — after window.scrollTo (100ms)', {
+                target: clamped,
+                actual: window.scrollY,
+            });
+        }, 100);
         return;
     }
 
     const parentRect = scrollParent.getBoundingClientRect();
     const offset = elRect.top - parentRect.top + scrollParent.scrollTop - buffer;
     const clamped = Math.max(0, offset);
+    const beforeTop = scrollParent.scrollTop;
+
+    console.log('[TOC] scrollParentToElement — scroll parent found', {
+        parentTag: scrollParent.tagName,
+        parentId: scrollParent.id || '(none)',
+        parentScrollTop: beforeTop,
+        parentRectTop: parentRect.top,
+        offset,
+        clamped,
+    });
+
     // Direct scrollTop assignment is more reliable than smooth scrollTo,
     // which can be cancelled by layout changes when the dialog unmounts.
     scrollParent.scrollTop = clamped;
+
+    console.log('[TOC] scrollParentToElement — after direct scrollTop', {
+        beforeTop,
+        target: clamped,
+        actual: scrollParent.scrollTop,
+    });
+
     if (scrollParent.scrollTop !== clamped) {
+        console.log('[TOC] scrollParentToElement — direct failed, trying smooth scrollTo');
         scrollParent.scrollTo({ top: clamped, behavior: 'smooth' });
+        setTimeout(() => {
+            console.log('[TOC] scrollParentToElement — after smooth scrollTo (100ms)', {
+                target: clamped,
+                actual: scrollParent.scrollTop,
+            });
+        }, 100);
     }
 };
 
 /** Scrolls to any element by ID with a small buffer above. */
 export const scrollToElement = (elementId: string) => {
     if (typeof document === 'undefined') return;
+    console.log('[TOC] scrollToElement', { elementId });
     const el = document.getElementById(elementId);
+    console.log('[TOC] scrollToElement getElementById', { elementId, found: !!el });
     if (el) {
-        scrollParentToElement(el);
+        scrollParentToElement(el, elementId);
+    } else {
+        const existingIds: string[] = [];
+        document.querySelectorAll('[id]').forEach((n) => {
+            const idAttr = (n as HTMLElement).getAttribute('id');
+            if (idAttr && (idAttr.includes('top') || idAttr.includes('role'))) {
+                existingIds.push(idAttr);
+            }
+        });
+        console.log('[TOC] scrollToElement — element NOT found. Related IDs in DOM:', existingIds);
     }
 };

@@ -60,6 +60,7 @@ const TableOfContentsDialog = ({
      * unscrollable. We force-clear the lock after closing so the scroll works.
      */
     const closeAndScroll = (scrollAction: () => void) => {
+        console.log('[TOC] closeAndScroll — closing dialog');
         onOpenChange(false);
         if (typeof document === 'undefined') {
             scrollAction();
@@ -72,17 +73,21 @@ const TableOfContentsDialog = ({
         const forceClearScrollLock = () => {
             const bodyStyle = document.body.style;
             const htmlStyle = document.documentElement.style;
-            if (window.getComputedStyle(document.body).overflowY === 'hidden') {
+            const bodyLocked = window.getComputedStyle(document.body).overflowY === 'hidden';
+            const htmlLocked = window.getComputedStyle(document.documentElement).overflowY === 'hidden';
+            if (bodyLocked) {
                 bodyStyle.overflow = '';
             }
-            if (window.getComputedStyle(document.documentElement).overflowY === 'hidden') {
+            if (htmlLocked) {
                 htmlStyle.overflow = '';
             }
+            console.log('[TOC] closeAndScroll — forceClearScrollLock', { bodyLocked, htmlLocked });
         };
 
         // Wait a tick for React to process the close, then force-clear and scroll.
         requestAnimationFrame(() => {
             forceClearScrollLock();
+            console.log('[TOC] closeAndScroll — running scrollAction');
             scrollAction();
         });
     };
@@ -143,7 +148,7 @@ const TableOfContentsDialog = ({
                                         </Pressable>
                                     ))}
 
-                                    {/* Role descriptions section */}
+                                    {/* Role descriptions section — temporarily disabled
                                     {visibleRoles.length > 0 && (
                                         <>
                                             <View className='bg-border/30 h-px w-full my-2' />
@@ -173,6 +178,7 @@ const TableOfContentsDialog = ({
                                             ))}
                                         </>
                                     )}
+                                    */}
                                 </Column>
                             </ShadowScrollView>
                         )}
