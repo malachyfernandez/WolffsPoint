@@ -92,25 +92,31 @@ const findScrollParent = (el: HTMLElement | null): HTMLElement | null => {
 
 /**
  * Scrolls the nearest scrollable ancestor so the element is visible with a
- * small buffer above. Does NOT use scrollIntoView (which would also scroll
- * the window and push the page content up/off-screen).
+ * buffer above. Does NOT use scrollIntoView (which would also scroll the
+ * window and push the page up/off-screen).
  */
-const scrollParentToElement = (el: HTMLElement, buffer = 24) => {
+const scrollParentToElement = (el: HTMLElement, buffer = 80) => {
+    const elRect = el.getBoundingClientRect();
     const scrollParent = findScrollParent(el);
 
     // No scrollable ancestor found — the page relies on the window for
     // scrolling. Scroll the window directly (NOT scrollIntoView, which would
     // also scroll intermediate ancestors and push the page up/off-screen).
     if (!scrollParent) {
-        const offset = el.getBoundingClientRect().top + window.scrollY - buffer;
+        const offset = elRect.top + window.scrollY - buffer;
         window.scrollTo({ top: Math.max(0, offset), behavior: 'smooth' });
         return;
     }
 
     const parentRect = scrollParent.getBoundingClientRect();
-    const elRect = el.getBoundingClientRect();
     const offset = elRect.top - parentRect.top + scrollParent.scrollTop - buffer;
-    scrollParent.scrollTo({ top: Math.max(0, offset), behavior: 'smooth' });
+    const clamped = Math.max(0, offset);
+    // Direct scrollTop assignment is more reliable than smooth scrollTo,
+    // which can be cancelled by layout changes when the dialog unmounts.
+    scrollParent.scrollTop = clamped;
+    if (scrollParent.scrollTop !== clamped) {
+        scrollParent.scrollTo({ top: clamped, behavior: 'smooth' });
+    }
 };
 
 /** Scrolls to any element by ID with a small buffer above. */
