@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { ScrollView, Pressable } from 'react-native';
+import { ScrollView, Pressable, View } from 'react-native';
 import { ChevronUp, ChevronDown } from 'lucide-react-native';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
 import FontText from '../ui/text/FontText';
+import FontTextInput from '../ui/forms/FontTextInput';
 import MarkdownRenderer from '../ui/markdown/MarkdownRenderer';
 import AppButton from '../ui/buttons/AppButton';
 import { useList, useValue } from '../../../hooks/useData';
@@ -15,9 +16,10 @@ import MarkdownEditorDialog from './MarkdownEditorDialog';
 
 interface RuleBookRoleDescriptionsProps {
   gameId: string;
+  headingIdPrefix?: string;
 }
 
-const RuleBookRoleDescriptions = ({ gameId }: RuleBookRoleDescriptionsProps) => {
+const RuleBookRoleDescriptions = ({ gameId, headingIdPrefix }: RuleBookRoleDescriptionsProps) => {
   const { executeCommand } = useUndoRedo();
   const createUndoSnapshot = useCreateUndoSnapshot();
   const [editingRoleIndex, setEditingRoleIndex] = useState<number | null>(null);
@@ -35,6 +37,7 @@ const RuleBookRoleDescriptions = ({ gameId }: RuleBookRoleDescriptionsProps) => 
   });
 
   const roles = roleTable?.value ?? [];
+  const roleDescriptionsTitle = ruleBookData?.value?.roleDescriptionsTitle || '';
   const visibleRolesWithContent = roles.filter(
     (role) =>
       role.isVisible !== false &&
@@ -161,26 +164,34 @@ const RuleBookRoleDescriptions = ({ gameId }: RuleBookRoleDescriptionsProps) => 
   return (
     <>
       <Column className="gap-2">
-        <FontText weight="bold" className="text-xl">
-          Role Descriptions
-        </FontText>
-        {/* <ScrollView> */}
+        <FontTextInput
+          value={roleDescriptionsTitle}
+          placeholder="Role Descriptions"
+          onChangeText={(text) =>
+            setRuleBookData({
+              ...(ruleBookData?.value || { content: '', roleOrder: [] }),
+              roleDescriptionsTitle: text,
+            })
+          }
+          variant="styled"
+          weight="bold"
+          className="w-full text-3xl leading-9"
+        />
         <Column className="gap-4">
           {orderedRoles.map((role, index) => (
             <Row key={roles.indexOf(role)} className="items-stretch gap-4">
               <Column className="flex-1 gap-4">
-                {/* <FontText weight='bold' className='text-lg'>
-                                        {role.role}
-                                    </FontText> */}
-                <Pressable
-                  onPress={() => setEditingRoleIndex(roles.indexOf(role))}
-                  className="bg-text/10 hover:bg-text/5 min-h-[160px] w-full justify-center rounded-xl p-4">
-                  <MarkdownRenderer
-                    markdown={role.aboutRole}
-                    textAlign="center"
-                    viewHeightImages={30}
-                  />
-                </Pressable>
+                <View nativeID={headingIdPrefix ? `${headingIdPrefix}-role-${index}` : undefined}>
+                  <Pressable
+                    onPress={() => setEditingRoleIndex(roles.indexOf(role))}
+                    className="bg-text/10 hover:bg-text/5 min-h-[160px] w-full justify-center rounded-xl p-4">
+                    <MarkdownRenderer
+                      markdown={role.aboutRole}
+                      textAlign="center"
+                      viewHeightImages={30}
+                    />
+                  </Pressable>
+                </View>
               </Column>
               <Column className="justify-center gap-0">
                 <AppButton

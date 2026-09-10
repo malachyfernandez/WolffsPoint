@@ -1,4 +1,5 @@
 import React from 'react';
+import { View } from 'react-native';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
 import FontText from '../ui/text/FontText';
@@ -11,9 +12,13 @@ import { RuleBookData } from '../../../types/ruleBook';
 
 interface RuleBookRoleDescriptionsPLAYERProps {
   gameId: string;
+  headingIdPrefix?: string;
 }
 
-const RuleBookRoleDescriptionsPLAYER = ({ gameId }: RuleBookRoleDescriptionsPLAYERProps) => {
+const HEADING_1_CLASS = 'text-3xl leading-9';
+const DEFAULT_ROLE_DESCRIPTIONS_TITLE = 'Role Descriptions';
+
+const RuleBookRoleDescriptionsPLAYER = ({ gameId, headingIdPrefix }: RuleBookRoleDescriptionsPLAYERProps) => {
   const gameRows = useFindListItems('games', {
     itemId: gameId,
     returnTop: 1,
@@ -33,6 +38,7 @@ const RuleBookRoleDescriptionsPLAYER = ({ gameId }: RuleBookRoleDescriptionsPLAY
 
   const roles: RoleTableItem[] = roleTableRecords?.[0]?.value ?? [];
   const ruleBookData: RuleBookData | undefined = ruleBookRecords?.[0]?.value;
+  const roleDescriptionsTitle = ruleBookData?.roleDescriptionsTitle || DEFAULT_ROLE_DESCRIPTIONS_TITLE;
   const visibleRolesWithContent = roles.filter(
     (role: RoleTableItem) =>
       role.isVisible !== false &&
@@ -72,8 +78,8 @@ const RuleBookRoleDescriptionsPLAYER = ({ gameId }: RuleBookRoleDescriptionsPLAY
 
   return (
     <Column className="border-border/15 gap-2 border-t pt-4">
-      <FontText weight="bold" className="text-xl">
-        Role Descriptions
+      <FontText weight="bold" className={HEADING_1_CLASS}>
+        {roleDescriptionsTitle}
       </FontText>
       <Column className="gap-0">
         {orderedRoles.map((role, index) => (
@@ -81,13 +87,15 @@ const RuleBookRoleDescriptionsPLAYER = ({ gameId }: RuleBookRoleDescriptionsPLAY
             key={roles.indexOf(role)}
             className={`items-start gap-4 py-4 ${index < orderedRoles.length - 1 ? 'border-border/15 border-b' : ''}`}>
             <Column className="flex-1 gap-4">
-              <InputOptionsProvider gameId={gameId} showInputs={false}>
-                <MarkdownRenderer
-                  markdown={role.aboutRole}
-                  textAlign="center"
-                  viewHeightImages={30}
-                />
-              </InputOptionsProvider>
+              <View nativeID={headingIdPrefix ? `${headingIdPrefix}-role-${index}` : undefined}>
+                <InputOptionsProvider gameId={gameId} showInputs={false}>
+                  <MarkdownRenderer
+                    markdown={role.aboutRole}
+                    textAlign="center"
+                    viewHeightImages={30}
+                  />
+                </InputOptionsProvider>
+              </View>
             </Column>
           </Row>
         ))}

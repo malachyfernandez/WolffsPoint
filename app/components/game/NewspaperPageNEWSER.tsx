@@ -97,12 +97,6 @@ const NewspaperPageNEWSER = ({ currentUserId, currentEmail, gameId }: NewspaperP
             return;
         }
 
-        console.log('[NewspaperPageNEWSER] Writing newser acceptance record', {
-            email: currentEmail,
-            userId: currentUserId,
-            gameId,
-        });
-
         setAccepted({
             email: currentEmail,
             userId: currentUserId,

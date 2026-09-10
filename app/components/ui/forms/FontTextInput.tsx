@@ -21,6 +21,22 @@ const WEIGHT_MAP: Record<FontWeight, '400' | '500' | '700'> = {
     bold: '700',
 };
 
+/** Walk up the DOM to find the nearest scrollable ancestor. */
+const findScrollParent = (el: HTMLElement | null): HTMLElement | null => {
+    if (!el) return null;
+    let node: HTMLElement | null = el.parentElement;
+    while (node) {
+        const style = window.getComputedStyle(node);
+        const overflowY = style.overflowY;
+        const canScroll = (overflowY === 'auto' || overflowY === 'scroll' || overflowY === 'overlay');
+        if (canScroll && node.scrollHeight > node.clientHeight) {
+            return node;
+        }
+        node = node.parentElement;
+    }
+    return null;
+};
+
 const FontTextInput = ({
     className = '',
     weight = 'regular',
@@ -48,8 +64,20 @@ const FontTextInput = ({
             return;
         }
 
+        // Preserve the parent scroll position while measuring. Setting
+        // height to 0 momentarily collapses the textarea, which can cause
+        // the scroll container to jump to the top. We restore it after.
+        const scrollParent = findScrollParent(textarea);
+        const savedScrollTop = scrollParent?.scrollTop ?? 0;
+        const savedScrollLeft = scrollParent?.scrollLeft ?? 0;
+
         textarea.style.height = '0px';
         textarea.style.height = `${textarea.scrollHeight}px`;
+
+        if (scrollParent) {
+            scrollParent.scrollTop = savedScrollTop;
+            scrollParent.scrollLeft = savedScrollLeft;
+        }
     }, []);
 
     const getVariantClasses = () => {

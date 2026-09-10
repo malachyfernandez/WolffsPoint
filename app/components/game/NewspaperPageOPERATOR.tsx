@@ -245,16 +245,6 @@ const NewspaperPageOPERATOR = ({ currentUserId, gameId }: NewspaperPageOPERATORP
         isLeaving?: boolean;
     }) => {
         const canAssignToNewser = Boolean(selectedDayOwner.validNewser?.userId);
-        console.log('[OPERATOR renderOperatorWritingContent]', {
-            dayIndex,
-            hasControl,
-            isLeaving,
-            canAssignToNewser,
-            validNewser: selectedDayOwner.validNewser,
-            newserDraft,
-            isNewserDraftLoading,
-            selectedDayOwnerLoading: selectedDayOwner.isLoading,
-        });
 
         if (!hasControl) {
             return (

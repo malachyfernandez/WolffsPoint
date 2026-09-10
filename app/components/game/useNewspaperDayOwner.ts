@@ -46,24 +46,11 @@ export const useNewspaperDayOwner = ({ gameId, dayIndex, disabled = false }: Use
         const assignment = assignmentRecords?.[0]?.value;
         const userDatas = userDataRecords?.map((record) => record.value) ?? [];
         const accepted = acceptedRecords?.map((record) => record.value) ?? [];
-        const result = resolveValidNewserAssignment({
+        return resolveValidNewserAssignment({
             assignment,
             userDatas,
             acceptedRecords: accepted,
         });
-        // Debug logging for newser resolution
-        console.log('[useNewspaperDayOwner] newser resolution:', {
-            gameId,
-            dayIndex,
-            operatorUserId,
-            assignmentEmail: assignment?.email,
-            assignmentUserId: assignment?.userId,
-            userDataCount: userDatas.length,
-            acceptedCount: accepted.length,
-            acceptedDetailed: JSON.stringify(accepted.map(a => ({ email: a.email, userId: a.userId }))),
-            resolvedResult: result,
-        });
-        return result;
     }, [assignmentRecords, userDataRecords, acceptedRecords, gameId, dayIndex, operatorUserId]);
 
     const ownerUserId = useMemo(() => {

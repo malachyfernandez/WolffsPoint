@@ -25,6 +25,7 @@ interface MarkdownRendererProps {
   state?: Record<string, string | undefined>;
   setState?: (nextState: Record<string, string | undefined>) => void;
   isInDialog?: boolean;
+  headingIdPrefix?: string;
 }
 
 type MarkdownBlock =
@@ -637,6 +638,7 @@ const MarkdownRendererContent = ({
   state,
   setState,
   isInDialog = false,
+  headingIdPrefix,
   playerOptions,
   roleOptions,
   scriptSources,
@@ -746,33 +748,37 @@ const MarkdownRendererContent = ({
                 ? 'text-2xl leading-8'
                 : 'text-xl leading-7';
 
+          const headingId = headingIdPrefix ? `${headingIdPrefix}-heading-${index}` : undefined;
+
           if (containsInputs) {
             return (
-              <InlineMarkdownWithInputs
-                key={`heading-${index}`}
-                text={block.text}
-                keyPrefix={`heading-${index}`}
-                textAlign={textAlign}
-                textClassName={sizeClassName}
-                textStyle={{ lineHeight: block.level === 1 ? 36 : block.level === 2 ? 32 : 28 }}
-                defaultWeight="bold"
-                state={state}
-                setState={setState}
-                playerOptions={playerOptions}
-                roleOptions={roleOptions}
-                isInDialog={isInDialog}
-              />
+              <View key={`heading-${index}`} nativeID={headingId}>
+                <InlineMarkdownWithInputs
+                  text={block.text}
+                  keyPrefix={`heading-${index}`}
+                  textAlign={textAlign}
+                  textClassName={sizeClassName}
+                  textStyle={{ lineHeight: block.level === 1 ? 36 : block.level === 2 ? 32 : 28 }}
+                  defaultWeight="bold"
+                  state={state}
+                  setState={setState}
+                  playerOptions={playerOptions}
+                  roleOptions={roleOptions}
+                  isInDialog={isInDialog}
+                />
+              </View>
             );
           }
 
           return (
-            <FontText
-              key={`heading-${index}`}
-              weight="bold"
-              className={sizeClassName}
-              style={{ textAlign }}>
-              {renderInlineMarkdown(block.text, `heading-${index}`)}
-            </FontText>
+            <View key={`heading-${index}`} nativeID={headingId}>
+              <FontText
+                weight="bold"
+                className={sizeClassName}
+                style={{ textAlign }}>
+                {renderInlineMarkdown(block.text, `heading-${index}`)}
+              </FontText>
+            </View>
           );
         }
 
