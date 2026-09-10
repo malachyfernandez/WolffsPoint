@@ -201,7 +201,7 @@ const RuleBookRoleDescriptions = ({ gameId, headingIdPrefix }: RuleBookRoleDescr
         </View>
         <Column className="gap-4">
           {orderedRoles.map((role, index) => (
-            <Row key={roles.indexOf(role)} className="items-stretch gap-4">
+            <Row key={roles.indexOf(role)} className="relative items-stretch gap-4">
               <Column className="flex-1 gap-4">
                 <View nativeID={headingIdPrefix ? `${headingIdPrefix}-role-${index}` : undefined}>
                   <Pressable
@@ -219,12 +219,6 @@ const RuleBookRoleDescriptions = ({ gameId, headingIdPrefix }: RuleBookRoleDescr
                 <AppButton
                   variant="none"
                   className="h-12 w-12"
-                  onPress={() => setHidingRoleIndex(roles.indexOf(role))}>
-                  <Eye size={20} color="rgb(46, 41, 37)" />
-                </AppButton>
-                <AppButton
-                  variant="none"
-                  className="h-12 w-12"
                   onPress={() => moveRoleUp(index)}
                   disabled={index === 0}>
                   <ChevronUp size={20} color="rgb(46, 41, 37)" />
@@ -237,6 +231,12 @@ const RuleBookRoleDescriptions = ({ gameId, headingIdPrefix }: RuleBookRoleDescr
                   <ChevronDown size={20} color="rgb(46, 41, 37)" />
                 </AppButton>
               </Column>
+              <AppButton
+                variant="none"
+                className="absolute right-0 top-0 h-10 w-10"
+                onPress={() => setHidingRoleIndex(roles.indexOf(role))}>
+                <Eye size={20} color="rgb(46, 41, 37)" />
+              </AppButton>
             </Row>
           ))}
         </Column>
