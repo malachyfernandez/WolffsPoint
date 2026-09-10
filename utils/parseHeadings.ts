@@ -137,7 +137,8 @@ const scrollParentToElement = (el: HTMLElement, idForLog: string, buffer = 80) =
     });
 
     // Direct scrollTop assignment is more reliable than smooth scrollTo,
-    // which can be cancelled by layout changes when the dialog unmounts.
+    // which gets cancelled/interrupted by layout changes when the dialog
+    // unmounts and can leave the scroll at a wrong intermediate position.
     scrollParent.scrollTop = clamped;
 
     console.log('[TOC] scrollParentToElement — after direct scrollTop', {
@@ -146,16 +147,14 @@ const scrollParentToElement = (el: HTMLElement, idForLog: string, buffer = 80) =
         actual: scrollParent.scrollTop,
     });
 
-    if (scrollParent.scrollTop !== clamped) {
-        console.log('[TOC] scrollParentToElement — direct failed, trying smooth scrollTo');
-        scrollParent.scrollTo({ top: clamped, behavior: 'smooth' });
-        setTimeout(() => {
-            console.log('[TOC] scrollParentToElement — after smooth scrollTo (100ms)', {
-                target: clamped,
-                actual: scrollParent.scrollTop,
-            });
-        }, 100);
-    }
+    // Verify the scroll held after a short delay (catches re-layout resets).
+    setTimeout(() => {
+        console.log('[TOC] scrollParentToElement — scrollTop check (100ms)', {
+            target: clamped,
+            actual: scrollParent.scrollTop,
+            held: Math.abs(scrollParent.scrollTop - clamped) < 2,
+        });
+    }, 100);
 };
 
 /** Scrolls to any element by ID with a small buffer above. */
