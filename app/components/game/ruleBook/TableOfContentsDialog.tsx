@@ -148,7 +148,7 @@ const TableOfContentsDialog = ({
                                         </Pressable>
                                     ))}
 
-                                    {/* Role descriptions section — temporarily disabled
+                                    {/* Role descriptions section */}
                                     {visibleRoles.length > 0 && (
                                         <>
                                             <View className='bg-border/30 h-px w-full my-2' />
@@ -178,7 +178,6 @@ const TableOfContentsDialog = ({
                                             ))}
                                         </>
                                     )}
-                                    */}
                                 </Column>
                             </ShadowScrollView>
                         )}
