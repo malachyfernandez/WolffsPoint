@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { ScrollView, Pressable, View } from 'react-native';
-import { ChevronUp, ChevronDown } from 'lucide-react-native';
+import { ChevronUp, ChevronDown, Eye } from 'lucide-react-native';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
 import FontText from '../ui/text/FontText';
 import FontTextInput from '../ui/forms/FontTextInput';
 import MarkdownRenderer from '../ui/markdown/MarkdownRenderer';
 import AppButton from '../ui/buttons/AppButton';
+import ConvexDialog from '../ui/dialog/ConvexDialog';
+import DialogHeader from '../ui/dialog/DialogHeader';
 import { useList, useValue } from '../../../hooks/useData';
 import { useUndoRedo, useCreateUndoSnapshot } from '../../../hooks/useUndoRedo';
 import { getGameScopedKey } from '../../../utils/multiplayer';
@@ -23,6 +25,7 @@ const RuleBookRoleDescriptions = ({ gameId, headingIdPrefix }: RuleBookRoleDescr
   const { executeCommand } = useUndoRedo();
   const createUndoSnapshot = useCreateUndoSnapshot();
   const [editingRoleIndex, setEditingRoleIndex] = useState<number | null>(null);
+  const [hidingRoleIndex, setHidingRoleIndex] = useState<number | null>(null);
 
   const [ruleBookData, setRuleBookData] = useValue<RuleBookData>(
     getGameScopedKey('ruleBook', gameId),
@@ -86,6 +89,23 @@ const RuleBookRoleDescriptions = ({ gameId, headingIdPrefix }: RuleBookRoleDescr
       action: () => setRoleTable(createUndoSnapshot(nextRoleTable)),
       undoAction: () => setRoleTable(createUndoSnapshot(previousRoleTable)),
       description: 'Set About Role',
+    });
+  };
+
+  const UNDOABLEsetHiddenFromRulebook = (roleIndex: number, value: boolean) => {
+    const previousRoleTable = createUndoSnapshot(roleTable?.value ?? []);
+    if (roleIndex < 0 || roleIndex >= previousRoleTable.length) return;
+
+    const nextRoleTable = createUndoSnapshot(previousRoleTable);
+    nextRoleTable[roleIndex] = {
+      ...nextRoleTable[roleIndex],
+      hiddenFromRulebook: value,
+    };
+
+    executeCommand({
+      action: () => setRoleTable(createUndoSnapshot(nextRoleTable)),
+      undoAction: () => setRoleTable(createUndoSnapshot(previousRoleTable)),
+      description: 'Set Role Rulebook Visibility',
     });
   };
 
@@ -199,16 +219,22 @@ const RuleBookRoleDescriptions = ({ gameId, headingIdPrefix }: RuleBookRoleDescr
                 <AppButton
                   variant="none"
                   className="h-12 w-12"
+                  onPress={() => setHidingRoleIndex(roles.indexOf(role))}>
+                  <Eye size={20} color="rgb(46, 41, 37)" />
+                </AppButton>
+                <AppButton
+                  variant="none"
+                  className="h-12 w-12"
                   onPress={() => moveRoleUp(index)}
                   disabled={index === 0}>
-                  <ChevronUp size={20} color="white" />
+                  <ChevronUp size={20} color="rgb(46, 41, 37)" />
                 </AppButton>
                 <AppButton
                   variant="none"
                   className="h-12 w-12"
                   onPress={() => moveRoleDown(index)}
                   disabled={index === orderedRoles.length - 1}>
-                  <ChevronDown size={20} color="white" />
+                  <ChevronDown size={20} color="rgb(46, 41, 37)" />
                 </AppButton>
               </Column>
             </Row>
@@ -231,6 +257,56 @@ const RuleBookRoleDescriptions = ({ gameId, headingIdPrefix }: RuleBookRoleDescr
           }
         }}
       />
+
+      <ConvexDialog.Root
+        isOpen={hidingRoleIndex !== null}
+        onOpenChange={(open: boolean) => !open && setHidingRoleIndex(null)}>
+        <ConvexDialog.Portal>
+          <ConvexDialog.Overlay />
+          <ConvexDialog.Content className="w-md">
+            <ConvexDialog.Close
+              iconProps={{ color: 'rgb(246, 238, 219)' }}
+              className="w-10 h-10 bg-text-inverted/10 hover:bg-text-inverted/15 rounded-full absolute right-0 top-0 z-10"
+            />
+            <Column className="gap-4">
+              <DialogHeader text="Hide from rulebook" />
+              <Column className="gap-4 pt-5 px-5 pb-5">
+                <FontText className="text-center">
+                  Hide{' '}
+                  {hidingRoleIndex !== null
+                    ? roles[hidingRoleIndex]?.role || 'this role'
+                    : 'this role'}{' '}
+                  from the rulebook?
+                </FontText>
+                <FontText variant="subtext" className="text-center">
+                  You can show it again from the Roles tab.
+                </FontText>
+                <View className="flex-row gap-3 mt-4">
+                  <AppButton
+                    variant="outline"
+                    className="flex-1 h-12"
+                    onPress={() => setHidingRoleIndex(null)}>
+                    <FontText weight="medium">Cancel</FontText>
+                  </AppButton>
+                  <AppButton
+                    variant="filled"
+                    className="flex-1 h-12"
+                    onPress={() => {
+                      if (hidingRoleIndex !== null) {
+                        UNDOABLEsetHiddenFromRulebook(hidingRoleIndex, true);
+                      }
+                      setHidingRoleIndex(null);
+                    }}>
+                    <FontText weight="medium" color="white">
+                      Hide
+                    </FontText>
+                  </AppButton>
+                </View>
+              </Column>
+            </Column>
+          </ConvexDialog.Content>
+        </ConvexDialog.Portal>
+      </ConvexDialog.Root>
     </>
   );
 };
