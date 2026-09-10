@@ -66,9 +66,11 @@ const RuleBookPagePLAYER = ({ gameId }: RuleBookPagePLAYERProps) => {
             <Column className='gap-4 flex-1 py-3 sm:px-4'>
                 <Row className='items-center justify-between'>
                     <Column className='gap-2 flex-1'>
-                        <FontText weight='bold' className={HEADING_1_CLASS}>
-                            {ruleBookTitle}
-                        </FontText>
+                        <View nativeID={`${headingIdPrefix}-top`}>
+                            <FontText weight='bold' className={HEADING_1_CLASS}>
+                                {ruleBookTitle}
+                            </FontText>
+                        </View>
                     </Column>
                     <Pressable
                         onPress={() => setIsTocOpen(true)}
@@ -99,6 +101,7 @@ const RuleBookPagePLAYER = ({ gameId }: RuleBookPagePLAYERProps) => {
                 markdown={ruleBookMarkdown}
                 headingIdPrefix={headingIdPrefix}
                 roles={roles}
+                ruleBookTitle={ruleBookTitle}
                 roleDescriptionsTitle={roleDescriptionsTitle}
             />
         </Animated.View>

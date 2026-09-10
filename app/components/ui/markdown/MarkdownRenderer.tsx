@@ -751,34 +751,53 @@ const MarkdownRendererContent = ({
           const headingId = headingIdPrefix ? `${headingIdPrefix}-heading-${index}` : undefined;
 
           if (containsInputs) {
+            const content = (
+              <InlineMarkdownWithInputs
+                text={block.text}
+                keyPrefix={`heading-${index}`}
+                textAlign={textAlign}
+                textClassName={sizeClassName}
+                textStyle={{ lineHeight: block.level === 1 ? 36 : block.level === 2 ? 32 : 28 }}
+                defaultWeight="bold"
+                state={state}
+                setState={setState}
+                playerOptions={playerOptions}
+                roleOptions={roleOptions}
+                isInDialog={isInDialog}
+              />
+            );
+
+            if (headingId) {
+              return (
+                <View key={`heading-${index}`} nativeID={headingId}>
+                  {content}
+                </View>
+              );
+            }
+            return <React.Fragment key={`heading-${index}`}>{content}</React.Fragment>;
+          }
+
+          if (headingId) {
             return (
               <View key={`heading-${index}`} nativeID={headingId}>
-                <InlineMarkdownWithInputs
-                  text={block.text}
-                  keyPrefix={`heading-${index}`}
-                  textAlign={textAlign}
-                  textClassName={sizeClassName}
-                  textStyle={{ lineHeight: block.level === 1 ? 36 : block.level === 2 ? 32 : 28 }}
-                  defaultWeight="bold"
-                  state={state}
-                  setState={setState}
-                  playerOptions={playerOptions}
-                  roleOptions={roleOptions}
-                  isInDialog={isInDialog}
-                />
+                <FontText
+                  weight="bold"
+                  className={sizeClassName}
+                  style={{ textAlign }}>
+                  {renderInlineMarkdown(block.text, `heading-${index}`)}
+                </FontText>
               </View>
             );
           }
 
           return (
-            <View key={`heading-${index}`} nativeID={headingId}>
-              <FontText
-                weight="bold"
-                className={sizeClassName}
-                style={{ textAlign }}>
-                {renderInlineMarkdown(block.text, `heading-${index}`)}
-              </FontText>
-            </View>
+            <FontText
+              key={`heading-${index}`}
+              weight="bold"
+              className={sizeClassName}
+              style={{ textAlign }}>
+              {renderInlineMarkdown(block.text, `heading-${index}`)}
+            </FontText>
           );
         }
 

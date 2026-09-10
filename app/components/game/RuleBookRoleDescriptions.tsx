@@ -164,19 +164,21 @@ const RuleBookRoleDescriptions = ({ gameId, headingIdPrefix }: RuleBookRoleDescr
   return (
     <>
       <Column className="gap-2">
-        <FontTextInput
-          value={roleDescriptionsTitle}
-          placeholder="Role Descriptions"
-          onChangeText={(text) =>
-            setRuleBookData({
-              ...(ruleBookData?.value || { content: '', roleOrder: [] }),
-              roleDescriptionsTitle: text,
-            })
-          }
-          variant="styled"
-          weight="bold"
-          className="w-full text-3xl leading-9"
-        />
+        <View nativeID={headingIdPrefix ? `${headingIdPrefix}-roles-top` : undefined}>
+          <FontTextInput
+            value={roleDescriptionsTitle}
+            placeholder="Role Descriptions"
+            onChangeText={(text) =>
+              setRuleBookData({
+                ...(ruleBookData?.value || { content: '', roleOrder: [] }),
+                roleDescriptionsTitle: text,
+              })
+            }
+            variant="styled"
+            weight="bold"
+            className="w-full text-3xl leading-9"
+          />
+        </View>
         <Column className="gap-4">
           {orderedRoles.map((role, index) => (
             <Row key={roles.indexOf(role)} className="items-stretch gap-4">

@@ -78,9 +78,11 @@ const RuleBookRoleDescriptionsPLAYER = ({ gameId, headingIdPrefix }: RuleBookRol
 
   return (
     <Column className="border-border/15 gap-2 border-t pt-4">
-      <FontText weight="bold" className={HEADING_1_CLASS}>
-        {roleDescriptionsTitle}
-      </FontText>
+      <View nativeID={headingIdPrefix ? `${headingIdPrefix}-roles-top` : undefined}>
+        <FontText weight="bold" className={HEADING_1_CLASS}>
+          {roleDescriptionsTitle}
+        </FontText>
+      </View>
       <Column className="gap-0">
         {orderedRoles.map((role, index) => (
           <Row

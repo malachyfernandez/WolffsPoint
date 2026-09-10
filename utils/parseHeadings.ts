@@ -62,14 +62,62 @@ export const parseHeadings = (markdown: string): MarkdownHeading[] => {
 
 /**
  * Scrolls to a heading element by its nativeID.
- * Uses smooth scrollIntoView on web.
+ * Only scrolls the nearest scrollable ancestor (not the window).
  */
 export const scrollToHeading = (headingIdPrefix: string, blockIndex: number) => {
     const id = `${headingIdPrefix}-heading-${blockIndex}`;
     if (typeof document !== 'undefined') {
         const el = document.getElementById(id);
         if (el) {
-            el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            scrollParentToElement(el);
         }
+    }
+};
+
+/** Walk up the DOM to find the nearest scrollable ancestor. */
+const findScrollParent = (el: HTMLElement | null): HTMLElement | null => {
+    if (!el) return null;
+    let node: HTMLElement | null = el.parentElement;
+    while (node) {
+        const style = window.getComputedStyle(node);
+        const overflowY = style.overflowY;
+        const canScroll = (overflowY === 'auto' || overflowY === 'scroll' || overflowY === 'overlay');
+        if (canScroll && node.scrollHeight > node.clientHeight) {
+            return node;
+        }
+        node = node.parentElement;
+    }
+    return null;
+};
+
+/**
+ * Scrolls the nearest scrollable ancestor so the element is visible with a
+ * small buffer above. Does NOT use scrollIntoView (which would also scroll
+ * the window and push the page content up/off-screen).
+ */
+const scrollParentToElement = (el: HTMLElement, buffer = 24) => {
+    const scrollParent = findScrollParent(el);
+
+    // No scrollable ancestor found — the page relies on the window for
+    // scrolling. Scroll the window directly (NOT scrollIntoView, which would
+    // also scroll intermediate ancestors and push the page up/off-screen).
+    if (!scrollParent) {
+        const offset = el.getBoundingClientRect().top + window.scrollY - buffer;
+        window.scrollTo({ top: Math.max(0, offset), behavior: 'smooth' });
+        return;
+    }
+
+    const parentRect = scrollParent.getBoundingClientRect();
+    const elRect = el.getBoundingClientRect();
+    const offset = elRect.top - parentRect.top + scrollParent.scrollTop - buffer;
+    scrollParent.scrollTo({ top: Math.max(0, offset), behavior: 'smooth' });
+};
+
+/** Scrolls to any element by ID with a small buffer above. */
+export const scrollToElement = (elementId: string) => {
+    if (typeof document === 'undefined') return;
+    const el = document.getElementById(elementId);
+    if (el) {
+        scrollParentToElement(el);
     }
 };

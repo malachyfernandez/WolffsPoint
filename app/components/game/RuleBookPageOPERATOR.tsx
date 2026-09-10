@@ -67,19 +67,21 @@ const RuleBookPageOPERATOR = ({ gameId, onBack }: RuleBookPageOPERATORProps) => 
 
       <Column className="border-border/15 gap-5 border-y py-5">
         <Column className="gap-2">
-          <FontTextInput
-            value={ruleBookTitle}
-            placeholder={DEFAULT_RULE_BOOK_TITLE}
-            onChangeText={(text) =>
-              setRuleBookData({
-                ...(ruleBookData?.value || { content: '', roleOrder: [] }),
-                ruleBookTitle: text,
-              })
-            }
-            variant="styled"
-            weight="bold"
-            className={`w-full ${HEADING_1_CLASS}`}
-          />
+          <View nativeID={`${headingIdPrefix}-top`}>
+            <FontTextInput
+              value={ruleBookTitle}
+              placeholder={DEFAULT_RULE_BOOK_TITLE}
+              onChangeText={(text) =>
+                setRuleBookData({
+                  ...(ruleBookData?.value || { content: '', roleOrder: [] }),
+                  ruleBookTitle: text,
+                })
+              }
+              variant="styled"
+              weight="bold"
+              className={`w-full ${HEADING_1_CLASS}`}
+            />
+          </View>
           <Pressable
             onPress={() => setIsEditDialogOpen(true)}
             className="bg-text/5 min-h-[220px] flex-1 rounded-3xl p-4">
@@ -123,6 +125,7 @@ const RuleBookPageOPERATOR = ({ gameId, onBack }: RuleBookPageOPERATORProps) => 
         markdown={ruleBookData?.value?.content || ''}
         headingIdPrefix={headingIdPrefix}
         roles={roles}
+        ruleBookTitle={ruleBookTitle || DEFAULT_RULE_BOOK_TITLE}
         roleDescriptionsTitle={roleDescriptionsTitle || 'Role Descriptions'}
       />
     </Column>
