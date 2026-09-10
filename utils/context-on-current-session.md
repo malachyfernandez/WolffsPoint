@@ -1,132 +1,133 @@
-# Context: Rule Book TOC + Newspaper Improvements
+# Context: Operator Rule Book loses scooped corners (web-only bug)
 
-## Overview
+This file is a self-contained handoff. Read it in full before doing anything else.
 
-This file captures the full context of an ongoing session working on the Wolfspoint multiplayer game (React Native / Expo / TypeScript / Convex). The session covered several independent features. The most recent active issue is that the **Table of Contents (TOC) scroll-to-section is not working** after a fix that was intended to prevent the page from being pushed up/off-screen.
+## 1. The task
 
----
+Fix a web-only visual bug in the Wolfspoint multiplayer game.
 
-## Active Bug: TOC scroll not working
+**Bug:** When the operator opens the Rule Book from inside the Config tab, the decorative "scooped corners" that normally surround the whole page (the container below the top nav tabs) disappear and the page appears to have square corners.
 
-### What's happening
+**Reproduction path (operator, web only):**
+1. Open the operator game page.
+2. Select the "Config" tab (internally named `rulebook` in `OperatorTab`).
+3. The Config landing page renders inside a `PaperContainer` and shows the scooped corners correctly.
+4. Tap the "Rule book" preview card inside Config.
+5. The view animates to `RuleBookPageOPERATOR`. The outer `PaperContainer`'s scooped corners are now missing / square.
 
-On the Rule Book page (both operator and player views), there is a "Table of Contents" button (a `List` icon in the top-right). Clicking it opens a modal (`TableOfContentsDialog`) that lists:
-1. The rule book title (top-level)
-2. All markdown headings from the rule book content (indented by heading level)
-3. The role descriptions title (top-level, after a divider)
-4. Each role name (indented one level)
+**Constraint:** Web-only. Do not change native mobile behavior. Do not redesign the frame. Preserve the existing CSS-mask-based scooped corners, the frame texture, outer shadows, the GameTabBar's intentional overlap, and the existing `LayoutStateAnimatedView` transitions.
 
-Clicking any entry should scroll the rule book page so the corresponding section is visible, with a ~24px buffer above it, then close the modal.
+**Do NOT** blanket-add `overflow: hidden` without checking effects on masks, outlines, shadows, texture, and the tab overlap.
 
-**Currently the modal closes but no scrolling happens.**
+## 2. What "scooped corners" are
 
-### History of the bug
+The outer page frame is a `PaperContainer` → `GuildedFrame` → `GuildedFrameCore` (web). The scooped corners are NOT `border-radius`. They are produced by **CSS masks** on `.guilded-frame-shell` (and `::before`, `::after`, and `.guilded-frame-surface`). Each layer uses four `radial-gradient` masks (one per corner) with `mask-size: 51% 51%` and `mask-repeat: no-repeat`. The corner radius is `--r: 20px`. The frame has three ring thicknesses (`--t-out`, `--t-mid`, `--t-in`) and a surface background.
 
-1. **Original implementation** used `el.scrollIntoView({ behavior: 'smooth', block: 'start' })`. This worked for scrolling but also scrolled the **window** itself, pushing the entire page content up and cutting off the top of the operator page. The user reported: "somehow u made every page in the operator be higher then it should be sometimes cutting off the top."
+Anything that paints an opaque rectangular layer over the frame's transparent corner regions, or that changes the frame element's sizing/overflow/stacking, can visually cover or bypass the mask and make the corners look square.
 
-2. **First fix attempt** added `requestAnimationFrame(() => scrollParent.scrollBy({ top: -24 }))` after `scrollIntoView`. This added the buffer but didn't fix the window-scroll issue.
+## 3. Key file paths (repo root: `/Users/malachyfernandez/Documents/1-programing/apps-and-sites/wolfspoint/wolffspoint`)
 
-3. **Second fix attempt** replaced `scrollIntoView` entirely with a manual approach: find the nearest scrollable ancestor via `findScrollParent()`, then `scrollParent.scrollTo({ top: offset })` where offset is calculated from `getBoundingClientRect()`. This fixed the page-pushed-up issue but **broke scrolling entirely** — the modal closes but nothing scrolls.
+### Frame implementation (web)
+- `app/components/ui/PaperContainer.web.tsx` — wraps children in `FadeInAfterDelay` → `GuildedFrame` with `className="z-1"`, `contentClassName="py-4 px-2 sm:px-4"`, `backgroundToken="inner-background"`.
+- `app/components/ui/chrome/GuildedFrame.web.tsx` — delegates to `GuildedFrameCore.web`, picks `gold`/`ghostly` variant based on `PlayerStatusContext.isPlayerDead`.
+- `app/components/ui/chrome/GuildedFrameCore.web.tsx` — **the actual scooped-corner CSS lives here** in the `guildedFrameCSS` template string. Renders `.guilded-frame-root > .guilded-frame-shadow > .guilded-frame-shell > .guilded-frame-surface > (.guilded-frame-texture + .guilded-frame-content)`. The CSS is injected via `<style dangerouslySetInnerHTML>`. Read this file; the mask definitions are the source of truth for the corners.
+- `app/components/ui/loading/FadeInAfterDelay.tsx` — wraps children in an `Animated.View` that fades opacity from 0.01 to 1 after a delay.
 
-### Likely cause
+### Operator layout (the broken path)
+- `app/components/game/GamePage.tsx` — top-level game page. Wraps everything in `ShadowScrollView` (heroui-native `ScrollShadow` + `Animated.ScrollView`). Renders `OperatorGamePage` for operators.
+- `app/components/game/OperatorGamePage.tsx` — renders `<Column gap-4>` → `<GameTabBar>` → `<PaperContainer>` → `<Animated.View key={activeTab} entering={FadeIn.duration(300)} className="w-full min-w-0">` → tab content. The `rulebook` tab renders `<ConfigPageOPERATOR>`.
+- `app/components/game/ConfigPageOPERATOR.tsx` — **primary suspect.** Renders `<Column className="min-h-[760px] flex-1 gap-0 py-3 sm:px-4">` containing a `LayoutStateAnimatedView.Container` with `className="flex-1"`. Two options: `config` (page 1) and an `OptionContainer` (page 2, `pushInAnimation={fromRight}`) holding `ruleBook` and `phoneBook` options. The `ruleBook` option renders `<RuleBookPageOPERATOR>`.
+- `app/components/game/RuleBookPageOPERATOR.tsx` — renders `<Column className="gap-6 pb-6">` with a back button, a TOC button, a title `FontTextInput`, a markdown preview `Pressable` (`bg-text/5 min-h-[220px] flex-1 rounded-3xl p-4`), `RuleBookRoleDescriptions`, plus `MarkdownEditorDialog` and `TableOfContentsDialog` (both portal-based, rendered as siblings). It does NOT render its own outer frame — it relies on the surrounding `PaperContainer`.
+- `app/components/game/RuleBookRoleDescriptions.tsx` — renders role description cards (`bg-text/10 ... rounded-xl`) and a `MarkdownEditorDialog`.
 
-The `findScrollParent()` function walks up the DOM looking for an element with `overflowY: auto/scroll/overlay` and `scrollHeight > clientHeight`. If the rule book content is **not** inside a scroll container with explicit overflow styling (i.e. the page relies on the window/body for scrolling), `findScrollParent` returns `null` and no scrolling happens.
+### The animated transition container (primary suspect)
+- `app/components/ui/LayoutStateAnimatedView.tsx` — compound component. `Container` is `flex: 1, position: relative`. On state change it keeps the previous content as `leavingContent` rendered in an absolute-fill `Animated.View` (`pointerEvents="none"`, `StyleSheet.absoluteFillObject`) and renders the new content in an `Animated.View` with `flex: 1`. The leaving overlay is removed after the exit animation duration. The entering/leaving animated styles only set `opacity` and `transform` (translateX/Y, scale). **This nested relative/absolute layering inside the masked frame is the most likely cause** — an absolute-fill or flex child could paint a rectangular surface over the transparent corner regions, or the transition could change the frame's measured size.
 
-The rule book pages render inside `PaperContainer` → `Column` → content. There may not be an explicit scroll container — the whole page might just grow and the window scrolls. In that case, we need to fall back to scrolling the window (but only the window, not via `scrollIntoView` which also scrolls intermediate containers).
+### Player layout (the working comparison)
+- `app/components/game/PlayerGamePage.tsx` — renders `<Column gap-5>` → `<GameTabBar>` → `<PaperContainer>` → `<Animated.View key={activeTab} entering={FadeIn.duration(300)} className="w-full min-w-0">` → tab content directly. The `ruleBook` tab renders `<RuleBookPagePLAYER>`. **No nested `LayoutStateAnimatedView`** — this is the key structural difference from the operator path.
+- `app/components/game/RuleBookPagePLAYER.tsx` — renders `<Animated.View entering={FadeIn.duration(300)} className="flex-1 min-h-[760px]">` → `<Column className="gap-4 flex-1 py-3 sm:px-4">` with title, TOC button, `MarkdownRenderer`, `RuleBookRoleDescriptionsPLAYER`, and `TableOfContentsDialog`.
 
-### The fix needed
+### Tab bar (intentional overlap)
+- `app/components/game/GameTabBar.web.tsx` — `.guilded-game-tab-bar` uses `margin-bottom: calc(-32px - var(--tab-bottom-extension) - var(--tab-bottom-buffer))` to overlap the `PaperContainer` below. `--tab-bottom-extension: 28px`, `--tab-bottom-buffer: 22px`. The `PaperContainer` gets `z-1` so it sits above the tab bar. Do not break this overlap.
 
-`scrollParentToElement` in `utils/parseHeadings.ts` needs to handle the case where there is no scrollable ancestor — it should scroll `window` (or `document.documentElement`) to the element's position with the buffer, without using `scrollIntoView` (which scrolls all ancestors).
+### Dialogs (portal-based, should not affect the closed frame)
+- `app/components/ui/dialog/ConvexDialog.tsx` and `ConvexDialog.web.tsx` — `ConvexDialog.Root` wraps heroui-native `Dialog`; `ConvexDialog.Portal` only renders children when `isOpen`; `ConvexDialog.Content` wraps in a `DialogGuildedFrame` (separate frame instance).
+- `app/components/game/MarkdownEditorDialog.tsx` — uses `ConvexDialog.Root`/`Portal`; renders a `<ConvexDialog.Trigger asChild><View /></ConvexDialog.Trigger>` (an empty trigger) plus the portal content. When closed, the portal renders nothing.
+- `app/components/game/ruleBook/TableOfContentsDialog.tsx` — same pattern; portal only renders when open.
 
-### Relevant files
+### Supporting
+- `app/components/layout/Column.tsx` — `<View className={\`flex-col ${className}\`}>` with `mergeGapStyle`.
+- `app/components/layout/gapStyle.ts` — `mergeGapStyle` always includes a default `gap: 16` plus parsed gap tokens.
+- `app/components/ui/ShadowScrollView.tsx` — wraps heroui-native `ScrollShadow` around a `ScrollView`.
+- `global.css` — Tailwind/Uniwind theme tokens. No frame-specific CSS here; the frame CSS is entirely in `GuildedFrameCore.web.tsx`.
+- `app/_layout.tsx` — root providers; sets `html`/`body` background to `--color-outer-background` (`rgb(30, 30, 30)`).
 
-- **`utils/parseHeadings.ts`** — Contains `scrollToHeading`, `scrollToElement`, `findScrollParent`, `scrollParentToElement`. This is where the fix goes.
-- **`app/components/game/ruleBook/TableOfContentsDialog.tsx`** — The TOC modal. Calls `scrollToElement(id)` and `scrollToHeading(prefix, blockIndex)` on press.
-- **`app/components/game/RuleBookPageOPERATOR.tsx`** — Operator rule book page with editable title fields and TOC button.
-- **`app/components/game/RuleBookPagePLAYER.tsx`** — Player rule book page (read-only titles, TOC button).
-- **`app/components/game/RuleBookRoleDescriptions.tsx`** — Operator role descriptions section with editable title.
-- **`app/components/game/RuleBookRoleDescriptionsPLAYER.tsx`** — Player role descriptions section.
-- **`app/components/ui/markdown/MarkdownRenderer.tsx`** — Renders markdown. Has `headingIdPrefix` prop that wraps headings in `<View nativeID="...">` for scroll targets. Only wraps when `headingIdPrefix` is provided.
-- **`app/components/ui/PaperContainer.tsx`** — The container wrapper used by game pages. Check if it or its children have overflow styles.
+## 4. Architecture / how the pieces fit
 
-### Current `scrollParentToElement` implementation (the broken one)
-
-```ts
-const scrollParentToElement = (el: HTMLElement, buffer = 24) => {
-    const scrollParent = findScrollParent(el);
-    if (!scrollParent) return;  // <-- returns early if no scroll parent found
-
-    const parentRect = scrollParent.getBoundingClientRect();
-    const elRect = el.getBoundingClientRect();
-    const offset = elRect.top - parentRect.top + scrollParent.scrollTop - buffer;
-    scrollParent.scrollTo({ top: Math.max(0, offset), behavior: 'smooth' });
-};
+```
+GamePage
+  ShadowScrollView (Animated.ScrollView, h-screen)
+    View (max-w-[1000px] mx-auto pt-60)
+      OperatorGamePage
+        Column (gap-4)
+          GameTabBar (negative margin, overlaps below)
+          PaperContainer (z-1)
+            FadeInAfterDelay
+              GuildedFrame -> GuildedFrameCore  <-- scooped corners via CSS masks
+                guilded-frame-content (py-4 px-2 sm:px-4)
+                  Animated.View (key=activeTab, FadeIn 300ms, w-full min-w-0)
+                    [activeTab === 'rulebook']
+                    ConfigPageOPERATOR
+                      Column (min-h-[760px] flex-1 py-3 sm:px-4)
+                        LayoutStateAnimatedView.Container (flex-1, position: relative)
+                          [leavingContent? absolute-fill Animated.View, pointerEvents none]
+                          Animated.View (flex: 1, entering style: opacity+transform)
+                            [stateValue === 'ruleBook']
+                            RuleBookPageOPERATOR
+                              Column (gap-6 pb-6)
+                                ...content...
+                                MarkdownEditorDialog (portal, closed)
+                                TableOfContentsDialog (portal, closed)
 ```
 
-### What the fix should do
+The player path is the same up to `PaperContainer` but swaps the nested `ConfigPageOPERATOR`/`LayoutStateAnimatedView` for a direct `RuleBookPagePLAYER` render. The player path is not reported broken.
 
-When `findScrollParent` returns null, fall back to scrolling the window:
-```ts
-if (!scrollParent) {
-    // No scroll container found — scroll the window
-    const offset = el.getBoundingClientRect().top + window.scrollY - buffer;
-    window.scrollTo({ top: Math.max(0, offset), behavior: 'smooth' });
-    return;
-}
-```
+## 5. Most likely causes (investigate in this order)
 
----
+1. **`LayoutStateAnimatedView` layering inside the masked frame.** The `Container` is `flex: 1, position: relative` and renders an absolute-fill leaving overlay plus a `flex: 1` entering child. One of these layers may paint a rectangular surface over the frame's transparent corner regions, or the transition may resize the frame so the mask no longer covers the corners. Compare computed styles of `.guilded-frame-shell` / `.guilded-frame-surface` / the `LayoutStateAnimatedView` container and its animated children between the Config state (corners OK) and the Rule Book state (corners broken).
+2. **A child with an opaque background or its own stacking context** covering the corner mask regions. `RuleBookPageOPERATOR`'s `border-y` section, the `bg-text/5` preview card, or `RuleBookRoleDescriptions`'s `bg-text/10` cards are candidates, but they are interior and shouldn't reach the frame corners — verify in the inspector.
+3. **Transition-only vs persistent.** Determine whether the corners are missing only during the `fromRight` transition (while `leavingContent` is mounted) or persist after the transition completes. The leaving overlay is removed after the exit duration (~250ms).
+4. **Stacking-context / z-index interaction** with `PaperContainer`'s `z-1` and the tab bar's `z-index: 0`. A new stacking context created by the animated `transform`/`opacity` could reorder layers.
 
-## Completed Features (for context)
+## 6. Constraints and decisions already made
 
-### 1. Customizable Rule Book Titles
+- Web-only. Prefer `.web.tsx` components and browser CSS behavior.
+- Do NOT redesign the frame. Preserve the CSS mask and its layering.
+- Be careful with `overflow: hidden` — it can clip shadows, mask effects, texture, or the tab overlap.
+- Do NOT add debug logging to shipped code unless explicitly asked.
+- Do NOT change Convex code for this issue (it is UI-only). If Convex code is touched, read `convex/_generated/ai/guidelines.md` first.
+- Editor dialogs with editable state must preserve the unsaved-changes confirmation pattern (see `AGENTS.md` and `MarkdownEditorDialog.tsx`/`UnsavedChangesDialog.tsx`). Not directly relevant to this bug, but keep in mind if touching dialogs.
+- The TOC scroll work from the previous thread is complete and committed; do not regress it. TOC behavior: closes dialog, clears body/html overflow lock, finds target, scrolls nearest scrollable ancestor via direct `scrollTop`, ~80px buffer, no smooth-scroll fallback.
 
-- **`RuleBookData` type** (`types/ruleBook.ts`): Added `ruleBookTitle?` and `roleDescriptionsTitle?` fields.
-- **Operator page**: Titles are always-visible `FontTextInput` fields with `variant="styled"` (border + background), full width, at heading-1 size (`text-3xl leading-9`). They update live as the operator types. Empty values fall back to "Rule Book" / "Role Descriptions" as placeholders.
-- **Player pages**: Display the operator's custom titles as `FontText` (read-only).
+## 7. Verification expectations
 
-### 2. Table of Contents
+- Compare operator Config page (corners OK) vs operator Rule Book page (corners broken) in the running web preview.
+- Check all four outer corners.
+- Check during the transition and after it settles.
+- Inspect computed styles of `.guilded-frame-shell`, `.guilded-frame-surface`, `.guilded-frame-content`, the `LayoutStateAnimatedView` container, the active animated child, and any leaving absolute overlay.
+- Run the project's typecheck/build after changes (Expo web; the dev server was previously started on port 8085 because 8081 was occupied).
+- Confirm no temporary debug logs remain.
 
-- **`parseHeadings.ts`**: Extracts `#{1,3}` headings from markdown (matching MarkdownRenderer's parsing, skipping code fences and script blocks). Returns `{ blockIndex, level, text }[]`.
-- **`MarkdownRenderer`**: `headingIdPrefix` prop wraps headings in `<View nativeID="${prefix}-heading-${index}">` — but ONLY when the prop is provided, so other pages are unaffected.
-- **`TableOfContentsDialog`** (`app/components/game/ruleBook/TableOfContentsDialog.tsx`): Scrollable modal listing all headings (indented by level), rule book title (top), role descriptions title (top after divider), and role names (indented). All items use the same font styling — only indentation differs.
-- **Anchor IDs**: `${prefix}-top` (rule book title), `${prefix}-roles-top` (role descriptions title), `${prefix}-role-${index}` (each role), `${prefix}-heading-${blockIndex}` (each markdown heading).
+## 8. What has NOT been done yet
 
-### 3. Newspaper Zoom Height Fix
+- No code change has been made for this bug. The previous thread only investigated.
+- The root cause has not been confirmed. The suspects in section 5 are hypotheses.
+- No fix has been implemented or verified.
 
-- **`NewspaperZoomableView.tsx`**: Added `unscaledContentHeight` shared value measured via `onLayout`. The outer `Animated.View` now animates both `width` and `height` based on `unscaledContentHeight.value * animatedZoom.value`, so the container grows/shrinks with zoom (no gap when zoomed out, no cutoff when zoomed in).
-- **Initial load zoom fix**: `hasInitializedRef` skips animation until `containerWidth > 0`, so the first real zoom value is set directly without animating.
+## 9. Dev server note
 
-### 4. Import Draft Modal Improvements
+The Expo web dev server was previously started on port 8085 (port 8081 was occupied by another project). The operator game page requires authentication (Clerk) and real user data, so direct automated navigation is limited; the user reproduces manually in the browser preview.
 
-- **`ImportDraftDialog.tsx`**: Buttons wrap with `flex-wrap gap-x-4 gap-y-3`. Replace button is `sm:min-w-[320px] px-6`. Newspaper preview wrapped in vertical `ShadowScrollView` for scrolling.
-- **`NewspaperDayView.tsx`**: Votes container has `sm:mx-0 -mx-2` matching the newspaper's small-screen negative margin.
+## 10. Goal of the new thread
 
-### 5. Newser Resolution Fix
-
-- **Problem**: Operator couldn't see newser's draft because `assignmentUserId` was empty (saved before newser joined) and the newser's email wasn't in the operator's `userData` query results.
-- **Fix**: Added `NewserAccepted` record type. Newser writes their own acceptance record (`{ email, userId, gameId, acceptedAt }`) via `useValue` in `NewspaperPageNEWSER.tsx`. Operator reads it via `useFindValues` in `useNewspaperDayOwner.ts`. `resolveValidNewserAssignment` in `utils/newspaperControl.ts` now has three fallbacks: email→userData match, assignment.userId, accepted record email match.
-- **Files**: `utils/newspaperControl.ts`, `app/components/game/useNewspaperDayOwner.ts`, `app/components/game/NewspaperPageNEWSER.tsx`, `app/components/game/NewserGamePage.tsx` (passes `currentEmail` prop).
-
-### 6. Markdown Editor Scroll Jump Fix
-
-- **`FontTextInput.tsx`**: `resizeTextarea` now saves/restores the parent scroll container's `scrollTop`/`scrollLeft` during the height measurement (setting height to 0 then scrollHeight). Added `findScrollParent` helper. This prevents the scroll-to-top glitch when editing markdown below a certain threshold.
-
----
-
-## Key Architecture Notes
-
-- **Data system**: `useValue` reads/writes the current user's own value. `useFindValues` reads across users. `useFindListItems` reads list items. All cached client-side. See `utils/about-parts-of-this-codebase/userVariables-system.md`.
-- **Privacy**: `'PUBLIC'` = everyone can read. `'PRIVATE'` = owner only.
-- **Game-scoped keys**: `getGameScopedKey('keyName', gameId)` generates keys like `gameId-keyName`.
-- **Rule book data**: Stored as `RuleBookData` under `getGameScopedKey('ruleBook', gameId)`, owned by the operator. Players read it via `useFindValues` with the operator's userId.
-- **Role table**: Stored as `RoleTableItem[]` under `useList('roleTable', gameId)`. Each role has `role`, `aboutRole`, `isVisible`, `hiddenFromRulebook`, etc.
-- **Dialogs**: Use `ConvexDialog` from `app/components/ui/dialog/ConvexDialog.tsx`. Header via `DialogHeader`. Scrollable content via `ShadowScrollView`.
-- **Layout**: `Column` and `Row` with `gap` prop (4px units). Tailwind classes via `className`.
-- **Fonts**: `FontText` and `FontTextInput` use `LibreBaskerville` font. Heading 1 size = `text-3xl leading-9`.
-
-## Verification
-
-- Run `npx tsc --noEmit --pretty` from the project root to typecheck.
-- Dev server runs on `http://localhost:8086` via `npx expo start --web --port 8086`.
-- Test the TOC by opening the rule book page, clicking the List icon, and selecting entries.
+Diagnose the root cause, implement the smallest web-specific fix that preserves the scooped corners and all the constraints in section 6, verify in the browser, run typecheck, and report the changed files and verification results. Do not claim any PR state without authoritative evidence.
