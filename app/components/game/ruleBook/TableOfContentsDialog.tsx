@@ -60,7 +60,6 @@ const TableOfContentsDialog = ({
      * unscrollable. We force-clear the lock after closing so the scroll works.
      */
     const closeAndScroll = (scrollAction: () => void) => {
-        console.log('[TOC] closeAndScroll — closing dialog');
         onOpenChange(false);
         if (typeof document === 'undefined') {
             scrollAction();
@@ -73,21 +72,17 @@ const TableOfContentsDialog = ({
         const forceClearScrollLock = () => {
             const bodyStyle = document.body.style;
             const htmlStyle = document.documentElement.style;
-            const bodyLocked = window.getComputedStyle(document.body).overflowY === 'hidden';
-            const htmlLocked = window.getComputedStyle(document.documentElement).overflowY === 'hidden';
-            if (bodyLocked) {
+            if (window.getComputedStyle(document.body).overflowY === 'hidden') {
                 bodyStyle.overflow = '';
             }
-            if (htmlLocked) {
+            if (window.getComputedStyle(document.documentElement).overflowY === 'hidden') {
                 htmlStyle.overflow = '';
             }
-            console.log('[TOC] closeAndScroll — forceClearScrollLock', { bodyLocked, htmlLocked });
         };
 
         // Wait a tick for React to process the close, then force-clear and scroll.
         requestAnimationFrame(() => {
             forceClearScrollLock();
-            console.log('[TOC] closeAndScroll — running scrollAction');
             scrollAction();
         });
     };
