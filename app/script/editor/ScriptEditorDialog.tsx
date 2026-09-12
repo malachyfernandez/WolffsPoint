@@ -1356,7 +1356,7 @@ const ScriptEditorDialog = ({
         <ConvexDialog.Portal>
           <ConvexDialog.Overlay />
           <ConvexDialog.Content className="h-[85vh] max-w-5xl" isSwipeable={false}>
-            <View ref={targetRef}>
+            <View ref={targetRef} className="flex-1 min-h-0">
             <CloseButton onPress={readOnly ? () => onOpenChange(false) : handleAttemptClose} />
             {onSaveToServer && !readOnly && (
               <>

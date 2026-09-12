@@ -150,7 +150,7 @@ const ActionEditorDialog = ({
         <ConvexDialog.Portal>
           <ConvexDialog.Overlay />
           <ConvexDialog.Content className="max-w-lg p-1" isSwipeable={false}>
-            <View ref={targetRef}>
+            <View ref={targetRef} className="flex-1 min-h-0">
             <CloseButton onPress={handleAttemptClose} />
             <MinimizeButton
               hasUnsavedChanges={hasUnsavedChanges}

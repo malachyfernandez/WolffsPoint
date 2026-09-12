@@ -611,7 +611,7 @@ const MarkdownEditorDialog = ({
           <ConvexDialog.Overlay />
           <InputOptionsProvider gameId={gameId} showInputs>
             <ConvexDialog.Content className="h-[80vh]" isSwipeable={false}>
-              <View ref={targetRef}>
+              <View ref={targetRef} className="flex-1 min-h-0">
               <CloseButton onPress={readOnly ? () => onOpenChange(false) : handleAttemptClose} />
               {!readOnly && (
                 <MinimizeButton

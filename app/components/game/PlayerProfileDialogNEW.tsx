@@ -268,7 +268,7 @@ const PlayerProfileDialogNEW = ({
             className="h-[80vh] max-w-6xl"
             frameVariant={frameVariant}
             isSwipeable={!hasUnsavedChanges}>
-            <View ref={targetRef}>
+            <View ref={targetRef} className="flex-1 min-h-0">
             <CloseButton onPress={handleAttemptClose} />
             <MinimizeButton
               hasUnsavedChanges={hasUnsavedChanges}
