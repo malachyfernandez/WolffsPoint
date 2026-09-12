@@ -49,13 +49,15 @@ const ActionEditorDialog = ({
   const [hasEverBeenEnabled, setHasEverBeenEnabled] = useState(false);
 
   useEffect(() => {
-    if (isOpen) {
-      setDraftAction(initialAction);
-      setEditingStartAction(initialAction);
-      setIsHistoryOpen(false);
-      setPreviewEntry(null);
+    if (!isOpen) {
       setHasEverBeenEnabled(false);
+      return;
     }
+
+    setDraftAction(initialAction);
+    setEditingStartAction(initialAction);
+    setIsHistoryOpen(false);
+    setPreviewEntry(null);
   }, [initialAction, isOpen]);
 
   const hasUnsavedChanges = draftAction.trim() !== (editingStartAction?.trim() || '');

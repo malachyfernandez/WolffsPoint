@@ -91,17 +91,19 @@ const TagCellEditor = ({
   const [initialTextValue, setInitialTextValue] = useState('');
 
   React.useEffect(() => {
-    if (isOpen) {
-      const initialTags = parsed.tags.map((t) => t.name);
-      setSelectedTagNames(initialTags);
-      setTextValue(parsed.text);
-      setInitialSelectedTagNames(initialTags);
-      setInitialTextValue(parsed.text);
-      setIsLeaveConfirmOpen(false);
-      setIsHistoryOpen(false);
-      setPreviewEntry(null);
+    if (!isOpen) {
       setHasEverBeenEnabled(false);
+      return;
     }
+
+    const initialTags = parsed.tags.map((t) => t.name);
+    setSelectedTagNames(initialTags);
+    setTextValue(parsed.text);
+    setInitialSelectedTagNames(initialTags);
+    setInitialTextValue(parsed.text);
+    setIsLeaveConfirmOpen(false);
+    setIsHistoryOpen(false);
+    setPreviewEntry(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 

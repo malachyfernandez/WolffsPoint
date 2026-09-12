@@ -85,16 +85,18 @@ const VoteEditorDialog = ({
   const { setHint } = useKeyboardShortcutHint();
 
   useEffect(() => {
-    if (isOpen) {
-      setDraftVote(initialVoteText);
-      setEditingStartVote(initialVoteText);
-      setDraftMultiplier(String(initialVoteMultiplier));
-      setEditingStartMultiplier(String(initialVoteMultiplier));
-      setIsLeaveConfirmDialogOpen(false);
-      setIsHistoryOpen(false);
-      setPreviewEntry(null);
+    if (!isOpen) {
       setHasEverBeenEnabled(false);
+      return;
     }
+
+    setDraftVote(initialVoteText);
+    setEditingStartVote(initialVoteText);
+    setDraftMultiplier(String(initialVoteMultiplier));
+    setEditingStartMultiplier(String(initialVoteMultiplier));
+    setIsLeaveConfirmDialogOpen(false);
+    setIsHistoryOpen(false);
+    setPreviewEntry(null);
   }, [initialVoteMultiplier, initialVoteText, isOpen]);
 
   const parsedMultiplier = parseInt(draftMultiplier, 10);

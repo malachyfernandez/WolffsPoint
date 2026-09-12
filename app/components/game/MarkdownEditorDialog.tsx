@@ -220,7 +220,6 @@ const MarkdownEditorDialog = ({
     setPreviewInputState({});
     setIsHistoryOpen(false);
     setPreviewEntry(null);
-    setHasEverBeenEnabled(false);
   }, [initialMarkdown, initialTitle, isOpen]);
 
   const handleTabChange = (newTab: string) => {
