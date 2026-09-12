@@ -50,7 +50,8 @@ export function SaveHistoryPill({
         : 'bg-transparent border border-dashed border-text-inverted/30';
 
     return (
-        <View className="absolute right-11 top-0 z-10 flex-row items-stretch h-10">
+        <View className="save-history-pill-bg absolute right-11 top-0 z-10 p-0 pl-4">
+            <View className="flex-row items-stretch h-10">
             {/* Save half — fixed width, symmetric padding */}
             <Pressable
                 onPress={handleSavePress}
@@ -71,6 +72,7 @@ export function SaveHistoryPill({
             >
                 <History size={16} color="rgb(246, 238, 219)" />
             </Pressable>
+            </View>
         </View>
     );
 }

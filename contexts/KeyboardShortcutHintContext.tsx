@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useRef, useEffect, ReactNode } from 'react';
 import { View, Text, Platform } from 'react-native';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 
@@ -10,10 +10,28 @@ const KeyboardShortcutHintContext = createContext<KeyboardShortcutHintContextTyp
 
 export const useKeyboardShortcutHint = () => {
     const context = useContext(KeyboardShortcutHintContext);
+    const ownedRef = useRef(false);
+    const contextRef = useRef(context);
+    contextRef.current = context;
+
+    useEffect(() => {
+        return () => {
+            if (ownedRef.current && contextRef.current) {
+                contextRef.current.setHint(null);
+            }
+        };
+    }, []);
+
     if (!context) {
         return { setHint: () => {} };
     }
-    return context;
+
+    const setHint = (keys: string[] | null) => {
+        ownedRef.current = keys !== null;
+        context.setHint(keys);
+    };
+
+    return { setHint };
 };
 
 const KeyChip = ({ label }: { label: string }) => (

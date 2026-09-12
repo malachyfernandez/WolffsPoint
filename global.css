@@ -65,3 +65,7 @@
         transform: translate(-50%, -50%);
     }
 }
+
+.save-history-pill-bg {
+    background-image: linear-gradient(to right, transparent 0%, #1a1a1a 10%);
+}
