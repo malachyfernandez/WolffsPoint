@@ -210,6 +210,7 @@ const PlayerProfileDialogNEW = ({
   const handleReplaceFromHistory = (entry: SavedEntry) => {
     const savedProfile = entry.value as PlayerProfile;
     setDraft(savedProfile);
+    setHasEverBeenEnabled(true);
     setPreviewEntry(null);
     setIsHistoryOpen(false);
   };

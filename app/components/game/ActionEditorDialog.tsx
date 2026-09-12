@@ -86,6 +86,7 @@ const ActionEditorDialog = ({
   // Replace current draft with a saved entry from history
   const handleReplaceFromHistory = (entry: SavedEntry) => {
     setDraftAction(entry.value as string);
+    setHasEverBeenEnabled(true);
     setPreviewEntry(null);
     setIsHistoryOpen(false);
   };

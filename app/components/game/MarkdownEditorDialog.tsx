@@ -475,6 +475,7 @@ const MarkdownEditorDialog = ({
     if (includeTitle && savedValue.title !== undefined) {
       setDraftTitle(savedValue.title);
     }
+    setHasEverBeenEnabled(true);
     setPreviewEntry(null);
     setIsHistoryOpen(false);
   };

@@ -194,6 +194,7 @@ const VoteEditorDialog = ({
     const voteText = normalizeVoteTargets(savedValue.vote).join(', ');
     setDraftVote(voteText);
     setDraftMultiplier(String(savedValue.multiplier));
+    setHasEverBeenEnabled(true);
     setPreviewEntry(null);
     setIsHistoryOpen(false);
   };

@@ -240,6 +240,7 @@ const TagCellEditor = ({
     const savedParsed = parseCell(saved.value);
     setSelectedTagNames(savedParsed.tags.map((t) => t.name));
     setTextValue(savedParsed.text);
+    setHasEverBeenEnabled(true);
     setPreviewEntry(null);
     setIsHistoryOpen(false);
   };
