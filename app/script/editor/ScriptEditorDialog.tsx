@@ -53,6 +53,7 @@ import { SavedEntry } from '../../../hooks/useSaveHistory';
 import SaveHistoryPill from '../../components/ui/dialog/SaveHistoryPill';
 import SaveHistoryDialog from '../../components/ui/dialog/SaveHistoryDialog';
 import ViewOnlyPreviewModal from '../../components/ui/dialog/ViewOnlyPreviewModal';
+import { MinimizeButton, useMinimizeTarget } from '../../components/ui/minimize';
 
 interface ScriptEditorDialogProps {
   isOpen: boolean;
@@ -585,6 +586,12 @@ const ScriptEditorDialog = ({
   const moveTooltipId = React.useId();
   const cloneTooltipId = React.useId();
   const placeTooltipId = React.useId();
+
+  const { targetRef, performMinimize } = useMinimizeTarget({
+    title,
+    onClose: () => onOpenChange(false),
+    onRestore: () => onOpenChange(true),
+  });
   const moveTooltipContent = useMemo(
     () => (
       <>
@@ -1349,15 +1356,23 @@ const ScriptEditorDialog = ({
         <ConvexDialog.Portal>
           <ConvexDialog.Overlay />
           <ConvexDialog.Content className="h-[85vh] max-w-5xl" isSwipeable={false}>
+            <View ref={targetRef}>
             <CloseButton onPress={readOnly ? () => onOpenChange(false) : handleAttemptClose} />
             {onSaveToServer && !readOnly && (
-              <SaveHistoryPill
-                hasUnsavedChanges={hasModifications}
-                isInvalid={!canSubmit || !!moveSession}
-                invalidMessage={!canSubmit ? 'Script is empty' : undefined}
-                onSave={handleSave}
-                onOpenHistory={() => setIsHistoryOpen(true)}
-              />
+              <>
+                <MinimizeButton
+                  hasUnsavedChanges={hasModifications}
+                  onSave={handleSave}
+                  onMinimize={performMinimize}
+                />
+                <SaveHistoryPill
+                  hasUnsavedChanges={hasModifications}
+                  isInvalid={!canSubmit || !!moveSession}
+                  invalidMessage={!canSubmit ? 'Script is empty' : undefined}
+                  onSave={handleSave}
+                  onOpenHistory={() => setIsHistoryOpen(true)}
+                />
+              </>
             )}
             <DialogHeader
               text={title}
@@ -1565,7 +1580,7 @@ const ScriptEditorDialog = ({
                       </>
                     ))}
                 </Row>
-                <Row className="gap-4">
+                <Row className="minimize-hide gap-4">
                   {!readOnly && (
                     <AppButton variant="outline" className="w-28" onPress={handleAttemptClose}>
                       <FontText weight="medium">Cancel</FontText>
@@ -1614,6 +1629,7 @@ const ScriptEditorDialog = ({
               onUnsaveFunction={unsaveFunction}
               onClose={() => setInsertTarget(null)}
             />
+            </View>
           </ConvexDialog.Content>
         </ConvexDialog.Portal>
       </ConvexDialog.Root>
