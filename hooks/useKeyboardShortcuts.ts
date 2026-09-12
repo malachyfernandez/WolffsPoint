@@ -85,6 +85,7 @@ export function useKeyboardShortcuts({
                 if (tag === 'textarea' || tag === 'input' || target?.isContentEditable) {
                     return;
                 }
+                e.preventDefault();
                 onPrimaryActionRef.current?.();
                 return;
             }

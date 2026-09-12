@@ -11,6 +11,7 @@ import { UserTableItem } from '../../../types/playerTable';
 import { getPlayerActionSummary, normalizeVoteTargets } from '../../../utils/multiplayer';
 import ActionPills from './ActionPills';
 import { resolveVoteEmailToName } from './VoteEditorDialog';
+import CloseButton from '../ui/dialog/CloseButton';
 
 const formatInputValue = (value: string) => {
   try {
@@ -59,10 +60,7 @@ const NightlyCertificationDialog = ({
       <ConvexDialog.Portal>
         <ConvexDialog.Overlay />
         <ConvexDialog.Content className="h-[85vh] max-w-5xl p-1">
-          <ConvexDialog.Close
-            iconProps={{ color: 'rgb(246, 238, 219)' }}
-            className="bg-text-inverted/10 hover:bg-text-inverted/15 absolute right-0 top-0 z-10 h-10 w-10 rounded-full"
-          />
+          <CloseButton onPress={() => onOpenChange(false)} />
           <DialogHeader
             text="Nightly submissions"
             subtext="Review what each player submitted before you certify it into the operator table."

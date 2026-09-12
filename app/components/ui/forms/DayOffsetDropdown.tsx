@@ -8,6 +8,7 @@ import Row from '../../layout/Row';
 import FontText from '../text/FontText';
 import AppButton from '../buttons/AppButton';
 import StatusButton from '../StatusButton';
+import CloseButton from '../dialog/CloseButton';
 
 interface DayOffsetDropdownProps {
   /** 0 = on the final day, 1+ = N days before */
@@ -70,10 +71,7 @@ const DayOffsetDropdown = ({
       <ConvexDialog.Portal>
         <ConvexDialog.Overlay />
         <ConvexDialog.Content className="max-w-sm">
-          <ConvexDialog.Close
-            iconProps={{ color: 'rgb(246, 238, 219)' }}
-            className="bg-text-inverted/10 hover:bg-text-inverted/15 absolute right-0 top-0 z-10 h-10 w-10 rounded-full"
-          />
+          <CloseButton onPress={() => setIsOpen(false)} />
           <Column className="gap-4">
             <DialogHeader text={title} />
             <Column className="gap-2">

@@ -3,6 +3,7 @@ import { View, Pressable, useWindowDimensions, ScrollView } from 'react-native';
 import ShadowScrollView from '../ui/ShadowScrollView';
 import ConvexDialog from '../ui/dialog/ConvexDialog';
 import DialogHeader from '../ui/dialog/DialogHeader';
+import CloseButton from '../ui/dialog/CloseButton';
 import SaveHistoryPill from '../ui/dialog/SaveHistoryPill';
 import SaveHistoryDialog from '../ui/dialog/SaveHistoryDialog';
 import ViewOnlyPreviewModal from '../ui/dialog/ViewOnlyPreviewModal';
@@ -255,15 +256,7 @@ const PlayerProfileDialogNEW = ({
             className="h-[80vh] max-w-6xl"
             frameVariant={frameVariant}
             isSwipeable={!hasUnsavedChanges}>
-            <Pressable
-              onPress={handleAttemptClose}
-              onHoverIn={() => setHint(['esc'])}
-              onHoverOut={() => setHint(null)}
-              className="bg-text-inverted/10 hover:bg-text-inverted/15 absolute right-0 top-0 z-10 h-10 w-10 items-center justify-center rounded-full">
-              <FontText color="rgb(246, 238, 219)" weight="bold" className="text-xl">
-                ×
-              </FontText>
-            </Pressable>
+            <CloseButton onPress={handleAttemptClose} />
             {historyKey && (
               <SaveHistoryPill
                 hasUnsavedChanges={hasUnsavedChanges}
@@ -555,13 +548,7 @@ const SocialsDialog = ({ isOpen, onOpenChange, onSave, initialSocials }: Socials
         <ConvexDialog.Content
           className="max-h-[80vh] max-w-2xl p-1"
           isSwipeable={!hasUnsavedChanges}>
-          <Pressable
-            onPress={handleAttemptClose}
-            className="bg-text-inverted/10 hover:bg-text-inverted/15 absolute right-0 top-0 z-10 h-10 w-10 items-center justify-center rounded-full">
-            <FontText color="rgb(246, 238, 219)" weight="bold" className="text-xl">
-              ×
-            </FontText>
-          </Pressable>
+          <CloseButton onPress={handleAttemptClose} />
           <DialogHeader text="Socials" />
 
           <Column className="min-h-0 flex-1 gap-4 pt-5">

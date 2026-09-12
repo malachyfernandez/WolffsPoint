@@ -13,6 +13,7 @@ import UrlInputControls from './UrlInputControls';
 import { useToast } from '../../../../contexts/ToastContext';
 import { api } from '../../../../convex/_generated/api';
 import { prepareWebFileForUpload, UploadThingReactNativeFile } from '../../../../utils/imageCompression';
+import CloseButton from './CloseButton';
 
 interface UploadThingSignedUpload {
     url: string;
@@ -237,10 +238,7 @@ const ImageUploadDialog = ({
                 <ConvexDialog.Overlay />
 
                 <ConvexDialog.Content className='p-1 max-w-xl'>
-                    <ConvexDialog.Close
-                        iconProps={{ color: 'rgb(246, 238, 219)' }}
-                        className="w-10 h-10 bg-text-inverted/10 hover:bg-text-inverted/15 rounded-full absolute right-0 top-0 z-10"
-                    />
+                    <CloseButton onPress={() => onOpenChange(false)} />
 
                     <Column className='gap-4'>
                         <DialogHeader

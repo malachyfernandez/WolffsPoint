@@ -7,6 +7,7 @@ import Row from '../../layout/Row';
 import AppButton from '../../ui/buttons/AppButton';
 import FontText from '../../ui/text/FontText';
 import FontTextInput from '../../ui/forms/FontTextInput';
+import CloseButton from '../../ui/dialog/CloseButton';
 
 interface TownSquareLinkDialogProps {
     isOpen: boolean;
@@ -38,7 +39,7 @@ const TownSquareLinkDialog = ({ isOpen, onInsert, onOpenChange, selectedText }: 
             <ConvexDialog.Portal>
                 <ConvexDialog.Overlay />
                 <ConvexDialog.Content className='p-1 max-w-2xl'>
-                    <ConvexDialog.Close iconProps={{ color: 'rgb(246, 238, 219)' }} className='absolute right-0 top-0 z-10 h-10 w-10 bg-text-inverted/10 hover:bg-text-inverted/15 rounded-full' />
+                    <CloseButton onPress={() => onOpenChange(false)} />
                     <DialogHeader text='Insert link' />
                     <Column className='gap-4 p-5'>
                         <Column className='gap-1'>

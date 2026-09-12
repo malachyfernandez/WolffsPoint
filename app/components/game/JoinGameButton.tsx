@@ -7,6 +7,7 @@ import FontText from '../ui/text/FontText';
 import FontTextInput from '../ui/forms/FontTextInput';
 import JoinHandler from '../ui/forms/JoinHandler';
 import DialogHeader from '../ui/dialog/DialogHeader';
+import CloseButton from '../ui/dialog/CloseButton';
 
 interface JoinGameButtonProps {
     onJoin?: (gameId: string) => void;
@@ -34,7 +35,7 @@ const JoinGameButton = ({ onJoin, condensed }: JoinGameButtonProps) => {
 
                     <ConvexDialog.Content className='w-md'>
 
-                        <ConvexDialog.Close iconProps={{ color: 'rgb(246, 238, 219)' }} className="w-10 h-10 bg-text-inverted/10 hover:bg-text-inverted/15 rounded-full absolute right-0 top-0 z-10" />
+                        <CloseButton onPress={() => setIsHeroDialogOpen(false)} />
 
                         <Column className='gap-4'>
                             <DialogHeader

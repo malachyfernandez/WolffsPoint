@@ -3,12 +3,12 @@ import { View, Pressable, Platform } from 'react-native';
 import { Calendar } from 'lucide-react-native';
 import ConvexDialog from './ConvexDialog';
 import DialogHeader from './DialogHeader';
+import CloseButton from './CloseButton';
 import FontText from '../text/FontText';
 import Row from '../../layout/Row';
 import Column from '../../layout/Column';
 import AppButton from '../buttons/AppButton';
 import { SavedEntry } from '../../../../hooks/useSaveHistory';
-import { useKeyboardShortcutHint } from '../../../../contexts/KeyboardShortcutHintContext';
 import { useKeyboardShortcuts } from '../../../../hooks/useKeyboardShortcuts';
 
 interface SaveHistoryDialogProps {
@@ -42,8 +42,6 @@ export function SaveHistoryDialog({
     onSelectEntry,
     onClearHistory,
 }: SaveHistoryDialogProps) {
-    const { setHint } = useKeyboardShortcutHint();
-
     useKeyboardShortcuts({
         onClose: () => onOpenChange(false),
         enabled: isOpen,
@@ -54,16 +52,7 @@ export function SaveHistoryDialog({
             <ConvexDialog.Portal>
                 <ConvexDialog.Overlay />
                 <ConvexDialog.Content className="max-w-md h-[60vh]" isSwipeable={false}>
-                    <Pressable
-                        onPress={() => onOpenChange(false)}
-                        onHoverIn={() => setHint(['esc'])}
-                        onHoverOut={() => setHint(null)}
-                        className="absolute right-0 top-0 z-10 h-10 w-10 bg-text-inverted/10 hover:bg-text-inverted/15 rounded-full items-center justify-center"
-                    >
-                        <FontText color="rgb(246, 238, 219)" weight="bold" className="text-xl">
-                            ×
-                        </FontText>
-                    </Pressable>
+                    <CloseButton onPress={() => onOpenChange(false)} />
                     <DialogHeader
                         text="Save History"
                         subtext={`Showing up to ${maxSaves} most recent saves`}
@@ -118,17 +107,16 @@ function HistoryEntry({ entry, onPress }: { entry: SavedEntry; onPress: () => vo
             onPress={onPress}
             onHoverIn={handleHoverIn}
             onHoverOut={handleHoverOut}
-            className="bg-text-inverted/5 hover:bg-text-inverted/10 rounded-lg p-3 border border-text-inverted/10"
+            className="bg-text/5 hover:bg-text/10 rounded-lg p-3 border border-text/10"
         >
             <View style={{ position: 'relative' }}>
                 <Row className="items-center gap-2" style={{ opacity: isHovered ? 0.5 : 1 }}>
-                    <Calendar size={12} color="rgb(246, 238, 219)" opacity={0.6} />
-                    <FontText color="rgb(246, 238, 219)" className="text-xs opacity-60">
+                    <Calendar size={12} opacity={0.6} />
+                    <FontText className="text-xs opacity-60">
                         {formatDateTime(entry.savedAt)}
                     </FontText>
                 </Row>
                 <FontText
-                    color="rgb(246, 238, 219)"
                     className="text-sm mt-1"
                     style={{ opacity: isHovered ? 0.5 : 1 }}
                     numberOfLines={1}

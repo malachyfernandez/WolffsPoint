@@ -15,6 +15,7 @@ import { getGameScopedKey } from '../../../utils/multiplayer';
 import { RuleBookData } from '../../../types/ruleBook';
 import { RoleTableItem } from '../../../types/roleTable';
 import MarkdownEditorDialog from './MarkdownEditorDialog';
+import CloseButton from '../ui/dialog/CloseButton';
 
 interface RuleBookRoleDescriptionsProps {
   gameId: string;
@@ -264,10 +265,7 @@ const RuleBookRoleDescriptions = ({ gameId, headingIdPrefix }: RuleBookRoleDescr
         <ConvexDialog.Portal>
           <ConvexDialog.Overlay />
           <ConvexDialog.Content className="w-md">
-            <ConvexDialog.Close
-              iconProps={{ color: 'rgb(246, 238, 219)' }}
-              className="w-10 h-10 bg-text-inverted/10 hover:bg-text-inverted/15 rounded-full absolute right-0 top-0 z-10"
-            />
+            <CloseButton onPress={() => setHidingRoleIndex(null)} />
             <Column className="gap-4">
               <DialogHeader text="Hide from rulebook" />
               <Column className="gap-4 pt-5 px-5 pb-5">

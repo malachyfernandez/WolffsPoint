@@ -7,6 +7,7 @@ import DialogHeader from '../ui/dialog/DialogHeader';
 import Column from '../layout/Column';
 import { useKeyboardShortcuts } from '../../../hooks/useKeyboardShortcuts';
 import { useKeyboardShortcutHint } from '../../../contexts/KeyboardShortcutHintContext';
+import CloseButton from '../ui/dialog/CloseButton';
 
 interface DeleteConfirmationDialogProps {
     isOpen: boolean;
@@ -35,7 +36,7 @@ const DeleteConfirmationDialog = ({ isOpen, onOpenChange, onConfirm, itemType, i
             <ConvexDialog.Portal>
                 <ConvexDialog.Overlay />
                 <ConvexDialog.Content className='w-md'>
-                    <ConvexDialog.Close iconProps={{ color: 'rgb(246, 238, 219)' }} className='w-10 h-10 bg-text-inverted/10 hover:bg-text-inverted/15 rounded-full absolute right-0 top-0 z-10' />
+                    <CloseButton onPress={() => onOpenChange(false)} />
                     <Column className='gap-4'>
                         <DialogHeader text={`Delete ${itemType}`} subtext='This action cannot be undone' />
                         <Column className='gap-4 pt-5 px-5 pb-5'>

@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Pressable, View } from 'react-native';
-import { Trash2, X } from 'lucide-react-native';
+import { Trash2 } from 'lucide-react-native';
 import ConvexDialog from '../ui/dialog/ConvexDialog';
+import CloseButton from '../ui/dialog/CloseButton';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
 import AppButton from '../ui/buttons/AppButton';
@@ -184,13 +185,7 @@ const AddTagDialog = ({
         <ConvexDialog.Portal>
           <ConvexDialog.Overlay />
           <ConvexDialog.Content className="max-w-md" isSwipeable={false}>
-            <Pressable
-              onPress={handleAttemptClose}
-              onHoverIn={() => setHint(['esc'])}
-              onHoverOut={() => setHint(null)}
-              className="bg-text-inverted/10 hover:bg-text-inverted/15 absolute right-0 top-0 z-10 h-10 w-10 items-center justify-center rounded-full">
-              <X size={18} color="rgb(246, 238, 219)" />
-            </Pressable>
+            <CloseButton onPress={handleAttemptClose} />
             <DialogHeader text={isEditMode ? 'Edit Tag' : 'New Tag'} />
             <Column className="gap-4 p-0 sm:p-5">
               {/* Preview */}

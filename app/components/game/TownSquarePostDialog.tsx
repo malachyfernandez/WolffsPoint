@@ -15,6 +15,7 @@ import AppButton from '../ui/buttons/AppButton';
 import MarkdownEditorDialog from './MarkdownEditorDialog';
 import { TownSquareAuthorAvatar, TownSquareAuthorName } from './townSquare/TownSquareAuthorIdentity';
 import { useCanEditScripts } from '../../../hooks/useCanEditScripts';
+import CloseButton from '../ui/dialog/CloseButton';
 
 interface TownSquarePostDialogProps {
     gameId: string;
@@ -52,7 +53,7 @@ const TownSquarePostDialog = ({ gameId, isOpen, onOpenChange, post, currentProfi
                 <ConvexDialog.Portal>
                     <ConvexDialog.Overlay />
                     <ConvexDialog.Content className='p-1 h-[85vh] max-w-4xl'>
-                        <ConvexDialog.Close iconProps={{ color: 'rgb(246, 238, 219)' }} className="w-10 h-10 bg-text-inverted/10 hover:bg-text-inverted/15 rounded-full absolute right-0 top-0 z-10" />
+                        <CloseButton onPress={() => onOpenChange(false)} />
                         <DialogHeader text='Town Square Thread' />
                         <ScrollView className='p-4'>
                             <Column className='gap-4'>

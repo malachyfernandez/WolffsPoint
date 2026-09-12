@@ -1664,13 +1664,7 @@ const VariableRenameModal = ({
         <ConvexDialog.Portal>
           <ConvexDialog.Overlay />
           <ConvexDialog.Content className="max-w-md p-6" isSwipeable={false}>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Cancel rename"
-              onPress={handleAttemptClose}
-              className="bg-text-inverted/10 hover:bg-text-inverted/15 absolute right-0 top-0 z-10 h-10 w-10 items-center justify-center rounded-full">
-              <X size={18} color="rgb(246, 238, 219)" />
-            </Pressable>
+            <CloseButton onPress={handleAttemptClose} accessibilityLabel="Cancel rename" />
             <DialogHeader text="Rename Variable" />
             <Column className="gap-4 p-5">
               <Column className="gap-1">

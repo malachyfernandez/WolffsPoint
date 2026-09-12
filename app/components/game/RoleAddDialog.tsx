@@ -12,6 +12,7 @@ import StatusButton from '../ui/StatusButton';
 import { RoleTableItem } from '../../../types/roleTable';
 import { useKeyboardShortcuts } from '../../../hooks/useKeyboardShortcuts';
 import { useKeyboardShortcutHint } from '../../../contexts/KeyboardShortcutHintContext';
+import CloseButton from '../ui/dialog/CloseButton';
 
 interface RoleAddDialogProps {
   isOpen: boolean;
@@ -68,10 +69,7 @@ const RoleAddDialog = ({ isOpen, onOpenChange, onAddRole }: RoleAddDialogProps) 
       <ConvexDialog.Portal>
         <ConvexDialog.Overlay />
         <ConvexDialog.Content className="max-w-xl">
-          <ConvexDialog.Close
-            iconProps={{ color: 'rgb(246, 238, 219)' }}
-            className="bg-text-inverted/10 hover:bg-text-inverted/15 absolute right-0 top-0 z-10 h-10 w-10 rounded-full"
-          />
+          <CloseButton onPress={() => onOpenChange(false)} />
           <DialogHeader text="Add Role" subtext="Enter the role details" />
           <Column className="gap-4 p-0 sm:p-5">
             <Column className="gap-2">

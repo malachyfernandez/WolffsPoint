@@ -9,6 +9,7 @@ import FontText from '../../ui/text/FontText';
 import ShadowScrollView from '../../ui/ShadowScrollView';
 import { Usepaper } from '../../../../types/usepaper';
 import NewspaperZoomableView from './NewspaperZoomableView';
+import CloseButton from '../../ui/dialog/CloseButton';
 
 interface ImportDraftDialogProps {
     isOpen: boolean;
@@ -43,10 +44,7 @@ const ImportDraftDialog = ({
             <ConvexDialog.Portal>
                 <ConvexDialog.Overlay />
                 <ConvexDialog.Content className='h-[90vh]'>
-                    <ConvexDialog.Close
-                        iconProps={{ color: 'rgb(246, 238, 219)' }}
-                        className='bg-text-inverted/10 hover:bg-text-inverted/15 absolute right-0 top-0 z-10 h-10 w-10 rounded-full'
-                    />
+                    <CloseButton onPress={() => onOpenChange(false)} />
                     <DialogHeader
                         text={`Import ${sourceLabel} Draft`}
                         subtext='Preview the draft below before replacing your newspaper'

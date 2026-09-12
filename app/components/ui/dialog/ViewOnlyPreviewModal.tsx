@@ -1,7 +1,8 @@
 import React from 'react';
-import { Pressable, View } from 'react-native';
+import { View } from 'react-native';
 import ConvexDialog from './ConvexDialog';
 import DialogHeader from './DialogHeader';
+import CloseButton from './CloseButton';
 import Row from '../../layout/Row';
 import AppButton from '../buttons/AppButton';
 import FontText from '../text/FontText';
@@ -49,16 +50,7 @@ export function ViewOnlyPreviewModal({
             <ConvexDialog.Portal>
                 <ConvexDialog.Overlay />
                 <ConvexDialog.Content className="h-[75vh]" isSwipeable={false}>
-                    <Pressable
-                        onPress={() => onOpenChange(false)}
-                        onHoverIn={() => setHint(['esc'])}
-                        onHoverOut={() => setHint(null)}
-                        className="absolute right-0 top-0 z-10 h-10 w-10 bg-text-inverted/10 hover:bg-text-inverted/15 rounded-full items-center justify-center"
-                    >
-                        <FontText color="rgb(246, 238, 219)" weight="bold" className="text-xl">
-                            ×
-                        </FontText>
-                    </Pressable>
+                    <CloseButton onPress={() => onOpenChange(false)} />
                     <DialogHeader text={title} subtext={subtext} />
                     <View className="flex-1 min-h-0">
                         {children}

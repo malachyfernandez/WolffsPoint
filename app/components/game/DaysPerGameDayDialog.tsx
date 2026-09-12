@@ -6,6 +6,7 @@ import FontText from '../ui/text/FontText';
 import FontNumberInput from '../ui/forms/FontNumberInput';
 import DialogHeader from '../ui/dialog/DialogHeader';
 import { View, Text } from 'react-native';
+import CloseButton from '../ui/dialog/CloseButton';
 
 interface DaysPerGameDayDialogProps {
     isOpen: boolean;
@@ -42,7 +43,7 @@ const DaysPerGameDayDialog = ({ isOpen, onOpenChange, currentValue, onPress, set
                 <ConvexDialog.Overlay />
 
                 <ConvexDialog.Content>
-                    <ConvexDialog.Close iconProps={{ color: 'rgb(246, 238, 219)' }} className="w-10 h-10 bg-text-inverted/10 hover:bg-text-inverted/15 rounded-full absolute right-0 top-0 z-10" />
+                    <CloseButton onPress={() => onOpenChange(false)} />
 
                     <Column className='gap-4'>
                         <DialogHeader

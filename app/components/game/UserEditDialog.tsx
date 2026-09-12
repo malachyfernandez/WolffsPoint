@@ -16,6 +16,7 @@ import StatusButton from '../ui/StatusButton';
 import DeleteConfirmationDialog from './DeleteRoleConfirmationDialog';
 import { useKeyboardShortcuts } from '../../../hooks/useKeyboardShortcuts';
 import { useKeyboardShortcutHint } from '../../../contexts/KeyboardShortcutHintContext';
+import CloseButton from '../ui/dialog/CloseButton';
 
 interface UserEditDialogProps {
     isOpen: boolean;
@@ -163,7 +164,7 @@ const UserEditDialog = ({
                 <ConvexDialog.Overlay />
 
                 <ConvexDialog.Content className="max-w-xl">
-                    <ConvexDialog.Close iconProps={{ color: 'rgb(246, 238, 219)' }} className="w-10 h-10 bg-text-inverted/10 hover:bg-text-inverted/15 rounded-full absolute right-0 top-0 z-10" />
+                    <CloseButton onPress={() => onOpenChange(false)} />
                     <DialogHeader
                         text={`Edit User`}
                         subtext={`Set the user details`}

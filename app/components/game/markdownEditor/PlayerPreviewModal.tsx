@@ -25,6 +25,7 @@ import {
   normalizeGameSchedule,
   parseStoredDayDates,
 } from '../../../../utils/multiplayer';
+import CloseButton from '../../ui/dialog/CloseButton';
 
 interface PlayerPreviewModalProps {
   isOpen: boolean;
@@ -214,10 +215,7 @@ const PlayerPreviewModal = ({
       <ConvexDialog.Portal>
         <ConvexDialog.Overlay />
         <ConvexDialog.Content className="h-[90vh]">
-          <ConvexDialog.Close
-            iconProps={{ color: 'rgb(246, 238, 219)' }}
-            className="bg-text-inverted/10 hover:bg-text-inverted/15 absolute right-0 top-0 z-10 h-10 w-10 rounded-full"
-          />
+          <CloseButton onPress={() => onOpenChange(false)} />
           <DialogHeader text="Preview As Player" subtext={`Role: ${roleName || 'Unnamed role'}`} />
 
           <Column className="min-h-0 flex-1 gap-3 pt-3">

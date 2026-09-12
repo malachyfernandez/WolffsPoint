@@ -9,6 +9,7 @@ import FontText from '../ui/text/FontText';
 import CustomCheckbox from '../ui/CustomCheckbox';
 import DeleteConfirmationDialog from './DeleteRoleConfirmationDialog';
 import { ColumnSizeOption } from './playerTableColumnSizing';
+import CloseButton from '../ui/dialog/CloseButton';
 
 interface ColumnActionsDialogProps {
   isOpen: boolean;
@@ -49,10 +50,7 @@ const ColumnActionsDialog = ({
         <ConvexDialog.Portal>
           <ConvexDialog.Overlay />
           <ConvexDialog.Content className="max-w-md p-1">
-            <ConvexDialog.Close
-              iconProps={{ color: 'rgb(246, 238, 219)' }}
-              className="bg-text-inverted/10 hover:bg-text-inverted/15 absolute right-0 top-0 z-10 h-10 w-10 rounded-full"
-            />
+            <CloseButton onPress={() => onOpenChange(false)} />
             <DialogHeader text={title} />
             <Column className="gap-3 p-0 pt-4 sm:p-5">
               {sizeOptions.map((option) => (

@@ -16,7 +16,9 @@ export const useKeyboardShortcutHint = () => {
 
     useEffect(() => {
         return () => {
+            console.log('[Hint] cleanup firing, ownedRef.current =', ownedRef.current, 'contextRef.current exists =', !!contextRef.current);
             if (ownedRef.current && contextRef.current) {
+                console.log('[Hint] cleanup clearing hint on unmount');
                 contextRef.current.setHint(null);
             }
         };
@@ -27,6 +29,7 @@ export const useKeyboardShortcutHint = () => {
     }
 
     const setHint = (keys: string[] | null) => {
+        console.log('[Hint] setHint called with', keys, '— setting owned to', keys !== null);
         ownedRef.current = keys !== null;
         context.setHint(keys);
     };
@@ -44,6 +47,7 @@ export const KeyboardShortcutHintProvider: React.FC<{ children: ReactNode }> = (
     const [hintKeys, setHintKeys] = useState<string[] | null>(null);
 
     const setHint = (keys: string[] | null) => {
+        console.log('[Hint] provider setHint called with', keys);
         setHintKeys(keys);
     };
 

@@ -9,6 +9,7 @@ import DialogHeader from '../ui/dialog/DialogHeader';
 import SmartDateInput from '../ui/forms/SmartDateInput';
 import StatusButton from '../ui/StatusButton';
 import { useListSet } from 'hooks/useData';
+import CloseButton from '../ui/dialog/CloseButton';
 
 interface NewWolffspointButtonAndDialogueProps {
     onCreate?: (gameId: string) => void;
@@ -95,7 +96,7 @@ const NewWolffspointButtonAndDialogue = ({ onCreate, condensed }: NewWolffspoint
 
                 <ConvexDialog.Content className='w-md'>
 
-                    <ConvexDialog.Close iconProps={{ color: 'rgb(246, 238, 219)' }} className="w-10 h-10 bg-text-inverted/10 hover:bg-text-inverted/15 rounded-full absolute right-0 top-0 z-10" />
+                    <CloseButton onPress={() => setIsHeroDialogOpen(false)} />
 
                     <Column className='gap-4'>
                         <DialogHeader

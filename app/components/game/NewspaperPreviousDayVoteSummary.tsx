@@ -17,6 +17,7 @@ import {
 } from '../../../utils/multiplayer';
 import ConvexDialog from '../ui/dialog/ConvexDialog';
 import DialogHeader from '../ui/dialog/DialogHeader';
+import CloseButton from '../ui/dialog/CloseButton';
 
 interface NewspaperPreviousDayVoteSummaryProps {
   gameId: string;
@@ -89,10 +90,7 @@ const SkipVoteRow = ({
         <ConvexDialog.Portal>
           <ConvexDialog.Overlay />
           <ConvexDialog.Content className="max-w-sm">
-            <ConvexDialog.Close
-              iconProps={{ color: 'rgb(246, 238, 219)' }}
-              className="bg-text-inverted/10 hover:bg-text-inverted/15 absolute right-0 top-0 z-10 h-10 w-10 rounded-full"
-            />
+            <CloseButton onPress={() => setShowVoters(false)} />
             <Column className="gap-4">
               <DialogHeader
                 text="SKIPPED VOTE"
@@ -221,10 +219,7 @@ const VoteSummaryRow = ({
         <ConvexDialog.Portal>
           <ConvexDialog.Overlay />
           <ConvexDialog.Content className="max-w-sm">
-            <ConvexDialog.Close
-              iconProps={{ color: 'rgb(246, 238, 219)' }}
-              className="bg-text-inverted/10 hover:bg-text-inverted/15 absolute right-0 top-0 z-10 h-10 w-10 rounded-full"
-            />
+            <CloseButton onPress={() => setShowVoters(false)} />
             <Column className="gap-4">
               <DialogHeader
                 text="VOTES RECEIVED"

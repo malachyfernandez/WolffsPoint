@@ -9,6 +9,7 @@ import { useFindListItems } from 'hooks/useData';
 import { useTownSquareAuthorIdentity } from './townSquare/TownSquareAuthorIdentity';
 import { TownSquareAuthorAvatar } from './townSquare/TownSquareAuthorIdentity';
 import { Archive, Hash } from 'lucide-react-native';
+import CloseButton from '../ui/dialog/CloseButton';
 
 interface JoinedGameOptionsDialogProps {
     gameId: string;
@@ -53,10 +54,7 @@ const JoinedGameOptionsDialog = ({
             <ConvexDialog.Portal>
                 <ConvexDialog.Overlay />
                 <ConvexDialog.Content>
-                    <ConvexDialog.Close
-                        iconProps={{ color: 'rgb(246, 238, 219)' }}
-                        className="w-10 h-10 bg-text-inverted/10 hover:bg-text-inverted/15 rounded-full absolute right-0 top-0 z-10"
-                    />
+                    <CloseButton onPress={() => onOpenChange(false)} />
 
                     <Column className='gap-4'>
                         <DialogHeader

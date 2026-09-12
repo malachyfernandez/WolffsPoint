@@ -10,6 +10,7 @@ import DialogHeader from '../ui/dialog/DialogHeader';
 import CustomCheckbox from '../ui/CustomCheckbox';
 import { useKeyboardShortcuts } from '../../../hooks/useKeyboardShortcuts';
 import { useKeyboardShortcutHint } from '../../../contexts/KeyboardShortcutHintContext';
+import CloseButton from '../ui/dialog/CloseButton';
 
 interface VoteEnableDialogProps {
   isOpen: boolean;
@@ -103,11 +104,7 @@ const VoteEnableDialog = ({
         <ConvexDialog.Portal>
           <ConvexDialog.Overlay />
           <ConvexDialog.Content className="max-w-md" isSwipeable={!hasChange}>
-            <ConvexDialog.Close
-              iconProps={{ color: 'rgb(246, 238, 219)' }}
-              className="bg-text-inverted/10 hover:bg-text-inverted/15 absolute right-0 top-0 z-10 h-10 w-10 rounded-full"
-              onPress={handleAttemptClose}
-            />
+            <CloseButton onPress={handleAttemptClose} />
             <DialogHeader text="Vote Settings" subtext={`${roleName || 'Role'} voting`} />
             <Column className="gap-4 p-0 sm:p-5">
               <FontText variant="subtext">

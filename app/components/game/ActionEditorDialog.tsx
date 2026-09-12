@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { View, ScrollView, Pressable } from 'react-native';
-import { X } from 'lucide-react-native';
+import { View, ScrollView } from 'react-native';
 import FontTextInput from '../ui/forms/FontTextInput';
 import ConvexDialog from '../ui/dialog/ConvexDialog';
 import DialogHeader from '../ui/dialog/DialogHeader';
+import CloseButton from '../ui/dialog/CloseButton';
 import SaveHistoryPill from '../ui/dialog/SaveHistoryPill';
 import SaveHistoryDialog from '../ui/dialog/SaveHistoryDialog';
 import ViewOnlyPreviewModal from '../ui/dialog/ViewOnlyPreviewModal';
@@ -134,13 +134,7 @@ const ActionEditorDialog = ({
         <ConvexDialog.Portal>
           <ConvexDialog.Overlay />
           <ConvexDialog.Content className="max-w-lg p-1" isSwipeable={false}>
-            <Pressable
-              onPress={handleAttemptClose}
-              onHoverIn={() => setHint(['esc'])}
-              onHoverOut={() => setHint(null)}
-              className="bg-text-inverted/10 hover:bg-text-inverted/15 absolute right-0 top-0 z-10 h-10 w-10 items-center justify-center rounded-full">
-              <X size={18} color="rgb(246, 238, 219)" />
-            </Pressable>
+            <CloseButton onPress={handleAttemptClose} />
             {historyKey && (
               <SaveHistoryPill
                 hasUnsavedChanges={hasUnsavedChanges}

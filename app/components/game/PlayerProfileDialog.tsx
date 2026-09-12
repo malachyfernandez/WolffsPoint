@@ -10,6 +10,7 @@ import DialogHeader from '../ui/dialog/DialogHeader';
 import SimpleImageUpload from '../ui/imageUpload/SimpleImageUpload';
 import MarkdownRenderer from '../ui/markdown/MarkdownRenderer';
 import { PlayerProfile } from '../../../types/multiplayer';
+import CloseButton from '../ui/dialog/CloseButton';
 
 interface PlayerProfileDialogProps {
     initialValue: PlayerProfile;
@@ -51,7 +52,7 @@ const PlayerProfileDialog = ({
             <ConvexDialog.Portal>
                 <ConvexDialog.Overlay />
                 <ConvexDialog.Content className='p-1 h-[90vh] max-w-5xl'>
-                    <ConvexDialog.Close iconProps={{ color: 'rgb(246, 238, 219)' }} className="w-10 h-10 bg-text-inverted/10 hover:bg-text-inverted/15 rounded-full absolute right-0 top-0 z-10" />
+                    <CloseButton onPress={() => onOpenChange(false)} />
                     <DialogHeader text={title} subtext='This is what everyone in the game will see.' />
                     <ScrollView className='w-full'>
                         <Row className='gap-4 w-full p-4 items-start'>

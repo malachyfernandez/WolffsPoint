@@ -10,6 +10,7 @@ import FontTextInput from '../ui/forms/FontTextInput';
 import AppDropdown, { AppDropdownOption } from '../ui/forms/AppDropdown';
 import MarkdownRenderer from '../ui/markdown/MarkdownRenderer';
 import { printScriptBlock } from '../../script/lang/printer';
+import CloseButton from '../ui/dialog/CloseButton';
 
 interface MarkdownInputBuilderDialogProps {
   isOpen: boolean;
@@ -92,10 +93,7 @@ const MarkdownInputBuilderDialog = ({
       <ConvexDialog.Portal>
         <ConvexDialog.Overlay />
         <ConvexDialog.Content className="max-w-3xl p-1">
-          <ConvexDialog.Close
-            iconProps={{ color: 'rgb(246, 238, 219)' }}
-            className="bg-text-inverted/10 hover:bg-text-inverted/15 absolute right-0 top-0 z-10 h-10 w-10 rounded-full"
-          />
+          <CloseButton onPress={() => onOpenChange(false)} />
           <DialogHeader text="Insert input" />
           <Column className="gap-4 p-5">
             <Column className="gap-1">
