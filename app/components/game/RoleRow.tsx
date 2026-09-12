@@ -9,6 +9,7 @@ import MarkdownEditorDialog from './MarkdownEditorDialog';
 import VoteEnableDialog from './VoteEnableDialog';
 import DeleteConfirmationDialog from './DeleteRoleConfirmationDialog';
 import { RoleTableItem } from 'types/roleTable';
+import { SelectableOverlay } from './multiSelect/SelectableOverlay';
 
 interface RoleRowProps {
   gameId: string;
@@ -27,6 +28,7 @@ interface RoleRowProps {
   onEditEnd?: () => void;
   isEditing?: boolean;
   showInputs?: boolean;
+  selectionMode?: boolean;
 }
 
 const RoleRow = ({
@@ -46,6 +48,7 @@ const RoleRow = ({
   onEditEnd,
   isEditing,
   showInputs = false,
+  selectionMode = false,
 }: RoleRowProps) => {
   const [isRoleInfoDialogOpen, setIsRoleInfoDialogOpen] = useState(false);
   const [isRoleMessageDialogOpen, setIsRoleMessageDialogOpen] = useState(false);
@@ -58,7 +61,8 @@ const RoleRow = ({
     <>
       <Row className={`h-12 w-min gap-0 ${isEditing ? 'z-50' : ''}`}>
         <Column
-          className={`border-subtle-border h-full w-32 items-center justify-center gap-4 border ${isLast ? 'rounded-bl-lg' : ''}`}>
+          className={`border-subtle-border h-full w-32 items-center justify-center gap-4 border ${isLast ? 'rounded-bl-lg' : ''}`}
+          style={{ position: 'relative' }}>
           <Pressable
             onPress={() => setIsRoleInfoDialogOpen(true)}
             className="h-full w-full items-center justify-center">
@@ -72,9 +76,11 @@ const RoleRow = ({
               {role.role || <FontText className="opacity-50">Role name</FontText>}
             </FontText>
           </Pressable>
+          <SelectableOverlay cellId={`r-name-${index}`} cellType="roleName" />
         </Column>
         <Column
-          className={`border-subtle-border h-full w-64 items-center justify-center gap-4 border`}>
+          className={`border-subtle-border h-full w-64 items-center justify-center gap-4 border`}
+          style={{ position: 'relative' }}>
           <Pressable
             onPress={() => setIsRoleMessageDialogOpen(true)}
             className="h-full w-60 items-center justify-center">
@@ -95,8 +101,11 @@ const RoleRow = ({
               )}
             </FontText>
           </Pressable>
+          <SelectableOverlay cellId={`r-msg-${index}`} cellType="roleMessage" />
         </Column>
-        <Column className="border-subtle-border h-full w-64 items-center justify-center gap-4 border">
+        <Column
+          className={`border-subtle-border h-full w-64 items-center justify-center gap-4 border`}
+          style={{ position: 'relative' }}>
           <Pressable
             onPress={() => setIsVoteEnableDialogOpen(true)}
             className="h-full w-60 items-center justify-center">
@@ -116,9 +125,11 @@ const RoleRow = ({
               )}
             </FontText>
           </Pressable>
+          <SelectableOverlay cellId={`r-vote-${index}`} cellType="voteMessage" />
         </Column>
         <Column
-          className={`border-subtle-border h-full w-64 items-center justify-center gap-4 border ${isLast ? 'rounded-br-lg' : ''}`}>
+          className={`border-subtle-border h-full w-64 items-center justify-center gap-4 border ${isLast ? 'rounded-br-lg' : ''}`}
+          style={{ position: 'relative' }}>
           <Pressable
             onPress={() => setIsAboutRoleDialogOpen(true)}
             className="h-full w-full items-center justify-center">
@@ -139,17 +150,20 @@ const RoleRow = ({
               )}
             </FontText>
           </Pressable>
+          <SelectableOverlay cellId={`r-about-${index}`} cellType="aboutRole" />
         </Column>
-        <Column className={`h-12 w-0 items-center justify-center gap-4`}>
-          <AppButton
-            variant="filled"
-            className="max-h-8 w-8"
-            onPress={() => setIsDeleteConfirmOpen(true)}>
-            <FontText weight="bold" color="white" className="mt-[-0.1rem] text-xl">
-              -
-            </FontText>
-          </AppButton>
-        </Column>
+        {!selectionMode && (
+          <Column className={`h-12 w-0 items-center justify-center gap-4`}>
+            <AppButton
+              variant="filled"
+              className="max-h-8 w-8"
+              onPress={() => setIsDeleteConfirmOpen(true)}>
+              <FontText weight="bold" color="white" className="mt-[-0.1rem] text-xl">
+                -
+              </FontText>
+            </AppButton>
+          </Column>
+        )}
       </Row>
 
       <RoleEditDialog

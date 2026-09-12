@@ -12,6 +12,7 @@ import { getPlayerActionSummary } from '../../../utils/multiplayer';
 import ActionPills from './ActionPills';
 import ActionEditorDialog from './ActionEditorDialog';
 import VoteEditorDialog, { resolveVoteEmailToName } from './VoteEditorDialog';
+import { SelectableOverlay } from './multiSelect/SelectableOverlay';
 
 interface DayUserRowProps {
   user: UserTableItem;
@@ -38,6 +39,7 @@ interface DayUserRowProps {
   dayColumnTitles: string[];
   onTagsAdded?: (tagNames: string[], context: CellContext) => void;
   onTagsRemoved?: (tagNames: string[], context: CellContext) => void;
+  selectionMode?: boolean;
 }
 
 const DayUserRow = ({
@@ -59,6 +61,7 @@ const DayUserRow = ({
   dayColumnTitles,
   onTagsAdded,
   onTagsRemoved,
+  selectionMode = false,
 }: DayUserRowProps) => {
   const [editingColumns, setEditingColumns] = useState<Record<number, boolean>>({});
   const [isEditingVote, setIsEditingVote] = useState(false);
@@ -103,7 +106,7 @@ const DayUserRow = ({
     <Row className={`h-12 w-min gap-0 ${isEditing ? 'z-50' : ''}`}>
       <Column
         className={`border-subtle-border z-10 h-full items-center justify-center gap-4 border ${isLast ? 'rounded-bl-lg' : ''}`}
-        style={{ width: dayBaseColumnWidths.vote }}>
+        style={{ width: dayBaseColumnWidths.vote, position: 'relative' }}>
         <Pressable
           onPress={handleVotePress}
           className="h-full w-full items-center justify-center px-1">
@@ -118,10 +121,11 @@ const DayUserRow = ({
             )}
           </FontText>
         </Pressable>
+        <SelectableOverlay cellId={`d-v-${index}`} cellType="daysVote" />
       </Column>
       <Column
         className={`border-subtle-border z-20 h-full items-center justify-center gap-0 border`}
-        style={{ width: dayBaseColumnWidths.action }}>
+        style={{ width: dayBaseColumnWidths.action, position: 'relative' }}>
         <Pressable
           onPress={handleActionPress}
           className="h-full w-full items-center justify-center px-1">
@@ -129,6 +133,7 @@ const DayUserRow = ({
             <ActionPills actionText={getPlayerActionSummary(dayData.action)} />
           </View>
         </Pressable>
+        <SelectableOverlay cellId={`d-a-${index}`} cellType="daysAction" />
       </Column>
 
       {dayData.extraColumns?.map((column, columnIndex) => {
@@ -166,6 +171,7 @@ const DayUserRow = ({
                 onTagsAdded={onTagsAdded}
                 onTagsRemoved={onTagsRemoved}
               />
+              <SelectableOverlay cellId={`d-e-${index}-${columnIndex}`} cellType="daysExtra" />
             </Column>
           </Animated.View>
         );

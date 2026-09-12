@@ -11,6 +11,8 @@ import PlayerAddUserSection from './PlayerAddUserSection';
 import ComprehensiveDaySelector from '../ui/daySelector/ComprehensiveDaySelector';
 import DaysTable from './DaysTable';
 import LoadingText from '../ui/loading/LoadingText';
+import { MultiSelectProvider, useMultiSelect } from './multiSelect/MultiSelectContext';
+import MultiSelectToolbar from './multiSelect/MultiSelectToolbar';
 
 
 
@@ -24,6 +26,15 @@ interface PlayerPageOPERATORProps {
 
 
 const PlayerPageOPERATOR = ({ currentUserId, gameId }: PlayerPageOPERATORProps) => {
+  return (
+    <MultiSelectProvider>
+      <PlayerPageContent currentUserId={currentUserId} gameId={gameId} />
+    </MultiSelectProvider>
+  );
+};
+
+const PlayerPageContent = ({ currentUserId, gameId }: PlayerPageOPERATORProps) => {
+    const { selectionMode } = useMultiSelect();
     // const [startingDate] = useUserList({
     //     key: "startingDate",
     //     itemId: gameId,
@@ -82,6 +93,8 @@ const PlayerPageOPERATOR = ({ currentUserId, gameId }: PlayerPageOPERATORProps) 
                 {users.length > 0 ? (
                     <Column className='gap-4 py-3 sm:px-4'>
 
+                        <MultiSelectToolbar />
+
                         <ShadowScrollView direction='horizontal' className='mr-1 pt-1' scrollViewClassName='px-1 py-5' horizontal>
                             <Row className='gap-4'>
                                 <Column className='gap-1'>
@@ -101,7 +114,7 @@ const PlayerPageOPERATOR = ({ currentUserId, gameId }: PlayerPageOPERATORProps) 
                                     </Row>
                                 </Column>
                                 <Column className='gap-0'>
-                                    <View className='' style={{ width: daysTableWidth }}>
+                                    <View className='' style={{ width: daysTableWidth, opacity: selectionMode ? 0.4 : 1 }} pointerEvents={selectionMode ? 'none' : 'auto'}>
                                         <ComprehensiveDaySelector
                                             gameId={gameId}
                                             showAddButton={true}

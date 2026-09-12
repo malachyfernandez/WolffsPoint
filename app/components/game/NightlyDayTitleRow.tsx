@@ -4,6 +4,7 @@ import Row from '../layout/Row';
 import AppButton from '../ui/buttons/AppButton';
 import ColumnActionsDialog from './ColumnActionsDialog';
 import { ColumnSizeOption, getInnerTextWidth } from './nightlyTableColumnSizing';
+import { SelectableColumnOverlay } from './multiSelect/SelectableOverlay';
 
 interface NightlyDayTitleRowProps {
   onEditStart?: () => void;
@@ -25,6 +26,13 @@ interface NightlyDayTitleRowProps {
   ) => void;
   extraDayColumns?: string[];
   extraDayColumnWidths?: number[];
+  selectionMode?: boolean;
+  columnCellIds?: {
+    vote: string[];
+    action: string[];
+    morningMessage: string[];
+    extra: string[][];
+  };
 }
 
 type ActiveColumnMenu = { column: 'vote' | 'action' | 'morningMessage' } | null;
@@ -38,6 +46,8 @@ const NightlyDayTitleRow = ({
   onSetColumnSize,
   extraDayColumns = [],
   extraDayColumnWidths = [],
+  selectionMode = false,
+  columnCellIds,
 }: NightlyDayTitleRowProps) => {
   const [activeMenu, setActiveMenu] = useState<ActiveColumnMenu>(null);
 
@@ -55,57 +65,75 @@ const NightlyDayTitleRow = ({
         className={`bg-background border-border h-12 w-min gap-0 rounded-t-lg border-b-2 ${isEditing ? 'z-50' : ''}`}>
         <Row
           className="h-full items-center justify-center gap-0 px-2"
-          style={{ width: columnWidths.vote }}>
+          style={{ width: columnWidths.vote, position: 'relative' }}>
           <FontText
             weight="medium"
             className="text-center"
             style={{ width: getInnerTextWidth(columnWidths.vote) }}>
             Vote
           </FontText>
-          <AppButton
-            variant="grey"
-            className="ml-0 mr-[0.4rem] max-h-6 w-6"
-            onPress={() => setActiveMenu({ column: 'vote' })}>
-            <FontText weight="bold" color="white" className="mt-[-0.1rem] text-lg">
-              ⋯
-            </FontText>
-          </AppButton>
+          {!selectionMode && (
+            <AppButton
+              variant="grey"
+              className="ml-0 mr-[0.4rem] max-h-6 w-6"
+              onPress={() => setActiveMenu({ column: 'vote' })}>
+              <FontText weight="bold" color="white" className="mt-[-0.1rem] text-lg">
+                ⋯
+              </FontText>
+            </AppButton>
+          )}
+          <SelectableColumnOverlay
+            columnCellIds={columnCellIds?.vote ?? []}
+            cellType="nightlyVote"
+          />
         </Row>
         <Row
           className="h-full items-center justify-center gap-0 px-2"
-          style={{ width: columnWidths.action }}>
+          style={{ width: columnWidths.action, position: 'relative' }}>
           <FontText
             weight="medium"
             className="text-center"
             style={{ width: getInnerTextWidth(columnWidths.action) }}>
             Action
           </FontText>
-          <AppButton
-            variant="grey"
-            className="ml-0 mr-[0.4rem] max-h-6 w-6"
-            onPress={() => setActiveMenu({ column: 'action' })}>
-            <FontText weight="bold" color="white" className="mt-[-0.1rem] text-lg">
-              ⋯
-            </FontText>
-          </AppButton>
+          {!selectionMode && (
+            <AppButton
+              variant="grey"
+              className="ml-0 mr-[0.4rem] max-h-6 w-6"
+              onPress={() => setActiveMenu({ column: 'action' })}>
+              <FontText weight="bold" color="white" className="mt-[-0.1rem] text-lg">
+                ⋯
+              </FontText>
+            </AppButton>
+          )}
+          <SelectableColumnOverlay
+            columnCellIds={columnCellIds?.action ?? []}
+            cellType="nightlyAction"
+          />
         </Row>
         <Row
           className="h-full items-center justify-center gap-0 px-2"
-          style={{ width: columnWidths.morningMessage }}>
+          style={{ width: columnWidths.morningMessage, position: 'relative' }}>
           <FontText
             weight="medium"
             className="text-center"
             style={{ width: getInnerTextWidth(columnWidths.morningMessage) }}>
             Morning Message (Tomorrow)
           </FontText>
-          <AppButton
-            variant="grey"
-            className="ml-0 mr-[0.4rem] max-h-6 w-6"
-            onPress={() => setActiveMenu({ column: 'morningMessage' })}>
-            <FontText weight="bold" color="white" className="mt-[-0.1rem] text-lg">
-              ⋯
-            </FontText>
-          </AppButton>
+          {!selectionMode && (
+            <AppButton
+              variant="grey"
+              className="ml-0 mr-[0.4rem] max-h-6 w-6"
+              onPress={() => setActiveMenu({ column: 'morningMessage' })}>
+              <FontText weight="bold" color="white" className="mt-[-0.1rem] text-lg">
+                ⋯
+              </FontText>
+            </AppButton>
+          )}
+          <SelectableColumnOverlay
+            columnCellIds={columnCellIds?.morningMessage ?? []}
+            cellType="morningMessage"
+          />
         </Row>
         {extraDayColumns.map((title, index) => {
           const width = extraDayColumnWidths[index] ?? 112;
@@ -113,13 +141,17 @@ const NightlyDayTitleRow = ({
             <Row
               key={index}
               className="h-full items-center justify-center gap-0 px-2"
-              style={{ width }}>
+              style={{ width, position: 'relative' }}>
               <FontText
                 weight="medium"
                 className="overflow-hidden text-nowrap text-center"
                 style={{ width: getInnerTextWidth(width) }}>
                 {title || 'UNSET'}
               </FontText>
+              <SelectableColumnOverlay
+                columnCellIds={columnCellIds?.extra[index] ?? []}
+                cellType="nightlyExtra"
+              />
             </Row>
           );
         })}

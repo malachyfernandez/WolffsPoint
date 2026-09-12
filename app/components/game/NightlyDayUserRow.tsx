@@ -14,6 +14,7 @@ import { UserTableItem } from '../../../types/playerTable';
 import { VoteValue } from '../../../types/multiplayer';
 import { getPlayerActionSummary } from '../../../utils/multiplayer';
 import { useList } from 'hooks/useData';
+import { SelectableOverlay } from './multiSelect/SelectableOverlay';
 
 interface NightlyDayUserRowProps {
   user: UserTableItem;
@@ -38,6 +39,7 @@ interface NightlyDayUserRowProps {
   extraDayColumnIndices?: number[];
   extraDayColumnWidths?: number[];
   extraDayColumnTitles?: string[];
+  selectionMode?: boolean;
 }
 
 const NightlyDayUserRow = ({
@@ -58,6 +60,7 @@ const NightlyDayUserRow = ({
   extraDayColumnIndices = [],
   extraDayColumnWidths = [],
   extraDayColumnTitles = [],
+  selectionMode = false,
 }: NightlyDayUserRowProps) => {
   const [isMessageDialogOpen, setIsMessageDialogOpen] = useState(false);
   const [isActionDialogOpen, setIsActionDialogOpen] = useState(false);
@@ -114,7 +117,7 @@ const NightlyDayUserRow = ({
       <Row className={`h-12 w-min gap-0 ${isEditing ? 'z-50' : ''}`}>
         <Column
           className={`border-subtle-border z-10 h-full items-center justify-center gap-4 border`}
-          style={{ width: columnWidths.vote }}>
+          style={{ width: columnWidths.vote, position: 'relative' }}>
           <Pressable
             onPress={handleVotePress}
             className="h-full w-full items-center justify-center px-1">
@@ -134,10 +137,11 @@ const NightlyDayUserRow = ({
               <FontText className="text-text/60 text-[10px]">{voteMultiplier}x</FontText>
             </View>
           )}
+          <SelectableOverlay cellId={`n-v-${index}`} cellType="nightlyVote" />
         </Column>
         <Column
           className={`border-subtle-border z-20 h-full items-center justify-center gap-0 border`}
-          style={{ width: columnWidths.action }}>
+          style={{ width: columnWidths.action, position: 'relative' }}>
           <Pressable
             onPress={handleActionPress}
             className="h-full w-full items-center justify-center px-1">
@@ -145,10 +149,11 @@ const NightlyDayUserRow = ({
               <ActionPills actionText={getPlayerActionSummary(dayData.action)} />
             </View>
           </Pressable>
+          <SelectableOverlay cellId={`n-a-${index}`} cellType="nightlyAction" />
         </Column>
         <Column
           className={`border-subtle-border h-full items-center justify-center gap-0 border ${isLast && extraDayColumnIndices.length === 0 ? 'rounded-br-lg' : ''}`}
-          style={{ width: columnWidths.morningMessage }}>
+          style={{ width: columnWidths.morningMessage, position: 'relative' }}>
           {getCurrentMorningMessage() ? (
             <Pressable
               onPress={() => setIsMessageDialogOpen(true)}
@@ -204,6 +209,7 @@ const NightlyDayUserRow = ({
               </FontText>
             </Pressable>
           )}
+          <SelectableOverlay cellId={`n-m-${index}`} cellType="morningMessage" />
         </Column>
         {extraDayColumnIndices.map((colIdx, i) => {
           const width = extraDayColumnWidths[i] ?? 112;
@@ -242,6 +248,7 @@ const NightlyDayUserRow = ({
                   column: extraDayColumnTitles[i] ?? `Column ${colIdx + 1}`,
                 }}
               />
+              <SelectableOverlay cellId={`n-e-${index}-${colIdx}`} cellType="nightlyExtra" />
             </Column>
           );
         })}

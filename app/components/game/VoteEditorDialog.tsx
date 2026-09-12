@@ -42,6 +42,8 @@ interface VoteEditorDialogProps {
   users: UserTableItem[];
   /** Scoped key for save history storage. If omitted, save history is disabled. */
   historyKey?: string;
+  /** Label for the submit button. Defaults to "Done". */
+  submitLabel?: string;
 }
 
 export const resolveVoteEmailToName = (vote: VoteValue, users: UserTableItem[]): string => {
@@ -68,6 +70,7 @@ const VoteEditorDialog = ({
   dialogSubtext,
   users,
   historyKey,
+  submitLabel = 'Done',
 }: VoteEditorDialogProps) => {
   const initialVoteText = normalizeVoteTargets(initialVote).join(', ');
   const [draftVote, setDraftVote] = useState(initialVoteText);
@@ -314,7 +317,7 @@ const VoteEditorDialog = ({
                 </AppButton>
                 <DisableableButton
                   isEnabled={doneEnabled}
-                  enabledText="Done"
+                  enabledText={submitLabel}
                   className="w-24 sm:w-32"
                   disabledText="No changes"
                   onPress={handleSubmit}

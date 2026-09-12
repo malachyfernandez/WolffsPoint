@@ -23,6 +23,8 @@ interface RoleEditDialogProps {
   onSetRoleName: (index: number, name: string) => void;
   onSetDoesRoleVote: (index: number, value: boolean) => void;
   onSetHiddenFromRulebook: (index: number, value: boolean) => void;
+  /** Label for the submit button. Defaults to "Save". */
+  submitLabel?: string;
 }
 
 const RoleEditDialog = ({
@@ -33,6 +35,7 @@ const RoleEditDialog = ({
   onSetRoleName,
   onSetDoesRoleVote,
   onSetHiddenFromRulebook,
+  submitLabel = 'Save',
 }: RoleEditDialogProps) => {
   const [roleName, setRoleName] = useState(role.role || '');
   const [doesRoleVote, setDoesRoleVote] = useState(role.doesRoleVote);
@@ -157,13 +160,13 @@ const RoleEditDialog = ({
                   {hasChange && roleName.trim() ? (
                     <AppButton className="h-10 w-48" variant="black" onPress={handleSave} onHoverIn={() => setHint(['enter'])} onHoverOut={() => setHint(null)}>
                       <FontText color="white" weight="medium">
-                        Save
+                        {submitLabel}
                       </FontText>
                     </AppButton>
                   ) : (
                     <StatusButton
                       className="h-10 w-48"
-                      buttonText="Save"
+                      buttonText={submitLabel}
                       buttonAltText="No changes"
                     />
                   )}

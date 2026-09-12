@@ -23,6 +23,8 @@ import {
   getWidthForColumnSize,
   ColumnSizeOption,
 } from './playerTableColumnSizing';
+import TagCellEditor from './TagCellEditor';
+import { useMultiSelect } from './multiSelect/MultiSelectContext';
 
 interface PlayerTableProps {
   gameId: string;
@@ -47,6 +49,10 @@ const PlayerTable = ({
 }: PlayerTableProps) => {
   const { executeCommand } = useUndoRedo();
   const [editingRow, setEditingRow] = useState<'title' | number | null>(null);
+  const { selectionMode, selectedCells, cellType, exitSelectionMode, registerEditHandler } =
+    useMultiSelect();
+  const [isBulkTagEditorOpen, setIsBulkTagEditorOpen] = useState(false);
+  const [bulkTagInitial, setBulkTagInitial] = useState('');
 
   const handleRowEditStart = (rowType: 'title' | number) => {
     setEditingRow(rowType);
@@ -457,6 +463,70 @@ const PlayerTable = ({
     });
   };
 
+  // Compute column cell IDs for column selection
+  const extraColumnCellIds = (userTableTitle?.value?.extraUserColumns ?? []).map((_, colIdx) =>
+    users.map((_, i) => `p-e-${i}-${colIdx}`)
+  );
+
+  const handleBulkEdit = () => {
+    // Only handle player-extra cell types
+    if (cellType !== 'playerExtra') return;
+
+    const firstId = Array.from(selectedCells)[0];
+    if (!firstId) return;
+
+    // Parse cell ID: p-e-${userIndex}-${columnIndex}
+    const parts = firstId.split('-');
+    if (parts.length < 4) return;
+    const userIndex = parseInt(parts[2], 10);
+    const columnIndex = parseInt(parts[3], 10);
+    if (userIndex < 0 || userIndex >= users.length) return;
+
+    const user = users[userIndex];
+    setBulkTagInitial(user.playerData.extraColumns?.[columnIndex] ?? '');
+    setIsBulkTagEditorOpen(true);
+  };
+
+  // Register this table's bulk-edit handler with the shared context
+  useEffect(() => {
+    return registerEditHandler(handleBulkEdit);
+  }, [registerEditHandler, handleBulkEdit]);
+
+  // Apply tag/text value to all selected extra user column cells.
+  // Tag triggers are intentionally suppressed during bulk updates.
+  const handleBulkTagUpdate = (newValue: string) => {
+    const previousUserTable = createUndoSnapshot(usersRef.current);
+    const nextUserTable = createUndoSnapshot(previousUserTable);
+
+    for (const cellId of selectedCells) {
+      const parts = cellId.split('-');
+      if (parts.length < 4 || parts[0] !== 'p' || parts[1] !== 'e') continue;
+      const userIndex = parseInt(parts[2], 10);
+      const columnIndex = parseInt(parts[3], 10);
+      if (userIndex < 0 || userIndex >= nextUserTable.length) continue;
+
+      const user = nextUserTable[userIndex];
+      const extraColumns = [...(user.playerData.extraColumns || [])];
+      extraColumns[columnIndex] = newValue;
+      nextUserTable[userIndex] = {
+        ...user,
+        playerData: { ...user.playerData, extraColumns },
+      };
+    }
+
+    usersRef.current = nextUserTable;
+    executeCommand({
+      action: () => setUserTable(createUndoSnapshot(nextUserTable)),
+      undoAction: () => {
+        usersRef.current = previousUserTable;
+        setUserTable(createUndoSnapshot(previousUserTable));
+      },
+      description: 'Bulk Update Cells',
+    });
+    setIsBulkTagEditorOpen(false);
+    exitSelectionMode();
+  };
+
   return (
     <Column className="gap-0">
       <Row className="gap-0">
@@ -475,6 +545,8 @@ const PlayerTable = ({
             onDeleteExtraUserColumn={UNDOABLEdeleteExtraUserColumn}
             nightlyVisibility={nightlyVisibility?.value?.extraUserColumns}
             onToggleNightlyVisibility={toggleNightlyVisibility}
+            selectionMode={selectionMode}
+            columnCellIds={extraColumnCellIds}
           />
 
           {users.map((user, index) => (
@@ -494,17 +566,29 @@ const PlayerTable = ({
               userColumnTitles={titles.extraUserColumns}
               onTagsAdded={handleTagsAdded}
               onTagsRemoved={handleTagsRemoved}
+              selectionMode={selectionMode}
             />
           ))}
         </Column>
-        <Row className="bg-light -z-10 h-12 w-12 items-center justify-center gap-4">
-          <AppButton variant="filled" className="h-8! w-8" onPress={UNDOABLEaddColumn}>
-            <FontText weight="bold" color="white" className="mt-[-0.1rem] text-xl ">
-              +
-            </FontText>
-          </AppButton>
-        </Row>
+        {!selectionMode && (
+          <Row className="bg-light -z-10 h-12 w-12 items-center justify-center gap-4">
+            <AppButton variant="filled" className="h-8! w-8" onPress={UNDOABLEaddColumn}>
+              <FontText weight="bold" color="white" className="mt-[-0.1rem] text-xl ">
+                +
+              </FontText>
+            </AppButton>
+          </Row>
+        )}
       </Row>
+
+      <TagCellEditor
+        isOpen={isBulkTagEditorOpen}
+        onOpenChange={setIsBulkTagEditorOpen}
+        gameId={gameId}
+        value={bulkTagInitial}
+        onChange={(newValue) => handleBulkTagUpdate(newValue)}
+        submitLabel="Update All"
+      />
     </Column>
   );
 };

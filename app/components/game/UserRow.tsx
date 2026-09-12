@@ -20,6 +20,7 @@ import UserEditDialog from './UserEditDialog';
 import { useList } from 'hooks/useData';
 import { UserTableItem } from 'types/playerTable';
 import { createUndoSnapshot, useUndoRedo } from 'hooks/useUndoRedo';
+import { SelectableOverlay } from './multiSelect/SelectableOverlay';
 
 interface UserRowProps {
   user: {
@@ -53,6 +54,7 @@ interface UserRowProps {
   userColumnTitles?: string[];
   onTagsAdded?: (tagNames: string[], context: CellContext) => void;
   onTagsRemoved?: (tagNames: string[], context: CellContext) => void;
+  selectionMode?: boolean;
 }
 
 const UserRow = ({
@@ -70,6 +72,7 @@ const UserRow = ({
   userColumnTitles,
   onTagsAdded,
   onTagsRemoved,
+  selectionMode = false,
 }: UserRowProps) => {
   const [editingColumns, setEditingColumns] = useState<Record<number, boolean>>({});
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -201,6 +204,7 @@ const UserRow = ({
                   onTagsAdded={onTagsAdded}
                   onTagsRemoved={onTagsRemoved}
                 />
+                <SelectableOverlay cellId={`p-e-${index}-${columnIndex}`} cellType="playerExtra" />
               </Column>
             </Animated.View>
           );

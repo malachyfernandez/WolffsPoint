@@ -5,6 +5,7 @@ import Row from '../layout/Row';
 import AppButton from '../ui/buttons/AppButton';
 import ColumnActionsDialog from './ColumnActionsDialog';
 import { ColumnSizeOption, getInnerTextWidth } from './playerTableColumnSizing';
+import { SelectableColumnOverlay } from './multiSelect/SelectableOverlay';
 
 interface DayTitleRowProps {
   userTableTitle?: {
@@ -36,6 +37,12 @@ interface DayTitleRowProps {
   nightlyVisibility?: boolean[];
   /** Toggle nightly visibility for a column. */
   onToggleNightlyVisibility?: (columnIndex: number) => void;
+  selectionMode?: boolean;
+  columnCellIds?: {
+    vote: string[];
+    action: string[];
+    extra: string[][];
+  };
 }
 
 type ActiveColumnMenu =
@@ -59,6 +66,8 @@ const DayTitleRow = ({
   onDeleteExtraDayColumn,
   nightlyVisibility,
   onToggleNightlyVisibility,
+  selectionMode = false,
+  columnCellIds,
 }: DayTitleRowProps) => {
   const titles = userTableTitle ?? { extraUserColumns: [], extraDayColumns: [] };
   const visibility = userTableColumnVisibility ?? { extraUserColumns: [], extraDayColumns: [] };
@@ -81,39 +90,51 @@ const DayTitleRow = ({
         className={`bg-background border-border h-12 w-min gap-0 rounded-t-lg border-b-2 ${isEditing ? 'z-50' : ''}`}>
         <Row
           className="h-full items-center justify-center gap-0 px-2"
-          style={{ width: dayBaseColumnWidths.vote }}>
+          style={{ width: dayBaseColumnWidths.vote, position: 'relative' }}>
           <FontText
             weight="medium"
             className="text-center"
             style={{ width: getInnerTextWidth(dayBaseColumnWidths.vote) }}>
             Vote
           </FontText>
-          <AppButton
-            variant="grey"
-            className="ml-0 mr-[0.4rem] max-h-6 w-6"
-            onPress={() => setActiveMenu({ type: 'base', column: 'vote' })}>
-            <FontText weight="bold" color="white" className="mt-[-0.1rem] text-lg">
-              ⋯
-            </FontText>
-          </AppButton>
+          {!selectionMode && (
+            <AppButton
+              variant="grey"
+              className="ml-0 mr-[0.4rem] max-h-6 w-6"
+              onPress={() => setActiveMenu({ type: 'base', column: 'vote' })}>
+              <FontText weight="bold" color="white" className="mt-[-0.1rem] text-lg">
+                ⋯
+              </FontText>
+            </AppButton>
+          )}
+          <SelectableColumnOverlay
+            columnCellIds={columnCellIds?.vote ?? []}
+            cellType="daysVote"
+          />
         </Row>
         <Row
           className="h-full items-center justify-center gap-0 px-2"
-          style={{ width: dayBaseColumnWidths.action }}>
+          style={{ width: dayBaseColumnWidths.action, position: 'relative' }}>
           <FontText
             weight="medium"
             className="text-center"
             style={{ width: getInnerTextWidth(dayBaseColumnWidths.action) }}>
             Action
           </FontText>
-          <AppButton
-            variant="grey"
-            className="ml-0 mr-[0.4rem] max-h-6 w-6"
-            onPress={() => setActiveMenu({ type: 'base', column: 'action' })}>
-            <FontText weight="bold" color="white" className="mt-[-0.1rem] text-lg">
-              ⋯
-            </FontText>
-          </AppButton>
+          {!selectionMode && (
+            <AppButton
+              variant="grey"
+              className="ml-0 mr-[0.4rem] max-h-6 w-6"
+              onPress={() => setActiveMenu({ type: 'base', column: 'action' })}>
+              <FontText weight="bold" color="white" className="mt-[-0.1rem] text-lg">
+                ⋯
+              </FontText>
+            </AppButton>
+          )}
+          <SelectableColumnOverlay
+            columnCellIds={columnCellIds?.action ?? []}
+            cellType="daysAction"
+          />
         </Row>
         {titles.extraDayColumns.map((columnTitle, index) => {
           if (!visibility.extraDayColumns[index]) return null;
@@ -125,25 +146,41 @@ const DayTitleRow = ({
             <Row
               key={index}
               className={`h-full items-center justify-center gap-0 px-2 ${editingColumns[index] ? 'z-50' : ''}`}
-              style={{ width: columnWidth }}>
-              <InlineEditableText
-                value={columnTitle}
-                onChange={(newValue) => setColumnTitle?.(index, newValue)}
-                placeholder="UNSET"
-                className="overflow-hidden text-nowrap text-center"
-                style={{ width: textWidth }}
-                weight="medium"
-                onEditStart={() => handleColumnEditStart(index)}
-                onEditEnd={() => handleColumnEditEnd(index)}
-              />
-              <AppButton
-                variant="grey"
-                className="ml-0 mr-[0.4rem] max-h-6 w-6"
-                onPress={() => setActiveMenu({ type: 'extra', index })}>
-                <FontText weight="bold" color="white" className="mt-[-0.1rem] text-lg">
-                  ⋯
+              style={{ width: columnWidth, position: 'relative' }}>
+              {!selectionMode && (
+                <InlineEditableText
+                  value={columnTitle}
+                  onChange={(newValue) => setColumnTitle?.(index, newValue)}
+                  placeholder="UNSET"
+                  className="overflow-hidden text-nowrap text-center"
+                  style={{ width: textWidth }}
+                  weight="medium"
+                  onEditStart={() => handleColumnEditStart(index)}
+                  onEditEnd={() => handleColumnEditEnd(index)}
+                />
+              )}
+              {!selectionMode && (
+                <AppButton
+                  variant="grey"
+                  className="ml-0 mr-[0.4rem] max-h-6 w-6"
+                  onPress={() => setActiveMenu({ type: 'extra', index })}>
+                  <FontText weight="bold" color="white" className="mt-[-0.1rem] text-lg">
+                    ⋯
+                  </FontText>
+                </AppButton>
+              )}
+              {selectionMode && (
+                <FontText
+                  weight="medium"
+                  className="text-center"
+                  style={{ width: textWidth }}>
+                  {columnTitle}
                 </FontText>
-              </AppButton>
+              )}
+              <SelectableColumnOverlay
+                columnCellIds={columnCellIds?.extra[index] ?? []}
+                cellType="daysExtra"
+              />
             </Row>
           );
         })}

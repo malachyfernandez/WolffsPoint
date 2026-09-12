@@ -24,6 +24,11 @@ import {
 import { getTargetDayCount, normalizePlayerPageState } from './playerTableNormalization';
 import { useTagTriggers, type CellContext } from '../../../hooks/useTagTriggers';
 import { VoteValue } from '../../../types/multiplayer';
+import { getPlayerActionSummary } from '../../../utils/multiplayer';
+import ActionEditorDialog from './ActionEditorDialog';
+import VoteEditorDialog from './VoteEditorDialog';
+import TagCellEditor from './TagCellEditor';
+import { useMultiSelect } from './multiSelect/MultiSelectContext';
 
 interface DaysTableProps {
   gameId: string;
@@ -36,6 +41,22 @@ interface DaysTableProps {
   onWidthChange?: (width: number) => void;
   onColumnsReady?: (ready: boolean) => void;
 }
+
+/** Parse a days-table cell ID into its components. */
+const parseDaysCellId = (cellId: string): {
+  type: string;
+  userIndex: number;
+  columnIndex?: number;
+} => {
+  if (cellId.startsWith('d-v-')) return { type: 'daysVote', userIndex: parseInt(cellId.slice(4), 10) };
+  if (cellId.startsWith('d-a-')) return { type: 'daysAction', userIndex: parseInt(cellId.slice(4), 10) };
+  if (cellId.startsWith('d-e-')) {
+    const rest = cellId.slice(4);
+    const parts = rest.split('-');
+    return { type: 'daysExtra', userIndex: parseInt(parts[0], 10), columnIndex: parseInt(parts[1], 10) };
+  }
+  return { type: '', userIndex: -1 };
+};
 
 const DaysTable = ({
   gameId,
@@ -51,6 +72,17 @@ const DaysTable = ({
   const { executeCommand } = useUndoRedo();
   const [editingRow, setEditingRow] = useState<'title' | number | null>(null);
   const tableRef = useRef<any>(null);
+  const { selectionMode, selectedCells, cellType, exitSelectionMode, registerEditHandler } =
+    useMultiSelect();
+
+  // Bulk editor state
+  const [isBulkVoteEditorOpen, setIsBulkVoteEditorOpen] = useState(false);
+  const [bulkVoteInitial, setBulkVoteInitial] = useState<VoteValue>('');
+  const [bulkVoteMultiplier, setBulkVoteMultiplier] = useState(1);
+  const [isBulkActionEditorOpen, setIsBulkActionEditorOpen] = useState(false);
+  const [bulkActionInitial, setBulkActionInitial] = useState('');
+  const [isBulkTagEditorOpen, setIsBulkTagEditorOpen] = useState(false);
+  const [bulkTagInitial, setBulkTagInitial] = useState('');
 
   const handleRowEditStart = (rowType: 'title' | number) => {
     setEditingRow(rowType);
@@ -558,6 +590,146 @@ const DaysTable = ({
     return getWidthForColumnSize(112, columnSizes.value.dayExtraColumns[index]);
   });
 
+  // Compute column cell IDs for column selection
+  const voteColumnCellIds = users.map((_, i) => `d-v-${i}`);
+  const actionColumnCellIds = users.map((_, i) => `d-a-${i}`);
+  const extraColumnCellIds = (userTableTitle?.value?.extraDayColumns ?? []).map((_, colIdx) =>
+    users.map((_, i) => `d-e-${i}-${colIdx}`)
+  );
+
+  // Open the appropriate bulk editor based on the selected cell type
+  const handleBulkEdit = () => {
+    // Only handle days-table cell types
+    if (cellType !== 'daysVote' && cellType !== 'daysAction' && cellType !== 'daysExtra') return;
+
+    const firstId = Array.from(selectedCells)[0];
+    if (!firstId) return;
+
+    const parsed = parseDaysCellId(firstId);
+    if (parsed.userIndex < 0 || parsed.userIndex >= users.length) return;
+
+    const user = users[parsed.userIndex];
+    const dayData = user.days[dayNumber] || { vote: '', action: '', extraColumns: [] };
+
+    if (cellType === 'daysVote') {
+      setBulkVoteInitial(dayData.vote || '');
+      setBulkVoteMultiplier(dayData.voteMultiplier ?? 1);
+      setIsBulkVoteEditorOpen(true);
+    } else if (cellType === 'daysAction') {
+      setBulkActionInitial(getPlayerActionSummary(dayData.action));
+      setIsBulkActionEditorOpen(true);
+    } else if (cellType === 'daysExtra') {
+      setBulkTagInitial(dayData.extraColumns?.[parsed.columnIndex ?? 0] ?? '');
+      setIsBulkTagEditorOpen(true);
+    }
+  };
+
+  // Register this table's bulk-edit handler with the shared context
+  useEffect(() => {
+    return registerEditHandler(handleBulkEdit);
+  }, [registerEditHandler, handleBulkEdit]);
+
+  // Apply vote + multiplier to all selected vote cells in a single undoable command
+  const handleBulkVoteUpdate = (vote: VoteValue, multiplier: number) => {
+    const previousUserTable = createUndoSnapshot(userTable?.value ?? []);
+    const nextUserTable = createUndoSnapshot(
+      getNormalizedState({ users: previousUserTable }).users
+    );
+
+    for (const cellId of selectedCells) {
+      const parsed = parseDaysCellId(cellId);
+      if (parsed.type !== 'daysVote') continue;
+      const userIndex = parsed.userIndex;
+      if (userIndex < 0 || userIndex >= nextUserTable.length) continue;
+
+      const user = nextUserTable[userIndex];
+      const days = [...user.days];
+      while (days.length <= dayNumber) {
+        days.push({ vote: '', action: '', extraColumns: [] });
+      }
+      days[dayNumber] = { ...days[dayNumber], vote, voteMultiplier: multiplier };
+      nextUserTable[userIndex] = { ...user, days };
+    }
+
+    executeCommand({
+      action: () => setUserTable(createUndoSnapshot(nextUserTable)),
+      undoAction: () => setUserTable(createUndoSnapshot(previousUserTable)),
+      description: 'Bulk Update Votes',
+    });
+    setIsBulkVoteEditorOpen(false);
+    exitSelectionMode();
+  };
+
+  // Apply action to all selected action cells in a single undoable command
+  const handleBulkActionUpdate = (action: string) => {
+    const previousUserTable = createUndoSnapshot(userTable?.value ?? []);
+    const nextUserTable = createUndoSnapshot(
+      getNormalizedState({ users: previousUserTable }).users
+    );
+
+    for (const cellId of selectedCells) {
+      const parsed = parseDaysCellId(cellId);
+      if (parsed.type !== 'daysAction') continue;
+      const userIndex = parsed.userIndex;
+      if (userIndex < 0 || userIndex >= nextUserTable.length) continue;
+
+      const user = nextUserTable[userIndex];
+      const days = [...user.days];
+      while (days.length <= dayNumber) {
+        days.push({ vote: '', action: '', extraColumns: [] });
+      }
+      days[dayNumber] = { ...days[dayNumber], action };
+      nextUserTable[userIndex] = { ...user, days };
+    }
+
+    executeCommand({
+      action: () => setUserTable(createUndoSnapshot(nextUserTable)),
+      undoAction: () => setUserTable(createUndoSnapshot(previousUserTable)),
+      description: 'Bulk Update Actions',
+    });
+    setIsBulkActionEditorOpen(false);
+    exitSelectionMode();
+  };
+
+  // Apply tag/text value to all selected extra cells in a single undoable command.
+  // NOTE: Tag triggers are intentionally suppressed during bulk updates to avoid
+  // cascading trigger side effects across many cells at once.
+  const handleBulkTagUpdate = (newValue: string) => {
+    const previousUserTable = createUndoSnapshot(usersRef.current);
+    const nextUserTable = createUndoSnapshot(
+      getNormalizedState({ users: previousUserTable }).users
+    );
+
+    for (const cellId of selectedCells) {
+      const parsed = parseDaysCellId(cellId);
+      if (parsed.type !== 'daysExtra' || parsed.columnIndex === undefined) continue;
+      const userIndex = parsed.userIndex;
+      if (userIndex < 0 || userIndex >= nextUserTable.length) continue;
+
+      const user = nextUserTable[userIndex];
+      const days = [...user.days];
+      while (days.length <= dayNumber) {
+        days.push({ vote: '', action: '', extraColumns: [] });
+      }
+      const extraColumns = [...(days[dayNumber].extraColumns || [])];
+      extraColumns[parsed.columnIndex] = newValue;
+      days[dayNumber] = { ...days[dayNumber], extraColumns };
+      nextUserTable[userIndex] = { ...user, days };
+    }
+
+    usersRef.current = nextUserTable;
+    executeCommand({
+      action: () => setUserTable(createUndoSnapshot(nextUserTable)),
+      undoAction: () => {
+        usersRef.current = previousUserTable;
+        setUserTable(createUndoSnapshot(previousUserTable));
+      },
+      description: 'Bulk Update Cells',
+    });
+    setIsBulkTagEditorOpen(false);
+    exitSelectionMode();
+  };
+
   return (
     <>
       <Column onLayout={onLayout} ref={tableRef} className="gap-0">
@@ -579,6 +751,12 @@ const DaysTable = ({
               onDeleteExtraDayColumn={UNDOABLEdeleteDayColumn}
               nightlyVisibility={nightlyVisibility?.value?.extraDayColumns}
               onToggleNightlyVisibility={toggleNightlyVisibility}
+              selectionMode={selectionMode}
+              columnCellIds={{
+                vote: voteColumnCellIds,
+                action: actionColumnCellIds,
+                extra: extraColumnCellIds,
+              }}
             />
 
             {users.map((user, index) => (
@@ -602,18 +780,51 @@ const DaysTable = ({
                 dayColumnTitles={titles.extraDayColumns}
                 onTagsAdded={handleTagsAdded}
                 onTagsRemoved={handleTagsRemoved}
+                selectionMode={selectionMode}
               />
             ))}
           </Column>
-          <Row className="bg-light -z-10 h-12 w-12 items-center justify-center gap-4">
-            <AppButton variant="filled" className="h-8! w-8" onPress={UNDOABLEaddDayColumn}>
-              <FontText weight="bold" color="white" className="mt-[-0.1rem] text-xl">
-                +
-              </FontText>
-            </AppButton>
-          </Row>
+          {!selectionMode && (
+            <Row className="bg-light -z-10 h-12 w-12 items-center justify-center gap-4">
+              <AppButton variant="filled" className="h-8! w-8" onPress={UNDOABLEaddDayColumn}>
+                <FontText weight="bold" color="white" className="mt-[-0.1rem] text-xl">
+                  +
+                </FontText>
+              </AppButton>
+            </Row>
+          )}
         </Row>
       </Column>
+
+      {/* Bulk editor dialogs */}
+      <VoteEditorDialog
+        isOpen={isBulkVoteEditorOpen}
+        onOpenChange={setIsBulkVoteEditorOpen}
+        title="Bulk Update Votes"
+        initialVote={bulkVoteInitial}
+        initialVoteMultiplier={bulkVoteMultiplier}
+        onSubmit={(vote, multiplier) => handleBulkVoteUpdate(vote, multiplier)}
+        dialogSubtext="Update all selected vote cells."
+        users={users}
+        submitLabel="Update All"
+      />
+      <ActionEditorDialog
+        isOpen={isBulkActionEditorOpen}
+        onOpenChange={setIsBulkActionEditorOpen}
+        title="Bulk Update Actions"
+        initialAction={bulkActionInitial}
+        onSubmit={(action) => handleBulkActionUpdate(action)}
+        dialogSubtext="Update all selected action cells."
+        submitLabel="Update All"
+      />
+      <TagCellEditor
+        isOpen={isBulkTagEditorOpen}
+        onOpenChange={setIsBulkTagEditorOpen}
+        gameId={gameId}
+        value={bulkTagInitial}
+        onChange={(newValue) => handleBulkTagUpdate(newValue)}
+        submitLabel="Update All"
+      />
     </>
   );
 };

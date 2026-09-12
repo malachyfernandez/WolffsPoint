@@ -28,6 +28,8 @@ interface ActionEditorDialogProps {
   dialogSubtext?: string;
   /** Scoped key for save history storage. If omitted, save history is disabled. */
   historyKey?: string;
+  /** Label for the submit button. Defaults to "Done". */
+  submitLabel?: string;
 }
 
 const ActionEditorDialog = ({
@@ -38,6 +40,7 @@ const ActionEditorDialog = ({
   onSubmit,
   dialogSubtext,
   historyKey,
+  submitLabel = 'Done',
 }: ActionEditorDialogProps) => {
   const { history, addSave, clearHistory, maxSaves } = useSaveHistory(historyKey ?? null);
   const { setHint } = useKeyboardShortcutHint();
@@ -191,7 +194,7 @@ const ActionEditorDialog = ({
                 </AppButton>
                 <DisableableButton
                   isEnabled={doneEnabled}
-                  enabledText="Done"
+                  enabledText={submitLabel}
                   disabledText="No changes"
                   onPress={handleSubmit}
                   enabledVariant="filled"

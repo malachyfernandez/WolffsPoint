@@ -6,6 +6,7 @@ import Row from '../layout/Row';
 import AppButton from '../ui/buttons/AppButton';
 import ColumnActionsDialog from './ColumnActionsDialog';
 import { ColumnSizeOption, getInnerTextWidth } from './playerTableColumnSizing';
+import { SelectableColumnOverlay } from './multiSelect/SelectableOverlay';
 
 interface TitleRowProps {
   userTableTitle?: {
@@ -29,6 +30,8 @@ interface TitleRowProps {
   nightlyVisibility?: boolean[];
   /** Toggle nightly visibility for a column. */
   onToggleNightlyVisibility?: (columnIndex: number) => void;
+  selectionMode?: boolean;
+  columnCellIds?: string[][];
 }
 
 const TitleRow = ({
@@ -45,6 +48,8 @@ const TitleRow = ({
   onDeleteExtraUserColumn,
   nightlyVisibility,
   onToggleNightlyVisibility,
+  selectionMode = false,
+  columnCellIds,
 }: TitleRowProps) => {
   const titles = userTableTitle ?? { extraUserColumns: [], extraDayColumns: [] };
   const visibility = userTableColumnVisibility ?? { extraUserColumns: [], extraDayColumns: [] };
@@ -85,25 +90,41 @@ const TitleRow = ({
             <Row
               key={index}
               className={`h-full items-center justify-center gap-0 px-2 ${editingColumns[index] ? 'z-50' : ''}`}
-              style={{ width: columnWidth }}>
-              <InlineEditableText
-                value={columnTitle}
-                onChange={(newValue) => setColumnTitle?.(index, newValue)}
-                placeholder="UNSET"
-                className="overflow-hidden text-nowrap text-center"
-                style={{ width: textWidth }}
-                weight="medium"
-                onEditStart={() => handleColumnEditStart(index)}
-                onEditEnd={() => handleColumnEditEnd(index)}
-              />
-              <AppButton
-                variant="grey"
-                className="ml-0 mr-[0.4rem] max-h-6 w-6"
-                onPress={() => setActiveMenu(index)}>
-                <FontText weight="bold" color="white" className="mt-[-0.1rem] text-lg">
-                  ⋯
+              style={{ width: columnWidth, position: 'relative' }}>
+              {!selectionMode && (
+                <InlineEditableText
+                  value={columnTitle}
+                  onChange={(newValue) => setColumnTitle?.(index, newValue)}
+                  placeholder="UNSET"
+                  className="overflow-hidden text-nowrap text-center"
+                  style={{ width: textWidth }}
+                  weight="medium"
+                  onEditStart={() => handleColumnEditStart(index)}
+                  onEditEnd={() => handleColumnEditEnd(index)}
+                />
+              )}
+              {!selectionMode && (
+                <AppButton
+                  variant="grey"
+                  className="ml-0 mr-[0.4rem] max-h-6 w-6"
+                  onPress={() => setActiveMenu(index)}>
+                  <FontText weight="bold" color="white" className="mt-[-0.1rem] text-lg">
+                    ⋯
+                  </FontText>
+                </AppButton>
+              )}
+              {selectionMode && (
+                <FontText
+                  weight="medium"
+                  className="text-center"
+                  style={{ width: textWidth }}>
+                  {columnTitle}
                 </FontText>
-              </AppButton>
+              )}
+              <SelectableColumnOverlay
+                columnCellIds={columnCellIds?.[index] ?? []}
+                cellType="playerExtra"
+              />
             </Row>
           );
         })}

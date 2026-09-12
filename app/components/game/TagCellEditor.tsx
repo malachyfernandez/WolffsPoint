@@ -54,6 +54,8 @@ interface TagCellEditorProps {
   onTagsRemoved?: (tagNames: string[], context: CellContext) => void;
   /** Scoped key for save history storage. If omitted, save history is disabled. */
   historyKey?: string;
+  /** Label for the submit button. Defaults to "Done". */
+  submitLabel?: string;
 }
 
 const TagCellEditor = ({
@@ -66,6 +68,7 @@ const TagCellEditor = ({
   onTagsAdded,
   onTagsRemoved,
   historyKey,
+  submitLabel = 'Done',
 }: TagCellEditorProps) => {
   const { history, addSave, clearHistory, maxSaves } = useSaveHistory(historyKey ?? null);
   const { setHint } = useKeyboardShortcutHint();
@@ -390,7 +393,7 @@ const TagCellEditor = ({
                       disabled={!doneEnabled}
                     >
                       <FontText color="white" weight="medium" className="text-sm">
-                        Done
+                        {submitLabel}
                       </FontText>
                     </AppButton>
                   </Row>

@@ -6,8 +6,11 @@ import Column from '../layout/Column';
 import Row from '../layout/Row';
 import RoleRow from './RoleRow';
 import MarkdownEditorDialog from './MarkdownEditorDialog';
+import RoleEditDialog from './RoleEditDialog';
 import { createUndoSnapshot, useUndoRedo } from 'hooks/useUndoRedo';
 import { DEFAULT_VOTE_MESSAGE, RoleTableItem } from 'types/roleTable';
+import { useMultiSelect } from './multiSelect/MultiSelectContext';
+import { SelectableColumnOverlay } from './multiSelect/SelectableOverlay';
 
 interface RoleTableProps {
   gameId: string;
@@ -31,6 +34,18 @@ const RoleTable = ({
   const { executeCommand } = useUndoRedo();
   const [editingRow, setEditingRow] = useState<number | null>(null);
   const [isDefaultVoteMessageOpen, setIsDefaultVoteMessageOpen] = useState(false);
+  const { selectionMode, selectedCells, cellType, exitSelectionMode, registerEditHandler } =
+    useMultiSelect();
+
+  // Bulk editor state
+  const [isBulkRoleEditOpen, setIsBulkRoleEditOpen] = useState(false);
+  const [bulkRoleName, setBulkRoleName] = useState('');
+  const [isBulkRoleMessageOpen, setIsBulkRoleMessageOpen] = useState(false);
+  const [bulkRoleMessage, setBulkRoleMessage] = useState('');
+  const [isBulkVoteMessageOpen, setIsBulkVoteMessageOpen] = useState(false);
+  const [bulkVoteMessage, setBulkVoteMessage] = useState('');
+  const [isBulkAboutRoleOpen, setIsBulkAboutRoleOpen] = useState(false);
+  const [bulkAboutRole, setBulkAboutRole] = useState('');
 
   const handleRowEditStart = (rowIndex: number) => {
     setEditingRow(rowIndex);
@@ -181,6 +196,129 @@ const RoleTable = ({
     });
   };
 
+  // Compute column cell IDs for column selection (using actual indices)
+  const roleNameColumnIds = visibleRoles.map((role) => `r-name-${roles.indexOf(role)}`);
+  const roleMsgColumnIds = visibleRoles.map((role) => `r-msg-${roles.indexOf(role)}`);
+  const voteMsgColumnIds = visibleRoles.map((role) => `r-vote-${roles.indexOf(role)}`);
+  const aboutRoleColumnIds = visibleRoles.map((role) => `r-about-${roles.indexOf(role)}`);
+
+  const handleBulkEdit = () => {
+    // Only handle role-table cell types
+    if (
+      cellType !== 'roleName' &&
+      cellType !== 'roleMessage' &&
+      cellType !== 'voteMessage' &&
+      cellType !== 'aboutRole'
+    )
+      return;
+
+    const firstId = Array.from(selectedCells)[0];
+    if (!firstId) return;
+
+    const parts = firstId.split('-');
+    const roleIndex = parseInt(parts[2], 10);
+    if (roleIndex < 0 || roleIndex >= roles.length) return;
+    const role = roles[roleIndex];
+
+    if (cellType === 'roleName') {
+      setBulkRoleName(role.role || '');
+      setIsBulkRoleEditOpen(true);
+    } else if (cellType === 'roleMessage') {
+      setBulkRoleMessage(role.roleMessage ?? '');
+      setIsBulkRoleMessageOpen(true);
+    } else if (cellType === 'voteMessage') {
+      setBulkVoteMessage(role.voteMessage ?? defaultVoteMessage?.value ?? DEFAULT_VOTE_MESSAGE);
+      setIsBulkVoteMessageOpen(true);
+    } else if (cellType === 'aboutRole') {
+      setBulkAboutRole(role.aboutRole ?? '');
+      setIsBulkAboutRoleOpen(true);
+    }
+  };
+
+  // Register this table's bulk-edit handler with the shared context
+  useEffect(() => {
+    return registerEditHandler(handleBulkEdit);
+  }, [registerEditHandler, handleBulkEdit]);
+
+  const handleBulkRoleNameUpdate = (name: string) => {
+    const previousRoleTable = createUndoSnapshot(roleTable?.value ?? []);
+    const nextRoleTable = createUndoSnapshot(previousRoleTable);
+    for (const cellId of selectedCells) {
+      const parts = cellId.split('-');
+      if (parts[0] !== 'r' || parts[1] !== 'name') continue;
+      const roleIndex = parseInt(parts[2], 10);
+      if (roleIndex < 0 || roleIndex >= nextRoleTable.length) continue;
+      nextRoleTable[roleIndex] = { ...nextRoleTable[roleIndex], role: name };
+    }
+    executeCommand({
+      action: () => setRoleTable(createUndoSnapshot(nextRoleTable)),
+      undoAction: () => setRoleTable(createUndoSnapshot(previousRoleTable)),
+      description: 'Bulk Update Role Names',
+    });
+    setIsBulkRoleEditOpen(false);
+    exitSelectionMode();
+  };
+
+  const handleBulkRoleMessageUpdate = ({ markdown }: { markdown: string }) => {
+    const previousRoleTable = createUndoSnapshot(roleTable?.value ?? []);
+    const nextRoleTable = createUndoSnapshot(previousRoleTable);
+    for (const cellId of selectedCells) {
+      const parts = cellId.split('-');
+      if (parts[0] !== 'r' || parts[1] !== 'msg') continue;
+      const roleIndex = parseInt(parts[2], 10);
+      if (roleIndex < 0 || roleIndex >= nextRoleTable.length) continue;
+      nextRoleTable[roleIndex] = { ...nextRoleTable[roleIndex], roleMessage: markdown };
+    }
+    executeCommand({
+      action: () => setRoleTable(createUndoSnapshot(nextRoleTable)),
+      undoAction: () => setRoleTable(createUndoSnapshot(previousRoleTable)),
+      description: 'Bulk Update Role Messages',
+    });
+    setIsBulkRoleMessageOpen(false);
+    exitSelectionMode();
+  };
+
+  const handleBulkVoteMessageUpdate = ({ markdown }: { markdown: string }) => {
+    const previousRoleTable = createUndoSnapshot(roleTable?.value ?? []);
+    const nextRoleTable = createUndoSnapshot(previousRoleTable);
+    for (const cellId of selectedCells) {
+      const parts = cellId.split('-');
+      if (parts[0] !== 'r' || parts[1] !== 'vote') continue;
+      const roleIndex = parseInt(parts[2], 10);
+      if (roleIndex < 0 || roleIndex >= nextRoleTable.length) continue;
+      nextRoleTable[roleIndex] = {
+        ...nextRoleTable[roleIndex],
+        voteMessage: markdown.trim() ? markdown : undefined,
+      };
+    }
+    executeCommand({
+      action: () => setRoleTable(createUndoSnapshot(nextRoleTable)),
+      undoAction: () => setRoleTable(createUndoSnapshot(previousRoleTable)),
+      description: 'Bulk Update Vote Messages',
+    });
+    setIsBulkVoteMessageOpen(false);
+    exitSelectionMode();
+  };
+
+  const handleBulkAboutRoleUpdate = ({ markdown }: { markdown: string }) => {
+    const previousRoleTable = createUndoSnapshot(roleTable?.value ?? []);
+    const nextRoleTable = createUndoSnapshot(previousRoleTable);
+    for (const cellId of selectedCells) {
+      const parts = cellId.split('-');
+      if (parts[0] !== 'r' || parts[1] !== 'about') continue;
+      const roleIndex = parseInt(parts[2], 10);
+      if (roleIndex < 0 || roleIndex >= nextRoleTable.length) continue;
+      nextRoleTable[roleIndex] = { ...nextRoleTable[roleIndex], aboutRole: markdown };
+    }
+    executeCommand({
+      action: () => setRoleTable(createUndoSnapshot(nextRoleTable)),
+      undoAction: () => setRoleTable(createUndoSnapshot(previousRoleTable)),
+      description: 'Bulk Update About Role',
+    });
+    setIsBulkAboutRoleOpen(false);
+    exitSelectionMode();
+  };
+
   return (
     <>
       <Column className="gap-0">
@@ -188,32 +326,43 @@ const RoleTable = ({
           <Column className={`border-border w-min gap-0 rounded border-2 ${className || ''}`}>
             {/* Title Row */}
             <Row className={`bg-background border-border h-12 w-min gap-0 rounded-t-lg border-b-2`}>
-              <Column className="h-full w-32 items-center justify-center gap-4">
+              <Column className="h-full w-32 items-center justify-center gap-4" style={{ position: 'relative' }}>
                 <FontText weight="medium" className="text-center">
                   Role
                 </FontText>
+                <SelectableColumnOverlay columnCellIds={roleNameColumnIds} cellType="roleName" />
               </Column>
-              <Column className="h-full w-64 items-center justify-center gap-4">
+              <Column className="h-full w-64 items-center justify-center gap-4" style={{ position: 'relative' }}>
                 <FontText weight="medium" className="text-center">
                   Role Message
                 </FontText>
+                <SelectableColumnOverlay columnCellIds={roleMsgColumnIds} cellType="roleMessage" />
               </Column>
-              <Column className="h-full w-64 items-center justify-center gap-4">
-                <Pressable
-                  onPress={() => setIsDefaultVoteMessageOpen(true)}
-                  className="h-full w-full items-center justify-center">
-                  <FontText
-                    weight="medium"
-                    className="text-center"
-                    style={{ textDecorationLine: 'underline', textDecorationStyle: 'dotted' }}>
+              <Column className="h-full w-64 items-center justify-center gap-4" style={{ position: 'relative' }}>
+                {!selectionMode && (
+                  <Pressable
+                    onPress={() => setIsDefaultVoteMessageOpen(true)}
+                    className="h-full w-full items-center justify-center">
+                    <FontText
+                      weight="medium"
+                      className="text-center"
+                      style={{ textDecorationLine: 'underline', textDecorationStyle: 'dotted' }}>
+                      Vote Message
+                    </FontText>
+                  </Pressable>
+                )}
+                {selectionMode && (
+                  <FontText weight="medium" className="text-center">
                     Vote Message
                   </FontText>
-                </Pressable>
+                )}
+                <SelectableColumnOverlay columnCellIds={voteMsgColumnIds} cellType="voteMessage" />
               </Column>
-              <Column className="h-full w-64 items-center justify-center gap-4">
+              <Column className="h-full w-64 items-center justify-center gap-4" style={{ position: 'relative' }}>
                 <FontText weight="medium" className="text-center">
                   About Role
                 </FontText>
+                <SelectableColumnOverlay columnCellIds={aboutRoleColumnIds} cellType="aboutRole" />
               </Column>
             </Row>
 
@@ -239,6 +388,7 @@ const RoleTable = ({
                   onEditEnd={handleRowEditEnd}
                   isEditing={editingRow === actualIndex}
                   showInputs={showInputs}
+                  selectionMode={selectionMode}
                 />
               );
             })}
@@ -257,6 +407,54 @@ const RoleTable = ({
         hideInputs={false}
         allowVoteInput
         historyKey={`defaultVoteMessage:${gameId}`}
+      />
+
+      {/* Bulk editor dialogs */}
+      <RoleEditDialog
+        isOpen={isBulkRoleEditOpen}
+        onOpenChange={setIsBulkRoleEditOpen}
+        roleIndex={-1}
+        role={{ role: bulkRoleName, doesRoleVote: true, hiddenFromRulebook: false } as RoleTableItem}
+        onSetRoleName={(_, name) => handleBulkRoleNameUpdate(name)}
+        onSetDoesRoleVote={() => {}}
+        onSetHiddenFromRulebook={() => {}}
+        submitLabel="Update All"
+      />
+      <MarkdownEditorDialog
+        isOpen={isBulkRoleMessageOpen}
+        onOpenChange={setIsBulkRoleMessageOpen}
+        title="Bulk Update Role Messages"
+        initialMarkdown={bulkRoleMessage}
+        onSubmit={handleBulkRoleMessageUpdate}
+        gameId={gameId}
+        showInputs={showInputs}
+        showScript
+        hideInputs={false}
+        submitLabel="Update All"
+      />
+      <MarkdownEditorDialog
+        isOpen={isBulkVoteMessageOpen}
+        onOpenChange={setIsBulkVoteMessageOpen}
+        title="Bulk Update Vote Messages"
+        initialMarkdown={bulkVoteMessage}
+        onSubmit={handleBulkVoteMessageUpdate}
+        gameId={gameId}
+        showInputs={showInputs}
+        showScript
+        hideInputs={false}
+        allowVoteInput
+        submitLabel="Update All"
+      />
+      <MarkdownEditorDialog
+        isOpen={isBulkAboutRoleOpen}
+        onOpenChange={setIsBulkAboutRoleOpen}
+        title="Bulk Update About Role"
+        initialMarkdown={bulkAboutRole}
+        onSubmit={handleBulkAboutRoleUpdate}
+        gameId={gameId}
+        showScript
+        centered={true}
+        submitLabel="Update All"
       />
     </>
   );

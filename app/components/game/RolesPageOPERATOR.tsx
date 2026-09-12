@@ -12,6 +12,8 @@ import { useUndoRedo, useCreateUndoSnapshot } from '../../../hooks/useUndoRedo';
 import { RoleTableItem } from '../../../types/roleTable';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { Plus } from 'lucide-react-native';
+import { MultiSelectProvider } from './multiSelect/MultiSelectContext';
+import MultiSelectToolbar from './multiSelect/MultiSelectToolbar';
 
 interface RolesPageOPERATORProps {
   currentUserId: string;
@@ -19,6 +21,14 @@ interface RolesPageOPERATORProps {
 }
 
 const RolesPageOPERATOR = ({ currentUserId, gameId }: RolesPageOPERATORProps) => {
+  return (
+    <MultiSelectProvider>
+      <RolesPageContent currentUserId={currentUserId} gameId={gameId} />
+    </MultiSelectProvider>
+  );
+};
+
+const RolesPageContent = ({ currentUserId, gameId }: RolesPageOPERATORProps) => {
   const { executeCommand } = useUndoRedo();
   const createUndoSnapshot = useCreateUndoSnapshot();
 
@@ -68,6 +78,7 @@ const RolesPageOPERATOR = ({ currentUserId, gameId }: RolesPageOPERATORProps) =>
   return (
     <Animated.View entering={FadeIn.duration(300)} className="min-h-190">
       <Column className="gap-4 py-3 sm:px-4">
+        <MultiSelectToolbar />
         {visibleRoles.length > 0 ? (
           <Column className="gap-4">
             <ShadowScrollView

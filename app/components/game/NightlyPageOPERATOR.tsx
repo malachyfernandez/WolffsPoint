@@ -13,6 +13,8 @@ import Row from '../layout/Row';
 import ShadowScrollView from '../ui/ShadowScrollView';
 import { View, useWindowDimensions } from 'react-native';
 import ComprehensiveDaySelector from '../ui/daySelector/ComprehensiveDaySelector';
+import { MultiSelectProvider, useMultiSelect } from './multiSelect/MultiSelectContext';
+import MultiSelectToolbar from './multiSelect/MultiSelectToolbar';
 import NightlyCertificationDialog from './NightlyCertificationDialog';
 import {
   getGameScopedKey,
@@ -31,10 +33,19 @@ interface NightlyPageOPERATORProps {
   gameId: string;
 }
 
-const NightlyPageOPERATOR = ({
+const NightlyPageOPERATOR = (props: NightlyPageOPERATORProps) => {
+  return (
+    <MultiSelectProvider>
+      <NightlyPageContent {...props} />
+    </MultiSelectProvider>
+  );
+};
+
+const NightlyPageContent = ({
   currentUserId: _currentUserId,
   gameId,
 }: NightlyPageOPERATORProps) => {
+  const { selectionMode } = useMultiSelect();
   const [isCertificationDialogOpen, setIsCertificationDialogOpen] = useState(false);
   const { width } = useWindowDimensions();
 
@@ -182,6 +193,34 @@ const NightlyPageOPERATOR = ({
     setMorningMessagesList(updatedMessages);
   };
 
+  // Bulk-update morning messages in a single state write (avoids stale-state
+  // overwrite when calling updateMorningMessage in a loop).
+  const bulkUpdateMorningMessages = (
+    dayIndex: number,
+    userIndices: number[],
+    value: string
+  ) => {
+    const currentMessages = morningMessagesList.value || {};
+    const updatedMessages = { ...currentMessages };
+
+    for (const userIndex of userIndices) {
+      const user = users[userIndex];
+      if (!user) continue;
+
+      if (!updatedMessages[user.email.toLowerCase()]) {
+        updatedMessages[user.email.toLowerCase()] = new Array(
+          fixedDayDatesArray.length
+        ).fill('');
+      }
+
+      const userMessages = [...updatedMessages[user.email.toLowerCase()]];
+      userMessages[dayIndex] = value;
+      updatedMessages[user.email.toLowerCase()] = userMessages;
+    }
+
+    setMorningMessagesList(updatedMessages);
+  };
+
   // Update player living state (same as players tab)
   const updatePlayerLivingState = (userIndex: number, livingState: 'alive' | 'dead') => {
     const updatedUsers = [...users];
@@ -323,6 +362,8 @@ const NightlyPageOPERATOR = ({
                 </Column>
               )}
 
+              <MultiSelectToolbar />
+
               <ShadowScrollView
                 direction="horizontal"
                 className="mr-1 pt-1"
@@ -345,7 +386,7 @@ const NightlyPageOPERATOR = ({
                     </Row>
                   </Column>
                   <Column className="gap-0">
-                    <View style={{ width: daysTableWidth }}>
+                    <View style={{ width: daysTableWidth, opacity: selectionMode ? 0.4 : 1 }} pointerEvents={selectionMode ? 'none' : 'auto'}>
                       <ComprehensiveDaySelector
                         gameId={gameId}
                         showAddButton={true}
@@ -368,6 +409,7 @@ const NightlyPageOPERATOR = ({
                         }}
                         morningMessagesList={morningMessagesList.value || {}}
                         updateMorningMessage={updateMorningMessage}
+                        bulkUpdateMorningMessages={bulkUpdateMorningMessages}
                         onColumnsReady={setIsDaysTableColumnsReady}
                       />
                     </Row>

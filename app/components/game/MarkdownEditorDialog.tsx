@@ -89,6 +89,8 @@ interface MarkdownEditorDialogProps {
   historyKey?: string;
   /** When true, the editor is non-editable (view-only): no editing, no save pill, no Done button, just Close. */
   readOnly?: boolean;
+  /** Label for the submit button. Defaults to "Done". */
+  submitLabel?: string;
 }
 
 const ScriptEditorWithSources = ({
@@ -283,6 +285,7 @@ const MarkdownEditorDialog = ({
   showPreviewAsPlayerOption = false,
   historyKey,
   readOnly = false,
+  submitLabel = 'Done',
 }: MarkdownEditorDialogProps) => {
   const { executeCommand } = useUndoRedo();
   const createUndoSnapshot = useCreateUndoSnapshot();
@@ -667,6 +670,7 @@ const MarkdownEditorDialog = ({
                 ) : (
                   <ActionButtons
                     canSubmit={doneEnabled}
+                    submitLabel={submitLabel}
                     submitDisabledText={submitDisabledText}
                     onCancel={handleAttemptClose}
                     onSubmit={handleSubmit}
