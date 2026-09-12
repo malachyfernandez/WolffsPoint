@@ -65,6 +65,16 @@ export const MinimizeProvider = ({ children }: { children: React.ReactNode }) =>
 
 export const useMinimize = () => {
   const ctx = useContext(MinimizeContext);
-  if (!ctx) throw new Error('useMinimize must be used within MinimizeProvider');
+  // Gracefully degrade when no provider is present — dialogs still work,
+  // just without minimize functionality.
+  if (!ctx) {
+    return {
+      minimized: [],
+      minimize: () => '',
+      restore: () => {},
+      removeMinimized: () => {},
+      clearAll: () => {},
+    } as MinimizeContextValue;
+  }
   return ctx;
 };

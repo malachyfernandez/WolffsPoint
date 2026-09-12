@@ -20,12 +20,17 @@ interface UseMinimizeTargetOptions {
  * the tan background + paper texture). Elements marked with the `minimize-hide`
  * class (header, close button, save pill, action buttons) are stripped from
  * the clone so the minimized preview shows only the middle content.
+ *
+ * If no MinimizeProvider is present in the tree, `performMinimize` is a no-op
+ * so dialogs still work outside the operator context.
  */
 export function useMinimizeTarget({ title, onClose, onRestore }: UseMinimizeTargetOptions) {
   const { minimize } = useMinimize();
   const targetRef = useRef<View>(null);
 
   const performMinimize = useCallback(() => {
+    if (!minimize) return;
+
     const el = targetRef.current as unknown as HTMLElement | null;
 
     if (el) {
