@@ -437,6 +437,16 @@ const MarkdownEditorDialog = ({
       plainText: stripMarkdownSyntax(draftBody.trim()),
       title: includeTitle ? draftTitle.trim() : undefined,
     });
+    if (historyKey && hasUnsavedChanges) {
+      const preview = stripMarkdownSyntax(draftBody.trim()).slice(0, 200);
+      addSave(
+        {
+          markdown: draftBody.trim(),
+          title: includeTitle ? draftTitle.trim() : undefined,
+        },
+        preview
+      );
+    }
     onOpenChange(false);
   };
 
@@ -770,6 +780,7 @@ const MarkdownEditorDialog = ({
             subtext={previewEntry ? new Date(previewEntry.savedAt).toLocaleString() : undefined}
             entry={previewEntry}
             onReplace={handleReplaceFromHistory}
+            contentClassName="h-[80vh]"
           >
             {previewEntry && (
               <InputOptionsProvider gameId={gameId} showInputs>

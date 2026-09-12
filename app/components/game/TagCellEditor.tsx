@@ -196,6 +196,17 @@ const TagCellEditor = ({
         onTagsRemoved(removedTags, cellContext);
       }
     }
+
+    // Add to save history
+    if (historyKey && hasUnsavedChanges) {
+      const preview = isInTagMode
+        ? selectedTagNames.join(', ')
+        : textValue.trim().slice(0, 200);
+      addSave(
+        { value: newValue, tags: selectedTagNames, text: textValue },
+        preview
+      );
+    }
   };
 
   // Save without closing — persists via onChange and adds to history
@@ -428,14 +439,44 @@ const TagCellEditor = ({
             subtext={previewEntry ? new Date(previewEntry.savedAt).toLocaleString() : undefined}
             entry={previewEntry}
             onReplace={handleReplaceFromHistory}
+            contentClassName="max-w-2xl"
           >
-            {previewEntry && (
-              <ScrollView className="flex-1" contentContainerClassName="p-4">
-                <FontText className="text-text">
-                    {(previewEntry.value as { value: string })?.value ?? ''}
-                </FontText>
-              </ScrollView>
-            )}
+            {previewEntry && (() => {
+              const savedValue = (previewEntry.value as { value: string })?.value ?? '';
+              const savedParsed = parseCell(savedValue);
+              if (savedParsed.tags.length > 0) {
+                return (
+                  <ScrollView className="flex-1" contentContainerClassName="p-4">
+                    <View className="border-subtle-border flex-row flex-wrap gap-2 rounded-lg border p-3">
+                      {savedParsed.tags.map((tag) => {
+                        const def = definitions.find((d) => d.name === tag.name);
+                        const color: TagColor = def ? getTagColor(def.color) : getTagColor('Grey');
+                        return (
+                          <TagPill
+                            key={tag.name}
+                            label={tag.name}
+                            color={color}
+                            maxWidth={300}
+                          />
+                        );
+                      })}
+                    </View>
+                    {savedParsed.text.trim() ? (
+                      <FontText className="text-text mt-3">
+                        {savedParsed.text}
+                      </FontText>
+                    ) : null}
+                  </ScrollView>
+                );
+              }
+              return (
+                <ScrollView className="flex-1" contentContainerClassName="p-4">
+                  <FontText className="text-text">
+                    {savedParsed.text}
+                  </FontText>
+                </ScrollView>
+              );
+            })()}
           </ViewOnlyPreviewModal>
         </>
       )}

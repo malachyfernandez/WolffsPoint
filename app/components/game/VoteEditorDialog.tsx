@@ -124,7 +124,12 @@ const VoteEditorDialog = ({
       .split(',')
       .map((target) => target.trim())
       .filter(Boolean);
-    onSubmit(targets.length > 1 ? targets : targets[0] || '', safeMultiplier);
+    const voteValue = targets.length > 1 ? targets : targets[0] || '';
+    onSubmit(voteValue, safeMultiplier);
+    if (historyKey && hasUnsavedChanges) {
+      const preview = `Vote: ${resolveVoteEmailToName(voteValue, users)} (${safeMultiplier}x)`;
+      addSave({ vote: voteValue, multiplier: safeMultiplier }, preview);
+    }
     onOpenChange(false);
   };
 
@@ -345,15 +350,45 @@ const VoteEditorDialog = ({
             subtext={previewEntry ? new Date(previewEntry.savedAt).toLocaleString() : undefined}
             entry={previewEntry}
             onReplace={handleReplaceFromHistory}
+            contentClassName="max-w-md"
           >
             {previewEntry && (
               <Column className="gap-4 p-4">
-                <FontText weight="medium" className="text-sm opacity-70">Vote targets</FontText>
-                <FontText>{normalizeVoteTargets((previewEntry.value as { vote: VoteValue }).vote).join(', ') || 'No vote'}</FontText>
-                <FontText weight="medium" className="text-sm opacity-70">Resolved name</FontText>
-                <FontText>{resolveVoteEmailToName((previewEntry.value as { vote: VoteValue }).vote, users)}</FontText>
-                <FontText weight="medium" className="text-sm opacity-70">Multiplier</FontText>
-                <FontText>{(previewEntry.value as { multiplier: number }).multiplier}x</FontText>
+                <Column className="gap-1">
+                  <FontText weight="medium" className="text-sm opacity-70">
+                    Vote target emails
+                  </FontText>
+                  <FontText>
+                    {normalizeVoteTargets((previewEntry.value as { vote: VoteValue }).vote).join(', ') || 'No vote'}
+                  </FontText>
+                </Column>
+                <Column className="gap-1">
+                  <FontText weight="medium" className="text-sm opacity-70">
+                    Resolved Name
+                  </FontText>
+                  <View className="bg-text border-border rounded-lg border-2 p-3">
+                    <FontText color="white" weight="medium" className="text-center">
+                      {resolveVoteEmailToName((previewEntry.value as { vote: VoteValue }).vote, users)}
+                    </FontText>
+                  </View>
+                </Column>
+                <Column className="gap-1">
+                  <FontText weight="medium" className="text-sm opacity-70">
+                    Vote Multiplier
+                  </FontText>
+                  <Row className="items-center gap-3">
+                    <FontText>
+                      {(previewEntry.value as { multiplier: number }).multiplier}x
+                    </FontText>
+                    <FontText variant="subtext" className="text-sm">
+                      {(previewEntry.value as { multiplier: number }).multiplier === 1
+                        ? 'Standard vote (1x)'
+                        : (previewEntry.value as { multiplier: number }).multiplier === -1
+                          ? 'Thief-style negative vote (-1x)'
+                          : `${(previewEntry.value as { multiplier: number }).multiplier}x vote weight`}
+                    </FontText>
+                  </Row>
+                </Column>
               </Column>
             )}
           </ViewOnlyPreviewModal>

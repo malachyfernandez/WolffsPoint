@@ -1758,6 +1758,7 @@ const ScriptEditorDialog = ({
             subtext={previewEntry ? new Date(previewEntry.savedAt).toLocaleString() : undefined}
             entry={previewEntry}
             onReplace={() => { /* script editor doesn't directly replace; parent handles it */ setPreviewEntry(null); }}
+            contentClassName="h-[85vh] max-w-5xl"
           >
             {previewEntry && renderPreviewContent && renderPreviewContent(previewEntry)}
           </ViewOnlyPreviewModal>

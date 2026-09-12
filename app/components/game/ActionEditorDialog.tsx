@@ -70,6 +70,9 @@ const ActionEditorDialog = ({
 
   const handleSubmit = () => {
     onSubmit(draftAction.trim());
+    if (historyKey && hasUnsavedChanges) {
+      addSave(draftAction.trim(), draftAction.trim().slice(0, 200));
+    }
     onOpenChange(false);
   };
 
@@ -223,6 +226,7 @@ const ActionEditorDialog = ({
             subtext={previewEntry ? new Date(previewEntry.savedAt).toLocaleString() : undefined}
             entry={previewEntry}
             onReplace={handleReplaceFromHistory}
+            contentClassName="max-w-lg"
           >
             {previewEntry && (
               <ScrollView className="flex-1" contentContainerClassName="p-4">

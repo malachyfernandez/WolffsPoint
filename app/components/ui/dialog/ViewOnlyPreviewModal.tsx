@@ -18,6 +18,8 @@ interface ViewOnlyPreviewModalProps {
     entry: SavedEntry | null;
     onReplace: (entry: SavedEntry) => void;  // loads value into editor, closes preview
     children: React.ReactNode;              // view-only content rendered by parent
+    /** ClassName for the dialog content, to match the parent modal's dimensions. */
+    contentClassName?: string;
 }
 
 /**
@@ -34,6 +36,7 @@ export function ViewOnlyPreviewModal({
     entry,
     onReplace,
     children,
+    contentClassName = 'h-[75vh]',
 }: ViewOnlyPreviewModalProps) {
     const { setHint } = useKeyboardShortcutHint();
 
@@ -49,7 +52,7 @@ export function ViewOnlyPreviewModal({
         <ConvexDialog.Root isOpen={isOpen} onOpenChange={onOpenChange}>
             <ConvexDialog.Portal>
                 <ConvexDialog.Overlay />
-                <ConvexDialog.Content className="h-[75vh]" isSwipeable={false}>
+                <ConvexDialog.Content className={contentClassName} isSwipeable={false}>
                     <CloseButton onPress={() => onOpenChange(false)} />
                     <DialogHeader text={title} subtext={subtext} />
                     <View className="flex-1 min-h-0">

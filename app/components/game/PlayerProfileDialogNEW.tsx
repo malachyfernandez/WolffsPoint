@@ -186,6 +186,10 @@ const PlayerProfileDialogNEW = ({
     if (onSaveCustomUserInfo) {
       onSaveCustomUserInfo({ name: realName.trim() });
     }
+    if (historyKey && hasUnsavedChanges) {
+      const preview = `${draft.inGameName.trim() || 'Unnamed'} — ${(draft.bioMarkdown || '').slice(0, 120)}`;
+      addSave(draft, preview);
+    }
     onOpenChange(false);
   };
 
@@ -442,6 +446,7 @@ const PlayerProfileDialogNEW = ({
             subtext={previewEntry ? new Date(previewEntry.savedAt).toLocaleString() : undefined}
             entry={previewEntry}
             onReplace={handleReplaceFromHistory}
+            contentClassName="h-[80vh] max-w-6xl"
           >
             {previewEntry && (
               <ScrollView className="flex-1" contentContainerClassName="p-4">
