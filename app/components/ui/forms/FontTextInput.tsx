@@ -52,6 +52,7 @@ const FontTextInput = ({
     submitBehavior,
     onBlur,
     autoFocus,
+    editable,
     ...props
 }: FontTextInputProps) => {
     const [fontsLoaded] = useFonts({
@@ -135,6 +136,7 @@ const FontTextInput = ({
                 placeholder={placeholder}
                 value={typeof value === 'string' ? value : ''}
                 autoFocus={autoFocus}
+                readOnly={editable === false}
                 onBlur={onBlur ? () => onBlur({ nativeEvent: { text: typeof value === 'string' ? value : '' } } as any) : undefined}
                 onChange={(event) => {
                     resizeTextarea(event.currentTarget);

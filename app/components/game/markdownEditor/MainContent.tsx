@@ -81,7 +81,7 @@ export function MainContent({
         />
       ) : null}
 
-      {!isSideBySide ? <TabSelector value={activeTab} onValueChange={readOnly ? () => {} : onTabChange} /> : null}
+      {!isSideBySide ? <TabSelector value={activeTab} onValueChange={onTabChange} /> : null}
 
       {isSideBySide ? (
         <SideBySideLayout

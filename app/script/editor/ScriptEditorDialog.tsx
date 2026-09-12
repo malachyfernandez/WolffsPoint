@@ -1428,6 +1428,7 @@ const ScriptEditorDialog = ({
                     multiline
                     value={textDraft}
                     onChangeText={readOnly ? undefined : handleTextChange}
+                    onKeyPress={readOnly ? () => showToast('Preview only') : undefined}
                     editable={!readOnly}
                     placeholder={`Variable({\n  NAME = "deadPlayers",\n  VALUE = players.Filter(Item => Item.entry("isAlive") == false),\n});\n\nCreateSelectInput({\n  NAME = "revive",\n  LIST = deadPlayers,\n  LABEL = "Back From Dead",\n  NUMSELECTABLE = (deadPlayers.length / 2).floor,\n});`}
                     placeholderTextColor="#0004"
@@ -1445,25 +1446,25 @@ const ScriptEditorDialog = ({
                       statements={state.ast.statements}
                       definedVariables={definedVariables}
                       definedFunctions={definedFunctions}
-                      onAdd={readOnly ? () => {} : (target) => {
+                      onAdd={readOnly ? () => showToast('Preview only') : (target) => {
                         if (!moveSession) setInsertTarget(target);
                       }}
                       moveTool={readOnly ? undefined : moveToolControls}
-                      onSetExpression={readOnly ? (() => {}) : handleSetExpression}
-                      onSetStatementField={readOnly ? (() => {}) : handleSetStatementField}
-                      onDeleteStatement={readOnly ? (() => {}) : handleDeleteStatement}
-                      onRenameVariable={readOnly ? (() => {}) : handleRenameVariable}
+                      onSetExpression={readOnly ? (() => showToast('Preview only')) : handleSetExpression}
+                      onSetStatementField={readOnly ? (() => showToast('Preview only')) : handleSetStatementField}
+                      onDeleteStatement={readOnly ? (() => showToast('Preview only')) : handleDeleteStatement}
+                      onRenameVariable={readOnly ? (() => showToast('Preview only')) : handleRenameVariable}
                       entryKeysBySource={entryKeysBySource}
                       inputSources={inputSources}
                       isTriggerContext={isTriggerContext}
                       gameId={gameId}
                       savedFunctionNames={savedFunctionNames}
-                      onSaveFunction={readOnly ? (() => {}) : handleSaveFunction}
-                      onUnsaveFunction={readOnly ? (() => {}) : unsaveFunction}
-                      onLockedFunctionClick={readOnly ? (() => {}) : handleLockedFunctionClick}
+                      onSaveFunction={readOnly ? (() => showToast('Preview only')) : handleSaveFunction}
+                      onUnsaveFunction={readOnly ? (() => showToast('Preview only')) : unsaveFunction}
+                      onLockedFunctionClick={readOnly ? (() => showToast('Preview only')) : handleLockedFunctionClick}
                       decoupledFunctionNames={decoupledFunctions}
-                      onSetComment={readOnly ? (() => {}) : handleSetComment}
-                      onEditMarkdown={readOnly ? (() => {}) : (value, onSave) =>
+                      onSetComment={readOnly ? (() => showToast('Preview only')) : handleSetComment}
+                      onEditMarkdown={readOnly ? (() => showToast('Preview only')) : (value, onSave) =>
                         setMarkdownEditor({ isOpen: true, value, onSave })
                       }
                     />

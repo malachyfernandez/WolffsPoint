@@ -141,6 +141,124 @@ const ScriptEditorWithSources = ({
   );
 };
 
+/**
+ * Read-only preview of a saved markdown version. Encapsulates the local state
+ * needed to switch between Editing/Preview tabs and to open the script editor
+ * (in read-only mode) when the cursor lands inside a `/*script ... script*\/` block.
+ *
+ * Rendered inside an `InputOptionsProvider` so script input rendering works.
+ */
+const ReadOnlyMarkdownPreview = ({
+  includeTitle,
+  titleInputLabel,
+  titleInputPlaceholder,
+  draftTitle,
+  draftBody,
+  isPreviewSideBySide,
+  showInputs,
+  centered,
+  gameId,
+  hideInputs,
+  allowVoteInput,
+}: {
+  includeTitle: boolean;
+  titleInputLabel: string;
+  titleInputPlaceholder: string;
+  draftTitle: string;
+  draftBody: string;
+  isPreviewSideBySide: boolean;
+  showInputs: boolean;
+  centered: boolean;
+  gameId?: string;
+  hideInputs?: boolean;
+  allowVoteInput?: boolean;
+}) => {
+  const [activeTab, setActiveTab] = useState('preview');
+  const [selection, setSelection] = useState<SelectionRange>(emptySelection);
+  const [editingScriptBlock, setEditingScriptBlock] = useState<{
+    start: number;
+    end: number;
+    content: string;
+  } | null>(null);
+  const [isScriptDialogOpen, setIsScriptDialogOpen] = useState(false);
+  const [previewInputState, setPreviewInputState] = useState<Record<string, string | undefined>>(
+    {}
+  );
+
+  // Detect if the cursor is inside a `/*script ... script*/` block.
+  const cursorScriptBlock = useMemo(
+    () => findScriptBlockAtCursor(draftBody, selection.start),
+    [draftBody, selection.start]
+  );
+
+  const handleEditCode = () => {
+    if (!cursorScriptBlock) return;
+    setEditingScriptBlock({
+      start: cursorScriptBlock.start,
+      end: cursorScriptBlock.end,
+      content: cursorScriptBlock.content,
+    });
+    setIsScriptDialogOpen(true);
+  };
+
+  return (
+    <>
+      <MainContent
+        includeTitle={includeTitle}
+        titleInputLabel={titleInputLabel}
+        titleInputPlaceholder={titleInputPlaceholder}
+        draftTitle={draftTitle}
+        draftBody={draftBody}
+        isPreviewSideBySide={isPreviewSideBySide}
+        activeTab={activeTab}
+        showInputs={showInputs}
+        previewInputState={previewInputState}
+        setPreviewInputState={setPreviewInputState}
+        setDraftTitle={() => {}}
+        setDraftBody={() => {}}
+        setSelection={setSelection}
+        onTabChange={setActiveTab}
+        onBold={() => {}}
+        onItalic={() => {}}
+        onLink={() => {}}
+        onImage={() => {}}
+        onInput={() => {}}
+        onMore={() => {}}
+        centered={centered}
+        readOnly
+      />
+      {cursorScriptBlock ? (
+        <Row className="pt-2">
+          <AppButton
+            variant="outline"
+            className="h-8 px-3"
+            onPress={handleEditCode}
+            dropShadow={false}>
+            <Row className="items-center gap-1.5">
+              <Code2 size={14} color="#1a1a1a" />
+              <FontText className="text-sm">Edit Code</FontText>
+            </Row>
+          </AppButton>
+        </Row>
+      ) : null}
+      <ScriptEditorWithSources
+        isOpen={isScriptDialogOpen}
+        onOpenChange={(open) => {
+          if (!open) setEditingScriptBlock(null);
+          setIsScriptDialogOpen(open);
+        }}
+        onSubmit={() => {}}
+        initialScriptText={editingScriptBlock?.content}
+        gameId={gameId}
+        hideInputs={hideInputs}
+        allowVoteInput={allowVoteInput}
+        readOnly
+      />
+    </>
+  );
+};
+
+
 const MarkdownEditorDialog = ({
   isOpen,
   onOpenChange,
@@ -654,29 +772,18 @@ const MarkdownEditorDialog = ({
           >
             {previewEntry && (
               <InputOptionsProvider gameId={gameId} showInputs>
-                <MainContent
+                <ReadOnlyMarkdownPreview
                   includeTitle={includeTitle}
                   titleInputLabel={titleInputLabel}
                   titleInputPlaceholder={titleInputPlaceholder}
                   draftTitle={(previewEntry.value as { title?: string })?.title ?? ''}
                   draftBody={(previewEntry.value as { markdown: string })?.markdown ?? ''}
                   isPreviewSideBySide={isPreviewSideBySide}
-                  activeTab="preview"
                   showInputs={showInputs}
-                  previewInputState={{}}
-                  setPreviewInputState={() => {}}
-                  setDraftTitle={() => {}}
-                  setDraftBody={() => {}}
-                  setSelection={() => {}}
-                  onTabChange={() => {}}
-                  onBold={() => {}}
-                  onItalic={() => {}}
-                  onLink={() => {}}
-                  onImage={() => {}}
-                  onInput={() => {}}
-                  onMore={() => {}}
                   centered={centered}
-                  readOnly
+                  gameId={gameId}
+                  hideInputs={hideInputs}
+                  allowVoteInput={allowVoteInput}
                 />
               </InputOptionsProvider>
             )}

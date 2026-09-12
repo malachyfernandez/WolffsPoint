@@ -62,7 +62,7 @@ export function TabbedLayout({
 }: TabbedLayoutProps) {
   // When readOnly, keep both tabs but make editing non-editable (matches original layout).
   return (
-    <Tabs value={activeTab} onValueChange={readOnly ? () => {} : onTabChange} className="h-full flex-1">
+    <Tabs value={activeTab} onValueChange={onTabChange} className="h-full flex-1">
       <Tabs.Content value="editing" className="flex-1">
         <Column className="gap-1">
           {!readOnly && (
