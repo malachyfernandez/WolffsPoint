@@ -12,6 +12,8 @@ import { RoleTableItem } from 'types/roleTable';
 import { UserTableItem, UserTableTitle } from 'types/playerTable';
 import Row from '../layout/Row';
 import StatusButton from '../ui/StatusButton';
+import { useKeyboardShortcuts } from '../../../hooks/useKeyboardShortcuts';
+import { useKeyboardShortcutHint } from '../../../contexts/KeyboardShortcutHintContext';
 
 interface UserAddDialogProps {
     isOpen: boolean;
@@ -24,6 +26,8 @@ const UserAddDialog = ({
     onOpenChange,
     gameId
 }: UserAddDialogProps) => {
+    const { setHint } = useKeyboardShortcutHint();
+
     const [realName, setRealName] = useState('');
     const [email, setEmail] = useState('');
     const [role, setRole] = useState('');
@@ -123,6 +127,12 @@ const UserAddDialog = ({
         onOpenChange(false);
     };
 
+    useKeyboardShortcuts({
+        onPrimaryAction: handleSubmit,
+        onClose: handleCancel,
+        enabled: isOpen,
+    });
+
     return (
         <ConvexDialog.Root isOpen={isOpen} onOpenChange={handleDialogOpenChange}>
             <ConvexDialog.Trigger asChild>
@@ -174,7 +184,7 @@ const UserAddDialog = ({
                             <Column className='gap-4 w-min'>
                                 <Row className='gap-4 w-min max-w-full'>
                                     {isUniqueEmail && isValidEmail && realName.trim() && email.trim() ? (
-                                        <AppButton className='w-30 sm:w-48 h-10' variant='black' onPress={handleSubmit}>
+                                        <AppButton className='w-30 sm:w-48 h-10' variant='black' onPress={handleSubmit} onHoverIn={() => setHint(['enter'])} onHoverOut={() => setHint(null)}>
                                             <FontText color='white' weight='medium'>Add User</FontText>
                                         </AppButton>
                                     ) : (
@@ -185,7 +195,7 @@ const UserAddDialog = ({
                                         />
                                     )}
 
-                                    <AppButton className='w-22 sm:w-48 h-10' variant='outline' onPress={handleCancel}>
+                                    <AppButton className='w-22 sm:w-48 h-10' variant='outline' onPress={handleCancel} onHoverIn={() => setHint(['esc'])} onHoverOut={() => setHint(null)}>
                                         <FontText color='black' weight='medium'>Cancel</FontText>
                                     </AppButton>
                                 </Row>

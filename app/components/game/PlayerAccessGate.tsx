@@ -164,6 +164,7 @@ const PlayerAccessGate = ({ gameId, currentUserId, children }: PlayerAccessGateP
           saveLabel="Enter game"
           operatorRealName={matchingPlayer.realName}
           onSaveCustomUserInfo={setCustomUserInfo}
+          historyKey={`playerProfile:${gameId}:${currentUserId}`}
         />
       </Animated.View>
     );
@@ -184,6 +185,7 @@ const PlayerAccessGate = ({ gameId, currentUserId, children }: PlayerAccessGateP
         onOpenChange={setIsProfileDialogOpen}
         onSave={setProfile}
         title="Edit your player profile"
+        historyKey={`playerProfile:${gameId}:${currentUserId}`}
       />
     </PlayerStatusProvider>
     // </Animated.View>

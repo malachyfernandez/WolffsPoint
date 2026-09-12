@@ -5,6 +5,8 @@ import FontText from '../ui/text/FontText';
 import ConvexDialog from '../ui/dialog/ConvexDialog';
 import DialogHeader from '../ui/dialog/DialogHeader';
 import Column from '../layout/Column';
+import { useKeyboardShortcuts } from '../../../hooks/useKeyboardShortcuts';
+import { useKeyboardShortcutHint } from '../../../contexts/KeyboardShortcutHintContext';
 
 interface DeleteConfirmationDialogProps {
     isOpen: boolean;
@@ -16,6 +18,18 @@ interface DeleteConfirmationDialogProps {
 }
 
 const DeleteConfirmationDialog = ({ isOpen, onOpenChange, onConfirm, itemType, itemName, confirmButtonText = 'Delete' }: DeleteConfirmationDialogProps) => {
+    const { setHint } = useKeyboardShortcutHint();
+
+    // Enter = primary action (confirm delete), Esc = cancel
+    useKeyboardShortcuts({
+        onPrimaryAction: () => {
+            onConfirm();
+            onOpenChange(false);
+        },
+        onClose: () => onOpenChange(false),
+        enabled: isOpen,
+    });
+
     return (
         <ConvexDialog.Root isOpen={isOpen} onOpenChange={onOpenChange}>
             <ConvexDialog.Portal>
@@ -33,6 +47,8 @@ const DeleteConfirmationDialog = ({ isOpen, onOpenChange, onConfirm, itemType, i
                                     variant='outline'
                                     className='flex-1 h-12'
                                     onPress={() => onOpenChange(false)}
+                                    onHoverIn={() => setHint(['esc'])}
+                                    onHoverOut={() => setHint(null)}
                                 >
                                     <FontText weight='medium'>Cancel</FontText>
                                 </AppButton>
@@ -43,6 +59,8 @@ const DeleteConfirmationDialog = ({ isOpen, onOpenChange, onConfirm, itemType, i
                                         onConfirm();
                                         onOpenChange(false);
                                     }}
+                                    onHoverIn={() => setHint(['enter'])}
+                                    onHoverOut={() => setHint(null)}
                                 >
                                     <FontText weight='medium' color='red'>{confirmButtonText}</FontText>
                                 </AppButton>

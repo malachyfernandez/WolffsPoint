@@ -8,6 +8,8 @@ import AppButton from '../ui/buttons/AppButton';
 import FontText from '../ui/text/FontText';
 import DialogHeader from '../ui/dialog/DialogHeader';
 import CustomCheckbox from '../ui/CustomCheckbox';
+import { useKeyboardShortcuts } from '../../../hooks/useKeyboardShortcuts';
+import { useKeyboardShortcutHint } from '../../../contexts/KeyboardShortcutHintContext';
 
 interface VoteEnableDialogProps {
   isOpen: boolean;
@@ -26,6 +28,8 @@ const VoteEnableDialog = ({
   onSetDoesRoleVote,
   onContinueToEditor,
 }: VoteEnableDialogProps) => {
+  const { setHint } = useKeyboardShortcutHint();
+
   const [canVote, setCanVote] = useState(doesRoleVote);
   const [isLeaveConfirmDialogOpen, setIsLeaveConfirmDialogOpen] = useState(false);
 
@@ -84,6 +88,12 @@ const VoteEnableDialog = ({
     }
   };
 
+  useKeyboardShortcuts({
+    onPrimaryAction: handlePrimary,
+    onClose: handleCancel,
+    enabled: isOpen,
+  });
+
   return (
     <>
       <ConvexDialog.Root isOpen={isOpen} onOpenChange={handleOpenChange}>
@@ -118,12 +128,12 @@ const VoteEnableDialog = ({
 
               <Column className="w-full items-center justify-center gap-4 pt-2">
                 <Row className="gap-4">
-                  <AppButton className="h-10 w-48" variant="black" onPress={handlePrimary}>
+                  <AppButton className="h-10 w-48" variant="black" onPress={handlePrimary} onHoverIn={() => setHint(['enter'])} onHoverOut={() => setHint(null)}>
                     <FontText color="white" weight="medium">
                       {canVote ? 'Edit Vote Message' : 'Save'}
                     </FontText>
                   </AppButton>
-                  <AppButton className="h-10 w-48" variant="outline" onPress={handleCancel}>
+                  <AppButton className="h-10 w-48" variant="outline" onPress={handleCancel} onHoverIn={() => setHint(['esc'])} onHoverOut={() => setHint(null)}>
                     <FontText color="black" weight="medium">
                       Cancel
                     </FontText>

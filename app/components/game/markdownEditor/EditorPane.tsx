@@ -18,6 +18,8 @@ interface EditorPaneProps {
     onMore: () => void;
     onScript?: () => void;
     onVariable?: () => void;
+    /** When true, the editor is non-editable (view-only) and the toolbar is hidden. */
+    readOnly?: boolean;
 }
 
 export function EditorPane({
@@ -33,25 +35,29 @@ export function EditorPane({
     onMore,
     onScript,
     onVariable,
+    readOnly = false,
 }: EditorPaneProps) {
     return (
         <Column className='gap-1 flex-1 min-w-0'>
-            <TownSquareComposerToolbar
-                onBold={onBold}
-                onInput={onInput}
-                onImage={onImage}
-                onItalic={onItalic}
-                onLink={onLink}
-                onMore={onMore}
-                onScript={onScript}
-                onVariable={onVariable}
-                showInputs={showInputs}
-            />
+            {!readOnly && (
+                <TownSquareComposerToolbar
+                    onBold={onBold}
+                    onInput={onInput}
+                    onImage={onImage}
+                    onItalic={onItalic}
+                    onLink={onLink}
+                    onMore={onMore}
+                    onScript={onScript}
+                    onVariable={onVariable}
+                    showInputs={showInputs}
+                />
+            )}
             <ShadowScrollView className='flex-1' scrollViewClassName='flex-1 rounded-[24px] py-4'>
                     <TownSquareComposerEditorPane
                         onBodyChange={onBodyChange}
                         onSelectionChange={onSelectionChange}
                         value={value}
+                        readOnly={readOnly}
                     />
             </ShadowScrollView>
         </Column>

@@ -101,6 +101,7 @@ const ParticipantAccessGate = ({ gameId, currentUserId, children }: ParticipantA
           onSave={setProfile}
           title="Claim your profile"
           saveLabel="Enter game"
+          historyKey={`playerProfile:${gameId}:${currentUserId}`}
         />
       </Animated.View>
     );
@@ -119,6 +120,7 @@ const ParticipantAccessGate = ({ gameId, currentUserId, children }: ParticipantA
         onOpenChange={setIsProfileDialogOpen}
         onSave={setProfile}
         title="Edit your profile"
+        historyKey={`playerProfile:${gameId}:${currentUserId}`}
       />
     </PlayerStatusProvider>
   );

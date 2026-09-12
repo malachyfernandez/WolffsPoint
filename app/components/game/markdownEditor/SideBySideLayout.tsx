@@ -27,6 +27,8 @@ interface SideBySideLayoutProps {
   onPreviewAsPlayer?: () => void;
   /** Custom preview renderer. If provided, replaces the default markdown preview. */
   renderPreview?: () => React.ReactNode;
+  /** When true, the editor is non-editable (view-only) and only the preview pane is shown. */
+  readOnly?: boolean;
 }
 
 export function SideBySideLayout({
@@ -50,6 +52,7 @@ export function SideBySideLayout({
   showPreviewAsPlayer = false,
   onPreviewAsPlayer,
   renderPreview,
+  readOnly = false,
 }: SideBySideLayoutProps) {
   return (
     <Row className="min-h-0 flex-1 gap-4">
@@ -66,9 +69,10 @@ export function SideBySideLayout({
         onMore={onMore}
         onScript={onScript}
         onVariable={onVariable}
+        readOnly={readOnly}
       />
 
-      <Column className="min-w-0 flex-1 gap-4">
+      <Column className={`min-w-0 flex-1 gap-4`}>
         {renderPreview ? (
           renderPreview()
         ) : (

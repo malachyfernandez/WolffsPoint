@@ -1,8 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { View, Pressable, useWindowDimensions } from 'react-native';
+import { View, Pressable, useWindowDimensions, ScrollView } from 'react-native';
 import ShadowScrollView from '../ui/ShadowScrollView';
 import ConvexDialog from '../ui/dialog/ConvexDialog';
 import DialogHeader from '../ui/dialog/DialogHeader';
+import SaveHistoryPill from '../ui/dialog/SaveHistoryPill';
+import SaveHistoryDialog from '../ui/dialog/SaveHistoryDialog';
+import ViewOnlyPreviewModal from '../ui/dialog/ViewOnlyPreviewModal';
 import UnsavedChangesDialog from '../ui/dialog/UnsavedChangesDialog';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
@@ -18,6 +21,9 @@ import PlayerProfilePreviewCard, {
 import BioEditorDialog from './BioEditorDialog';
 import MarkdownRenderer from '../ui/markdown/MarkdownRenderer';
 import { TabSelector } from './markdownEditor';
+import { useSaveHistory, SavedEntry } from '../../../hooks/useSaveHistory';
+import { useKeyboardShortcuts } from '../../../hooks/useKeyboardShortcuts';
+import { useKeyboardShortcutHint } from '../../../contexts/KeyboardShortcutHintContext';
 
 interface PlayerProfileDialogNEWProps {
   initialValue: PlayerProfile;
@@ -29,6 +35,8 @@ interface PlayerProfileDialogNEWProps {
   operatorRealName?: string;
   onSaveCustomUserInfo?: (info: { name: string }) => void;
   frameVariant?: 'gold' | 'ghostly';
+  /** Scoped key for save history storage. If omitted, save history is disabled. */
+  historyKey?: string;
 }
 
 interface SocialsData {
@@ -67,7 +75,11 @@ const PlayerProfileDialogNEW = ({
   operatorRealName,
   onSaveCustomUserInfo,
   frameVariant = 'gold',
+  historyKey,
 }: PlayerProfileDialogNEWProps) => {
+  const { history, addSave, clearHistory, maxSaves } = useSaveHistory(historyKey ?? null);
+  const { setHint } = useKeyboardShortcutHint();
+
   // Main profile state
   const [draft, setDraft] = useState<PlayerProfile>(initialValue);
   const [realName, setRealName] = useState(operatorRealName || '');
@@ -78,6 +90,9 @@ const PlayerProfileDialogNEW = ({
   const { width } = useWindowDimensions();
   const isDesktop = width >= 768;
   const [isLeaveConfirmDialogOpen, setIsLeaveConfirmDialogOpen] = useState(false);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [previewEntry, setPreviewEntry] = useState<SavedEntry | null>(null);
+  const [hasEverBeenEnabled, setHasEverBeenEnabled] = useState(false);
 
   const [previousInitialValue, setPreviousInitialValue] = useState<PlayerProfile | null>(null);
 
@@ -159,7 +174,7 @@ const PlayerProfileDialogNEW = ({
   };
 
   const handleSave = () => {
-    if (!canSave || !hasUnsavedChanges) {
+    if (!canSave) {
       return;
     }
     onSave({
@@ -172,6 +187,51 @@ const PlayerProfileDialogNEW = ({
     }
     onOpenChange(false);
   };
+
+  // Save without closing — persists via onSave and adds to history
+  const handleSaveWithoutClose = () => {
+    if (!canSave) return;
+    onSave({
+      ...draft,
+      inGameName: draft.inGameName.trim(),
+      claimedAt: draft.claimedAt || Date.now(),
+    });
+    if (onSaveCustomUserInfo) {
+      onSaveCustomUserInfo({ name: realName.trim() });
+    }
+    if (historyKey) {
+      const preview = `${draft.inGameName.trim() || 'Unnamed'} — ${(draft.bioMarkdown || '').slice(0, 120)}`;
+      addSave(draft, preview);
+    }
+  };
+
+  // Replace current draft with a saved entry from history
+  const handleReplaceFromHistory = (entry: SavedEntry) => {
+    const savedProfile = entry.value as PlayerProfile;
+    setDraft(savedProfile);
+    setPreviewEntry(null);
+    setIsHistoryOpen(false);
+  };
+
+  useEffect(() => {
+    if (hasUnsavedChanges) setHasEverBeenEnabled(true);
+  }, [hasUnsavedChanges]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      setHasEverBeenEnabled(false);
+      setIsHistoryOpen(false);
+      setPreviewEntry(null);
+    }
+  }, [isOpen]);
+
+  const doneEnabled = (hasUnsavedChanges || hasEverBeenEnabled) && canSave;
+
+  useKeyboardShortcuts({
+    onSave: handleSaveWithoutClose,
+    onClose: handleAttemptClose,
+    enabled: isOpen && !isHistoryOpen && !previewEntry && !isBioDialogOpen && !isSocialsDialogOpen,
+  });
 
   return (
     <>
@@ -197,11 +257,22 @@ const PlayerProfileDialogNEW = ({
             isSwipeable={!hasUnsavedChanges}>
             <Pressable
               onPress={handleAttemptClose}
+              onHoverIn={() => setHint(['esc'])}
+              onHoverOut={() => setHint(null)}
               className="bg-text-inverted/10 hover:bg-text-inverted/15 absolute right-0 top-0 z-10 h-10 w-10 items-center justify-center rounded-full">
               <FontText color="rgb(246, 238, 219)" weight="bold" className="text-xl">
                 ×
               </FontText>
             </Pressable>
+            {historyKey && (
+              <SaveHistoryPill
+                hasUnsavedChanges={hasUnsavedChanges}
+                isInvalid={!canSave}
+                invalidMessage={!canSave ? 'Name is required' : undefined}
+                onSave={handleSaveWithoutClose}
+                onOpenHistory={() => setIsHistoryOpen(true)}
+              />
+            )}
             <DialogHeader text={title} subtext="This is what everyone sees" />
 
             {/* Tab selector (narrow screens only) */}
@@ -310,9 +381,9 @@ const PlayerProfileDialogNEW = ({
                 variant="black"
                 className="w-28 sm:w-40"
                 onPress={handleSave}
-                disabled={!canSave || !hasUnsavedChanges}>
+                disabled={!doneEnabled}>
                 <FontText weight="medium" color="white">
-                  {saveLabel}
+                  Done
                 </FontText>
               </AppButton>
             </Row>
@@ -333,7 +404,6 @@ const PlayerProfileDialogNEW = ({
         isOpen={isBioDialogOpen}
         onOpenChange={setIsBioDialogOpen}
         title="Edit Bio"
-        submitLabel="Save Bio"
         initialMarkdown={draft.bioMarkdown || ''}
         onSubmit={(markdown) => {
           setDraft((current) => ({ ...current, bioMarkdown: markdown }));
@@ -360,6 +430,46 @@ const PlayerProfileDialogNEW = ({
         onSave={handleSave}
         onDiscard={handleConfirmLeave}
       />
+
+      {historyKey && (
+        <>
+          <SaveHistoryDialog
+            isOpen={isHistoryOpen}
+            onOpenChange={setIsHistoryOpen}
+            history={history}
+            maxSaves={maxSaves}
+            onSelectEntry={(entry) => setPreviewEntry(entry)}
+            onClearHistory={clearHistory}
+          />
+          <ViewOnlyPreviewModal
+            isOpen={previewEntry !== null}
+            onOpenChange={(open) => { if (!open) setPreviewEntry(null); }}
+            title="Preview Saved Profile"
+            subtext={previewEntry ? new Date(previewEntry.savedAt).toLocaleString() : undefined}
+            entry={previewEntry}
+            onReplace={handleReplaceFromHistory}
+          >
+            {previewEntry && (
+              <ScrollView className="flex-1" contentContainerClassName="p-4">
+                <PlayerProfilePreviewCard
+                  displayName={(previewEntry.value as PlayerProfile)?.inGameName || 'Unnamed'}
+                  bioMarkdown={(previewEntry.value as PlayerProfile)?.bioMarkdown || ''}
+                  imageUrl={(previewEntry.value as PlayerProfile)?.profileImageUrl || undefined}
+                  initials={
+                    ((previewEntry.value as PlayerProfile)?.inGameName || '?')
+                      .split(' ')
+                      .map((n: string) => n[0] || '')
+                      .join('')
+                      .toUpperCase()
+                      .slice(0, 2) || '?'
+                  }
+                  profile={previewEntry.value as PlayerProfile}
+                />
+              </ScrollView>
+            )}
+          </ViewOnlyPreviewModal>
+        </>
+      )}
     </>
   );
 };

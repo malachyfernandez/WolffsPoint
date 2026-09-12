@@ -48,6 +48,11 @@ import type { EntryKeysBySource } from './typeInference';
 import { useUndoRedo, useCreateUndoSnapshot } from '../../../hooks/useUndoRedo';
 import { useSavedFunctions } from '../../../hooks/useSavedFunctions';
 import { useToast } from '../../../contexts/ToastContext';
+import { useKeyboardShortcuts } from '../../../hooks/useKeyboardShortcuts';
+import { SavedEntry } from '../../../hooks/useSaveHistory';
+import SaveHistoryPill from '../../components/ui/dialog/SaveHistoryPill';
+import SaveHistoryDialog from '../../components/ui/dialog/SaveHistoryDialog';
+import ViewOnlyPreviewModal from '../../components/ui/dialog/ViewOnlyPreviewModal';
 
 interface ScriptEditorDialogProps {
   isOpen: boolean;
@@ -66,6 +71,20 @@ interface ScriptEditorDialogProps {
   isTriggerContext?: boolean;
   /** Game ID, used to load tag definitions for the tag() function picker. */
   gameId?: string;
+  /** When provided, shows the save pill and enables saving the full parent
+   *  markdown to the server (fixes the double-save issue). The callback should
+   *  update the parent draft AND persist to server AND add to history. */
+  onSaveToServer?: (scriptText: string) => void;
+  /** Shared history entries from the parent markdown editor. */
+  historyEntries?: SavedEntry[];
+  /** Max saves (from parent). */
+  historyMaxSaves?: number;
+  /** Clear history callback (from parent). */
+  onClearHistory?: () => void;
+  /** Renders view-only preview content for a history entry (from parent). */
+  renderPreviewContent?: (entry: SavedEntry) => React.ReactNode;
+  /** When true, the editor is non-editable (view-only): no editing, no save pill, no Done button, just Close. */
+  readOnly?: boolean;
 }
 
 type EditorMode = 'blocks' | 'text';
@@ -525,6 +544,12 @@ const ScriptEditorDialog = ({
   allowVoteInput = false,
   isTriggerContext,
   gameId,
+  onSaveToServer,
+  historyEntries,
+  historyMaxSaves = 5,
+  onClearHistory,
+  renderPreviewContent,
+  readOnly = false,
 }: ScriptEditorDialogProps) => {
   const [state, dispatch] = useReducer(editorReducer, createScript(), (ast) => initialState(ast));
   const { executeCommand, undo, redo, canUndo, canRedo } = useUndoRedo();
@@ -540,7 +565,10 @@ const ScriptEditorDialog = ({
     onSave: (newValue: string) => void;
   } | null>(null);
   const [hasModifications, setHasModifications] = useState(false);
+  const [hasEverBeenEnabled, setHasEverBeenEnabled] = useState(false);
   const [isLeaveConfirmDialogOpen, setIsLeaveConfirmDialogOpen] = useState(false);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [previewEntry, setPreviewEntry] = useState<SavedEntry | null>(null);
   const [expressionSwapTarget, setExpressionSwapTarget] = useState<{
     location: ExpressionLocation;
     expression: Expression;
@@ -1245,10 +1273,38 @@ const ScriptEditorDialog = ({
   const handleSubmit = () => {
     const textToSubmit =
       mode === 'text' ? printScriptBlock(textDraft) : printScriptBlock(state.ast);
-    onSubmit(textToSubmit);
+    if (onSaveToServer) {
+      onSaveToServer(textToSubmit);
+    } else {
+      onSubmit(textToSubmit);
+    }
     setHasModifications(false);
     onOpenChange(false);
   };
+
+  // Save without closing — persists the full markdown to server via parent
+  const handleSave = () => {
+    if (!canSubmit || !!moveSession) return;
+    if (!hasModifications) return;
+    const textToSubmit =
+      mode === 'text' ? printScriptBlock(textDraft) : printScriptBlock(state.ast);
+    if (onSaveToServer) {
+      onSaveToServer(textToSubmit);
+    }
+    setHasModifications(false);
+  };
+
+  useEffect(() => {
+    if (hasModifications) setHasEverBeenEnabled(true);
+  }, [hasModifications]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      setHasEverBeenEnabled(false);
+      setIsHistoryOpen(false);
+      setPreviewEntry(null);
+    }
+  }, [isOpen]);
 
   // --- Unsaved changes protection ---
   const handleAttemptClose = () => {
@@ -1258,6 +1314,13 @@ const ScriptEditorDialog = ({
       onOpenChange(false);
     }
   };
+
+  // Keyboard shortcuts (must be after handleAttemptClose/handleSave declarations)
+  useKeyboardShortcuts({
+    onSave: handleSave,
+    onClose: handleAttemptClose,
+    enabled: isOpen && !isHistoryOpen && !previewEntry,
+  });
 
   const handleOpenChange = (open: boolean) => {
     if (!open && hasModifications) {
@@ -1275,6 +1338,7 @@ const ScriptEditorDialog = ({
 
   const canSubmit =
     mode === 'text' ? textDraft.trim().length > 0 && !parseError : state.ast.statements.length > 0;
+  const doneEnabled = (hasModifications || hasEverBeenEnabled) && canSubmit && !moveSession;
 
   return (
     <>
@@ -1285,7 +1349,16 @@ const ScriptEditorDialog = ({
         <ConvexDialog.Portal>
           <ConvexDialog.Overlay />
           <ConvexDialog.Content className="h-[85vh] max-w-5xl" isSwipeable={false}>
-            <CloseButton onPress={handleAttemptClose} />
+            <CloseButton onPress={readOnly ? () => onOpenChange(false) : handleAttemptClose} />
+            {onSaveToServer && !readOnly && (
+              <SaveHistoryPill
+                hasUnsavedChanges={hasModifications}
+                isInvalid={!canSubmit || !!moveSession}
+                invalidMessage={!canSubmit ? 'Script is empty' : undefined}
+                onSave={handleSave}
+                onOpenHistory={() => setIsHistoryOpen(true)}
+              />
+            )}
             <DialogHeader
               text={title}
               subtext={
@@ -1297,7 +1370,7 @@ const ScriptEditorDialog = ({
             <Column className="min-h-0 flex-1 gap-3 pt-3">
               <Row className="justify-between gap-2">
                 <Row className="gap-2">
-                  {mode === 'blocks' && (
+                  {mode === 'blocks' && !readOnly && (
                     <>
                       <AppButton
                         variant="outline"
@@ -1318,27 +1391,29 @@ const ScriptEditorDialog = ({
                     </>
                   )}
                 </Row>
-                <Row className="gap-2">
-                  <AppButton
-                    variant={mode === 'blocks' ? 'filled' : 'outline'}
-                    className="h-8 px-3"
-                    onPress={() => handleSwitchMode('blocks')}
-                    dropShadow={false}>
-                    <FontText className="text-sm" color={mode === 'blocks' ? 'white' : undefined}>
-                      Blocks
-                    </FontText>
-                  </AppButton>
-                  <AppButton
-                    variant={mode === 'text' ? 'filled' : 'outline'}
-                    className="h-8 px-3"
-                    onPress={() => handleSwitchMode('text')}
-                    disabled={!!moveSession}
-                    dropShadow={false}>
-                    <FontText className="text-sm" color={mode === 'text' ? 'white' : undefined}>
-                      Text
-                    </FontText>
-                  </AppButton>
-                </Row>
+                {!readOnly && (
+                  <Row className="gap-2">
+                    <AppButton
+                      variant={mode === 'blocks' ? 'filled' : 'outline'}
+                      className="h-8 px-3"
+                      onPress={() => handleSwitchMode('blocks')}
+                      dropShadow={false}>
+                      <FontText className="text-sm" color={mode === 'blocks' ? 'white' : undefined}>
+                        Blocks
+                      </FontText>
+                    </AppButton>
+                    <AppButton
+                      variant={mode === 'text' ? 'filled' : 'outline'}
+                      className="h-8 px-3"
+                      onPress={() => handleSwitchMode('text')}
+                      disabled={!!moveSession}
+                      dropShadow={false}>
+                      <FontText className="text-sm" color={mode === 'text' ? 'white' : undefined}>
+                        Text
+                      </FontText>
+                    </AppButton>
+                  </Row>
+                )}
               </Row>
 
               {parseError && (
@@ -1352,7 +1427,8 @@ const ScriptEditorDialog = ({
                   <TextInput
                     multiline
                     value={textDraft}
-                    onChangeText={handleTextChange}
+                    onChangeText={readOnly ? undefined : handleTextChange}
+                    editable={!readOnly}
                     placeholder={`Variable({\n  NAME = "deadPlayers",\n  VALUE = players.Filter(Item => Item.entry("isAlive") == false),\n});\n\nCreateSelectInput({\n  NAME = "revive",\n  LIST = deadPlayers,\n  LABEL = "Back From Dead",\n  NUMSELECTABLE = (deadPlayers.length / 2).floor,\n});`}
                     placeholderTextColor="#0004"
                     className="bg-text/5 min-h-0 flex-1 rounded-xl p-4 font-mono text-sm"
@@ -1369,25 +1445,25 @@ const ScriptEditorDialog = ({
                       statements={state.ast.statements}
                       definedVariables={definedVariables}
                       definedFunctions={definedFunctions}
-                      onAdd={(target) => {
+                      onAdd={readOnly ? () => {} : (target) => {
                         if (!moveSession) setInsertTarget(target);
                       }}
-                      moveTool={moveToolControls}
-                      onSetExpression={handleSetExpression}
-                      onSetStatementField={handleSetStatementField}
-                      onDeleteStatement={handleDeleteStatement}
-                      onRenameVariable={handleRenameVariable}
+                      moveTool={readOnly ? undefined : moveToolControls}
+                      onSetExpression={readOnly ? (() => {}) : handleSetExpression}
+                      onSetStatementField={readOnly ? (() => {}) : handleSetStatementField}
+                      onDeleteStatement={readOnly ? (() => {}) : handleDeleteStatement}
+                      onRenameVariable={readOnly ? (() => {}) : handleRenameVariable}
                       entryKeysBySource={entryKeysBySource}
                       inputSources={inputSources}
                       isTriggerContext={isTriggerContext}
                       gameId={gameId}
                       savedFunctionNames={savedFunctionNames}
-                      onSaveFunction={handleSaveFunction}
-                      onUnsaveFunction={unsaveFunction}
-                      onLockedFunctionClick={handleLockedFunctionClick}
+                      onSaveFunction={readOnly ? (() => {}) : handleSaveFunction}
+                      onUnsaveFunction={readOnly ? (() => {}) : unsaveFunction}
+                      onLockedFunctionClick={readOnly ? (() => {}) : handleLockedFunctionClick}
                       decoupledFunctionNames={decoupledFunctions}
-                      onSetComment={handleSetComment}
-                      onEditMarkdown={(value, onSave) =>
+                      onSetComment={readOnly ? (() => {}) : handleSetComment}
+                      onEditMarkdown={readOnly ? (() => {}) : (value, onSave) =>
                         setMarkdownEditor({ isOpen: true, value, onSave })
                       }
                     />
@@ -1425,7 +1501,7 @@ const ScriptEditorDialog = ({
 
               <Row className="items-center justify-between gap-4 pt-2">
                 <Row className="gap-2">
-                  {mode === 'blocks' &&
+                  {mode === 'blocks' && !readOnly &&
                     (moveSession ? (
                       moveSession.phase === 'place' ? (
                         <AppButton
@@ -1489,18 +1565,31 @@ const ScriptEditorDialog = ({
                     ))}
                 </Row>
                 <Row className="gap-4">
-                  <AppButton variant="outline" className="w-28" onPress={handleAttemptClose}>
-                    <FontText weight="medium">Cancel</FontText>
-                  </AppButton>
-                  <AppButton
-                    variant="filled"
-                    className="w-36"
-                    disabled={!canSubmit || !!moveSession}
-                    onPress={handleSubmit}>
-                    <FontText weight="medium" color="white">
-                      Save Script
-                    </FontText>
-                  </AppButton>
+                  {!readOnly && (
+                    <AppButton variant="outline" className="w-28" onPress={handleAttemptClose}>
+                      <FontText weight="medium">Cancel</FontText>
+                    </AppButton>
+                  )}
+                  {readOnly ? (
+                    <AppButton
+                      variant="filled"
+                      className="w-36"
+                      onPress={() => onOpenChange(false)}>
+                      <FontText weight="medium" color="white">
+                        Close
+                      </FontText>
+                    </AppButton>
+                  ) : (
+                    <AppButton
+                      variant="filled"
+                      className="w-36"
+                      disabled={!doneEnabled}
+                      onPress={handleSubmit}>
+                      <FontText weight="medium" color="white">
+                        Done
+                      </FontText>
+                    </AppButton>
+                  )}
                 </Row>
               </Row>
             </Column>
@@ -1535,7 +1624,6 @@ const ScriptEditorDialog = ({
             if (!open) setMarkdownEditor(null);
           }}
           title="Edit Markdown"
-          submitLabel="Save"
           initialMarkdown={markdownEditor.value}
           showScript
           showInputs
@@ -1651,6 +1739,29 @@ const ScriptEditorDialog = ({
           </ConvexDialog.Content>
         </ConvexDialog.Portal>
       </ConvexDialog.Root>
+
+      {onSaveToServer && historyEntries && (
+        <>
+          <SaveHistoryDialog
+            isOpen={isHistoryOpen}
+            onOpenChange={setIsHistoryOpen}
+            history={historyEntries}
+            maxSaves={historyMaxSaves}
+            onSelectEntry={(entry) => setPreviewEntry(entry)}
+            onClearHistory={onClearHistory}
+          />
+          <ViewOnlyPreviewModal
+            isOpen={previewEntry !== null}
+            onOpenChange={(open) => { if (!open) setPreviewEntry(null); }}
+            title="Preview Saved Version"
+            subtext={previewEntry ? new Date(previewEntry.savedAt).toLocaleString() : undefined}
+            entry={previewEntry}
+            onReplace={() => { /* script editor doesn't directly replace; parent handles it */ setPreviewEntry(null); }}
+          >
+            {previewEntry && renderPreviewContent && renderPreviewContent(previewEntry)}
+          </ViewOnlyPreviewModal>
+        </>
+      )}
     </>
   );
 };

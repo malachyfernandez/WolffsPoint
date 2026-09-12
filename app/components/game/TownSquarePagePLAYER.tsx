@@ -202,7 +202,6 @@ const TownSquarePagePLAYER = ({ gameId, currentProfile }: TownSquarePagePLAYERPr
                         onOpenChange={setIsThreadComposerOpen}
                         requireMarkdown={true}
                         onSubmit={createThread}
-                        submitLabel='Publish'
                         title='Create thread'
                         gameId={gameId}
                         showScript={canEditScripts}
@@ -215,7 +214,6 @@ const TownSquarePagePLAYER = ({ gameId, currentProfile }: TownSquarePagePLAYERPr
                         onOpenChange={setIsAnnouncementComposerOpen}
                         requireMarkdown={true}
                         onSubmit={createAnnouncement}
-                        submitLabel='Publish'
                         title='Create announcement'
                         gameId={gameId}
                         showScript={canEditScripts}
@@ -240,10 +238,10 @@ const TownSquarePagePLAYER = ({ gameId, currentProfile }: TownSquarePagePLAYERPr
                                 title,
                             });
                         }}
-                        submitLabel='Save changes'
                         title='Edit thread'
                         gameId={gameId}
                         showScript={canEditScripts}
+                        historyKey={`townSquareThread:${gameId}:${selectedThread?.postId ?? ''}`}
                     />
 
                     <MarkdownEditorDialog
@@ -272,7 +270,6 @@ const TownSquarePagePLAYER = ({ gameId, currentProfile }: TownSquarePagePLAYERPr
 
                             setReplyTargetCommentId(null);
                         }}
-                        submitLabel='Post reply'
                         title='Write reply'
                         gameId={gameId}
                         showScript={canEditScripts}
@@ -299,10 +296,10 @@ const TownSquarePagePLAYER = ({ gameId, currentProfile }: TownSquarePagePLAYERPr
                             });
                             setEditingReplyId(null);
                         }}
-                        submitLabel='Save changes'
                         title='Edit reply'
                         gameId={gameId}
                         showScript={canEditScripts}
+                        historyKey={`townSquareReply:${gameId}:${editingReply?.commentId ?? ''}`}
                     />
                 </>
             )}

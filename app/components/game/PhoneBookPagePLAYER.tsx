@@ -101,6 +101,7 @@ const PhoneBookPagePLAYER = ({ gameId, currentUserId, currentEmail }: PhoneBookP
                     onSave={setMyProfile}
                     title='Edit your profile'
                     frameVariant={frameVariant}
+                    historyKey={`playerProfile:${gameId}:${currentUserId}`}
                 />
             </Column>
         </Animated.View>

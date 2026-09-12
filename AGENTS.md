@@ -93,16 +93,14 @@ See `app/components/game/MarkdownEditorDialog.tsx` for the canonical implementat
    <UnsavedChangesDialog
      isOpen={isLeaveConfirmOpen}
      onOpenChange={setIsLeaveConfirmOpen}
-     onStay={handleCancelLeave}
-     onLeave={handleConfirmLeave}
+     onSave={handleSubmit}
+     onDiscard={handleConfirmLeave}
    />
    ```
 
 7. **`handleConfirmLeave`** closes both dialogs: `setIsLeaveConfirmOpen(false); onOpenChange(false);`
 
-8. **`handleCancelLeave`** just closes the confirm: `setIsLeaveConfirmOpen(false);`
-
-9. **Reset `isLeaveConfirmOpen` to `false`** in the open `useEffect` so stale state doesn't persist across reopens.
+8. **Reset `isLeaveConfirmOpen` to `false`** in the open `useEffect` so stale state doesn't persist across reopens.
 
 ### Dialogs that already follow this pattern
 

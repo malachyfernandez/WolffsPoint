@@ -107,7 +107,6 @@ const RuleBookPageOPERATOR = ({ gameId, onBack }: RuleBookPageOPERATORProps) => 
         isOpen={isEditDialogOpen}
         onOpenChange={setIsEditDialogOpen}
         title={ruleBookTitle || DEFAULT_RULE_BOOK_TITLE}
-        submitLabel="Save Rule Book"
         initialMarkdown={ruleBookData?.value?.content || ''}
         gameId={gameId}
         showScript
@@ -117,6 +116,7 @@ const RuleBookPageOPERATOR = ({ gameId, onBack }: RuleBookPageOPERATORProps) => 
             content: markdown,
           })
         }
+        historyKey={`ruleBook:${gameId}`}
       />
 
       <TableOfContentsDialog

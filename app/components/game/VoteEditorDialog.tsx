@@ -5,6 +5,9 @@ import FontTextInput from '../ui/forms/FontTextInput';
 import ConvexDialog from '../ui/dialog/ConvexDialog';
 import DialogHeader from '../ui/dialog/DialogHeader';
 import UnsavedChangesDialog from '../ui/dialog/UnsavedChangesDialog';
+import SaveHistoryPill from '../ui/dialog/SaveHistoryPill';
+import SaveHistoryDialog from '../ui/dialog/SaveHistoryDialog';
+import ViewOnlyPreviewModal from '../ui/dialog/ViewOnlyPreviewModal';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
 import FontText from '../ui/text/FontText';
@@ -13,6 +16,9 @@ import DisableableButton from '../ui/buttons/DisableableButton';
 import { UserTableItem } from '../../../types/playerTable';
 import { MarkdownInputState, VoteValue } from '../../../types/multiplayer';
 import { normalizeVoteTargets } from '../../../utils/multiplayer';
+import { useSaveHistory, SavedEntry } from '../../../hooks/useSaveHistory';
+import { useKeyboardShortcuts } from '../../../hooks/useKeyboardShortcuts';
+import { useKeyboardShortcutHint } from '../../../contexts/KeyboardShortcutHintContext';
 const formatInputValue = (value: string) => {
   try {
     const parsed = JSON.parse(value);
@@ -34,6 +40,8 @@ interface VoteEditorDialogProps {
   onSubmit: (vote: VoteValue, voteMultiplier: number) => void;
   dialogSubtext?: string;
   users: UserTableItem[];
+  /** Scoped key for save history storage. If omitted, save history is disabled. */
+  historyKey?: string;
 }
 
 export const resolveVoteEmailToName = (vote: VoteValue, users: UserTableItem[]): string => {
@@ -59,6 +67,7 @@ const VoteEditorDialog = ({
   onSubmit,
   dialogSubtext,
   users,
+  historyKey,
 }: VoteEditorDialogProps) => {
   const initialVoteText = normalizeVoteTargets(initialVote).join(', ');
   const [draftVote, setDraftVote] = useState(initialVoteText);
@@ -68,6 +77,12 @@ const VoteEditorDialog = ({
     String(initialVoteMultiplier)
   );
   const [isLeaveConfirmDialogOpen, setIsLeaveConfirmDialogOpen] = useState(false);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [previewEntry, setPreviewEntry] = useState<SavedEntry | null>(null);
+  const [hasEverBeenEnabled, setHasEverBeenEnabled] = useState(false);
+
+  const { history, addSave, clearHistory, maxSaves } = useSaveHistory(historyKey ?? null);
+  const { setHint } = useKeyboardShortcutHint();
 
   useEffect(() => {
     if (isOpen) {
@@ -76,6 +91,9 @@ const VoteEditorDialog = ({
       setDraftMultiplier(String(initialVoteMultiplier));
       setEditingStartMultiplier(String(initialVoteMultiplier));
       setIsLeaveConfirmDialogOpen(false);
+      setIsHistoryOpen(false);
+      setPreviewEntry(null);
+      setHasEverBeenEnabled(false);
     }
   }, [initialVoteMultiplier, initialVoteText, isOpen]);
 
@@ -85,6 +103,12 @@ const VoteEditorDialog = ({
   const hasUnsavedChanges =
     draftVote.trim() !== (editingStartVote?.trim() || '') ||
     String(safeMultiplier) !== editingStartMultiplier;
+
+  useEffect(() => {
+    if (hasUnsavedChanges) {
+      setHasEverBeenEnabled(true);
+    }
+  }, [hasUnsavedChanges]);
 
   const resolvedName = useMemo(() => {
     return resolveVoteEmailToName(draftVote, users);
@@ -141,6 +165,44 @@ const VoteEditorDialog = ({
     setDraftMultiplier(cleaned);
   };
 
+  // Sticky-enabled: once Done becomes enabled, it stays enabled (until dialog closes)
+  const doneEnabled = (hasUnsavedChanges || hasEverBeenEnabled);
+
+  // Save without closing — persists via onSubmit and adds to history
+  const handleSave = () => {
+    if (!hasUnsavedChanges) return;
+    const targets = draftVote
+      .split(',')
+      .map((target) => target.trim())
+      .filter(Boolean);
+    const voteValue = targets.length > 1 ? targets : targets[0] || '';
+    onSubmit(voteValue, safeMultiplier);
+    setEditingStartVote(draftVote.trim());
+    setEditingStartMultiplier(String(safeMultiplier));
+
+    if (historyKey) {
+      const preview = `Vote: ${resolveVoteEmailToName(voteValue, users)} (${safeMultiplier}x)`;
+      addSave({ vote: voteValue, multiplier: safeMultiplier }, preview);
+    }
+  };
+
+  // Replace current draft with a saved entry from history
+  const handleReplaceFromHistory = (entry: SavedEntry) => {
+    const savedValue = entry.value as { vote: VoteValue; multiplier: number };
+    const voteText = normalizeVoteTargets(savedValue.vote).join(', ');
+    setDraftVote(voteText);
+    setDraftMultiplier(String(savedValue.multiplier));
+    setPreviewEntry(null);
+    setIsHistoryOpen(false);
+  };
+
+  // Keyboard shortcuts
+  useKeyboardShortcuts({
+    onSave: handleSave,
+    onClose: handleAttemptClose,
+    enabled: isOpen && !isHistoryOpen && !previewEntry,
+  });
+
   return (
     <>
       <ConvexDialog.Root isOpen={isOpen} onOpenChange={handleOpenChange}>
@@ -152,9 +214,18 @@ const VoteEditorDialog = ({
           <ConvexDialog.Content className="max-w-md p-1" isSwipeable={false}>
             <Pressable
               onPress={handleAttemptClose}
+              onHoverIn={() => setHint(['esc'])}
+              onHoverOut={() => setHint(null)}
               className="bg-text-inverted/10 hover:bg-text-inverted/15 absolute right-0 top-0 z-10 h-10 w-10 items-center justify-center rounded-full">
               <X size={18} color="rgb(246, 238, 219)" />
             </Pressable>
+            {historyKey && (
+              <SaveHistoryPill
+                hasUnsavedChanges={hasUnsavedChanges}
+                onSave={handleSave}
+                onOpenHistory={() => setIsHistoryOpen(true)}
+              />
+            )}
             <DialogHeader text={title} subtext={dialogSubtext} />
 
             <Column className="gap-4 p-0 pt-4 sm:p-5">
@@ -234,12 +305,14 @@ const VoteEditorDialog = ({
 
               {/* Action Buttons */}
               <Row className="justify-end gap-4 pt-2">
-                <AppButton variant="outline" onPress={handleCancel} className="h-12 w-24 sm:w-32">
+                <AppButton variant="outline" onPress={handleCancel} className="h-12 w-24 sm:w-32"
+                  onHoverIn={() => setHint(['esc'])}
+                  onHoverOut={() => setHint(null)}>
                   <FontText>Cancel</FontText>
                 </AppButton>
                 <DisableableButton
-                  isEnabled={hasUnsavedChanges}
-                  enabledText="Save"
+                  isEnabled={doneEnabled}
+                  enabledText="Done"
                   className="w-24 sm:w-32"
                   disabledText="No changes"
                   onPress={handleSubmit}
@@ -257,6 +330,38 @@ const VoteEditorDialog = ({
         onSave={handleSubmit}
         onDiscard={handleConfirmLeave}
       />
+
+      {historyKey && (
+        <>
+          <SaveHistoryDialog
+            isOpen={isHistoryOpen}
+            onOpenChange={setIsHistoryOpen}
+            history={history}
+            maxSaves={maxSaves}
+            onSelectEntry={(entry) => setPreviewEntry(entry)}
+            onClearHistory={clearHistory}
+          />
+          <ViewOnlyPreviewModal
+            isOpen={previewEntry !== null}
+            onOpenChange={(open) => { if (!open) setPreviewEntry(null); }}
+            title="Preview Saved Vote"
+            subtext={previewEntry ? new Date(previewEntry.savedAt).toLocaleString() : undefined}
+            entry={previewEntry}
+            onReplace={handleReplaceFromHistory}
+          >
+            {previewEntry && (
+              <Column className="gap-4 p-4">
+                <FontText weight="medium" className="text-sm opacity-70">Vote targets</FontText>
+                <FontText>{normalizeVoteTargets((previewEntry.value as { vote: VoteValue }).vote).join(', ') || 'No vote'}</FontText>
+                <FontText weight="medium" className="text-sm opacity-70">Resolved name</FontText>
+                <FontText>{resolveVoteEmailToName((previewEntry.value as { vote: VoteValue }).vote, users)}</FontText>
+                <FontText weight="medium" className="text-sm opacity-70">Multiplier</FontText>
+                <FontText>{(previewEntry.value as { multiplier: number }).multiplier}x</FontText>
+              </Column>
+            )}
+          </ViewOnlyPreviewModal>
+        </>
+      )}
     </>
   );
 };

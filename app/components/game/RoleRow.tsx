@@ -166,7 +166,6 @@ const RoleRow = ({
         isOpen={isRoleMessageDialogOpen}
         onOpenChange={setIsRoleMessageDialogOpen}
         title={`${role.role || 'Role'} Role Message`}
-        submitLabel="Save Message"
         initialMarkdown={role.roleMessage}
         onSubmit={({ markdown }) => setRoleMessage(index, markdown)}
         gameId={gameId}
@@ -175,6 +174,7 @@ const RoleRow = ({
         hideInputs={false}
         roleName={role.role}
         showPreviewAsPlayerOption
+        historyKey={`roleMessage:${gameId}:${index}`}
       />
       <VoteEnableDialog
         isOpen={isVoteEnableDialogOpen}
@@ -188,7 +188,6 @@ const RoleRow = ({
         isOpen={isVoteMessageDialogOpen}
         onOpenChange={setIsVoteMessageDialogOpen}
         title={`${role.role || 'Role'} Vote Message`}
-        submitLabel="Save Override"
         initialMarkdown={role.voteMessage ?? defaultVoteMessage}
         onSubmit={({ markdown }) => setVoteMessage(index, markdown)}
         dialogSubtext="Saving creates an override for this role. Save an empty message to inherit the default."
@@ -199,17 +198,18 @@ const RoleRow = ({
         allowVoteInput
         roleName={role.role}
         showPreviewAsPlayerOption
+        historyKey={`voteMessage:${gameId}:${index}`}
       />
       <MarkdownEditorDialog
         isOpen={isAboutRoleDialogOpen}
         onOpenChange={setIsAboutRoleDialogOpen}
         title={`About ${role.role || 'Role'}`}
-        submitLabel="Save About"
         initialMarkdown={role.aboutRole}
         onSubmit={({ markdown }) => setAboutRole(index, markdown)}
         gameId={gameId}
         showScript
         centered={true}
+        historyKey={`aboutRole:${gameId}:${index}`}
       />
 
       <DeleteConfirmationDialog

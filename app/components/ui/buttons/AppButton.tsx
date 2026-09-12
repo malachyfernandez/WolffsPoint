@@ -59,6 +59,7 @@ import { TouchableOpacity } from 'react-native';
 import Row from '../../layout/Row';
 import { BlurView } from 'expo-blur';
 import GuildedButton from './GuildedButton';
+import { useKeyboardShortcutHint } from '../../../../contexts/KeyboardShortcutHintContext';
 
 interface AppButtonProps {
     children: React.ReactNode;
@@ -69,6 +70,10 @@ interface AppButtonProps {
     disabled?: boolean;
     blurred?: boolean;
     gameId?: string;
+    onHoverIn?: () => void;
+    onHoverOut?: () => void;
+    /** Keyboard shortcut keys to display as a hint when hovering (e.g. ['cmd', 's'] or ['esc']) */
+    keyboardHint?: string[];
 }
 
 const AppButton = ({
@@ -80,8 +85,22 @@ const AppButton = ({
     disabled = false,
     blurred = false,
     gameId,
+    onHoverIn,
+    onHoverOut,
+    keyboardHint,
 }: AppButtonProps) => {
     const [isPressed, setIsPressed] = useState(false);
+    const { setHint } = useKeyboardShortcutHint();
+
+    const handleHoverIn = () => {
+        onHoverIn?.();
+        if (keyboardHint) setHint(keyboardHint);
+    };
+
+    const handleHoverOut = () => {
+        onHoverOut?.();
+        if (keyboardHint) setHint(null);
+    };
 
     if (variant === 'accent' || variant === 'secondary') {
         const isSecondary = variant === 'secondary';
@@ -167,6 +186,8 @@ const AppButton = ({
             onPressIn={() => !disabled && setIsPressed(true)}
             onPressOut={() => !disabled && setIsPressed(false)}
             onPress={disabled ? undefined : onPress}
+            {...(handleHoverIn ? { onHoverIn: handleHoverIn } : {})}
+            {...(handleHoverOut ? { onHoverOut: handleHoverOut } : {})}
             activeOpacity={disabled ? 1 : 0.8}
             disabled={disabled}
         >

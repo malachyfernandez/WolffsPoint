@@ -10,6 +10,8 @@ import DialogHeader from '../ui/dialog/DialogHeader';
 import CustomCheckbox from '../ui/CustomCheckbox';
 import StatusButton from '../ui/StatusButton';
 import { RoleTableItem } from '../../../types/roleTable';
+import { useKeyboardShortcuts } from '../../../hooks/useKeyboardShortcuts';
+import { useKeyboardShortcutHint } from '../../../contexts/KeyboardShortcutHintContext';
 
 interface RoleAddDialogProps {
   isOpen: boolean;
@@ -18,6 +20,8 @@ interface RoleAddDialogProps {
 }
 
 const RoleAddDialog = ({ isOpen, onOpenChange, onAddRole }: RoleAddDialogProps) => {
+  const { setHint } = useKeyboardShortcutHint();
+
   const [roleName, setRoleName] = useState('');
   const [doesRoleVote, setDoesRoleVote] = useState(true);
   const [hiddenFromRulebook, setHiddenFromRulebook] = useState(false);
@@ -49,6 +53,12 @@ const RoleAddDialog = ({ isOpen, onOpenChange, onAddRole }: RoleAddDialogProps) 
     setHiddenFromRulebook(false);
     onOpenChange(false);
   };
+
+  useKeyboardShortcuts({
+    onPrimaryAction: handleSubmit,
+    onClose: handleCancel,
+    enabled: isOpen,
+  });
 
   return (
     <ConvexDialog.Root isOpen={isOpen} onOpenChange={onOpenChange}>
@@ -103,7 +113,7 @@ const RoleAddDialog = ({ isOpen, onOpenChange, onAddRole }: RoleAddDialogProps) 
             <Column className="w-full items-center justify-center gap-4">
               <Row className="gap-4">
                 {roleName.trim() ? (
-                  <AppButton className="h-10 w-48" variant="black" onPress={handleSubmit}>
+                  <AppButton className="h-10 w-48" variant="black" onPress={handleSubmit} onHoverIn={() => setHint(['enter'])} onHoverOut={() => setHint(null)}>
                     <FontText color="white" weight="medium">
                       Add Role
                     </FontText>
@@ -115,7 +125,7 @@ const RoleAddDialog = ({ isOpen, onOpenChange, onAddRole }: RoleAddDialogProps) 
                     buttonAltText="Enter a name"
                   />
                 )}
-                <AppButton className="h-10 w-48" variant="outline" onPress={handleCancel}>
+                <AppButton className="h-10 w-48" variant="outline" onPress={handleCancel} onHoverIn={() => setHint(['esc'])} onHoverOut={() => setHint(null)}>
                   <FontText color="black" weight="medium">
                     Cancel
                   </FontText>

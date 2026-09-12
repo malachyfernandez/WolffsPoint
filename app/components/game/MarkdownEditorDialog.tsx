@@ -2,11 +2,16 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { View } from 'react-native';
 import ConvexDialog from '../ui/dialog/ConvexDialog';
 import DialogHeader from '../ui/dialog/DialogHeader';
+import SaveHistoryPill from '../ui/dialog/SaveHistoryPill';
+import SaveHistoryDialog from '../ui/dialog/SaveHistoryDialog';
+import ViewOnlyPreviewModal from '../ui/dialog/ViewOnlyPreviewModal';
 import Row from '../layout/Row';
 import AppButton from '../ui/buttons/AppButton';
 import FontText from '../ui/text/FontText';
 import { Code2 } from 'lucide-react-native';
 import { useUndoRedo, useCreateUndoSnapshot } from '../../../hooks/useUndoRedo';
+import { useSaveHistory, SavedEntry } from '../../../hooks/useSaveHistory';
+import { useKeyboardShortcuts } from '../../../hooks/useKeyboardShortcuts';
 import {
   SelectionRange,
   emptySelection,
@@ -15,9 +20,9 @@ import {
   insertAtSelection,
 } from './townSquare/townSquareUtils';
 import { CloseButton, MainContent, ActionButtons, SubDialogs } from './markdownEditor';
+import { InputOptionsProvider } from './markdownEditor/InputOptionsProvider';
 import ScriptEditorDialog from '../../script/editor/ScriptEditorDialog';
 import { useMarkdownRendererInputData } from '../ui/markdown/MarkdownRenderer';
-import { InputOptionsProvider } from './markdownEditor/InputOptionsProvider';
 import PlayerPreviewModal from './markdownEditor/PlayerPreviewModal';
 import MarkdownVariableDialog from './markdownEditor/MarkdownVariableDialog';
 import { createMarkdownVariableMarker } from '../../script/markdownVariables';
@@ -56,7 +61,6 @@ interface MarkdownEditorDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   title: string;
-  submitLabel: string;
   initialMarkdown?: string;
   initialTitle?: string;
   onSubmit: (payload: MarkdownEditorDialogSubmitPayload) => void;
@@ -81,6 +85,10 @@ interface MarkdownEditorDialogProps {
    *  editor should pass this — it saves the markdown and opens a preview modal
    *  that renders the message as a specific player would see it. */
   showPreviewAsPlayerOption?: boolean;
+  /** Scoped key for save history storage. If omitted, save history is disabled. */
+  historyKey?: string;
+  /** When true, the editor is non-editable (view-only): no editing, no save pill, no Done button, just Close. */
+  readOnly?: boolean;
 }
 
 const ScriptEditorWithSources = ({
@@ -91,6 +99,12 @@ const ScriptEditorWithSources = ({
   gameId,
   hideInputs,
   allowVoteInput,
+  onSaveToServer,
+  historyEntries,
+  historyMaxSaves,
+  onClearHistory,
+  renderPreviewContent,
+  readOnly,
 }: {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
@@ -99,6 +113,12 @@ const ScriptEditorWithSources = ({
   gameId?: string;
   hideInputs?: boolean;
   allowVoteInput?: boolean;
+  onSaveToServer?: (scriptText: string) => void;
+  historyEntries?: SavedEntry[];
+  historyMaxSaves?: number;
+  onClearHistory?: () => void;
+  renderPreviewContent?: (entry: SavedEntry) => React.ReactNode;
+  readOnly?: boolean;
 }) => {
   const { scriptSources } = useMarkdownRendererInputData();
   return (
@@ -111,6 +131,12 @@ const ScriptEditorWithSources = ({
       gameId={gameId}
       hideInputs={hideInputs}
       allowVoteInput={allowVoteInput}
+      onSaveToServer={onSaveToServer}
+      historyEntries={historyEntries}
+      historyMaxSaves={historyMaxSaves}
+      onClearHistory={onClearHistory}
+      renderPreviewContent={renderPreviewContent}
+      readOnly={readOnly}
     />
   );
 };
@@ -119,7 +145,6 @@ const MarkdownEditorDialog = ({
   isOpen,
   onOpenChange,
   title,
-  submitLabel,
   initialMarkdown = '',
   initialTitle = '',
   onSubmit,
@@ -138,9 +163,12 @@ const MarkdownEditorDialog = ({
   centered = false,
   roleName,
   showPreviewAsPlayerOption = false,
+  historyKey,
+  readOnly = false,
 }: MarkdownEditorDialogProps) => {
   const { executeCommand } = useUndoRedo();
   const createUndoSnapshot = useCreateUndoSnapshot();
+  const { history, addSave, clearHistory, maxSaves } = useSaveHistory(historyKey ?? null);
 
   const [activeTab, setActiveTab] = useState('editing');
   const [draftTitle, setDraftTitle] = useState('');
@@ -164,9 +192,15 @@ const MarkdownEditorDialog = ({
     {}
   );
   const [isPlayerPreviewOpen, setIsPlayerPreviewOpen] = useState(false);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [previewEntry, setPreviewEntry] = useState<SavedEntry | null>(null);
+
+  // Sticky-enabled: once Done becomes enabled, it stays enabled (until dialog closes)
+  const [hasEverBeenEnabled, setHasEverBeenEnabled] = useState(false);
 
   useEffect(() => {
     if (!isOpen) {
+      setHasEverBeenEnabled(false);
       return;
     }
 
@@ -184,6 +218,9 @@ const MarkdownEditorDialog = ({
     setIsLeaveConfirmDialogOpen(false);
     setEditingScriptBlock(null);
     setPreviewInputState({});
+    setIsHistoryOpen(false);
+    setPreviewEntry(null);
+    setHasEverBeenEnabled(false);
   }, [initialMarkdown, initialTitle, isOpen]);
 
   const handleTabChange = (newTab: string) => {
@@ -215,9 +252,18 @@ const MarkdownEditorDialog = ({
   const isTitleValid = !includeTitle || draftTitle.trim().length > 0;
   const isMarkdownValid = !requireMarkdown || draftBody.trim().length > 0;
   const hasUnsavedChanges =
-    draftBody.trim() !== (initialMarkdown?.trim() || '') ||
-    (includeTitle && draftTitle.trim() !== (initialTitle?.trim() || ''));
-  const canSubmit = isTitleValid && isMarkdownValid && hasUnsavedChanges;
+    draftBody.trim() !== (editingStartText?.trim() || '') ||
+    (includeTitle && draftTitle.trim() !== (editingStartTitle?.trim() || ''));
+  const isInvalid = !isTitleValid || !isMarkdownValid;
+
+  // Sticky-enabled: once enabled, stays enabled unless invalid
+  const doneEnabled = (hasUnsavedChanges || hasEverBeenEnabled) && !isInvalid;
+
+  useEffect(() => {
+    if (hasUnsavedChanges) {
+      setHasEverBeenEnabled(true);
+    }
+  }, [hasUnsavedChanges]);
 
   const submitDisabledText = !isTitleValid
     ? 'No Title'
@@ -236,9 +282,6 @@ const MarkdownEditorDialog = ({
   };
 
   // Intercept all dismiss attempts (overlay click, escape) to check for unsaved changes.
-  // Swipe is disabled when there are unsaved changes (via isSwipeable prop) because
-  // HeroUI's swipe animation completes before onOpenChange fires, leaving the dialog
-  // stuck off-screen if we intercept the close.
   const handleOpenChange = (open: boolean) => {
     if (!open && hasUnsavedChanges) {
       setIsLeaveConfirmDialogOpen(true);
@@ -268,7 +311,7 @@ const MarkdownEditorDialog = ({
   };
 
   const handleSubmit = () => {
-    if (!canSubmit) {
+    if (!doneEnabled) {
       return;
     }
 
@@ -280,8 +323,53 @@ const MarkdownEditorDialog = ({
     onOpenChange(false);
   };
 
+  // Save without closing — persists via onSubmit and adds to history
+  const handleSave = () => {
+    if (isInvalid) return;
+    if (!hasUnsavedChanges) return;
+
+    onSubmit({
+      markdown: draftBody.trim(),
+      plainText: stripMarkdownSyntax(draftBody.trim()),
+      title: includeTitle ? draftTitle.trim() : undefined,
+    });
+
+    // Update the editing start so hasUnsavedChanges becomes false
+    setEditingStartText(draftBody.trim());
+    if (includeTitle) setEditingStartTitle(draftTitle.trim());
+
+    // Add to save history
+    if (historyKey) {
+      const preview = stripMarkdownSyntax(draftBody.trim()).slice(0, 200);
+      addSave(
+        {
+          markdown: draftBody.trim(),
+          title: includeTitle ? draftTitle.trim() : undefined,
+        },
+        preview
+      );
+    }
+  };
+
+  // Replace current draft with a saved entry from history
+  const handleReplaceFromHistory = (entry: SavedEntry) => {
+    const savedValue = entry.value as { markdown: string; title?: string };
+    setDraftBody(savedValue.markdown);
+    if (includeTitle && savedValue.title !== undefined) {
+      setDraftTitle(savedValue.title);
+    }
+    setPreviewEntry(null);
+    setIsHistoryOpen(false);
+  };
+
+  // Keyboard shortcuts
+  useKeyboardShortcuts({
+    onSave: handleSave,
+    onClose: handleAttemptClose,
+    enabled: isOpen && !isHistoryOpen && !previewEntry,
+  });
+
   const handlePreviewAsPlayer = () => {
-    // Force save: submit the current draft, then open the preview modal
     const markdownToSave = draftBody.trim();
     onSubmit({
       markdown: markdownToSave,
@@ -321,7 +409,6 @@ const MarkdownEditorDialog = ({
 
   const handleUpdateScript = (scriptText: string) => {
     if (editingScriptBlock) {
-      // Replace the existing script block in-place.
       const before = draftBody.slice(0, editingScriptBlock.start);
       const after = draftBody.slice(editingScriptBlock.end);
       const nextBody = `${before}${scriptText}${after}`;
@@ -330,10 +417,50 @@ const MarkdownEditorDialog = ({
       setSelection({ start: newCursor, end: newCursor });
       setEditingScriptBlock(null);
     } else {
-      // Inserting a new script.
       runBodyUpdate((value, range) => insertAtSelection(value, range, `\n\n${scriptText}\n\n`));
     }
     setIsScriptDialogOpen(false);
+  };
+
+  // Called by the script editor when the user presses Save or Done — inserts the
+  // script into the draft AND saves the full markdown to the server (fixes the
+  // double-save issue where the script editor's "Save" only updated the draft).
+  const handleSaveScriptToServer = (scriptText: string) => {
+    let nextBody: string;
+    if (editingScriptBlock) {
+      const before = draftBody.slice(0, editingScriptBlock.start);
+      const after = draftBody.slice(editingScriptBlock.end);
+      nextBody = `${before}${scriptText}${after}`;
+      setDraftBody(nextBody);
+      const newCursor = editingScriptBlock.start + scriptText.length;
+      setSelection({ start: newCursor, end: newCursor });
+      setEditingScriptBlock(null);
+    } else {
+      const result = insertAtSelection(draftBody, selection, `\n\n${scriptText}\n\n`);
+      nextBody = result.value;
+      setDraftBody(nextBody);
+      setSelection(result.selection);
+    }
+
+    // Save to server
+    onSubmit({
+      markdown: nextBody.trim(),
+      plainText: stripMarkdownSyntax(nextBody.trim()),
+      title: includeTitle ? draftTitle.trim() : undefined,
+    });
+    setEditingStartText(nextBody.trim());
+
+    // Add to shared history
+    if (historyKey) {
+      const preview = stripMarkdownSyntax(nextBody.trim()).slice(0, 200);
+      addSave(
+        {
+          markdown: nextBody.trim(),
+          title: includeTitle ? draftTitle.trim() : undefined,
+        },
+        preview
+      );
+    }
   };
 
   return (
@@ -346,7 +473,16 @@ const MarkdownEditorDialog = ({
           <ConvexDialog.Overlay />
           <InputOptionsProvider gameId={gameId} showInputs>
             <ConvexDialog.Content className="h-[80vh]" isSwipeable={false}>
-              <CloseButton onPress={handleAttemptClose} />
+              <CloseButton onPress={readOnly ? () => onOpenChange(false) : handleAttemptClose} />
+              {historyKey && !readOnly && (
+                <SaveHistoryPill
+                  hasUnsavedChanges={hasUnsavedChanges}
+                  isInvalid={isInvalid && hasUnsavedChanges}
+                  invalidMessage={!isTitleValid ? 'Title is required' : !isMarkdownValid ? 'Text is required' : undefined}
+                  onSave={handleSave}
+                  onOpenHistory={() => setIsHistoryOpen(true)}
+                />
+              )}
               <DialogHeader text={title} subtext={dialogSubtext} />
               <MainContent
                 includeTitle={includeTitle}
@@ -374,9 +510,10 @@ const MarkdownEditorDialog = ({
                 centered={centered}
                 showPreviewAsPlayer={showPreviewAsPlayerOption}
                 onPreviewAsPlayer={handlePreviewAsPlayer}
+                readOnly={readOnly}
               />
               <Row className="-mx-3 items-center justify-between gap-4 pt-4 sm:mx-0">
-                {cursorScriptBlock ? (
+                {cursorScriptBlock && !readOnly ? (
                   <AppButton
                     variant="outline"
                     className="h-8 px-3"
@@ -390,13 +527,23 @@ const MarkdownEditorDialog = ({
                 ) : (
                   <View />
                 )}
-                <ActionButtons
-                  canSubmit={canSubmit}
-                  submitLabel={submitLabel}
-                  submitDisabledText={submitDisabledText}
-                  onCancel={handleAttemptClose}
-                  onSubmit={handleSubmit}
-                />
+                {readOnly ? (
+                  <Row className="gap-4 justify-end">
+                    <AppButton
+                      variant="filled"
+                      className="w-32"
+                      onPress={() => onOpenChange(false)}>
+                      <FontText color="white" weight="medium">Close</FontText>
+                    </AppButton>
+                  </Row>
+                ) : (
+                  <ActionButtons
+                    canSubmit={doneEnabled}
+                    submitDisabledText={submitDisabledText}
+                    onCancel={handleAttemptClose}
+                    onSubmit={handleSubmit}
+                  />
+                )}
               </Row>
             </ConvexDialog.Content>
           </InputOptionsProvider>
@@ -444,6 +591,38 @@ const MarkdownEditorDialog = ({
           gameId={gameId}
           hideInputs={hideInputs}
           allowVoteInput={allowVoteInput}
+          onSaveToServer={historyKey ? handleSaveScriptToServer : undefined}
+          historyEntries={historyKey ? history : undefined}
+          historyMaxSaves={historyKey ? maxSaves : undefined}
+          onClearHistory={historyKey ? clearHistory : undefined}
+          renderPreviewContent={historyKey ? ((entry: SavedEntry) => (
+            <InputOptionsProvider gameId={gameId} showInputs>
+              <MainContent
+                includeTitle={includeTitle}
+                titleInputLabel={titleInputLabel}
+                titleInputPlaceholder={titleInputPlaceholder}
+                draftTitle={(entry.value as { title?: string })?.title ?? ''}
+                draftBody={(entry.value as { markdown: string })?.markdown ?? ''}
+                isPreviewSideBySide={isPreviewSideBySide}
+                activeTab="preview"
+                showInputs={showInputs}
+                previewInputState={{}}
+                setPreviewInputState={() => {}}
+                setDraftTitle={() => {}}
+                setDraftBody={() => {}}
+                setSelection={() => {}}
+                onTabChange={() => {}}
+                onBold={() => {}}
+                onItalic={() => {}}
+                onLink={() => {}}
+                onImage={() => {}}
+                onInput={() => {}}
+                onMore={() => {}}
+                centered={centered}
+                readOnly
+              />
+            </InputOptionsProvider>
+          )) : undefined}
         />
       </InputOptionsProvider>
 
@@ -454,6 +633,56 @@ const MarkdownEditorDialog = ({
           gameId={gameId}
           roleName={roleName}
         />
+      )}
+
+      {historyKey && (
+        <>
+          <SaveHistoryDialog
+            isOpen={isHistoryOpen}
+            onOpenChange={setIsHistoryOpen}
+            history={history}
+            maxSaves={maxSaves}
+            onSelectEntry={(entry) => setPreviewEntry(entry)}
+            onClearHistory={clearHistory}
+          />
+          <ViewOnlyPreviewModal
+            isOpen={previewEntry !== null}
+            onOpenChange={(open) => { if (!open) setPreviewEntry(null); }}
+            title="Preview Saved Version"
+            subtext={previewEntry ? new Date(previewEntry.savedAt).toLocaleString() : undefined}
+            entry={previewEntry}
+            onReplace={handleReplaceFromHistory}
+          >
+            {previewEntry && (
+              <InputOptionsProvider gameId={gameId} showInputs>
+                <MainContent
+                  includeTitle={includeTitle}
+                  titleInputLabel={titleInputLabel}
+                  titleInputPlaceholder={titleInputPlaceholder}
+                  draftTitle={(previewEntry.value as { title?: string })?.title ?? ''}
+                  draftBody={(previewEntry.value as { markdown: string })?.markdown ?? ''}
+                  isPreviewSideBySide={isPreviewSideBySide}
+                  activeTab="preview"
+                  showInputs={showInputs}
+                  previewInputState={{}}
+                  setPreviewInputState={() => {}}
+                  setDraftTitle={() => {}}
+                  setDraftBody={() => {}}
+                  setSelection={() => {}}
+                  onTabChange={() => {}}
+                  onBold={() => {}}
+                  onItalic={() => {}}
+                  onLink={() => {}}
+                  onImage={() => {}}
+                  onInput={() => {}}
+                  onMore={() => {}}
+                  centered={centered}
+                  readOnly
+                />
+              </InputOptionsProvider>
+            )}
+          </ViewOnlyPreviewModal>
+        </>
       )}
     </>
   );

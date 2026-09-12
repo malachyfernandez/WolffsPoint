@@ -249,7 +249,6 @@ const RoleTable = ({
         isOpen={isDefaultVoteMessageOpen}
         onOpenChange={setIsDefaultVoteMessageOpen}
         title="Default Vote Message"
-        submitLabel="Save Default"
         initialMarkdown={defaultVoteMessage?.value ?? DEFAULT_VOTE_MESSAGE}
         onSubmit={({ markdown }) => setDefaultVoteMessage(markdown)}
         gameId={gameId}
@@ -257,6 +256,7 @@ const RoleTable = ({
         showScript
         hideInputs={false}
         allowVoteInput
+        historyKey={`defaultVoteMessage:${gameId}`}
       />
     </>
   );

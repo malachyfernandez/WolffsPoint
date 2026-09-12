@@ -15,6 +15,8 @@ import { useValue, useList } from 'hooks/useData';
 import { getGameScopedKey } from 'utils/multiplayer';
 import type { UserTableItem, UserTableTitle } from '../../../types/playerTable';
 import type { ScriptSourceData } from '../../script/runtime/sources';
+import { useKeyboardShortcuts } from '../../../hooks/useKeyboardShortcuts';
+import { useKeyboardShortcutHint } from '../../../contexts/KeyboardShortcutHintContext';
 
 interface AddTagDialogProps {
   isOpen: boolean;
@@ -45,6 +47,8 @@ const AddTagDialog = ({
   onDelete,
   gameId,
 }: AddTagDialogProps) => {
+  const { setHint } = useKeyboardShortcutHint();
+
   const [name, setName] = useState('');
   const [selectedColor, setSelectedColor] = useState<string>(TAG_COLORS[0].name);
   const [isLeaveConfirmOpen, setIsLeaveConfirmOpen] = useState(false);
@@ -168,6 +172,12 @@ const AddTagDialog = ({
     }
   };
 
+  useKeyboardShortcuts({
+    onPrimaryAction: handleSubmit,
+    onClose: handleAttemptClose,
+    enabled: isOpen,
+  });
+
   return (
     <>
       <ConvexDialog.Root isOpen={isOpen} onOpenChange={handleOpenChange}>
@@ -176,6 +186,8 @@ const AddTagDialog = ({
           <ConvexDialog.Content className="max-w-md" isSwipeable={false}>
             <Pressable
               onPress={handleAttemptClose}
+              onHoverIn={() => setHint(['esc'])}
+              onHoverOut={() => setHint(null)}
               className="bg-text-inverted/10 hover:bg-text-inverted/15 absolute right-0 top-0 z-10 h-10 w-10 items-center justify-center rounded-full">
               <X size={18} color="rgb(246, 238, 219)" />
             </Pressable>
@@ -276,12 +288,14 @@ const AddTagDialog = ({
                   className="h-10 flex-1"
                   variant="black"
                   onPress={handleSubmit}
+                  onHoverIn={() => setHint(['enter'])}
+                  onHoverOut={() => setHint(null)}
                   disabled={!canSubmit}>
                   <FontText color="white" weight="medium">
                     {isEditMode ? 'Save' : 'Create'}
                   </FontText>
                 </AppButton>
-                <AppButton className="h-10 flex-1" variant="outline" onPress={handleAttemptClose}>
+                <AppButton className="h-10 flex-1" variant="outline" onPress={handleAttemptClose} onHoverIn={() => setHint(['esc'])} onHoverOut={() => setHint(null)}>
                   <FontText weight="medium">Cancel</FontText>
                 </AppButton>
               </Row>

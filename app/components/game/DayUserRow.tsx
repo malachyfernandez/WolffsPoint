@@ -177,6 +177,7 @@ const DayUserRow = ({
         initialAction={getPlayerActionSummary(dayData.action)}
         onSubmit={(action) => setActionValue?.(index, action)}
         dialogSubtext={`Set the action for ${user.realName || 'User'}.`}
+        historyKey={`action:${gameId}:${dayNumber}:${index}`}
       />
       <VoteEditorDialog
         isOpen={isVoteDialogOpen}
@@ -189,6 +190,7 @@ const DayUserRow = ({
         onSubmit={(vote, multiplier) => setVoteValue?.(index, vote, multiplier)}
         dialogSubtext={`Set the vote target for ${user.realName || 'User'}.`}
         users={users}
+        historyKey={`vote:${gameId}:${dayNumber}:${index}`}
       />
     </Row>
   );

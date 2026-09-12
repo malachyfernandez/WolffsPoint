@@ -250,7 +250,6 @@ const NightlyDayUserRow = ({
         isOpen={isMessageDialogOpen}
         onOpenChange={setIsMessageDialogOpen}
         title={`${user.realName || 'User'} Morning Message (Tomorrow)`}
-        submitLabel="Save Message"
         initialMarkdown={getCurrentMorningMessage()}
         onSubmit={({ markdown }) => updateMorningMessage(dayNumber, index, markdown)}
         dialogSubtext={`Set the message ${user.realName || 'User'} will see after this day ends.`}
@@ -259,6 +258,7 @@ const NightlyDayUserRow = ({
         showInputs
         hideInputs={false}
         centered={true}
+        historyKey={`morningMessage:${gameId}:${dayNumber}:${index}`}
       />
       <ActionEditorDialog
         isOpen={isActionDialogOpen}
@@ -267,6 +267,7 @@ const NightlyDayUserRow = ({
         initialAction={getPlayerActionSummary(dayData.action)}
         onSubmit={(action) => setActionValue?.(index, action)}
         dialogSubtext={`Set the action for ${user.realName || 'User'}.`}
+        historyKey={`action:${gameId}:${dayNumber}:${index}`}
       />
       <VoteEditorDialog
         isOpen={isVoteDialogOpen}
@@ -279,6 +280,7 @@ const NightlyDayUserRow = ({
         onSubmit={(vote, multiplier) => setVoteValue?.(index, vote, multiplier)}
         dialogSubtext={`Set the vote target for ${user.realName || 'User'}.`}
         users={users}
+        historyKey={`vote:${gameId}:${dayNumber}:${index}`}
       />
     </>
   );

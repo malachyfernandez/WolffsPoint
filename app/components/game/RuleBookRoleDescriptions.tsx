@@ -247,7 +247,6 @@ const RuleBookRoleDescriptions = ({ gameId, headingIdPrefix }: RuleBookRoleDescr
         isOpen={editingRoleIndex !== null}
         onOpenChange={(open) => !open && setEditingRoleIndex(null)}
         title={`About ${editingRoleIndex !== null ? roles[editingRoleIndex]?.role || 'Role' : 'Role'}`}
-        submitLabel="Save About"
         initialMarkdown={editingRoleIndex !== null ? roles[editingRoleIndex]?.aboutRole || '' : ''}
         gameId={gameId}
         showScript
@@ -256,6 +255,7 @@ const RuleBookRoleDescriptions = ({ gameId, headingIdPrefix }: RuleBookRoleDescr
             UNDOABLEsetAboutRole(editingRoleIndex, markdown);
           }
         }}
+        historyKey={`aboutRole:${gameId}:${editingRoleIndex ?? ''}`}
       />
 
       <ConvexDialog.Root

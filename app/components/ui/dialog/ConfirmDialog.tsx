@@ -6,6 +6,8 @@ import AppButton from '../buttons/AppButton';
 import FontText from '../text/FontText';
 import ConvexDialog from './ConvexDialog';
 import DialogHeader from './DialogHeader';
+import { useKeyboardShortcuts } from '../../../../hooks/useKeyboardShortcuts';
+import { useKeyboardShortcutHint } from '../../../../contexts/KeyboardShortcutHintContext';
 
 interface ConfirmDialogProps {
   isOpen: boolean;
@@ -34,6 +36,18 @@ const ConfirmDialog = ({
   cancelLabel = 'Cancel',
   danger = false,
 }: ConfirmDialogProps) => {
+  const { setHint } = useKeyboardShortcutHint();
+
+  // Enter = primary action (confirm), Esc = cancel
+  useKeyboardShortcuts({
+    onPrimaryAction: () => {
+      onOpenChange(false);
+      onConfirm();
+    },
+    onClose: () => onOpenChange(false),
+    enabled: isOpen,
+  });
+
   return (
     <ConvexDialog.Root isOpen={isOpen} onOpenChange={onOpenChange}>
       <ConvexDialog.Portal>
@@ -41,6 +55,8 @@ const ConfirmDialog = ({
         <ConvexDialog.Content className="max-w-md p-6" isSwipeable={false}>
           <Pressable
             onPress={() => onOpenChange(false)}
+            onHoverIn={() => setHint(['esc'])}
+            onHoverOut={() => setHint(null)}
             className="absolute left-0 top-0 z-10 h-10 w-10 items-center justify-center rounded-full bg-text-inverted/10 hover:bg-text-inverted/15"
             accessibilityRole="button"
             accessibilityLabel="Cancel">
@@ -55,7 +71,12 @@ const ConfirmDialog = ({
             </Column>
           )}
           <Row className="gap-4 justify-center pt-4">
-            <AppButton variant="outline" className="w-24" onPress={() => onOpenChange(false)}>
+            <AppButton
+              variant="outline"
+              className="w-24"
+              onPress={() => onOpenChange(false)}
+              onHoverIn={() => setHint(['esc'])}
+              onHoverOut={() => setHint(null)}>
               <FontText weight="medium">{cancelLabel}</FontText>
             </AppButton>
             <AppButton
@@ -64,7 +85,9 @@ const ConfirmDialog = ({
               onPress={() => {
                 onOpenChange(false);
                 onConfirm();
-              }}>
+              }}
+              onHoverIn={() => setHint(['enter'])}
+              onHoverOut={() => setHint(null)}>
               <FontText weight="medium" color="white">
                 {confirmLabel}
               </FontText>

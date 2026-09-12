@@ -120,4 +120,9 @@ export const DATA_CONFIG: DataConfigType = {
     privacy: 'PRIVATE',
     defaultValue: [],
   },
+  saveHistory: {
+    type: 'variable',
+    privacy: 'PRIVATE',
+    defaultValue: [],
+  },
 };

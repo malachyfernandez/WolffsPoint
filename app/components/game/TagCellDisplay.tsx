@@ -116,6 +116,11 @@ const TagCellDisplay = ({
         cellContext={cellContext}
         onTagsAdded={onTagsAdded}
         onTagsRemoved={onTagsRemoved}
+        historyKey={
+          cellContext
+            ? `tagCell:${gameId}:${cellContext.playerIndex}:${cellContext.dayIndex ?? 'player'}:${cellContext.column}`
+            : `tagCell:${gameId}:${value.slice(0, 20)}`
+        }
       />
     </>
   );

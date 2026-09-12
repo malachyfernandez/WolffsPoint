@@ -78,7 +78,38 @@ const convex = new ConvexReactClient(process.env.EXPO_PUBLIC_CONVEX_URL!);
 const basePortalClassName = 'flex-1 w-full h-full px-4 py-6 items-center justify-center';
 
 const ConvexDialogContent = ({ children }: { children: React.ReactNode }) => {
-    return <ConvexProvider client={convex}>{children}</ConvexProvider>;
+    const containerRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        // When a new dialog mounts, move focus away from any element in the
+        // underlying modal. Focus the first focusable element inside this dialog
+        // (or the container itself as a fallback) so keyboard events go to the
+        // top-most modal, not the one below.
+        const timer = setTimeout(() => {
+            const container = containerRef.current;
+            if (!container) return;
+            const focusable = container.querySelector<HTMLElement>(
+                'button, [href], input, textarea, select, [tabindex]:not([tabindex="-1"])'
+            );
+            if (focusable) {
+                focusable.focus();
+            } else {
+                // No focusable child — make the container itself focusable so it
+                // receives keyboard events instead of the underlying modal.
+                container.setAttribute('tabindex', '-1');
+                container.focus();
+            }
+        }, 0);
+        return () => clearTimeout(timer);
+    }, []);
+
+    return (
+        <ConvexProvider client={convex}>
+            <div ref={containerRef} style={{ display: 'contents' }}>
+                {children}
+            </div>
+        </ConvexProvider>
+    );
 };
 
 const baseContentClassName = 'w-full self-center bg-transparent border-0 p-0 overflow-visible shadow-none';
@@ -111,13 +142,14 @@ const WidthTrackingDialogContent = ({ children, outerClassName, innerHeightClass
 const renderWrappedContent = (children: React.ReactNode, outerClassName?: string, innerHeightClassName?: string, style?: any, props?: any, frameVariant?: 'gold' | 'ghostly') => {
     return (
         <WidthTrackingDialogContent 
-            children={children}
             outerClassName={outerClassName}
             innerHeightClassName={innerHeightClassName}
             style={style}
             props={props}
             frameVariant={frameVariant}
-        />
+        >
+            {children}
+        </WidthTrackingDialogContent>
     );
 };
 

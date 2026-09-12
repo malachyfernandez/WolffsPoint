@@ -8,9 +8,11 @@ interface TownSquareComposerEditorPaneProps {
     onBodyChange: (value: string) => void;
     onSelectionChange: (selection: SelectionRange) => void;
     value: string;
+    /** When true, the editor is non-editable (view-only). */
+    readOnly?: boolean;
 }
 
-const TownSquareComposerEditorPane = ({ onBodyChange, onSelectionChange, value }: TownSquareComposerEditorPaneProps) => {
+const TownSquareComposerEditorPane = ({ onBodyChange, onSelectionChange, value, readOnly = false }: TownSquareComposerEditorPaneProps) => {
     const [contentHeight, setContentHeight] = useState(0);
     const lineCount = value.split('\n').length;
     const minHeight = Math.max(120, lineCount * 24 + 32);
@@ -23,11 +25,12 @@ const TownSquareComposerEditorPane = ({ onBodyChange, onSelectionChange, value }
                     autoGrow
                     multiline
                     className='min-w-0 rounded-3xl bg-text/10 p-4 text-base text-text'
-                    onChangeText={onBodyChange}
-                    onSelectionChange={(event) => onSelectionChange(event.nativeEvent.selection)}
+                    onChangeText={readOnly ? undefined : onBodyChange}
+                    onSelectionChange={readOnly ? undefined : (event) => onSelectionChange(event.nativeEvent.selection)}
                     placeholder='Write the thread the way you want it to look.'
                     style={{ lineHeight: '24px', minHeight: '50vh' } as any}
                     value={value}
+                    editable={!readOnly}
                 />
             </Column>
         );
@@ -38,14 +41,15 @@ const TownSquareComposerEditorPane = ({ onBodyChange, onSelectionChange, value }
             <TextInput
                 multiline={true}
                 className='min-w-0 min-h-[50vh] rounded-3xl bg-text/10 overflow-hidden p-4 text-base text-text'
-                onChangeText={onBodyChange}
+                onChangeText={readOnly ? undefined : onBodyChange}
                 onContentSizeChange={(event) => setContentHeight(event.nativeEvent.contentSize.height)}
-                onSelectionChange={(event) => onSelectionChange(event.nativeEvent.selection)}
+                onSelectionChange={readOnly ? undefined : (event) => onSelectionChange(event.nativeEvent.selection)}
                 placeholder='Write the thread the way you want it to look.'
                 placeholderTextColor='#0004'
                 scrollEnabled={false}
                 style={{ lineHeight: 24, textAlignVertical: 'top', height }}
                 value={value}
+                editable={!readOnly}
             />
         </Column>
     );

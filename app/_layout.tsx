@@ -10,6 +10,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { PortalHost } from "@rn-primitives/portal";
 import { tokenCache } from '../utils/tokenCache';
 import { ToastProvider } from '../contexts/ToastContext';
+import { KeyboardShortcutHintProvider } from '../contexts/KeyboardShortcutHintContext';
 import { useGlobalRateLimitMonitor } from '../hooks/useRateLimitMonitor';
 import { GenerationProvider } from '../contexts/GenerationContext';
 import { WebDropdownProvider } from '../contexts/WebDropdownProvider';
@@ -127,6 +128,7 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <GenerationProvider>
         <ToastProvider>
+          <KeyboardShortcutHintProvider>
           <GlobalRateLimitMonitor />
           <WebThemeColorSync />
           <HeroUINativeProvider
@@ -149,6 +151,7 @@ export default function RootLayout() {
               </ClerkLoaded>
             </ClerkProvider>
           </HeroUINativeProvider>
+          </KeyboardShortcutHintProvider>
         </ToastProvider>
       </GenerationProvider>
     </GestureHandlerRootView>

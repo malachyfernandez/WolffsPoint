@@ -101,7 +101,6 @@ const TownSquarePostDialog = ({ gameId, isOpen, onOpenChange, post, currentProfi
                 isOpen={isCommentDialogOpen}
                 onOpenChange={setIsCommentDialogOpen}
                 title='Add comment'
-                submitLabel='Post comment'
                 requireMarkdown={true}
                 gameId={gameId}
                 showScript={canEditScripts}

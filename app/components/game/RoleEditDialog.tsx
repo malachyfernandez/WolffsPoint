@@ -11,6 +11,8 @@ import DialogHeader from '../ui/dialog/DialogHeader';
 import CustomCheckbox from '../ui/CustomCheckbox';
 import StatusButton from '../ui/StatusButton';
 import { RoleTableItem } from '../../../types/roleTable';
+import { useKeyboardShortcuts } from '../../../hooks/useKeyboardShortcuts';
+import { useKeyboardShortcutHint } from '../../../contexts/KeyboardShortcutHintContext';
 
 interface RoleEditDialogProps {
   isOpen: boolean;
@@ -35,6 +37,8 @@ const RoleEditDialog = ({
   const [doesRoleVote, setDoesRoleVote] = useState(role.doesRoleVote);
   const [hiddenFromRulebook, setHiddenFromRulebook] = useState(role.hiddenFromRulebook === true);
   const [isLeaveConfirmDialogOpen, setIsLeaveConfirmDialogOpen] = useState(false);
+
+  const { setHint } = useKeyboardShortcutHint();
 
   useEffect(() => {
     if (isOpen) {
@@ -92,6 +96,12 @@ const RoleEditDialog = ({
     onOpenChange(false);
   };
 
+  useKeyboardShortcuts({
+    onPrimaryAction: handleSave,
+    onClose: handleAttemptClose,
+    enabled: isOpen,
+  });
+
   return (
     <>
       <ConvexDialog.Root isOpen={isOpen} onOpenChange={handleOpenChange}>
@@ -148,7 +158,7 @@ const RoleEditDialog = ({
               <Column className="w-full items-center justify-center gap-4">
                 <Row className="gap-4">
                   {hasChange && roleName.trim() ? (
-                    <AppButton className="h-10 w-48" variant="black" onPress={handleSave}>
+                    <AppButton className="h-10 w-48" variant="black" onPress={handleSave} onHoverIn={() => setHint(['enter'])} onHoverOut={() => setHint(null)}>
                       <FontText color="white" weight="medium">
                         Save
                       </FontText>
@@ -160,7 +170,7 @@ const RoleEditDialog = ({
                       buttonAltText="No changes"
                     />
                   )}
-                  <AppButton className="h-10 w-48" variant="outline" onPress={handleCancel}>
+                  <AppButton className="h-10 w-48" variant="outline" onPress={handleCancel} onHoverIn={() => setHint(['esc'])} onHoverOut={() => setHint(null)}>
                     <FontText color="black" weight="medium">
                       Cancel
                     </FontText>

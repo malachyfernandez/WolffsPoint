@@ -10,6 +10,8 @@ import DialogHeader from '../ui/dialog/DialogHeader';
 import SmartDateInput from '../ui/forms/SmartDateInput';
 import StatusButton from '../ui/StatusButton';
 import CustomCheckbox from '../ui/CustomCheckbox';
+import { useKeyboardShortcuts } from '../../../hooks/useKeyboardShortcuts';
+import { useKeyboardShortcutHint } from '../../../contexts/KeyboardShortcutHintContext';
 
 interface DaySelectionDialogProps {
   isOpen: boolean;
@@ -44,6 +46,8 @@ const DaySelectionDialog = ({
   onSkipVotingChange,
   onSkipActionsChange,
 }: DaySelectionDialogProps) => {
+  const { setHint } = useKeyboardShortcutHint();
+
   const [input, setInput] = useState('');
   const [isDateValid, setIsDateValid] = useState(true);
 
@@ -123,6 +127,12 @@ const DaySelectionDialog = ({
       onOpenChange(false);
     }
   };
+
+  useKeyboardShortcuts({
+    onPrimaryAction: submitForum,
+    onClose: () => onOpenChange(false),
+    enabled: isOpen,
+  });
 
   return (
     <ConvexDialog.Root isOpen={isOpen} onOpenChange={onOpenChange}>
@@ -206,7 +216,7 @@ const DaySelectionDialog = ({
 
             {isDateValid ? (
               hasAnyChange ? (
-                <AppButton className="w-34 h-10" variant="black" onPress={submitForum}>
+                <AppButton className="w-34 h-10" variant="black" onPress={submitForum} onHoverIn={() => setHint(['enter'])} onHoverOut={() => setHint(null)}>
                   <FontText color="white" weight="medium">
                     Change
                   </FontText>

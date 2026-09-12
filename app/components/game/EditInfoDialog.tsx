@@ -8,6 +8,8 @@ import AppButton from '../ui/buttons/AppButton';
 import ProfilePhotoCircle from '../ui/profile/ProfilePhotoCircle';
 import ConvexDialog from '../ui/dialog/ConvexDialog';
 import DialogHeader from '../ui/dialog/DialogHeader';
+import { useKeyboardShortcuts } from '../../../hooks/useKeyboardShortcuts';
+import { useKeyboardShortcutHint } from '../../../contexts/KeyboardShortcutHintContext';
 
 interface CustomUserInfo {
     name?: string;
@@ -32,6 +34,8 @@ const EditInfoDialog = ({
     setCustomUserInfo,
     clerkData,
 }: EditInfoDialogProps) => {
+    const { setHint } = useKeyboardShortcutHint();
+
     // Auto-fill with Clerk data initially, but allow custom overrides
     const [name, setName] = useState(customUserInfo.name || clerkData.name || '');
     const [photoUrl, setPhotoUrl] = useState(customUserInfo.photoUrl || '');
@@ -68,6 +72,12 @@ const EditInfoDialog = ({
         setPhotoUrl(customUserInfo.photoUrl || '');
         onClose();
     };
+
+    useKeyboardShortcuts({
+        onPrimaryAction: handleSave,
+        onClose: handleCancel,
+        enabled: isOpen,
+    });
 
         return (
         <ConvexDialog.Root isOpen={isOpen} onOpenChange={onClose}>
@@ -127,6 +137,8 @@ const EditInfoDialog = ({
                                 <AppButton
                                     variant="outline"
                                     onPress={handleCancel}
+                                    onHoverIn={() => setHint(['esc'])}
+                                    onHoverOut={() => setHint(null)}
                                     className="w-22 sm:w-32"
                                 >
                                     <FontText color="black" weight="medium">
@@ -136,6 +148,8 @@ const EditInfoDialog = ({
                                 <AppButton
                                     variant="filled"
                                     onPress={handleSave}
+                                    onHoverIn={() => setHint(['enter'])}
+                                    onHoverOut={() => setHint(null)}
                                     className="w-22 sm:w-32"
                                 >
                                     <FontText color="white" weight="medium">

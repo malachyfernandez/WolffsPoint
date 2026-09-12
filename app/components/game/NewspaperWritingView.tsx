@@ -219,12 +219,12 @@ const NewspaperWritingView = ({
             }
           }}
           title={`Column ${selectedColumnIndex + 1}`}
-          submitLabel="Save Column"
           initialMarkdown={newspaperColumns[selectedColumnIndex] ?? ''}
           onSubmit={({ markdown }) => setColumnMarkdown(selectedColumnIndex, markdown)}
           gameId={realGameId ?? gameId}
           showScript
           isPreviewSideBySide={true}
+          historyKey={`newspaperColumn:${gameId}:${selectedColumnIndex}`}
         />
       )}
 

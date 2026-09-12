@@ -1,7 +1,10 @@
-import React, { useMemo, useState } from 'react';
-import { Pressable, View } from 'react-native';
+import React, { useMemo, useState, useEffect } from 'react';
+import { Pressable, View, ScrollView } from 'react-native';
 import { Pencil, Plus, X } from 'lucide-react-native';
 import ConvexDialog from '../ui/dialog/ConvexDialog';
+import SaveHistoryPill from '../ui/dialog/SaveHistoryPill';
+import SaveHistoryDialog from '../ui/dialog/SaveHistoryDialog';
+import ViewOnlyPreviewModal from '../ui/dialog/ViewOnlyPreviewModal';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
 import AppButton from '../ui/buttons/AppButton';
@@ -15,6 +18,9 @@ import AddTagDialog from './AddTagDialog';
 import { useValue } from 'hooks/useData';
 import { getGameScopedKey } from 'utils/multiplayer';
 import { parseCell, encodeTags, encodeText, type ParsedCell } from 'utils/tagEncoding';
+import { useSaveHistory, SavedEntry } from '../../../hooks/useSaveHistory';
+import { useKeyboardShortcuts } from '../../../hooks/useKeyboardShortcuts';
+import { useKeyboardShortcutHint } from '../../../contexts/KeyboardShortcutHintContext';
 
 export interface TagDefinition {
   name: string;
@@ -45,6 +51,8 @@ interface TagCellEditorProps {
   onTagsAdded?: (tagNames: string[], context: CellContext) => void;
   /** Called when tags are removed (for firing tag-removed triggers) */
   onTagsRemoved?: (tagNames: string[], context: CellContext) => void;
+  /** Scoped key for save history storage. If omitted, save history is disabled. */
+  historyKey?: string;
 }
 
 const TagCellEditor = ({
@@ -56,7 +64,10 @@ const TagCellEditor = ({
   cellContext,
   onTagsAdded,
   onTagsRemoved,
+  historyKey,
 }: TagCellEditorProps) => {
+  const { history, addSave, clearHistory, maxSaves } = useSaveHistory(historyKey ?? null);
+  const { setHint } = useKeyboardShortcutHint();
   const [tagDefs, setTagDefs] = useValue<TagDefinitionsData>(getTagDefinitionsKey(gameId), {
     defaultValue: [],
     privacy: 'PUBLIC',
@@ -69,6 +80,9 @@ const TagCellEditor = ({
   const [isAddTagOpen, setIsAddTagOpen] = useState(false);
   const [editingTag, setEditingTag] = useState<TagDefinition | null>(null);
   const [isLeaveConfirmOpen, setIsLeaveConfirmOpen] = useState(false);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [previewEntry, setPreviewEntry] = useState<SavedEntry | null>(null);
+  const [hasEverBeenEnabled, setHasEverBeenEnabled] = useState(false);
 
   // Track the initial state (snapshot when the dialog opens) so we can detect
   // unsaved changes and prompt before closing.
@@ -83,6 +97,9 @@ const TagCellEditor = ({
       setInitialSelectedTagNames(initialTags);
       setInitialTextValue(parsed.text);
       setIsLeaveConfirmOpen(false);
+      setIsHistoryOpen(false);
+      setPreviewEntry(null);
+      setHasEverBeenEnabled(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
@@ -96,6 +113,12 @@ const TagCellEditor = ({
     JSON.stringify([...selectedTagNames].sort()) !==
       JSON.stringify([...initialSelectedTagNames].sort()) ||
     textValue.trim() !== initialTextValue.trim();
+
+  useEffect(() => {
+    if (hasUnsavedChanges) setHasEverBeenEnabled(true);
+  }, [hasUnsavedChanges]);
+
+  const doneEnabled = hasUnsavedChanges || hasEverBeenEnabled;
 
   // Intercept all dismiss attempts (overlay click, escape, cancel button).
   // Swipe is disabled via isSwipeable={false} on the Content because HeroUI's
@@ -172,6 +195,58 @@ const TagCellEditor = ({
     }
   };
 
+  // Save without closing — persists via onChange and adds to history
+  const handleSaveWithoutClose = () => {
+    if (!hasUnsavedChanges) return;
+    const newValue = isInTagMode ? encodeTags(selectedTagNames) : encodeText(textValue.trim());
+    onChange(newValue);
+
+    // Update the initial snapshot so hasUnsavedChanges becomes false
+    setInitialSelectedTagNames([...selectedTagNames]);
+    setInitialTextValue(textValue);
+
+    // Fire tag triggers
+    if (isInTagMode && cellContext) {
+      const originalTagNames = new Set(parsed.tags.map((t) => t.name));
+      const newTagNames = new Set(selectedTagNames);
+      const addedTags = selectedTagNames.filter((name) => !originalTagNames.has(name));
+      const removedTags = parsed.tags.map((t) => t.name).filter((name) => !newTagNames.has(name));
+      if (addedTags.length > 0 && onTagsAdded) {
+        onTagsAdded(addedTags, cellContext);
+      }
+      if (removedTags.length > 0 && onTagsRemoved) {
+        onTagsRemoved(removedTags, cellContext);
+      }
+    }
+
+    // Add to save history
+    if (historyKey) {
+      const preview = isInTagMode
+        ? selectedTagNames.join(', ')
+        : textValue.trim().slice(0, 200);
+      addSave(
+        { value: newValue, tags: selectedTagNames, text: textValue },
+        preview
+      );
+    }
+  };
+
+  // Replace current draft with a saved entry from history
+  const handleReplaceFromHistory = (entry: SavedEntry) => {
+    const saved = entry.value as { value: string; tags: string[]; text: string };
+    const savedParsed = parseCell(saved.value);
+    setSelectedTagNames(savedParsed.tags.map((t) => t.name));
+    setTextValue(savedParsed.text);
+    setPreviewEntry(null);
+    setIsHistoryOpen(false);
+  };
+
+  useKeyboardShortcuts({
+    onSave: handleSaveWithoutClose,
+    onClose: handleAttemptClose,
+    enabled: isOpen && !isHistoryOpen && !previewEntry && !isAddTagOpen,
+  });
+
   return (
     <>
       <ConvexDialog.Root isOpen={isOpen} onOpenChange={handleOpenChange}>
@@ -180,9 +255,19 @@ const TagCellEditor = ({
           <ConvexDialog.Content className="max-w-2xl" isSwipeable={false}>
             <Pressable
               onPress={handleAttemptClose}
+              onHoverIn={() => setHint(['esc'])}
+              onHoverOut={() => setHint(null)}
               className="bg-text-inverted/10 hover:bg-text-inverted/15 absolute right-0 top-0 z-10 h-10 w-10 items-center justify-center rounded-full">
               <X size={18} color="rgb(246, 238, 219)" />
             </Pressable>
+            {historyKey && (
+              <SaveHistoryPill
+                hasUnsavedChanges={hasUnsavedChanges}
+                isInvalid={false}
+                onSave={handleSaveWithoutClose}
+                onOpenHistory={() => setIsHistoryOpen(true)}
+              />
+            )}
             <DialogHeader text="Edit Cell" />
             <Column className="gap-3 p-0 sm:p-5">
               <Row className="items-stretch gap-3">
@@ -289,9 +374,14 @@ const TagCellEditor = ({
                         Cancel
                       </FontText>
                     </AppButton>
-                    <AppButton className="h-8 w-20" variant="black" onPress={handleSave}>
+                    <AppButton
+                      className="h-8 w-20"
+                      variant="black"
+                      onPress={handleSave}
+                      disabled={!doneEnabled}
+                    >
                       <FontText color="white" weight="medium" className="text-sm">
-                        Save
+                        Done
                       </FontText>
                     </AppButton>
                   </Row>
@@ -322,6 +412,35 @@ const TagCellEditor = ({
         existingNames={definitions.map((d) => d.name)}
         gameId={gameId}
       />
+
+      {historyKey && (
+        <>
+          <SaveHistoryDialog
+            isOpen={isHistoryOpen}
+            onOpenChange={setIsHistoryOpen}
+            history={history}
+            maxSaves={maxSaves}
+            onSelectEntry={(entry) => setPreviewEntry(entry)}
+            onClearHistory={clearHistory}
+          />
+          <ViewOnlyPreviewModal
+            isOpen={previewEntry !== null}
+            onOpenChange={(open) => { if (!open) setPreviewEntry(null); }}
+            title="Preview Saved Cell"
+            subtext={previewEntry ? new Date(previewEntry.savedAt).toLocaleString() : undefined}
+            entry={previewEntry}
+            onReplace={handleReplaceFromHistory}
+          >
+            {previewEntry && (
+              <ScrollView className="flex-1" contentContainerClassName="p-4">
+                <FontText className="text-text">
+                    {(previewEntry.value as { value: string })?.value ?? ''}
+                </FontText>
+              </ScrollView>
+            )}
+          </ViewOnlyPreviewModal>
+        </>
+      )}
     </>
   );
 };

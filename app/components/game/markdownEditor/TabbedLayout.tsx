@@ -31,6 +31,8 @@ interface TabbedLayoutProps {
   onPreviewAsPlayer?: () => void;
   /** Custom preview renderer. If provided, replaces the default markdown preview. */
   renderPreview?: () => React.ReactNode;
+  /** When true, the editor is non-editable (view-only) and only the preview tab is shown. */
+  readOnly?: boolean;
 }
 
 export function TabbedLayout({
@@ -56,28 +58,33 @@ export function TabbedLayout({
   showPreviewAsPlayer = false,
   onPreviewAsPlayer,
   renderPreview,
+  readOnly = false,
 }: TabbedLayoutProps) {
+  // When readOnly, keep both tabs but make editing non-editable (matches original layout).
   return (
-    <Tabs value={activeTab} onValueChange={onTabChange} className="h-full flex-1">
+    <Tabs value={activeTab} onValueChange={readOnly ? () => {} : onTabChange} className="h-full flex-1">
       <Tabs.Content value="editing" className="flex-1">
         <Column className="gap-1">
-          <TownSquareComposerToolbar
-            onBold={onBold}
-            onInput={onInput}
-            onImage={onImage}
-            onItalic={onItalic}
-            onLink={onLink}
-            onMore={onMore}
-            onScript={onScript}
-            onVariable={onVariable}
-            showInputs={showInputs}
-          />
+          {!readOnly && (
+            <TownSquareComposerToolbar
+              onBold={onBold}
+              onInput={onInput}
+              onImage={onImage}
+              onItalic={onItalic}
+              onLink={onLink}
+              onMore={onMore}
+              onScript={onScript}
+              onVariable={onVariable}
+              showInputs={showInputs}
+            />
+          )}
         </Column>
         <ShadowScrollView className="flex-1" scrollViewClassName="flex-1 h-full py-4">
           <TownSquareComposerEditorPane
             onBodyChange={onBodyChange}
             onSelectionChange={onSelectionChange}
             value={draftBody}
+            readOnly={readOnly}
           />
         </ShadowScrollView>
       </Tabs.Content>

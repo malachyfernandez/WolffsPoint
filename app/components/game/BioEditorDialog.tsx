@@ -21,7 +21,6 @@ interface BioEditorDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   title: string;
-  submitLabel: string;
   initialMarkdown?: string;
   onSubmit: (markdown: string) => void;
   gameId?: string;
@@ -36,7 +35,6 @@ const BioEditorDialog = ({
   isOpen,
   onOpenChange,
   title,
-  submitLabel,
   initialMarkdown = '',
   onSubmit,
   gameId,
@@ -209,7 +207,6 @@ const BioEditorDialog = ({
               <Row className="-mx-3 items-center justify-end gap-4 pt-4 sm:mx-0">
                 <ActionButtons
                   canSubmit={canSubmit}
-                  submitLabel={submitLabel}
                   submitDisabledText={submitDisabledText}
                   onCancel={handleAttemptClose}
                   onSubmit={handleSubmit}
