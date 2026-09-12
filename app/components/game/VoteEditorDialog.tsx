@@ -8,6 +8,7 @@ import UnsavedChangesDialog from '../ui/dialog/UnsavedChangesDialog';
 import SaveHistoryPill from '../ui/dialog/SaveHistoryPill';
 import SaveHistoryDialog from '../ui/dialog/SaveHistoryDialog';
 import ViewOnlyPreviewModal from '../ui/dialog/ViewOnlyPreviewModal';
+import { MinimizeButton, useMinimizeTarget } from '../ui/minimize';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
 import FontText from '../ui/text/FontText';
@@ -83,6 +84,12 @@ const VoteEditorDialog = ({
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [previewEntry, setPreviewEntry] = useState<SavedEntry | null>(null);
   const [hasEverBeenEnabled, setHasEverBeenEnabled] = useState(false);
+
+  const { targetRef, performMinimize } = useMinimizeTarget({
+    title,
+    onClose: () => onOpenChange(false),
+    onRestore: () => onOpenChange(true),
+  });
 
   const { history, addSave, clearHistory, maxSaves } = useSaveHistory(historyKey ?? null);
   const { setHint } = useKeyboardShortcutHint();
@@ -223,7 +230,13 @@ const VoteEditorDialog = ({
         <ConvexDialog.Portal>
           <ConvexDialog.Overlay />
           <ConvexDialog.Content className="max-w-md p-1" isSwipeable={false}>
+            <View ref={targetRef}>
             <CloseButton onPress={handleAttemptClose} />
+            <MinimizeButton
+              hasUnsavedChanges={hasUnsavedChanges}
+              onSave={handleSave}
+              onMinimize={performMinimize}
+            />
             {historyKey && (
               <SaveHistoryPill
                 hasUnsavedChanges={hasUnsavedChanges}
@@ -309,7 +322,7 @@ const VoteEditorDialog = ({
               )}
 
               {/* Action Buttons */}
-              <Row className="justify-end gap-4 pt-2">
+              <Row className="minimize-hide justify-end gap-4 pt-2">
                 <AppButton variant="outline" onPress={handleCancel} className="h-12 w-24 sm:w-32"
                   onHoverIn={() => setHint(['esc'])}
                   onHoverOut={() => setHint(null)}>
@@ -325,6 +338,7 @@ const VoteEditorDialog = ({
                 />
               </Row>
             </Column>
+            </View>
           </ConvexDialog.Content>
         </ConvexDialog.Portal>
       </ConvexDialog.Root>

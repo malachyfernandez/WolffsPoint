@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import ConvexDialog from '../ui/dialog/ConvexDialog';
 import UnsavedChangesDialog from '../ui/dialog/UnsavedChangesDialog';
+import { MinimizeButton, useMinimizeTarget } from '../ui/minimize';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
 import AppButton from '../ui/buttons/AppButton';
@@ -44,6 +45,12 @@ const RoleEditDialog = ({
 
   const { setHint } = useKeyboardShortcutHint();
 
+  const { targetRef, performMinimize } = useMinimizeTarget({
+    title: 'Edit Role',
+    onClose: () => onOpenChange(false),
+    onRestore: () => onOpenChange(true),
+  });
+
   useEffect(() => {
     if (isOpen) {
       setRoleName(role.role || '');
@@ -63,6 +70,14 @@ const RoleEditDialog = ({
     onSetDoesRoleVote(roleIndex, doesRoleVote);
     onSetHiddenFromRulebook(roleIndex, hiddenFromRulebook);
     onOpenChange(false);
+  };
+
+  // Save without closing — used by minimize button
+  const handleSaveWithoutClose = () => {
+    if (!roleName.trim()) return;
+    onSetRoleName(roleIndex, roleName.trim());
+    onSetDoesRoleVote(roleIndex, doesRoleVote);
+    onSetHiddenFromRulebook(roleIndex, hiddenFromRulebook);
   };
 
   const handleCancel = () => {
@@ -115,7 +130,13 @@ const RoleEditDialog = ({
         <ConvexDialog.Portal>
           <ConvexDialog.Overlay />
           <ConvexDialog.Content className="max-w-xl" isSwipeable={!hasChange}>
+            <View ref={targetRef}>
             <CloseButton onPress={handleAttemptClose} />
+            <MinimizeButton
+              hasUnsavedChanges={hasChange}
+              onSave={handleSaveWithoutClose}
+              onMinimize={performMinimize}
+            />
             <DialogHeader text="Edit Role" subtext="Set the role details" />
             <Column className="gap-4 p-0 sm:p-5">
               <Column className="gap-2">
@@ -156,7 +177,7 @@ const RoleEditDialog = ({
               </Column>
 
               <Column className="w-full items-center justify-center gap-4">
-                <Row className="gap-4">
+                <Row className="minimize-hide gap-4">
                   {hasChange && roleName.trim() ? (
                     <AppButton className="h-10 w-48" variant="black" onPress={handleSave} onHoverIn={() => setHint(['enter'])} onHoverOut={() => setHint(null)}>
                       <FontText color="white" weight="medium">
@@ -178,6 +199,7 @@ const RoleEditDialog = ({
                 </Row>
               </Column>
             </Column>
+            </View>
           </ConvexDialog.Content>
         </ConvexDialog.Portal>
       </ConvexDialog.Root>

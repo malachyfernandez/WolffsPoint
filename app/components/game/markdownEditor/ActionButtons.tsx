@@ -23,7 +23,7 @@ export function ActionButtons({
     const { setHint } = useKeyboardShortcutHint();
 
     return (
-        <Row className='gap-4 justify-end pt-1'>
+        <Row className='minimize-hide gap-4 justify-end pt-1'>
             <AppButton
                 variant='outline'
                 className='w-20 sm:w-32'

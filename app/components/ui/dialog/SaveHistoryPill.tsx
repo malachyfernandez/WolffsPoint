@@ -50,7 +50,7 @@ export function SaveHistoryPill({
         : 'bg-transparent border border-dashed border-text-inverted/30';
 
     return (
-        <View className="save-history-pill-bg absolute right-11 top-0 z-10 p-0 pl-4">
+        <View className="save-history-pill-bg minimize-hide absolute right-22 top-0 z-10 p-0 pl-4">
             <View className="flex-row items-stretch h-10">
             {/* Save half — fixed width, symmetric padding */}
             <Pressable

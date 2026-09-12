@@ -8,6 +8,7 @@ import SaveHistoryPill from '../ui/dialog/SaveHistoryPill';
 import SaveHistoryDialog from '../ui/dialog/SaveHistoryDialog';
 import ViewOnlyPreviewModal from '../ui/dialog/ViewOnlyPreviewModal';
 import UnsavedChangesDialog from '../ui/dialog/UnsavedChangesDialog';
+import { MinimizeButton, useMinimizeTarget } from '../ui/minimize';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
 import FontText from '../ui/text/FontText';
@@ -80,6 +81,12 @@ const PlayerProfileDialogNEW = ({
 }: PlayerProfileDialogNEWProps) => {
   const { history, addSave, clearHistory, maxSaves } = useSaveHistory(historyKey ?? null);
   const { setHint } = useKeyboardShortcutHint();
+
+  const { targetRef, performMinimize } = useMinimizeTarget({
+    title,
+    onClose: () => onOpenChange(false),
+    onRestore: () => onOpenChange(true),
+  });
 
   // Main profile state
   const [draft, setDraft] = useState<PlayerProfile>(initialValue);
@@ -261,7 +268,13 @@ const PlayerProfileDialogNEW = ({
             className="h-[80vh] max-w-6xl"
             frameVariant={frameVariant}
             isSwipeable={!hasUnsavedChanges}>
+            <View ref={targetRef}>
             <CloseButton onPress={handleAttemptClose} />
+            <MinimizeButton
+              hasUnsavedChanges={hasUnsavedChanges}
+              onSave={handleSaveWithoutClose}
+              onMinimize={performMinimize}
+            />
             {historyKey && (
               <SaveHistoryPill
                 hasUnsavedChanges={hasUnsavedChanges}
@@ -371,7 +384,7 @@ const PlayerProfileDialogNEW = ({
               )}
             </Row>
 
-            <Row className="justify-end gap-4 px-5">
+            <Row className="minimize-hide justify-end gap-4 px-5">
               <AppButton variant="outline" className="w-20 sm:w-36" onPress={handleAttemptClose}>
                 <FontText weight="medium">Cancel</FontText>
               </AppButton>
@@ -385,6 +398,7 @@ const PlayerProfileDialogNEW = ({
                 </FontText>
               </AppButton>
             </Row>
+            </View>
           </ConvexDialog.Content>
         </ConvexDialog.Portal>
       </ConvexDialog.Root>

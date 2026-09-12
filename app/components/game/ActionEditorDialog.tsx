@@ -8,6 +8,7 @@ import SaveHistoryPill from '../ui/dialog/SaveHistoryPill';
 import SaveHistoryDialog from '../ui/dialog/SaveHistoryDialog';
 import ViewOnlyPreviewModal from '../ui/dialog/ViewOnlyPreviewModal';
 import UnsavedChangesDialog from '../ui/dialog/UnsavedChangesDialog';
+import { MinimizeButton, useMinimizeTarget } from '../ui/minimize';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
 import FontText from '../ui/text/FontText';
@@ -50,6 +51,12 @@ const ActionEditorDialog = ({
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [previewEntry, setPreviewEntry] = useState<SavedEntry | null>(null);
   const [hasEverBeenEnabled, setHasEverBeenEnabled] = useState(false);
+
+  const { targetRef, performMinimize } = useMinimizeTarget({
+    title,
+    onClose: () => onOpenChange(false),
+    onRestore: () => onOpenChange(true),
+  });
 
   useEffect(() => {
     if (!isOpen) {
@@ -143,7 +150,13 @@ const ActionEditorDialog = ({
         <ConvexDialog.Portal>
           <ConvexDialog.Overlay />
           <ConvexDialog.Content className="max-w-lg p-1" isSwipeable={false}>
+            <View ref={targetRef}>
             <CloseButton onPress={handleAttemptClose} />
+            <MinimizeButton
+              hasUnsavedChanges={hasUnsavedChanges}
+              onSave={handleSave}
+              onMinimize={performMinimize}
+            />
             {historyKey && (
               <SaveHistoryPill
                 hasUnsavedChanges={hasUnsavedChanges}
@@ -188,7 +201,7 @@ const ActionEditorDialog = ({
               </Column>
 
               {/* Action Buttons */}
-              <Row className="justify-end gap-4 pt-2">
+              <Row className="minimize-hide justify-end gap-4 pt-2">
                 <AppButton variant="outline" onPress={handleCancel} className="w-22 h-12 sm:w-32">
                   <FontText>Cancel</FontText>
                 </AppButton>
@@ -201,6 +214,7 @@ const ActionEditorDialog = ({
                 />
               </Row>
             </Column>
+            </View>
           </ConvexDialog.Content>
         </ConvexDialog.Portal>
       </ConvexDialog.Root>

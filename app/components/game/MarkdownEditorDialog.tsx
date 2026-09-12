@@ -5,6 +5,7 @@ import DialogHeader from '../ui/dialog/DialogHeader';
 import SaveHistoryPill from '../ui/dialog/SaveHistoryPill';
 import SaveHistoryDialog from '../ui/dialog/SaveHistoryDialog';
 import ViewOnlyPreviewModal from '../ui/dialog/ViewOnlyPreviewModal';
+import { MinimizeButton, useMinimizeTarget } from '../ui/minimize';
 import Row from '../layout/Row';
 import AppButton from '../ui/buttons/AppButton';
 import FontText from '../ui/text/FontText';
@@ -290,6 +291,12 @@ const MarkdownEditorDialog = ({
   const { executeCommand } = useUndoRedo();
   const createUndoSnapshot = useCreateUndoSnapshot();
   const { history, addSave, clearHistory, maxSaves } = useSaveHistory(historyKey ?? null);
+
+  const { targetRef, performMinimize } = useMinimizeTarget({
+    title,
+    onClose: () => onOpenChange(false),
+    onRestore: () => onOpenChange(true),
+  });
 
   const [activeTab, setActiveTab] = useState('editing');
   const [draftTitle, setDraftTitle] = useState('');
@@ -604,7 +611,15 @@ const MarkdownEditorDialog = ({
           <ConvexDialog.Overlay />
           <InputOptionsProvider gameId={gameId} showInputs>
             <ConvexDialog.Content className="h-[80vh]" isSwipeable={false}>
+              <View ref={targetRef}>
               <CloseButton onPress={readOnly ? () => onOpenChange(false) : handleAttemptClose} />
+              {!readOnly && (
+                <MinimizeButton
+                  hasUnsavedChanges={hasUnsavedChanges}
+                  onSave={handleSave}
+                  onMinimize={performMinimize}
+                />
+              )}
               {historyKey && !readOnly && (
                 <SaveHistoryPill
                   hasUnsavedChanges={hasUnsavedChanges}
@@ -668,15 +683,18 @@ const MarkdownEditorDialog = ({
                     </AppButton>
                   </Row>
                 ) : (
-                  <ActionButtons
-                    canSubmit={doneEnabled}
-                    submitLabel={submitLabel}
-                    submitDisabledText={submitDisabledText}
-                    onCancel={handleAttemptClose}
-                    onSubmit={handleSubmit}
-                  />
+                  <Row className="gap-2 items-center justify-end">
+                    <ActionButtons
+                      canSubmit={doneEnabled}
+                      submitLabel={submitLabel}
+                      submitDisabledText={submitDisabledText}
+                      onCancel={handleAttemptClose}
+                      onSubmit={handleSubmit}
+                    />
+                  </Row>
                 )}
               </Row>
+              </View>
             </ConvexDialog.Content>
           </InputOptionsProvider>
         </ConvexDialog.Portal>
