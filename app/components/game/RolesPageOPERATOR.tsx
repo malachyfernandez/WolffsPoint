@@ -86,10 +86,10 @@ const RolesPageContent = ({ currentUserId, gameId }: RolesPageOPERATORProps) => 
               className="mr-1"
               scrollViewClassName="px-1 py-5"
               horizontal>
-              <Row className="gap-4">
+              <Row className="gap-0 pr-4">
                 <Column className="gap-1">
-                  <Row className="h-6 gap-4">{/* spacer to align with table */}</Row>
-                  <Row className={`gap-4 ${isRoleTableBeingEdited ? 'z-50' : ''}`.trim()}>
+                  <Row className="h-6 gap-0">{/* spacer to align with table */}</Row>
+                  <Row className={`gap-0 ${isRoleTableBeingEdited ? 'z-50' : ''}`.trim()}>
                     <RoleTable
                       gameId={gameId}
                       doSync={doSync}
