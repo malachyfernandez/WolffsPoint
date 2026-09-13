@@ -268,136 +268,139 @@ const PlayerProfileDialogNEW = ({
             className="h-[80vh] max-w-6xl"
             frameVariant={frameVariant}
             isSwipeable={!hasUnsavedChanges}>
-            <View ref={targetRef} className="flex-1 min-h-0">
-            <CloseButton onPress={handleAttemptClose} />
-            <MinimizeButton
-              hasUnsavedChanges={hasUnsavedChanges}
-              onSave={handleSaveWithoutClose}
-              onMinimize={performMinimize}
-            />
-            {historyKey && (
-              <SaveHistoryPill
-                hasUnsavedChanges={hasUnsavedChanges}
-                isInvalid={!canSave}
-                invalidMessage={!canSave ? 'Name is required' : undefined}
-                onSave={handleSaveWithoutClose}
-                onOpenHistory={() => setIsHistoryOpen(true)}
-              />
-            )}
-            <DialogHeader text={title} subtext="This is what everyone sees" />
+            <View ref={targetRef} className="min-h-0 flex-1">
+              <CloseButton onPress={handleAttemptClose} />
+              {historyKey && (
+                <MinimizeButton
+                  hasUnsavedChanges={hasUnsavedChanges}
+                  onSave={handleSaveWithoutClose}
+                  onMinimize={performMinimize}
+                />
+              )}
+              {historyKey && (
+                <SaveHistoryPill
+                  hasUnsavedChanges={hasUnsavedChanges}
+                  isInvalid={!canSave}
+                  invalidMessage={!canSave ? 'Name is required' : undefined}
+                  onSave={handleSaveWithoutClose}
+                  onOpenHistory={() => setIsHistoryOpen(true)}
+                  hasMinimizeButton
+                />
+              )}
+              <DialogHeader text={title} subtext="This is what everyone sees" />
 
-            {/* Tab selector (narrow screens only) */}
-            {!isDesktop && <TabSelector value={profileTab} onValueChange={setProfileTab} />}
+              {/* Tab selector (narrow screens only) */}
+              {!isDesktop && <TabSelector value={profileTab} onValueChange={setProfileTab} />}
 
-            <Row className="-mx-5 min-h-0 flex-1 gap-0 sm:pt-5">
-              {/* LEFT: Inputs (scrollable) — always on desktop, only on "editing" tab on mobile */}
-              {(isDesktop || profileTab === 'editing') && (
-                <ShadowScrollView className="flex-1" scrollViewClassName="flex-1">
-                  <Column className="gap-6 px-2 pb-2 sm:px-5">
-                    {operatorRealName !== undefined && (
+              <Row className="-mx-5 min-h-0 flex-1 gap-0 sm:pt-5">
+                {/* LEFT: Inputs (scrollable) — always on desktop, only on "editing" tab on mobile */}
+                {(isDesktop || profileTab === 'editing') && (
+                  <ShadowScrollView className="flex-1" scrollViewClassName="flex-1">
+                    <Column className="gap-6 px-2 pb-2 sm:px-5">
+                      {operatorRealName !== undefined && (
+                        <Column className="gap-1">
+                          <FontText weight="medium">Real name</FontText>
+                          <FontTextInput
+                            className="border-subtle-border w-full rounded-xl border px-4 py-3"
+                            placeholder="The name you go by"
+                            value={realName}
+                            onChangeText={setRealName}
+                          />
+                        </Column>
+                      )}
                       <Column className="gap-1">
-                        <FontText weight="medium">Real name</FontText>
+                        <FontText weight="medium">In-game name</FontText>
                         <FontTextInput
                           className="border-subtle-border w-full rounded-xl border px-4 py-3"
-                          placeholder="The name you go by"
-                          value={realName}
-                          onChangeText={setRealName}
+                          placeholder="The name everyone knows you by"
+                          value={draft.inGameName}
+                          onChangeText={(value) =>
+                            setDraft((current) => ({ ...current, inGameName: value }))
+                          }
                         />
                       </Column>
-                    )}
-                    <Column className="gap-1">
-                      <FontText weight="medium">In-game name</FontText>
-                      <FontTextInput
-                        className="border-subtle-border w-full rounded-xl border px-4 py-3"
-                        placeholder="The name everyone knows you by"
-                        value={draft.inGameName}
-                        onChangeText={(value) =>
-                          setDraft((current) => ({ ...current, inGameName: value }))
-                        }
-                      />
-                    </Column>
-                    <Row className="items-start gap-4">
-                      <Column className="w-[126px] shrink-0 gap-2">
-                        <FontText weight="medium">Profile picture</FontText>
-                        <Pressable
-                          onPress={() => setImageDialogMode('profile')}
-                          className="border-subtle-border bg-text/5 hover:bg-text/10 h-16 items-center overflow-hidden rounded-3xl border hover:brightness-90">
-                          <PlayerProfileAvatar
-                            imageUrl={draft.profileImageUrl || undefined}
-                            initials={previewInitials}
-                          />
-                        </Pressable>
-                      </Column>
-
-                      <Column className="flex-1 gap-2">
-                        <FontText weight="medium">Socials</FontText>
-                        <Pressable
-                          onPress={() => setIsSocialsDialogOpen(true)}
-                          className="border-subtle-border bg-text/5 hover:bg-text/10 h-16 overflow-hidden rounded-3xl border brightness-95 hover:brightness-90">
-                          <ShadowScrollView
-                            className="flex-1"
-                            scrollViewClassName="flex-1 p-4"
-                            pointerEvents="none">
-                            <PlayerProfileContactInfo
-                              profile={draft}
-                              emptyText="No socials yet. Tap to add."
-                              maxItems={4}
+                      <Row className="items-start gap-4">
+                        <Column className="w-[126px] shrink-0 gap-2">
+                          <FontText weight="medium">Profile picture</FontText>
+                          <Pressable
+                            onPress={() => setImageDialogMode('profile')}
+                            className="border-subtle-border bg-text/5 hover:bg-text/10 h-16 items-center overflow-hidden rounded-3xl border hover:brightness-90">
+                            <PlayerProfileAvatar
+                              imageUrl={draft.profileImageUrl || undefined}
+                              initials={previewInitials}
                             />
-                          </ShadowScrollView>
+                          </Pressable>
+                        </Column>
+
+                        <Column className="flex-1 gap-2">
+                          <FontText weight="medium">Socials</FontText>
+                          <Pressable
+                            onPress={() => setIsSocialsDialogOpen(true)}
+                            className="border-subtle-border bg-text/5 hover:bg-text/10 h-16 overflow-hidden rounded-3xl border brightness-95 hover:brightness-90">
+                            <ShadowScrollView
+                              className="flex-1"
+                              scrollViewClassName="flex-1 p-4"
+                              pointerEvents="none">
+                              <PlayerProfileContactInfo
+                                profile={draft}
+                                emptyText="No socials yet. Tap to add."
+                                maxItems={4}
+                              />
+                            </ShadowScrollView>
+                          </Pressable>
+                        </Column>
+                      </Row>
+
+                      {/* Bio preview box (clickable, opens bio editor modal) */}
+                      <Column className="gap-2">
+                        <FontText weight="medium">Bio</FontText>
+                        <Pressable
+                          onPress={() => setIsBioDialogOpen(true)}
+                          className="border-subtle-border bg-text/5 hover:bg-text/10 min-h-35 max-h-20 overflow-hidden rounded-3xl border p-4 brightness-95 hover:brightness-90">
+                          {draft.bioMarkdown?.trim() ? (
+                            <MarkdownRenderer markdown={draft.bioMarkdown.trim()} />
+                          ) : (
+                            <FontText variant="subtext">
+                              Write whatever you want people to know about you. Tap to edit.
+                            </FontText>
+                          )}
                         </Pressable>
                       </Column>
-                    </Row>
-
-                    {/* Bio preview box (clickable, opens bio editor modal) */}
-                    <Column className="gap-2">
-                      <FontText weight="medium">Bio</FontText>
-                      <Pressable
-                        onPress={() => setIsBioDialogOpen(true)}
-                        className="border-subtle-border bg-text/5 hover:bg-text/10 min-h-35 max-h-20 overflow-hidden rounded-3xl border p-4 brightness-95 hover:brightness-90">
-                        {draft.bioMarkdown?.trim() ? (
-                          <MarkdownRenderer markdown={draft.bioMarkdown.trim()} />
-                        ) : (
-                          <FontText variant="subtext">
-                            Write whatever you want people to know about you. Tap to edit.
-                          </FontText>
-                        )}
-                      </Pressable>
                     </Column>
-                  </Column>
-                </ShadowScrollView>
-              )}
-
-              {/* RIGHT: Full-height profile preview — always on desktop, only on "preview" tab on mobile */}
-              {(isDesktop || profileTab === 'preview') && (
-                <Column className="flex-1 gap-2">
-                  {isDesktop && <FontText weight="medium">Preview</FontText>}
-                  <ShadowScrollView className="flex-1" scrollViewClassName="flex-1">
-                    <PlayerProfilePreviewCard
-                      displayName={previewName}
-                      bioMarkdown={draft.bioMarkdown || ''}
-                      imageUrl={draft.profileImageUrl || undefined}
-                      initials={previewInitials}
-                      profile={draft}
-                    />
                   </ShadowScrollView>
-                </Column>
-              )}
-            </Row>
+                )}
 
-            <Row className="minimize-hide justify-end gap-4 px-5">
-              <AppButton variant="outline" className="w-20 sm:w-36" onPress={handleAttemptClose}>
-                <FontText weight="medium">Cancel</FontText>
-              </AppButton>
-              <AppButton
-                variant="black"
-                className="w-28 sm:w-40"
-                onPress={handleSave}
-                disabled={!doneEnabled}>
-                <FontText weight="medium" color="white">
-                  Done
-                </FontText>
-              </AppButton>
-            </Row>
+                {/* RIGHT: Full-height profile preview — always on desktop, only on "preview" tab on mobile */}
+                {(isDesktop || profileTab === 'preview') && (
+                  <Column className="flex-1 gap-2">
+                    {isDesktop && <FontText weight="medium">Preview</FontText>}
+                    <ShadowScrollView className="flex-1" scrollViewClassName="flex-1">
+                      <PlayerProfilePreviewCard
+                        displayName={previewName}
+                        bioMarkdown={draft.bioMarkdown || ''}
+                        imageUrl={draft.profileImageUrl || undefined}
+                        initials={previewInitials}
+                        profile={draft}
+                      />
+                    </ShadowScrollView>
+                  </Column>
+                )}
+              </Row>
+
+              <Row className="minimize-hide justify-end gap-4 px-5">
+                <AppButton variant="outline" className="w-20 sm:w-36" onPress={handleAttemptClose}>
+                  <FontText weight="medium">Cancel</FontText>
+                </AppButton>
+                <AppButton
+                  variant="black"
+                  className="w-28 sm:w-40"
+                  onPress={handleSave}
+                  disabled={!doneEnabled}>
+                  <FontText weight="medium" color="white">
+                    Done
+                  </FontText>
+                </AppButton>
+              </Row>
             </View>
           </ConvexDialog.Content>
         </ConvexDialog.Portal>
@@ -455,13 +458,14 @@ const PlayerProfileDialogNEW = ({
           />
           <ViewOnlyPreviewModal
             isOpen={previewEntry !== null}
-            onOpenChange={(open) => { if (!open) setPreviewEntry(null); }}
+            onOpenChange={(open) => {
+              if (!open) setPreviewEntry(null);
+            }}
             title="Preview Saved Profile"
             subtext={previewEntry ? new Date(previewEntry.savedAt).toLocaleString() : undefined}
             entry={previewEntry}
             onReplace={handleReplaceFromHistory}
-            contentClassName="h-[80vh] max-w-6xl"
-          >
+            contentClassName="h-[80vh] max-w-6xl">
             {previewEntry && (
               <ScrollView className="flex-1" contentContainerClassName="p-4">
                 <PlayerProfilePreviewCard

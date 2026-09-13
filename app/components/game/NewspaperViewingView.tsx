@@ -2,50 +2,23 @@ import React from 'react';
 import { View } from 'react-native';
 import Column from '../layout/Column';
 import FontText from '../ui/text/FontText';
-import LoadingText from '../ui/loading/LoadingText';
 import PlaceholderCard from '../ui/PlaceholderCard';
 import { Newspaper } from 'lucide-react-native';
-import { useFindListItems } from 'hooks/useData';
 import { Usepaper } from 'types/usepaper';
-import { getNewspaperDayItemId } from '../../../utils/newspaperControl';
 import NewspaperZoomableView from './newspaperPageOperator/NewspaperZoomableView';
 
 interface NewspaperViewingViewProps {
-    dayIndex: number;
     gameId: string;
-    ownerUserId: string;
+    usepaper: Usepaper;
     TILE_SIZE: number;
     roundBottom?: boolean;
+    onReady?: () => void;
 }
 
-const minimumUsepaper: Usepaper = {
-    columns: ['', ''],
-};
-
-const NewspaperViewingView = ({ dayIndex, gameId, ownerUserId, TILE_SIZE, roundBottom }: NewspaperViewingViewProps) => {
-    const usepaperRecords = useFindListItems<Usepaper>("newspaper", {
-        itemId: getNewspaperDayItemId(gameId, dayIndex),
-        userIds: ownerUserId ? [ownerUserId] : [''],
-        returnTop: 1,
-    });
-
-    const isLoading = usepaperRecords === undefined;
-
-    const resolvedUsepaper = usepaperRecords?.[0]?.value?.columns?.length
-        ? usepaperRecords[0].value
-        : minimumUsepaper;
-
-    const isSkipped = Boolean(resolvedUsepaper.skipped);
-    const newspaperColumns = resolvedUsepaper.columns;
+const NewspaperViewingView = ({ gameId, usepaper, TILE_SIZE, roundBottom, onReady }: NewspaperViewingViewProps) => {
+    const isSkipped = Boolean(usepaper.skipped);
+    const newspaperColumns = usepaper.columns;
     const hasContent = newspaperColumns.some(column => column.trim().length > 0);
-
-    if (isLoading) {
-        return (
-            <Column className='gap-4 items-center justify-center py-24'>
-                <LoadingText text='Loading newspaper' />
-            </Column>
-        );
-    }
 
     if (isSkipped) {
         return (
@@ -72,7 +45,7 @@ const NewspaperViewingView = ({ dayIndex, gameId, ownerUserId, TILE_SIZE, roundB
                         No newspaper yet
                     </FontText>
                     <FontText variant='subtext' className='text-center'>
-                        The newspaper hasn't been made for this day. Check back later.
+                        The newspaper hasn’t been made for this day. Check back later.
                     </FontText>
                 </Column>
             </PlaceholderCard>
@@ -86,6 +59,7 @@ const NewspaperViewingView = ({ dayIndex, gameId, ownerUserId, TILE_SIZE, roundB
                 gameId={gameId}
                 TILE_SIZE={TILE_SIZE}
                 roundBottom={roundBottom}
+                onReady={onReady}
             />
         </View>
     );

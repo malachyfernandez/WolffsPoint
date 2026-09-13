@@ -6,7 +6,7 @@ interface UseListSearchOptions<T = any> {
     searchQuery: string;
     userIds: string[];
     searchKey: string; // Required: the key to search
-    additionalKeys?: string[]; // Optional: additional keys to fetch (like pages)
+    additionalKeys?: [string]; // Optional: additional keys to fetch (like pages)
     preserveResultsDuringLoading?: boolean; // New prop to enable caching behavior
 }
 
@@ -85,11 +85,10 @@ export function useListSearch<T = any>({
     });
 
     // Get additional items if specified (like pages for documents)
-    const additionalItems = additionalKeys?.map(key => 
-        useFindListItems<any>(key, {
-            userIds,
-        })
-    );
+    const additionalItem = useFindListItems<any>(additionalKeys?.[0] ?? searchKey, {
+        userIds,
+    });
+    const additionalItems = additionalKeys ? [additionalItem] : undefined;
 
     // Convert UserListRecord arrays to clean value arrays
     const itemValues = items?.map(item => item.value);

@@ -107,10 +107,8 @@ const CopyableText = ({ text, prefix = '', className = '', copyText = 'Copied', 
     return content;
 };
 
-export default CopyableText;
-
 // Container component that provides context to child CopyableText components
-CopyableText.Container = ({ className = '', copyText = 'Copied', color, children }: CopyableTextContainerProps) => {
+const CopyableTextContainer = ({ className = '', copyText = 'Copied', color, children }: CopyableTextContainerProps) => {
     const [copied, setCopied] = useState(false);
 
     const handleCopy = async () => {
@@ -133,3 +131,7 @@ CopyableText.Container = ({ className = '', copyText = 'Copied', color, children
         </CopyableContext.Provider>
     );
 };
+
+CopyableText.Container = CopyableTextContainer;
+
+export default CopyableText;

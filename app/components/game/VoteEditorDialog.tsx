@@ -183,7 +183,7 @@ const VoteEditorDialog = ({
   };
 
   // Sticky-enabled: once Done becomes enabled, it stays enabled (until dialog closes)
-  const doneEnabled = (hasUnsavedChanges || hasEverBeenEnabled);
+  const doneEnabled = hasUnsavedChanges || hasEverBeenEnabled;
 
   // Save without closing — persists via onSubmit and adds to history
   const handleSave = () => {
@@ -230,114 +230,120 @@ const VoteEditorDialog = ({
         <ConvexDialog.Portal>
           <ConvexDialog.Overlay />
           <ConvexDialog.Content className="max-w-md p-1" isSwipeable={false}>
-            <View ref={targetRef} className="flex-1 min-h-0">
-            <CloseButton onPress={handleAttemptClose} />
-            <MinimizeButton
-              hasUnsavedChanges={hasUnsavedChanges}
-              onSave={handleSave}
-              onMinimize={performMinimize}
-            />
-            {historyKey && (
-              <SaveHistoryPill
-                hasUnsavedChanges={hasUnsavedChanges}
-                onSave={handleSave}
-                onOpenHistory={() => setIsHistoryOpen(true)}
-              />
-            )}
-            <DialogHeader text={title} subtext={dialogSubtext} />
-
-            <Column className="gap-4 p-0 pt-4 sm:p-5">
-              {/* Email Input */}
-              <Column className="gap-1">
-                <FontText weight="medium" className="text-sm opacity-70">
-                  Vote target emails
-                </FontText>
-                <FontTextInput
-                  value={draftVote}
-                  onChangeText={setDraftVote}
-                  placeholder="Enter one or more emails, separated by commas..."
-                  variant="styled"
-                  className="p-2"
-                  style={{ fontFamily: 'Poppins-Regular' }}
-                  autoCapitalize="none"
-                  keyboardType="email-address"
+            <View ref={targetRef} className="min-h-0 flex-1">
+              <CloseButton onPress={handleAttemptClose} />
+              {historyKey && (
+                <MinimizeButton
+                  hasUnsavedChanges={hasUnsavedChanges}
+                  onSave={handleSave}
+                  onMinimize={performMinimize}
                 />
-              </Column>
+              )}
+              {historyKey && (
+                <SaveHistoryPill
+                  hasUnsavedChanges={hasUnsavedChanges}
+                  onSave={handleSave}
+                  onOpenHistory={() => setIsHistoryOpen(true)}
+                  hasMinimizeButton
+                />
+              )}
+              <DialogHeader text={title} subtext={dialogSubtext} />
 
-              {/* Live Preview */}
-              <Column className="gap-1">
-                <FontText weight="medium" className="text-sm opacity-70">
-                  Resolved Name
-                </FontText>
-                <View className="bg-text border-border rounded-lg border-2 p-3">
-                  <FontText color="white" weight="medium" className="text-center">
-                    {resolvedName}
+              <Column className="gap-4 p-0 pt-4 sm:p-5">
+                {/* Email Input */}
+                <Column className="gap-1">
+                  <FontText weight="medium" className="text-sm opacity-70">
+                    Vote target emails
                   </FontText>
-                </View>
-              </Column>
-
-              {/* Vote Multiplier */}
-              <Column className="gap-1">
-                <FontText weight="medium" className="text-sm opacity-70">
-                  Vote Multiplier
-                </FontText>
-                <Row className="items-center gap-3">
                   <FontTextInput
-                    value={draftMultiplier}
-                    onChangeText={handleMultiplierChange}
-                    placeholder="1"
+                    value={draftVote}
+                    onChangeText={setDraftVote}
+                    placeholder="Enter one or more emails, separated by commas..."
                     variant="styled"
-                    className="w-24 p-2"
+                    className="p-2"
                     style={{ fontFamily: 'Poppins-Regular' }}
-                    keyboardType="numeric"
+                    autoCapitalize="none"
+                    keyboardType="email-address"
                   />
-                  <FontText variant="subtext" className="text-sm">
-                    {safeMultiplier === 1
-                      ? 'Standard vote (1x)'
-                      : safeMultiplier === -1
-                        ? 'Thief-style negative vote (-1x)'
-                        : `${safeMultiplier}x vote weight`}
+                </Column>
+
+                {/* Live Preview */}
+                <Column className="gap-1">
+                  <FontText weight="medium" className="text-sm opacity-70">
+                    Resolved Name
                   </FontText>
+                  <View className="bg-text border-border rounded-lg border-2 p-3">
+                    <FontText color="white" weight="medium" className="text-center">
+                      {resolvedName}
+                    </FontText>
+                  </View>
+                </Column>
+
+                {/* Vote Multiplier */}
+                <Column className="gap-1">
+                  <FontText weight="medium" className="text-sm opacity-70">
+                    Vote Multiplier
+                  </FontText>
+                  <Row className="items-center gap-3">
+                    <FontTextInput
+                      value={draftMultiplier}
+                      onChangeText={handleMultiplierChange}
+                      placeholder="1"
+                      variant="styled"
+                      className="w-24 p-2"
+                      style={{ fontFamily: 'Poppins-Regular' }}
+                      keyboardType="numeric"
+                    />
+                    <FontText variant="subtext" className="text-sm">
+                      {safeMultiplier === 1
+                        ? 'Standard vote (1x)'
+                        : safeMultiplier === -1
+                          ? 'Thief-style negative vote (-1x)'
+                          : `${safeMultiplier}x vote weight`}
+                    </FontText>
+                  </Row>
+                </Column>
+
+                {supplementalInputs.length > 0 && (
+                  <Column className="gap-2">
+                    <FontText weight="medium" className="text-sm opacity-70">
+                      Supplemental vote responses
+                    </FontText>
+                    <Column className="bg-text/5 gap-2 rounded-lg p-3">
+                      {supplementalInputs.map(([label, value]) => (
+                        <Row key={label} className="items-start justify-between gap-3">
+                          <FontText weight="medium" className="flex-1">
+                            {label}
+                          </FontText>
+                          <FontText className="flex-1 text-right">
+                            {formatInputValue(value || '')}
+                          </FontText>
+                        </Row>
+                      ))}
+                    </Column>
+                  </Column>
+                )}
+
+                {/* Action Buttons */}
+                <Row className="minimize-hide justify-end gap-4 pt-2">
+                  <AppButton
+                    variant="outline"
+                    onPress={handleCancel}
+                    className="h-12 w-24 sm:w-32"
+                    onHoverIn={() => setHint(['esc'])}
+                    onHoverOut={() => setHint(null)}>
+                    <FontText>Cancel</FontText>
+                  </AppButton>
+                  <DisableableButton
+                    isEnabled={doneEnabled}
+                    enabledText={submitLabel}
+                    className="w-24 sm:w-32"
+                    disabledText="No changes"
+                    onPress={handleSubmit}
+                    enabledVariant="filled"
+                  />
                 </Row>
               </Column>
-
-              {supplementalInputs.length > 0 && (
-                <Column className="gap-2">
-                  <FontText weight="medium" className="text-sm opacity-70">
-                    Supplemental vote responses
-                  </FontText>
-                  <Column className="bg-text/5 gap-2 rounded-lg p-3">
-                    {supplementalInputs.map(([label, value]) => (
-                      <Row key={label} className="items-start justify-between gap-3">
-                        <FontText weight="medium" className="flex-1">
-                          {label}
-                        </FontText>
-                        <FontText className="flex-1 text-right">
-                          {formatInputValue(value || '')}
-                        </FontText>
-                      </Row>
-                    ))}
-                  </Column>
-                </Column>
-              )}
-
-              {/* Action Buttons */}
-              <Row className="minimize-hide justify-end gap-4 pt-2">
-                <AppButton variant="outline" onPress={handleCancel} className="h-12 w-24 sm:w-32"
-                  onHoverIn={() => setHint(['esc'])}
-                  onHoverOut={() => setHint(null)}>
-                  <FontText>Cancel</FontText>
-                </AppButton>
-                <DisableableButton
-                  isEnabled={doneEnabled}
-                  enabledText={submitLabel}
-                  className="w-24 sm:w-32"
-                  disabledText="No changes"
-                  onPress={handleSubmit}
-                  enabledVariant="filled"
-                />
-              </Row>
-            </Column>
             </View>
           </ConvexDialog.Content>
         </ConvexDialog.Portal>
@@ -362,13 +368,14 @@ const VoteEditorDialog = ({
           />
           <ViewOnlyPreviewModal
             isOpen={previewEntry !== null}
-            onOpenChange={(open) => { if (!open) setPreviewEntry(null); }}
+            onOpenChange={(open) => {
+              if (!open) setPreviewEntry(null);
+            }}
             title="Preview Saved Vote"
             subtext={previewEntry ? new Date(previewEntry.savedAt).toLocaleString() : undefined}
             entry={previewEntry}
             onReplace={handleReplaceFromHistory}
-            contentClassName="max-w-md"
-          >
+            contentClassName="max-w-md">
             {previewEntry && (
               <Column className="gap-4 p-4">
                 <Column className="gap-1">
@@ -376,7 +383,9 @@ const VoteEditorDialog = ({
                     Vote target emails
                   </FontText>
                   <FontText>
-                    {normalizeVoteTargets((previewEntry.value as { vote: VoteValue }).vote).join(', ') || 'No vote'}
+                    {normalizeVoteTargets((previewEntry.value as { vote: VoteValue }).vote).join(
+                      ', '
+                    ) || 'No vote'}
                   </FontText>
                 </Column>
                 <Column className="gap-1">
@@ -385,7 +394,10 @@ const VoteEditorDialog = ({
                   </FontText>
                   <View className="bg-text border-border rounded-lg border-2 p-3">
                     <FontText color="white" weight="medium" className="text-center">
-                      {resolveVoteEmailToName((previewEntry.value as { vote: VoteValue }).vote, users)}
+                      {resolveVoteEmailToName(
+                        (previewEntry.value as { vote: VoteValue }).vote,
+                        users
+                      )}
                     </FontText>
                   </View>
                 </Column>

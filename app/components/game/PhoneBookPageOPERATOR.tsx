@@ -81,6 +81,18 @@ const PhoneBookGrid = ({ gameId, players }: { gameId: string; players: { userId:
         }
     }, [readyKey]);
 
+    const allReady = players.length > 0 && readyCount >= players.length;
+
+    useEffect(() => {
+        if (allReady) {
+            opacity.value = withTiming(1, { duration: 300 });
+        }
+    }, [allReady, opacity]);
+
+    const animatedStyle = useAnimatedStyle(() => ({
+        opacity: opacity.value,
+    }));
+
     if (players.length === 0) {
         return (
             <Animated.View entering={FadeIn.duration(300)}>
@@ -90,18 +102,6 @@ const PhoneBookGrid = ({ gameId, players }: { gameId: string; players: { userId:
             </Animated.View>
         );
     }
-
-    const allReady = readyCount >= players.length;
-
-    useEffect(() => {
-        if (allReady) {
-            opacity.value = withTiming(1, { duration: 300 });
-        }
-    }, [allReady]);
-
-    const animatedStyle = useAnimatedStyle(() => ({
-        opacity: opacity.value,
-    }));
 
     return (
         <View style={{ flex: 1, minHeight: 400 }}>

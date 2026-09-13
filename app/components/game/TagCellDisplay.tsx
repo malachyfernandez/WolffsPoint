@@ -43,7 +43,7 @@ const TagCellDisplay = ({
   const parsed = parseCell(value);
   const definitions = tagDefs.value ?? [];
 
-  const handlePress = () => {
+  const handleOpen = () => {
     onEditStart?.();
     setIsEditorOpen(true);
   };
@@ -59,7 +59,7 @@ const TagCellDisplay = ({
   return (
     <>
       <Pressable
-        onPress={handlePress}
+        onPress={handleOpen}
         style={{
           position: 'absolute',
           top: 0,
@@ -108,7 +108,8 @@ const TagCellDisplay = ({
       <TagCellEditor
         isOpen={isEditorOpen}
         onOpenChange={(open) => {
-          if (!open) handleClose();
+          if (open) handleOpen();
+          else handleClose();
         }}
         gameId={gameId}
         value={value}

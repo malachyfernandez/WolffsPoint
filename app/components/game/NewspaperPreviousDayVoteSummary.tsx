@@ -24,6 +24,39 @@ interface NewspaperPreviousDayVoteSummaryProps {
   dayIndex: number;
 }
 
+export const useIsPreviousDayVoteSummaryReady = (gameId: string, dayIndex: number) => {
+  const gameRows = useFindListItems('games', {
+    itemId: gameId,
+    returnTop: 1,
+  });
+  const operatorUserId = gameRows?.[0]?.userToken ?? '';
+  const operatorUserTableRecords = useFindListItems<UserTableItem[]>('userTable', {
+    itemId: gameId,
+    userIds: operatorUserId ? [operatorUserId] : undefined,
+    returnTop: 1,
+  });
+  const allProfiles = useFindValues<PlayerProfile>(getGameScopedKey('playerProfile', gameId), {
+    returnTop: 200,
+  });
+  const scheduleRecord = useFindValues(getGameScopedKey('gameSchedule', gameId), {
+    returnTop: 1,
+  });
+
+  if (dayIndex <= 0) {
+    return true;
+  }
+
+  if (gameRows === undefined || !operatorUserId || operatorUserTableRecords === undefined) {
+    return false;
+  }
+
+  const players = operatorUserTableRecords[0]?.value ?? [];
+  const targetDay = dayIndex - 1;
+  const hasVotes = players.some((player) => normalizeVoteTargets(player.days?.[targetDay]?.vote).length > 0);
+
+  return !hasVotes || (allProfiles !== undefined && scheduleRecord !== undefined);
+};
+
 const getInitials = (value: string) => {
   const parts = value
     .split(/\s+/)
@@ -278,7 +311,7 @@ const NewspaperPreviousDayVoteSummary = ({
     return map;
   }, [allProfiles]);
 
-  const { voteRows, skipVoteCount, skipVoters, votersByTargetEmail } = useMemo(() => {
+  const { voteRows, skipVoteCount, skipVoters } = useMemo(() => {
     if (dayIndex <= 0) {
       return {
         voteRows: [] as { player: UserTableItem; voteCount: number; voters: UserTableItem[] }[],

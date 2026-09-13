@@ -21,9 +21,13 @@ export function useHasPreviousDayVotes(gameId: string, dayIndex: number): boolea
       return false;
     }
 
-    const players = operatorUserTableRecords?.[0]?.value ?? [];
+    if (gameRows === undefined || !operatorUserId || operatorUserTableRecords === undefined) {
+      return undefined;
+    }
+
+    const players = operatorUserTableRecords[0]?.value ?? [];
     const targetDay = dayIndex - 1;
 
     return players.some((player) => hasVoteContent(player.days?.[targetDay]?.vote));
-  }, [dayIndex, operatorUserTableRecords]);
+  }, [dayIndex, gameRows, operatorUserId, operatorUserTableRecords]);
 }

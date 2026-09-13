@@ -150,70 +150,73 @@ const ActionEditorDialog = ({
         <ConvexDialog.Portal>
           <ConvexDialog.Overlay />
           <ConvexDialog.Content className="max-w-lg p-1" isSwipeable={false}>
-            <View ref={targetRef} className="flex-1 min-h-0">
-            <CloseButton onPress={handleAttemptClose} />
-            <MinimizeButton
-              hasUnsavedChanges={hasUnsavedChanges}
-              onSave={handleSave}
-              onMinimize={performMinimize}
-            />
-            {historyKey && (
-              <SaveHistoryPill
-                hasUnsavedChanges={hasUnsavedChanges}
-                isInvalid={false}
-                onSave={handleSave}
-                onOpenHistory={() => setIsHistoryOpen(true)}
-              />
-            )}
-            <DialogHeader text={title} subtext={dialogSubtext} />
-
-            <Column className="gap-4 p-0 pt-4 sm:p-5">
-              {/* Text Input for editing */}
-              <Column className="gap-1">
-                <FontText weight="medium" className="text-sm opacity-70">
-                  Action Text
-                </FontText>
-                <FontTextInput
-                  value={draftAction}
-                  onChangeText={setDraftAction}
-                  placeholder="e.g., Kill: Ty Pace • Weapon: Piano"
-                  multiline
-                  numberOfLines={3}
-                  variant="styled"
-                  className="p-2"
-                  style={{ fontFamily: 'Poppins-Regular' }}
+            <View ref={targetRef} className="min-h-0 flex-1">
+              <CloseButton onPress={handleAttemptClose} />
+              {historyKey && (
+                <MinimizeButton
+                  hasUnsavedChanges={hasUnsavedChanges}
+                  onSave={handleSave}
+                  onMinimize={performMinimize}
                 />
-                <FontText className="text-xs opacity-50">
-                  Use • to separate multiple actions. Use : to separate label from value.
-                </FontText>
-              </Column>
-
-              {/* Live Preview */}
-              <Column className="flex-1 gap-1">
-                <FontText weight="medium" className="text-sm opacity-70">
-                  Preview
-                </FontText>
-                <View className="bg-background border-border min-h-[80px] flex-1 rounded-lg border-2 p-3">
-                  <ShadowScrollView className="h-full">
-                    <ActionPills actionText={draftAction} />
-                  </ShadowScrollView>
-                </View>
-              </Column>
-
-              {/* Action Buttons */}
-              <Row className="minimize-hide justify-end gap-4 pt-2">
-                <AppButton variant="outline" onPress={handleCancel} className="w-22 h-12 sm:w-32">
-                  <FontText>Cancel</FontText>
-                </AppButton>
-                <DisableableButton
-                  isEnabled={doneEnabled}
-                  enabledText={submitLabel}
-                  disabledText="No changes"
-                  onPress={handleSubmit}
-                  enabledVariant="filled"
+              )}
+              {historyKey && (
+                <SaveHistoryPill
+                  hasUnsavedChanges={hasUnsavedChanges}
+                  isInvalid={false}
+                  onSave={handleSave}
+                  onOpenHistory={() => setIsHistoryOpen(true)}
+                  hasMinimizeButton
                 />
-              </Row>
-            </Column>
+              )}
+              <DialogHeader text={title} subtext={dialogSubtext} />
+
+              <Column className="gap-4 p-0 pt-4 sm:p-5">
+                {/* Text Input for editing */}
+                <Column className="gap-1">
+                  <FontText weight="medium" className="text-sm opacity-70">
+                    Action Text
+                  </FontText>
+                  <FontTextInput
+                    value={draftAction}
+                    onChangeText={setDraftAction}
+                    placeholder="e.g., Kill: Ty Pace • Weapon: Piano"
+                    multiline
+                    numberOfLines={3}
+                    variant="styled"
+                    className="p-2"
+                    style={{ fontFamily: 'Poppins-Regular' }}
+                  />
+                  <FontText className="text-xs opacity-50">
+                    Use • to separate multiple actions. Use : to separate label from value.
+                  </FontText>
+                </Column>
+
+                {/* Live Preview */}
+                <Column className="flex-1 gap-1">
+                  <FontText weight="medium" className="text-sm opacity-70">
+                    Preview
+                  </FontText>
+                  <View className="bg-background border-border min-h-[80px] flex-1 rounded-lg border-2 p-3">
+                    <ShadowScrollView className="h-full">
+                      <ActionPills actionText={draftAction} />
+                    </ShadowScrollView>
+                  </View>
+                </Column>
+
+                {/* Action Buttons */}
+                <Row className="minimize-hide justify-end gap-4 pt-2">
+                  <AppButton variant="outline" onPress={handleCancel} className="w-22 h-12 sm:w-32">
+                    <FontText>Cancel</FontText>
+                  </AppButton>
+                  <DisableableButton
+                    isEnabled={doneEnabled}
+                    enabledText={submitLabel}
+                    disabledText="No changes"
+                    onPress={handleSubmit}
+                    enabledVariant="filled"
+                  />
+                </Row>
+              </Column>
             </View>
           </ConvexDialog.Content>
         </ConvexDialog.Portal>
@@ -238,13 +241,14 @@ const ActionEditorDialog = ({
           />
           <ViewOnlyPreviewModal
             isOpen={previewEntry !== null}
-            onOpenChange={(open) => { if (!open) setPreviewEntry(null); }}
+            onOpenChange={(open) => {
+              if (!open) setPreviewEntry(null);
+            }}
             title="Preview Saved Action"
             subtext={previewEntry ? new Date(previewEntry.savedAt).toLocaleString() : undefined}
             entry={previewEntry}
             onReplace={handleReplaceFromHistory}
-            contentClassName="max-w-lg"
-          >
+            contentClassName="max-w-lg">
             {previewEntry && (
               <ScrollView className="flex-1" contentContainerClassName="p-4">
                 <ActionPills actionText={(previewEntry.value as string) ?? ''} />

@@ -1,7 +1,7 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { View, StyleSheet, useWindowDimensions } from 'react-native';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { View } from 'react-native';
 import { Tabs } from 'heroui-native';
-import Animated, { FadeIn, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+import LayoutStateAnimatedView, { fromRight } from '../ui/LayoutStateAnimatedView';
 import Column from '../layout/Column';
 import NewspaperWritingView from './NewspaperWritingView';
 import OperatorDayNavigation from '../ui/daySelector/OperatorDayNavigation';
@@ -22,14 +22,9 @@ interface NewspaperPageNEWSERProps {
     gameId: string;
 }
 
-type AnimationDirection = 'left' | 'right';
-
-const TILE_SIZE = 600;
-
 const NewspaperPageNEWSER = ({ currentUserId, currentEmail, gameId }: NewspaperPageNEWSERProps) => {
     const [activeTab, setActiveTab] = useState<'writing' | 'viewing'>('writing');
     const [selectedDayIndex, setSelectedDayIndex] = useState(0);
-    const { width } = useWindowDimensions();
     const { operatorUserId, isLoading: isOperatorLoading } = useGameOperatorUserId(gameId);
     const { value: operatorDayDates, isLoading: isDayDatesLoading } = useSharedListValue<string[]>({
         key: 'dayDatesArray',
@@ -45,9 +40,6 @@ const NewspaperPageNEWSER = ({ currentUserId, currentEmail, gameId }: NewspaperP
     });
 
     const totalDays = operatorDayDates.length;
-    const [leavingDayIndex, setLeavingDayIndex] = useState<number | null>(null);
-    const previousDayIndexRef = useRef<number | null>(null);
-    const leavingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const hasInitializedSelectedDayRef = useRef(false);
     const hasSeededSelectedDayRef = useRef(false);
     const [isInitialLoadComplete, setIsInitialLoadComplete] = useState(false);
@@ -56,11 +48,11 @@ const NewspaperPageNEWSER = ({ currentUserId, currentEmail, gameId }: NewspaperP
         gameId,
         dayIndex: selectedDayIndex,
     });
-    const leavingDayOwner = useNewspaperDayOwner({
-        gameId,
-        dayIndex: leavingDayIndex ?? 0,
-        disabled: leavingDayIndex === null,
-    });
+    const [readyDayKey, setReadyDayKey] = useState<string | null>(null);
+    const selectedDayKey = `${selectedDayIndex}:${selectedDayOwner.ownerUserId}`;
+    const handleSelectedDayReady = useCallback(() => {
+        setReadyDayKey(selectedDayKey);
+    }, [selectedDayKey]);
     const currentDayItemId = getNewspaperDayItemId(gameId, selectedDayIndex);
 
     // Load the operator's draft so the newser can import it when they have control
@@ -105,14 +97,6 @@ const NewspaperPageNEWSER = ({ currentUserId, currentEmail, gameId }: NewspaperP
         });
     }, [accepted, currentEmail, currentUserId, gameId, setAccepted]);
 
-    const slideDistance = useMemo(() => Math.min(Math.max(width * 0.12, 24), 72), [width]);
-    const transitionDuration = 240;
-
-    const enteringOpacity = useSharedValue(1);
-    const enteringTranslateX = useSharedValue(0);
-    const leavingOpacity = useSharedValue(1);
-    const leavingTranslateX = useSharedValue(0);
-
     useEffect(() => {
         if (isOperatorLoading || isDayDatesLoading || isSelectedDayLoading) {
             return;
@@ -131,79 +115,9 @@ const NewspaperPageNEWSER = ({ currentUserId, currentEmail, gameId }: NewspaperP
     useEffect(() => {
         if (!hasInitializedSelectedDayRef.current && !isOperatorLoading && !isDayDatesLoading && !isSelectedDayLoading) {
             hasInitializedSelectedDayRef.current = true;
-            previousDayIndexRef.current = selectedDayIndex;
             setIsInitialLoadComplete(true);
         }
     }, [isDayDatesLoading, isOperatorLoading, isSelectedDayLoading, selectedDayIndex]);
-
-    useEffect(() => {
-        return () => {
-            if (leavingTimeoutRef.current) {
-                clearTimeout(leavingTimeoutRef.current);
-            }
-        };
-    }, []);
-
-    useEffect(() => {
-        if (!isInitialLoadComplete) {
-            return;
-        }
-
-        const previousDayIndex = previousDayIndexRef.current;
-
-        if (previousDayIndex == null) {
-            previousDayIndexRef.current = selectedDayIndex;
-            enteringOpacity.value = 1;
-            enteringTranslateX.value = 0;
-            leavingOpacity.value = 0;
-            leavingTranslateX.value = 0;
-            return;
-        }
-
-        if (previousDayIndex === selectedDayIndex) {
-            return;
-        }
-
-        if (leavingTimeoutRef.current) {
-            clearTimeout(leavingTimeoutRef.current);
-        }
-
-        const direction: AnimationDirection = selectedDayIndex > previousDayIndex ? 'left' : 'right';
-        const enteringStartX = direction === 'left' ? slideDistance : -slideDistance;
-        const leavingEndX = direction === 'left' ? -slideDistance : slideDistance;
-
-        setLeavingDayIndex(previousDayIndex);
-
-        enteringOpacity.value = 0;
-        enteringTranslateX.value = enteringStartX;
-        leavingOpacity.value = 1;
-        leavingTranslateX.value = 0;
-
-        enteringOpacity.value = withTiming(1, { duration: transitionDuration });
-        enteringTranslateX.value = withTiming(0, { duration: transitionDuration });
-        leavingOpacity.value = withTiming(0, { duration: transitionDuration });
-        leavingTranslateX.value = withTiming(leavingEndX, { duration: transitionDuration });
-
-        leavingTimeoutRef.current = setTimeout(() => {
-            setLeavingDayIndex(null);
-        }, transitionDuration);
-
-        previousDayIndexRef.current = selectedDayIndex;
-    }, [enteringOpacity, enteringTranslateX, isInitialLoadComplete, leavingOpacity, leavingTranslateX, selectedDayIndex, slideDistance]);
-
-    const enteringStyle = useAnimatedStyle(() => {
-        return {
-            opacity: enteringOpacity.value,
-            transform: [{ translateX: enteringTranslateX.value }],
-        };
-    });
-
-    const leavingStyle = useAnimatedStyle(() => {
-        return {
-            opacity: leavingOpacity.value,
-            transform: [{ translateX: leavingTranslateX.value }],
-        };
-    });
 
     const handleTabChange = (value: string) => {
         if (value === 'writing' || value === 'viewing') {
@@ -211,10 +125,9 @@ const NewspaperPageNEWSER = ({ currentUserId, currentEmail, gameId }: NewspaperP
         }
     };
 
-    const isOwnershipLoading = selectedDayOwner.isLoading || (leavingDayIndex !== null && leavingDayOwner.isLoading);
-    const isReady = isInitialLoadComplete && !isOwnershipLoading;
+    const isReady = isInitialLoadComplete;
 
-    const renderViewingContent = (dayIndex: number, ownerUserId: string, isLeaving: boolean = false) => {
+    const renderViewingContent = (dayIndex: number, ownerUserId: string, onReady?: () => void) => {
         return (
             // <View className='py-4 rounded-2xl' style={{
             //     // @ts-ignore: web-only CSS
@@ -222,14 +135,14 @@ const NewspaperPageNEWSER = ({ currentUserId, currentEmail, gameId }: NewspaperP
             //     backgroundRepeat: 'repeat',
             //     backgroundSize: `${TILE_SIZE}px ${TILE_SIZE}px`,
             // }}>
-                <NewspaperDayView gameId={gameId} dayIndex={dayIndex} ownerUserId={ownerUserId} isLeaving={isLeaving} />
+                <NewspaperDayView gameId={gameId} dayIndex={dayIndex} ownerUserId={ownerUserId} onReady={onReady} />
             // </View>
         );
     };
 
     if (!isReady) {
         return (
-            <Column className='gap-4 min-h-[760px] items-center justify-center'>
+            <Column className='gap-4 min-h-190 items-center justify-center'>
                 <FontText variant='subtext'>Loading newspaper…</FontText>
             </Column>
         );
@@ -272,91 +185,56 @@ const NewspaperPageNEWSER = ({ currentUserId, currentEmail, gameId }: NewspaperP
                 </View>
             </View>
 
-            <Column className='gap-4 max-w-[950px] w-full self-center'>
-                <View style={styles.animatedContentContainer} className='px-2 sm:px-0'>
-                    {leavingDayIndex != null ? (
-                        <Animated.View
-                            key={`leaving-${leavingDayIndex}`}
-                            pointerEvents='none'
-                            style={[styles.animatedContentOverlay, leavingStyle]}
-                        >
-                            <Tabs value={activeTab} onValueChange={handleTabChange} className='flex-1'>
-                                <Tabs.Content value='viewing' className='flex-1'>
-                                    {renderViewingContent(leavingDayIndex, leavingDayOwner.ownerUserId, true)}
-                                </Tabs.Content>
-                                <Tabs.Content value='writing' className='flex-1'>
-                                    {currentUserId === leavingDayOwner.ownerUserId ? (
-                                        <NewspaperWritingView
-                                            gameId={getNewspaperDayItemId(gameId, leavingDayIndex)}
-                                            realGameId={gameId}
-                                            importSourceLabel='Operator'
-                                            importDraft={operatorDraft}
-                                            isImportDraftLoading={isOperatorDraftLoading}
-                                            onImportDraft={() => {}}
-                                        />
-                                    ) : (
-                                        <PlaceholderCard>
-                                            <Column className='gap-3 items-center'>
-                                                <Newspaper size={48} color='rgb(46, 41, 37)' />
-                                                <FontText weight='bold' className='text-xl text-center'>
-                                                    Editing locked
-                                                </FontText>
-                                                <FontText variant='subtext' className='text-center'>
-                                                    You do not have control of today's newspaper.
-                                                </FontText>
-                                            </Column>
-                                        </PlaceholderCard>
-                                    )}
-                                </Tabs.Content>
-                            </Tabs>
-                        </Animated.View>
-                    ) : null}
-
-                    <Animated.View entering={isInitialLoadComplete ? FadeIn.duration(300) : undefined} key={`selected-${selectedDayIndex}`} style={enteringStyle}>
-                        <Tabs value={activeTab} onValueChange={handleTabChange} className='flex-1'>
-                            <Tabs.Content value='viewing' className='flex-1'>
-                                {renderViewingContent(selectedDayIndex, selectedDayOwner.ownerUserId)}
-                            </Tabs.Content>
-                            <Tabs.Content value='writing' className='flex-1'>
-                                {currentUserId === selectedDayOwner.ownerUserId ? (
-                                    <NewspaperWritingView
-                                        gameId={currentDayItemId}
-                                        realGameId={gameId}
-                                        importSourceLabel='Operator'
-                                        importDraft={operatorDraft}
-                                        isImportDraftLoading={isOperatorDraftLoading}
-                                        onImportDraft={() => {}}
-                                    />
+            <Column className='gap-4 max-w-237.5 w-full self-center'>
+                <View className='px-2 sm:px-0'>
+                    <LayoutStateAnimatedView.Container stateVar={String(selectedDayIndex)} highPerformance>
+                        <LayoutStateAnimatedView.OptionContainer page={selectedDayIndex} pushInAnimation={fromRight}>
+                            <LayoutStateAnimatedView.Option
+                                stateValue={String(selectedDayIndex)}
+                                isReady={!selectedDayOwner.isLoading && (activeTab === 'writing' || readyDayKey === selectedDayKey)}
+                            >
+                                {selectedDayOwner.isLoading ? (
+                                    <Column className='min-h-190 items-center justify-center'>
+                                        <FontText variant='subtext'>Loading newspaper…</FontText>
+                                    </Column>
                                 ) : (
-                                    <PlaceholderCard>
-                                        <Column className='gap-3 items-center'>
-                                            <Newspaper size={48} color='rgb(46, 41, 37)' />
-                                            <FontText weight='bold' className='text-xl text-center'>
-                                                Editing locked
-                                            </FontText>
-                                            <FontText variant='subtext' className='text-center'>
-                                                You do not have control of today's newspaper.
-                                            </FontText>
-                                        </Column>
-                                    </PlaceholderCard>
+                                    <Tabs value={activeTab} onValueChange={handleTabChange} className='flex-1'>
+                                        <Tabs.Content value='viewing' className='flex-1'>
+                                            {renderViewingContent(selectedDayIndex, selectedDayOwner.ownerUserId, handleSelectedDayReady)}
+                                        </Tabs.Content>
+                                        <Tabs.Content value='writing' className='flex-1'>
+                                            {currentUserId === selectedDayOwner.ownerUserId ? (
+                                                <NewspaperWritingView
+                                                    gameId={currentDayItemId}
+                                                    realGameId={gameId}
+                                                    importSourceLabel='Operator'
+                                                    importDraft={operatorDraft}
+                                                    isImportDraftLoading={isOperatorDraftLoading}
+                                                    onImportDraft={() => {}}
+                                                />
+                                            ) : (
+                                                <PlaceholderCard>
+                                                    <Column className='gap-3 items-center'>
+                                                        <Newspaper size={48} color='rgb(46, 41, 37)' />
+                                                        <FontText weight='bold' className='text-xl text-center'>
+                                                            Editing locked
+                                                        </FontText>
+                                                        <FontText variant='subtext' className='text-center'>
+                                                            You do not have control of today’s newspaper.
+                                                        </FontText>
+                                                    </Column>
+                                                </PlaceholderCard>
+                                            )}
+                                        </Tabs.Content>
+                                    </Tabs>
                                 )}
-                            </Tabs.Content>
-                        </Tabs>
-                    </Animated.View>
+                            </LayoutStateAnimatedView.Option>
+                        </LayoutStateAnimatedView.OptionContainer>
+                    </LayoutStateAnimatedView.Container>
                 </View>
             </Column>
         </Column>
     );
 };
-
-const styles = StyleSheet.create({
-    animatedContentContainer: {
-        overflow: 'hidden',
-        position: 'relative',
-    },
-    animatedContentOverlay: {
-        ...StyleSheet.absoluteFillObject,
-    },
-});
 
 export default NewspaperPageNEWSER;

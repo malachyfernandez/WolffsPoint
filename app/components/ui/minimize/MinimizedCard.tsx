@@ -47,8 +47,7 @@ const MinimizedCard = ({ entry, onRestore, onRemove }: MinimizedCardProps) => {
         height: Math.min(scaledHeight, MAX_HEIGHT),
         flexShrink: 0,
       }}
-      onClick={onRestore}
-    >
+      onClick={onRestore}>
       {/* Clipped content container */}
       <div
         style={{
@@ -62,8 +61,7 @@ const MinimizedCard = ({ entry, onRestore, onRemove }: MinimizedCardProps) => {
           boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
           border: '1px solid rgba(0,0,0,0.2)',
           cursor: 'pointer',
-        }}
-      >
+        }}>
         {/* Scaled DOM clone (guilded frame with tan bg + texture) */}
         <div
           ref={containerRef}
@@ -94,11 +92,11 @@ const MinimizedCard = ({ entry, onRestore, onRemove }: MinimizedCardProps) => {
           height: 32,
           borderRadius: 16,
           backgroundColor: 'rgba(139, 0, 0, 0.9)',
+          boxShadow: '0 5px 10px rgba(72, 0, 0, 0.42)',
           alignItems: 'center',
           justifyContent: 'center',
           zIndex: 10,
-        }}
-      >
+        }}>
         <FontText color="white" weight="bold" className="text-2xl leading-none">
           ×
         </FontText>

@@ -225,6 +225,8 @@ const NewspaperWritingView = ({
           showScript
           isPreviewSideBySide={true}
           historyKey={`newspaperColumn:${gameId}:${selectedColumnIndex}`}
+          onMinimize={() => setIsDialogOpen(false)}
+          onRestore={() => setIsDialogOpen(true)}
         />
       )}
 

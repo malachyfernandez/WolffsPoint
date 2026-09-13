@@ -54,7 +54,7 @@ const TownSquareThreadListView = ({
                 {isPlayerDead && (
                     <Column className='gap-0 flex grow'>
                         <FontText weight='bold' className='text-2xl leading-10'>Shhhhhhhh</FontText>
-                        <FontText variant='subtext'>Still the Town Square, but Ghosts don't talk silly</FontText>
+                        <FontText variant='subtext'>Still the Town Square, but Ghosts don’t talk silly</FontText>
                     </Column>
                 )}
 

@@ -56,7 +56,7 @@
  * - Only adjacent page changes animate (page difference of exactly 1)
  * - Same-page changes and non-adjacent jumps render with no animation
  * - The higher-numbered page's pushInAnimation determines the transition direction
- * - Elements are completely removed from DOM after exit animation completes
+ * - The single content tree is swapped only after its exit animation completes
  * 
  * @animation Presets
  * - fromRight: Enter from right, exit to left (default)
@@ -65,12 +65,12 @@
  * - fromBottom: Enter from bottom, exit to top
  * 
  * @performance Notes
- * - Leaving elements have pointerEvents='none' during transition
- * - DOM cleanup happens exactly when exit animation completes
+ * - The active content has pointerEvents='none' while it exits
+ * - Only one content tree is mounted at any point in the transition
  * - No performance overhead from hidden elements after transition
  */
 import React, { PropsWithChildren, ReactNode, useEffect, useMemo, useRef, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import Animated, {
     SharedValue,
     useAnimatedStyle,
@@ -101,11 +101,13 @@ export type LayoutStateAnimatedViewPushInAnimation = {
 interface LayoutStateAnimatedViewContainerProps<TState extends TransitionStateKey> extends PropsWithChildren {
     stateVar: TState;
     className?: string;
+    highPerformance?: boolean;
 }
 
 interface LayoutStateAnimatedViewOptionProps<TState extends TransitionStateKey> extends PropsWithChildren {
     stateValue: TState;
     page?: number;
+    isReady?: boolean;
 }
 
 interface LayoutStateAnimatedViewOptionContainerProps extends PropsWithChildren {
@@ -118,14 +120,13 @@ type ResolvedOption<TState extends TransitionStateKey> = {
     page: number;
     pushInAnimation?: LayoutStateAnimatedViewPushInAnimation;
     children: ReactNode;
+    isReady: boolean;
 };
 
-type LeavingContent = {
-    key: string;
-    children: ReactNode;
-};
+type TransitionPhase = 'idle' | 'exiting' | 'waiting' | 'swapping' | 'entering';
 
 const DEFAULT_DURATION = 250;
+const webPerformanceStyle = Platform.OS === 'web' ? ({ willChange: 'transform, opacity' } as any) : undefined;
 
 const NO_ANIMATION_TRANSITION: LayoutStateAnimatedViewTransition = {
     entering: {},
@@ -299,6 +300,7 @@ const collectOptions = <TState extends TransitionStateKey>(
                 page,
                 pushInAnimation: inheritedPushInAnimation,
                 children: optionProps.children,
+                isReady: optionProps.isReady !== false,
             });
         }
     });
@@ -309,6 +311,7 @@ const collectOptions = <TState extends TransitionStateKey>(
 const getTransitionForPageChange = <TState extends TransitionStateKey>(
     previousOption?: ResolvedOption<TState>,
     nextOption?: ResolvedOption<TState>,
+    adjacentOnly = true,
 ) => {
     if (!previousOption || !nextOption) {
         return null;
@@ -318,7 +321,7 @@ const getTransitionForPageChange = <TState extends TransitionStateKey>(
         return null;
     }
 
-    if (Math.abs(previousOption.page - nextOption.page) !== 1) {
+    if (adjacentOnly && Math.abs(previousOption.page - nextOption.page) !== 1) {
         return null;
     }
 
@@ -336,112 +339,154 @@ const LayoutStateAnimatedViewContainer = <TState extends TransitionStateKey>({
     stateVar,
     className,
     children,
+    highPerformance = false,
 }: LayoutStateAnimatedViewContainerProps<TState>) => {
     const options = useMemo(() => collectOptions<TState>(children), [children]);
     const currentOption = options.find((option) => option.stateValue === stateVar);
-    const currentContent = currentOption?.children ?? null;
+    const [displayedOption, setDisplayedOption] = useState<ResolvedOption<TState> | undefined>(currentOption);
+    const [phase, setPhase] = useState<TransitionPhase>('idle');
+    const displayedOptionRef = useRef(displayedOption);
+    const targetOptionRef = useRef(currentOption);
+    const transitionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const firstAnimationFrameRef = useRef<ReturnType<typeof requestAnimationFrame> | null>(null);
+    const secondAnimationFrameRef = useRef<ReturnType<typeof requestAnimationFrame> | null>(null);
 
-    const previousStateRef = useRef<TState | undefined>(undefined);
-    const previousOptionRef = useRef<ResolvedOption<TState> | undefined>(currentOption);
-    const previousContentRef = useRef<ReactNode>(currentContent);
-    const leavingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-    const [leavingContent, setLeavingContent] = useState<LeavingContent | null>(null);
+    targetOptionRef.current = currentOption;
 
-    const enteringOpacity = useSharedValue(1);
-    const enteringTranslateX = useSharedValue(0);
-    const enteringTranslateY = useSharedValue(0);
-    const enteringScale = useSharedValue(1);
-    const leavingOpacity = useSharedValue(1);
-    const leavingTranslateX = useSharedValue(0);
-    const leavingTranslateY = useSharedValue(0);
-    const leavingScale = useSharedValue(1);
+    const opacity = useSharedValue(1);
+    const translateX = useSharedValue(0);
+    const translateY = useSharedValue(0);
+    const scale = useSharedValue(1);
 
-    const enteringStyle = useAnimatedStyle(() => {
+    const animatedStyle = useAnimatedStyle(() => {
         return {
-            opacity: enteringOpacity.value,
+            opacity: opacity.value,
             transform: [
-                { translateX: enteringTranslateX.value },
-                { translateY: enteringTranslateY.value },
-                { scale: enteringScale.value },
-            ],
-        };
-    });
-
-    const leavingStyle = useAnimatedStyle(() => {
-        return {
-            opacity: leavingOpacity.value,
-            transform: [
-                { translateX: leavingTranslateX.value },
-                { translateY: leavingTranslateY.value },
-                { scale: leavingScale.value },
+                { translateX: translateX.value },
+                { translateY: translateY.value },
+                { scale: scale.value },
             ],
         };
     });
 
     useEffect(() => {
-        const previousState = previousStateRef.current;
+        if (phase === 'waiting') {
+            if (displayedOptionRef.current?.stateValue !== currentOption?.stateValue) {
+                displayedOptionRef.current = currentOption;
+                setDisplayedOption(currentOption);
+                opacity.value = 0;
+                translateX.value = 0;
+                translateY.value = 0;
+                scale.value = 1;
+                return;
+            }
 
-        if (previousState == null) {
-            applyAnimation(NO_ANIMATION_TRANSITION.entering, enteringOpacity, enteringTranslateX, enteringTranslateY, enteringScale);
-            previousStateRef.current = stateVar;
-            previousOptionRef.current = currentOption;
-            previousContentRef.current = currentContent;
+            if (!currentOption?.isReady) {
+                return;
+            }
+
+            const fadeInAnimation: LayoutStateAnimatedViewAnimation = {
+                duration: 180,
+                opacity: [0, 1],
+            };
+
+            setPhase('swapping');
+            firstAnimationFrameRef.current = requestAnimationFrame(() => {
+                secondAnimationFrameRef.current = requestAnimationFrame(() => {
+                    setPhase('entering');
+                    applyAnimation(fadeInAnimation, opacity, translateX, translateY, scale);
+
+                    transitionTimeoutRef.current = setTimeout(() => {
+                        setPhase('idle');
+                    }, getDuration(fadeInAnimation));
+                });
+            });
             return;
         }
 
-        if (previousState !== stateVar) {
-            if (leavingTimeoutRef.current) {
-                clearTimeout(leavingTimeoutRef.current);
-            }
-
-            const activeTransition = getTransitionForPageChange(previousOptionRef.current, currentOption);
-
-            if (!activeTransition || previousContentRef.current == null) {
-                setLeavingContent(null);
-                applyAnimation(NO_ANIMATION_TRANSITION.entering, enteringOpacity, enteringTranslateX, enteringTranslateY, enteringScale);
-                applyAnimation(NO_ANIMATION_TRANSITION.exiting, leavingOpacity, leavingTranslateX, leavingTranslateY, leavingScale);
-            } else {
-                setLeavingContent({
-                    key: `${String(previousState)}-${String(stateVar)}-${Date.now()}`,
-                    children: previousContentRef.current,
-                });
-
-                applyAnimation(activeTransition.entering, enteringOpacity, enteringTranslateX, enteringTranslateY, enteringScale);
-                applyAnimation(activeTransition.exiting, leavingOpacity, leavingTranslateX, leavingTranslateY, leavingScale);
-
-                leavingTimeoutRef.current = setTimeout(() => {
-                    setLeavingContent(null);
-                }, getDuration(activeTransition.exiting));
-            }
+        if (phase !== 'idle') {
+            return;
         }
 
-        previousStateRef.current = stateVar;
-        previousOptionRef.current = currentOption;
-        previousContentRef.current = currentContent;
-    }, [currentContent, currentOption, enteringOpacity, enteringScale, enteringTranslateX, enteringTranslateY, leavingOpacity, leavingScale, leavingTranslateX, leavingTranslateY, stateVar]);
+        const previousOption = displayedOptionRef.current;
+
+        if (previousOption?.stateValue === currentOption?.stateValue) {
+            displayedOptionRef.current = currentOption;
+            return;
+        }
+
+        const activeTransition = getTransitionForPageChange(previousOption, currentOption, !highPerformance);
+
+        if (!activeTransition || !previousOption || !currentOption) {
+            displayedOptionRef.current = currentOption;
+            setDisplayedOption(currentOption);
+            applyAnimation(NO_ANIMATION_TRANSITION.entering, opacity, translateX, translateY, scale);
+            return;
+        }
+
+        setDisplayedOption(previousOption);
+        setPhase('exiting');
+        applyAnimation(activeTransition.exiting, opacity, translateX, translateY, scale);
+
+        transitionTimeoutRef.current = setTimeout(() => {
+            const nextOption = targetOptionRef.current;
+            const enteringTransition = getTransitionForPageChange(previousOption, nextOption);
+
+            const enteringAnimation = enteringTransition?.entering ?? NO_ANIMATION_TRANSITION.entering;
+
+            displayedOptionRef.current = nextOption;
+            setDisplayedOption(nextOption);
+
+            if (highPerformance) {
+                opacity.value = 0;
+                translateX.value = 0;
+                translateY.value = 0;
+                scale.value = 1;
+                setPhase('waiting');
+                return;
+            }
+
+            setPhase('swapping');
+            firstAnimationFrameRef.current = requestAnimationFrame(() => {
+                secondAnimationFrameRef.current = requestAnimationFrame(() => {
+                    setPhase('entering');
+                    applyAnimation(enteringAnimation, opacity, translateX, translateY, scale);
+
+                    transitionTimeoutRef.current = setTimeout(() => {
+                        setPhase('idle');
+                    }, getDuration(enteringAnimation));
+                });
+            });
+        }, getDuration(activeTransition.exiting));
+    }, [currentOption, highPerformance, opacity, phase, scale, stateVar, translateX, translateY]);
 
     useEffect(() => {
         return () => {
-            if (leavingTimeoutRef.current) {
-                clearTimeout(leavingTimeoutRef.current);
+            if (transitionTimeoutRef.current) {
+                clearTimeout(transitionTimeoutRef.current);
+            }
+            if (firstAnimationFrameRef.current !== null) {
+                cancelAnimationFrame(firstAnimationFrameRef.current);
+            }
+            if (secondAnimationFrameRef.current !== null) {
+                cancelAnimationFrame(secondAnimationFrameRef.current);
             }
         };
     }, []);
 
+    const displayedContent = phase === 'idle'
+        ? displayedOptionRef.current?.stateValue === currentOption?.stateValue
+            ? currentOption?.children
+            : displayedOptionRef.current?.children
+        : displayedOption?.children;
+
     return (
         <View className={className} style={styles.container}>
-            {leavingContent ? (
-                <Animated.View
-                    key={leavingContent.key}
-                    pointerEvents='none'
-                    style={[styles.overlay, leavingStyle]}
-                >
-                    {leavingContent.children}
-                </Animated.View>
-            ) : null}
-
-            <Animated.View key={String(stateVar)} style={[styles.fill, enteringStyle]}>
-                {currentContent}
+            <Animated.View
+                pointerEvents={phase === 'exiting' || phase === 'waiting' || phase === 'swapping' ? 'none' : 'auto'}
+                style={[styles.fill, webPerformanceStyle, animatedStyle]}
+            >
+                {displayedContent ?? null}
             </Animated.View>
         </View>
     );
@@ -454,9 +499,6 @@ const styles = StyleSheet.create({
     },
     fill: {
         flex: 1,
-    },
-    overlay: {
-        ...StyleSheet.absoluteFillObject,
     },
 });
 

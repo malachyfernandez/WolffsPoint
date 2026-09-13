@@ -2,6 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { Pressable } from 'react-native';
 import FontText from '../text/FontText';
 import MustSaveDialog from './MustSaveDialog';
+import { useMinimize } from './MinimizeContext';
 
 interface MinimizeButtonProps {
   /** Whether the dialog currently has unsaved changes. */
@@ -22,12 +23,9 @@ interface MinimizeButtonProps {
  *
  * Place this right after CloseButton inside the dialog content.
  */
-const MinimizeButton = ({
-  hasUnsavedChanges,
-  onSave,
-  onMinimize,
-}: MinimizeButtonProps) => {
+const MinimizeButton = ({ hasUnsavedChanges, onSave, onMinimize }: MinimizeButtonProps) => {
   const [mustSaveOpen, setMustSaveOpen] = useState(false);
+  const { isAvailable } = useMinimize();
 
   const handlePress = useCallback(() => {
     if (hasUnsavedChanges) {
@@ -42,14 +40,15 @@ const MinimizeButton = ({
     onMinimize();
   }, [onSave, onMinimize]);
 
+  if (!isAvailable) return null;
+
   return (
     <>
       <Pressable
         onPress={handlePress}
         accessibilityRole="button"
         accessibilityLabel="Minimize"
-        className="minimize-hide absolute right-11 top-0 z-10 h-10 w-10 items-center justify-center rounded-full bg-text-inverted/10 hover:bg-text-inverted/15"
-      >
+        className="minimize-hide bg-text-inverted/10 hover:bg-text-inverted/15 absolute right-11 top-0 z-10 h-10 w-10 items-center justify-center rounded-full">
         <FontText color="rgb(246, 238, 219)" weight="bold" className="text-xl leading-none">
           −
         </FontText>

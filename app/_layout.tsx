@@ -15,6 +15,7 @@ import { useGlobalRateLimitMonitor } from '../hooks/useRateLimitMonitor';
 import { GenerationProvider } from '../contexts/GenerationContext';
 import { WebDropdownProvider } from '../contexts/WebDropdownProvider';
 import { DataProvider } from '../contexts/DataProvider';
+import { MinimizeProvider, MinimizeRow } from './components/ui/minimize';
 import { useEffect } from "react";
 import "../global.css";
 
@@ -131,6 +132,7 @@ export default function RootLayout() {
           <KeyboardShortcutHintProvider>
           <GlobalRateLimitMonitor />
           <WebThemeColorSync />
+          <MinimizeProvider>
           <HeroUINativeProvider
             config={{
               devInfo: {
@@ -143,14 +145,16 @@ export default function RootLayout() {
                 <WebDropdownProvider>
                   <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
                     <DataProvider>
-                      <Slot />
-                      <PortalHost />
+                        <Slot />
+                        <PortalHost />
+                        <MinimizeRow />
                     </DataProvider>
                   </ConvexProviderWithClerk>
                 </WebDropdownProvider>
               </ClerkLoaded>
             </ClerkProvider>
           </HeroUINativeProvider>
+          </MinimizeProvider>
           </KeyboardShortcutHintProvider>
         </ToastProvider>
       </GenerationProvider>

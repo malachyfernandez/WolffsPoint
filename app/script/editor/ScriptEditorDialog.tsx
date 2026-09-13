@@ -53,7 +53,6 @@ import { SavedEntry } from '../../../hooks/useSaveHistory';
 import SaveHistoryPill from '../../components/ui/dialog/SaveHistoryPill';
 import SaveHistoryDialog from '../../components/ui/dialog/SaveHistoryDialog';
 import ViewOnlyPreviewModal from '../../components/ui/dialog/ViewOnlyPreviewModal';
-import { MinimizeButton, useMinimizeTarget } from '../../components/ui/minimize';
 
 interface ScriptEditorDialogProps {
   isOpen: boolean;
@@ -587,11 +586,6 @@ const ScriptEditorDialog = ({
   const cloneTooltipId = React.useId();
   const placeTooltipId = React.useId();
 
-  const { targetRef, performMinimize } = useMinimizeTarget({
-    title,
-    onClose: () => onOpenChange(false),
-    onRestore: () => onOpenChange(true),
-  });
   const moveTooltipContent = useMemo(
     () => (
       <>
@@ -1356,23 +1350,16 @@ const ScriptEditorDialog = ({
         <ConvexDialog.Portal>
           <ConvexDialog.Overlay />
           <ConvexDialog.Content className="h-[85vh] max-w-5xl" isSwipeable={false}>
-            <View ref={targetRef} className="flex-1 min-h-0">
+            <View className="flex-1 min-h-0">
             <CloseButton onPress={readOnly ? () => onOpenChange(false) : handleAttemptClose} />
             {onSaveToServer && !readOnly && (
-              <>
-                <MinimizeButton
-                  hasUnsavedChanges={hasModifications}
-                  onSave={handleSave}
-                  onMinimize={performMinimize}
-                />
-                <SaveHistoryPill
-                  hasUnsavedChanges={hasModifications}
-                  isInvalid={!canSubmit || !!moveSession}
-                  invalidMessage={!canSubmit ? 'Script is empty' : undefined}
-                  onSave={handleSave}
-                  onOpenHistory={() => setIsHistoryOpen(true)}
-                />
-              </>
+              <SaveHistoryPill
+                hasUnsavedChanges={hasModifications}
+                isInvalid={!canSubmit || !!moveSession}
+                invalidMessage={!canSubmit ? 'Script is empty' : undefined}
+                onSave={handleSave}
+                onOpenHistory={() => setIsHistoryOpen(true)}
+              />
             )}
             <DialogHeader
               text={title}

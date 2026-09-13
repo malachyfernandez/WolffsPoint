@@ -25,11 +25,11 @@ interface UseMinimizeTargetOptions {
  * so dialogs still work outside the operator context.
  */
 export function useMinimizeTarget({ title, onClose, onRestore }: UseMinimizeTargetOptions) {
-  const { minimize } = useMinimize();
+  const { isAvailable, minimize } = useMinimize();
   const targetRef = useRef<View>(null);
 
   const performMinimize = useCallback(() => {
-    if (!minimize) return;
+    if (!isAvailable) return;
 
     const el = targetRef.current as unknown as HTMLElement | null;
 
@@ -66,7 +66,7 @@ export function useMinimizeTarget({ title, onClose, onRestore }: UseMinimizeTarg
     }
 
     onClose();
-  }, [minimize, title, onClose, onRestore]);
+  }, [isAvailable, minimize, title, onClose, onRestore]);
 
   return { targetRef, performMinimize };
 }

@@ -35,7 +35,7 @@ export const useKeyboardShortcutHint = () => {
 };
 
 const KeyChip = ({ label }: { label: string }) => (
-    <View className="bg-white/15 border border-white/25 rounded-md px-2 py-0.5 items-center justify-center min-w-[24px]">
+    <View className="bg-white/15 border border-white/25 rounded-md px-2 py-0.5 items-center justify-center min-w-6">
         <Text className="text-white text-xs font-medium uppercase tracking-wide">{label}</Text>
     </View>
 );
@@ -54,7 +54,7 @@ export const KeyboardShortcutHintProvider: React.FC<{ children: ReactNode }> = (
                 <Animated.View
                     entering={FadeIn.duration(150)}
                     exiting={FadeOut.duration(150)}
-                    className="absolute bottom-4 right-4 z-[100] flex-row gap-1.5 items-center pointer-events-none"
+                    className="absolute bottom-4 right-4 z-100 flex-row gap-1.5 items-center pointer-events-none"
                     pointerEvents="none"
                 >
                     {hintKeys.map((key, i) => (

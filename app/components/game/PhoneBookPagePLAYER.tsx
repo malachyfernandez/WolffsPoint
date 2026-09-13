@@ -64,14 +64,14 @@ const PhoneBookPagePLAYER = ({ gameId, currentUserId, currentEmail }: PhoneBookP
 
     if (isLoading) {
         return (
-            <Column className='gap-4 flex-1 min-h-[760px] items-center justify-center'>
+            <Column className='gap-4 flex-1 min-h-190 items-center justify-center'>
                 <LoadingText text='Loading phone book' />
             </Column>
         );
     }
 
     return (
-        <Animated.View entering={FadeIn.duration(300)} className='flex-1 min-h-[760px]'>
+        <Animated.View entering={FadeIn.duration(300)} className='flex-1 min-h-190'>
 
             <Column className='gap-6 flex-1 py-3 sm:px-4'>
                 <PhoneBookHeader
@@ -196,7 +196,19 @@ const PhoneBookGrid = ({ gameId, players }: { gameId: string; players: { userId:
             reportedRef.current.add(userId);
             setReadyCount(c => c + 1);
         }
-    }, [readyKey]);
+    }, []);
+
+    const allReady = players.length > 0 && readyCount >= players.length;
+
+    useEffect(() => {
+        if (allReady) {
+            opacity.value = withTiming(1, { duration: 300 });
+        }
+    }, [allReady, opacity]);
+
+    const animatedStyle = useAnimatedStyle(() => ({
+        opacity: opacity.value,
+    }));
 
     if (players.length === 0) {
         return (
@@ -207,18 +219,6 @@ const PhoneBookGrid = ({ gameId, players }: { gameId: string; players: { userId:
             </Animated.View>
         );
     }
-
-    const allReady = readyCount >= players.length;
-
-    useEffect(() => {
-        if (allReady) {
-            opacity.value = withTiming(1, { duration: 300 });
-        }
-    }, [allReady]);
-
-    const animatedStyle = useAnimatedStyle(() => ({
-        opacity: opacity.value,
-    }));
 
     return (
         <View style={{ flex: 1, minHeight: 400 }}>
@@ -231,7 +231,7 @@ const PhoneBookGrid = ({ gameId, players }: { gameId: string; players: { userId:
                 <Row className='gap-4 flex-wrap'>
                     {players.map((player, index) => (
                         <PlayerCard
-                            key={`${player.userId}-${player.email}`}
+                            key={`${player.userId}-${player.email}-${readyKey}`}
                             userId={player.userId}
                             gameId={gameId}
                             email={player.email}
@@ -239,8 +239,8 @@ const PhoneBookGrid = ({ gameId, players }: { gameId: string; players: { userId:
                             onReady={markReady}
                         />
                     ))}
-                    <View className='flex-1 min-w-[280px] opacity-0 pointer-events-none' />
-                    <View className='flex-1 min-w-[280px] opacity-0 pointer-events-none' />
+                    <View className='flex-1 min-w-70 opacity-0 pointer-events-none' />
+                    <View className='flex-1 min-w-70 opacity-0 pointer-events-none' />
                 </Row> 
             </Animated.View>
         </View>
@@ -336,7 +336,7 @@ const PlayerCard = ({ userId, gameId, email, index = 0, onReady }: { userId: str
         : '*No Bio*';
 
     return (
-        <View className='flex-1 min-w-[280px]'>
+        <View className='flex-1 min-w-70'>
             <Animated.View entering={FadeIn.duration(300).delay(index * 50)}>
                 <PlayerProfilePreviewCard
                     displayName={displayName}

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import Animated, { useAnimatedReaction, useAnimatedRef, useAnimatedStyle, useSharedValue, withTiming, Easing, scrollTo } from 'react-native-reanimated';
 import Column from '../../layout/Column';
@@ -14,6 +14,7 @@ interface NewspaperZoomableViewProps {
     gameId: string;
     TILE_SIZE: number;
     roundBottom?: boolean;
+    onReady?: () => void;
 }
 
 const NEWSPAPER_WIDTH = 910;
@@ -23,7 +24,7 @@ const SCROLL_PADDING = 40;
 const ZOOM_FACTOR = 1.25;
 const MAX_ZOOM = 3;
 
-const NewspaperZoomableView = ({ columns, gameId, TILE_SIZE, roundBottom }: NewspaperZoomableViewProps) => {
+const NewspaperZoomableView = ({ columns, gameId, TILE_SIZE, roundBottom, onReady }: NewspaperZoomableViewProps) => {
     const [zoom, setZoom] = useState(1);
     const [containerWidth, setContainerWidth] = useState(0);
 
@@ -55,12 +56,12 @@ const NewspaperZoomableView = ({ columns, gameId, TILE_SIZE, roundBottom }: News
 
     const viewportWidth = Math.max(containerWidth - SCROLL_PADDING, 0);
 
-    const animateTo = (value: number) => {
+    const animateTo = useCallback((value: number) => {
         animatedZoom.value = withTiming(value, {
             duration: 200,
             easing: Easing.out(Easing.cubic),
         });
-    };
+    }, [animatedZoom]);
 
     useEffect(() => {
         centerUnscaled.value = 0;
@@ -76,7 +77,7 @@ const NewspaperZoomableView = ({ columns, gameId, TILE_SIZE, roundBottom }: News
         } else {
             animateTo(defaultZoom);
         }
-    }, [defaultZoom, containerWidth]);
+    }, [animateTo, animatedZoom, centerUnscaled, defaultZoom, containerWidth]);
 
     useAnimatedReaction(
         () => animatedZoom.value,
@@ -153,7 +154,10 @@ const NewspaperZoomableView = ({ columns, gameId, TILE_SIZE, roundBottom }: News
                     >
                         <Animated.View style={animatedWidthStyle}>
                             <Animated.View
-                                onLayout={(e) => { unscaledContentHeight.value = e.nativeEvent.layout.height; }}
+                                onLayout={(e) => {
+                                    unscaledContentHeight.value = e.nativeEvent.layout.height;
+                                    onReady?.();
+                                }}
                                 className={`py-4 ${roundBottom ? 'rounded-2xl' : 'rounded-t-2xl'}`}
                                 style={[animatedScaleStyle, {
                                     width: NEWSPAPER_WIDTH,
@@ -163,7 +167,7 @@ const NewspaperZoomableView = ({ columns, gameId, TILE_SIZE, roundBottom }: News
                                     backgroundSize: `${TILE_SIZE}px ${TILE_SIZE}px`,
                                 }]}
                             >
-                                <Column className='gap-4 w-[910px]'>
+                                <Column className='gap-4 w-227.5'>
                                     <View className='items-center justify-center px-8'>
                                         <PressLogo width="100%" />
                                     </View>

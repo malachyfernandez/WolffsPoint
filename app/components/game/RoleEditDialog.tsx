@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import ConvexDialog from '../ui/dialog/ConvexDialog';
 import UnsavedChangesDialog from '../ui/dialog/UnsavedChangesDialog';
-import { MinimizeButton, useMinimizeTarget } from '../ui/minimize';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
 import AppButton from '../ui/buttons/AppButton';
@@ -15,6 +14,7 @@ import { RoleTableItem } from '../../../types/roleTable';
 import { useKeyboardShortcuts } from '../../../hooks/useKeyboardShortcuts';
 import { useKeyboardShortcutHint } from '../../../contexts/KeyboardShortcutHintContext';
 import CloseButton from '../ui/dialog/CloseButton';
+import { MinimizeButton, useMinimizeTarget } from '../ui/minimize';
 
 interface RoleEditDialogProps {
   isOpen: boolean;
@@ -44,7 +44,6 @@ const RoleEditDialog = ({
   const [isLeaveConfirmDialogOpen, setIsLeaveConfirmDialogOpen] = useState(false);
 
   const { setHint } = useKeyboardShortcutHint();
-
   const { targetRef, performMinimize } = useMinimizeTarget({
     title: 'Edit Role',
     onClose: () => onOpenChange(false),
@@ -64,20 +63,17 @@ const RoleEditDialog = ({
     doesRoleVote !== role.doesRoleVote ||
     hiddenFromRulebook !== (role.hiddenFromRulebook === true);
 
-  const handleSave = () => {
-    if (!roleName.trim()) return;
-    onSetRoleName(roleIndex, roleName.trim());
-    onSetDoesRoleVote(roleIndex, doesRoleVote);
-    onSetHiddenFromRulebook(roleIndex, hiddenFromRulebook);
-    onOpenChange(false);
-  };
-
-  // Save without closing — used by minimize button
   const handleSaveWithoutClose = () => {
     if (!roleName.trim()) return;
     onSetRoleName(roleIndex, roleName.trim());
     onSetDoesRoleVote(roleIndex, doesRoleVote);
     onSetHiddenFromRulebook(roleIndex, hiddenFromRulebook);
+  };
+
+  const handleSave = () => {
+    if (!roleName.trim()) return;
+    handleSaveWithoutClose();
+    onOpenChange(false);
   };
 
   const handleCancel = () => {
@@ -130,75 +126,85 @@ const RoleEditDialog = ({
         <ConvexDialog.Portal>
           <ConvexDialog.Overlay />
           <ConvexDialog.Content className="max-w-xl" isSwipeable={!hasChange}>
-            <View ref={targetRef} className="flex-1 min-h-0">
-            <CloseButton onPress={handleAttemptClose} />
-            <MinimizeButton
-              hasUnsavedChanges={hasChange}
-              onSave={handleSaveWithoutClose}
-              onMinimize={performMinimize}
-            />
-            <DialogHeader text="Edit Role" subtext="Set the role details" />
-            <Column className="gap-4 p-0 sm:p-5">
-              <Column className="gap-2">
-                <FontText weight="medium">Role Name</FontText>
-                <FontTextInput
-                  placeholder="Enter role name..."
-                  variant="styled"
-                  className="w-full p-2"
-                  value={roleName}
-                  onChangeText={setRoleName}
-                />
-
-                <Pressable
-                  onPress={() => setDoesRoleVote(!doesRoleVote)}
-                  className="flex-row items-center gap-3 pt-2">
-                  <CustomCheckbox
-                    checked={doesRoleVote}
-                    onChange={() => setDoesRoleVote(!doesRoleVote)}
-                    selectedStateAppearance="positive"
+            <View ref={targetRef} className="min-h-0 flex-1">
+              <CloseButton onPress={handleAttemptClose} />
+              <MinimizeButton
+                hasUnsavedChanges={hasChange}
+                onSave={handleSaveWithoutClose}
+                onMinimize={performMinimize}
+              />
+              <DialogHeader text="Edit Role" subtext="Set the role details" />
+              <Column className="gap-4 p-0 sm:p-5">
+                <Column className="gap-2">
+                  <FontText weight="medium">Role Name</FontText>
+                  <FontTextInput
+                    placeholder="Enter role name..."
+                    variant="styled"
+                    className="w-full p-2"
+                    value={roleName}
+                    onChangeText={setRoleName}
                   />
-                  <FontText className={doesRoleVote ? '' : 'opacity-70'}>
-                    This role can vote
-                  </FontText>
-                </Pressable>
 
-                <Pressable
-                  onPress={() => setHiddenFromRulebook(!hiddenFromRulebook)}
-                  className="flex-row items-center gap-3 pt-2">
-                  <CustomCheckbox
-                    checked={!hiddenFromRulebook}
-                    onChange={() => setHiddenFromRulebook(!hiddenFromRulebook)}
-                    monochrome
-                  />
-                  <FontText className={hiddenFromRulebook ? 'opacity-70' : ''}>
-                    {hiddenFromRulebook ? 'Hidden from rulebook' : 'Visible in rulebook'}
-                  </FontText>
-                </Pressable>
-              </Column>
+                  <Pressable
+                    onPress={() => setDoesRoleVote(!doesRoleVote)}
+                    className="flex-row items-center gap-3 pt-2">
+                    <CustomCheckbox
+                      checked={doesRoleVote}
+                      onChange={() => setDoesRoleVote(!doesRoleVote)}
+                      selectedStateAppearance="positive"
+                    />
+                    <FontText className={doesRoleVote ? '' : 'opacity-70'}>
+                      This role can vote
+                    </FontText>
+                  </Pressable>
 
-              <Column className="w-full items-center justify-center gap-4">
-                <Row className="minimize-hide gap-4">
-                  {hasChange && roleName.trim() ? (
-                    <AppButton className="h-10 w-48" variant="black" onPress={handleSave} onHoverIn={() => setHint(['enter'])} onHoverOut={() => setHint(null)}>
-                      <FontText color="white" weight="medium">
-                        {submitLabel}
+                  <Pressable
+                    onPress={() => setHiddenFromRulebook(!hiddenFromRulebook)}
+                    className="flex-row items-center gap-3 pt-2">
+                    <CustomCheckbox
+                      checked={!hiddenFromRulebook}
+                      onChange={() => setHiddenFromRulebook(!hiddenFromRulebook)}
+                      monochrome
+                    />
+                    <FontText className={hiddenFromRulebook ? 'opacity-70' : ''}>
+                      {hiddenFromRulebook ? 'Hidden from rulebook' : 'Visible in rulebook'}
+                    </FontText>
+                  </Pressable>
+                </Column>
+
+                <Column className="w-full items-center justify-center gap-4">
+                  <Row className="minimize-hide gap-4">
+                    {hasChange && roleName.trim() ? (
+                      <AppButton
+                        className="h-10 w-48"
+                        variant="black"
+                        onPress={handleSave}
+                        onHoverIn={() => setHint(['enter'])}
+                        onHoverOut={() => setHint(null)}>
+                        <FontText color="white" weight="medium">
+                          {submitLabel}
+                        </FontText>
+                      </AppButton>
+                    ) : (
+                      <StatusButton
+                        className="h-10 w-48"
+                        buttonText={submitLabel}
+                        buttonAltText="No changes"
+                      />
+                    )}
+                    <AppButton
+                      className="h-10 w-48"
+                      variant="outline"
+                      onPress={handleCancel}
+                      onHoverIn={() => setHint(['esc'])}
+                      onHoverOut={() => setHint(null)}>
+                      <FontText color="black" weight="medium">
+                        Cancel
                       </FontText>
                     </AppButton>
-                  ) : (
-                    <StatusButton
-                      className="h-10 w-48"
-                      buttonText={submitLabel}
-                      buttonAltText="No changes"
-                    />
-                  )}
-                  <AppButton className="h-10 w-48" variant="outline" onPress={handleCancel} onHoverIn={() => setHint(['esc'])} onHoverOut={() => setHint(null)}>
-                    <FontText color="black" weight="medium">
-                      Cancel
-                    </FontText>
-                  </AppButton>
-                </Row>
+                  </Row>
+                </Column>
               </Column>
-            </Column>
             </View>
           </ConvexDialog.Content>
         </ConvexDialog.Portal>

@@ -143,7 +143,7 @@ const ConfigPageOPERATOR = ({ gameId, currentUserId }: ConfigPageOPERATORProps) 
                 </Column>
                 <Column className="min-w-[300px] flex-1 items-center gap-2">
                   <FontText variant="subtext" className="text-center">
-                    Downloads each day's newspaper columns as markdown files in a zip.
+                    Downloads each day’s newspaper columns as markdown files in a zip.
                   </FontText>
                   <DownloadNewspaperButton gameId={gameId} />
                 </Column>

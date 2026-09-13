@@ -257,6 +257,7 @@ const RuleBookRoleDescriptions = ({ gameId, headingIdPrefix }: RuleBookRoleDescr
           }
         }}
         historyKey={`aboutRole:${gameId}:${editingRoleIndex ?? ''}`}
+        onRestore={() => setEditingRoleIndex(editingRoleIndex)}
       />
 
       <ConvexDialog.Root

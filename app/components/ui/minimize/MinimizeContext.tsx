@@ -14,7 +14,8 @@ export interface MinimizedEntry {
   onRestore: () => void;
 }
 
-interface MinimizeContextValue {
+export interface MinimizeContextValue {
+  isAvailable: boolean;
   minimized: MinimizedEntry[];
   minimize: (entry: Omit<MinimizedEntry, 'id'>) => string;
   restore: (id: string) => void;
@@ -23,6 +24,14 @@ interface MinimizeContextValue {
 }
 
 const MinimizeContext = createContext<MinimizeContextValue | null>(null);
+
+export const MinimizeContextBridge = ({
+  value,
+  children,
+}: {
+  value: MinimizeContextValue;
+  children: React.ReactNode;
+}) => <MinimizeContext.Provider value={value}>{children}</MinimizeContext.Provider>;
 
 export const MinimizeProvider = ({ children }: { children: React.ReactNode }) => {
   const [minimized, setMinimized] = useState<MinimizedEntry[]>([]);
@@ -57,7 +66,8 @@ export const MinimizeProvider = ({ children }: { children: React.ReactNode }) =>
   }, []);
 
   return (
-    <MinimizeContext.Provider value={{ minimized, minimize, restore, removeMinimized, clearAll }}>
+    <MinimizeContext.Provider
+      value={{ isAvailable: true, minimized, minimize, restore, removeMinimized, clearAll }}>
       {children}
     </MinimizeContext.Provider>
   );
@@ -69,6 +79,7 @@ export const useMinimize = () => {
   // just without minimize functionality.
   if (!ctx) {
     return {
+      isAvailable: false,
       minimized: [],
       minimize: () => '',
       restore: () => {},

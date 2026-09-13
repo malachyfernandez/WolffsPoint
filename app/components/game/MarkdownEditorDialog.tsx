@@ -92,6 +92,8 @@ interface MarkdownEditorDialogProps {
   readOnly?: boolean;
   /** Label for the submit button. Defaults to "Done". */
   submitLabel?: string;
+  onMinimize?: () => void;
+  onRestore?: () => void;
 }
 
 const ScriptEditorWithSources = ({
@@ -261,7 +263,6 @@ const ReadOnlyMarkdownPreview = ({
   );
 };
 
-
 const MarkdownEditorDialog = ({
   isOpen,
   onOpenChange,
@@ -287,6 +288,8 @@ const MarkdownEditorDialog = ({
   historyKey,
   readOnly = false,
   submitLabel = 'Done',
+  onMinimize,
+  onRestore,
 }: MarkdownEditorDialogProps) => {
   const { executeCommand } = useUndoRedo();
   const createUndoSnapshot = useCreateUndoSnapshot();
@@ -294,8 +297,8 @@ const MarkdownEditorDialog = ({
 
   const { targetRef, performMinimize } = useMinimizeTarget({
     title,
-    onClose: () => onOpenChange(false),
-    onRestore: () => onOpenChange(true),
+    onClose: onMinimize ?? (() => onOpenChange(false)),
+    onRestore: onRestore ?? (() => onOpenChange(true)),
   });
 
   const [activeTab, setActiveTab] = useState('editing');
@@ -611,89 +614,98 @@ const MarkdownEditorDialog = ({
           <ConvexDialog.Overlay />
           <InputOptionsProvider gameId={gameId} showInputs>
             <ConvexDialog.Content className="h-[80vh]" isSwipeable={false}>
-              <View ref={targetRef} className="flex-1 min-h-0">
-              <CloseButton onPress={readOnly ? () => onOpenChange(false) : handleAttemptClose} />
-              {!readOnly && (
-                <MinimizeButton
-                  hasUnsavedChanges={hasUnsavedChanges}
-                  onSave={handleSave}
-                  onMinimize={performMinimize}
-                />
-              )}
-              {historyKey && !readOnly && (
-                <SaveHistoryPill
-                  hasUnsavedChanges={hasUnsavedChanges}
-                  isInvalid={isInvalid && hasUnsavedChanges}
-                  invalidMessage={!isTitleValid ? 'Title is required' : !isMarkdownValid ? 'Text is required' : undefined}
-                  onSave={handleSave}
-                  onOpenHistory={() => setIsHistoryOpen(true)}
-                />
-              )}
-              <DialogHeader text={title} subtext={dialogSubtext} />
-              <MainContent
-                includeTitle={includeTitle}
-                titleInputLabel={titleInputLabel}
-                titleInputPlaceholder={titleInputPlaceholder}
-                draftTitle={draftTitle}
-                draftBody={draftBody}
-                isPreviewSideBySide={isPreviewSideBySide}
-                activeTab={activeTab}
-                showInputs={showInputs}
-                previewInputState={previewInputState}
-                setPreviewInputState={setPreviewInputState}
-                setDraftTitle={setDraftTitle}
-                setDraftBody={setDraftBody}
-                setSelection={setSelection}
-                onTabChange={handleTabChange}
-                onBold={handleBold}
-                onItalic={handleItalic}
-                onLink={handleLink}
-                onImage={handleImage}
-                onInput={handleInput}
-                onMore={handleMore}
-                onScript={showScript ? handleScript : undefined}
-                onVariable={showVariables ? handleVariable : undefined}
-                centered={centered}
-                showPreviewAsPlayer={showPreviewAsPlayerOption}
-                onPreviewAsPlayer={handlePreviewAsPlayer}
-                readOnly={readOnly}
-              />
-              <Row className="-mx-3 items-center justify-between gap-4 pt-4 sm:mx-0">
-                {cursorScriptBlock && !readOnly ? (
-                  <AppButton
-                    variant="outline"
-                    className="h-8 px-3"
-                    onPress={handleEditCode}
-                    dropShadow={false}>
-                    <Row className="items-center gap-1.5">
-                      <Code2 size={14} color="#1a1a1a" />
-                      <FontText className="text-sm">Edit Code</FontText>
-                    </Row>
-                  </AppButton>
-                ) : (
-                  <View />
+              <View ref={targetRef} className="min-h-0 flex-1">
+                <CloseButton onPress={readOnly ? () => onOpenChange(false) : handleAttemptClose} />
+                {historyKey && !readOnly && (
+                  <MinimizeButton
+                    hasUnsavedChanges={hasUnsavedChanges}
+                    onSave={handleSave}
+                    onMinimize={performMinimize}
+                  />
                 )}
-                {readOnly ? (
-                  <Row className="gap-4 justify-end">
+                {historyKey && !readOnly && (
+                  <SaveHistoryPill
+                    hasUnsavedChanges={hasUnsavedChanges}
+                    isInvalid={isInvalid && hasUnsavedChanges}
+                    invalidMessage={
+                      !isTitleValid
+                        ? 'Title is required'
+                        : !isMarkdownValid
+                          ? 'Text is required'
+                          : undefined
+                    }
+                    onSave={handleSave}
+                    onOpenHistory={() => setIsHistoryOpen(true)}
+                    hasMinimizeButton
+                  />
+                )}
+                <DialogHeader text={title} subtext={dialogSubtext} />
+                <MainContent
+                  includeTitle={includeTitle}
+                  titleInputLabel={titleInputLabel}
+                  titleInputPlaceholder={titleInputPlaceholder}
+                  draftTitle={draftTitle}
+                  draftBody={draftBody}
+                  isPreviewSideBySide={isPreviewSideBySide}
+                  activeTab={activeTab}
+                  showInputs={showInputs}
+                  previewInputState={previewInputState}
+                  setPreviewInputState={setPreviewInputState}
+                  setDraftTitle={setDraftTitle}
+                  setDraftBody={setDraftBody}
+                  setSelection={setSelection}
+                  onTabChange={handleTabChange}
+                  onBold={handleBold}
+                  onItalic={handleItalic}
+                  onLink={handleLink}
+                  onImage={handleImage}
+                  onInput={handleInput}
+                  onMore={handleMore}
+                  onScript={showScript ? handleScript : undefined}
+                  onVariable={showVariables ? handleVariable : undefined}
+                  centered={centered}
+                  showPreviewAsPlayer={showPreviewAsPlayerOption}
+                  onPreviewAsPlayer={handlePreviewAsPlayer}
+                  readOnly={readOnly}
+                />
+                <Row className="-mx-3 items-center justify-between gap-4 pt-4 sm:mx-0">
+                  {cursorScriptBlock && !readOnly ? (
                     <AppButton
-                      variant="filled"
-                      className="w-32"
-                      onPress={() => onOpenChange(false)}>
-                      <FontText color="white" weight="medium">Close</FontText>
+                      variant="outline"
+                      className="h-8 px-3"
+                      onPress={handleEditCode}
+                      dropShadow={false}>
+                      <Row className="items-center gap-1.5">
+                        <Code2 size={14} color="#1a1a1a" />
+                        <FontText className="text-sm">Edit Code</FontText>
+                      </Row>
                     </AppButton>
-                  </Row>
-                ) : (
-                  <Row className="gap-2 items-center justify-end">
-                    <ActionButtons
-                      canSubmit={doneEnabled}
-                      submitLabel={submitLabel}
-                      submitDisabledText={submitDisabledText}
-                      onCancel={handleAttemptClose}
-                      onSubmit={handleSubmit}
-                    />
-                  </Row>
-                )}
-              </Row>
+                  ) : (
+                    <View />
+                  )}
+                  {readOnly ? (
+                    <Row className="justify-end gap-4">
+                      <AppButton
+                        variant="filled"
+                        className="w-32"
+                        onPress={() => onOpenChange(false)}>
+                        <FontText color="white" weight="medium">
+                          Close
+                        </FontText>
+                      </AppButton>
+                    </Row>
+                  ) : (
+                    <Row className="items-center justify-end gap-2">
+                      <ActionButtons
+                        canSubmit={doneEnabled}
+                        submitLabel={submitLabel}
+                        submitDisabledText={submitDisabledText}
+                        onCancel={handleAttemptClose}
+                        onSubmit={handleSubmit}
+                      />
+                    </Row>
+                  )}
+                </Row>
               </View>
             </ConvexDialog.Content>
           </InputOptionsProvider>
@@ -745,34 +757,38 @@ const MarkdownEditorDialog = ({
           historyEntries={historyKey ? history : undefined}
           historyMaxSaves={historyKey ? maxSaves : undefined}
           onClearHistory={historyKey ? clearHistory : undefined}
-          renderPreviewContent={historyKey ? ((entry: SavedEntry) => (
-            <InputOptionsProvider gameId={gameId} showInputs>
-              <MainContent
-                includeTitle={includeTitle}
-                titleInputLabel={titleInputLabel}
-                titleInputPlaceholder={titleInputPlaceholder}
-                draftTitle={(entry.value as { title?: string })?.title ?? ''}
-                draftBody={(entry.value as { markdown: string })?.markdown ?? ''}
-                isPreviewSideBySide={isPreviewSideBySide}
-                activeTab="preview"
-                showInputs={showInputs}
-                previewInputState={{}}
-                setPreviewInputState={() => {}}
-                setDraftTitle={() => {}}
-                setDraftBody={() => {}}
-                setSelection={() => {}}
-                onTabChange={() => {}}
-                onBold={() => {}}
-                onItalic={() => {}}
-                onLink={() => {}}
-                onImage={() => {}}
-                onInput={() => {}}
-                onMore={() => {}}
-                centered={centered}
-                readOnly
-              />
-            </InputOptionsProvider>
-          )) : undefined}
+          renderPreviewContent={
+            historyKey
+              ? (entry: SavedEntry) => (
+                  <InputOptionsProvider gameId={gameId} showInputs>
+                    <MainContent
+                      includeTitle={includeTitle}
+                      titleInputLabel={titleInputLabel}
+                      titleInputPlaceholder={titleInputPlaceholder}
+                      draftTitle={(entry.value as { title?: string })?.title ?? ''}
+                      draftBody={(entry.value as { markdown: string })?.markdown ?? ''}
+                      isPreviewSideBySide={isPreviewSideBySide}
+                      activeTab="preview"
+                      showInputs={showInputs}
+                      previewInputState={{}}
+                      setPreviewInputState={() => {}}
+                      setDraftTitle={() => {}}
+                      setDraftBody={() => {}}
+                      setSelection={() => {}}
+                      onTabChange={() => {}}
+                      onBold={() => {}}
+                      onItalic={() => {}}
+                      onLink={() => {}}
+                      onImage={() => {}}
+                      onInput={() => {}}
+                      onMore={() => {}}
+                      centered={centered}
+                      readOnly
+                    />
+                  </InputOptionsProvider>
+                )
+              : undefined
+          }
         />
       </InputOptionsProvider>
 
@@ -797,13 +813,14 @@ const MarkdownEditorDialog = ({
           />
           <ViewOnlyPreviewModal
             isOpen={previewEntry !== null}
-            onOpenChange={(open) => { if (!open) setPreviewEntry(null); }}
+            onOpenChange={(open) => {
+              if (!open) setPreviewEntry(null);
+            }}
             title="Preview Saved Version"
             subtext={previewEntry ? new Date(previewEntry.savedAt).toLocaleString() : undefined}
             entry={previewEntry}
             onReplace={handleReplaceFromHistory}
-            contentClassName="h-[80vh]"
-          >
+            contentClassName="h-[80vh]">
             {previewEntry && (
               <InputOptionsProvider gameId={gameId} showInputs>
                 <ReadOnlyMarkdownPreview

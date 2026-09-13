@@ -18,95 +18,90 @@ import ConfigIcon from '../ui/icons/Config';
 import PaperContainer from '../ui/PaperContainer';
 import { PlayerProfile } from '../../../types/multiplayer';
 import { PlayerStatusProvider } from '../../../contexts/PlayerStatusContext';
-import { MinimizeProvider, MinimizeRow } from '../ui/minimize';
-
 
 export type OperatorTab = 'players' | 'config' | 'nightly' | 'forum' | 'newspaper' | 'rulebook';
 
 interface OperatorGamePageProps {
-    gameId: string;
-    currentUserId: string;
+  gameId: string;
+  currentUserId: string;
 }
 
 const operatorTabs: GameTabDefinition<OperatorTab>[] = [
-    { label: 'Players', condensedLabel: 'Players', value: 'players', icon: <PlayersIcon /> },
-    { label: 'Roles', condensedLabel: 'Roles', value: 'config', icon: <RolesIcon /> },
-    { label: 'Nightly', condensedLabel: 'Nightly', value: 'nightly', icon: <NightlyIcon /> },
-    { label: 'Town Square', condensedLabel: 'Town Sq', value: 'forum', icon: <TownSquareIcon /> },
-    { label: 'Newspaper', condensedLabel: 'News', value: 'newspaper', icon: <NewspaperIcon /> },
-    { label: 'Config', condensedLabel: 'Config', value: 'rulebook', icon: <ConfigIcon /> },
+  { label: 'Players', condensedLabel: 'Players', value: 'players', icon: <PlayersIcon /> },
+  { label: 'Roles', condensedLabel: 'Roles', value: 'config', icon: <RolesIcon /> },
+  { label: 'Nightly', condensedLabel: 'Nightly', value: 'nightly', icon: <NightlyIcon /> },
+  { label: 'Town Square', condensedLabel: 'Town Sq', value: 'forum', icon: <TownSquareIcon /> },
+  { label: 'Newspaper', condensedLabel: 'News', value: 'newspaper', icon: <NewspaperIcon /> },
+  { label: 'Config', condensedLabel: 'Config', value: 'rulebook', icon: <ConfigIcon /> },
 ];
 
 const OperatorGamePage = ({ gameId, currentUserId }: OperatorGamePageProps) => {
-    const [activeTab, setActiveTab] = useState<OperatorTab>('players');
+  const [activeTab, setActiveTab] = useState<OperatorTab>('players');
 
-    // Create operator profile for TownSquare
-    const profile: PlayerProfile = {
-        gameId,
-        email: 'operator@game.local',
-        userId: currentUserId,
-        inGameName: 'Game Operator',
-        profileImageUrl: '',
-        phoneNumber: '',
-        instagram: '',
-        discord: '',
-        otherContact: '',
-        bioMarkdown: 'Game operator account',
-        claimedAt: Date.now(),
-    };
+  // Create operator profile for TownSquare
+  const profile: PlayerProfile = {
+    gameId,
+    email: 'operator@game.local',
+    userId: currentUserId,
+    inGameName: 'Game Operator',
+    profileImageUrl: '',
+    phoneNumber: '',
+    instagram: '',
+    discord: '',
+    otherContact: '',
+    bioMarkdown: 'Game operator account',
+    claimedAt: Date.now(),
+  };
 
-    return (
-        <PlayerStatusProvider isPlayerDead={false}>
-            <MinimizeProvider>
-                <Column className='gap-4 w-full sm:gap-5'>
-                    <GameTabBar activeTab={activeTab} onTabPress={setActiveTab} tabs={operatorTabs} />
-                    <PaperContainer>
-                        <View className='w-full min-w-0'>
-                            {/* All tabs stay mounted so dialog state persists across tab switches.
+  return (
+    <PlayerStatusProvider isPlayerDead={false}>
+      <Column className="w-full gap-4 sm:gap-5">
+        <GameTabBar activeTab={activeTab} onTabPress={setActiveTab} tabs={operatorTabs} />
+        <PaperContainer>
+          <View className="w-full min-w-0">
+            {/* All tabs stay mounted so dialog state persists across tab switches.
                                 Inactive tabs are hidden via display:none instead of unmounted. */}
-                            <Animated.View
-                                entering={FadeIn.duration(300)}
-                                style={{ display: activeTab === 'players' ? 'flex' : 'none' }}
-                                className='w-full min-w-0'>
-                                <PlayerPageOPERATOR currentUserId={currentUserId} gameId={gameId} />
-                            </Animated.View>
-                            <Animated.View
-                                entering={FadeIn.duration(300)}
-                                style={{ display: activeTab === 'config' ? 'flex' : 'none' }}
-                                className='w-full min-w-0'>
-                                <RolesPageOPERATOR currentUserId={currentUserId} gameId={gameId} />
-                            </Animated.View>
-                            <Animated.View
-                                entering={FadeIn.duration(300)}
-                                style={{ display: activeTab === 'nightly' ? 'flex' : 'none' }}
-                                className='w-full min-w-0'>
-                                <NightlyPageOPERATOR currentUserId={currentUserId} gameId={gameId} />
-                            </Animated.View>
-                            <Animated.View
-                                entering={FadeIn.duration(300)}
-                                style={{ display: activeTab === 'forum' ? 'flex' : 'none' }}
-                                className='w-full min-w-0'>
-                                <TownSquarePagePLAYER gameId={gameId} currentProfile={profile} />
-                            </Animated.View>
-                            <Animated.View
-                                entering={FadeIn.duration(300)}
-                                style={{ display: activeTab === 'newspaper' ? 'flex' : 'none' }}
-                                className='w-full min-w-0'>
-                                <NewspaperPageOPERATOR currentUserId={currentUserId} gameId={gameId} />
-                            </Animated.View>
-                            <Animated.View
-                                entering={FadeIn.duration(300)}
-                                style={{ display: activeTab === 'rulebook' ? 'flex' : 'none' }}
-                                className='w-full min-w-0'>
-                                <ConfigPageOPERATOR gameId={gameId} currentUserId={currentUserId} />
-                            </Animated.View>
-                        </View>
-                    </PaperContainer>
-                </Column>
-                <MinimizeRow />
-            </MinimizeProvider>
-        </PlayerStatusProvider>
-    );
+            <Animated.View
+              entering={FadeIn.duration(300)}
+              style={{ display: activeTab === 'players' ? 'flex' : 'none' }}
+              className="w-full min-w-0">
+              <PlayerPageOPERATOR currentUserId={currentUserId} gameId={gameId} />
+            </Animated.View>
+            <Animated.View
+              entering={FadeIn.duration(300)}
+              style={{ display: activeTab === 'config' ? 'flex' : 'none' }}
+              className="w-full min-w-0">
+              <RolesPageOPERATOR currentUserId={currentUserId} gameId={gameId} />
+            </Animated.View>
+            <Animated.View
+              entering={FadeIn.duration(300)}
+              style={{ display: activeTab === 'nightly' ? 'flex' : 'none' }}
+              className="w-full min-w-0">
+              <NightlyPageOPERATOR currentUserId={currentUserId} gameId={gameId} />
+            </Animated.View>
+            <Animated.View
+              entering={FadeIn.duration(300)}
+              style={{ display: activeTab === 'forum' ? 'flex' : 'none' }}
+              className="w-full min-w-0">
+              <TownSquarePagePLAYER gameId={gameId} currentProfile={profile} />
+            </Animated.View>
+            <Animated.View
+              entering={FadeIn.duration(300)}
+              style={{ display: activeTab === 'newspaper' ? 'flex' : 'none' }}
+              className="w-full min-w-0">
+              <NewspaperPageOPERATOR currentUserId={currentUserId} gameId={gameId} />
+            </Animated.View>
+            <Animated.View
+              entering={FadeIn.duration(300)}
+              style={{ display: activeTab === 'rulebook' ? 'flex' : 'none' }}
+              className="w-full min-w-0">
+              <ConfigPageOPERATOR gameId={gameId} currentUserId={currentUserId} />
+            </Animated.View>
+          </View>
+        </PaperContainer>
+      </Column>
+    </PlayerStatusProvider>
+  );
 };
 
 export default OperatorGamePage;

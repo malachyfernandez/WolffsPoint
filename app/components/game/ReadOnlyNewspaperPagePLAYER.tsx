@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
 import FontText from '../ui/text/FontText';
@@ -6,18 +6,16 @@ import { useGameOperatorUserId } from '../../../hooks/useGameOperatorUserId';
 import { useSharedListValue } from '../../../hooks/useSharedListValue';
 import { useSharedVariableValue } from '../../../hooks/useSharedVariableValue';
 import { PlayerProfile, GameSchedule } from '../../../types/multiplayer';
-import { RoleTableItem } from '../../../types/roleTable';
 import { UserTableItem } from '../../../types/playerTable';
 import { getContextualDayRangeLabel, getCurrentPlayableDayIndex, getGameScopedKey, normalizeGameSchedule, parseStoredDayDates, defaultGameSchedule, formatTimeLabel, formatContextualDateLabel, isDayReleasedAtTime } from '../../../utils/multiplayer';
 import { ChevronLeft, ChevronRight, Newspaper } from 'lucide-react-native';
-import { Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
-import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+import { Pressable, View } from 'react-native';
+import LayoutStateAnimatedView, { fromRight } from '../ui/LayoutStateAnimatedView';
 import NewspaperDayView from './NewspaperDayView';
 import PlaceholderCard from '../ui/PlaceholderCard';
 import LoadingContainer from '../ui/loading/LoadingContainer';
 import { useNewspaperDayOwner } from './useNewspaperDayOwner';
 import LoadingText from '../ui/loading/LoadingText';
-import FadeInAfterDelay from '../ui/loading/FadeInAfterDelay';
 
 interface YourEyesOnlyPagePLAYERProps {
     gameId: string;
@@ -26,34 +24,26 @@ interface YourEyesOnlyPagePLAYERProps {
     currentProfile: PlayerProfile;
 }
 
-type AnimationDirection = 'left' | 'right';
-
-// Configurable tile size for the paper background texture (in pixels)
-const TILE_SIZE = 600;
-
 const YourEyesOnlyPagePLAYER = ({ gameId, currentEmail, matchingPlayer, currentProfile }: YourEyesOnlyPagePLAYERProps) => {
     const { operatorUserId } = useGameOperatorUserId(gameId);
     const operatorUserIds = operatorUserId ? [operatorUserId] : undefined;
     const { value: dayDateStrings } = useSharedListValue<string[]>({ key: 'dayDatesArray', itemId: gameId, defaultValue: [], userIds: operatorUserIds });
     const { value: numberOfRealDaysPerInGameDay } = useSharedListValue<number>({ key: 'numberOfRealDaysPerInGameDay', itemId: gameId, defaultValue: 2, userIds: operatorUserIds });
-    const roleTable = useSharedListValue<RoleTableItem[]>({ key: 'roleTable', itemId: gameId, defaultValue: [], userIds: operatorUserIds });
     const scheduleRecord = useSharedVariableValue<GameSchedule>({ key: getGameScopedKey('gameSchedule', gameId), defaultValue: defaultGameSchedule, userIds: operatorUserIds });
     const [now, setNow] = useState(() => new Date());
-    const { width } = useWindowDimensions();
 
     const dayDates = useMemo(() => parseStoredDayDates(dayDateStrings), [dayDateStrings]);
     const currentDayIndex = useMemo(() => getCurrentPlayableDayIndex(dayDates), [dayDates]);
     const [selectedDayIndex, setSelectedDayIndex] = useState(() => getCurrentPlayableDayIndex(parseStoredDayDates(dayDateStrings)));
-    const [leavingDayIndex, setLeavingDayIndex] = useState<number | null>(null);
     const selectedDayOwner = useNewspaperDayOwner({
         gameId,
         dayIndex: selectedDayIndex,
     });
-    const leavingDayOwner = useNewspaperDayOwner({
-        gameId,
-        dayIndex: leavingDayIndex ?? 0,
-        disabled: leavingDayIndex === null,
-    });
+    const [readyDayKey, setReadyDayKey] = useState<string | null>(null);
+    const selectedDayKey = `${selectedDayIndex}:${selectedDayOwner.ownerUserId}`;
+    const handleSelectedDayReady = useCallback(() => {
+        setReadyDayKey(selectedDayKey);
+    }, [selectedDayKey]);
     const schedule = normalizeGameSchedule(scheduleRecord.value ?? defaultGameSchedule);
     // Content is released if:
     // 1. It's a previous day (selectedDayIndex < currentDayIndex) - always released
@@ -69,39 +59,16 @@ const YourEyesOnlyPagePLAYER = ({ gameId, currentEmail, matchingPlayer, currentP
         // It's the start date - check if wake-up time has passed
         return isDayReleasedAtTime(selectedDayStartDate, schedule.wakeUpTime, now);
     }, [isPreviousDay, selectedDayStartDate, isStartOfSelectedDay, schedule.wakeUpTime, now]);
-    const hasLeavingDayReleased = useMemo(() => {
-        const leavingDayStartDateLocal = leavingDayIndex != null ? dayDates[leavingDayIndex] : null;
-        if (leavingDayIndex == null || !leavingDayStartDateLocal) return true;
-        const isLeavingDayPreviousLocal = leavingDayIndex < currentDayIndex;
-        if (isLeavingDayPreviousLocal) return true; // Previous days are always released
-        const isStartOfLeavingDayLocal = new Date(now).setHours(0, 0, 0, 0) === new Date(leavingDayStartDateLocal).setHours(0, 0, 0, 0);
-        // For current/future days, only apply wake-up time on the start date itself
-        if (!isStartOfLeavingDayLocal) return true; // Not the start date, so released
-        // It's the start date - check if wake-up time has passed
-        return isDayReleasedAtTime(leavingDayStartDateLocal, schedule.wakeUpTime, now);
-    }, [leavingDayIndex, dayDates, currentDayIndex, schedule.wakeUpTime, now]);
     const releaseDateLabel = useMemo(() => selectedDayStartDate ? formatContextualDateLabel(selectedDayStartDate, undefined, now, 'lower') : '', [selectedDayStartDate, now]);
     const selectedDayRangeLabel = useMemo(() => getContextualDayRangeLabel(dayDates, selectedDayIndex, numberOfRealDaysPerInGameDay), [selectedDayIndex, dayDates, numberOfRealDaysPerInGameDay]);
     const previousDayLabel = useMemo(() => selectedDayIndex > 0 ? getContextualDayRangeLabel(dayDates, selectedDayIndex - 1, numberOfRealDaysPerInGameDay) : '', [dayDates, numberOfRealDaysPerInGameDay, selectedDayIndex]);
     const nextDayLabel = useMemo(() => selectedDayIndex < currentDayIndex ? getContextualDayRangeLabel(dayDates, selectedDayIndex + 1, numberOfRealDaysPerInGameDay) : '', [currentDayIndex, dayDates, numberOfRealDaysPerInGameDay, selectedDayIndex]);
-    const roleData = roleTable.value.find((roleItem) => roleItem.role === matchingPlayer.role);
-    const slideDistance = useMemo(() => Math.min(Math.max(width * 0.12, 24), 72), [width]);
-    const transitionDuration = 240;
-    const previousDayIndexRef = useRef<number | null>(null);
-    const leavingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const hasInitializedSelectedDayRef = useRef(false);
-
-    const enteringOpacity = useSharedValue(1);
-    const enteringTranslateX = useSharedValue(0);
-    const leavingOpacity = useSharedValue(1);
-    const leavingTranslateX = useSharedValue(0);
 
     useEffect(() => {
         if (!hasInitializedSelectedDayRef.current && dayDates.length > 0) {
             hasInitializedSelectedDayRef.current = true;
             setSelectedDayIndex(currentDayIndex);
-            // Set previousDayIndexRef so animation effect doesn't trigger on initial load
-            previousDayIndexRef.current = currentDayIndex;
             return;
         }
 
@@ -114,84 +81,17 @@ const YourEyesOnlyPagePLAYER = ({ gameId, currentEmail, matchingPlayer, currentP
         }, 60000); // Update every minute
 
         return () => {
-            if (leavingTimeoutRef.current) {
-                clearTimeout(leavingTimeoutRef.current);
-            }
             clearInterval(intervalId);
         };
     }, []);
-
-    useEffect(() => {
-        const previousDayIndex = previousDayIndexRef.current;
-
-        if (previousDayIndex == null) {
-            previousDayIndexRef.current = selectedDayIndex;
-            enteringOpacity.value = 1;
-            enteringTranslateX.value = 0;
-            leavingOpacity.value = 0;
-            leavingTranslateX.value = 0;
-            return;
-        }
-
-        if (previousDayIndex === selectedDayIndex) {
-            return;
-        }
-
-        if (leavingTimeoutRef.current) {
-            clearTimeout(leavingTimeoutRef.current);
-        }
-
-        const direction: AnimationDirection = selectedDayIndex > previousDayIndex ? 'left' : 'right';
-        const enteringStartX = direction === 'left' ? slideDistance : -slideDistance;
-        const leavingEndX = direction === 'left' ? -slideDistance : slideDistance;
-
-        setLeavingDayIndex(previousDayIndex);
-
-        enteringOpacity.value = 0;
-        enteringTranslateX.value = enteringStartX;
-        leavingOpacity.value = 1;
-        leavingTranslateX.value = 0;
-
-        enteringOpacity.value = withTiming(1, { duration: transitionDuration });
-        enteringTranslateX.value = withTiming(0, { duration: transitionDuration });
-        leavingOpacity.value = withTiming(0, { duration: transitionDuration });
-        leavingTranslateX.value = withTiming(leavingEndX, { duration: transitionDuration });
-
-        leavingTimeoutRef.current = setTimeout(() => {
-            setLeavingDayIndex(null);
-        }, transitionDuration);
-
-        previousDayIndexRef.current = selectedDayIndex;
-    }, [enteringOpacity, enteringTranslateX, leavingOpacity, leavingTranslateX, selectedDayIndex, slideDistance]);
-
-    const enteringStyle = useAnimatedStyle(() => {
-        return {
-            opacity: enteringOpacity.value,
-            transform: [{ translateX: enteringTranslateX.value }],
-        };
-    });
-
-    const leavingStyle = useAnimatedStyle(() => {
-        return {
-            opacity: leavingOpacity.value,
-            transform: [{ translateX: leavingTranslateX.value }],
-        };
-    });
-
-    const isOwnershipLoading = selectedDayOwner.isLoading || (leavingDayIndex !== null && leavingDayOwner.isLoading);
 
     return (
         <LoadingContainer
             dependencies={[scheduleRecord.record]}
             loadingText='Loading newspaper'
-            className='flex-1 min-h-[760px] pb-8'
+            className='flex-1 min-h-190 pb-8'
         >
-            {isOwnershipLoading ? (
-                <Column className='gap-4 flex-1 items-center justify-center'>
-                    <LoadingText text='Loading newspaper' />
-                </Column>
-            ) : (
-                <Column className='gap-7 flex-1'>
+            <Column className='gap-7 flex-1'>
 
 
                     <Column className='gap-5 border-y border-border/15 py-5'>
@@ -243,65 +143,44 @@ const YourEyesOnlyPagePLAYER = ({ gameId, currentEmail, matchingPlayer, currentP
                         backgroundSize: `${TILE_SIZE}px ${TILE_SIZE}px`,
                     }]}> */}
                         <View className='px-1'>
-                            {leavingDayIndex != null ? (
-                                <Animated.View
-                                    key={`leaving-${leavingDayIndex}`}
-                                    pointerEvents='none'
-                                    style={[styles.animatedContentOverlay, leavingStyle]}
-                                >
-                                    {hasLeavingDayReleased ? (
-                                        <NewspaperDayView gameId={gameId} dayIndex={leavingDayIndex} ownerUserId={leavingDayOwner.ownerUserId} isLeaving />
-                                    ) : (
-                                        <PlaceholderCard>
-                                            <Column className='gap-3 items-center'>
-                                                <Newspaper size={48} color='rgb(46, 41, 37)' />
-                                                <FontText weight='bold' className='text-xl text-center'>
-                                                    Not yet released
-                                                </FontText>
-                                                <FontText variant='subtext' className='text-center'>
-                                                    The newspaper will be available at {formatTimeLabel(schedule.wakeUpTime)}.
-                                                </FontText>
+                            <LayoutStateAnimatedView.Container stateVar={String(selectedDayIndex)} highPerformance>
+                                <LayoutStateAnimatedView.OptionContainer page={selectedDayIndex} pushInAnimation={fromRight}>
+                                    <LayoutStateAnimatedView.Option
+                                        stateValue={String(selectedDayIndex)}
+                                        isReady={!selectedDayOwner.isLoading && (!hasNewspaperReleased || readyDayKey === selectedDayKey)}
+                                    >
+                                        {selectedDayOwner.isLoading ? (
+                                            <Column className='min-h-190 items-center justify-center'>
+                                                <LoadingText text='Loading newspaper' />
                                             </Column>
-                                        </PlaceholderCard>
-                                    )}
-                                </Animated.View>
-                            ) : null}
-
-                            <Animated.View key={`selected-${selectedDayIndex}`} style={enteringStyle}>
-                                {hasNewspaperReleased ? (
-                                    // <FadeInAfterDelay delayMs={1}>
-                                        <NewspaperDayView gameId={gameId} dayIndex={selectedDayIndex} ownerUserId={selectedDayOwner.ownerUserId} />
-                                    // </FadeInAfterDelay>
-                                ) : (
-                                    <PlaceholderCard>
-                                        <Column className='gap-3 items-center'>
-                                            <Newspaper size={48} color='rgb(46, 41, 37)' />
-                                            <FontText weight='bold' className='text-xl text-center'>
-                                                Not yet released
-                                            </FontText>
-                                            <FontText variant='subtext' className='text-center'>
-                                                The newspaper will be available {releaseDateLabel || 'soon'} at {formatTimeLabel(schedule.wakeUpTime)}.
-                                            </FontText>
-                                        </Column>
-                                    </PlaceholderCard>
-                                )}
-                            </Animated.View>
+                                        ) : hasNewspaperReleased ? (
+                                            <NewspaperDayView
+                                                gameId={gameId}
+                                                dayIndex={selectedDayIndex}
+                                                ownerUserId={selectedDayOwner.ownerUserId}
+                                                onReady={handleSelectedDayReady}
+                                            />
+                                        ) : (
+                                            <PlaceholderCard>
+                                                <Column className='gap-3 items-center'>
+                                                    <Newspaper size={48} color='rgb(46, 41, 37)' />
+                                                    <FontText weight='bold' className='text-xl text-center'>
+                                                        Not yet released
+                                                    </FontText>
+                                                    <FontText variant='subtext' className='text-center'>
+                                                        The newspaper will be available {releaseDateLabel || 'soon'} at {formatTimeLabel(schedule.wakeUpTime)}.
+                                                    </FontText>
+                                                </Column>
+                                            </PlaceholderCard>
+                                        )}
+                                    </LayoutStateAnimatedView.Option>
+                                </LayoutStateAnimatedView.OptionContainer>
+                            </LayoutStateAnimatedView.Container>
                         </View>
                     </Column>
-                </Column>
-            )}
+            </Column>
         </LoadingContainer>
     );
 };
-
-const styles = StyleSheet.create({
-    animatedContentContainer: {
-        overflow: 'hidden',
-        position: 'relative',
-    },
-    animatedContentOverlay: {
-        ...StyleSheet.absoluteFillObject,
-    },
-});
 
 export default YourEyesOnlyPagePLAYER;

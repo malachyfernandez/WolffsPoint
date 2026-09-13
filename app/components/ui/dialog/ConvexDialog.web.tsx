@@ -3,6 +3,7 @@ import { View, useWindowDimensions } from 'react-native';
 import { ConvexProvider, ConvexReactClient } from 'convex/react';
 import { Dialog } from 'heroui-native/dialog';
 import DialogGuildedFrame from '../chrome/DialogGuildedFrame.web';
+import { MinimizeContextBridge, useMinimize } from '../minimize/MinimizeContext';
 
 const DialogVariantContext = createContext<'gold' | 'ghostly'>('gold');
 
@@ -153,6 +154,16 @@ const renderWrappedContent = (children: React.ReactNode, outerClassName?: string
     );
 };
 
+const ConvexDialogPortal = ({ className, children, ...props }: any) => {
+    const minimizeContext = useMinimize();
+
+    return (
+        <Dialog.Portal className={`${basePortalClassName} ${className || ''}`.trim()} {...props}>
+            <MinimizeContextBridge value={minimizeContext}>{children}</MinimizeContextBridge>
+        </Dialog.Portal>
+    );
+};
+
 const ConvexDialog = {
     Root: ({ frameVariant, ...props }: any) => (
         <DialogVariantContext.Provider value={frameVariant || 'gold'}>
@@ -160,9 +171,7 @@ const ConvexDialog = {
         </DialogVariantContext.Provider>
     ),
     Trigger: Dialog.Trigger,
-    Portal: ({ className, ...props }: any) => (
-        <Dialog.Portal className={`${basePortalClassName} ${className || ''}`.trim()} {...props} />
-    ),
+    Portal: ConvexDialogPortal,
     Overlay: ({ className, ...props }: any) => <Dialog.Overlay className={`bg-black/20 ${className || ''}`.trim()} {...props} />,
     Content: ({ children, className, style, frameVariant: contentFrameVariant, ...props }: any) => {
         const contextFrameVariant = useContext(DialogVariantContext);

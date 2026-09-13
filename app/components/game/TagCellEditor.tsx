@@ -208,13 +208,8 @@ const TagCellEditor = ({
 
     // Add to save history
     if (historyKey && hasUnsavedChanges) {
-      const preview = isInTagMode
-        ? selectedTagNames.join(', ')
-        : textValue.trim().slice(0, 200);
-      addSave(
-        { value: newValue, tags: selectedTagNames, text: textValue },
-        preview
-      );
+      const preview = isInTagMode ? selectedTagNames.join(', ') : textValue.trim().slice(0, 200);
+      addSave({ value: newValue, tags: selectedTagNames, text: textValue }, preview);
     }
   };
 
@@ -244,13 +239,8 @@ const TagCellEditor = ({
 
     // Add to save history
     if (historyKey) {
-      const preview = isInTagMode
-        ? selectedTagNames.join(', ')
-        : textValue.trim().slice(0, 200);
-      addSave(
-        { value: newValue, tags: selectedTagNames, text: textValue },
-        preview
-      );
+      const preview = isInTagMode ? selectedTagNames.join(', ') : textValue.trim().slice(0, 200);
+      addSave({ value: newValue, tags: selectedTagNames, text: textValue }, preview);
     }
   };
 
@@ -277,141 +267,148 @@ const TagCellEditor = ({
         <ConvexDialog.Portal>
           <ConvexDialog.Overlay />
           <ConvexDialog.Content className="max-w-2xl" isSwipeable={false}>
-            <View ref={targetRef} className="flex-1 min-h-0">
-            <CloseButton onPress={handleAttemptClose} />
-            <MinimizeButton
-              hasUnsavedChanges={hasUnsavedChanges}
-              onSave={handleSaveWithoutClose}
-              onMinimize={performMinimize}
-            />
-            {historyKey && (
-              <SaveHistoryPill
-                hasUnsavedChanges={hasUnsavedChanges}
-                isInvalid={false}
-                onSave={handleSaveWithoutClose}
-                onOpenHistory={() => setIsHistoryOpen(true)}
-              />
-            )}
-            <DialogHeader text="Edit Cell" />
-            <Column className="gap-3 p-0 sm:p-5">
-              <Row className="items-stretch gap-3">
-                {/* Left: Tag sidebar */}
-                <Column className="w-44 gap-2">
-                  <ShadowScrollView className="border-subtle-border max-h-[240px] rounded-lg border">
-                    <Column className="gap-1 p-2">
-                      {definitions.length === 0 ? (
-                        <FontText variant="subtext" className="px-1 py-4 text-center text-xs">
-                          No tags yet
-                        </FontText>
-                      ) : (
-                        definitions.map((def) => {
-                          const color = getTagColor(def.color);
-                          const isSelected = selectedTagNames.includes(def.name);
-                          return (
-                            <Pressable
-                              key={def.name}
-                              onPress={() => toggleTag(def.name)}
-                              className={`rounded-lg p-1.5 ${isSelected ? 'bg-text/10' : ''}`}>
-                              <Row className="items-center gap-2">
-                                <View
-                                  className="h-3.5 w-3.5 rounded-full"
-                                  style={{ backgroundColor: color.bg }}
-                                />
-                                <FontText
-                                  className="flex-1 text-xs"
-                                  weight="medium"
-                                  numberOfLines={1}
-                                  ellipsizeMode="tail">
-                                  {def.name}
-                                </FontText>
-                                {isSelected && (
-                                  <FontText className="text-xs text-green-600">✓</FontText>
-                                )}
-                                <Pressable
-                                  onPress={() => {
-                                    setEditingTag(def);
-                                    setIsAddTagOpen(true);
-                                  }}
-                                  className="items-center justify-center self-stretch rounded"
-                                  style={{ width: 28, marginLeft: -2 }}>
-                                  <Pencil
-                                    size={13}
-                                    color="rgb(46, 41, 37)"
-                                    style={{ opacity: 0.7 }}
+            <View ref={targetRef} className="min-h-0 flex-1">
+              <CloseButton onPress={handleAttemptClose} />
+              {historyKey && (
+                <MinimizeButton
+                  hasUnsavedChanges={hasUnsavedChanges}
+                  onSave={handleSaveWithoutClose}
+                  onMinimize={performMinimize}
+                />
+              )}
+              {historyKey && (
+                <SaveHistoryPill
+                  hasUnsavedChanges={hasUnsavedChanges}
+                  isInvalid={false}
+                  onSave={handleSaveWithoutClose}
+                  onOpenHistory={() => setIsHistoryOpen(true)}
+                  hasMinimizeButton
+                />
+              )}
+              <DialogHeader text="Edit Cell" />
+              <Column className="gap-3 p-0 sm:p-5">
+                <Row className="items-stretch gap-3">
+                  {/* Left: Tag sidebar */}
+                  <Column className="w-44 gap-2">
+                    <ShadowScrollView className="border-subtle-border max-h-[240px] rounded-lg border">
+                      <Column className="gap-1 p-2">
+                        {definitions.length === 0 ? (
+                          <FontText variant="subtext" className="px-1 py-4 text-center text-xs">
+                            No tags yet
+                          </FontText>
+                        ) : (
+                          definitions.map((def) => {
+                            const color = getTagColor(def.color);
+                            const isSelected = selectedTagNames.includes(def.name);
+                            return (
+                              <Pressable
+                                key={def.name}
+                                onPress={() => toggleTag(def.name)}
+                                className={`rounded-lg p-1.5 ${isSelected ? 'bg-text/10' : ''}`}>
+                                <Row className="items-center gap-2">
+                                  <View
+                                    className="h-3.5 w-3.5 rounded-full"
+                                    style={{ backgroundColor: color.bg }}
                                   />
-                                </Pressable>
-                              </Row>
-                            </Pressable>
-                          );
-                        })
-                      )}
-                    </Column>
-                  </ShadowScrollView>
-                  <AppButton
-                    variant="outline"
-                    className="h-8 w-full"
-                    onPress={() => {
-                      setEditingTag(null);
-                      setIsAddTagOpen(true);
-                    }}>
-                    <Row className="items-center gap-1">
-                      <Plus size={13} color="rgb(46, 41, 37)" />
-                      <FontText weight="medium" className="text-xs">
-                        New Tag
-                      </FontText>
-                    </Row>
-                  </AppButton>
-                </Column>
-
-                {/* Right: Editor area + buttons at bottom */}
-                <Column className="flex-1 justify-between gap-2">
-                  {isInTagMode ? (
-                    <View className="border-subtle-border flex-row flex-wrap gap-2 rounded-lg border p-3">
-                      {selectedTagNames.map((name) => {
-                        const def = definitions.find((d) => d.name === name);
-                        const color: TagColor = def ? getTagColor(def.color) : getTagColor('Grey');
-                        return (
-                          <TagPill
-                            key={name}
-                            label={name}
-                            color={color}
-                            onRemove={() => removeTag(name)}
-                            maxWidth={300}
-                          />
-                        );
-                      })}
-                    </View>
-                  ) : (
-                    <FontTextInput
-                      placeholder="Type here..."
-                      variant="styled"
-                      className="w-full p-2"
-                      value={textValue}
-                      onChangeText={setTextValue}
-                      multiline
-                    />
-                  )}
-
-                  <Row className="minimize-hide justify-end gap-2">
-                    <AppButton className="h-8 w-20" variant="outline" onPress={handleAttemptClose}>
-                      <FontText weight="medium" className="text-sm">
-                        Cancel
-                      </FontText>
-                    </AppButton>
+                                  <FontText
+                                    className="flex-1 text-xs"
+                                    weight="medium"
+                                    numberOfLines={1}
+                                    ellipsizeMode="tail">
+                                    {def.name}
+                                  </FontText>
+                                  {isSelected && (
+                                    <FontText className="text-xs text-green-600">✓</FontText>
+                                  )}
+                                  <Pressable
+                                    onPress={() => {
+                                      setEditingTag(def);
+                                      setIsAddTagOpen(true);
+                                    }}
+                                    className="items-center justify-center self-stretch rounded"
+                                    style={{ width: 28, marginLeft: -2 }}>
+                                    <Pencil
+                                      size={13}
+                                      color="rgb(46, 41, 37)"
+                                      style={{ opacity: 0.7 }}
+                                    />
+                                  </Pressable>
+                                </Row>
+                              </Pressable>
+                            );
+                          })
+                        )}
+                      </Column>
+                    </ShadowScrollView>
                     <AppButton
-                      className="h-8 w-20"
-                      variant="black"
-                      onPress={handleSave}
-                      disabled={!doneEnabled}
-                    >
-                      <FontText color="white" weight="medium" className="text-sm">
-                        {submitLabel}
-                      </FontText>
+                      variant="outline"
+                      className="h-8 w-full"
+                      onPress={() => {
+                        setEditingTag(null);
+                        setIsAddTagOpen(true);
+                      }}>
+                      <Row className="items-center gap-1">
+                        <Plus size={13} color="rgb(46, 41, 37)" />
+                        <FontText weight="medium" className="text-xs">
+                          New Tag
+                        </FontText>
+                      </Row>
                     </AppButton>
-                  </Row>
-                </Column>
-              </Row>
-            </Column>
+                  </Column>
+
+                  {/* Right: Editor area + buttons at bottom */}
+                  <Column className="flex-1 justify-between gap-2">
+                    {isInTagMode ? (
+                      <View className="border-subtle-border flex-row flex-wrap gap-2 rounded-lg border p-3">
+                        {selectedTagNames.map((name) => {
+                          const def = definitions.find((d) => d.name === name);
+                          const color: TagColor = def
+                            ? getTagColor(def.color)
+                            : getTagColor('Grey');
+                          return (
+                            <TagPill
+                              key={name}
+                              label={name}
+                              color={color}
+                              onRemove={() => removeTag(name)}
+                              maxWidth={300}
+                            />
+                          );
+                        })}
+                      </View>
+                    ) : (
+                      <FontTextInput
+                        placeholder="Type here..."
+                        variant="styled"
+                        className="w-full p-2"
+                        value={textValue}
+                        onChangeText={setTextValue}
+                        multiline
+                      />
+                    )}
+
+                    <Row className="minimize-hide justify-end gap-2">
+                      <AppButton
+                        className="h-8 w-20"
+                        variant="outline"
+                        onPress={handleAttemptClose}>
+                        <FontText weight="medium" className="text-sm">
+                          Cancel
+                        </FontText>
+                      </AppButton>
+                      <AppButton
+                        className="h-8 w-20"
+                        variant="black"
+                        onPress={handleSave}
+                        disabled={!doneEnabled}>
+                        <FontText color="white" weight="medium" className="text-sm">
+                          {submitLabel}
+                        </FontText>
+                      </AppButton>
+                    </Row>
+                  </Column>
+                </Row>
+              </Column>
             </View>
           </ConvexDialog.Content>
         </ConvexDialog.Portal>
@@ -450,49 +447,44 @@ const TagCellEditor = ({
           />
           <ViewOnlyPreviewModal
             isOpen={previewEntry !== null}
-            onOpenChange={(open) => { if (!open) setPreviewEntry(null); }}
+            onOpenChange={(open) => {
+              if (!open) setPreviewEntry(null);
+            }}
             title="Preview Saved Cell"
             subtext={previewEntry ? new Date(previewEntry.savedAt).toLocaleString() : undefined}
             entry={previewEntry}
             onReplace={handleReplaceFromHistory}
-            contentClassName="max-w-2xl"
-          >
-            {previewEntry && (() => {
-              const savedValue = (previewEntry.value as { value: string })?.value ?? '';
-              const savedParsed = parseCell(savedValue);
-              if (savedParsed.tags.length > 0) {
+            contentClassName="max-w-2xl">
+            {previewEntry &&
+              (() => {
+                const savedValue = (previewEntry.value as { value: string })?.value ?? '';
+                const savedParsed = parseCell(savedValue);
+                if (savedParsed.tags.length > 0) {
+                  return (
+                    <ScrollView className="flex-1" contentContainerClassName="p-4">
+                      <View className="border-subtle-border flex-row flex-wrap gap-2 rounded-lg border p-3">
+                        {savedParsed.tags.map((tag) => {
+                          const def = definitions.find((d) => d.name === tag.name);
+                          const color: TagColor = def
+                            ? getTagColor(def.color)
+                            : getTagColor('Grey');
+                          return (
+                            <TagPill key={tag.name} label={tag.name} color={color} maxWidth={300} />
+                          );
+                        })}
+                      </View>
+                      {savedParsed.text.trim() ? (
+                        <FontText className="text-text mt-3">{savedParsed.text}</FontText>
+                      ) : null}
+                    </ScrollView>
+                  );
+                }
                 return (
                   <ScrollView className="flex-1" contentContainerClassName="p-4">
-                    <View className="border-subtle-border flex-row flex-wrap gap-2 rounded-lg border p-3">
-                      {savedParsed.tags.map((tag) => {
-                        const def = definitions.find((d) => d.name === tag.name);
-                        const color: TagColor = def ? getTagColor(def.color) : getTagColor('Grey');
-                        return (
-                          <TagPill
-                            key={tag.name}
-                            label={tag.name}
-                            color={color}
-                            maxWidth={300}
-                          />
-                        );
-                      })}
-                    </View>
-                    {savedParsed.text.trim() ? (
-                      <FontText className="text-text mt-3">
-                        {savedParsed.text}
-                      </FontText>
-                    ) : null}
+                    <FontText className="text-text">{savedParsed.text}</FontText>
                   </ScrollView>
                 );
-              }
-              return (
-                <ScrollView className="flex-1" contentContainerClassName="p-4">
-                  <FontText className="text-text">
-                    {savedParsed.text}
-                  </FontText>
-                </ScrollView>
-              );
-            })()}
+              })()}
           </ViewOnlyPreviewModal>
         </>
       )}

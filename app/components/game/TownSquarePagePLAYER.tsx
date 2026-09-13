@@ -300,6 +300,7 @@ const TownSquarePagePLAYER = ({ gameId, currentProfile }: TownSquarePagePLAYERPr
                         gameId={gameId}
                         showScript={canEditScripts}
                         historyKey={`townSquareReply:${gameId}:${editingReply?.commentId ?? ''}`}
+                        onRestore={() => setEditingReplyId(editingReplyId)}
                     />
                 </>
             )}

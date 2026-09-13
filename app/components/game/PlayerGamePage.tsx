@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import Column from '../layout/Column';
 import GameTabBar, { GameTabDefinition } from './GameTabBar';
@@ -19,58 +20,88 @@ import PaperContainer from '../ui/PaperContainer';
 export type PlayerTab = 'townSquare' | 'newspaper' | 'ruleBook' | 'eyesOnly' | 'phoneBook';
 
 interface PlayerGamePageProps {
-    gameId: string;
-    currentUserId: string;
+  gameId: string;
+  currentUserId: string;
 }
 
 const playerTabs: GameTabDefinition<PlayerTab>[] = [
-    { label: 'Town Square', condensedLabel: 'Town Sq', value: 'townSquare', icon: <TownSquareIcon /> },
-    { label: 'Newspaper', condensedLabel: 'News', value: 'newspaper', icon: <NewspaperIcon /> },
-    { label: 'Your Eyes Only', condensedLabel: 'Your Eyes Only', value: 'eyesOnly', icon: <YourEyeIcon /> },
-    { label: 'Rule Book', condensedLabel: 'Rule Bk', value: 'ruleBook', icon: <RuleBookIcon /> },
-    { label: 'Phone Book', condensedLabel: 'Phone Bk', value: 'phoneBook', icon: <PhoneBookIcon /> },
+  {
+    label: 'Town Square',
+    condensedLabel: 'Town Sq',
+    value: 'townSquare',
+    icon: <TownSquareIcon />,
+  },
+  { label: 'Newspaper', condensedLabel: 'News', value: 'newspaper', icon: <NewspaperIcon /> },
+  {
+    label: 'Your Eyes Only',
+    condensedLabel: 'Your Eyes Only',
+    value: 'eyesOnly',
+    icon: <YourEyeIcon />,
+  },
+  { label: 'Rule Book', condensedLabel: 'Rule Bk', value: 'ruleBook', icon: <RuleBookIcon /> },
+  { label: 'Phone Book', condensedLabel: 'Phone Bk', value: 'phoneBook', icon: <PhoneBookIcon /> },
 ];
 
 const PlayerGamePage = ({ gameId, currentUserId }: PlayerGamePageProps) => {
-    const [activeTab, setActiveTab] = useState<PlayerTab>('townSquare');
+  const [activeTab, setActiveTab] = useState<PlayerTab>('townSquare');
 
-    return (
-        <PlayerAccessGate gameId={gameId} currentUserId={currentUserId}>
-            {({ currentEmail, matchingPlayer, profile }) => (
-                <Column className='gap-5'>
-                    <GameTabBar activeTab={activeTab} onTabPress={setActiveTab} tabs={playerTabs} />
-                    <PaperContainer>
-                        <Animated.View key={activeTab} entering={FadeIn.duration(300)} className='w-full min-w-0'>
-                            {activeTab === 'townSquare' && <TownSquarePagePLAYER gameId={gameId} currentProfile={profile} />}
-                            {activeTab === 'newspaper' &&
-                                <ReadOnlyNewspaperPagePLAYER
-                                    gameId={gameId}
-                                    currentEmail={currentEmail}
-                                    matchingPlayer={matchingPlayer}
-                                    currentProfile={profile}
-                                />}
-                            {activeTab === 'ruleBook' && <RuleBookPagePLAYER gameId={gameId} />}
-                            {activeTab === 'eyesOnly' && (
-                                <YourEyesOnlyPagePLAYER
-                                    gameId={gameId}
-                                    currentEmail={currentEmail}
-                                    matchingPlayer={matchingPlayer}
-                                    currentProfile={profile}
-                                />
-                            )}
-                            {activeTab === 'phoneBook' && (
-                                <PhoneBookPagePLAYER
-                                    gameId={gameId}
-                                    currentUserId={currentUserId}
-                                    currentEmail={currentEmail}
-                                />
-                            )}
-                        </Animated.View>
-                    </PaperContainer>
-                </Column>
-            )}
-        </PlayerAccessGate>
-    );
+  return (
+    <PlayerAccessGate gameId={gameId} currentUserId={currentUserId}>
+      {({ currentEmail, matchingPlayer, profile }) => (
+        <Column className="gap-5">
+          <GameTabBar activeTab={activeTab} onTabPress={setActiveTab} tabs={playerTabs} />
+          <PaperContainer>
+            <View className="w-full min-w-0">
+              <Animated.View
+                entering={FadeIn.duration(180)}
+                style={{ display: activeTab === 'townSquare' ? 'flex' : 'none' }}
+                className="w-full min-w-0">
+                <TownSquarePagePLAYER gameId={gameId} currentProfile={profile} />
+              </Animated.View>
+              <Animated.View
+                entering={FadeIn.duration(180)}
+                style={{ display: activeTab === 'newspaper' ? 'flex' : 'none' }}
+                className="w-full min-w-0">
+                <ReadOnlyNewspaperPagePLAYER
+                  gameId={gameId}
+                  currentEmail={currentEmail}
+                  matchingPlayer={matchingPlayer}
+                  currentProfile={profile}
+                />
+              </Animated.View>
+              <Animated.View
+                entering={FadeIn.duration(180)}
+                style={{ display: activeTab === 'eyesOnly' ? 'flex' : 'none' }}
+                className="w-full min-w-0">
+                <YourEyesOnlyPagePLAYER
+                  gameId={gameId}
+                  currentEmail={currentEmail}
+                  matchingPlayer={matchingPlayer}
+                  currentProfile={profile}
+                />
+              </Animated.View>
+              <Animated.View
+                entering={FadeIn.duration(180)}
+                style={{ display: activeTab === 'ruleBook' ? 'flex' : 'none' }}
+                className="w-full min-w-0">
+                <RuleBookPagePLAYER gameId={gameId} />
+              </Animated.View>
+              <Animated.View
+                entering={FadeIn.duration(180)}
+                style={{ display: activeTab === 'phoneBook' ? 'flex' : 'none' }}
+                className="w-full min-w-0">
+                <PhoneBookPagePLAYER
+                  gameId={gameId}
+                  currentUserId={currentUserId}
+                  currentEmail={currentEmail}
+                />
+              </Animated.View>
+            </View>
+          </PaperContainer>
+        </Column>
+      )}
+    </PlayerAccessGate>
+  );
 };
 
 export default PlayerGamePage;
