@@ -59,9 +59,12 @@ const TownSquareThreadListItem = ({ index, isLast, isOperator, onPress, onToggle
 
                         <Row className='gap-4 items-center'>
                             {thread.postType === 'announcement' ? (
-                                <FontText variant='subtext' className='bg-text/10 px-3 py-1 rounded-full'>
-                                    Announcement
-                                </FontText>
+                                <>
+                                    <FontText variant='subtext' className='bg-text/10 px-3 py-1 rounded-full'>
+                                        Announcement
+                                    </FontText>
+                                    <FontText variant='subtext' className='md:hidden'>{formatTimestamp(thread.createdAt)}</FontText>
+                                </>
                             ) : (
                                 <>
                                     <FontText variant='subtext' className='text-accent'>
