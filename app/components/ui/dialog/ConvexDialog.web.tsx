@@ -82,24 +82,20 @@ const ConvexDialogContent = ({ children }: { children: React.ReactNode }) => {
     const containerRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        // When a new dialog mounts, move focus away from any element in the
-        // underlying modal. Focus the first focusable element inside this dialog
-        // (or the container itself as a fallback) so keyboard events go to the
-        // top-most modal, not the one below.
+        // When a new dialog mounts, release focus from whatever element below
+        // was focused (e.g. a text input in the dialog underneath) so keyboard
+        // events target the top-most dialog's shortcut handlers instead of
+        // being swallowed by the stale field. Focus is deliberately NOT moved
+        // to a button inside this dialog — Enter must trigger the dialog's
+        // primary action, not activate a random button. If focus is already
+        // inside this dialog (e.g. an autoFocus input), leave it alone.
         const timer = setTimeout(() => {
             const container = containerRef.current;
             if (!container) return;
-            const focusable = container.querySelector<HTMLElement>(
-                'button, [href], input, textarea, select, [tabindex]:not([tabindex="-1"])'
-            );
-            if (focusable) {
-                focusable.focus();
-            } else {
-                // No focusable child — make the container itself focusable so it
-                // receives keyboard events instead of the underlying modal.
-                container.setAttribute('tabindex', '-1');
-                container.focus();
-            }
+            const active = document.activeElement as HTMLElement | null;
+            if (!active || active === document.body || active === document.documentElement) return;
+            if (container.contains(active)) return;
+            active.blur();
         }, 0);
         return () => clearTimeout(timer);
     }, []);

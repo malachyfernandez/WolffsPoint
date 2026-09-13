@@ -669,7 +669,9 @@ export const parseMarkdown = (markdown: string): MarkdownBlock[] => {
 
 const getNewspaperHeadingStyle = (titleFont?: NewspaperTitleFont) => {
   const fontFamily = titleFont ? getNewspaperFontFamily(titleFont) : undefined;
-  return { fontFamily };
+  // Must not emit fontFamily: undefined — spreading it would override
+  // FontText's default font and fall back to the browser default.
+  return fontFamily ? { fontFamily } : {};
 };
 
 const MarkdownRendererContent = ({
