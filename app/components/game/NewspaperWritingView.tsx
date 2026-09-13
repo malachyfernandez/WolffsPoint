@@ -9,6 +9,7 @@ import { createUndoSnapshot, useUndoRedo } from 'hooks/useUndoRedo';
 import { useToast } from 'contexts/ToastContext';
 import ShadowScrollView from '../ui/ShadowScrollView';
 import NewspaperColumnCell from './newspaperPageOperator/NewspaperColumnCell';
+import type { PendingColumnOpen } from 'hooks/usePendingColumnOpen';
 import ImportDraftDialog from './newspaperPageOperator/ImportDraftDialog';
 import NewspaperSectionOptionsDialog from './newspaperPageOperator/NewspaperSectionOptionsDialog';
 import NewspaperSectionDivider from './newspaperPageOperator/NewspaperSectionDivider';
@@ -27,6 +28,8 @@ import {
 
 interface NewspaperWritingViewProps {
   gameId: string; // This will now be in format "originalGameId-day-year-month-day"
+  /** Which day this view renders. Used to match pending restore requests. */
+  dayIndex: number;
   /** The actual game ID (not the composite newspaper day ID). Used for loading
    *  script data (players, roles, etc.) via InputOptionsProvider. */
   realGameId?: string;
@@ -38,6 +41,14 @@ interface NewspaperWritingViewProps {
   isImportDraftLoading?: boolean;
   /** Called when the user confirms importing the draft. */
   onImportDraft?: (draft: Usepaper) => void;
+  /** A pending "open this column" request from a minimized card, kept at the
+   *  page level so it survives this view unmounting on day switches. */
+  pendingColumnOpen?: PendingColumnOpen | null;
+  /** Requests opening a column — lives at page level so minimized cards can
+   *  still restore after this view unmounts. */
+  onRequestColumnOpen?: (dayIndex: number, sectionIndex: number, columnIndex: number) => void;
+  /** Clears the pending request once the target cell has opened. */
+  onConsumePendingColumnOpen?: () => void;
 }
 
 const minimumUsepaper: Usepaper = {
@@ -46,11 +57,15 @@ const minimumUsepaper: Usepaper = {
 
 const NewspaperWritingView = ({
   gameId,
+  dayIndex,
   realGameId,
   importSourceLabel,
   importDraft,
   isImportDraftLoading,
   onImportDraft,
+  pendingColumnOpen,
+  onRequestColumnOpen,
+  onConsumePendingColumnOpen,
 }: NewspaperWritingViewProps) => {
   const { executeCommand } = useUndoRedo();
   const { showToast } = useToast();
@@ -232,6 +247,17 @@ const NewspaperWritingView = ({
                     columnMarkdown={columnMarkdown}
                     onSubmitMarkdown={(markdown) => setColumnMarkdown(sectionIndex, columnIndex, markdown)}
                     onRemove={() => removeColumn(sectionIndex, columnIndex)}
+                    isPendingOpen={
+                      // Wait for this day's newspaper to finish syncing so the
+                      // dialog opens with real content instead of flashing the
+                      // default/empty value first.
+                      newspaper?.state?.isSyncing === false &&
+                      pendingColumnOpen?.dayIndex === dayIndex &&
+                      pendingColumnOpen?.sectionIndex === sectionIndex &&
+                      pendingColumnOpen?.columnIndex === columnIndex
+                    }
+                    onConsumePendingOpen={() => onConsumePendingColumnOpen?.()}
+                    onRequestOpen={() => onRequestColumnOpen?.(dayIndex, sectionIndex, columnIndex)}
                   />
                 ))}
               </Row>

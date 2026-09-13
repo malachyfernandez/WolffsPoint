@@ -14,6 +14,7 @@ import { useSharedListValue } from '../../../hooks/useSharedListValue';
 import OperatorDayNavigation from '../ui/daySelector/OperatorDayNavigation';
 import NewspaperDayView from './NewspaperDayView';
 import { useNewspaperDayOwner } from './useNewspaperDayOwner';
+import { usePendingColumnOpen } from '../../../hooks/usePendingColumnOpen';
 import { Usepaper } from '../../../types/usepaper';
 import { NewspaperControlState, getNewspaperControlKey, getNewspaperDayControlItemId, getNewspaperDayItemId } from '../../../utils/newspaperControl';
 import { hasNewspaperContent } from '../../../utils/newspaperSections';
@@ -100,6 +101,17 @@ const NewspaperPageOPERATOR = ({ currentUserId, gameId }: NewspaperPageOPERATORP
             privacy: 'PUBLIC',
         });
     };
+
+    // Minimized column editors restore through here — the per-day writing
+    // views unmount on day switches, so the request must live at page level.
+    // Uses local setSelectedDayIndex only — handleSelectedDayIndexChange would
+    // also write the shared selectedDayIndex user variable.
+    const { pendingColumnOpen, requestColumnOpen, consumePendingColumnOpen } = usePendingColumnOpen(
+        (dayIndex) => {
+            setActiveTab('writing');
+            setSelectedDayIndex(dayIndex);
+        },
+    );
 
     // Don't render any day navigation or content until data is loaded
     const isReady = isInitialLoadComplete;
@@ -190,11 +202,15 @@ const NewspaperPageOPERATOR = ({ currentUserId, gameId }: NewspaperPageOPERATORP
                 </Row>
                 <NewspaperWritingView
                     gameId={getNewspaperDayItemId(gameId, dayIndex)}
+                    dayIndex={dayIndex}
                     realGameId={gameId}
                     importSourceLabel='Newser'
                     importDraft={newserDraft}
                     isImportDraftLoading={isNewserDraftLoading}
                     onImportDraft={() => {}}
+                    pendingColumnOpen={pendingColumnOpen}
+                    onRequestColumnOpen={requestColumnOpen}
+                    onConsumePendingColumnOpen={consumePendingColumnOpen}
                 />
             </Column>
         );
@@ -227,7 +243,11 @@ const NewspaperPageOPERATOR = ({ currentUserId, gameId }: NewspaperPageOPERATORP
                     gameId={gameId}
                     ownerUserId={operatorUserId}
                     selectedDayIndex={selectedDayIndex}
-                    onSelectedDayIndexChange={handleSelectedDayIndexChange}
+                    onSelectedDayIndexChange={(dayIndex) => {
+                        // Manual navigation abandons any undelivered restore request
+                        consumePendingColumnOpen();
+                        handleSelectedDayIndexChange(dayIndex);
+                    }}
                 />
             </View>
 

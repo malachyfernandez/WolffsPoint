@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Pressable } from 'react-native';
 import Column from '../../layout/Column';
 import MarkdownRenderer from '../../ui/markdown/MarkdownRenderer';
@@ -20,6 +20,14 @@ interface NewspaperColumnCellProps {
     columnMarkdown: string;
     onSubmitMarkdown: (markdown: string) => void;
     onRemove: () => void;
+    /** True when a pending restore request targets this cell. The cell opens
+     *  its editor and consumes the request (clears it at the page level). */
+    isPendingOpen: boolean;
+    onConsumePendingOpen: () => void;
+    /** Called when this column's minimized card is clicked. Must reach
+     *  page-level state so it still works after this cell unmounts on a day
+     *  switch. */
+    onRequestOpen: () => void;
 }
 
 /**
@@ -38,9 +46,20 @@ const NewspaperColumnCell = ({
     columnMarkdown,
     onSubmitMarkdown,
     onRemove,
+    isPendingOpen,
+    onConsumePendingOpen,
+    onRequestOpen,
 }: NewspaperColumnCellProps) => {
     const [isEditorOpen, setIsEditorOpen] = useState(false);
     const isLastColumn = columnIndex === section.columns.length - 1;
+
+    // A minimized editor from another day lands here once this day mounts.
+    useEffect(() => {
+        if (isPendingOpen) {
+            setIsEditorOpen(true);
+            onConsumePendingOpen();
+        }
+    }, [isPendingOpen, onConsumePendingOpen]);
 
     return (
         <Column
@@ -84,6 +103,7 @@ const NewspaperColumnCell = ({
                 newspaperTitleFont={section.titleFont}
                 newspaperDividerStyle={section.dividerStyle}
                 historyKey={`newspaperColumn:${gameId}:${section.id}:${columnIndex}`}
+                onRestore={onRequestOpen}
             />
         </Column>
     );

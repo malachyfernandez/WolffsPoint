@@ -37,12 +37,13 @@ const MinimizeRow = () => {
             left: 0,
             zIndex: 9999,
             display: 'flex',
-            width: 'fit-content',
-            maxWidth: '100vw',
+            width: '100vw',
             flexDirection: 'column',
             padding: 12,
             boxSizing: 'border-box',
             alignItems: 'flex-start',
+            overflowX: 'auto',
+            overflowY: 'hidden',
             pointerEvents: 'none',
           }}>
           <div
@@ -104,11 +105,9 @@ const MinimizeRow = () => {
               style={{
                 width: 'fit-content',
                 maxWidth: '100%',
-                overflowX: 'auto',
-                overflowY: 'hidden',
+                overflow: 'visible',
                 padding: '24px 12px 24px',
                 boxSizing: 'border-box',
-                scrollbarGutter: 'stable',
               }}>
               <div
                 style={{

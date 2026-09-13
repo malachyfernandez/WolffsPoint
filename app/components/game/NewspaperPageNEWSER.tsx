@@ -14,6 +14,7 @@ import { useSharedListValue } from '../../../hooks/useSharedListValue';
 import { useFindListItems, useValue } from 'hooks/useData';
 import { getNewspaperDayItemId, getNewserAcceptedKey, NewserAccepted } from '../../../utils/newspaperControl';
 import { useNewspaperDayOwner } from './useNewspaperDayOwner';
+import { usePendingColumnOpen } from '../../../hooks/usePendingColumnOpen';
 import { Usepaper } from '../../../types/usepaper';
 import { Newspaper } from 'lucide-react-native';
 import { hasNewspaperContent } from '../../../utils/newspaperSections';
@@ -127,6 +128,15 @@ const NewspaperPageNEWSER = ({ currentUserId, currentEmail, gameId }: NewspaperP
         }
     };
 
+    // Minimized column editors restore through here — the per-day writing
+    // views unmount on day switches, so the request must live at page level.
+    const { pendingColumnOpen, requestColumnOpen, consumePendingColumnOpen } = usePendingColumnOpen(
+        (dayIndex) => {
+            setActiveTab('writing');
+            setSelectedDayIndex(dayIndex);
+        },
+    );
+
     const isReady = isInitialLoadComplete;
 
     const renderViewingContent = (dayIndex: number, ownerUserId: string, onReady?: () => void) => {
@@ -155,7 +165,11 @@ const NewspaperPageNEWSER = ({ currentUserId, currentEmail, gameId }: NewspaperP
                     gameId={gameId}
                     ownerUserId={operatorUserId}
                     selectedDayIndex={selectedDayIndex}
-                    onSelectedDayIndexChange={setSelectedDayIndex}
+                    onSelectedDayIndexChange={(dayIndex) => {
+                        // Manual navigation abandons any undelivered restore request
+                        consumePendingColumnOpen();
+                        setSelectedDayIndex(dayIndex);
+                    }}
                 />
             </View>
 
@@ -206,11 +220,15 @@ const NewspaperPageNEWSER = ({ currentUserId, currentEmail, gameId }: NewspaperP
                                             {currentUserId === selectedDayOwner.ownerUserId ? (
                                                 <NewspaperWritingView
                                                     gameId={currentDayItemId}
+                                                    dayIndex={selectedDayIndex}
                                                     realGameId={gameId}
                                                     importSourceLabel='Operator'
                                                     importDraft={operatorDraft}
                                                     isImportDraftLoading={isOperatorDraftLoading}
                                                     onImportDraft={() => {}}
+                                                    pendingColumnOpen={pendingColumnOpen}
+                                                    onRequestColumnOpen={requestColumnOpen}
+                                                    onConsumePendingColumnOpen={consumePendingColumnOpen}
                                                 />
                                             ) : (
                                                 <PlaceholderCard>

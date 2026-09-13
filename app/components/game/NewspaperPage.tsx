@@ -5,6 +5,7 @@ import Row from '../layout/Row';
 import AppButton from '../ui/buttons/AppButton';
 import FontText from '../ui/text/FontText';
 import NewspaperWritingView from './NewspaperWritingView';
+import { usePendingColumnOpen } from '../../../hooks/usePendingColumnOpen';
 import { useList, useValue } from 'hooks/useData';
 import ShadowScrollView from '../ui/ShadowScrollView';
 import DaySelectionDialog from './DaySelectionDialog';
@@ -78,6 +79,11 @@ const NewspaperPage = ({ gameId }: NewspaperPageProps) => {
 
     const currentDayKey = getNewspaperKey(selectedDayIndex.value);
 
+    // Minimized column editors restore through here so they survive day switches.
+    const { pendingColumnOpen, requestColumnOpen, consumePendingColumnOpen } = usePendingColumnOpen(
+        (dayIndex) => setSelectedDayIndex(dayIndex),
+    );
+
     return (
         <Column className='gap-4 flex-1 w-full'>
             {/* Day Selector Bar - Same as NightlyPageOPERATOR */}
@@ -146,7 +152,14 @@ const NewspaperPage = ({ gameId }: NewspaperPageProps) => {
 
             {/* Newspaper Content for Selected Day */}
             <Column className='gap-4 flex-1'>
-                <NewspaperWritingView gameId={`${gameId}-${currentDayKey}`} realGameId={gameId} />
+                <NewspaperWritingView
+                    gameId={`${gameId}-${currentDayKey}`}
+                    dayIndex={selectedDayIndex.value}
+                    realGameId={gameId}
+                    pendingColumnOpen={pendingColumnOpen}
+                    onRequestColumnOpen={requestColumnOpen}
+                    onConsumePendingColumnOpen={consumePendingColumnOpen}
+                />
             </Column>
         </Column>
     );
