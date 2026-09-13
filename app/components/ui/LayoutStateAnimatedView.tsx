@@ -125,7 +125,7 @@ type ResolvedOption<TState extends TransitionStateKey> = {
 
 type TransitionPhase = 'idle' | 'exiting' | 'waiting' | 'swapping' | 'entering';
 
-const DEFAULT_DURATION = 250;
+const DEFAULT_DURATION = 180;
 const webPerformanceStyle = Platform.OS === 'web' ? ({ willChange: 'transform, opacity' } as any) : undefined;
 
 const NO_ANIMATION_TRANSITION: LayoutStateAnimatedViewTransition = {
@@ -179,49 +179,49 @@ const createPushInAnimation = (
     backward,
 });
 
-const enterFromBottom = (duration = 350, distance = 24): LayoutStateAnimatedViewAnimation => ({
+const enterFromBottom = (duration = 220, distance = 24): LayoutStateAnimatedViewAnimation => ({
     duration,
     opacity: [0, 1],
     y: [distance, 0],
 });
 
-const enterFromRight = (duration = 300, distance = 24): LayoutStateAnimatedViewAnimation => ({
+const enterFromRight = (duration = 200, distance = 24): LayoutStateAnimatedViewAnimation => ({
     duration,
     opacity: [0, 1],
     x: [distance, 0],
 });
 
-const enterFromLeft = (duration = 300, distance = 24): LayoutStateAnimatedViewAnimation => ({
+const enterFromLeft = (duration = 200, distance = 24): LayoutStateAnimatedViewAnimation => ({
     duration,
     opacity: [0, 1],
     x: [-distance, 0],
 });
 
-const enterFromTop = (duration = 350, distance = 24): LayoutStateAnimatedViewAnimation => ({
+const enterFromTop = (duration = 220, distance = 24): LayoutStateAnimatedViewAnimation => ({
     duration,
     opacity: [0, 1],
     y: [-distance, 0],
 });
 
-const exitToBottom = (duration = 250, distance = 24): LayoutStateAnimatedViewAnimation => ({
+const exitToBottom = (duration = 160, distance = 24): LayoutStateAnimatedViewAnimation => ({
     duration,
     opacity: [1, 0],
     y: [0, distance],
 });
 
-const exitToTop = (duration = 250, distance = 24): LayoutStateAnimatedViewAnimation => ({
+const exitToTop = (duration = 160, distance = 24): LayoutStateAnimatedViewAnimation => ({
     duration,
     opacity: [1, 0],
     y: [0, -distance],
 });
 
-const exitToLeft = (duration = 250, distance = 24): LayoutStateAnimatedViewAnimation => ({
+const exitToLeft = (duration = 160, distance = 24): LayoutStateAnimatedViewAnimation => ({
     duration,
     opacity: [1, 0],
     x: [0, -distance],
 });
 
-const exitToRight = (duration = 250, distance = 24): LayoutStateAnimatedViewAnimation => ({
+const exitToRight = (duration = 160, distance = 24): LayoutStateAnimatedViewAnimation => ({
     duration,
     opacity: [1, 0],
     x: [0, distance],
@@ -386,7 +386,7 @@ const LayoutStateAnimatedViewContainer = <TState extends TransitionStateKey>({
             }
 
             const fadeInAnimation: LayoutStateAnimatedViewAnimation = {
-                duration: 180,
+                duration: 150,
                 opacity: [0, 1],
             };
 

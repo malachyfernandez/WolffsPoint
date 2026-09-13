@@ -13,8 +13,9 @@ import { RoleTableItem } from '../../../types/roleTable';
 import { UserTableItem } from '../../../types/playerTable';
 import { getContextualDayRangeLabel, getCurrentPlayableDayIndex, getGameScopedKey, normalizeGameSchedule, parseStoredDayDates, defaultGameSchedule, formatTimeLabel, formatContextualDateLabel, isDayReleasedAtTime } from '../../../utils/multiplayer';
 import { ChevronLeft, ChevronRight, Eye, Sun } from 'lucide-react-native';
-import { Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+import LayoutStateAnimatedView, { fromRight } from '../ui/LayoutStateAnimatedView';
 import YourEyesOnlyDayContentPLAYER from './YourEyesOnlyDayContentPLAYER';
 
 interface YourEyesOnlyPagePLAYERProps {
@@ -23,8 +24,6 @@ interface YourEyesOnlyPagePLAYERProps {
     matchingPlayer: UserTableItem;
     currentProfile: PlayerProfile;
 }
-
-type AnimationDirection = 'left' | 'right';
 
 const YourEyesOnlyPagePLAYER = ({ gameId, currentEmail, matchingPlayer, currentProfile }: YourEyesOnlyPagePLAYERProps) => {
     const [hasConfirmedAlone, setHasConfirmedAlone] = useState(false);
@@ -39,7 +38,6 @@ const YourEyesOnlyPagePLAYER = ({ gameId, currentEmail, matchingPlayer, currentP
     const roleTable = useSharedListValue<RoleTableItem[]>({ key: 'roleTable', itemId: gameId, defaultValue: [], userIds: operatorUserIds });
     const scheduleRecord = useSharedVariableValue({ key: getGameScopedKey('gameSchedule', gameId), defaultValue: defaultGameSchedule, userIds: operatorUserIds });
     const [now, setNow] = useState(() => new Date());
-    const { width } = useWindowDimensions();
 
     const dayDates = useMemo(() => parseStoredDayDates(dayDateStrings), [dayDateStrings]);
     const currentDayIndex = useMemo(() => getCurrentPlayableDayIndex(dayDates), [dayDates]);
@@ -64,17 +62,7 @@ const YourEyesOnlyPagePLAYER = ({ gameId, currentEmail, matchingPlayer, currentP
     const previousDayLabel = useMemo(() => selectedDayIndex > 0 ? getContextualDayRangeLabel(dayDates, selectedDayIndex - 1, numberOfRealDaysPerInGameDay) : '', [dayDates, numberOfRealDaysPerInGameDay, selectedDayIndex]);
     const nextDayLabel = useMemo(() => selectedDayIndex < currentDayIndex ? getContextualDayRangeLabel(dayDates, selectedDayIndex + 1, numberOfRealDaysPerInGameDay) : '', [currentDayIndex, dayDates, numberOfRealDaysPerInGameDay, selectedDayIndex]);
     const roleData = roleTable.value.find((roleItem) => roleItem.role === matchingPlayer.role);
-    const slideDistance = useMemo(() => Math.min(Math.max(width * 0.12, 24), 72), [width]);
-    const transitionDuration = 240;
-    const [leavingDayIndex, setLeavingDayIndex] = useState<number | null>(null);
-    const previousDayIndexRef = useRef<number | null>(null);
-    const leavingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const hasInitializedSelectedDayRef = useRef(false);
-
-    const enteringOpacity = useSharedValue(1);
-    const enteringTranslateX = useSharedValue(0);
-    const leavingOpacity = useSharedValue(1);
-    const leavingTranslateX = useSharedValue(0);
 
     useEffect(() => {
         if (!hasInitializedSelectedDayRef.current && dayDates.length > 0) {
@@ -92,69 +80,9 @@ const YourEyesOnlyPagePLAYER = ({ gameId, currentEmail, matchingPlayer, currentP
         }, 60000); // Update every minute
 
         return () => {
-            if (leavingTimeoutRef.current) {
-                clearTimeout(leavingTimeoutRef.current);
-            }
             clearInterval(intervalId);
         };
     }, []);
-
-    useEffect(() => {
-        const previousDayIndex = previousDayIndexRef.current;
-
-        if (previousDayIndex == null) {
-            previousDayIndexRef.current = selectedDayIndex;
-            enteringOpacity.value = 1;
-            enteringTranslateX.value = 0;
-            leavingOpacity.value = 0;
-            leavingTranslateX.value = 0;
-            return;
-        }
-
-        if (previousDayIndex === selectedDayIndex) {
-            return;
-        }
-
-        if (leavingTimeoutRef.current) {
-            clearTimeout(leavingTimeoutRef.current);
-        }
-
-        const direction: AnimationDirection = selectedDayIndex > previousDayIndex ? 'left' : 'right';
-        const enteringStartX = direction === 'left' ? slideDistance : -slideDistance;
-        const leavingEndX = direction === 'left' ? -slideDistance : slideDistance;
-
-        setLeavingDayIndex(previousDayIndex);
-
-        enteringOpacity.value = 0;
-        enteringTranslateX.value = enteringStartX;
-        leavingOpacity.value = 1;
-        leavingTranslateX.value = 0;
-
-        enteringOpacity.value = withTiming(1, { duration: transitionDuration });
-        enteringTranslateX.value = withTiming(0, { duration: transitionDuration });
-        leavingOpacity.value = withTiming(0, { duration: transitionDuration });
-        leavingTranslateX.value = withTiming(leavingEndX, { duration: transitionDuration });
-
-        leavingTimeoutRef.current = setTimeout(() => {
-            setLeavingDayIndex(null);
-        }, transitionDuration);
-
-        previousDayIndexRef.current = selectedDayIndex;
-    }, [enteringOpacity, enteringTranslateX, leavingOpacity, leavingTranslateX, selectedDayIndex, slideDistance]);
-
-    const enteringStyle = useAnimatedStyle(() => {
-        return {
-            opacity: enteringOpacity.value,
-            transform: [{ translateX: enteringTranslateX.value }],
-        };
-    });
-
-    const leavingStyle = useAnimatedStyle(() => {
-        return {
-            opacity: leavingOpacity.value,
-            transform: [{ translateX: leavingTranslateX.value }],
-        };
-    });
 
     const overlayAnimatedStyle = useAnimatedStyle(() => ({
         opacity: overlayOpacity.value,
@@ -177,7 +105,7 @@ const YourEyesOnlyPagePLAYER = ({ gameId, currentEmail, matchingPlayer, currentP
     };
 
     return (
-        <Column className='gap-7 flex-1 min-h-[760px] pb-8'>
+        <Column className='gap-7 flex-1 min-h-190 pb-8'>
             <Animated.View style={contentAnimatedStyle} className='gap-4'>
                 {roleData?.aboutRole?.trim().length ? (
                     <MarkdownRenderer
@@ -235,44 +163,33 @@ const YourEyesOnlyPagePLAYER = ({ gameId, currentEmail, matchingPlayer, currentP
                         </Pressable>
                     </Row>
 
-                    <View style={styles.animatedContentContainer}>
-                        {leavingDayIndex != null ? (
-                            <Animated.View
-                                key={`leaving-${leavingDayIndex}`}
-                                pointerEvents='none'
-                                style={[styles.animatedContentOverlay, leavingStyle]}
-                            >
-                                <YourEyesOnlyDayContentPLAYER
-                                    gameId={gameId}
-                                    currentEmail={currentEmail}
-                                    currentUserId={currentProfile.userId}
-                                    dayIndex={leavingDayIndex}
-                                />
-                            </Animated.View>
-                        ) : null}
-
-                        <Animated.View key={`selected-${selectedDayIndex}`} style={enteringStyle}>
-                            {hasWokenUp ? (
-                                <YourEyesOnlyDayContentPLAYER
-                                    gameId={gameId}
-                                    currentEmail={currentEmail}
-                                    currentUserId={currentProfile.userId}
-                                    dayIndex={selectedDayIndex}
-                                />
-                            ) : (
-                                <PlaceholderCard>
-                                    <Column className='gap-3 items-center'>
-                                        <Sun size={48} color='rgb(46, 41, 37)' />
-                                        <FontText weight='bold' className='text-xl text-center'>
-                                            Not yet released
-                                        </FontText>
-                                        <FontText variant='subtext' className='text-center'>
-                                            Day content will be available {releaseDateLabel || 'soon'} at {formatTimeLabel(schedule.wakeUpTime)}.
-                                        </FontText>
-                                    </Column>
-                                </PlaceholderCard>
-                            )}
-                        </Animated.View>
+                    <View>
+                        <LayoutStateAnimatedView.Container stateVar={String(selectedDayIndex)}>
+                            <LayoutStateAnimatedView.OptionContainer page={selectedDayIndex} pushInAnimation={fromRight}>
+                                <LayoutStateAnimatedView.Option stateValue={String(selectedDayIndex)}>
+                                    {hasWokenUp ? (
+                                        <YourEyesOnlyDayContentPLAYER
+                                            gameId={gameId}
+                                            currentEmail={currentEmail}
+                                            currentUserId={currentProfile.userId}
+                                            dayIndex={selectedDayIndex}
+                                        />
+                                    ) : (
+                                        <PlaceholderCard>
+                                            <Column className='gap-3 items-center'>
+                                                <Sun size={48} color='rgb(46, 41, 37)' />
+                                                <FontText weight='bold' className='text-xl text-center'>
+                                                    Not yet released
+                                                </FontText>
+                                                <FontText variant='subtext' className='text-center'>
+                                                    Day content will be available {releaseDateLabel || 'soon'} at {formatTimeLabel(schedule.wakeUpTime)}.
+                                                </FontText>
+                                            </Column>
+                                        </PlaceholderCard>
+                                    )}
+                                </LayoutStateAnimatedView.Option>
+                            </LayoutStateAnimatedView.OptionContainer>
+                        </LayoutStateAnimatedView.Container>
                     </View>
                 </Column>
             </Animated.View>
@@ -304,15 +221,5 @@ const YourEyesOnlyPagePLAYER = ({ gameId, currentEmail, matchingPlayer, currentP
         </Column>
     );
 };
-
-const styles = StyleSheet.create({
-    animatedContentContainer: {
-        overflow: 'hidden',
-        position: 'relative',
-    },
-    animatedContentOverlay: {
-        ...StyleSheet.absoluteFillObject,
-    },
-});
 
 export default YourEyesOnlyPagePLAYER;
