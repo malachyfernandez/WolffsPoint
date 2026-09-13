@@ -23,10 +23,13 @@ import {
 import { CloseButton, MainContent, ActionButtons, SubDialogs } from './markdownEditor';
 import { InputOptionsProvider } from './markdownEditor/InputOptionsProvider';
 import ScriptEditorDialog from '../../script/editor/ScriptEditorDialog';
-import { useMarkdownRendererInputData } from '../ui/markdown/MarkdownRenderer';
+import { useMarkdownRendererInputData, default as MarkdownRenderer } from '../ui/markdown/MarkdownRenderer';
+import ShadowScrollView from '../ui/ShadowScrollView';
+import Column from '../layout/Column';
 import PlayerPreviewModal from './markdownEditor/PlayerPreviewModal';
 import MarkdownVariableDialog from './markdownEditor/MarkdownVariableDialog';
 import { createMarkdownVariableMarker } from '../../script/markdownVariables';
+import type { NewspaperDividerStyle, NewspaperTitleFont } from '../../../types/usepaper';
 
 /** Find all `/*script ... script*\/` blocks in the markdown text. */
 const findScriptBlocks = (text: string): { start: number; end: number; content: string }[] => {
@@ -94,6 +97,8 @@ interface MarkdownEditorDialogProps {
   submitLabel?: string;
   onMinimize?: () => void;
   onRestore?: () => void;
+  newspaperTitleFont?: NewspaperTitleFont;
+  newspaperDividerStyle?: NewspaperDividerStyle;
 }
 
 const ScriptEditorWithSources = ({
@@ -290,6 +295,8 @@ const MarkdownEditorDialog = ({
   submitLabel = 'Done',
   onMinimize,
   onRestore,
+  newspaperTitleFont,
+  newspaperDividerStyle,
 }: MarkdownEditorDialogProps) => {
   const { executeCommand } = useUndoRedo();
   const createUndoSnapshot = useCreateUndoSnapshot();
@@ -666,6 +673,30 @@ const MarkdownEditorDialog = ({
                   centered={centered}
                   showPreviewAsPlayer={showPreviewAsPlayerOption}
                   onPreviewAsPlayer={handlePreviewAsPlayer}
+                  renderPreview={newspaperTitleFont ? () => (
+                    <Column className="min-w-0 flex-1 gap-2">
+                      <ShadowScrollView
+                        className="h-[52vh] flex-1"
+                        scrollViewClassName="h-[52vh] flex-1 border border-subtle-border px-4 py-4">
+                        <Column className="gap-3">
+                          {draftBody.trim() ? (
+                            <MarkdownRenderer
+                              markdown={draftBody.trim()}
+                              textAlign="justify"
+                              newspaperTitleFont={newspaperTitleFont}
+                              newspaperDividerStyle={newspaperDividerStyle}
+                              isInDialog
+                            />
+                          ) : (
+                            <Column className="gap-1 py-12">
+                              <FontText weight="medium">Nothing to preview yet</FontText>
+                              <FontText variant="subtext">Start typing in the Editing tab.</FontText>
+                            </Column>
+                          )}
+                        </Column>
+                      </ShadowScrollView>
+                    </Column>
+                  ) : undefined}
                   readOnly={readOnly}
                 />
                 <Row className="-mx-3 items-center justify-between gap-4 pt-4 sm:mx-0">
@@ -727,6 +758,7 @@ const MarkdownEditorDialog = ({
         isLeaveConfirmDialogOpen={isLeaveConfirmDialogOpen}
         setIsLeaveConfirmDialogOpen={setIsLeaveConfirmDialogOpen}
         runBodyUpdate={runBodyUpdate}
+        showImageBorderOption={Boolean(newspaperTitleFont)}
         onConfirmLeave={handleConfirmLeave}
         onSave={handleSubmit}
       />

@@ -7,6 +7,7 @@ import FontText from '../ui/text/FontText';
 import Row from '../layout/Row';
 import { GameInfo } from 'types/games';
 import { Usepaper } from 'types/usepaper';
+import { getNewspaperSections, hasNewspaperContent } from '../../../utils/newspaperSections';
 import JSZip from 'jszip';
 
 interface DownloadNewspaperButtonProps {
@@ -27,7 +28,7 @@ const DownloadNewspaperButton = ({ gameId }: DownloadNewspaperButtonProps) => {
 
     const newspapersByDay = useMemo(() => {
         const prefix = `${gameId}-day-`;
-        const map = new Map<number, string[]>();
+        const map = new Map<number, Usepaper>();
 
         if (!allNewspaperRecords) return map;
 
@@ -39,8 +40,10 @@ const DownloadNewspaperButton = ({ gameId }: DownloadNewspaperButtonProps) => {
             const dayIndex = parseInt(dayIndexStr, 10);
             if (Number.isNaN(dayIndex)) continue;
 
-            const columns = record.value?.columns ?? [];
-            map.set(dayIndex, columns);
+            const usepaper = record.value;
+            if (usepaper) {
+                map.set(dayIndex, usepaper);
+            }
         }
 
         return map;
@@ -48,8 +51,8 @@ const DownloadNewspaperButton = ({ gameId }: DownloadNewspaperButtonProps) => {
 
     const hasAnyNewspaper = useMemo(() => {
         for (const dayIndex of dayDates.keys()) {
-            const columns = newspapersByDay.get(dayIndex);
-            if (columns && columns.some((c) => c.trim().length > 0)) {
+            const usepaper = newspapersByDay.get(dayIndex);
+            if (usepaper && hasNewspaperContent(usepaper)) {
                 return true;
             }
         }
@@ -69,17 +72,23 @@ const DownloadNewspaperButton = ({ gameId }: DownloadNewspaperButtonProps) => {
             let filesAdded = 0;
 
             for (let dayIndex = 0; dayIndex < dayDates.length; dayIndex++) {
-                const columns = newspapersByDay.get(dayIndex) ?? [];
-                const hasContent = columns.some((c) => c.trim().length > 0);
-                if (!hasContent) continue;
+                const usepaper = newspapersByDay.get(dayIndex);
+                if (!usepaper || !hasNewspaperContent(usepaper)) continue;
 
                 const dateStr = dayDates[dayIndex]?.replace(/\//g, '-') ?? `day_${dayIndex + 1}`;
                 const fileName = `Day_${dayIndex + 1}_${dateStr}.md`;
 
+                const sections = getNewspaperSections(usepaper);
                 let fileContent = '';
-                for (let i = 0; i < columns.length; i++) {
-                    const columnMarkdown = columns[i] ?? '';
-                    fileContent += `# COLUMN ${i + 1}\n\n${columnMarkdown.trim()}\n\n`;
+                for (let s = 0; s < sections.length; s++) {
+                    const section = sections[s];
+                    if (s > 0) {
+                        fileContent += `\n---\n\n`;
+                    }
+                    for (let i = 0; i < section.columns.length; i++) {
+                        const columnMarkdown = section.columns[i] ?? '';
+                        fileContent += `# COLUMN ${i + 1}\n\n${columnMarkdown.trim()}\n\n`;
+                    }
                 }
 
                 folder.file(fileName, fileContent.trim() + '\n');

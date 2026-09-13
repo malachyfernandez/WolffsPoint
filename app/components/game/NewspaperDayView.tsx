@@ -8,6 +8,7 @@ import LoadingText from '../ui/loading/LoadingText';
 import { useFindListItems } from '../../../hooks/useData';
 import { Usepaper } from '../../../types/usepaper';
 import { getNewspaperDayItemId } from '../../../utils/newspaperControl';
+import { getNewspaperColumns, hasNewspaperContent } from '../../../utils/newspaperSections';
 
 const NEWSPAPER_TEXTURE_URL = 'https://d9tic9wqq4.ufs.sh/f/e3bq9j1bOXyi6QFuqBSV3IcVxmF4QjUoPvCOdS2HLawpi0Ey';
 const loadedImageUrls = new Set<string>();
@@ -73,24 +74,26 @@ const NewspaperDayView = ({ gameId, dayIndex, ownerUserId, onReady }: NewspaperD
         userIds: ownerUserId ? [ownerUserId] : [''],
         returnTop: 1,
     });
-    const resolvedUsepaper = usepaperRecords?.[0]?.value?.columns?.length
-        ? usepaperRecords[0].value
+    const storedUsepaper = usepaperRecords?.[0]?.value;
+    const resolvedUsepaper = storedUsepaper?.sections?.length || storedUsepaper?.columns?.length
+        ? storedUsepaper
         : minimumUsepaper;
     const hasVoteSummary = useHasPreviousDayVotes(gameId, dayIndex);
     const isVoteSummaryReady = useIsPreviousDayVoteSummaryReady(gameId, dayIndex);
     const showVoteSummary = hasVoteSummary === true;
+    const newspaperColumns = useMemo(() => getNewspaperColumns(resolvedUsepaper), [resolvedUsepaper]);
     const assetUrls = useMemo(
-        () => [NEWSPAPER_TEXTURE_URL, ...getMarkdownImageUrls(resolvedUsepaper.columns)],
-        [resolvedUsepaper.columns],
+        () => [NEWSPAPER_TEXTURE_URL, ...getMarkdownImageUrls(newspaperColumns)],
+        [newspaperColumns],
     );
     const assetKey = `${dayIndex}:${assetUrls.join('|')}`;
     const isDataReady = usepaperRecords !== undefined
         && hasVoteSummary !== undefined
         && isVoteSummaryReady;
-    const hasNewspaperContent = !resolvedUsepaper.skipped
-        && resolvedUsepaper.columns.some((column) => column.trim().length > 0);
+    const hasVisibleNewspaperContent = !resolvedUsepaper.skipped
+        && hasNewspaperContent(resolvedUsepaper);
     const areAssetsReady = isDataReady && loadedAssetKey === assetKey;
-    const isFullyReady = areAssetsReady && (!hasNewspaperContent || layoutReadyKey === assetKey);
+    const isFullyReady = areAssetsReady && (!hasVisibleNewspaperContent || layoutReadyKey === assetKey);
 
     useEffect(() => {
         if (!isDataReady) {

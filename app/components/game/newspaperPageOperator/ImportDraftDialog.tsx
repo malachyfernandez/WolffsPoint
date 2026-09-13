@@ -10,6 +10,7 @@ import ShadowScrollView from '../../ui/ShadowScrollView';
 import { Usepaper } from '../../../../types/usepaper';
 import NewspaperZoomableView from './NewspaperZoomableView';
 import CloseButton from '../../ui/dialog/CloseButton';
+import { hasNewspaperContent } from '../../../../utils/newspaperSections';
 
 interface ImportDraftDialogProps {
     isOpen: boolean;
@@ -36,8 +37,7 @@ const ImportDraftDialog = ({
     realGameId,
     onConfirmImport,
 }: ImportDraftDialogProps) => {
-    const columns = draft?.columns ?? [];
-    const hasContent = columns.some((c) => c.trim().length > 0);
+    const hasContent = hasNewspaperContent(draft);
 
     return (
         <ConvexDialog.Root isOpen={isOpen} onOpenChange={onOpenChange}>
@@ -70,7 +70,7 @@ const ImportDraftDialog = ({
                                 scrollViewClassName='w-full'
                             >
                                 <NewspaperZoomableView
-                                    columns={columns}
+                                    usepaper={draft!}
                                     gameId={realGameId}
                                     TILE_SIZE={TILE_SIZE}
                                     roundBottom

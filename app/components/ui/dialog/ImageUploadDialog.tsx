@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, ActivityIndicator } from 'react-native';
+import { View, ActivityIndicator, Pressable } from 'react-native';
 import { useAction } from 'convex/react';
 import ConvexDialog from './ConvexDialog';
 import Column from '../../layout/Column';
@@ -91,10 +91,11 @@ const uploadFileToPresignedUrl = async (
 interface ImageUploadDialogProps {
     isOpen: boolean;
     onOpenChange: (open: boolean) => void;
-    onImageSelect: (imageUrl: string) => void;
+    onImageSelect: (imageUrl: string, options: { hasBorder: boolean }) => void;
     title?: string;
     subtitle?: string;
     initialImageUrl?: string;
+    showBorderOption?: boolean;
 }
 
 const ImageUploadDialog = ({
@@ -104,8 +105,10 @@ const ImageUploadDialog = ({
     title = "Select Image",
     subtitle = "Choose an image from your device or enter a URL",
     initialImageUrl = '',
+    showBorderOption = false,
 }: ImageUploadDialogProps) => {
     const [uploadedImageUrl, setUploadedImageUrl] = useState(initialImageUrl);
+    const [hasBorder, setHasBorder] = useState(true);
     const [showUrlInput, setShowUrlInput] = useState(false);
     const [urlInput, setUrlInput] = useState('');
     const [urlError, setUrlError] = useState('');
@@ -121,13 +124,14 @@ const ImageUploadDialog = ({
             setUrlInput('');
             setUrlError('');
             setShowUrlInput(false);
+            setHasBorder(true);
         }
         onOpenChange(open);
     };
 
     const handleSelect = () => {
         if (uploadedImageUrl) {
-            onImageSelect(uploadedImageUrl);
+            onImageSelect(uploadedImageUrl, { hasBorder });
             onOpenChange(false);
         }
     };
@@ -136,6 +140,7 @@ const ImageUploadDialog = ({
         setUploadedImageUrl(initialImageUrl);
         setUrlInput('');
         setShowUrlInput(false);
+        setHasBorder(true);
         onOpenChange(false);
     };
 
@@ -313,6 +318,20 @@ const ImageUploadDialog = ({
                                 </View>
                             </div>
                         </Column>
+
+                        {showBorderOption && (
+                            <Pressable
+                                onPress={() => setHasBorder((current) => !current)}
+                                className='flex-row items-center gap-3 rounded-lg px-2 py-1'>
+                                <View className={`h-5 w-5 items-center justify-center rounded border ${hasBorder ? 'border-text bg-text' : 'border-border bg-background'}`}>
+                                    {hasBorder && <FontText color='white' weight='bold' className='text-xs'>✓</FontText>}
+                                </View>
+                                <Column className='gap-0.5'>
+                                    <FontText weight='medium'>Show border around image</FontText>
+                                    <FontText variant='subtext'>Enabled by default for newspaper images</FontText>
+                                </Column>
+                            </Pressable>
+                        )}
 
                         <Row className='gap-2 items-center w-full justify-center'>
                             <DisableableButton

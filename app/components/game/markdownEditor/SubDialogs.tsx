@@ -5,13 +5,14 @@ import TownSquareMoreOptionsDialog from '../townSquare/TownSquareMoreOptionsDial
 import TownSquareLinkDialog from '../townSquare/TownSquareLinkDialog';
 import MarkdownInputBuilderDialog from '../MarkdownInputBuilderDialog';
 import { InputOptionsProvider } from './InputOptionsProvider';
-import { SelectionRange } from '../townSquare/townSquareUtils';
 import {
+  SelectionRange,
   applyMoreComposerAction,
   insertMarkdownLink,
   insertMarkdownImage,
   insertAtSelection,
 } from '../townSquare/townSquareUtils';
+import { encodeMarkdownImageAlt } from '../../../../utils/markdownImageOptions';
 
 interface SubDialogsProps {
   gameId: string | undefined;
@@ -33,6 +34,7 @@ interface SubDialogsProps {
       selection: SelectionRange
     ) => { value: string; selection: SelectionRange }
   ) => void;
+  showImageBorderOption?: boolean;
   onConfirmLeave: () => void;
   onSave: () => void;
 }
@@ -52,6 +54,7 @@ export function SubDialogs({
   isLeaveConfirmDialogOpen,
   setIsLeaveConfirmDialogOpen,
   runBodyUpdate,
+  showImageBorderOption = false,
   onConfirmLeave,
   onSave,
 }: SubDialogsProps) {
@@ -77,9 +80,15 @@ export function SubDialogs({
       <ImageUploadDialog
         isOpen={isImageDialogOpen}
         onOpenChange={setIsImageDialogOpen}
-        onImageSelect={(imageUrl) =>
-          runBodyUpdate((value, range) => insertMarkdownImage(value, range, '', imageUrl))
+        onImageSelect={(imageUrl, options) =>
+          runBodyUpdate((value, range) => insertMarkdownImage(
+            value,
+            range,
+            encodeMarkdownImageAlt('', options.hasBorder),
+            imageUrl,
+          ))
         }
+        showBorderOption={showImageBorderOption}
         key={isImageDialogOpen ? 'open' : 'closed'}
       />
 

@@ -15,6 +15,7 @@ import NewspaperDayView from './NewspaperDayView';
 import { useNewspaperDayOwner } from './useNewspaperDayOwner';
 import { Usepaper } from '../../../types/usepaper';
 import { NewspaperControlState, getNewspaperControlKey, getNewspaperDayControlItemId, getNewspaperDayItemId } from '../../../utils/newspaperControl';
+import { hasNewspaperContent } from '../../../utils/newspaperSections';
 
 interface NewspaperPageOPERATORProps {
     currentUserId: string;
@@ -66,8 +67,8 @@ const NewspaperPageOPERATOR = ({ currentUserId, gameId }: NewspaperPageOPERATORP
         userIds: selectedDayOwner.validNewser?.userId ? [selectedDayOwner.validNewser.userId] : [''],
         returnTop: 1,
     });
-    const newserDraft = newserDraftRecords?.[0]?.value?.columns?.length
-        ? newserDraftRecords[0].value
+    const newserDraft = hasNewspaperContent(newserDraftRecords?.[0]?.value)
+        ? newserDraftRecords![0].value
         : null;
     const isNewserDraftLoading = newserDraftRecords === undefined;
 

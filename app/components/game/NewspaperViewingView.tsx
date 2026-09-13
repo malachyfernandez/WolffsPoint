@@ -6,6 +6,7 @@ import PlaceholderCard from '../ui/PlaceholderCard';
 import { Newspaper } from 'lucide-react-native';
 import { Usepaper } from 'types/usepaper';
 import NewspaperZoomableView from './newspaperPageOperator/NewspaperZoomableView';
+import { hasNewspaperContent } from '../../../utils/newspaperSections';
 
 interface NewspaperViewingViewProps {
     gameId: string;
@@ -17,8 +18,7 @@ interface NewspaperViewingViewProps {
 
 const NewspaperViewingView = ({ gameId, usepaper, TILE_SIZE, roundBottom, onReady }: NewspaperViewingViewProps) => {
     const isSkipped = Boolean(usepaper.skipped);
-    const newspaperColumns = usepaper.columns;
-    const hasContent = newspaperColumns.some(column => column.trim().length > 0);
+    const hasContent = hasNewspaperContent(usepaper);
 
     if (isSkipped) {
         return (
@@ -55,7 +55,7 @@ const NewspaperViewingView = ({ gameId, usepaper, TILE_SIZE, roundBottom, onRead
     return (
         <View className='sm:mx-0 -mx-2'>
             <NewspaperZoomableView
-                columns={newspaperColumns}
+                usepaper={usepaper}
                 gameId={gameId}
                 TILE_SIZE={TILE_SIZE}
                 roundBottom={roundBottom}

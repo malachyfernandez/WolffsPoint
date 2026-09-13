@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { Pressable, View } from 'react-native';
+import { Plus, Settings2 } from 'lucide-react-native';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
 import MarkdownRenderer from '../ui/markdown/MarkdownRenderer';
 import FontText from '../ui/text/FontText';
 import { InputOptionsProvider } from './markdownEditor/InputOptionsProvider';
-import { useList, useValue } from 'hooks/useData';
+import { useList } from 'hooks/useData';
 import { createUndoSnapshot, useUndoRedo } from 'hooks/useUndoRedo';
 import { useToast } from 'contexts/ToastContext';
 import ShadowScrollView from '../ui/ShadowScrollView';
@@ -13,11 +14,19 @@ import MarkdownEditorDialog from './MarkdownEditorDialog';
 import NewspaperColumnEmptyState from './newspaperPageOperator/NewspaperColumnEmptyState';
 import NewspaperColumnFooter from './newspaperPageOperator/NewspaperColumnFooter';
 import NewspaperColumnHeader from './newspaperPageOperator/NewspaperColumnHeader';
-import NewspaperPageHeader from './newspaperPageOperator/NewspaperPageHeader';
 import ImportDraftDialog from './newspaperPageOperator/ImportDraftDialog';
+import NewspaperSectionOptionsDialog from './newspaperPageOperator/NewspaperSectionOptionsDialog';
+import NewspaperSectionDivider from './newspaperPageOperator/NewspaperSectionDivider';
 import DisableableButton from '../ui/buttons/DisableableButton';
+import AppButton from '../ui/buttons/AppButton';
 import PressLogo from '../ui/icons/Press';
-import { Usepaper } from 'types/usepaper';
+import { NewspaperDividerStyle, NewspaperTitleFont, Usepaper } from 'types/usepaper';
+import {
+  createNewspaperSection,
+  getNewspaperSections,
+  hasNewspaperContent,
+  withNewspaperSections,
+} from '../../../utils/newspaperSections';
 
 interface NewspaperWritingViewProps {
   gameId: string; // This will now be in format "originalGameId-day-year-month-day"
@@ -34,10 +43,6 @@ interface NewspaperWritingViewProps {
   onImportDraft?: (draft: Usepaper) => void;
 }
 
-const defaultUsepaper: Usepaper = {
-  columns: [],
-};
-
 const minimumUsepaper: Usepaper = {
   columns: ['', ''],
 };
@@ -52,7 +57,8 @@ const NewspaperWritingView = ({
 }: NewspaperWritingViewProps) => {
   const { executeCommand } = useUndoRedo();
   const { showToast } = useToast();
-  const [selectedColumnIndex, setSelectedColumnIndex] = useState<number | null>(null);
+  const [selectedColumn, setSelectedColumn] = useState<{ sectionIndex: number; columnIndex: number } | null>(null);
+  const [optionsSectionIndex, setOptionsSectionIndex] = useState<number | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
 
@@ -61,9 +67,11 @@ const NewspaperWritingView = ({
     defaultValue: minimumUsepaper,
   });
 
-  const resolvedUsepaper = newspaper?.value?.columns?.length ? newspaper.value : minimumUsepaper;
-
-  const newspaperColumns = resolvedUsepaper.columns;
+  const storedUsepaper = newspaper?.value;
+  const resolvedUsepaper = storedUsepaper?.sections?.length || storedUsepaper?.columns?.length
+    ? storedUsepaper
+    : minimumUsepaper;
+  const sections = getNewspaperSections(resolvedUsepaper);
   const isSkipped = Boolean(resolvedUsepaper.skipped);
 
   const toggleSkip = () => {
@@ -78,56 +86,71 @@ const NewspaperWritingView = ({
     });
   };
 
-  const setColumnMarkdown = (columnIndex: number, markdown: string) => {
-    const previousUsepaper = createUndoSnapshot(resolvedUsepaper);
-    const nextUsepaper = createUndoSnapshot(previousUsepaper);
-
-    nextUsepaper.columns[columnIndex] = markdown;
-
+  const updateSections = (
+    nextSections: typeof sections,
+    description: string,
+    previousUsepaper = createUndoSnapshot(resolvedUsepaper),
+  ) => {
+    const nextUsepaper = withNewspaperSections(previousUsepaper, createUndoSnapshot(nextSections));
     executeCommand({
       action: () => setNewspaper(createUndoSnapshot(nextUsepaper)),
       undoAction: () => setNewspaper(createUndoSnapshot(previousUsepaper)),
-      description: 'Update Newspaper Column',
+      description,
     });
   };
 
-  const addColumn = () => {
-    if (newspaperColumns.length >= 8) {
-      showToast('Too many columns — maximum 8');
+  const setColumnMarkdown = (sectionIndex: number, columnIndex: number, markdown: string) => {
+    const nextSections = createUndoSnapshot(sections);
+    nextSections[sectionIndex].columns[columnIndex] = markdown;
+    updateSections(nextSections, 'Update Newspaper Column');
+  };
+
+  const addColumn = (sectionIndex: number) => {
+    if (sections[sectionIndex].columns.length >= 8) {
+      showToast('Too many columns — maximum 8 per section');
       return;
     }
-
-    const previousUsepaper = createUndoSnapshot(resolvedUsepaper);
-    const nextUsepaper = createUndoSnapshot(previousUsepaper);
-
-    nextUsepaper.columns.push('');
-
-    executeCommand({
-      action: () => setNewspaper(createUndoSnapshot(nextUsepaper)),
-      undoAction: () => setNewspaper(createUndoSnapshot(previousUsepaper)),
-      description: 'Add Newspaper Column',
-    });
+    const nextSections = createUndoSnapshot(sections);
+    nextSections[sectionIndex].columns.push('');
+    updateSections(nextSections, 'Add Newspaper Column');
   };
 
-  const removeColumn = (columnIndex: number) => {
-    if (newspaperColumns.length <= 1) {
+  const removeColumn = (sectionIndex: number, columnIndex: number) => {
+    if (sections[sectionIndex].columns.length <= 1) {
       return;
     }
-
-    const previousUsepaper = createUndoSnapshot(resolvedUsepaper);
-    const nextUsepaper = createUndoSnapshot(previousUsepaper);
-
-    nextUsepaper.columns.splice(columnIndex, 1);
-
-    executeCommand({
-      action: () => setNewspaper(createUndoSnapshot(nextUsepaper)),
-      undoAction: () => setNewspaper(createUndoSnapshot(previousUsepaper)),
-      description: 'Remove Newspaper Column',
-    });
+    const nextSections = createUndoSnapshot(sections);
+    nextSections[sectionIndex].columns.splice(columnIndex, 1);
+    updateSections(nextSections, 'Remove Newspaper Column');
   };
 
-  const openColumn = (columnIndex: number) => {
-    setSelectedColumnIndex(columnIndex);
+  const addSection = () => {
+    updateSections([...createUndoSnapshot(sections), createNewspaperSection()], 'Add Newspaper Section');
+  };
+
+  const removeSection = (sectionIndex: number) => {
+    if (sections.length <= 1) {
+      return;
+    }
+    const nextSections = createUndoSnapshot(sections);
+    nextSections.splice(sectionIndex, 1);
+    updateSections(nextSections, 'Remove Newspaper Section');
+  };
+
+  const setSectionTitleFont = (sectionIndex: number, titleFont: NewspaperTitleFont) => {
+    const nextSections = createUndoSnapshot(sections);
+    nextSections[sectionIndex].titleFont = titleFont;
+    updateSections(nextSections, 'Change Newspaper Title Font');
+  };
+
+  const setSectionDividerStyle = (sectionIndex: number, dividerStyle: NewspaperDividerStyle) => {
+    const nextSections = createUndoSnapshot(sections);
+    nextSections[sectionIndex].dividerStyle = dividerStyle;
+    updateSections(nextSections, 'Change Newspaper Divider Style');
+  };
+
+  const openColumn = (sectionIndex: number, columnIndex: number) => {
+    setSelectedColumn({ sectionIndex, columnIndex });
     setIsDialogOpen(true);
   };
 
@@ -150,7 +173,7 @@ const NewspaperWritingView = ({
           </Pressable>
           {importSourceLabel && onImportDraft && (
             <DisableableButton
-              isEnabled={Boolean(importDraft?.columns?.some((c) => c.trim().length > 0))}
+              isEnabled={hasNewspaperContent(importDraft)}
               enabledText={`Import draft from ${importSourceLabel}`}
               disabledText={`${importSourceLabel} draft is blank`}
               onPress={() => setIsImportDialogOpen(true)}
@@ -159,8 +182,7 @@ const NewspaperWritingView = ({
             />
           )}
         </Row>
-        <View className='border-b border-border/20' />
-        <NewspaperPageHeader onAddColumn={addColumn} />
+        <View className="border-border/20 border-b" />
       </Column>
 
       <ShadowScrollView
@@ -169,64 +191,121 @@ const NewspaperWritingView = ({
         className="w-full"
         scrollViewClassName="w-full px-4"
         horizontal>
-        <Column className="w-[910px] gap-4">
+        <Column className="w-227.5 gap-6">
           <View className="items-center justify-center px-8">
             <PressLogo width="100%" />
           </View>
-          <View className="w-full">
-            <Row className="border-border w-full items-stretch gap-0 overflow-hidden rounded-xl border-2">
-              {newspaperColumns.map((columnMarkdown, columnIndex) => (
-                <Column
-                  key={columnIndex}
-                  className={`bg-background flex-1 shrink gap-0 ${columnIndex !== newspaperColumns.length - 1 ? 'border-border border-r' : ''}`}>
-                  <NewspaperColumnHeader
-                    columnIndex={columnIndex}
-                    onRemove={() => removeColumn(columnIndex)}
-                    showRemove={newspaperColumns.length > 1}
-                  />
-
-                  <Pressable
-                    className="min-h-120 bg-inner-background flex-1 p-4"
-                    onPress={() => openColumn(columnIndex)}>
-                    <Column className="h-full justify-between gap-4">
-                      <Column className="gap-3">
-                        {columnMarkdown.trim().length > 0 ? (
-                          <InputOptionsProvider gameId={realGameId ?? gameId} showInputs={false}>
-                            <MarkdownRenderer markdown={columnMarkdown} textAlign="justify" />
-                          </InputOptionsProvider>
-                        ) : (
-                          <NewspaperColumnEmptyState />
-                        )}
+          {sections.map((section, sectionIndex) => (
+            <Column key={section.id} className="w-full gap-3">
+              {sectionIndex > 0 && <NewspaperSectionDivider />}
+              <Row className="items-center justify-between gap-3 px-2">
+                <FontText weight="bold" className="text-lg">
+                  Section {sectionIndex + 1}
+                </FontText>
+                <Row className="items-center gap-2">
+                  <AppButton
+                    variant="outline"
+                    className="h-9 px-3"
+                    onPress={() => setOptionsSectionIndex(sectionIndex)}>
+                    <Row className="items-center gap-1.5">
+                      <Settings2 size={16} color="rgb(46, 41, 37)" />
+                      <FontText weight="medium" className="text-sm">Options</FontText>
+                    </Row>
+                  </AppButton>
+                  <AppButton
+                    variant="filled"
+                    className="h-9 px-3"
+                    onPress={() => addColumn(sectionIndex)}>
+                    <Row className="items-center gap-1.5">
+                      <Plus size={16} color="white" />
+                      <FontText weight="medium" color="white" className="text-sm">Add Column</FontText>
+                    </Row>
+                  </AppButton>
+                </Row>
+              </Row>
+              <Row className="border-border w-full items-stretch gap-0 overflow-hidden rounded-xl border-2">
+                {section.columns.map((columnMarkdown, columnIndex) => (
+                  <Column
+                    key={columnIndex}
+                    className={`bg-background flex-1 shrink gap-0 ${columnIndex !== section.columns.length - 1 ? 'border-border border-r' : ''}`}>
+                    <NewspaperColumnHeader
+                      columnIndex={columnIndex}
+                      onRemove={() => removeColumn(sectionIndex, columnIndex)}
+                      showRemove={section.columns.length > 1}
+                    />
+                    <Pressable
+                      className="min-h-120 bg-inner-background flex-1 p-4"
+                      onPress={() => openColumn(sectionIndex, columnIndex)}>
+                      <Column className="h-full justify-between gap-4">
+                        <Column className="gap-3">
+                          {columnMarkdown.trim().length > 0 ? (
+                            <InputOptionsProvider gameId={realGameId ?? gameId} showInputs={false}>
+                              <MarkdownRenderer
+                                markdown={columnMarkdown}
+                                textAlign="justify"
+                                newspaperTitleFont={section.titleFont}
+                                newspaperDividerStyle={section.dividerStyle}
+                              />
+                            </InputOptionsProvider>
+                          ) : (
+                            <NewspaperColumnEmptyState />
+                          )}
+                        </Column>
+                        <NewspaperColumnFooter />
                       </Column>
-
-                      <NewspaperColumnFooter />
-                    </Column>
-                  </Pressable>
-                </Column>
-              ))}
-            </Row>
+                    </Pressable>
+                  </Column>
+                ))}
+              </Row>
+            </Column>
+          ))}
+          <View className="items-center pb-2">
+            <AppButton variant="accent" className="h-11 min-w-48 px-5" onPress={addSection}>
+              <Row className="items-center gap-2">
+                <Plus size={18} color="white" />
+                <FontText weight="bold" color="white">Add Section</FontText>
+              </Row>
+            </AppButton>
           </View>
         </Column>
       </ShadowScrollView>
 
-      {selectedColumnIndex !== null && (
+      {selectedColumn !== null && sections[selectedColumn.sectionIndex] && (
         <MarkdownEditorDialog
           isOpen={isDialogOpen}
           onOpenChange={(open) => {
             setIsDialogOpen(open);
             if (!open) {
-              setSelectedColumnIndex(null);
+              setSelectedColumn(null);
             }
           }}
-          title={`Column ${selectedColumnIndex + 1}`}
-          initialMarkdown={newspaperColumns[selectedColumnIndex] ?? ''}
-          onSubmit={({ markdown }) => setColumnMarkdown(selectedColumnIndex, markdown)}
+          title={`Section ${selectedColumn.sectionIndex + 1}, Column ${selectedColumn.columnIndex + 1}`}
+          initialMarkdown={sections[selectedColumn.sectionIndex].columns[selectedColumn.columnIndex] ?? ''}
+          onSubmit={({ markdown }) => setColumnMarkdown(selectedColumn.sectionIndex, selectedColumn.columnIndex, markdown)}
           gameId={realGameId ?? gameId}
           showScript
           isPreviewSideBySide={true}
-          historyKey={`newspaperColumn:${gameId}:${selectedColumnIndex}`}
+          newspaperTitleFont={sections[selectedColumn.sectionIndex].titleFont}
+          newspaperDividerStyle={sections[selectedColumn.sectionIndex].dividerStyle}
+          historyKey={`newspaperColumn:${gameId}:${sections[selectedColumn.sectionIndex].id}:${selectedColumn.columnIndex}`}
           onMinimize={() => setIsDialogOpen(false)}
           onRestore={() => setIsDialogOpen(true)}
+        />
+      )}
+
+      {optionsSectionIndex !== null && sections[optionsSectionIndex] && (
+        <NewspaperSectionOptionsDialog
+          isOpen
+          onOpenChange={(open) => {
+            if (!open) setOptionsSectionIndex(null);
+          }}
+          sectionNumber={optionsSectionIndex + 1}
+          titleFont={sections[optionsSectionIndex].titleFont}
+          dividerStyle={sections[optionsSectionIndex].dividerStyle}
+          onTitleFontChange={(font) => setSectionTitleFont(optionsSectionIndex, font)}
+          onDividerStyleChange={(style) => setSectionDividerStyle(optionsSectionIndex, style)}
+          onDelete={() => removeSection(optionsSectionIndex)}
+          canDelete={sections.length > 1}
         />
       )}
 

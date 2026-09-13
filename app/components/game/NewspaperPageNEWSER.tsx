@@ -15,6 +15,7 @@ import { getNewspaperDayItemId, getNewserAcceptedKey, NewserAccepted } from '../
 import { useNewspaperDayOwner } from './useNewspaperDayOwner';
 import { Usepaper } from '../../../types/usepaper';
 import { Newspaper } from 'lucide-react-native';
+import { hasNewspaperContent } from '../../../utils/newspaperSections';
 
 interface NewspaperPageNEWSERProps {
     currentUserId: string;
@@ -61,8 +62,8 @@ const NewspaperPageNEWSER = ({ currentUserId, currentEmail, gameId }: NewspaperP
         userIds: operatorUserId ? [operatorUserId] : [''],
         returnTop: 1,
     });
-    const operatorDraft = operatorDraftRecords?.[0]?.value?.columns?.length
-        ? operatorDraftRecords[0].value
+    const operatorDraft = hasNewspaperContent(operatorDraftRecords?.[0]?.value)
+        ? operatorDraftRecords![0].value
         : null;
     const isOperatorDraftLoading = operatorDraftRecords === undefined;
 

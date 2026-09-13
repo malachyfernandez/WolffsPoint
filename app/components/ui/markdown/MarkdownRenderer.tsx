@@ -3,9 +3,11 @@ import {
   Image,
   LayoutChangeEvent,
   Linking,
+  Platform,
   Pressable,
   View,
   useWindowDimensions,
+  TextStyle,
 } from 'react-native';
 import { UserTableItem } from '../../../../types/playerTable';
 import Column from '../../layout/Column';
@@ -15,6 +17,10 @@ import FontTextInput from '../forms/FontTextInput';
 import FontText from '../text/FontText';
 import ScriptRuntime, { collectActiveInputKeys } from '../../../script/runtime/ScriptRuntime';
 import type { ScriptSourceData } from '../../../script/runtime/sources';
+import type { NewspaperDividerStyle, NewspaperTitleFont } from '../../../../types/usepaper';
+import { getNewspaperFontFamily } from '../../../../utils/newspaperSections';
+import { parseMarkdownImageAlt } from '../../../../utils/markdownImageOptions';
+import { useNewspaperFonts } from '../../../../hooks/useNewspaperFonts';
 
 interface MarkdownRendererProps {
   markdown: string;
@@ -26,6 +32,10 @@ interface MarkdownRendererProps {
   setState?: (nextState: Record<string, string | undefined>) => void;
   isInDialog?: boolean;
   headingIdPrefix?: string;
+  /** When set, headings use this font and images get borders by default. */
+  newspaperTitleFont?: NewspaperTitleFont;
+  /** When set, `---` rules use this divider style. */
+  newspaperDividerStyle?: NewspaperDividerStyle;
 }
 
 export type MarkdownBlock =
@@ -100,11 +110,13 @@ const MarkdownImage = ({
   alt,
   viewHeightImages,
   removeImageBorders,
+  newspaperTitleFont,
 }: {
   url: string;
   alt: string;
   viewHeightImages?: number;
   removeImageBorders?: boolean;
+  newspaperTitleFont?: NewspaperTitleFont;
 }) => {
   const { height: windowHeight } = useWindowDimensions();
   const [containerWidth, setContainerWidth] = useState(0);
@@ -134,8 +146,12 @@ const MarkdownImage = ({
     };
   }, [url]);
 
+  const imageOptions = parseMarkdownImageAlt(alt);
+  const hasBorder = imageOptions.hasBorderOverride ?? (Boolean(newspaperTitleFont) || removeImageBorders === false);
+  const borderAllowance = hasBorder ? 6 : 0; // 2 × 3px border
+
   const maxImageHeight = windowHeight * ((viewHeightImages || 50) / 100);
-  const availableWidth = Math.max(containerWidth, 0);
+  const availableWidth = Math.max(containerWidth - borderAllowance, 0);
 
   let imageWidth = availableWidth || undefined;
   let imageHeight = maxImageHeight;
@@ -152,25 +168,47 @@ const MarkdownImage = ({
   }
 
   return (
-    <View key={url} className="my-0 w-full">
-      <View
-        className={`w-full items-center justify-center ${removeImageBorders === false ? 'border-border rounded-lg border' : ''}`}
-        onLayout={(event: LayoutChangeEvent) => {
-          setContainerWidth(event.nativeEvent.layout.width);
-        }}>
-        <Image
-          source={{ uri: url }}
-          style={{
-            width: imageWidth,
-            height: imageHeight,
-            maxWidth: '100%',
-          }}
-          resizeMode="contain"
-        />
+    <View
+      key={url}
+      className="my-0 w-full"
+      onLayout={(event: LayoutChangeEvent) => {
+        setContainerWidth(event.nativeEvent.layout.width);
+      }}>
+      <View className="w-full items-center justify-center">
+        {Platform.OS === 'web' ? (
+          <img
+            src={url}
+            alt={imageOptions.alt || ''}
+            draggable={false}
+            style={{
+              maxWidth: '100%',
+              maxHeight: maxImageHeight,
+              width: 'auto',
+              height: 'auto',
+              objectFit: 'contain',
+              ...(hasBorder
+                ? { borderWidth: 3, borderStyle: 'solid', borderColor: 'rgb(46, 41, 37)', boxSizing: 'border-box' }
+                : {}),
+            }}
+          />
+        ) : (
+          <Image
+            source={{ uri: url }}
+            style={{
+              width: imageWidth,
+              height: imageHeight,
+              maxWidth: '100%',
+              ...(hasBorder
+                ? { borderWidth: 3, borderColor: 'rgb(46, 41, 37)', boxSizing: 'border-box' }
+                : {}),
+            }}
+            resizeMode="contain"
+          />
+        )}
       </View>
-      {!!alt && alt !== 'IMAGE1' && (
+      {!!imageOptions.alt && imageOptions.alt !== 'IMAGE1' && (
         <FontText className="text-muted mt-2 text-center" style={{ fontSize: 12 }}>
-          {alt}
+          {imageOptions.alt}
         </FontText>
       )}
     </View>
@@ -393,7 +431,7 @@ const InlineMarkdownWithInputs = ({
             <Pressable
               key={`${keyPrefix}-link-${index}`}
               onPress={() => Linking.openURL(normalizedUrl)}>
-              <FontText weight="medium" className="text-primary underline">
+              <FontText weight="medium" className="text-primary underline" style={textStyle}>
                 {segment.text}
               </FontText>
             </Pressable>
@@ -446,14 +484,14 @@ const InlineMarkdownWithInputs = ({
   );
 };
 
-const renderInlineMarkdown = (text: string, keyPrefix: string) => {
+const renderInlineMarkdown = (text: string, keyPrefix: string, inheritedStyle?: TextStyle) => {
   return text
     .split(/(\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`|!\[[^\]]*\]\([^)]*\)|\[[^\]]+\]\([^)]+\))/g)
     .filter((part) => part.length > 0)
     .map((part, index) => {
       if (part.startsWith('**') && part.endsWith('**')) {
         return (
-          <FontText key={`${keyPrefix}-bold-${index}`} weight="bold">
+          <FontText key={`${keyPrefix}-bold-${index}`} weight="bold" style={inheritedStyle}>
             {part.slice(2, -2)}
           </FontText>
         );
@@ -461,7 +499,7 @@ const renderInlineMarkdown = (text: string, keyPrefix: string) => {
 
       if (part.startsWith('*') && part.endsWith('*')) {
         return (
-          <FontText key={`${keyPrefix}-italic-${index}`} style={{ fontStyle: 'italic' }}>
+          <FontText key={`${keyPrefix}-italic-${index}`} style={{ fontStyle: 'italic', ...inheritedStyle }}>
             {part.slice(1, -1)}
           </FontText>
         );
@@ -472,7 +510,7 @@ const renderInlineMarkdown = (text: string, keyPrefix: string) => {
           <FontText
             key={`${keyPrefix}-code-${index}`}
             weight="medium"
-            style={{ backgroundColor: '#efe5c8' }}>
+            style={{ backgroundColor: '#efe5c8', ...inheritedStyle }}>
             {part.slice(1, -1)}
           </FontText>
         );
@@ -506,7 +544,7 @@ const renderInlineMarkdown = (text: string, keyPrefix: string) => {
             <Pressable
               key={`${keyPrefix}-link-${index}`}
               onPress={() => Linking.openURL(normalizedUrl)}>
-              <FontText weight="medium" className="text-primary underline">
+              <FontText weight="medium" className="text-primary underline" style={inheritedStyle}>
                 {textMatch[1]}
               </FontText>
             </Pressable>
@@ -514,7 +552,7 @@ const renderInlineMarkdown = (text: string, keyPrefix: string) => {
         }
       }
 
-      return <FontText key={`${keyPrefix}-text-${index}`}>{part}</FontText>;
+      return <FontText key={`${keyPrefix}-text-${index}`} style={inheritedStyle}>{part}</FontText>;
     });
 };
 
@@ -629,6 +667,11 @@ export const parseMarkdown = (markdown: string): MarkdownBlock[] => {
   return blocks;
 };
 
+const getNewspaperHeadingStyle = (titleFont?: NewspaperTitleFont) => {
+  const fontFamily = titleFont ? getNewspaperFontFamily(titleFont) : undefined;
+  return { fontFamily };
+};
+
 const MarkdownRendererContent = ({
   markdown,
   className = '',
@@ -639,10 +682,13 @@ const MarkdownRendererContent = ({
   setState,
   isInDialog = false,
   headingIdPrefix,
+  newspaperTitleFont,
+  newspaperDividerStyle,
   playerOptions,
   roleOptions,
   scriptSources,
 }: MarkdownRendererProps & MarkdownRendererInputDataContextValue) => {
+  useNewspaperFonts();
   const blocks = useMemo(() => parseMarkdown(markdown || ''), [markdown]);
 
   const containsInputs = useMemo(() => MARKDOWN_INPUT_FINDER.test(markdown || ''), [markdown]);
@@ -700,6 +746,8 @@ const MarkdownRendererContent = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scriptSourcesList, inlineInputKeys, scriptSources]);
 
+  const newspaperHeadingStyle = getNewspaperHeadingStyle(newspaperTitleFont);
+
   return (
     <Column className={`gap-3 ${className ?? ''}`.trim()}>
       {blocks.map((block, index) => {
@@ -720,6 +768,8 @@ const MarkdownRendererContent = ({
                   textAlign={textAlign}
                   viewHeightImages={viewHeightImages}
                   removeImageBorders={removeImageBorders}
+                  newspaperTitleFont={newspaperTitleFont}
+                  newspaperDividerStyle={newspaperDividerStyle}
                   state={state}
                   setState={setState}
                   isInDialog={isInDialog}
@@ -737,7 +787,27 @@ const MarkdownRendererContent = ({
         }
 
         if (block.type === 'rule') {
-          return <View key={`rule-${index}`} className="bg-border h-px w-full opacity-60" />;
+          if (newspaperDividerStyle === 'doubleThin') {
+            return (
+              <Column key={`rule-${index}`} className="my-1 gap-1">
+                <View className="bg-text h-px w-full opacity-80" />
+                <View className="bg-text h-px w-full opacity-80" />
+              </Column>
+            );
+          }
+          if (newspaperDividerStyle === 'centeredShort') {
+            return <View key={`rule-${index}`} className="bg-text/70 my-1 h-px w-2/5 self-center" />;
+          }
+          if (newspaperDividerStyle === 'diamond') {
+            return (
+              <Row key={`rule-${index}`} className="my-1 items-center gap-3">
+                <View className="bg-text h-px flex-1 opacity-80" />
+                <View className="bg-text h-2 w-2 rotate-45" />
+                <View className="bg-text h-px flex-1 opacity-80" />
+              </Row>
+            );
+          }
+          return <View key={`rule-${index}`} className="bg-text/80 h-px w-full" />;
         }
 
         if (block.type === 'heading') {
@@ -757,7 +827,7 @@ const MarkdownRendererContent = ({
                 keyPrefix={`heading-${index}`}
                 textAlign={textAlign}
                 textClassName={sizeClassName}
-                textStyle={{ lineHeight: block.level === 1 ? 36 : block.level === 2 ? 32 : 28 }}
+                textStyle={{ lineHeight: block.level === 1 ? 36 : block.level === 2 ? 32 : 28, ...newspaperHeadingStyle }}
                 defaultWeight="bold"
                 state={state}
                 setState={setState}
@@ -783,8 +853,8 @@ const MarkdownRendererContent = ({
                 <FontText
                   weight="bold"
                   className={sizeClassName}
-                  style={{ textAlign }}>
-                  {renderInlineMarkdown(block.text, `heading-${index}`)}
+                  style={{ textAlign, ...newspaperHeadingStyle }}>
+                  {renderInlineMarkdown(block.text, `heading-${index}`, newspaperHeadingStyle)}
                 </FontText>
               </View>
             );
@@ -795,8 +865,8 @@ const MarkdownRendererContent = ({
               key={`heading-${index}`}
               weight="bold"
               className={sizeClassName}
-              style={{ textAlign }}>
-              {renderInlineMarkdown(block.text, `heading-${index}`)}
+              style={{ textAlign, ...newspaperHeadingStyle }}>
+              {renderInlineMarkdown(block.text, `heading-${index}`, newspaperHeadingStyle)}
             </FontText>
           );
         }
@@ -868,6 +938,7 @@ const MarkdownRendererContent = ({
               alt={block.alt}
               viewHeightImages={viewHeightImages}
               removeImageBorders={removeImageBorders}
+              newspaperTitleFont={newspaperTitleFont}
             />
           );
         }
