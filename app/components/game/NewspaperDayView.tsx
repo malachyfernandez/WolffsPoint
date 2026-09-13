@@ -5,6 +5,7 @@ import NewspaperViewingView from './NewspaperViewingView';
 import NewspaperPreviousDayVoteSummary, { useIsPreviousDayVoteSummaryReady } from './NewspaperPreviousDayVoteSummary';
 import { useHasPreviousDayVotes } from '../../../hooks/useHasPreviousDayVotes';
 import LoadingText from '../ui/loading/LoadingText';
+import { useBodyLoadReport } from '../../../hooks/useBodyLoadReport';
 import { useFindListItems } from '../../../hooks/useData';
 import { Usepaper } from '../../../types/usepaper';
 import { getNewspaperDayItemId } from '../../../utils/newspaperControl';
@@ -94,6 +95,8 @@ const NewspaperDayView = ({ gameId, dayIndex, ownerUserId, onReady }: NewspaperD
         && hasNewspaperContent(resolvedUsepaper);
     const areAssetsReady = isDataReady && loadedAssetKey === assetKey;
     const isFullyReady = areAssetsReady && (!hasVisibleNewspaperContent || layoutReadyKey === assetKey);
+
+    useBodyLoadReport(!isFullyReady, 300, `NewspaperDayView(day ${dayIndex})`);
 
     useEffect(() => {
         if (!isDataReady) {

@@ -1,4 +1,4 @@
-import React, { PropsWithChildren, useState, useMemo } from 'react';
+import React, { PropsWithChildren, useState, useMemo, useEffect } from 'react';
 import { Button } from 'heroui-native/button';
 import { Dialog } from 'heroui-native/dialog';
 import { ScrollView, View } from 'react-native';
@@ -28,6 +28,7 @@ const MainPage: React.FC<MainPageProps> = ({
     className = '',
 }) => {
     const [isHeroDialogOpen, setIsHeroDialogOpen] = useState(false);
+    const [isGameBodyReady, setIsGameBodyReady] = useState(false);
 
     interface UserData {
         email?: string;
@@ -74,6 +75,12 @@ const MainPage: React.FC<MainPageProps> = ({
 
     const isActiveGameLoading = (activeGameId.state.isSyncing == true)
 
+    // Reset body readiness when entering/leaving a game
+    useEffect(() => {
+        setIsGameBodyReady(false);
+    }, [activeGameId.value]);
+
+
     return (
         <>
             <View className='w-screen h-screen p-safe'>
@@ -100,6 +107,7 @@ const MainPage: React.FC<MainPageProps> = ({
                                 <GamePage
                                     gameId={activeGameId.value}
                                     currentUserId={userId}
+                                    onReady={() => setIsGameBodyReady(true)}
                                 />
                             </LayoutStateAnimatedView.Option>
                         </LayoutStateAnimatedView.OptionContainer>
@@ -110,7 +118,7 @@ const MainPage: React.FC<MainPageProps> = ({
 
             </View >
             <View className='absolute top-0 right-0'>
-                <TopSiteBar />
+                <TopSiteBar isGameBodyReady={isGameBodyReady} />
             </View>
         </>
     );

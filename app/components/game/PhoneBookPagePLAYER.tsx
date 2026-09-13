@@ -13,6 +13,7 @@ import Column from '../layout/Column';
 import Row from '../layout/Row';
 import FontText from '../ui/text/FontText';
 import LoadingText from '../ui/loading/LoadingText';
+import { useBodyLoadReport } from '../../../hooks/useBodyLoadReport';
 import AppButton from '../ui/buttons/AppButton';
 import MarkdownRenderer from '../ui/markdown/MarkdownRenderer';
 import PlayerProfileDialog from './PlayerProfileDialogNEW';
@@ -58,6 +59,8 @@ const PhoneBookPagePLAYER = ({ gameId, currentUserId, currentEmail }: PhoneBookP
     const { players, isLoading: isPhoneBookLoading } = useAllPlayers({ gameId });
 
     const isLoading = myProfile.state.isSyncing || isPhoneBookLoading;
+
+    useBodyLoadReport(isLoading, 300, 'PhoneBookPagePLAYER');
 
     const { width } = useWindowDimensions();
     const showEditButton = width >= 410;

@@ -7,6 +7,7 @@ import RoleAddDialog from './RoleAddDialog';
 import AppButton from '../ui/buttons/AppButton';
 import FontText from '../ui/text/FontText';
 import LoadingText from '../ui/loading/LoadingText';
+import { useBodyLoadReport } from '../../../hooks/useBodyLoadReport';
 import { useList } from '../../../hooks/useData';
 import { useUndoRedo, useCreateUndoSnapshot } from '../../../hooks/useUndoRedo';
 import { RoleTableItem } from '../../../types/roleTable';
@@ -51,6 +52,8 @@ const RolesPageContent = ({ currentUserId, gameId }: RolesPageOPERATORProps) => 
       setHasInitiallyLoaded(true);
     }
   }, [isSyncing, hasInitiallyLoaded]);
+
+  useBodyLoadReport(isSyncing || !hasInitiallyLoaded, 300, 'RolesPageOPERATOR');
 
   if (isSyncing || !hasInitiallyLoaded) {
     return (

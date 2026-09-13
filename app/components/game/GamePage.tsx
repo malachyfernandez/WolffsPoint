@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Column from '../layout/Column';
 import { Platform, View, useWindowDimensions } from 'react-native';
 import { useFindListItems, useFindValues } from 'hooks/useData';
@@ -21,13 +21,37 @@ import {
   resolveValidNewserAssignment,
 } from '../../../utils/newspaperControl';
 import FadeInAfterDelay from '../ui/loading/FadeInAfterDelay';
+import LoadingContainer from '../ui/loading/LoadingContainer';
+import { BodyReadinessProvider } from '../../../contexts/BodyReadinessContext';
 
 interface GamePageProps {
   gameId: string;
   currentUserId: string;
+  onReady?: () => void;
 }
 
-const GamePage = ({ gameId, currentUserId }: GamePageProps) => {
+const GamePage = ({ gameId, currentUserId, onReady }: GamePageProps) => {
+  const [allLoadsDone, setAllLoadsDone] = useState(false);
+  const [mountSettled, setMountSettled] = useState(false);
+  const readyFiredRef = useRef(false);
+
+  // Reset when gameId changes; give mounted children a tick to register before
+  // the provider is allowed to consider "everything" ready.
+  useEffect(() => {
+    setAllLoadsDone(false);
+    setMountSettled(false);
+    readyFiredRef.current = false;
+    const t = setTimeout(() => setMountSettled(true), 50);
+    return () => clearTimeout(t);
+  }, [gameId]);
+
+  const handleFadeComplete = useCallback(() => {
+    if (!readyFiredRef.current) {
+      readyFiredRef.current = true;
+      onReady?.();
+    }
+  }, [onReady]);
+
   const scrollAmount = useSharedValue(0);
   const { width: screenWidth } = useWindowDimensions();
 
@@ -112,24 +136,33 @@ const GamePage = ({ gameId, currentUserId }: GamePageProps) => {
             </FadeInAfterDelay>
           </Animated.View>
         </View>
-        <FadeInAfterDelay delayMs={100}>
-          <ShadowScrollView
-            className="flex-1"
-            scrollViewClassName="p-6 px-2 sm:px-6 h-screen w-full"
-            onScroll={handleScroll}
-            scrollEventThrottle={16}
-            scrollViewComponent={Animated.ScrollView}>
-            <View className="mx-auto w-full max-w-[1000px] pt-60">
-              {isOperator ? (
-                <OperatorGamePage currentUserId={currentUserId} gameId={gameId} />
-              ) : isNewser ? (
-                <NewserGamePage currentUserId={currentUserId} gameId={gameId} />
-              ) : (
-                <PlayerGamePage currentUserId={currentUserId} gameId={gameId} />
-              )}
-            </View>
-          </ShadowScrollView>
-        </FadeInAfterDelay>
+        {/* keepMounted: children stay mounted (invisible) so they can fetch + report
+            readiness; once every report is in, the whole thing fades in as one unit. */}
+        <LoadingContainer
+          dependencies={[allLoadsDone]}
+          loadingText="Loading game"
+          className="flex-1"
+          keepMounted
+          onReady={handleFadeComplete}>
+          <BodyReadinessProvider key={gameId} outerReady={mountSettled} onAllReady={() => setAllLoadsDone(true)}>
+            <ShadowScrollView
+              className="flex-1"
+              scrollViewClassName="p-6 px-2 sm:px-6 h-screen w-full"
+              onScroll={handleScroll}
+              scrollEventThrottle={16}
+              scrollViewComponent={Animated.ScrollView}>
+              <View className="mx-auto w-full max-w-[1000px] pt-60">
+                {isOperator ? (
+                  <OperatorGamePage currentUserId={currentUserId} gameId={gameId} />
+                ) : isNewser ? (
+                  <NewserGamePage currentUserId={currentUserId} gameId={gameId} />
+                ) : (
+                  <PlayerGamePage currentUserId={currentUserId} gameId={gameId} />
+                )}
+              </View>
+            </ShadowScrollView>
+          </BodyReadinessProvider>
+        </LoadingContainer>
     </Column>
   );
 };

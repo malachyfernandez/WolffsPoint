@@ -10,6 +10,7 @@ import PlayerProfileDialog from './PlayerProfileDialogNEW';
 import { PlayerProfile } from '../../../types/multiplayer';
 import { getGameScopedKey } from '../../../utils/multiplayer';
 import { PlayerStatusProvider } from '../../../contexts/PlayerStatusContext';
+import { useBodyLoadReport } from '../../../hooks/useBodyLoadReport';
 
 interface UserData {
   name: string;
@@ -66,6 +67,9 @@ const ParticipantAccessGate = ({ gameId, currentUserId, children }: ParticipantA
   const hasLoaded = useMemo(() => {
     return !userData.state.isSyncing && !profile.state.isSyncing;
   }, [profile.state.isSyncing, userData.state.isSyncing]);
+
+  // Report to BodyReadinessProvider — tab bar waits for the gate to load
+  useBodyLoadReport(!hasLoaded, 300, 'ParticipantAccessGate');
 
   if (!hasLoaded || !currentEmail.trim()) {
     return (

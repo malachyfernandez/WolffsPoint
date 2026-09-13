@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import FontText from '../ui/text/FontText';
 import LoadingText from '../ui/loading/LoadingText';
+import { useBodyLoadReport } from '../../../hooks/useBodyLoadReport';
 import { useList, useFindValues } from 'hooks/useData';
 import Column from '../layout/Column';
 import NightlyPlayerTable from './NightlyPlayerTable';
@@ -312,6 +313,8 @@ const NightlyPageContent = ({
   // Only show loading on initial load, not when syncing after
   const showLoading = !hasInitiallyLoaded || !areAllColumnsReady;
   const showInlineReviewButton = width >= 440;
+
+  useBodyLoadReport(showLoading, 300, 'NightlyPageOPERATOR');
 
   return (
     <>

@@ -6,6 +6,7 @@ import Column from '../layout/Column';
 import Row from '../layout/Row';
 import FontText from '../ui/text/FontText';
 import LoadingText from '../ui/loading/LoadingText';
+import { useBodyLoadReport } from '../../../hooks/useBodyLoadReport';
 import MarkdownRenderer from '../ui/markdown/MarkdownRenderer';
 import { InputOptionsProvider } from './markdownEditor/InputOptionsProvider';
 import { useFindListItems, useFindValues } from '../../../hooks/useData';
@@ -44,6 +45,8 @@ const RuleBookPagePLAYER = ({ gameId }: RuleBookPagePLAYERProps) => {
     });
 
     const isLoading = gameRows === undefined || ruleBookRecords === undefined || roleTableRecords === undefined;
+
+    useBodyLoadReport(isLoading, 300, 'RuleBookPagePLAYER');
 
     const headingIdPrefix = `rulebook-${gameId}`;
 

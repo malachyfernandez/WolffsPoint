@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { View } from 'react-native';
-import Animated, { FadeIn } from 'react-native-reanimated';
 import Column from '../layout/Column';
 import GameTabBar, { GameTabDefinition } from './GameTabBar';
 import TownSquarePagePLAYER from './TownSquarePagePLAYER';
 import RuleBookPagePLAYER from './RuleBookPagePLAYER';
 import PhoneBookPagePLAYER from './PhoneBookPagePLAYER';
 import PaperContainer from '../ui/PaperContainer';
+import { BodyReportScope } from '../../../contexts/BodyReadinessContext';
 import ParticipantAccessGate from './ParticipantAccessGate';
 import NewspaperPageNEWSER from './NewspaperPageNEWSER';
 import TownSquareIcon from '../ui/icons/TownSquare';
@@ -43,38 +43,42 @@ const NewserGamePage = ({ gameId, currentUserId }: NewserGamePageProps) => {
           <GameTabBar activeTab={activeTab} onTabPress={setActiveTab} tabs={newserTabs} />
           <PaperContainer>
             <View className="w-full min-w-0">
-              <Animated.View
-                entering={FadeIn.duration(180)}
+              <View
                 style={{ display: activeTab === 'townSquare' ? 'flex' : 'none' }}
                 className="w-full min-w-0">
+              <BodyReportScope enabled={activeTab === 'townSquare'}>
                 <TownSquarePagePLAYER gameId={gameId} currentProfile={profile} />
-              </Animated.View>
-              <Animated.View
-                entering={FadeIn.duration(180)}
+              </BodyReportScope>
+              </View>
+              <View
                 style={{ display: activeTab === 'newspaper' ? 'flex' : 'none' }}
                 className="w-full min-w-0">
+              <BodyReportScope enabled={activeTab === 'newspaper'}>
                 <NewspaperPageNEWSER
                   currentUserId={currentUserId}
                   currentEmail={currentEmail}
                   gameId={gameId}
                 />
-              </Animated.View>
-              <Animated.View
-                entering={FadeIn.duration(180)}
+              </BodyReportScope>
+              </View>
+              <View
                 style={{ display: activeTab === 'ruleBook' ? 'flex' : 'none' }}
                 className="w-full min-w-0">
+              <BodyReportScope enabled={activeTab === 'ruleBook'}>
                 <RuleBookPagePLAYER gameId={gameId} />
-              </Animated.View>
-              <Animated.View
-                entering={FadeIn.duration(180)}
+              </BodyReportScope>
+              </View>
+              <View
                 style={{ display: activeTab === 'phoneBook' ? 'flex' : 'none' }}
                 className="w-full min-w-0">
+              <BodyReportScope enabled={activeTab === 'phoneBook'}>
                 <PhoneBookPagePLAYER
                   gameId={gameId}
                   currentUserId={currentUserId}
                   currentEmail={currentEmail}
                 />
-              </Animated.View>
+              </BodyReportScope>
+              </View>
             </View>
           </PaperContainer>
         </Column>

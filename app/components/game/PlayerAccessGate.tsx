@@ -14,6 +14,7 @@ import { UserTableItem } from '../../../types/playerTable';
 import { PlayerProfile } from '../../../types/multiplayer';
 import { getGameScopedKey } from '../../../utils/multiplayer';
 import { PlayerStatusProvider } from '../../../contexts/PlayerStatusContext';
+import { useBodyLoadReport } from '../../../hooks/useBodyLoadReport';
 
 interface UserData {
   name: string;
@@ -107,6 +108,9 @@ const PlayerAccessGate = ({ gameId, currentUserId, children }: PlayerAccessGateP
     profile.state.isSyncing,
     customUserInfo.state.isSyncing,
   ]);
+
+  // Report to BodyReadinessProvider — tab bar waits for the gate to load
+  useBodyLoadReport(!hasLoaded, 300, 'PlayerAccessGate');
 
   // Show loading state while syncing for the first time
   if (!hasLoaded) {

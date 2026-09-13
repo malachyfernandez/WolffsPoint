@@ -11,6 +11,7 @@ import PlayerAddUserSection from './PlayerAddUserSection';
 import ComprehensiveDaySelector from '../ui/daySelector/ComprehensiveDaySelector';
 import DaysTable from './DaysTable';
 import LoadingText from '../ui/loading/LoadingText';
+import { useBodyLoadReport } from '../../../hooks/useBodyLoadReport';
 import { MultiSelectProvider, useMultiSelect } from './multiSelect/MultiSelectContext';
 import MultiSelectToolbar from './multiSelect/MultiSelectToolbar';
 
@@ -79,6 +80,8 @@ const PlayerPageContent = ({ currentUserId, gameId }: PlayerPageOPERATORProps) =
 
     const areAllColumnsReady = users.length === 0 || (isPlayerTableColumnsReady && isDaysTableColumnsReady);
     const showLoading = isSyncing || !hasInitiallyLoaded || !areAllColumnsReady;
+
+    useBodyLoadReport(showLoading, 300, 'PlayerPageOPERATOR');
 
     return (
         <>

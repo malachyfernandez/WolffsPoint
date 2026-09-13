@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { View } from 'react-native';
-import Animated, { FadeIn } from 'react-native-reanimated';
 import Column from '../layout/Column';
 import PlayerPageOPERATOR from './PlayerPageOPERATOR';
 import RolesPageOPERATOR from './RolesPageOPERATOR';
@@ -16,6 +15,7 @@ import TownSquareIcon from '../ui/icons/TownSquare';
 import NewspaperIcon from '../ui/icons/Newspaper';
 import ConfigIcon from '../ui/icons/Config';
 import PaperContainer from '../ui/PaperContainer';
+import { BodyReportScope } from '../../../contexts/BodyReadinessContext';
 import { PlayerProfile } from '../../../types/multiplayer';
 import { PlayerStatusProvider } from '../../../contexts/PlayerStatusContext';
 
@@ -61,42 +61,48 @@ const OperatorGamePage = ({ gameId, currentUserId }: OperatorGamePageProps) => {
           <View className="w-full min-w-0">
             {/* All tabs stay mounted so dialog state persists across tab switches.
                                 Inactive tabs are hidden via display:none instead of unmounted. */}
-            <Animated.View
-              entering={FadeIn.duration(300)}
+            <View
               style={{ display: activeTab === 'players' ? 'flex' : 'none' }}
               className="w-full min-w-0">
+              <BodyReportScope enabled={activeTab === 'players'}>
               <PlayerPageOPERATOR currentUserId={currentUserId} gameId={gameId} />
-            </Animated.View>
-            <Animated.View
-              entering={FadeIn.duration(300)}
+              </BodyReportScope>
+            </View>
+            <View
               style={{ display: activeTab === 'config' ? 'flex' : 'none' }}
               className="w-full min-w-0">
+              <BodyReportScope enabled={activeTab === 'config'}>
               <RolesPageOPERATOR currentUserId={currentUserId} gameId={gameId} />
-            </Animated.View>
-            <Animated.View
-              entering={FadeIn.duration(300)}
+              </BodyReportScope>
+            </View>
+            <View
               style={{ display: activeTab === 'nightly' ? 'flex' : 'none' }}
               className="w-full min-w-0">
+              <BodyReportScope enabled={activeTab === 'nightly'}>
               <NightlyPageOPERATOR currentUserId={currentUserId} gameId={gameId} />
-            </Animated.View>
-            <Animated.View
-              entering={FadeIn.duration(300)}
+              </BodyReportScope>
+            </View>
+            <View
               style={{ display: activeTab === 'forum' ? 'flex' : 'none' }}
               className="w-full min-w-0">
+              <BodyReportScope enabled={activeTab === 'forum'}>
               <TownSquarePagePLAYER gameId={gameId} currentProfile={profile} />
-            </Animated.View>
-            <Animated.View
-              entering={FadeIn.duration(300)}
+              </BodyReportScope>
+            </View>
+            <View
               style={{ display: activeTab === 'newspaper' ? 'flex' : 'none' }}
               className="w-full min-w-0">
+              <BodyReportScope enabled={activeTab === 'newspaper'}>
               <NewspaperPageOPERATOR currentUserId={currentUserId} gameId={gameId} />
-            </Animated.View>
-            <Animated.View
-              entering={FadeIn.duration(300)}
+              </BodyReportScope>
+            </View>
+            <View
               style={{ display: activeTab === 'rulebook' ? 'flex' : 'none' }}
               className="w-full min-w-0">
+              <BodyReportScope enabled={activeTab === 'rulebook'}>
               <ConfigPageOPERATOR gameId={gameId} currentUserId={currentUserId} />
-            </Animated.View>
+              </BodyReportScope>
+            </View>
           </View>
         </PaperContainer>
       </Column>

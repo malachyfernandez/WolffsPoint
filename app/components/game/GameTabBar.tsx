@@ -4,7 +4,6 @@ import NavTab from '../layout/NavTab';
 import MiddleNavTab from '../layout/MiddleNavTab';
 import SvgGroup2 from '../icons/Group2';
 import { View, Text, TouchableOpacity, useWindowDimensions } from 'react-native';
-import FadeInAfterDelay from '../ui/loading/FadeInAfterDelay';
 
 export type GameTabDefinition<TTab extends string> = {
     label: string;
@@ -48,7 +47,6 @@ const GameTabBar = <TTab extends string>({ activeTab, onTabPress, tabs, iconSize
     const useCondensed = width < 650; // Switch to condensed text on narrow screens
 
     return (
-        <FadeInAfterDelay delayMs={200}>
             <Row className='gap-1 px-4'>
                 {tabs.map((tab, index) => (
                     (hasTrueMiddle && index === centerIndex) ? (
@@ -80,7 +78,6 @@ const GameTabBar = <TTab extends string>({ activeTab, onTabPress, tabs, iconSize
                     )
                 ))}
             </Row>
-        </FadeInAfterDelay>
     );
 };
 

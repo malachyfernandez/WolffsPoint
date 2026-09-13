@@ -8,14 +8,14 @@ import { TouchableOpacity } from 'react-native';
 import { useValue, useFindListItems } from '../../../hooks/useData';
 import { GameInfo } from '../../../types/games';
 import CopyableText from '../ui/CopyableText';
-import Animated, { FadeIn } from 'react-native-reanimated';
 import { BlurView } from 'expo-blur';
 
 interface TopSiteBarProps {
     className?: string;
+    isGameBodyReady?: boolean;
 }
 
-const TopSiteBar = ({ className = '' }: TopSiteBarProps) => {
+const TopSiteBar = ({ className = '', isGameBodyReady = false }: TopSiteBarProps) => {
     const [activeGameId, setActiveGameId] = useValue<string>("activeGameId");
 
     const gameJoinCodeInfo = useFindListItems<GameInfo>("games", {
@@ -26,6 +26,7 @@ const TopSiteBar = ({ className = '' }: TopSiteBarProps) => {
     const gameJoinCode = gameJoinCodeInfo?.[0]?.value?.id;
     const isInAGame = activeGameId.value !== '';
 
+
     return (
         <Column className={`gap-4 ${className ?? ''}`.trim()}>
             <Row className='gap-4 justify-end items-center h-24 w-fit px-4 top-0 right-0'>
@@ -35,8 +36,7 @@ const TopSiteBar = ({ className = '' }: TopSiteBarProps) => {
 
                 {/* spacer */}
                 <></>
-                {isInAGame && (
-                    <Animated.View entering={FadeIn}>
+                {isInAGame && gameJoinCode && isGameBodyReady && (
                         <Row className='gap-4 items-center'>
 
                             {gameJoinCode && (
@@ -60,7 +60,6 @@ const TopSiteBar = ({ className = '' }: TopSiteBarProps) => {
 
 
                         </Row>
-                    </Animated.View>
                 )}
             </Row>
         </Column>
