@@ -44,24 +44,35 @@ const playerTabs: GameTabDefinition<PlayerTab>[] = [
 
 const PlayerGamePage = ({ gameId, currentUserId }: PlayerGamePageProps) => {
   const [activeTab, setActiveTab] = useState<PlayerTab>('townSquare');
+  // Tabs mount lazily on first visit, then stay mounted so dialog/minimize
+  // state survives tab switches.
+  const [mountedTabs, setMountedTabs] = useState<ReadonlySet<PlayerTab>>(() => new Set(['townSquare']));
+
+  const handleTabPress = (tab: PlayerTab) => {
+    setActiveTab(tab);
+    setMountedTabs((prev) => (prev.has(tab) ? prev : new Set(prev).add(tab)));
+  };
 
   return (
     <PlayerAccessGate gameId={gameId} currentUserId={currentUserId}>
       {({ currentEmail, matchingPlayer, profile }) => (
         <Column className="gap-5">
-          <GameTabBar activeTab={activeTab} onTabPress={setActiveTab} tabs={playerTabs} />
+          <GameTabBar activeTab={activeTab} onTabPress={handleTabPress} tabs={playerTabs} />
           <PaperContainer>
             <View className="w-full min-w-0">
               <View
                 style={{ display: activeTab === 'townSquare' ? 'flex' : 'none' }}
                 className="w-full min-w-0">
+              {mountedTabs.has('townSquare') && (
               <BodyReportScope enabled={activeTab === 'townSquare'}>
                 <TownSquarePagePLAYER gameId={gameId} currentProfile={profile} />
               </BodyReportScope>
+              )}
               </View>
               <View
                 style={{ display: activeTab === 'newspaper' ? 'flex' : 'none' }}
                 className="w-full min-w-0">
+              {mountedTabs.has('newspaper') && (
               <BodyReportScope enabled={activeTab === 'newspaper'}>
                 <ReadOnlyNewspaperPagePLAYER
                   gameId={gameId}
@@ -70,10 +81,12 @@ const PlayerGamePage = ({ gameId, currentUserId }: PlayerGamePageProps) => {
                   currentProfile={profile}
                 />
               </BodyReportScope>
+              )}
               </View>
               <View
                 style={{ display: activeTab === 'eyesOnly' ? 'flex' : 'none' }}
                 className="w-full min-w-0">
+              {mountedTabs.has('eyesOnly') && (
               <BodyReportScope enabled={activeTab === 'eyesOnly'}>
                 <YourEyesOnlyPagePLAYER
                   gameId={gameId}
@@ -82,17 +95,21 @@ const PlayerGamePage = ({ gameId, currentUserId }: PlayerGamePageProps) => {
                   currentProfile={profile}
                 />
               </BodyReportScope>
+              )}
               </View>
               <View
                 style={{ display: activeTab === 'ruleBook' ? 'flex' : 'none' }}
                 className="w-full min-w-0">
+              {mountedTabs.has('ruleBook') && (
               <BodyReportScope enabled={activeTab === 'ruleBook'}>
                 <RuleBookPagePLAYER gameId={gameId} />
               </BodyReportScope>
+              )}
               </View>
               <View
                 style={{ display: activeTab === 'phoneBook' ? 'flex' : 'none' }}
                 className="w-full min-w-0">
+              {mountedTabs.has('phoneBook') && (
               <BodyReportScope enabled={activeTab === 'phoneBook'}>
                 <PhoneBookPagePLAYER
                   gameId={gameId}
@@ -100,6 +117,7 @@ const PlayerGamePage = ({ gameId, currentUserId }: PlayerGamePageProps) => {
                   currentEmail={currentEmail}
                 />
               </BodyReportScope>
+              )}
               </View>
             </View>
           </PaperContainer>

@@ -88,6 +88,7 @@ const MainPage: React.FC<MainPageProps> = ({
                     dependencies={[activeGameId]}
                     loadingText="Loading"
                     className='flex-1'
+                    keepMounted={false}
                 >
                     <LayoutStateAnimatedView.Container stateVar={currentScreen} className='flex-1'>
                         <LayoutStateAnimatedView.Option page={1} stateValue='allGames'>

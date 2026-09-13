@@ -90,6 +90,7 @@ const YourEyesOnlyPagePLAYER = ({ gameId, currentEmail, matchingPlayer, currentP
             dependencies={[scheduleRecord.record]}
             loadingText='Loading newspaper'
             className='flex-1 min-h-190 pb-8'
+            keepMounted={false}
         >
             <Column className='gap-7 flex-1'>
 

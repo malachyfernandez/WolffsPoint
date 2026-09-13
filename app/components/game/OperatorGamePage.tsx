@@ -37,6 +37,14 @@ const operatorTabs: GameTabDefinition<OperatorTab>[] = [
 
 const OperatorGamePage = ({ gameId, currentUserId }: OperatorGamePageProps) => {
   const [activeTab, setActiveTab] = useState<OperatorTab>('players');
+  // Tabs mount lazily on first visit (no upfront fetching for unopened tabs),
+  // then stay mounted so dialog/minimize state survives tab switches.
+  const [mountedTabs, setMountedTabs] = useState<ReadonlySet<OperatorTab>>(() => new Set(['players']));
+
+  const handleTabPress = (tab: OperatorTab) => {
+    setActiveTab(tab);
+    setMountedTabs((prev) => (prev.has(tab) ? prev : new Set(prev).add(tab)));
+  };
 
   // Create operator profile for TownSquare
   const profile: PlayerProfile = {
@@ -56,52 +64,62 @@ const OperatorGamePage = ({ gameId, currentUserId }: OperatorGamePageProps) => {
   return (
     <PlayerStatusProvider isPlayerDead={false}>
       <Column className="w-full gap-4 sm:gap-5">
-        <GameTabBar activeTab={activeTab} onTabPress={setActiveTab} tabs={operatorTabs} />
+        <GameTabBar activeTab={activeTab} onTabPress={handleTabPress} tabs={operatorTabs} />
         <PaperContainer>
           <View className="w-full min-w-0">
-            {/* All tabs stay mounted so dialog state persists across tab switches.
-                                Inactive tabs are hidden via display:none instead of unmounted. */}
             <View
               style={{ display: activeTab === 'players' ? 'flex' : 'none' }}
               className="w-full min-w-0">
+              {mountedTabs.has('players') && (
               <BodyReportScope enabled={activeTab === 'players'}>
               <PlayerPageOPERATOR currentUserId={currentUserId} gameId={gameId} />
               </BodyReportScope>
+              )}
             </View>
             <View
               style={{ display: activeTab === 'config' ? 'flex' : 'none' }}
               className="w-full min-w-0">
+              {mountedTabs.has('config') && (
               <BodyReportScope enabled={activeTab === 'config'}>
               <RolesPageOPERATOR currentUserId={currentUserId} gameId={gameId} />
               </BodyReportScope>
+              )}
             </View>
             <View
               style={{ display: activeTab === 'nightly' ? 'flex' : 'none' }}
               className="w-full min-w-0">
+              {mountedTabs.has('nightly') && (
               <BodyReportScope enabled={activeTab === 'nightly'}>
               <NightlyPageOPERATOR currentUserId={currentUserId} gameId={gameId} />
               </BodyReportScope>
+              )}
             </View>
             <View
               style={{ display: activeTab === 'forum' ? 'flex' : 'none' }}
               className="w-full min-w-0">
+              {mountedTabs.has('forum') && (
               <BodyReportScope enabled={activeTab === 'forum'}>
               <TownSquarePagePLAYER gameId={gameId} currentProfile={profile} />
               </BodyReportScope>
+              )}
             </View>
             <View
               style={{ display: activeTab === 'newspaper' ? 'flex' : 'none' }}
               className="w-full min-w-0">
+              {mountedTabs.has('newspaper') && (
               <BodyReportScope enabled={activeTab === 'newspaper'}>
               <NewspaperPageOPERATOR currentUserId={currentUserId} gameId={gameId} />
               </BodyReportScope>
+              )}
             </View>
             <View
               style={{ display: activeTab === 'rulebook' ? 'flex' : 'none' }}
               className="w-full min-w-0">
+              {mountedTabs.has('rulebook') && (
               <BodyReportScope enabled={activeTab === 'rulebook'}>
               <ConfigPageOPERATOR gameId={gameId} currentUserId={currentUserId} />
               </BodyReportScope>
+              )}
             </View>
           </View>
         </PaperContainer>
