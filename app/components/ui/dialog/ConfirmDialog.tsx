@@ -36,12 +36,14 @@ const ConfirmDialog = ({
   danger = false,
 }: ConfirmDialogProps) => {
 
-  // Enter = primary action (confirm), Esc = cancel
+  // Enter = primary action (confirm), Esc = cancel.
+  // Danger (destructive) confirms require Del/Backspace instead of Enter.
   useKeyboardShortcuts({
     onPrimaryAction: () => {
       onOpenChange(false);
       onConfirm();
     },
+    primaryKey: danger ? 'delete' : 'enter',
     onClose: () => onOpenChange(false),
     enabled: isOpen,
   });
@@ -62,7 +64,8 @@ const ConfirmDialog = ({
             <AppButton
               variant="outline"
               className="w-24"
-              onPress={() => onOpenChange(false)}>
+              onPress={() => onOpenChange(false)}
+              keyboardHint={['esc']}>
               <FontText weight="medium">{cancelLabel}</FontText>
             </AppButton>
             <AppButton
@@ -71,7 +74,8 @@ const ConfirmDialog = ({
               onPress={() => {
                 onOpenChange(false);
                 onConfirm();
-              }}>
+              }}
+              keyboardHint={danger ? ['del'] : ['enter']}>
               <FontText weight="medium" color="white">
                 {confirmLabel}
               </FontText>

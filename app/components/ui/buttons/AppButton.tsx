@@ -55,7 +55,7 @@
  * - Drop shadow can be disabled for cleaner designs
  */
 import React, { useState } from 'react';
-import { TouchableOpacity } from 'react-native';
+import { Platform, TouchableOpacity } from 'react-native';
 import Row from '../../layout/Row';
 import { BlurView } from 'expo-blur';
 import GuildedButton from './GuildedButton';
@@ -94,7 +94,7 @@ const AppButton = ({
 
     const handleHoverIn = () => {
         onHoverIn?.();
-        if (keyboardHint) setHint(keyboardHint);
+        if (keyboardHint && !disabled) setHint(keyboardHint);
     };
 
     const handleHoverOut = () => {
@@ -102,11 +102,20 @@ const AppButton = ({
         if (keyboardHint) setHint(null);
     };
 
+    // react-native-web's TouchableOpacity drops onHoverIn/onHoverOut — the
+    // props never reach the DOM. onMouseEnter/onMouseLeave are forwarded.
+    const webHoverProps =
+        Platform.OS === 'web'
+            ? { onMouseEnter: handleHoverIn, onMouseLeave: handleHoverOut }
+            : {};
+
     if (variant === 'accent' || variant === 'secondary') {
         const isSecondary = variant === 'secondary';
         const buttonContent = (
             <GuildedButton
                 onPress={onPress}
+                onHoverIn={handleHoverIn}
+                onHoverOut={handleHoverOut}
                 disabled={disabled}
                 className={className}
                 height={48}
@@ -188,6 +197,7 @@ const AppButton = ({
             onPress={disabled ? undefined : onPress}
             {...(handleHoverIn ? { onHoverIn: handleHoverIn } : {})}
             {...(handleHoverOut ? { onHoverOut: handleHoverOut } : {})}
+            {...webHoverProps}
             activeOpacity={disabled ? 1 : 0.8}
             disabled={disabled}
         >

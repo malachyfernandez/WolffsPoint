@@ -302,6 +302,8 @@ function extractWidthClasses(className: string): string {
 export default function GuildedButton({
     children,
     onPress,
+    onHoverIn,
+    onHoverOut,
     disabled = false,
     className = '',
     rootClassName = '',
@@ -419,6 +421,8 @@ export default function GuildedButton({
                 className={`guilded-button-root ${disabled ? 'is-disabled' : ''} ${rootClassName} ${widthClasses}`.trim()}
                 onClick={disabled ? undefined : onPress}
                 onKeyDown={handleKeyDown}
+                onMouseEnter={onHoverIn}
+                onMouseLeave={onHoverOut}
                 style={rootStyle}
             >
                 <div className={`guilded-button-place ${widthClasses}`.trim()} style={placeStyle}>

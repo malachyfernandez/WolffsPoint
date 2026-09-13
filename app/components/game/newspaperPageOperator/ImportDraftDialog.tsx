@@ -10,6 +10,7 @@ import ShadowScrollView from '../../ui/ShadowScrollView';
 import { Usepaper } from '../../../../types/usepaper';
 import NewspaperZoomableView from './NewspaperZoomableView';
 import CloseButton from '../../ui/dialog/CloseButton';
+import { useKeyboardShortcuts } from '../../../../hooks/useKeyboardShortcuts';
 import { hasNewspaperContent } from '../../../../utils/newspaperSections';
 
 interface ImportDraftDialogProps {
@@ -38,6 +39,19 @@ const ImportDraftDialog = ({
     onConfirmImport,
 }: ImportDraftDialogProps) => {
     const hasContent = hasNewspaperContent(draft);
+
+    const handleConfirm = () => {
+        if (isLoading || !hasContent) return;
+        onConfirmImport();
+        onOpenChange(false);
+    };
+
+    // Enter = primary action (import), Esc = cancel
+    useKeyboardShortcuts({
+        onPrimaryAction: handleConfirm,
+        onClose: () => onOpenChange(false),
+        enabled: isOpen,
+    });
 
     return (
         <ConvexDialog.Root isOpen={isOpen} onOpenChange={onOpenChange}>
@@ -79,17 +93,15 @@ const ImportDraftDialog = ({
                         )}
 
                         <Row className='flex-wrap justify-end gap-x-4 gap-y-3 pt-2'>
-                            <AppButton variant='outline' className='w-full sm:w-28' onPress={() => onOpenChange(false)}>
+                            <AppButton variant='outline' className='w-full sm:w-28' onPress={() => onOpenChange(false)} keyboardHint={['esc']}>
                                 <FontText weight='medium'>Cancel</FontText>
                             </AppButton>
                             <AppButton
                                 variant='filled'
                                 className='w-full sm:w-auto sm:min-w-[320px] px-6'
                                 disabled={isLoading || !hasContent}
-                                onPress={() => {
-                                    onConfirmImport();
-                                    onOpenChange(false);
-                                }}
+                                onPress={handleConfirm}
+                                keyboardHint={['enter']}
                             >
                                 <FontText weight='medium' color='white'>
                                     {`Replace Newspaper With ${sourceLabel} Draft`}

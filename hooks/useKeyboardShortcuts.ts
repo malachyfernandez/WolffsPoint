@@ -3,6 +3,10 @@ import { useEffect, useRef } from 'react';
 interface KeyboardShortcutConfig {
     onSave?: () => void;
     onPrimaryAction?: () => void;
+    /** Key that fires onPrimaryAction. 'enter' (default) or 'delete' — the
+     * latter accepts both Delete and Backspace and disables Enter, for
+     * destructive confirmations. */
+    primaryKey?: 'enter' | 'delete';
     onClose?: () => void;
     enabled?: boolean;
 }
@@ -42,17 +46,20 @@ function isTopScope(id: string): boolean {
 export function useKeyboardShortcuts({
     onSave,
     onPrimaryAction,
+    primaryKey = 'enter',
     onClose,
     enabled = true,
 }: KeyboardShortcutConfig) {
     const onSaveRef = useRef(onSave);
     const onPrimaryActionRef = useRef(onPrimaryAction);
+    const primaryKeyRef = useRef(primaryKey);
     const onCloseRef = useRef(onClose);
     const scopeIdRef = useRef<string>(Math.random().toString(36).slice(2));
 
     // Keep refs fresh without re-registering listeners
     onSaveRef.current = onSave;
     onPrimaryActionRef.current = onPrimaryAction;
+    primaryKeyRef.current = primaryKey;
     onCloseRef.current = onClose;
 
     useEffect(() => {
@@ -77,9 +84,26 @@ export function useKeyboardShortcuts({
                 return;
             }
 
-            // Enter (without modifier keys)
-            if (e.key === 'Enter' && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey) {
+            // Enter (without modifier keys) — skipped when primaryKey is 'delete'
+            if (e.key === 'Enter' && primaryKeyRef.current === 'enter' && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey) {
                 // Don't intercept if focus is in a textarea or contenteditable
+                const target = e.target as HTMLElement;
+                const tag = target?.tagName?.toLowerCase();
+                if (tag === 'textarea' || tag === 'input' || target?.isContentEditable) {
+                    return;
+                }
+                // Don't intercept if focus is on a button — it already
+                // activates itself on Enter
+                if (target?.closest?.('button, [role="button"]')) {
+                    return;
+                }
+                e.preventDefault();
+                onPrimaryActionRef.current?.();
+                return;
+            }
+
+            // Delete/Backspace — destructive primary action (primaryKey 'delete')
+            if ((e.key === 'Delete' || e.key === 'Backspace') && primaryKeyRef.current === 'delete' && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey) {
                 const target = e.target as HTMLElement;
                 const tag = target?.tagName?.toLowerCase();
                 if (tag === 'textarea' || tag === 'input' || target?.isContentEditable) {
@@ -92,6 +116,14 @@ export function useKeyboardShortcuts({
 
             // Escape
             if (e.key === 'Escape') {
+                // First Escape leaves a focused text field; the next one closes
+                const target = e.target as HTMLElement;
+                const tag = target?.tagName?.toLowerCase();
+                if (tag === 'textarea' || tag === 'input' || target?.isContentEditable) {
+                    e.preventDefault();
+                    target.blur();
+                    return;
+                }
                 e.preventDefault();
                 onCloseRef.current?.();
                 return;

@@ -205,7 +205,7 @@ const ActionEditorDialog = ({
 
                 {/* Action Buttons */}
                 <Row className="minimize-hide justify-end gap-4 pt-2">
-                  <AppButton variant="outline" onPress={handleCancel} className="w-22 h-12 sm:w-32">
+                  <AppButton variant="outline" onPress={handleCancel} className="w-22 h-12 sm:w-32" keyboardHint={['esc']}>
                     <FontText>Cancel</FontText>
                   </AppButton>
                   <DisableableButton

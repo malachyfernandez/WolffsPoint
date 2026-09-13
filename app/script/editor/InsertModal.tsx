@@ -8,6 +8,7 @@ import ConfirmDialog from '../../components/ui/dialog/ConfirmDialog';
 import ShadowScrollView from '../../components/ui/ShadowScrollView';
 import Column from '../../components/layout/Column';
 import { useTooltip } from './useTooltip';
+import { useKeyboardShortcuts } from '../../../hooks/useKeyboardShortcuts';
 import Row from '../../components/layout/Row';
 import FontText from '../../components/ui/text/FontText';
 import AppButton from '../../components/ui/buttons/AppButton';
@@ -731,6 +732,33 @@ const InsertModal = ({
       setHasSeenBuiltinInfo(seen === 'true');
     });
   }, []);
+
+  const handleBuiltinInfoConfirm = () => {
+    if (pendingBuiltin && target) {
+      onInsertBuiltinFunction(
+        pendingBuiltin.fnStatement,
+        pendingBuiltin.callExpression,
+        target
+      );
+    }
+    setHasSeenBuiltinInfo(true);
+    AsyncStorage.setItem(BUILTIN_INFO_SEEN_KEY, 'true');
+    setShowBuiltinInfo(false);
+    setPendingBuiltin(null);
+    onClose();
+  };
+
+  const handleBuiltinInfoCancel = () => {
+    setShowBuiltinInfo(false);
+    setPendingBuiltin(null);
+  };
+
+  // Enter = primary action (add function), Esc = cancel
+  useKeyboardShortcuts({
+    onPrimaryAction: handleBuiltinInfoConfirm,
+    onClose: handleBuiltinInfoCancel,
+    enabled: showBuiltinInfo,
+  });
 
   // Load tag definitions for the tag() function picker
   const tagDefsKey = gameId ? getGameScopedKey('tagDefinitions', gameId) : null;
@@ -1641,20 +1669,8 @@ const InsertModal = ({
                   <AppButton
                     variant="accent"
                     className="flex-1"
-                    onPress={() => {
-                      if (pendingBuiltin && target) {
-                        onInsertBuiltinFunction(
-                          pendingBuiltin.fnStatement,
-                          pendingBuiltin.callExpression,
-                          target
-                        );
-                      }
-                      setHasSeenBuiltinInfo(true);
-                      AsyncStorage.setItem(BUILTIN_INFO_SEEN_KEY, 'true');
-                      setShowBuiltinInfo(false);
-                      setPendingBuiltin(null);
-                      onClose();
-                    }}>
+                    onPress={handleBuiltinInfoConfirm}
+                    keyboardHint={['enter']}>
                     <FontText weight="medium" color="white">
                       Add function
                     </FontText>
@@ -1662,10 +1678,8 @@ const InsertModal = ({
                   <AppButton
                     variant="secondary"
                     className="flex-1"
-                    onPress={() => {
-                      setShowBuiltinInfo(false);
-                      setPendingBuiltin(null);
-                    }}>
+                    onPress={handleBuiltinInfoCancel}
+                    keyboardHint={['esc']}>
                     <FontText weight="medium">Cancel</FontText>
                   </AppButton>
                 </Row>

@@ -18,6 +18,8 @@ export interface GuildedButtonRingPalette {
 export interface GuildedButtonProps {
     children: React.ReactNode;
     onPress?: () => void;
+    onHoverIn?: () => void;
+    onHoverOut?: () => void;
     disabled?: boolean;
     className?: string;
     rootClassName?: string;

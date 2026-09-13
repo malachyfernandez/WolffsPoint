@@ -16,6 +16,7 @@ import { RuleBookData } from '../../../types/ruleBook';
 import { RoleTableItem } from '../../../types/roleTable';
 import MarkdownEditorDialog from './MarkdownEditorDialog';
 import CloseButton from '../ui/dialog/CloseButton';
+import { useKeyboardShortcuts } from '../../../hooks/useKeyboardShortcuts';
 
 interface RuleBookRoleDescriptionsProps {
   gameId: string;
@@ -109,6 +110,20 @@ const RuleBookRoleDescriptions = ({ gameId, headingIdPrefix }: RuleBookRoleDescr
       description: 'Set Role Rulebook Visibility',
     });
   };
+
+  const handleConfirmHide = () => {
+    if (hidingRoleIndex !== null) {
+      UNDOABLEsetHiddenFromRulebook(hidingRoleIndex, true);
+    }
+    setHidingRoleIndex(null);
+  };
+
+  // Enter = primary action (hide), Esc = cancel
+  useKeyboardShortcuts({
+    onPrimaryAction: handleConfirmHide,
+    onClose: () => setHidingRoleIndex(null),
+    enabled: hidingRoleIndex !== null,
+  });
 
   // Ensure roleOrder contains all visible roles, initialized in current display order
   const getFullCurrentOrder = (): number[] => {
@@ -284,18 +299,15 @@ const RuleBookRoleDescriptions = ({ gameId, headingIdPrefix }: RuleBookRoleDescr
                   <AppButton
                     variant="outline"
                     className="flex-1 h-12"
-                    onPress={() => setHidingRoleIndex(null)}>
+                    onPress={() => setHidingRoleIndex(null)}
+                    keyboardHint={['esc']}>
                     <FontText weight="medium">Cancel</FontText>
                   </AppButton>
                   <AppButton
                     variant="filled"
                     className="flex-1 h-12"
-                    onPress={() => {
-                      if (hidingRoleIndex !== null) {
-                        UNDOABLEsetHiddenFromRulebook(hidingRoleIndex, true);
-                      }
-                      setHidingRoleIndex(null);
-                    }}>
+                    onPress={handleConfirmHide}
+                    keyboardHint={['enter']}>
                     <FontText weight="medium" color="white">
                       Hide
                     </FontText>

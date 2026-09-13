@@ -67,7 +67,8 @@ const UnsavedChangesDialog = ({
                 onPress={() => {
                   onOpenChange(false);
                   onSave();
-                }}>
+                }}
+                keyboardHint={['enter']}>
                 <FontText weight="medium" color="white">
                   {saveLabel}
                 </FontText>

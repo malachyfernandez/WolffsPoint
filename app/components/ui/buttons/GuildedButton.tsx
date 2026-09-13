@@ -22,6 +22,8 @@ import {
 export const GuildedButton = ({
     children,
     onPress,
+    onHoverIn,
+    onHoverOut,
     disabled = false,
     variant = guildedButtonDefaults.variant,
     radius = guildedButtonDefaults.radius,
@@ -44,6 +46,8 @@ export const GuildedButton = ({
     return (
         <Pressable
             onPress={disabled ? undefined : onPress}
+            onHoverIn={onHoverIn}
+            onHoverOut={onHoverOut}
             disabled={disabled}
             style={[
                 nativeStyles.container,

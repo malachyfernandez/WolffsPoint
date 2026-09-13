@@ -51,7 +51,8 @@ const MustSaveDialog = ({
               <AppButton
                 variant="outline"
                 className="w-28"
-                onPress={() => onOpenChange(false)}>
+                onPress={() => onOpenChange(false)}
+                keyboardHint={['esc']}>
                 <FontText weight="medium">Cancel</FontText>
               </AppButton>
               <AppButton
@@ -60,7 +61,8 @@ const MustSaveDialog = ({
                 onPress={() => {
                   onOpenChange(false);
                   onSave();
-                }}>
+                }}
+                keyboardHint={['enter']}>
                 <FontText weight="medium" color="white">
                   Save
                 </FontText>

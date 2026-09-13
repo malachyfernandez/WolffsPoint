@@ -49,6 +49,7 @@ import { useUndoRedo, useCreateUndoSnapshot } from '../../../hooks/useUndoRedo';
 import { useSavedFunctions } from '../../../hooks/useSavedFunctions';
 import { useToast } from '../../../contexts/ToastContext';
 import { useKeyboardShortcuts } from '../../../hooks/useKeyboardShortcuts';
+import { useKeyboardShortcutHint } from '../../../contexts/KeyboardShortcutHintContext';
 import { SavedEntry } from '../../../hooks/useSaveHistory';
 import SaveHistoryPill from '../../components/ui/dialog/SaveHistoryPill';
 import SaveHistoryDialog from '../../components/ui/dialog/SaveHistoryDialog';
@@ -582,6 +583,7 @@ const ScriptEditorDialog = ({
   const [nameCollision, setNameCollision] = useState<string | null>(null);
   const { savedFunctions, savedFunctionNames, saveFunction, unsaveFunction } = useSavedFunctions();
   const { showToast } = useToast();
+  const { setHint } = useKeyboardShortcutHint();
   const moveTooltipId = React.useId();
   const cloneTooltipId = React.useId();
   const placeTooltipId = React.useId();
@@ -1323,6 +1325,19 @@ const ScriptEditorDialog = ({
     enabled: isOpen && !isHistoryOpen && !previewEntry,
   });
 
+  // Name collision alert — Enter or Esc dismisses (OK is the only action)
+  useKeyboardShortcuts({
+    onPrimaryAction: () => setNameCollision(null),
+    onClose: () => setNameCollision(null),
+    enabled: nameCollision !== null,
+  });
+
+  // Decouple dialog — Esc cancels (multiple choices, no single primary action)
+  useKeyboardShortcuts({
+    onClose: () => setDecoupleDialog(null),
+    enabled: decoupleDialog !== null,
+  });
+
   const handleOpenChange = (open: boolean) => {
     if (!open && hasModifications) {
       setIsLeaveConfirmDialogOpen(true);
@@ -1736,6 +1751,8 @@ const ScriptEditorDialog = ({
               </FontText>
               <Pressable
                 onPress={() => setNameCollision(null)}
+                onHoverIn={() => setHint(['enter'])}
+                onHoverOut={() => setHint(null)}
                 className="border-subtle-border items-center rounded-lg border py-2.5">
                 <FontText weight="medium">OK</FontText>
               </Pressable>
