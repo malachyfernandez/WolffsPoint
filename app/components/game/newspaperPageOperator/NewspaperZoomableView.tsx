@@ -72,6 +72,15 @@ const NewspaperZoomableView = ({ usepaper, gameId, TILE_SIZE, roundBottom, onRea
         animatedZoom.value = defaultZoom;
     }, [animatedZoom, centerUnscaled, defaultZoom]);
 
+    // Fallback: some browsers (Safari iOS) may not fire onLayout for elements
+    // inside an opacity:0 container, which would deadlock the fade-in. Call
+    // onReady after a short delay as a safety net.
+    useEffect(() => {
+        if (!containerWidth) return;
+        const timeout = setTimeout(() => onReady?.(), 300);
+        return () => clearTimeout(timeout);
+    }, [containerWidth, onReady]);
+
     useAnimatedReaction(
         () => animatedZoom.value,
         (z) => {
