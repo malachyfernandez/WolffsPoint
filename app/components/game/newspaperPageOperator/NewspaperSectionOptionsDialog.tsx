@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { View } from 'react-native';
 import { Trash2 } from 'lucide-react-native';
-import { NewspaperDividerStyle, NewspaperTitleFont } from '../../../../types/usepaper';
+import { NewspaperDividerStyle, NewspaperSectionDefaults, NewspaperTitleFont } from '../../../../types/usepaper';
 import {
     NEWSPAPER_DIVIDER_STYLES,
     NEWSPAPER_TITLE_FONTS,
+    resolveDividerStyle,
+    resolveTitleFont,
 } from '../../../../utils/newspaperSections';
 import Row from '../../layout/Row';
 import AppButton from '../../ui/buttons/AppButton';
@@ -15,6 +17,8 @@ import FontText from '../../ui/text/FontText';
 import VisualDropdown from '../../ui/forms/VisualDropdown';
 import DeleteConfirmationDialog from '../DeleteRoleConfirmationDialog';
 import { useNewspaperFonts } from '../../../../hooks/useNewspaperFonts';
+import { useValue } from 'hooks/useData';
+import { useToast } from 'contexts/ToastContext';
 
 interface NewspaperSectionOptionsDialogProps {
   isOpen: boolean;
@@ -86,7 +90,12 @@ const NewspaperSectionOptionsDialog = ({
   canDelete,
 }: NewspaperSectionOptionsDialogProps) => {
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const { showToast } = useToast();
+  const [sectionDefaults, setSectionDefaults] = useValue<NewspaperSectionDefaults>('newspaperSectionDefaults');
   useNewspaperFonts();
+
+  const defaultTitleFont = resolveTitleFont({ titleFont: sectionDefaults?.value?.titleFont });
+  const defaultDividerStyle = resolveDividerStyle({ dividerStyle: sectionDefaults?.value?.dividerStyle });
 
   const fontOptions = NEWSPAPER_TITLE_FONTS.map((f) => ({
     value: f.value,
@@ -118,6 +127,14 @@ const NewspaperSectionOptionsDialog = ({
                 value={titleFont}
                 onValueChange={(v) => onTitleFontChange(v as NewspaperTitleFont)}
                 placeholder="Select a title font"
+                defaultValue={defaultTitleFont}
+                onSetDefault={(v) => {
+                  setSectionDefaults({
+                    titleFont: v as NewspaperTitleFont,
+                    dividerStyle: defaultDividerStyle,
+                  });
+                  showToast('Default heading font updated');
+                }}
               />
               <VisualDropdown
                 label="Divider Style"
@@ -125,6 +142,14 @@ const NewspaperSectionOptionsDialog = ({
                 value={dividerStyle}
                 onValueChange={(v) => onDividerStyleChange(v as NewspaperDividerStyle)}
                 placeholder="Select a divider style"
+                defaultValue={defaultDividerStyle}
+                onSetDefault={(v) => {
+                  setSectionDefaults({
+                    titleFont: defaultTitleFont,
+                    dividerStyle: v as NewspaperDividerStyle,
+                  });
+                  showToast('Default divider style updated');
+                }}
               />
             </View>
             <View className="border-border/20 mt-5 border-t pt-4">

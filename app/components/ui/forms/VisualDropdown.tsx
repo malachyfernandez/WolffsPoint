@@ -17,6 +17,12 @@ interface VisualDropdownProps {
     onValueChange: (value: string) => void;
     placeholder?: string;
     label?: string;
+    /** Option value marked as the user's default — shows a "Default" badge
+     *  in the top right of that option row. */
+    defaultValue?: string;
+    /** When provided, renders a "Set as default" row at the bottom of the
+     *  dropdown which is called with the currently selected value. */
+    onSetDefault?: (value: string) => void;
 }
 
 /**
@@ -29,6 +35,8 @@ const VisualDropdown = ({
     onValueChange,
     placeholder = 'Select an option',
     label,
+    defaultValue,
+    onSetDefault,
 }: VisualDropdownProps) => {
     const [isOpen, setIsOpen] = useState(false);
     const triggerRef = useRef<any>(null);
@@ -45,8 +53,24 @@ const VisualDropdown = ({
 
     const renderOption = (option: VisualDropdownOption) => {
         const isSelected = option.value === value;
+        const isDefault = option.value === defaultValue;
+        const cornerControl = isDefault ? (
+            <View pointerEvents="none" className="absolute right-3 top-2">
+                <FontText variant="subtext" className="text-xs">
+                    Default
+                </FontText>
+            </View>
+        ) : onSetDefault ? (
+            <Pressable
+                onPress={() => onSetDefault(option.value)}
+                className={`absolute right-3 top-2 rounded-full border border-border bg-background px-2.5 py-0.5 hover:bg-border/10 active:bg-border/10 transition-all ${Platform.OS === 'web' ? 'opacity-0 group-hover:opacity-100' : ''}`.trim()}>
+                <FontText weight="medium" className="text-xs">
+                    Set as default
+                </FontText>
+            </Pressable>
+        ) : null;
         return (
-            <View key={option.value} className="w-full">
+            <View key={option.value} className="w-full relative group">
                 {Platform.OS === 'web' ? (
                     React.createElement(
                         'button',
@@ -99,46 +123,42 @@ const VisualDropdown = ({
                         </View>
                     </Pressable>
                 )}
+                {cornerControl}
             </View>
         );
     };
 
     return (
         <>
-            {label && (
-                <FontText weight="medium" className="text-sm opacity-70 mb-1.5">
-                    {label}
-                </FontText>
-            )}
-            <Pressable
-                ref={triggerRef as any}
-                onPress={() => setIsOpen(true)}
-                className="border-subtle-border bg-background w-full flex-row items-center justify-between rounded-lg border px-3 py-3">
-                <View className="min-w-0 flex-1">
-                    {selectedOption ? (
-                        <View className="flex-row items-center gap-2">
-                            <View className="min-w-0 flex-1">
-                                {selectedOption.preview}
+            <View className="flex-col gap-1.5">
+                {label && (
+                    <FontText weight="medium" className="text-sm opacity-70">
+                        {label}
+                    </FontText>
+                )}
+                <Pressable
+                    ref={triggerRef as any}
+                    onPress={() => setIsOpen(true)}
+                    className="border-subtle-border bg-background w-full flex-row items-center justify-between rounded-lg border px-3 py-3">
+                    <View className="min-w-0 flex-1">
+                        {selectedOption ? (
+                            <View className="flex-row items-center gap-2">
+                                <View className="min-w-0 flex-1">
+                                    {selectedOption.preview}
+                                </View>
                             </View>
-                        </View>
-                    ) : (
-                        <FontText className="opacity-60">{placeholder}</FontText>
-                    )}
-                </View>
-                <ChevronDown size={18} color="rgb(46, 41, 37)" />
-            </Pressable>
+                        ) : (
+                            <FontText className="opacity-60">{placeholder}</FontText>
+                        )}
+                    </View>
+                    <ChevronDown size={18} color="rgb(46, 41, 37)" />
+                </Pressable>
+            </View>
 
             <ConvexDialog.Root isOpen={isOpen} onOpenChange={setIsOpen}>
                 <ConvexDialog.Portal>
                     <ConvexDialog.Overlay />
                     <ConvexDialog.Content isSwipeable={false} className="max-w-sm">
-                        <Pressable
-                            onPress={() => setIsOpen(false)}
-                            className="bg-text-inverted/10 hover:bg-text-inverted/15 absolute right-0 top-0 z-10 h-10 w-10 items-center justify-center rounded-full">
-                            <View>
-                                <FontText weight="bold" color="white" className="text-lg">✕</FontText>
-                            </View>
-                        </Pressable>
                         <View className="flex-col gap-1 pt-2">
                             {options.map(renderOption)}
                         </View>

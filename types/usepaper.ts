@@ -28,6 +28,12 @@ export interface NewspaperSection {
     style?: NewspaperSectionStyle;
 }
 
+/** Per-user defaults applied when creating new newspaper sections. */
+export interface NewspaperSectionDefaults {
+    titleFont: NewspaperTitleFont;
+    dividerStyle: NewspaperDividerStyle;
+}
+
 export interface Usepaper {
     columns: string[];
     sections?: NewspaperSection[];

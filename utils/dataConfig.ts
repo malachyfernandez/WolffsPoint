@@ -115,6 +115,11 @@ export const DATA_CONFIG: DataConfigType = {
     privacy: 'PUBLIC',
     defaultValue: {},
   },
+  newspaperSectionDefaults: {
+    type: 'variable',
+    privacy: 'PRIVATE',
+    defaultValue: { titleFont: 'libreBaskerville', dividerStyle: 'thin' },
+  },
   savedFunctions: {
     type: 'variable',
     privacy: 'PRIVATE',
