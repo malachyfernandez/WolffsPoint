@@ -6,6 +6,7 @@ import Column from '../layout/Column';
 import Row from '../layout/Row';
 import AppButton from '../ui/buttons/AppButton';
 import FontText from '../ui/text/FontText';
+import LoadingContainer from '../ui/loading/LoadingContainer';
 import NewspaperWritingView from './NewspaperWritingView';
 import { useFindListItems, useListSet } from 'hooks/useData';
 import { useGameOperatorUserId } from '../../../hooks/useGameOperatorUserId';
@@ -213,15 +214,13 @@ const NewspaperPageOPERATOR = ({ currentUserId, gameId }: NewspaperPageOPERATORP
         );
     };
 
-    if (!isReady) {
-        return (
-            <Column className='gap-4 min-h-190 items-center justify-center'>
-                <FontText variant='subtext'>Loading newspaper…</FontText>
-            </Column>
-        );
-    }
-
     return (
+        <LoadingContainer
+            dependencies={[isReady]}
+            loadingText='Loading newspaper'
+            className='min-h-190'
+            keepMounted={false}
+        >
         <Column className='gap-4 py-3'>
             <View className='mt-2 -mb-2 w-full'>
                 <OperatorDayNavigation
@@ -289,6 +288,7 @@ const NewspaperPageOPERATOR = ({ currentUserId, gameId }: NewspaperPageOPERATORP
                 </View>
             </Column>
         </Column>
+        </LoadingContainer>
     );
 };
 

@@ -121,7 +121,7 @@ const TownSquarePagePLAYER = ({ gameId, currentProfile }: TownSquarePagePLAYERPr
 
     return (
         <LoadingContainer
-            dependencies={[]}
+            dependencies={[!isLoading]}
             loadingText='Loading Town Square'
             className='flex-1 min-h-[760px]'
         >

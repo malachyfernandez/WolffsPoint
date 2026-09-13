@@ -9,6 +9,7 @@ import { UserTableItem } from '../../../types/playerTable';
 import { getGameScopedKey } from '../../../utils/multiplayer';
 import { getNewserAssignmentKey, NewserAssignment } from '../../../utils/newspaperControl';
 import LoadingText from '../ui/loading/LoadingText';
+import LoadingContainer from '../ui/loading/LoadingContainer';
 import { useTownSquareAuthorIdentity } from './townSquare/TownSquareAuthorIdentity';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
@@ -26,15 +27,12 @@ interface PhoneBookPageOPERATORProps {
 const PhoneBookPageOPERATOR = ({ gameId, currentUserId, onBack }: PhoneBookPageOPERATORProps) => {
     const { players, isLoading } = useAllPlayers({ gameId, currentUserId });
 
-    if (isLoading) {
-        return (
-            <Column className='gap-4 flex-1 min-h-[760px] items-center justify-center'>
-                <LoadingText text='Loading phone book' />
-            </Column>
-        );
-    }
-
     return (
+        <LoadingContainer
+            dependencies={[!isLoading]}
+            loadingText='Loading phone book'
+            className='min-h-[760px]'
+        >
         <Column className='gap-6 pb-6'>
             <Pressable onPress={onBack} className='self-start py-1'>
                 <Row className='gap-4 items-center'>
@@ -46,6 +44,7 @@ const PhoneBookPageOPERATOR = ({ gameId, currentUserId, onBack }: PhoneBookPageO
             <PhoneBookHeader />
             <PhoneBookGrid gameId={gameId} players={players} />
         </Column>
+        </LoadingContainer>
     );
 };
 

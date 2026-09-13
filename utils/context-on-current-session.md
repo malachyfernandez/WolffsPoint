@@ -1,132 +1,169 @@
-# Context: Read-only preview improvements for Markdown Editor history preview
+# Context: LoadingContainer `keepMounted` Conversion + Site-wide Loading Audit
 
-## Task
+## The task (verbatim request)
 
-When previewing a historical version of a markdown document in the `ViewOnlyPreviewModal`, the `MainContent` component is rendered with `readOnly` and `activeTab="preview"`. There are three problems to fix:
+> "let's just go around and one by one replace them with loading containers that have it always set to mount. set that to the new default once u do and remove the prop explicitly setting it.
+>
+> Then go through and do a comprehensive audit of the whole site and add them where it makes sense. ideally most every screen that has something load in should use it. most places using loading text were just made before this component was made."
 
-### 1. Toast on typing in read-only editor
+Broken down:
 
-When the user is on the **editing tab** of a read-only preview and tries to type, nothing happens (the textarea is `editable={false}`). Instead, a toast should appear at the bottom of the screen saying "Preview only" (or similar). Use the existing toast system:
+1. Convert every existing `LoadingContainer` call site so children stay mounted while loading (the new `keepMounted` behavior).
+2. Make `keepMounted` the **default** in `LoadingContainer` (so `keepMounted` no longer needs to be passed — remove the explicit prop at call sites). Consider whether to keep an opt-out prop (e.g. `keepMounted={false}`) for any call site that genuinely needs unmount semantics.
+3. Audit the entire app for places that render loading states manually (direct `<LoadingText>` usage, `=== undefined` early returns, custom `isLoading`/`isSyncing`/`showLoading` gates, `ActivityIndicator`, etc.) and wrap them in `LoadingContainer` where it makes sense.
 
-- `contexts/ToastContext.tsx` exports `useToast()` which provides `showToast(message: string)`.
-- The `ToastProvider` is mounted in `app/_layout.tsx`.
-- Example usage: `const { showToast } = useToast(); showToast("Preview only");`
-- The toast auto-hides after 3 seconds.
-- Reference doc: `utils/about-parts-of-this-codebase/how-to-undo.md` (mentions toast integration with undo system, but the toast itself is simple `showToast`).
+## Project background
 
-The read-only editor pane is `TownSquareComposerEditorPane` at `app/components/game/townSquare/TownSquareComposerEditorPane.tsx`. It receives `readOnly` prop and sets `editable={!readOnly}` on the `TextInput`/`FontTextInput`. When `readOnly`, `onChangeText` is set to `undefined`. To intercept typing attempts, you need to capture key presses even when `editable={false}` — this may require keeping `editable` true but intercepting `onChangeText` to show the toast instead of actually changing the text, OR adding a `onKeyPress` handler that fires the toast. On web, the underlying element is a `<textarea>` with `disabled` or `readOnly` attribute; you may need a different approach (e.g., wrapping with a keydown listener).
+- **WolffsPoint** — React Native / Expo web app, Convex backend, TypeScript `strict: true`, Reanimated, NativeWind `className` styling.
+- Repo root: `/Users/malachyfernandez/Documents/1-programing/apps-and-sites/wolfspoint/wolffspoint`
+- Dev server: `npm run web` (expo start --web) → http://localhost:8081
+- Typecheck: `npx tsc --noEmit --project tsconfig.json`
+- AGENTS.md rules worth knowing: read `convex/_generated/ai/guidelines.md` before touching `convex/`; all editable dialogs need an unsaved-changes confirmation (canonical impl: `app/components/game/MarkdownEditorDialog.tsx`).
 
-### 2. Allow tab switching in read-only preview
+## Three game roles
 
-Currently when `readOnly` is true, the `TabSelector` and `TabbedLayout` both pass `onValueChange={readOnly ? () => {} : onTabChange}`. This **disables tab switching entirely**. The user should be able to switch between "Editing" and "Preview" tabs even in read-only mode — they just can't edit the content.
+`GamePage` picks a role page after loading game/user/newser-assignment data:
 
-Files to fix:
-- `app/components/game/markdownEditor/TabSelector.tsx` — line 11: `onValueChange={onValueChange}` (already passes through, but `MainContent` passes `readOnly ? () => {} : onTabChange` at line 84).
-- `app/components/game/markdownEditor/MainContent.tsx` — line 84: `<TabSelector value={activeTab} onValueChange={readOnly ? () => {} : onTabChange} />` — should just pass `onTabChange` always.
-- `app/components/game/markdownEditor/TabbedLayout.tsx` — line 65: `<Tabs value={activeTab} onValueChange={readOnly ? () => {} : onTabChange} ...>` — should just pass `onTabChange` always.
+- **Operator** (`OperatorGamePage`) — owns the game. Tabs: players, config (roles), nightly, forum, newspaper, rulebook (config).
+- **Newser** (`NewserGamePage`) — valid newser assignment, not operator. Tabs: townSquare, newspaper, ruleBook, phoneBook. Wrapped in `ParticipantAccessGate`.
+- **Player** (`PlayerGamePage`) — everyone else. Tabs: townSquare, newspaper, eyesOnly, ruleBook, phoneBook. Wrapped in `PlayerAccessGate`.
 
-The `ViewOnlyPreviewModal` in `MarkdownEditorDialog.tsx` (lines 655-681) currently hardcodes `activeTab="preview"` and `onTabChange={() => {}}`. This needs to be changed to use a local state for `activeTab` so the user can switch tabs. The `onTabChange` callback should be a real setter.
+Each role page keeps ALL tab bodies mounted; inactive tabs are hidden via `display: none` (deliberate — preserves dialog state across tab switches).
 
-### 3. Open script editor in read-only mode from preview
+## LoadingContainer (`app/components/ui/loading/LoadingContainer.tsx`)
 
-When the user moves their cursor into a `/*script ... script*/` block in the editing tab of the read-only preview, the "Edit Code" button should appear (currently it's hidden when `readOnly` via `cursorScriptBlock && !readOnly` at line 515 of `MarkdownEditorDialog.tsx`). Clicking it should open `ScriptEditorDialog` in **read-only mode**.
-
-The `ScriptEditorDialog` already supports `readOnly` prop (see lines 87, 552, and many usages throughout). When `readOnly`:
-- The close button just closes (no unsaved-changes check).
-- Save/SaveHistory pill is hidden.
-- Block editing actions are no-ops.
-- Mode switcher is hidden.
-- Text editor is not editable.
-- Move/clone buttons are hidden.
-- The bottom action area shows a "Close" button instead of Save/Done.
-
-The `ScriptEditorWithSources` wrapper (lines 121-141 of `MarkdownEditorDialog.tsx`) already passes `readOnly` through to `ScriptEditorDialog`.
-
-The `ViewOnlyPreviewModal` content (lines 655-681) currently renders `MainContent` with `readOnly` but does NOT render a `ScriptEditorWithSources` dialog. The parent `MarkdownEditorDialog` does render a `ScriptEditorWithSources` (lines 581-626) but it's shared with the main editor and not wired to the preview's cursor.
-
-**Approach:** The `ViewOnlyPreviewModal` children are rendered as `children` prop. The preview's `MainContent` needs:
-- A local `activeTab` state (so user can switch tabs).
-- A local `editingScriptBlock` state and `cursorScriptBlock` memo (to detect when cursor is in a script block).
-- A local `isScriptDialogOpen` state.
-- A `ScriptEditorWithSources` (or `ScriptEditorDialog`) rendered with `readOnly` and the script block content.
-- The `onScript` and `handleEditCode` handlers wired up.
-
-This is complex because `MainContent` expects many props. The simplest approach is to create a small wrapper component (e.g., `ReadOnlyMarkdownPreview`) that encapsulates the `activeTab` state, script block detection, and script dialog rendering, so the `ViewOnlyPreviewModal` children can use it instead of inline `MainContent`.
-
-## Key files
-
-### Toast system
-- `contexts/ToastContext.tsx` — `useToast()` hook, `ToastProvider`, `showToast(message)`.
-- `app/_layout.tsx` — mounts `ToastProvider`.
-
-### Markdown editor
-- `app/components/game/MarkdownEditorDialog.tsx` — main dialog, renders `MainContent`, `ScriptEditorWithSources`, `ViewOnlyPreviewModal`.
-- `app/components/game/markdownEditor/MainContent.tsx` — layout component, passes `readOnly` to `TabSelector`, `TabbedLayout`, `SideBySideLayout`.
-- `app/components/game/markdownEditor/TabSelector.tsx` — tab switcher (Editing/Preview).
-- `app/components/game/markdownEditor/TabbedLayout.tsx` — tabbed layout with editing + preview panes.
-- `app/components/game/markdownEditor/SideBySideLayout.tsx` — side-by-side layout (desktop, width > 800).
-- `app/components/game/townSquare/TownSquareComposerEditorPane.tsx` — the actual textarea/editor pane, receives `readOnly`.
-
-### Script editor
-- `app/script/editor/ScriptEditorDialog.tsx` — full script editor, supports `readOnly` prop.
-- `app/components/game/MarkdownEditorDialog.tsx` lines 121-141 — `ScriptEditorWithSources` wrapper.
-
-### Preview modal
-- `app/components/ui/dialog/ViewOnlyPreviewModal.tsx` — generic view-only modal shell with Cancel/Replace buttons.
-
-### Script block detection (in MarkdownEditorDialog)
-- `cursorScriptBlock` memo (line 394) — detects `/*script ... script*/` block at current cursor position.
-- `handleEditCode` (line 399) — opens script editor for the block at cursor.
-- `editingScriptBlock` state (line 186) — `{ start, end, content }` of the script block being edited.
-
-## Current state of read-only preview rendering
-
-In `MarkdownEditorDialog.tsx` lines 647-683, the `ViewOnlyPreviewModal` children block:
+Signature:
 
 ```tsx
-{previewEntry && (
-  <InputOptionsProvider gameId={gameId} showInputs>
-    <MainContent
-      includeTitle={includeTitle}
-      draftTitle={(previewEntry.value as { title?: string })?.title ?? ''}
-      draftBody={(previewEntry.value as { markdown: string })?.markdown ?? ''}
-      isPreviewSideBySide={isPreviewSideBySide}
-      activeTab="preview"              // ← hardcoded, can't switch
-      showInputs={showInputs}
-      previewInputState={{}}
-      setPreviewInputState={() => {}}
-      setDraftTitle={() => {}}
-      setDraftBody={() => {}}
-      setSelection={() => {}}
-      onTabChange={() => {}}           // ← no-op, can't switch
-      onBold={() => {}}
-      onItalic={() => {}}
-      onLink={() => {}}
-      onImage={() => {}}
-      onInput={() => {}}
-      onMore={() => {}}
-      centered={centered}
-      readOnly                          // ← disables tab switching
-    />
-  </InputOptionsProvider>
-)}
+<LoadingContainer
+  dependencies={DependencyItem[]}   // undefined | {state:{isSyncing:true}} | false → loading
+  loadingText="Loading X"
+  loadingDelayMs?                   // delay before showing the text
+  className?
+  fadeInDuration?                   // default 300
+  keepMounted?                      // NEW — see below
+  onReady?                          // fires fadeInDuration ms after isLoading→false
+>
 ```
 
-## Constraints
+Two modes:
 
-- Do NOT break the non-read-only editor behavior.
-- The toast should use `useToast()` from `contexts/ToastContext.tsx`.
-- Tab switching must work in read-only mode (both `TabSelector` and `TabbedLayout`/`SideBySideLayout`).
-- The script editor opened from read-only preview must itself be read-only (pass `readOnly` to `ScriptEditorDialog`).
-- The `ViewOnlyPreviewModal` already has Cancel/Replace buttons at the bottom; the script editor dialog opens as a separate modal on top.
-- `SideBySideLayout` (desktop) shows both editing and preview side-by-side, so tab switching isn't needed there — but the editing pane still needs the toast-on-type behavior.
-- The `InputOptionsProvider` wrapping is needed for script input rendering in preview.
+- **Default (`keepMounted=false`)**: while `isLoading`, returns only centered `LoadingText`; children do not mount. When ready, children mount with `entering={FadeIn.duration(fadeInDuration)}`.
+- **`keepMounted=true`** (new, added this session): children are ALWAYS mounted inside `<Animated.View style={{opacity: contentOpacity, pointerEvents}}>`; a shared value fades 0→1 over `fadeInDuration` once deps resolve (can't use `entering` — children are already mounted by then). While `isLoading`, an `absolute inset-0` overlay shows `LoadingText` and `pointerEvents: 'none'` blocks interaction.
 
-## Tech stack
-- Expo SDK 54, React Native Web, Expo Router
-- Convex backend, Clerk auth
-- HeroUI Native dialogs (`heroui-native`)
-- NativeWind / Tailwind styling
-- `lucide-react-native` icons
-- Reanimated for toast animations
-- TypeScript
+Why `keepMounted` is safe here: `strict` TS means hooks return `T | undefined` and all children already handle it (verified — no `!`/`as` on dep data). Remaining behavioral differences: children effects/subscriptions run during load; invisible children occupy layout height (actually reduces jump); wrong intermediate states (e.g. `isGameDeleted` flash) are invisible under opacity 0.
+
+## BodyReadiness system (built this session — interacts with the task)
+
+Game-page body uses a registration system so the outer container only fades in once ALL nested loaders finish loading AND finish their fades.
+
+- `contexts/BodyReadinessContext.tsx`
+  - `BodyReadinessProvider({ outerReady, onAllReady, children })` — tracks `pendingRef: Map<id,label>`; fires `onAllReady` once `outerReady && pending.size === 0` (latches via `firedRef`).
+  - `registerContainer(label?) → id`, `reportReady(id)`, `unregisterContainer(id)`.
+  - `BodyReportScope({ enabled, children })` — context flag; descendants only register when `enabled`. Role pages wrap each tab body: `<BodyReportScope enabled={activeTab === 'x'}>` — REQUIRED because `display:none` children never get `onLayout` (deadlocked `NewspaperDayView` in the inactive newspaper tab was the bug this fixed).
+- `hooks/useBodyLoadReport.ts`
+  - `useBodyLoadReport(isLoading, fadeDuration = 300, label = 'component')` — registers on mount (if `enabled`), reports ready `fadeDuration` ms after `isLoading`→false, unregisters on unmount. No-op when no provider above.
+  - `LoadingContainer` calls it internally: `useBodyLoadReport(isLoading, fadeInDuration, \`LoadingContainer(${loadingText})\`)`. When a `LoadingContainer` sits ABOVE the provider (like the GamePage outer one), it's a no-op — no deadlock.
+
+### Current GamePage gate structure (`app/components/game/GamePage.tsx`)
+
+```tsx
+const [allLoadsDone, setAllLoadsDone] = useState(false);
+const [mountSettled, setMountSettled] = useState(false);   // 50ms after mount — guards premature "zero pending" fire
+// ...
+<LoadingContainer
+  dependencies={[allLoadsDone]}
+  loadingText="Loading game"
+  className="flex-1"
+  keepMounted                          // ← will become the default; remove this prop then
+  onReady={handleFadeComplete}>        // → calls MainPage onReady once → TopSiteBar appears
+  <BodyReadinessProvider key={gameId} outerReady={mountSettled} onAllReady={() => setAllLoadsDone(true)}>
+    <ShadowScrollView>
+      {isOperator ? <OperatorGamePage/> : isNewser ? <NewserGamePage/> : <PlayerGamePage/>}
+    </ShadowScrollView>
+  </BodyReadinessProvider>
+</LoadingContainer>
+```
+
+`MainPage` holds `isGameBodyReady` and conditionally renders `TopSiteBar`'s code/home controls on it (fade was removed; it appears when the body fade completes). `GameTabBar` also has no fade now — it rides the single outer fade.
+
+### Components already reporting via `useBodyLoadReport`
+
+| File | Reports |
+|---|---|
+| `LoadingContainer.tsx` | `isLoading` + fadeInDuration |
+| `ParticipantAccessGate.tsx` | `!hasLoaded` (userData + profile sync) |
+| `PlayerAccessGate.tsx` | `!hasLoaded` (userData, operator, userTable, profile, customUserInfo) |
+| `PlayerPageOPERATOR.tsx` | `showLoading` (syncing + hasInitiallyLoaded + all columns ready) |
+| `RolesPageOPERATOR.tsx` | `isSyncing \|\| !hasInitiallyLoaded` |
+| `NightlyPageOPERATOR.tsx` | `showLoading` |
+| `NewspaperDayView.tsx` | `!isFullyReady` (data + image preload + layout `onReady` from `NewspaperZoomableView`) |
+| `RuleBookPagePLAYER.tsx` | `isLoading` (3 queries undefined) |
+| `PhoneBookPagePLAYER.tsx` | `isLoading` (profile sync + phonebook) |
+
+## Existing `LoadingContainer` call sites (the conversion list)
+
+1. `app/components/game/GameList.tsx:24` — `dependencies={[archivedGames]}`, "Loading games"
+2. `app/components/game/JoinedGameListItem.tsx:46` — `dependencies={[gameInfo]}`, "Loading games"
+3. `app/components/game/ProfileInfo.tsx:46` — `dependencies={[userData, customUserInfo]}`, "Loading profile..."
+4. `app/components/game/ReadOnlyNewspaperPagePLAYER.tsx:89` — `dependencies={[scheduleRecord.record]}`, "Loading newspaper"
+5. `app/components/game/TownSquarePagePLAYER.tsx:123` — `dependencies={[]}` (always ready; children take an `isLoading` prop instead), "Loading Town Square"
+6. `app/components/game/GamePage.tsx:141` — the new `keepMounted` gate
+
+Note: `TownSquarePagePLAYER` passes `dependencies={[]}` — it's effectively never loading via the container (its own `isLoading` is passed down to children). Decide during conversion whether it should report its real `isLoading` instead.
+
+## Audit candidates — direct `LoadingText` / manual loading returns
+
+These render loading UI without `LoadingContainer` (likely predate it). Evaluate each for conversion:
+
+- `app/components/MainPage.tsx:91` — `isActiveGameLoading` → "Loading"
+- `app/components/game/GamePage.tsx:104` — early return while game/role data loads
+- `app/components/game/NightlyPageOPERATOR.tsx:323` — "Loading nightly data" (custom `showLoading` logic)
+- `app/components/game/RolesPageOPERATOR.tsx:61` — "Loading roles"
+- `app/components/game/PlayerPageOPERATOR.tsx:90` — "Loading players" (custom `showLoading` + opacity-0 pre-mount pattern already)
+- `app/components/game/PhoneBookPagePLAYER.tsx:71,230` — "Loading phone book" / "Loading players"
+- `app/components/game/RuleBookPagePLAYER.tsx:62` — "Loading rule book"
+- `app/components/game/NewspaperDayView.tsx:142,151` — two "Loading newspaper" states (assets + layout) — has its own sophisticated readiness; probably leave as-is or only lightly touch
+- `app/components/game/PlayerAccessGate.tsx:117,125` — gate loading
+- `app/components/game/ParticipantAccessGate.tsx:78` — gate loading
+- `app/components/game/ReadOnlyNewspaperPagePLAYER.tsx:154` — inner "Loading newspaper" (inside the already-converted container — nested state)
+- `app/components/game/PhoneBookPageOPERATOR.tsx:32,110`
+- `app/components/game/townSquare/TownSquareThreadListView.tsx:138` — "Loading threads" (children already get `isLoading`; may be fine)
+- `app/components/game/AllGamesPage.tsx:98` — "Loading games"
+
+Also grep for other patterns during the audit: `isSyncing`, `=== undefined` early returns, `ActivityIndicator`, `isLoading ?` in JSX.
+
+## Constraints / decisions / gotchas
+
+- **User wants a single outer fade**: everything loads invisible, then the whole tab+body container fades in once. Inner components keep their own fades — they play during the hidden phase or on tab switch.
+- **No fixed-delay coordination**: readiness is event-driven (register/report), not timers. The only deliberate delays: `mountSettled` 50ms registration window, `fadeDuration` report delay, and the loading UX itself.
+- **Inactive tabs must not gate** — keep `BodyReportScope enabled={activeTab === ...}` wrappers; `display:none` children can never finish layout-dependent readiness.
+- **Don't unmount children of the outer gate** — deadlock (nothing mounts → nothing reports → never ready).
+- **Hooks order**: all hooks in `LoadingContainer` are declared before its early return — keep it that way when editing.
+- **Safari iOS**: Reanimated `entering={FadeIn}` caused a post-animation flash on the top bar earlier; shared-value `withTiming` fades were the workaround. `NewspaperZoomableView` also has a comment that Safari iOS may not fire `onLayout` inside `opacity:0` containers — its fallback requires `containerWidth` first, which itself needs `onLayout`; keepMounted relies on `onLayout` working under `opacity:0` for the newspaper tab when active (verify on Safari iOS).
+- **Remounting caveat**: don't restructure `LoadingContainer`'s ready/loading branches into different root elements for the same children — React would unmount/remount the subtree and reset state. The current keepMounted impl keeps one stable wrapper.
+- Debug logs (`[BodyReadiness]`, `[GamePage]`, `[MainPage]`, `[LoadingContainer]`, `[GameTabBar]`, `[FadeInAfterDelay]`) were all removed at user request.
+- Dev server may already be running on 8081 (a previous instance on 8086 was killed). Expo warns about several out-of-date packages — pre-existing, unrelated.
+- A `.backup` file exists: `app/components/game/PlayerPageOPERATOR.tsx.backup` — not part of the build.
+
+## Definition of done for the task
+
+1. `keepMounted` behavior is the default in `LoadingContainer`; explicit prop removed at call sites (or inverted to an opt-out).
+2. All 5 pre-existing call sites verified working with mounted-children mode.
+3. Audit pass: every screen with a meaningful loading state uses `LoadingContainer` (or a deliberate reason not to).
+4. `npx tsc --noEmit` clean; site runs at http://localhost:8081; loading → single fade works for operator, newser, and player paths.
+
+## Resolution (completed)
+
+- `LoadingContainer.keepMounted` now defaults to `true` (opt out via `keepMounted={false}`). While loading: children mounted at opacity 0, `pointerEvents='none'`, `absolute inset-0 min-h-24` overlay with `LoadingText`. Opacity resets to 0 instantly if a dep goes back to loading.
+- `GamePage`: role-data early return folded into the container — `dependencies={[!isRoleDataLoading, allLoadsDone]}`, placeholder `<View className="min-h-[400px]"/>` while role resolves, provider `outerReady={mountSettled && !isRoleDataLoading}` so late-mounting role pages still register before the gate can fire.
+- Converted call sites: `MainPage` (activeGameId sync), `AllGamesPage` (gamesTheyJoined+archivedGames+myGames), `TownSquarePagePLAYER` (now `!isLoading` from useTownSquareForum instead of `[]`), `RuleBookPagePLAYER`, `PhoneBookPagePLAYER`, `PhoneBookPageOPERATOR`, `RolesPageOPERATOR`, `PlayerPageOPERATOR`, `NightlyPageOPERATOR` (keeps deliberate "initial load only" semantics — deps are `[hasInitiallyLoaded, areAllColumnsReady]`), `NewspaperPageOPERATOR`, `NewspaperPageNEWSER` (both `dependencies={[isReady]}` — also gains body-readiness reporting they lacked).
+- Deliberately NOT converted: `PlayerAccessGate`/`ParticipantAccessGate` (multi-branch render-prop gates — children need `matchingPlayer`/claimed profile, can't mount early; still report via `useBodyLoadReport`), `NewspaperDayView` (custom asset+layout readiness), `TownSquareThreadListView` "Loading threads" + `ReadOnlyNewspaperPagePLAYER` inner "Loading newspaper" (nested states), phone-book grid overlays (per-card readiness), `PlayerProfilePreviewCard`/`TownSquareAuthorIdentity` (inline skeletons), upload `ActivityIndicator`s (button spinners), `app/index.tsx` (auth gate).
+- `useBodyLoadReport` calls removed from pages now wrapped in LoadingContainer (it reports internally). Verified: `tsc --noEmit` clean, Metro bundle compiles on :8081.
+
+## Bugfix: blank newspaper viewing tab (operator first load)
+
+- Symptom: operator opens Newspaper tab → viewing content permanently blank.
+- Cause 1 (latent bug in `LayoutStateAnimatedView`): in `phase === 'waiting'`, `displayedContent` rendered the `displayedOption` snapshot captured at swap time. If `selectedDayOwner.isLoading` was still true then, the frozen children were the loading branch — `NewspaperDayView` never mounted → `readyDayKey` never set → `Option.isReady` never true → stuck at `opacity:0` forever. Fixed: `displayedContent` now renders live `currentOption.children` whenever the ref's option matches the current state.
+- Cause 2 (regression from keepMounted default): `NewspaperPageOPERATOR`/`NEWSER` containers mounted `LayoutStateAnimatedView` at `selectedDayIndex=0` before the stored-day seed landed, forcing a `0→N` transition into `waiting` while the new day's owner was still resolving. Fix: `keepMounted={false}` on both newspaper page containers — their subtree's readiness is layout-dependent (`onLayout`), so mounting invisible buys nothing and the old mount timing is restored.
+- Same freeze could previously hit day-to-day switching on a slow connection (target-day owner not resolved within the ~200ms exit animation) — the `displayedContent` fix covers that too.

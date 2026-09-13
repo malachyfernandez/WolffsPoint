@@ -13,7 +13,7 @@ import LayoutStateAnimatedView, { fromBottom } from './ui/LayoutStateAnimatedVie
 import FontTextInput from './ui/forms/FontTextInput';
 import JoinHandler from './ui/forms/JoinHandler';
 import FadeInAfterDelay from './ui/loading/FadeInAfterDelay';
-import LoadingText from './ui/loading/LoadingText';
+import LoadingContainer from './ui/loading/LoadingContainer';
 
 
 
@@ -73,8 +73,6 @@ const MainPage: React.FC<MainPageProps> = ({
     const isInAGame = activeGameId.value !== "";
     const currentScreen: ScreenState = isInAGame ? 'game' : 'allGames';
 
-    const isActiveGameLoading = (activeGameId.state.isSyncing == true)
-
     // Reset body readiness when entering/leaving a game
     useEffect(() => {
         setIsGameBodyReady(false);
@@ -86,12 +84,11 @@ const MainPage: React.FC<MainPageProps> = ({
             <View className='w-screen h-screen p-safe'>
 
 
-                {isActiveGameLoading ? (
-                    <View className='flex-1 items-center justify-center'>
-                        <LoadingText text="Loading" />
-                    </View>
-                ) : (
-
+                <LoadingContainer
+                    dependencies={[activeGameId]}
+                    loadingText="Loading"
+                    className='flex-1'
+                >
                     <LayoutStateAnimatedView.Container stateVar={currentScreen} className='flex-1'>
                         <LayoutStateAnimatedView.Option page={1} stateValue='allGames'>
                             <AllGamesPage
@@ -112,8 +109,7 @@ const MainPage: React.FC<MainPageProps> = ({
                             </LayoutStateAnimatedView.Option>
                         </LayoutStateAnimatedView.OptionContainer>
                     </LayoutStateAnimatedView.Container>
-
-                )}
+                </LoadingContainer>
 
 
             </View >

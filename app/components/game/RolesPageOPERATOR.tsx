@@ -6,12 +6,10 @@ import RoleTable from './RoleTable';
 import RoleAddDialog from './RoleAddDialog';
 import AppButton from '../ui/buttons/AppButton';
 import FontText from '../ui/text/FontText';
-import LoadingText from '../ui/loading/LoadingText';
-import { useBodyLoadReport } from '../../../hooks/useBodyLoadReport';
+import LoadingContainer from '../ui/loading/LoadingContainer';
 import { useList } from '../../../hooks/useData';
 import { useUndoRedo, useCreateUndoSnapshot } from '../../../hooks/useUndoRedo';
 import { RoleTableItem } from '../../../types/roleTable';
-import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { Plus } from 'lucide-react-native';
 import { MultiSelectProvider } from './multiSelect/MultiSelectContext';
 import MultiSelectToolbar from './multiSelect/MultiSelectToolbar';
@@ -53,16 +51,6 @@ const RolesPageContent = ({ currentUserId, gameId }: RolesPageOPERATORProps) => 
     }
   }, [isSyncing, hasInitiallyLoaded]);
 
-  useBodyLoadReport(isSyncing || !hasInitiallyLoaded, 300, 'RolesPageOPERATOR');
-
-  if (isSyncing || !hasInitiallyLoaded) {
-    return (
-      <Column className="min-h-190 items-center justify-center gap-4">
-        <LoadingText text="Loading roles" />
-      </Column>
-    );
-  }
-
   const addRole = (newRole: RoleTableItem) => {
     const previousRoleTable = createUndoSnapshot(roleTable?.value ?? []);
     executeCommand({
@@ -79,7 +67,11 @@ const RolesPageContent = ({ currentUserId, gameId }: RolesPageOPERATORProps) => 
   };
 
   return (
-    <Animated.View entering={FadeIn.duration(300)} className="min-h-190">
+    <LoadingContainer
+      dependencies={[roleTable, hasInitiallyLoaded]}
+      loadingText="Loading roles"
+      className="min-h-190"
+    >
       <Column className="gap-4 py-3 sm:px-4">
         <MultiSelectToolbar />
         {visibleRoles.length > 0 ? (
@@ -135,7 +127,7 @@ const RolesPageContent = ({ currentUserId, gameId }: RolesPageOPERATORProps) => 
         onOpenChange={setIsAddDialogOpen}
         onAddRole={addRole}
       />
-    </Animated.View>
+    </LoadingContainer>
   );
 };
 

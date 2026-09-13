@@ -1,12 +1,10 @@
 import React, { useMemo, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { List } from 'lucide-react-native';
-import Animated, { FadeIn } from 'react-native-reanimated';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
 import FontText from '../ui/text/FontText';
-import LoadingText from '../ui/loading/LoadingText';
-import { useBodyLoadReport } from '../../../hooks/useBodyLoadReport';
+import LoadingContainer from '../ui/loading/LoadingContainer';
 import MarkdownRenderer from '../ui/markdown/MarkdownRenderer';
 import { InputOptionsProvider } from './markdownEditor/InputOptionsProvider';
 import { useFindListItems, useFindValues } from '../../../hooks/useData';
@@ -44,10 +42,6 @@ const RuleBookPagePLAYER = ({ gameId }: RuleBookPagePLAYERProps) => {
         userIds: operatorUserId ? [operatorUserId] : [],
     });
 
-    const isLoading = gameRows === undefined || ruleBookRecords === undefined || roleTableRecords === undefined;
-
-    useBodyLoadReport(isLoading, 300, 'RuleBookPagePLAYER');
-
     const headingIdPrefix = `rulebook-${gameId}`;
 
     const ruleBookData = ruleBookRecords?.[0]?.value;
@@ -56,16 +50,12 @@ const RuleBookPagePLAYER = ({ gameId }: RuleBookPagePLAYERProps) => {
     const roleDescriptionsTitle = ruleBookData?.roleDescriptionsTitle || DEFAULT_ROLE_DESCRIPTIONS_TITLE;
     const roles = roleTableRecords?.[0]?.value ?? [];
 
-    if (isLoading) {
-        return (
-            <Column className='gap-4 flex-1 min-h-[760px] items-center justify-center'>
-                <LoadingText text='Loading rule book' />
-            </Column>
-        );
-    }
-
     return (
-        <Animated.View entering={FadeIn.duration(300)} className='flex-1 min-h-[760px]'>
+        <LoadingContainer
+            dependencies={[gameRows, ruleBookRecords, roleTableRecords]}
+            loadingText='Loading rule book'
+            className='flex-1 min-h-[760px]'
+        >
             <Column className='gap-4 flex-1 py-3 sm:px-4'>
                 <Row className='items-center justify-between'>
                     <Column className='gap-2 flex-1'>
@@ -107,7 +97,7 @@ const RuleBookPagePLAYER = ({ gameId }: RuleBookPagePLAYERProps) => {
                 ruleBookTitle={ruleBookTitle}
                 roleDescriptionsTitle={roleDescriptionsTitle}
             />
-        </Animated.View>
+        </LoadingContainer>
     );
 };
 

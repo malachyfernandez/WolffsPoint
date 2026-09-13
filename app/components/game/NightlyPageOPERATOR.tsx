@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import FontText from '../ui/text/FontText';
-import LoadingText from '../ui/loading/LoadingText';
-import { useBodyLoadReport } from '../../../hooks/useBodyLoadReport';
+import LoadingContainer from '../ui/loading/LoadingContainer';
 import { useList, useFindValues } from 'hooks/useData';
 import Column from '../layout/Column';
 import NightlyPlayerTable from './NightlyPlayerTable';
@@ -311,19 +310,15 @@ const NightlyPageContent = ({
   const areAllColumnsReady =
     users.length === 0 || (isPlayerTableColumnsReady && isDaysTableColumnsReady);
   // Only show loading on initial load, not when syncing after
-  const showLoading = !hasInitiallyLoaded || !areAllColumnsReady;
   const showInlineReviewButton = width >= 440;
 
-  useBodyLoadReport(showLoading, 300, 'NightlyPageOPERATOR');
-
   return (
-    <>
-      {showLoading && (
-        <Column className="min-h-[760px] items-center justify-center gap-4">
-          <LoadingText text="Loading nightly data" />
-        </Column>
-      )}
-      <Column className={`min-h-[760px] gap-4 py-3 sm:px-4 ${showLoading ? 'opacity-0' : ''}`}>
+    <LoadingContainer
+      dependencies={[hasInitiallyLoaded, areAllColumnsReady]}
+      loadingText='Loading nightly data'
+      className='min-h-[760px]'
+    >
+      <Column className='min-h-[760px] gap-4 py-3 sm:px-4'>
         {users.length > 0 ? (
           <Animated.View entering={FadeIn.duration(300)}>
             <Column className="gap-4">
@@ -438,7 +433,7 @@ const NightlyPageContent = ({
           </Row>
         )}
       </Column>
-    </>
+    </LoadingContainer>
   );
 };
 

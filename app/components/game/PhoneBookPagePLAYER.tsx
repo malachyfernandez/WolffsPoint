@@ -13,7 +13,7 @@ import Column from '../layout/Column';
 import Row from '../layout/Row';
 import FontText from '../ui/text/FontText';
 import LoadingText from '../ui/loading/LoadingText';
-import { useBodyLoadReport } from '../../../hooks/useBodyLoadReport';
+import LoadingContainer from '../ui/loading/LoadingContainer';
 import AppButton from '../ui/buttons/AppButton';
 import MarkdownRenderer from '../ui/markdown/MarkdownRenderer';
 import PlayerProfileDialog from './PlayerProfileDialogNEW';
@@ -58,24 +58,15 @@ const PhoneBookPagePLAYER = ({ gameId, currentUserId, currentEmail }: PhoneBookP
 
     const { players, isLoading: isPhoneBookLoading } = useAllPlayers({ gameId });
 
-    const isLoading = myProfile.state.isSyncing || isPhoneBookLoading;
-
-    useBodyLoadReport(isLoading, 300, 'PhoneBookPagePLAYER');
-
     const { width } = useWindowDimensions();
     const showEditButton = width >= 410;
 
-    if (isLoading) {
-        return (
-            <Column className='gap-4 flex-1 min-h-190 items-center justify-center'>
-                <LoadingText text='Loading phone book' />
-            </Column>
-        );
-    }
-
     return (
-        <Animated.View entering={FadeIn.duration(300)} className='flex-1 min-h-190'>
-
+        <LoadingContainer
+            dependencies={[myProfile, !isPhoneBookLoading]}
+            loadingText='Loading phone book'
+            className='flex-1 min-h-190'
+        >
             <Column className='gap-6 flex-1 py-3 sm:px-4'>
                 <PhoneBookHeader
                     onEditProfile={() => setIsProfileDialogOpen(true)}
@@ -107,7 +98,7 @@ const PhoneBookPagePLAYER = ({ gameId, currentUserId, currentEmail }: PhoneBookP
                     historyKey={`playerProfile:${gameId}:${currentUserId}`}
                 />
             </Column>
-        </Animated.View>
+        </LoadingContainer>
     );
 };
 

@@ -34,7 +34,7 @@ interface LoadingContainerProps {
     fadeInDuration?: number;
     /** Keep children mounted (invisible, non-interactive) while loading so they can
      *  fetch their own data and report readiness. The loading text overlays on top.
-     *  Default false — children only render once dependencies are ready. */
+     *  Default true — pass keepMounted={false} to unmount children until ready. */
     keepMounted?: boolean;
     /** Called when the container transitions from loading to ready */
     onReady?: () => void;
@@ -70,7 +70,7 @@ const LoadingContainer = ({
     loadingDelayMs,
     className = '',
     fadeInDuration = 300,
-    keepMounted = false,
+    keepMounted = true,
     onReady,
 }: LoadingContainerProps) => {
     const isLoading = dependencies.some((dep) => {
@@ -108,9 +108,8 @@ const LoadingContainer = ({
     const contentStyle = useAnimatedStyle(() => ({ opacity: contentOpacity.value }));
 
     useEffect(() => {
-        if (keepMounted && !isLoading) {
-            contentOpacity.value = withTiming(1, { duration: fadeInDuration });
-        }
+        if (!keepMounted) return;
+        contentOpacity.value = isLoading ? 0 : withTiming(1, { duration: fadeInDuration });
     }, [keepMounted, isLoading, fadeInDuration, contentOpacity]);
 
     if (isLoading && !keepMounted) {
@@ -126,11 +125,12 @@ const LoadingContainer = ({
             <View className={`relative ${className}`}>
                 <Animated.View
                     className={className}
-                    style={[contentStyle, { pointerEvents: isLoading ? 'none' : 'auto' }]}>
+                    pointerEvents={isLoading ? 'none' : 'auto'}
+                    style={contentStyle}>
                     {children}
                 </Animated.View>
                 {isLoading && (
-                    <Column className="absolute inset-0 gap-7 items-center justify-center">
+                    <Column className="absolute inset-0 min-h-24 gap-7 items-center justify-center">
                         <LoadingText text={loadingText} delayMs={loadingDelayMs} />
                     </Column>
                 )}

@@ -3,6 +3,7 @@ import { View } from 'react-native';
 import { Tabs } from 'heroui-native';
 import LayoutStateAnimatedView, { fromRight } from '../ui/LayoutStateAnimatedView';
 import Column from '../layout/Column';
+import LoadingContainer from '../ui/loading/LoadingContainer';
 import NewspaperWritingView from './NewspaperWritingView';
 import OperatorDayNavigation from '../ui/daySelector/OperatorDayNavigation';
 import NewspaperDayView from './NewspaperDayView';
@@ -141,15 +142,13 @@ const NewspaperPageNEWSER = ({ currentUserId, currentEmail, gameId }: NewspaperP
         );
     };
 
-    if (!isReady) {
-        return (
-            <Column className='gap-4 min-h-190 items-center justify-center'>
-                <FontText variant='subtext'>Loading newspaper…</FontText>
-            </Column>
-        );
-    }
-
     return (
+        <LoadingContainer
+            dependencies={[isReady]}
+            loadingText='Loading newspaper'
+            className='min-h-190'
+            keepMounted={false}
+        >
         <Column className='gap-4 py-3'>
             <View className='mt-2 -mb-2 w-full'>
                 <OperatorDayNavigation
@@ -235,6 +234,7 @@ const NewspaperPageNEWSER = ({ currentUserId, currentEmail, gameId }: NewspaperP
                 </View>
             </Column>
         </Column>
+        </LoadingContainer>
     );
 };
 

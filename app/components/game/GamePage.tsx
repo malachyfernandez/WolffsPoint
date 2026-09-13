@@ -6,8 +6,6 @@ import ShadowScrollView from '../ui/ShadowScrollView';
 import OperatorGamePage from './OperatorGamePage';
 import NewserGamePage from './NewserGamePage';
 import PlayerGamePage from './PlayerGamePage';
-import FontText from '../ui/text/FontText';
-import LoadingText from '../ui/loading/LoadingText';
 import WolffspointIcon from '../icons/WolffspointIcon';
 import Animated, {
   useAnimatedScrollHandler,
@@ -93,24 +91,17 @@ const GamePage = ({ gameId, currentUserId, onReady }: GamePageProps) => {
     returnTop: 1,
   });
 
-  if (
+  const isRoleDataLoading =
     ownedGameRows === undefined ||
     gameRows === undefined ||
     userDataRecords === undefined ||
-    newserAssignmentRecords === undefined
-  ) {
-    return (
-      <Column className="h-full w-full items-center justify-center gap-4">
-        <LoadingText text="Loading game" />
-      </Column>
-    );
-  }
+    newserAssignmentRecords === undefined;
 
   const isOperator = (ownedGameRows?.length ?? 0) > 0;
 
   const validNewser = resolveValidNewserAssignment({
     assignment: newserAssignmentRecords?.[0]?.value,
-    userDatas: userDataRecords.map((record) => record.value),
+    userDatas: (userDataRecords ?? []).map((record) => record.value),
   });
 
   const isNewser = !isOperator && validNewser?.userId === currentUserId;
@@ -136,15 +127,15 @@ const GamePage = ({ gameId, currentUserId, onReady }: GamePageProps) => {
             </FadeInAfterDelay>
           </Animated.View>
         </View>
-        {/* keepMounted: children stay mounted (invisible) so they can fetch + report
-            readiness; once every report is in, the whole thing fades in as one unit. */}
+        {/* Children stay mounted (invisible) so they can fetch + report readiness;
+            once every report is in, the whole thing fades in as one unit. The role
+            page itself only mounts once we know which role this user is. */}
         <LoadingContainer
-          dependencies={[allLoadsDone]}
+          dependencies={[!isRoleDataLoading, allLoadsDone]}
           loadingText="Loading game"
           className="flex-1"
-          keepMounted
           onReady={handleFadeComplete}>
-          <BodyReadinessProvider key={gameId} outerReady={mountSettled} onAllReady={() => setAllLoadsDone(true)}>
+          <BodyReadinessProvider key={gameId} outerReady={mountSettled && !isRoleDataLoading} onAllReady={() => setAllLoadsDone(true)}>
             <ShadowScrollView
               className="flex-1"
               scrollViewClassName="p-6 px-2 sm:px-6 h-screen w-full"
@@ -152,7 +143,9 @@ const GamePage = ({ gameId, currentUserId, onReady }: GamePageProps) => {
               scrollEventThrottle={16}
               scrollViewComponent={Animated.ScrollView}>
               <View className="mx-auto w-full max-w-[1000px] pt-60">
-                {isOperator ? (
+                {isRoleDataLoading ? (
+                  <View className="min-h-[400px]" />
+                ) : isOperator ? (
                   <OperatorGamePage currentUserId={currentUserId} gameId={gameId} />
                 ) : isNewser ? (
                   <NewserGamePage currentUserId={currentUserId} gameId={gameId} />

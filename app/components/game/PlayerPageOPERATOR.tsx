@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import Animated, { FadeIn } from 'react-native-reanimated';
 import { useList } from 'hooks/useData';
 import Column from '../layout/Column';
 import PlayerTable from './PlayerTable';
@@ -10,8 +9,7 @@ import { View } from 'react-native';
 import PlayerAddUserSection from './PlayerAddUserSection';
 import ComprehensiveDaySelector from '../ui/daySelector/ComprehensiveDaySelector';
 import DaysTable from './DaysTable';
-import LoadingText from '../ui/loading/LoadingText';
-import { useBodyLoadReport } from '../../../hooks/useBodyLoadReport';
+import LoadingContainer from '../ui/loading/LoadingContainer';
 import { MultiSelectProvider, useMultiSelect } from './multiSelect/MultiSelectContext';
 import MultiSelectToolbar from './multiSelect/MultiSelectToolbar';
 
@@ -79,18 +77,13 @@ const PlayerPageContent = ({ currentUserId, gameId }: PlayerPageOPERATORProps) =
     }, [isSyncing, hasInitiallyLoaded]);
 
     const areAllColumnsReady = users.length === 0 || (isPlayerTableColumnsReady && isDaysTableColumnsReady);
-    const showLoading = isSyncing || !hasInitiallyLoaded || !areAllColumnsReady;
-
-    useBodyLoadReport(showLoading, 300, 'PlayerPageOPERATOR');
 
     return (
-        <>
-            {showLoading && (
-                <Column className='gap-4 min-h-[760px] items-center justify-center'>
-                    <LoadingText text='Loading players' />
-                </Column>
-            )}
-            <Animated.View entering={FadeIn.duration(300)} className={`min-h-[760px] ${showLoading ? 'opacity-0' : ''}`}>
+        <LoadingContainer
+            dependencies={[userTable, selectedDayIndex, dayDatesArray, hasInitiallyLoaded, areAllColumnsReady]}
+            loadingText='Loading players'
+            className='min-h-[760px]'
+        >
 
 
                 {users.length > 0 ? (
@@ -153,8 +146,7 @@ const PlayerPageContent = ({ currentUserId, gameId }: PlayerPageOPERATORProps) =
                         <PlayerAddUserSection gameId={gameId} removeBottomSpace />
                     </Column>
                 )}
-            </Animated.View>
-        </>
+        </LoadingContainer>
     );
 };
 

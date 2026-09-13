@@ -474,11 +474,14 @@ const LayoutStateAnimatedViewContainer = <TState extends TransitionStateKey>({
         };
     }, []);
 
-    const displayedContent = phase === 'idle'
-        ? displayedOptionRef.current?.stateValue === currentOption?.stateValue
+    // When the ref's option is the current target, render its LIVE children.
+    // Using the frozen `displayedOption` snapshot here can deadlock 'waiting':
+    // a child that must mount to report readiness (isReady) never will if the
+    // snapshot was captured while it was still on a loading branch.
+    const displayedContent =
+        displayedOptionRef.current?.stateValue === currentOption?.stateValue
             ? currentOption?.children
-            : displayedOptionRef.current?.children
-        : displayedOption?.children;
+            : displayedOption?.children;
 
     return (
         <View className={className} style={styles.container}>

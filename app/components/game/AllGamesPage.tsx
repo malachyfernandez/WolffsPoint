@@ -24,7 +24,7 @@ import NoGames from './NoGames';
 import { MyGames } from 'types/games';
 import NewWolffspointButtonAndDialogue from './NewWolffspointButtonAndDialogue';
 import PublicImageUpload from '../ui/imageUpload/PublicImageUpload';
-import LoadingText from '../ui/loading/LoadingText';
+import LoadingContainer from '../ui/loading/LoadingContainer';
 import ShadowScrollView from '../ui/ShadowScrollView';
 import StateAnimatedView from '../ui/StateAnimatedView';
 import Row from '../layout/Row';
@@ -86,18 +86,17 @@ const AllGamesPage = ({
     const hasArchivedGames = (archivedGames.value || []).length > 0;
 
     const isGamesPageEmpty = !hasJoinedAGame && !hasMadeAGame && !hasArchivedGames;
-    const isGamesLoading = gamesTheyJoined?.state.isSyncing;
 
     return (
         <Column className='gap-4 flex-1 mt-10 max-w-[1000px] w-full mx-auto'>
             <ProfileInfo />
 
             <Column className='gap-4 flex-1'>
-                {isGamesLoading ? (
-                    <Column className='gap-4 flex-1 items-center justify-center'>
-                        <LoadingText text='Loading games' />
-                    </Column>
-                ) : (
+                <LoadingContainer
+                    dependencies={[gamesTheyJoined, archivedGames, myGames]}
+                    loadingText='Loading games'
+                    className='flex-1'
+                >
                     <ShadowScrollView className='h-full' scrollViewClassName='h-full'>
                             {!isGamesPageEmpty ? (
                                 <GameList
@@ -115,7 +114,7 @@ const AllGamesPage = ({
 
                             )}
                     </ShadowScrollView>
-                )}
+                </LoadingContainer>
 
             </Column>
 
