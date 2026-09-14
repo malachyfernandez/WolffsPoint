@@ -122,6 +122,8 @@ class GlobalRateLimitMonitor {
   private callTimestamps: Map<string, number[]> = new Map();
   private lastWarnings: Map<string, number> = new Map();
   private hasWarned: Map<string, boolean> = new Map();
+  private tripped: Map<string, boolean> = new Map();
+  private justTripped: Map<string, boolean> = new Map();
   private config: RateLimitConfig;
   private toastHandler: ((message: string) => void) | null = null;
 
@@ -147,6 +149,12 @@ class GlobalRateLimitMonitor {
 
     // Check threshold
     if (callCount > this.config.maxCalls) {
+      // Trip the circuit breaker: while tripped, callers should skip the
+      // mutation entirely so a write loop can't keep hitting the backend.
+      if (!this.tripped.get(key)) {
+        this.tripped.set(key, true);
+        this.justTripped.set(key, true);
+      }
       const lastWarning = this.lastWarnings.get(key) || 0;
 
       if (now - lastWarning > this.config.throttleMs) {
@@ -164,9 +172,34 @@ class GlobalRateLimitMonitor {
       }
     } else if (callCount <= this.config.maxCalls / 2 && this.hasWarned.get(key)) {
       this.hasWarned.set(key, false);
+      this.tripped.delete(key);
     }
 
     return callCount;
+  }
+
+  /**
+   * Circuit breaker: returns true while the key's call rate exceeds the
+   * configured threshold. Callers should skip the mutation when blocked.
+   * Releases automatically once activity drops below half the threshold.
+   */
+  isBlocked(key: string): boolean {
+    const stats = this.getStats(key);
+    if (!stats.isExceeded) {
+      this.tripped.delete(key);
+      return false;
+    }
+    return this.tripped.get(key) === true;
+  }
+
+  /**
+   * Returns true exactly once per trip, so callers can warn without
+   * spamming the console on every blocked attempt.
+   */
+  consumeTripWarning(key: string): boolean {
+    const flagged = this.justTripped.get(key) === true;
+    this.justTripped.delete(key);
+    return flagged;
   }
 
   getStats(key: string) {
@@ -188,10 +221,14 @@ class GlobalRateLimitMonitor {
       this.callTimestamps.delete(key);
       this.lastWarnings.delete(key);
       this.hasWarned.delete(key);
+      this.tripped.delete(key);
+      this.justTripped.delete(key);
     } else {
       this.callTimestamps.clear();
       this.lastWarnings.clear();
       this.hasWarned.clear();
+      this.tripped.clear();
+      this.justTripped.clear();
     }
   }
 }

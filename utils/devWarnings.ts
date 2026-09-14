@@ -4,6 +4,7 @@ export type DevWarningKey =
     | "uservar_op_timeout"
     | "uservar_rollback"
     | "uservar_auth_not_ready"
+    | "uservar_rate_limited"
     | "userlist_length_shared_item";
 
 export function devWarn(key: DevWarningKey, message: string) {

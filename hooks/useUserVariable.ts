@@ -7,6 +7,7 @@ import { userVarConfig } from '../utils/userVarConfig';
 import { decodeUserValue, encodeUserValue } from './userValueSerialization';
 import { globalRateLimitMonitor } from './useRateLimitMonitor';
 import { deepEqual } from '../utils/deepEqual';
+import { useToast } from '../contexts/ToastContext';
 
 type ObjectKeys<T> = T extends object ? Extract<keyof T, string> : never;
 type PrimitiveIndexValue = string | number | boolean;
@@ -240,6 +241,7 @@ export function useUserVariable<T>({
   const record = useQuery(api.user_vars.get, { key });
 
   const isSyncing = record === undefined;
+  const { showToast } = useToast();
 
   const [confirmedValue, setConfirmedValue] = useState<T | undefined>(undefined);
   const confirmedValueRef = useRef<T | undefined>(undefined);
@@ -331,7 +333,23 @@ export function useUserVariable<T>({
     // Track mutation for rate limit monitoring
     globalRateLimitMonitor.trackCall(`user_vars:${key}`);
 
-    if (deepEqual(newValue, valueRef.current)) {
+    if (globalRateLimitMonitor.isBlocked(`user_vars:${key}`)) {
+      if (globalRateLimitMonitor.consumeTripWarning(`user_vars:${key}`)) {
+        const msg = `⚠️ High data activity detected — possible infinite loop bug (key "${key}"). Writes paused.`;
+        showToast(msg);
+        devWarn(
+          'uservar_rate_limited',
+          `Blocked set for key="${key}" — mutation rate limit exceeded. Likely infinite write loop.`
+        );
+      }
+      return;
+    }
+
+    // Compare encoded forms: encodeUserValue strips `undefined` keys, so the
+    // stored value never contains them. Comparing raw values would fail
+    // forever for callers that include `field: undefined`, creating a
+    // write -> invalidate -> rewrite loop.
+    if (deepEqual(encodeUserValue(newValue), encodeUserValue(valueRef.current))) {
       return;
     }
 

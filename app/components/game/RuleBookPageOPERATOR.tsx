@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Pressable, View } from 'react-native';
-import { ChevronLeft, List } from 'lucide-react-native';
+import { ChevronLeft } from 'lucide-react-native';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
 import FontText from '../ui/text/FontText';
@@ -12,6 +12,7 @@ import { getGameScopedKey } from '../../../utils/multiplayer';
 import MarkdownEditorDialog from './MarkdownEditorDialog';
 import RuleBookRoleDescriptions from './RuleBookRoleDescriptions';
 import TableOfContentsDialog from './ruleBook/TableOfContentsDialog';
+import StickyTocButton from './ruleBook/StickyTocButton';
 import { RuleBookData } from '../../../types/ruleBook';
 import { RoleTableItem } from '../../../types/roleTable';
 
@@ -57,12 +58,7 @@ const RuleBookPageOPERATOR = ({ gameId, onBack }: RuleBookPageOPERATORProps) => 
             <FontText weight="medium">Config</FontText>
           </Row>
         </Pressable>
-        <Pressable
-          onPress={() => setIsTocOpen(true)}
-          className="bg-text/5 hover:bg-text/10 h-10 w-10 items-center justify-center rounded-full"
-        >
-          <List size={20} color="rgb(46, 41, 37)" />
-        </Pressable>
+        <StickyTocButton onPress={() => setIsTocOpen(true)} />
       </Row>
 
       <Column className="border-border/15 gap-5 border-y py-5">

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
@@ -37,6 +37,7 @@ import {
   normalizePlayerActionState,
   parseStoredDayDates,
 } from '../../../utils/multiplayer';
+import { deepEqual } from '../../../utils/deepEqual';
 
 interface YourEyesOnlyDayContentPLAYERProps {
   gameId: string;
@@ -351,14 +352,16 @@ const YourEyesOnlyDayContentPLAYER = ({
     voteMessage,
   ]);
 
-  // Persist planned updates into the submission whenever they change
+  // Persist planned updates into the submission whenever they change.
+  // NOTE: use deepEqual (not JSON.stringify) because Convex re-sorts object
+  // keys alphabetically on round-trip, so string comparison would never match
+  // and the effect would write forever (infinite user_vars:set loop).
   useEffect(() => {
     const currentActionUpdates = submission.value.plannedUpdates ?? [];
     const currentVoteUpdates = submission.value.votePlannedUpdates ?? [];
-    if (
-      JSON.stringify(plannedUpdates) !== JSON.stringify(currentActionUpdates) ||
-      JSON.stringify(votePlannedUpdates) !== JSON.stringify(currentVoteUpdates)
-    ) {
+    const actionDiff = !deepEqual(plannedUpdates, currentActionUpdates);
+    const voteDiff = !deepEqual(votePlannedUpdates, currentVoteUpdates);
+    if (actionDiff || voteDiff) {
       setSubmission({
         ...submission.value,
         plannedUpdates: plannedUpdates.length > 0 ? plannedUpdates : undefined,

@@ -1,6 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Pressable, View } from 'react-native';
-import { List } from 'lucide-react-native';
+import { View } from 'react-native';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
 import FontText from '../ui/text/FontText';
@@ -11,6 +10,7 @@ import { useFindListItems, useFindValues } from '../../../hooks/useData';
 import { getGameScopedKey } from '../../../utils/multiplayer';
 import RuleBookRoleDescriptionsPLAYER from './RuleBookRoleDescriptionsPLAYER';
 import TableOfContentsDialog from './ruleBook/TableOfContentsDialog';
+import StickyTocButton from './ruleBook/StickyTocButton';
 import { RuleBookData } from '../../../types/ruleBook';
 import { RoleTableItem } from '../../../types/roleTable';
 
@@ -65,12 +65,7 @@ const RuleBookPagePLAYER = ({ gameId }: RuleBookPagePLAYERProps) => {
                             </FontText>
                         </View>
                     </Column>
-                    <Pressable
-                        onPress={() => setIsTocOpen(true)}
-                        className='bg-text/5 hover:bg-text/10 h-10 w-10 items-center justify-center rounded-full'
-                    >
-                        <List size={20} color='rgb(46, 41, 37)' />
-                    </Pressable>
+                    <StickyTocButton onPress={() => setIsTocOpen(true)} />
                 </Row>
                 <Column className='gap-2'>
                     {ruleBookMarkdown.trim().length > 0 ? (

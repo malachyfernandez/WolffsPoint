@@ -1,4 +1,5 @@
 import { useValue } from './useData';
+import { deepEqual } from '../utils/deepEqual';
 
 export interface SavedEntry {
     id: string;
@@ -27,8 +28,10 @@ export function useSaveHistory(historyKey: string | null) {
 
     const addSave = (value: any, preview: string) => {
         const current = historyRecord?.value ?? [];
-        // Skip if the new value matches the most recent save (deduplicate)
-        if (current.length > 0 && JSON.stringify(current[0].value) === JSON.stringify(value)) {
+        // Skip if the new value matches the most recent save (deduplicate).
+        // Use deepEqual (not JSON.stringify) because Convex re-sorts object
+        // keys on round-trip, which would defeat a string comparison.
+        if (current.length > 0 && deepEqual(current[0].value, value)) {
             return;
         }
         const entry: SavedEntry = {

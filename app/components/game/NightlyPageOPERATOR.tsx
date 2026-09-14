@@ -21,6 +21,7 @@ import {
   hasPlayerActionContent,
   hasVoteContent,
 } from '../../../utils/multiplayer';
+import { deepEqual } from '../../../utils/deepEqual';
 import { PlayerNightSubmission, PlannedUpdate } from '../../../types/multiplayer';
 import {
   executePlannedUpdates,
@@ -162,7 +163,7 @@ const NightlyPageContent = ({
         }
       });
 
-      if (JSON.stringify(updatedMessages) !== JSON.stringify(currentMessages)) {
+      if (!deepEqual(updatedMessages, currentMessages)) {
         setMorningMessagesList(updatedMessages);
       }
     }
@@ -301,7 +302,7 @@ const NightlyPageContent = ({
     }
 
     setUserTable(finalUsers);
-    if (JSON.stringify(finalMorningMessages) !== JSON.stringify(morningMessagesList.value ?? {})) {
+    if (!deepEqual(finalMorningMessages, morningMessagesList.value ?? {})) {
       setMorningMessagesList(finalMorningMessages);
     }
     setDoSync(true);

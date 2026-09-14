@@ -33,7 +33,6 @@ export const useSyncUserData = (userData: any, setUserData: any) => {
 
             // Check if data actually needs updating to avoid infinite loops
             const needsUpdate =
-                !userData.email ||
                 userData.email !== clerkEmail ||
                 userData.name !== clerkName ||
                 userData.userId !== clerkUserId;

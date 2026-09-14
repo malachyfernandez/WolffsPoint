@@ -16,6 +16,7 @@ import FontTextInput from '../ui/forms/FontTextInput';
 import AppButton from '../ui/buttons/AppButton';
 import ImageUploadDialog from '../ui/dialog/ImageUploadDialog';
 import { PlayerProfile } from '../../../types/multiplayer';
+import { deepEqual } from '../../../utils/deepEqual';
 import PlayerProfilePreviewCard, {
   PlayerProfileAvatar,
   PlayerProfileContactInfo,
@@ -108,7 +109,7 @@ const PlayerProfileDialogNEW = ({
     if (isOpen) {
       const hasValueChanged =
         previousInitialValue === null ||
-        JSON.stringify(initialValue) !== JSON.stringify(previousInitialValue);
+        !deepEqual(initialValue, previousInitialValue);
 
       if (hasValueChanged) {
         setDraft(initialValue);
