@@ -65,7 +65,7 @@ const RuleBookPagePLAYER = ({ gameId }: RuleBookPagePLAYERProps) => {
                             </FontText>
                         </View>
                     </Column>
-                    <StickyTocButton onPress={() => setIsTocOpen(true)} />
+                    <StickyTocButton onPress={() => setIsTocOpen(true)} isOpen={isTocOpen} />
                 </Row>
                 <Column className='gap-2'>
                     {ruleBookMarkdown.trim().length > 0 ? (

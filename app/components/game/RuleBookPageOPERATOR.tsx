@@ -58,7 +58,7 @@ const RuleBookPageOPERATOR = ({ gameId, onBack }: RuleBookPageOPERATORProps) => 
             <FontText weight="medium">Config</FontText>
           </Row>
         </Pressable>
-        <StickyTocButton onPress={() => setIsTocOpen(true)} />
+        <StickyTocButton onPress={() => setIsTocOpen(true)} isOpen={isTocOpen} />
       </Row>
 
       <Column className="border-border/15 gap-5 border-y py-5">
