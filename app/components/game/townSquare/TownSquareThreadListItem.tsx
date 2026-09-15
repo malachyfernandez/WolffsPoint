@@ -4,6 +4,8 @@ import { ChevronRight, Pin } from 'lucide-react-native';
 import Column from '../../layout/Column';
 import Row from '../../layout/Row';
 import FontText from '../../ui/text/FontText';
+import MarkdownRenderer from '../../ui/markdown/MarkdownRenderer';
+import { InputOptionsProvider } from '../markdownEditor/InputOptionsProvider';
 import { TownSquareAuthorAvatar, TownSquareAuthorName } from './TownSquareAuthorIdentity';
 import { ThreadViewModel, TownSquareReadState, formatTimestamp } from './townSquareUtils';
 
@@ -24,6 +26,7 @@ const TownSquareThreadListItem = ({ index, isLast, isOperator, onPress, onToggle
     const newReplyCount = threadReadState ? Math.max(0, thread.replyCount - threadReadState.replyCount) : 0;
     const hasNewReplies = !isNeverViewed && newReplyCount > 0;
     const isPinned = thread.isPinned === true;
+    const isAnnouncement = thread.postType === 'announcement';
 
     const pinIcon = isPinned ? (
         <View className='items-center justify-center rounded-full bg-yellow-400 p-1'>
@@ -32,6 +35,86 @@ const TownSquareThreadListItem = ({ index, isLast, isOperator, onPress, onToggle
     ) : (
         <Pin size={16} color="#1a1a1a" />
     );
+
+    const pinControl = isOperator ? (
+        <Pressable onPress={onTogglePin} hitSlop={8}>
+            {pinIcon}
+        </Pressable>
+    ) : (
+        isPinned ? pinIcon : null
+    );
+
+    // Pinned threads render as a full post in the list, copying the detail
+    // view's layout exactly (mobile vs desktop header arrangement, title
+    // styling, markdown body) — everything up until the reply-button row.
+    // The date line is extended with reply count, announcement tag, new-replies
+    // badge, and the pin indicator so all list-item meta stays visible.
+    if (isPinned) {
+        const metaRow = (
+            <Row className='gap-4 items-center flex-wrap'>
+                <FontText variant='subtext'>{formatTimestamp(thread.createdAt)}</FontText>
+                {isAnnouncement ? (
+                    <FontText variant='subtext' className='bg-text/10 px-3 py-1 rounded-full'>
+                        Announcement
+                    </FontText>
+                ) : (
+                    <>
+                        <FontText variant='subtext' className='text-accent'>
+                            {`${thread.replyCount} repl${thread.replyCount === 1 ? 'y' : 'ies'} `}
+                        </FontText>
+                        {hasNewReplies && (
+                            <View className='px-1.5 py-0.5 bg-accent rounded-full'>
+                                <FontText weight='medium' className='text-xs text-white'>
+                                    {`${newReplyCount} New`}
+                                </FontText>
+                            </View>
+                        )}
+                    </>
+                )}
+                {pinControl}
+            </Row>
+        );
+
+        return (
+            <Pressable onPress={onPress}>
+                <Row className={`gap-4 items-start px-1 py-5 ${!isLast || index === 0 ? 'border-b border-border/20' : ''}`}>
+                    <Column className='gap-4 flex-1'>
+                        {/* Mobile header — avatar + author + meta on one row */}
+                        <Row className='sm:hidden w-full items-center'>
+                            <TownSquareAuthorAvatar gameId={thread.gameId} size={60} userId={thread.authorUserId} />
+                            <Column className='flex-1 gap-2'>
+                                <TownSquareAuthorName gameId={thread.gameId} userId={thread.authorUserId} />
+                                {metaRow}
+                            </Column>
+                        </Row>
+                        {/* Desktop header — avatar on left, title + author + meta on right */}
+                        <Row className='gap-4 items-start'>
+                            <TownSquareAuthorAvatar gameId={thread.gameId} size={60} userId={thread.authorUserId} className="hidden sm:flex" />
+                            <Column className='gap-4 flex-1'>
+                                <Row className='gap-4 items-center'>
+                                    <FontText weight='bold' className='text-3xl leading-10'>{thread.titleResolved}</FontText>
+                                    {isNeverViewed && (
+                                        <View className='px-1.5 py-0.5 bg-red-500 rounded-full'>
+                                            <FontText weight='medium' className='text-xs text-white'>New</FontText>
+                                        </View>
+                                    )}
+                                </Row>
+                                <Column className='gap-1 hidden sm:flex'>
+                                    <TownSquareAuthorName gameId={thread.gameId} userId={thread.authorUserId} />
+                                    {metaRow}
+                                </Column>
+                            </Column>
+                        </Row>
+
+                        <InputOptionsProvider gameId={thread.gameId} showInputs={false}>
+                            <MarkdownRenderer markdown={thread.bodyMarkdownResolved} />
+                        </InputOptionsProvider>
+                    </Column>
+                    <ChevronRight size={20} color="#666" className="mt-8" />
+                </Row>
+            </Pressable>
+        );
+    }
 
     return (
         <Pressable onPress={onPress}>
@@ -58,7 +141,7 @@ const TownSquareThreadListItem = ({ index, isLast, isOperator, onPress, onToggle
                         <FontText weight='medium'>{thread.previewText || 'Open the thread to read the full post.'}</FontText>
 
                         <Row className='gap-4 items-center'>
-                            {thread.postType === 'announcement' ? (
+                            {isAnnouncement ? (
                                 <>
                                     <FontText variant='subtext' className='bg-text/10 px-3 py-1 rounded-full'>
                                         Announcement
@@ -81,13 +164,7 @@ const TownSquareThreadListItem = ({ index, isLast, isOperator, onPress, onToggle
                                 </>
                             )}
                             {/* Pin icon — bottom left corner. Operators can press to toggle. */}
-                            {isOperator ? (
-                                <Pressable onPress={onTogglePin} hitSlop={8}>
-                                    {pinIcon}
-                                </Pressable>
-                            ) : (
-                                isPinned ? pinIcon : null
-                            )}
+                            {pinControl}
                         </Row>
                     </Column>
                 </Column>
