@@ -17,6 +17,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import LayoutStateAnimatedView, { fromRight } from '../ui/LayoutStateAnimatedView';
 import YourEyesOnlyDayContentPLAYER from './YourEyesOnlyDayContentPLAYER';
+import LoadingContainer from '../ui/loading/LoadingContainer';
 
 interface YourEyesOnlyPagePLAYERProps {
     gameId: string;
@@ -31,10 +32,10 @@ const YourEyesOnlyPagePLAYER = ({ gameId, currentEmail, matchingPlayer, currentP
     const overlayTranslateY = useSharedValue(0);
     const contentOpacity = useSharedValue(0);
     const contentTranslateY = useSharedValue(20);
-    const { operatorUserId } = useGameOperatorUserId(gameId);
+    const { operatorUserId, isLoading: isOperatorLoading } = useGameOperatorUserId(gameId);
     const operatorUserIds = operatorUserId ? [operatorUserId] : undefined;
-    const { value: dayDateStrings } = useSharedListValue<string[]>({ key: 'dayDatesArray', itemId: gameId, defaultValue: [], userIds: operatorUserIds });
-    const { value: numberOfRealDaysPerInGameDay } = useSharedListValue<number>({ key: 'numberOfRealDaysPerInGameDay', itemId: gameId, defaultValue: 2, userIds: operatorUserIds });
+    const { value: dayDateStrings, record: dayDateStringsRecord } = useSharedListValue<string[]>({ key: 'dayDatesArray', itemId: gameId, defaultValue: [], userIds: operatorUserIds });
+    const { value: numberOfRealDaysPerInGameDay, record: numberOfRealDaysRecord } = useSharedListValue<number>({ key: 'numberOfRealDaysPerInGameDay', itemId: gameId, defaultValue: 2, userIds: operatorUserIds });
     const roleTable = useSharedListValue<RoleTableItem[]>({ key: 'roleTable', itemId: gameId, defaultValue: [], userIds: operatorUserIds });
     const scheduleRecord = useSharedVariableValue({ key: getGameScopedKey('gameSchedule', gameId), defaultValue: defaultGameSchedule, userIds: operatorUserIds });
     const [now, setNow] = useState(() => new Date());
@@ -123,8 +124,13 @@ const YourEyesOnlyPagePLAYER = ({ gameId, currentEmail, matchingPlayer, currentP
         setHasConfirmedAlone(true);
     };
 
-    if (isSleepWindow) {
-        return (
+    return (
+    <LoadingContainer
+        dependencies={[dayDateStringsRecord, numberOfRealDaysRecord, roleTable.record, scheduleRecord.record, !isOperatorLoading]}
+        loadingText="Loading..."
+        className='flex-1 min-h-190'
+    >
+        {isSleepWindow ? (
             <Column className='gap-7 flex-1 min-h-190 pb-8 items-center justify-center'>
                 <PlaceholderCard>
                     <Column className='gap-3 items-center'>
@@ -138,11 +144,8 @@ const YourEyesOnlyPagePLAYER = ({ gameId, currentEmail, matchingPlayer, currentP
                     </Column>
                 </PlaceholderCard>
             </Column>
-        );
-    }
-
-    return (
-        <Column className='gap-7 flex-1 min-h-190 pb-8'>
+        ) : (
+            <Column className='gap-7 flex-1 min-h-190 pb-8'>
             <Animated.View style={contentAnimatedStyle} className='gap-4'>
                 {roleData?.aboutRole?.trim().length ? (
                     <MarkdownRenderer
@@ -256,6 +259,8 @@ const YourEyesOnlyPagePLAYER = ({ gameId, currentEmail, matchingPlayer, currentP
                 </Animated.View>
             )}
         </Column>
+        )}
+    </LoadingContainer>
     );
 };
 
