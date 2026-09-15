@@ -1,10 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Pressable, View } from 'react-native';
-import { Moon } from 'lucide-react-native';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
 import FontText from '../ui/text/FontText';
-import PlaceholderCard from '../ui/PlaceholderCard';
 import MarkdownRenderer, {
   MarkdownRendererInputDataProvider,
 } from '../ui/markdown/MarkdownRenderer';
@@ -422,36 +420,6 @@ const YourEyesOnlyDayContentPLAYER = ({
   const secondarySkipped = isVotePrimary ? isActionsSkipped : isVotingSkipped;
   const primaryDateLabel = formatContextualDateLabel(primaryDeadline, undefined, now, 'lower');
   const secondaryDateLabel = formatContextualDateLabel(secondaryDeadline, undefined, now, 'lower');
-
-  // "Go to sleep" state: both voting and actions have closed (LOCKED) for the
-  // current day but the next morning's wake-up time has not yet arrived. Uses
-  // the same LOCKED logic as the countdown above so it respects day offsets
-  // and deadlines landing on different days.
-  const nextMorning = useMemo(
-    () => getDayReleaseDate(dayDates, dayIndex, schedule.wakeUpTime),
-    [dayDates, dayIndex, schedule.wakeUpTime]
-  );
-  const isWaitingForMorning =
-    !bothSkipped &&
-    isVoteLocked &&
-    isActionLocked &&
-    (nextMorning ? now.getTime() < nextMorning.getTime() : false);
-
-  if (isWaitingForMorning) {
-    return (
-      <PlaceholderCard>
-        <Column className="gap-3 items-center">
-          <Moon size={48} color="rgb(46, 41, 37)" />
-          <FontText weight="bold" className="text-xl text-center">
-            Go to sleep!
-          </FontText>
-          <FontText variant="subtext" className="text-center">
-            Voting and actions have closed for the night. Check back when the sun comes up!
-          </FontText>
-        </Column>
-      </PlaceholderCard>
-    );
-  }
 
   return (
     <Column className="gap-5">

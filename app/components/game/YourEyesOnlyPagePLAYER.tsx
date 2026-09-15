@@ -11,8 +11,8 @@ import { useSharedVariableValue } from '../../../hooks/useSharedVariableValue';
 import { PlayerProfile } from '../../../types/multiplayer';
 import { RoleTableItem } from '../../../types/roleTable';
 import { UserTableItem } from '../../../types/playerTable';
-import { getContextualDayRangeLabel, getCurrentPlayableDayIndex, getGameScopedKey, normalizeGameSchedule, parseStoredDayDates, defaultGameSchedule, formatTimeLabel, formatContextualDateLabel, isDayReleasedAtTime } from '../../../utils/multiplayer';
-import { ChevronLeft, ChevronRight, Eye, Sun } from 'lucide-react-native';
+import { addDays, buildScheduledDate, getContextualDayRangeLabel, getCurrentPlayableDayIndex, getDayEndDate, getGameScopedKey, isNightWindowOpen, normalizeGameSchedule, parseStoredDayDates, defaultGameSchedule, formatTimeLabel, formatContextualDateLabel, isDayReleasedAtTime } from '../../../utils/multiplayer';
+import { ChevronLeft, ChevronRight, Eye, Moon, Sun } from 'lucide-react-native';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import LayoutStateAnimatedView, { fromRight } from '../ui/LayoutStateAnimatedView';
@@ -43,6 +43,25 @@ const YourEyesOnlyPagePLAYER = ({ gameId, currentEmail, matchingPlayer, currentP
     const currentDayIndex = useMemo(() => getCurrentPlayableDayIndex(dayDates), [dayDates]);
     const [selectedDayIndex, setSelectedDayIndex] = useState(() => getCurrentPlayableDayIndex(parseStoredDayDates(dayDateStrings)));
     const schedule = normalizeGameSchedule(scheduleRecord.value ?? defaultGameSchedule);
+    const currentDayStartDate = dayDates[currentDayIndex];
+    const deadlineDayIndex = currentDayIndex > 0 && currentDayStartDate && !isDayReleasedAtTime(currentDayStartDate, schedule.wakeUpTime, now)
+        ? currentDayIndex - 1
+        : currentDayIndex;
+    const deadlineDayEndDate = getDayEndDate(dayDates, deadlineDayIndex, numberOfRealDaysPerInGameDay);
+    const voteDeadlineBaseDate = new Date(deadlineDayEndDate.getTime() - (schedule.voteDayOffset ?? 0) * 24 * 60 * 60 * 1000);
+    const actionDeadlineBaseDate = new Date(deadlineDayEndDate.getTime() - (schedule.actionDayOffset ?? 0) * 24 * 60 * 60 * 1000);
+    const voteDeadlineTime = schedule.voteDeadlineTime ?? defaultGameSchedule.voteDeadlineTime ?? '22:00';
+    const actionDeadlineTime = schedule.actionDeadlineTime ?? defaultGameSchedule.actionDeadlineTime ?? '22:00';
+    const voteDeadline = buildScheduledDate(voteDeadlineBaseDate, voteDeadlineTime);
+    const actionDeadline = buildScheduledDate(actionDeadlineBaseDate, actionDeadlineTime);
+    const laterDeadline = voteDeadline.getTime() >= actionDeadline.getTime() ? voteDeadline : actionDeadline;
+    const sameDayWakeUp = buildScheduledDate(laterDeadline, schedule.wakeUpTime);
+    const nextWakeUp = sameDayWakeUp.getTime() > laterDeadline.getTime()
+        ? sameDayWakeUp
+        : buildScheduledDate(addDays(laterDeadline, 1), schedule.wakeUpTime);
+    const isVoteLocked = deadlineDayIndex < currentDayIndex || !isNightWindowOpen(voteDeadlineBaseDate, voteDeadlineTime, now);
+    const isActionLocked = deadlineDayIndex < currentDayIndex || !isNightWindowOpen(actionDeadlineBaseDate, actionDeadlineTime, now);
+    const isSleepWindow = dayDates.length > 0 && isVoteLocked && isActionLocked && now.getTime() < nextWakeUp.getTime();
     // Content is released if:
     // 1. It's a previous day (selectedDayIndex < currentDayIndex) - always released
     // 2. It's the current/future day - only blocked on the START DATE until wake-up time
@@ -77,7 +96,7 @@ const YourEyesOnlyPagePLAYER = ({ gameId, currentEmail, matchingPlayer, currentP
     useEffect(() => {
         const intervalId = setInterval(() => {
             setNow(new Date());
-        }, 60000); // Update every minute
+        }, 1000); // Update every second
 
         return () => {
             clearInterval(intervalId);
@@ -103,6 +122,24 @@ const YourEyesOnlyPagePLAYER = ({ gameId, currentEmail, matchingPlayer, currentP
         contentTranslateY.value = withTiming(0, { duration: 300 });
         setHasConfirmedAlone(true);
     };
+
+    if (isSleepWindow) {
+        return (
+            <Column className='gap-7 flex-1 min-h-190 pb-8 items-center justify-center'>
+                <PlaceholderCard>
+                    <Column className='gap-3 items-center'>
+                        <Moon size={48} color='rgb(46, 41, 37)' />
+                        <FontText weight='bold' className='text-xl text-center'>
+                            Go to sleep, man.
+                        </FontText>
+                        <FontText variant='subtext' className='text-center'>
+                            Your vote and action are locked. Come back in the morning.
+                        </FontText>
+                    </Column>
+                </PlaceholderCard>
+            </Column>
+        );
+    }
 
     return (
         <Column className='gap-7 flex-1 min-h-190 pb-8'>
