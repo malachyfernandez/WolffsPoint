@@ -24,12 +24,33 @@ const WEIGHT_MAP: Record<FontWeight, '400' | '500' | '700'> = {
   bold: '700',
 };
 
+const TEXT_UTIL_CLASSES = new Set([
+  'text-text',
+  'text-xs', 'text-sm', 'text-base', 'text-lg', 'text-xl',
+  'text-2xl', 'text-3xl', 'text-4xl', 'text-5xl', 'text-6xl', 'text-7xl', 'text-8xl', 'text-9xl',
+  'text-left', 'text-right', 'text-center', 'text-justify', 'text-start', 'text-end',
+  'text-wrap', 'text-nowrap', 'text-balance', 'text-pretty', 'text-ellipsis', 'text-clip',
+  'text-inherit', 'text-current', 'text-transparent',
+]);
+
+const getColorTokenFromClassName = (className: string): string | null => {
+  const matches = className.match(/text-[a-zA-Z0-9-]+/g);
+  if (!matches) return null;
+  for (let i = matches.length - 1; i >= 0; i--) {
+    const token = matches[i];
+    if (!TEXT_UTIL_CLASSES.has(token)) {
+      return token.replace(/^text-/, '');
+    }
+  }
+  return null;
+};
+
 const FontText = ({
   children,
   className = '',
   weight = 'regular',
   variant = 'default',
-  color = '',
+  color,
   style,
   onLayout,
   numberOfLines,
@@ -39,7 +60,8 @@ const FontText = ({
     LibreBaskerville: require('../../../../assets/fonts/Libre_Baskerville/LibreBaskerville-VariableFont_wght.ttf'),
   });
 
-  const resolvedColor = String(useCSSVariable(`--color-${color}`) || color);
+  const colorToken = color || getColorTokenFromClassName(className) || 'text';
+  const resolvedColor = String(useCSSVariable(`--color-${colorToken}`) || colorToken);
 
   if (variant === 'subtext') {
     className += ' text-xs opacity-70';
