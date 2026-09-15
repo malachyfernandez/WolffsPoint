@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { View } from 'react-native';
 import Animated, { FadeIn, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import Column from '../../layout/Column';
@@ -88,6 +88,19 @@ const LoadingContainer = ({
 
         return false;
     });
+
+    const depSignature = useMemo(() => {
+        return dependencies.map((dep, idx) => {
+            if (dep === undefined) return `dep[${idx}]=undefined`;
+            if (dep === false) return `dep[${idx}]=false`;
+            if (typeof dep === 'object' && dep !== null && 'state' in dep && (dep as any).state?.isSyncing === true) return `dep[${idx}]=syncing`;
+            return `dep[${idx}]=ready`;
+        }).join('|');
+    }, [dependencies]);
+
+    useEffect(() => {
+        console.log(`[YourEyesOnly][PROD-DIAG][Loading] isLoading=${isLoading} deps=${depSignature} loadingText=${loadingText}`);
+    }, [isLoading, depSignature, loadingText]);
 
     // Report to BodyReadinessProvider — waits for isLoading→false + fadeInDuration
     useBodyLoadReport(isLoading, fadeInDuration, `LoadingContainer(${loadingText})`);

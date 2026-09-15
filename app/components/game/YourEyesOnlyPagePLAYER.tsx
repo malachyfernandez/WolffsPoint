@@ -40,6 +40,17 @@ const YourEyesOnlyPagePLAYER = ({ gameId, currentEmail, matchingPlayer, currentP
     const scheduleRecord = useSharedVariableValue({ key: getGameScopedKey('gameSchedule', gameId), defaultValue: defaultGameSchedule, userIds: operatorUserIds });
     const [now, setNow] = useState(() => new Date());
 
+    useEffect(() => {
+        console.log(`[YourEyesOnly][PROD-DIAG][Page] MOUNT gameId=${gameId} currentEmail=${currentEmail} matchingPlayer.role=${matchingPlayer?.role} currentProfile.userId=${currentProfile?.userId}`);
+        return () => {
+            console.log(`[YourEyesOnly][PROD-DIAG][Page] UNMOUNT gameId=${gameId}`);
+        };
+    }, [gameId, currentEmail, matchingPlayer?.role, currentProfile?.userId]);
+
+    useEffect(() => {
+        console.log(`[YourEyesOnly][PROD-DIAG][Page] DATA gameId=${gameId} isOperatorLoading=${isOperatorLoading} operatorUserId=${operatorUserId ? 'set' : 'missing'} dayDateStringsRecord=${dayDateStringsRecord ? 'set' : 'missing'} numberOfRealDaysRecord=${numberOfRealDaysRecord ? 'set' : 'missing'} roleTable.record=${roleTable.record ? 'set' : 'missing'} scheduleRecord.record=${scheduleRecord.record ? 'set' : 'missing'}`);
+    }, [gameId, isOperatorLoading, operatorUserId, dayDateStringsRecord, numberOfRealDaysRecord, roleTable.record, scheduleRecord.record]);
+
     const dayDates = useMemo(() => parseStoredDayDates(dayDateStrings), [dayDateStrings]);
     const currentDayIndex = useMemo(() => getCurrentPlayableDayIndex(dayDates), [dayDates]);
     const [selectedDayIndex, setSelectedDayIndex] = useState(() => getCurrentPlayableDayIndex(parseStoredDayDates(dayDateStrings)));
@@ -82,6 +93,11 @@ const YourEyesOnlyPagePLAYER = ({ gameId, currentEmail, matchingPlayer, currentP
     const selectedDayRangeLabel = useMemo(() => getContextualDayRangeLabel(dayDates, selectedDayIndex, numberOfRealDaysPerInGameDay), [selectedDayIndex, dayDates, numberOfRealDaysPerInGameDay]);
     const previousDayLabel = useMemo(() => selectedDayIndex > 0 ? getContextualDayRangeLabel(dayDates, selectedDayIndex - 1, numberOfRealDaysPerInGameDay) : '', [dayDates, numberOfRealDaysPerInGameDay, selectedDayIndex]);
     const nextDayLabel = useMemo(() => selectedDayIndex < currentDayIndex ? getContextualDayRangeLabel(dayDates, selectedDayIndex + 1, numberOfRealDaysPerInGameDay) : '', [currentDayIndex, dayDates, numberOfRealDaysPerInGameDay, selectedDayIndex]);
+
+    useEffect(() => {
+        console.log(`[YourEyesOnly][PROD-DIAG][Page] DERIVED gameId=${gameId} dayDates.length=${dayDates.length} currentDayIndex=${currentDayIndex} selectedDayIndex=${selectedDayIndex} hasWokenUp=${hasWokenUp} isSleepWindow=${isSleepWindow} isVoteLocked=${isVoteLocked} isActionLocked=${isActionLocked} willRenderDayContent=${hasWokenUp}`);
+    }, [gameId, dayDates.length, currentDayIndex, selectedDayIndex, hasWokenUp, isSleepWindow, isVoteLocked, isActionLocked]);
+
     const roleData = roleTable.value.find((roleItem) => roleItem.role === matchingPlayer.role);
     const hasInitializedSelectedDayRef = useRef(false);
 
@@ -130,6 +146,7 @@ const YourEyesOnlyPagePLAYER = ({ gameId, currentEmail, matchingPlayer, currentP
         dependencies={[dayDateStringsRecord, numberOfRealDaysRecord, roleTable.record, scheduleRecord.record, !isOperatorLoading]}
         loadingText="Loading..."
         className='flex-1 min-h-190'
+        onReady={() => console.log(`[YourEyesOnly][PROD-DIAG][Page] LOADING-CONTAINER-READY gameId=${gameId}`)}
     >
         {isSleepWindow ? (
             <Column className='gap-7 flex-1 min-h-190 pb-8 items-center pt-10'>

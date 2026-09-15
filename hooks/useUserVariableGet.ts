@@ -71,6 +71,10 @@ export function useUserVariableGet<TValue = any>({
     startAfter,
   });
 
+  useEffect(() => {
+    console.log(`[YourEyesOnly][PROD-DIAG][VarGet] key=${key} userIds=${userIds ? userIds.join(',') : 'none'} results=${results === undefined ? 'undefined' : results.length}`);
+  }, [results]);
+
   const mappedResults = results?.map((record) => ({
     ...record,
     value: decodeUserValue(record.value as TValue),

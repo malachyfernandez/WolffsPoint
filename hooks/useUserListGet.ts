@@ -71,6 +71,10 @@ export function useUserListGet<TValue = any>({
     startAfter,
   });
 
+  useEffect(() => {
+    console.log(`[YourEyesOnly][PROD-DIAG][ListGet] key=${key} itemId=${itemId ?? ''} userIds=${userIds ? userIds.join(',') : 'none'} results=${results === undefined ? 'undefined' : results.length}`);
+  }, [results]);
+
   return results?.map((record) => ({
     ...record,
     value: decodeUserValue(record.value as TValue),

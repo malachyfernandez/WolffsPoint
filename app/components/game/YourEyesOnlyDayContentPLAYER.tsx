@@ -54,6 +54,11 @@ const YourEyesOnlyDayContentPLAYER = ({
 }: YourEyesOnlyDayContentPLAYERProps) => {
   const { operatorUserId } = useGameOperatorUserId(gameId);
   const operatorUserIds = operatorUserId ? [operatorUserId] : [];
+
+  useEffect(() => {
+    console.log(`[YourEyesOnly][PROD-DIAG][DayContent] MOUNT gameId=${gameId} dayIndex=${dayIndex} currentEmail=${currentEmail} currentUserId=${currentUserId} operatorUserId=${operatorUserId ? 'set' : 'missing'}`);
+  }, [gameId, dayIndex, currentEmail, currentUserId, operatorUserId]);
+
   const { value: userTable } = useSharedListValue<UserTableItem[]>({
     key: 'userTable',
     itemId: gameId,

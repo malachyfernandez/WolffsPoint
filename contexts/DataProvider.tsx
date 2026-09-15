@@ -128,6 +128,11 @@ function DataSubscriber({ subId, config, refCount }: { subId: SubId, config: any
       // Update global store
       globalDataStore.setResult(subId, result);
 
+      if (config.type === 'find-values' || config.type === 'find-list-items') {
+        const resultSummary = result === undefined ? 'undefined' : (Array.isArray(result) ? `${result.length}` : 'non-array');
+        console.log(`[YourEyesOnly][PROD-DIAG][DataProvider] type=${config.type} key=${config.key} itemId=${config.itemId ?? ''} userIds=${config.args?.userIds ? (config.args.userIds as string[]).join(',') : 'none'} result=${resultSummary} refCount=${refCount}`);
+      }
+
       // Track changes if nobody is actively listening
       if (refCount === 0) {
         setUnloadedChanges(c => c + 1);

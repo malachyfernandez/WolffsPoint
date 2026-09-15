@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useFindListItems } from './useData';
 
 export const useGameOperatorUserId = (gameId: string) => {
@@ -7,10 +7,16 @@ export const useGameOperatorUserId = (gameId: string) => {
         returnTop: 1,
     });
 
-    return useMemo(() => {
+    const result = useMemo(() => {
         return {
             operatorUserId: gameRows?.[0]?.userToken ?? '',
             isLoading: gameRows === undefined,
         };
     }, [gameRows]);
+
+    useEffect(() => {
+        console.log(`[YourEyesOnly][PROD-DIAG][OperatorId] gameId=${gameId} gameRows=${gameRows === undefined ? 'undefined' : (gameRows.length === 0 ? 'empty' : gameRows.length)} operatorUserId=${result.operatorUserId ? 'set' : 'missing'}`);
+    }, [gameId, gameRows, result.operatorUserId]);
+
+    return result;
 };
