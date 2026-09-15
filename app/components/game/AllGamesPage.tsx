@@ -88,7 +88,7 @@ const AllGamesPage = ({
     const isGamesPageEmpty = !hasJoinedAGame && !hasMadeAGame && !hasArchivedGames;
 
     return (
-        <Column className='gap-4 flex-1 mt-10 max-w-[1000px] w-full mx-auto'>
+        <Column className='gap-4 flex-1 mt-10 max-w-250 w-full mx-auto'>
             <ProfileInfo />
 
             <Column className='gap-4 flex-1'>

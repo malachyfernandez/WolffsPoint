@@ -144,7 +144,7 @@ const GamePage = ({ gameId, currentUserId, onReady }: GamePageProps) => {
               scrollViewComponent={Animated.ScrollView}>
               <View className="mx-auto w-full max-w-[1000px] pt-60">
                 {isRoleDataLoading ? (
-                  <View className="min-h-[400px]" />
+                  <View className="min-h-100" />
                 ) : isOperator ? (
                   <OperatorGamePage currentUserId={currentUserId} gameId={gameId} />
                 ) : isNewser ? (

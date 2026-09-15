@@ -90,7 +90,9 @@ const StickyTocButton = ({ onPress, isOpen = false }: StickyTocButtonProps) => {
         const el = floatingElRef.current;
         if (!el) return;
 
-        const show = isStuck;
+        // Visible when stuck, but fade out while the TOC dialog is open and
+        // fade back in the moment it closes (position recompute waits 1s).
+        const show = isStuck && !isOpen;
         el.innerHTML = '';
         el.onmouseenter = null;
         el.onmouseleave = null;
@@ -103,18 +105,21 @@ const StickyTocButton = ({ onPress, isOpen = false }: StickyTocButtonProps) => {
             height: 40px;
             border-radius: 9999px;
             background: ${REST_BG};
-            display: ${show ? 'flex' : 'none'};
+            display: flex;
+            opacity: ${show ? '1' : '0'};
+            pointer-events: ${show ? 'auto' : 'none'};
             align-items: center;
             justify-content: center;
             z-index: 2147483647;
             cursor: pointer;
-            transition: background 0.15s;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+            transition: ${isStuck ? 'opacity 0.3s, background 0.3s' : 'none'};
             user-select: none;
         `;
         el.innerHTML = LIST_SVG;
         el.onmouseenter = () => { el.style.background = ON_HOVER_BG; };
         el.onmouseleave = () => { el.style.background = REST_BG; };
-    }, [isStuck]);
+    }, [isStuck, isOpen]);
 
     // Continuously measure the button, the scroll container, and the header's
     // bottom edge so the floating element tracks resizes and layout changes.
@@ -123,9 +128,6 @@ const StickyTocButton = ({ onPress, isOpen = false }: StickyTocButtonProps) => {
         if (!node) return;
 
         const update = () => {
-            // Freeze all measurement/movement while the TOC dialog is open.
-            if (isOpen) return;
-
             // The sentinel's parent is the 40x40 View wrapping the Pressable —
             // measure that so we get the real button bounds.
             const btn = node.parentElement as HTMLElement | null;
@@ -143,6 +145,13 @@ const StickyTocButton = ({ onPress, isOpen = false }: StickyTocButtonProps) => {
 
             const scrollParent = findScrollParent(node);
             const scrollLeft = scrollParent ? scrollParent.scrollLeft : window.scrollX;
+
+            // Always keep the X position up to date, even if the dialog is open.
+            posRef.current.left = btnRect.left + scrollLeft + X_BUFFER;
+            if (el) el.style.left = `${posRef.current.left}px`;
+
+            // While the TOC dialog is open, freeze Y / stuck-state updates only.
+            if (isOpen) return;
 
             // Where the button sits when the scroll container is at the top.
             const restLeft = btnRect.left + scrollLeft;
@@ -212,7 +221,11 @@ const StickyTocButton = ({ onPress, isOpen = false }: StickyTocButtonProps) => {
         let timeout: ReturnType<typeof setTimeout> | null = null;
 
         if (isOpen) {
-            // Dialog is open — freeze. No polling or scroll/resize listeners.
+            // Dialog is open — freeze Y and stuck-state, but keep X in sync
+            // on resize/horizontal scroll.
+            update();
+            window.addEventListener('resize', update);
+            window.addEventListener('scroll', update, true);
         } else if (wasOpen) {
 
             // Dialog just closed — wait 1s before resuming so the layout
