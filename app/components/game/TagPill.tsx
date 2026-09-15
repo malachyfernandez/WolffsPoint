@@ -11,16 +11,16 @@ export interface TagColor {
 
 /** Preset color palette for tags */
 export const TAG_COLORS: TagColor[] = [
-  { name: 'Red', bg: '#EF4444', text: '#FFFFFF' },
-  { name: 'Orange', bg: '#F97316', text: '#FFFFFF' },
-  { name: 'Amber', bg: '#F59E0B', text: '#1F2937' },
-  { name: 'Green', bg: '#22C55E', text: '#FFFFFF' },
-  { name: 'Teal', bg: '#14B8A6', text: '#FFFFFF' },
-  { name: 'Blue', bg: '#3B82F6', text: '#FFFFFF' },
-  { name: 'Indigo', bg: '#6366F1', text: '#FFFFFF' },
-  { name: 'Purple', bg: '#A855F7', text: '#FFFFFF' },
-  { name: 'Pink', bg: '#EC4899', text: '#FFFFFF' },
-  { name: 'Grey', bg: '#6B7280', text: '#FFFFFF' },
+  { name: 'Red', bg: '#B91C1C', text: '#FFFFFF' },
+  { name: 'Orange', bg: '#C2410C', text: '#FFFFFF' },
+  { name: 'Amber', bg: '#B45309', text: '#FFFFFF' },
+  { name: 'Green', bg: '#15803D', text: '#FFFFFF' },
+  { name: 'Teal', bg: '#0F766E', text: '#FFFFFF' },
+  { name: 'Blue', bg: '#1D4ED8', text: '#FFFFFF' },
+  { name: 'Indigo', bg: '#4338CA', text: '#FFFFFF' },
+  { name: 'Purple', bg: '#7E22CE', text: '#FFFFFF' },
+  { name: 'Pink', bg: '#BE185D', text: '#FFFFFF' },
+  { name: 'Grey', bg: '#374151', text: '#FFFFFF' },
 ];
 
 /** Get a TagColor by name, falling back to grey */
