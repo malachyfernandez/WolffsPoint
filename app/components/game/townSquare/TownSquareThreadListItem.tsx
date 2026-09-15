@@ -59,7 +59,7 @@ const TownSquareThreadListItem = ({ index, isLast, isOperator, onPress, onToggle
                     </FontText>
                 ) : (
                     <>
-                        <FontText variant='subtext' className='text-accent'>
+                        <FontText variant='subtext'>
                             {`${thread.replyCount} repl${thread.replyCount === 1 ? 'y' : 'ies'} `}
                         </FontText>
                         {hasNewReplies && (
@@ -150,7 +150,7 @@ const TownSquareThreadListItem = ({ index, isLast, isOperator, onPress, onToggle
                                 </>
                             ) : (
                                 <>
-                                    <FontText variant='subtext' className='text-accent'>
+                                    <FontText variant='subtext'>
                                         {`${thread.replyCount} repl${thread.replyCount === 1 ? 'y' : 'ies'} `}
                                     </FontText>
                                     {hasNewReplies && (

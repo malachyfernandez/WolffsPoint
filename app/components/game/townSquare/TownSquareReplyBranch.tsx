@@ -73,7 +73,7 @@ const TownSquareReplyBranch = ({
                                                 </Pressable>
                                             )}
                                             <Pressable onPress={() => setPendingDeleteNode(node)}>
-                                                <FontText weight='bold' className='text-red-500'>Delete</FontText>
+                                                <FontText weight='bold'>Delete</FontText>
                                             </Pressable>
                                         </>
                                     ) : null}
@@ -97,7 +97,7 @@ const TownSquareReplyBranch = ({
 
                         {hiddenChildrenCount > 0 ? (
                             <Pressable onPress={() => onExpandBranch(branchId)} style={{ marginLeft: depth * indentSize + 18 }}>
-                                <FontText weight='bold' className='text-accent'>
+                                <FontText weight='bold'>
                                     {`See all ${hiddenChildrenCount} repl${hiddenChildrenCount === 1 ? 'y' : 'ies'}`}
                                 </FontText>
                             </Pressable>

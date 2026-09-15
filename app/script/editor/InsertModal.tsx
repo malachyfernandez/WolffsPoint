@@ -1579,7 +1579,7 @@ const InsertModal = ({
                     onRemove(target);
                     onClose();
                   }}>
-                  <FontText weight="bold" className="text-sm text-red-500">
+                  <FontText weight="bold" className="text-sm">
                     Remove
                   </FontText>
                 </AppButton>

@@ -441,7 +441,7 @@ const FunctionTemplateEditor = ({
                     className="h-9 px-3"
                     onPress={handleRemove}
                     dropShadow={false}>
-                    <FontText weight="bold" className="text-sm text-red-500">
+                    <FontText weight="bold" className="text-sm">
                       Remove
                     </FontText>
                   </AppButton>
@@ -671,7 +671,7 @@ const EditInputContent = ({
               </FontText>
             </AppButton>
             <AppButton variant="red" className="h-9 px-3" onPress={onRemove} dropShadow={false}>
-              <FontText weight="bold" className="text-sm text-red-500">
+              <FontText weight="bold" className="text-sm">
                 Remove
               </FontText>
             </AppButton>

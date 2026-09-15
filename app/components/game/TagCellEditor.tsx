@@ -318,7 +318,7 @@ const TagCellEditor = ({
                                     {def.name}
                                   </FontText>
                                   {isSelected && (
-                                    <FontText className="text-xs text-green-600">✓</FontText>
+                                    <FontText className="text-xs">✓</FontText>
                                   )}
                                   <Pressable
                                     onPress={() => {

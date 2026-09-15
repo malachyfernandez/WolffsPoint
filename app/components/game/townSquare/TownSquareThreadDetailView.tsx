@@ -104,7 +104,7 @@ const TownSquareThreadDetailView = ({
                                                 </Pressable>
                                             )}
                                             <Pressable onPress={() => setIsDeleteThreadConfirmOpen(true)}>
-                                                <FontText weight='bold' className='text-red-500'>Delete</FontText>
+                                                <FontText weight='bold'>Delete</FontText>
                                             </Pressable>
                                         </>
                                     ) : null}

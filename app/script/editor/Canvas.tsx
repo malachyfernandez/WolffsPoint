@@ -1679,7 +1679,7 @@ const VariableRenameModal = ({
                 />
               </Column>
               {hasCollision && (
-                <FontText className="text-sm text-red-600">
+                <FontText className="text-sm">
                   A variable already uses this name.
                 </FontText>
               )}

@@ -208,7 +208,7 @@ const AddTagDialog = ({
                   onChangeText={setName}
                 />
                 {isDuplicate && (
-                  <FontText className="text-xs text-red-500">
+                  <FontText className="text-xs">
                     A tag with this name already exists
                   </FontText>
                 )}
@@ -252,7 +252,7 @@ const AddTagDialog = ({
                           delete next[editTag.name];
                           setTagTriggersRecord(next);
                         }}>
-                        <FontText weight="medium" className="text-sm text-red-500">
+                        <FontText weight="medium" className="text-sm">
                           Remove
                         </FontText>
                       </AppButton>

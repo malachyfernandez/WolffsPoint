@@ -1435,7 +1435,7 @@ const ScriptEditorDialog = ({
 
               {parseError && (
                 <View className="rounded-lg border border-red-400/30 bg-red-400/5 p-2">
-                  <FontText className="text-xs text-red-500">{parseError}</FontText>
+                  <FontText className="text-xs">{parseError}</FontText>
                 </View>
               )}
 

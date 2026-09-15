@@ -135,7 +135,7 @@ const ScheduleTableUpdateDialog = ({
                 <FontTimeInput value={time} onChangeText={setTime} isInDialog />
               </Column>
               {!isValid && canonicalDate && (
-                <FontText variant="subtext" className="text-red-500">
+                <FontText variant="subtext">
                   Choose a time in the future.
                 </FontText>
               )}

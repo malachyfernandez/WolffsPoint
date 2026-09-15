@@ -441,7 +441,7 @@ const NightlyPageContent = ({
           </Animated.View>
         ) : (
           <Row className="items-center justify-center gap-4">
-            <FontText weight="medium" className="text-center text-gray-500">
+            <FontText weight="medium" className="text-center">
               No players available. Add players in the Players tab first.
             </FontText>
           </Row>
