@@ -162,7 +162,7 @@ const NewspaperDayView = ({ gameId, dayIndex, ownerUserId, onReady }: NewspaperD
                     />
                     {showVoteSummary && (
                         <View className='px-5 sm:mx-0 -mx-2'>
-                            <View className='rounded-b-2xl' style={{
+                            <View className={`rounded-b-2xl ${!hasVisibleNewspaperContent ? 'rounded-t-2xl' : ''}`} style={{
                                 // @ts-ignore: web-only CSS
                                 backgroundImage: `url('${NEWSPAPER_TEXTURE_URL}')`,
                                 backgroundRepeat: 'repeat',

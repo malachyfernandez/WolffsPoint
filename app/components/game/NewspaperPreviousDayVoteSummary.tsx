@@ -386,8 +386,7 @@ const NewspaperPreviousDayVoteSummary = ({
           Previous Day Vote
         </FontText>
         <FontText variant="subtext">
-          Certified results from Day {dayIndex}.
-          {publicVoting && ' Tap a player to see who voted for them.'}
+          {publicVoting && 'Tap a player to see who voted for them.'}
         </FontText>
       </Column>
       <Column className="gap-4">
