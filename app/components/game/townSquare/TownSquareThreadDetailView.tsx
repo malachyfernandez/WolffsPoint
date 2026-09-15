@@ -91,7 +91,7 @@ const TownSquareThreadDetailView = ({
 
                             <Row className='gap-4 items-center flex-wrap justify-between border-b border-border/20 pb-4'>
                                 {isAnnouncement ? (
-                                    <FontText weight='medium' className='text-accent'>Announcement</FontText>
+                                    <FontText weight='medium'>Announcement</FontText>
                                 ) : (
                                     <FontText variant='subtext'>{`${selectedThread.replyCount} repl${selectedThread.replyCount === 1 ? 'y' : 'ies'}`}</FontText>
                                 )}
@@ -100,7 +100,7 @@ const TownSquareThreadDetailView = ({
                                         <>
                                             {!isPlayerDead && (
                                                 <Pressable onPress={onEditThread}>
-                                                    <FontText weight='bold' className='text-accent'>Edit</FontText>
+                                                    <FontText weight='bold'>Edit</FontText>
                                                 </Pressable>
                                             )}
                                             <Pressable onPress={() => setIsDeleteThreadConfirmOpen(true)}>

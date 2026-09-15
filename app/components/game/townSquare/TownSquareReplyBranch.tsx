@@ -62,14 +62,14 @@ const TownSquareReplyBranch = ({
                                 <Row className='gap-4 items-center flex-wrap gap-y-1'>
                                     {!isPlayerDead && (
                                         <Pressable onPress={() => onReply(node)}>
-                                            <FontText weight='bold' className='text-accent'>Reply</FontText>
+                                            <FontText weight='bold'>Reply</FontText>
                                         </Pressable>
                                     )}
                                     {isOwnReply ? (
                                         <>
                                             {!isPlayerDead && (
                                                 <Pressable onPress={() => onEditReply(node)}>
-                                                    <FontText weight='bold' className='text-accent'>Edit</FontText>
+                                                    <FontText weight='bold'>Edit</FontText>
                                                 </Pressable>
                                             )}
                                             <Pressable onPress={() => setPendingDeleteNode(node)}>
