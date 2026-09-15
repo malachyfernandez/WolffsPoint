@@ -43,17 +43,25 @@ interface DaysTableProps {
 }
 
 /** Parse a days-table cell ID into its components. */
-const parseDaysCellId = (cellId: string): {
+const parseDaysCellId = (
+  cellId: string
+): {
   type: string;
   userIndex: number;
   columnIndex?: number;
 } => {
-  if (cellId.startsWith('d-v-')) return { type: 'daysVote', userIndex: parseInt(cellId.slice(4), 10) };
-  if (cellId.startsWith('d-a-')) return { type: 'daysAction', userIndex: parseInt(cellId.slice(4), 10) };
+  if (cellId.startsWith('d-v-'))
+    return { type: 'daysVote', userIndex: parseInt(cellId.slice(4), 10) };
+  if (cellId.startsWith('d-a-'))
+    return { type: 'daysAction', userIndex: parseInt(cellId.slice(4), 10) };
   if (cellId.startsWith('d-e-')) {
     const rest = cellId.slice(4);
     const parts = rest.split('-');
-    return { type: 'daysExtra', userIndex: parseInt(parts[0], 10), columnIndex: parseInt(parts[1], 10) };
+    return {
+      type: 'daysExtra',
+      userIndex: parseInt(parts[0], 10),
+      columnIndex: parseInt(parts[1], 10),
+    };
   }
   return { type: '', userIndex: -1 };
 };
@@ -112,7 +120,8 @@ const DaysTable = ({
 
   const [userTable, setUserTable] = useList<UserTableItem[]>('userTable', gameId);
 
-  const users = userTable?.value ?? [];
+  const userTableValue = userTable.scheduledUpdate?.value ?? userTable.value;
+  const users = userTableValue ?? [];
   // Ref that mirrors `users` but is also updated synchronously when we call
   // setUserTable, so that handleTagsAdded can see the tag change that was
   // just applied via onChange (before React re-renders).
@@ -132,7 +141,12 @@ const DaysTable = ({
     { privacy: 'PUBLIC' }
   );
 
-  const titles = userTableTitle?.value ?? { extraUserColumns: [], extraDayColumns: [] };
+  const userTableTitleValue = userTableTitle.scheduledUpdate?.value ?? userTableTitle.value;
+  const columnVisibilityValue =
+    userTableColumnVisibility.scheduledUpdate?.value ?? userTableColumnVisibility.value;
+  const nightlyVisibilityValue =
+    nightlyVisibility.scheduledUpdate?.value ?? nightlyVisibility.value;
+  const titles = userTableTitleValue ?? { extraUserColumns: [], extraDayColumns: [] };
   const { fireTagTriggers } = useTagTriggers(gameId, users, titles, (updated) =>
     setUserTable(updated)
   );
@@ -164,7 +178,7 @@ const DaysTable = ({
   const prevDayCountRef = useRef(dayCount);
   const prevDayNumberRef = useRef(dayNumber);
 
-  const targetDayCount = getTargetDayCount(userTable?.value, Math.max(dayCount, dayNumber + 1));
+  const targetDayCount = getTargetDayCount(userTableValue, Math.max(dayCount, dayNumber + 1));
 
   const getNormalizedState = useCallback(
     (overrides?: {
@@ -174,20 +188,14 @@ const DaysTable = ({
       columnSizes?: PlayerPageColumnSizes;
     }) => {
       return normalizePlayerPageState({
-        titles: overrides?.titles ?? userTableTitle?.value,
-        visibility: overrides?.visibility ?? userTableColumnVisibility?.value,
-        users: overrides?.users ?? userTable?.value,
+        titles: overrides?.titles ?? userTableTitleValue,
+        visibility: overrides?.visibility ?? columnVisibilityValue,
+        users: overrides?.users ?? userTableValue,
         targetDayCount,
         columnSizes: overrides?.columnSizes ?? columnSizes.value,
       });
     },
-    [
-      columnSizes.value,
-      targetDayCount,
-      userTable?.value,
-      userTableColumnVisibility?.value,
-      userTableTitle?.value,
-    ]
+    [columnSizes.value, targetDayCount, userTableValue, columnVisibilityValue, userTableTitleValue]
   );
 
   // Track when column data is ready (only check isSyncing, not value presence)
@@ -225,16 +233,16 @@ const DaysTable = ({
     }
 
     const normalizedState = getNormalizedState();
-    const currentTitles = userTableTitle?.value ?? { extraUserColumns: [], extraDayColumns: [] };
-    const currentVisibility = userTableColumnVisibility?.value ?? {
+    const currentTitles = userTableTitleValue ?? { extraUserColumns: [], extraDayColumns: [] };
+    const currentVisibility = columnVisibilityValue ?? {
       extraUserColumns: [],
       extraDayColumns: [],
     };
-    const currentUsers = userTable?.value ?? [];
+    const currentUsers = userTableValue ?? [];
     const currentColumnSizes = columnSizes.value ?? defaultPlayerPageColumnSizes;
 
     // Normalize nightly visibility to match column counts, defaulting to false
-    const currentNightly = nightlyVisibility?.value ?? {
+    const currentNightly = nightlyVisibilityValue ?? {
       extraUserColumns: [],
       extraDayColumns: [],
     };
@@ -299,8 +307,8 @@ const DaysTable = ({
     return cleanup;
   }, [
     measureTableWidth,
-    userTableTitle?.value?.extraDayColumns?.length,
-    userTableColumnVisibility?.value?.extraDayColumns,
+    userTableTitleValue?.extraDayColumns?.length,
+    columnVisibilityValue?.extraDayColumns,
     columnSizes.value.dayBaseColumns.action,
     columnSizes.value.dayBaseColumns.vote,
     columnSizes.value.dayExtraColumns,
@@ -310,7 +318,7 @@ const DaysTable = ({
     newVoteValue: VoteValue,
     voteMultiplier: number
   ) => {
-    const previousUserTable = createUndoSnapshot(userTable?.value ?? []);
+    const previousUserTable = createUndoSnapshot(userTableValue ?? []);
     if (userIndex < 0 || userIndex >= previousUserTable.length) return;
 
     const nextUserTable = createUndoSnapshot(
@@ -342,7 +350,7 @@ const DaysTable = ({
   };
 
   const UNDOABLEsetActionValue = (userIndex: number, newActionValue: string) => {
-    const previousUserTable = createUndoSnapshot(userTable?.value ?? []);
+    const previousUserTable = createUndoSnapshot(userTableValue ?? []);
     if (userIndex < 0 || userIndex >= previousUserTable.length) return;
 
     const nextUserTable = createUndoSnapshot(
@@ -418,7 +426,7 @@ const DaysTable = ({
 
   const UNDOABLEsetDayColumnTitle = (columnIndex: number, newTitle: string) => {
     const previousTitles = createUndoSnapshot(
-      userTableTitle?.value ?? { extraUserColumns: [], extraDayColumns: [] }
+      userTableTitleValue ?? { extraUserColumns: [], extraDayColumns: [] }
     );
     const nextTitles = createUndoSnapshot(getNormalizedState({ titles: previousTitles }).titles);
     nextTitles.extraDayColumns[columnIndex] = newTitle;
@@ -454,11 +462,11 @@ const DaysTable = ({
 
   const UNDOABLEaddDayColumn = () => {
     const previousTitles = createUndoSnapshot(
-      userTableTitle?.value ?? { extraUserColumns: [], extraDayColumns: [] }
+      userTableTitleValue ?? { extraUserColumns: [], extraDayColumns: [] }
     );
-    const previousUserTable = createUndoSnapshot(userTable?.value ?? []);
+    const previousUserTable = createUndoSnapshot(userTableValue ?? []);
     const previousVisibility = createUndoSnapshot(
-      userTableColumnVisibility?.value ?? { extraUserColumns: [], extraDayColumns: [] }
+      columnVisibilityValue ?? { extraUserColumns: [], extraDayColumns: [] }
     );
     const previousSizes = createUndoSnapshot(columnSizes.value ?? defaultPlayerPageColumnSizes);
 
@@ -503,7 +511,7 @@ const DaysTable = ({
   };
 
   const toggleNightlyVisibility = (columnIndex: number) => {
-    const current = nightlyVisibility?.value ?? { extraUserColumns: [], extraDayColumns: [] };
+    const current = nightlyVisibilityValue ?? { extraUserColumns: [], extraDayColumns: [] };
     const colCount = titles.extraDayColumns.length;
     // Normalize to full length, defaulting to false (not shown in nightly)
     const normalized = Array.from(
@@ -520,15 +528,15 @@ const DaysTable = ({
 
   const UNDOABLEdeleteDayColumn = (columnIndex: number) => {
     const previousTitles = createUndoSnapshot(
-      userTableTitle?.value ?? { extraUserColumns: [], extraDayColumns: [] }
+      userTableTitleValue ?? { extraUserColumns: [], extraDayColumns: [] }
     );
-    const previousUserTable = createUndoSnapshot(userTable?.value ?? []);
+    const previousUserTable = createUndoSnapshot(userTableValue ?? []);
     const previousVisibility = createUndoSnapshot(
-      userTableColumnVisibility?.value ?? { extraUserColumns: [], extraDayColumns: [] }
+      columnVisibilityValue ?? { extraUserColumns: [], extraDayColumns: [] }
     );
     const previousSizes = createUndoSnapshot(columnSizes.value ?? defaultPlayerPageColumnSizes);
     const previousNightlyVisibility = createUndoSnapshot(
-      nightlyVisibility?.value ?? { extraUserColumns: [], extraDayColumns: [] }
+      nightlyVisibilityValue ?? { extraUserColumns: [], extraDayColumns: [] }
     );
 
     const nextTitles = {
@@ -586,14 +594,14 @@ const DaysTable = ({
     action: getWidthForColumnSize(112, columnSizes.value.dayBaseColumns.action),
   };
 
-  const extraDayColumnWidths = (userTableTitle?.value?.extraDayColumns ?? []).map((_, index) => {
+  const extraDayColumnWidths = (userTableTitleValue?.extraDayColumns ?? []).map((_, index) => {
     return getWidthForColumnSize(112, columnSizes.value.dayExtraColumns[index]);
   });
 
   // Compute column cell IDs for column selection
   const voteColumnCellIds = users.map((_, i) => `d-v-${i}`);
   const actionColumnCellIds = users.map((_, i) => `d-a-${i}`);
-  const extraColumnCellIds = (userTableTitle?.value?.extraDayColumns ?? []).map((_, colIdx) =>
+  const extraColumnCellIds = (userTableTitleValue?.extraDayColumns ?? []).map((_, colIdx) =>
     users.map((_, i) => `d-e-${i}-${colIdx}`)
   );
 
@@ -631,7 +639,7 @@ const DaysTable = ({
 
   // Apply vote + multiplier to all selected vote cells in a single undoable command
   const handleBulkVoteUpdate = (vote: VoteValue, multiplier: number) => {
-    const previousUserTable = createUndoSnapshot(userTable?.value ?? []);
+    const previousUserTable = createUndoSnapshot(userTableValue ?? []);
     const nextUserTable = createUndoSnapshot(
       getNormalizedState({ users: previousUserTable }).users
     );
@@ -662,7 +670,7 @@ const DaysTable = ({
 
   // Apply action to all selected action cells in a single undoable command
   const handleBulkActionUpdate = (action: string) => {
-    const previousUserTable = createUndoSnapshot(userTable?.value ?? []);
+    const previousUserTable = createUndoSnapshot(userTableValue ?? []);
     const nextUserTable = createUndoSnapshot(
       getNormalizedState({ users: previousUserTable }).users
     );
@@ -736,8 +744,8 @@ const DaysTable = ({
         <Row className="gap-0">
           <Column className={`border-border w-min gap-0 rounded border-2 ${className || ''}`}>
             <DayTitleRow
-              userTableTitle={userTableTitle?.value}
-              userTableColumnVisibility={userTableColumnVisibility?.value}
+              userTableTitle={userTableTitleValue}
+              userTableColumnVisibility={columnVisibilityValue}
               setColumnTitle={UNDOABLEsetDayColumnTitle}
               onEditStart={() => handleRowEditStart('title')}
               onEditEnd={handleRowEditEnd}
@@ -749,7 +757,7 @@ const DaysTable = ({
               onSetDayBaseColumnSize={setDayBaseColumnSize}
               onSetExtraDayColumnSize={setDayExtraColumnSize}
               onDeleteExtraDayColumn={UNDOABLEdeleteDayColumn}
-              nightlyVisibility={nightlyVisibility?.value?.extraDayColumns}
+              nightlyVisibility={nightlyVisibilityValue?.extraDayColumns}
               onToggleNightlyVisibility={toggleNightlyVisibility}
               selectionMode={selectionMode}
               columnCellIds={{
@@ -770,7 +778,7 @@ const DaysTable = ({
                 setVoteValue={UNDOABLEsetVoteValue}
                 setActionValue={UNDOABLEsetActionValue}
                 setExtraColumnValue={UNDOABLEsetExtraDayColumnValue}
-                userTableColumnVisibility={userTableColumnVisibility?.value}
+                userTableColumnVisibility={columnVisibilityValue}
                 onEditStart={() => handleRowEditStart(index)}
                 onEditEnd={handleRowEditEnd}
                 isEditing={editingRow === index}

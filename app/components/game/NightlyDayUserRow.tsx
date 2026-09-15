@@ -69,6 +69,7 @@ const NightlyDayUserRow = ({
   const [userTable, setUserTable] = useList<UserTableItem[]>('userTable', gameId ?? '', {
     privacy: 'PUBLIC',
   });
+  const userTableValue = userTable.scheduledUpdate?.value ?? userTable.value;
 
   const dayData = user.days[dayNumber] || { vote: '', action: '', extraColumns: [] };
   const voteMultiplier = dayData.voteMultiplier ?? 1;
@@ -224,7 +225,7 @@ const NightlyDayUserRow = ({
                 gameId={gameId ?? ''}
                 value={value}
                 onChange={(newValue) => {
-                  const currentUsers = userTable?.value ?? [];
+                  const currentUsers = userTableValue ?? [];
                   if (index < 0 || index >= currentUsers.length) return;
                   const updatedUsers = [...currentUsers];
                   const u = updatedUsers[index];

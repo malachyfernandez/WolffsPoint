@@ -77,14 +77,18 @@ const AddTagDialog = ({
     { privacy: 'PUBLIC' }
   );
 
+  const scheduledUserTable = userTable.scheduledUpdate?.value ?? userTable.value;
+  const scheduledUserTableTitle = userTableTitle.scheduledUpdate?.value ?? userTableTitle.value;
+  const scheduledMorningMessages =
+    morningMessagesList.scheduledUpdate?.value ?? morningMessagesList.value;
   const scriptSources = useMemo<ScriptSourceData>(
     () => ({
       capability: 'operator',
-      players: userTable?.value ?? [],
-      userTableTitle: userTableTitle?.value,
-      morningMessagesList: morningMessagesList?.value,
+      players: scheduledUserTable ?? [],
+      userTableTitle: scheduledUserTableTitle,
+      morningMessagesList: scheduledMorningMessages,
     }),
-    [userTable?.value, userTableTitle?.value, morningMessagesList?.value]
+    [scheduledUserTable, scheduledUserTableTitle, scheduledMorningMessages]
   );
 
   // Snapshot of the initial state when the dialog opens, used to detect
@@ -290,7 +294,12 @@ const AddTagDialog = ({
                     {isEditMode ? 'Save' : 'Create'}
                   </FontText>
                 </AppButton>
-                <AppButton className="h-10 flex-1" variant="outline" onPress={handleAttemptClose} onHoverIn={() => setHint(['esc'])} onHoverOut={() => setHint(null)}>
+                <AppButton
+                  className="h-10 flex-1"
+                  variant="outline"
+                  onPress={handleAttemptClose}
+                  onHoverIn={() => setHint(['esc'])}
+                  onHoverOut={() => setHint(null)}>
                   <FontText weight="medium">Cancel</FontText>
                 </AppButton>
               </Row>

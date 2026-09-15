@@ -1,13 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import FontText from '../ui/text/FontText';
 import LoadingContainer from '../ui/loading/LoadingContainer';
-import { useList, useFindValues } from 'hooks/useData';
+import { useList, useFindValues, useValue } from 'hooks/useData';
 import Column from '../layout/Column';
 import NightlyPlayerTable from './NightlyPlayerTable';
 import NightlyDaysTable from './NightlyDaysTable';
 import { UserTableItem } from 'types/playerTable';
-import { RoleTableItem } from 'types/roleTable';
 import AppButton from '../ui/buttons/AppButton';
 import Row from '../layout/Row';
 import ShadowScrollView from '../ui/ShadowScrollView';
@@ -28,7 +27,8 @@ import {
   executeMorningMessagePlannedUpdates,
 } from '../../../utils/executePlannedUpdates';
 import { fireTagTriggersForNetChanges } from '../../../hooks/useTagTriggers';
-import { useValue } from 'hooks/useData';
+import TableFreezeControls from './TableFreezeControls';
+import { usePlayerDataFreeze } from '../../../hooks/useTableFreeze';
 interface NightlyPageOPERATORProps {
   currentUserId: string;
   gameId: string;
@@ -55,7 +55,11 @@ const NightlyPageContent = ({
     privacy: 'PUBLIC',
   });
 
-  const users = userTable?.value ?? [];
+  const freezeController = usePlayerDataFreeze(gameId);
+  const users = useMemo(
+    () => userTable.scheduledUpdate?.value ?? userTable.value ?? [],
+    [userTable.scheduledUpdate?.value, userTable.value]
+  );
 
   // Table titles (for resolving column names in UpdateCell)
   const [userTableTitle] = useList<{ extraUserColumns: string[]; extraDayColumns: string[] }>(
@@ -63,9 +67,6 @@ const NightlyPageContent = ({
     gameId,
     { privacy: 'PUBLIC' }
   );
-
-  // Role table (for role message scripts that may contain UpdateCell blocks)
-  const [roleTable] = useList<RoleTableItem[]>('roleTable', gameId, { privacy: 'PUBLIC' });
 
   // Tag triggers (for firing OnTagAdded/OnTagRemoved during certify)
   const [tagTriggersRecord] = useValue<Record<string, string>>(
@@ -82,6 +83,11 @@ const NightlyPageContent = ({
       defaultValue: {},
     }
   );
+  const morningMessagesValue = useMemo(
+    () => morningMessagesList.scheduledUpdate?.value ?? morningMessagesList.value ?? {},
+    [morningMessagesList.scheduledUpdate?.value, morningMessagesList.value]
+  );
+  const userTableTitleValue = userTableTitle.scheduledUpdate?.value ?? userTableTitle.value;
 
   // Shared selected day index (same as players tab)
   const [selectedDayIndex] = useList<number>('selectedDayIndex', gameId, {
@@ -147,7 +153,7 @@ const NightlyPageContent = ({
 
   useEffect(() => {
     if (morningMessagesList.state.isSyncing === false) {
-      const currentMessages = morningMessagesList.value || {};
+      const currentMessages = morningMessagesValue;
 
       const updatedMessages = { ...currentMessages };
 
@@ -167,7 +173,13 @@ const NightlyPageContent = ({
         setMorningMessagesList(updatedMessages);
       }
     }
-  }, [fixedDayDatesArray.length, users.length, morningMessagesList.state.isSyncing]);
+  }, [
+    fixedDayDatesArray.length,
+    morningMessagesList.state.isSyncing,
+    morningMessagesValue,
+    setMorningMessagesList,
+    users,
+  ]);
 
   const [doSync, setDoSync] = useState(false);
   const [isPlayerTableBeingEdited, setIsPlayerTableBeingEdited] = useState(false);
@@ -180,7 +192,7 @@ const NightlyPageContent = ({
     const user = users[userIndex];
     if (!user) return;
 
-    const currentMessages = morningMessagesList.value || {};
+    const currentMessages = morningMessagesValue;
     const updatedMessages = { ...currentMessages };
 
     if (!updatedMessages[user.email.toLowerCase()]) {
@@ -196,12 +208,8 @@ const NightlyPageContent = ({
 
   // Bulk-update morning messages in a single state write (avoids stale-state
   // overwrite when calling updateMorningMessage in a loop).
-  const bulkUpdateMorningMessages = (
-    dayIndex: number,
-    userIndices: number[],
-    value: string
-  ) => {
-    const currentMessages = morningMessagesList.value || {};
+  const bulkUpdateMorningMessages = (dayIndex: number, userIndices: number[], value: string) => {
+    const currentMessages = morningMessagesValue;
     const updatedMessages = { ...currentMessages };
 
     for (const userIndex of userIndices) {
@@ -209,9 +217,7 @@ const NightlyPageContent = ({
       if (!user) continue;
 
       if (!updatedMessages[user.email.toLowerCase()]) {
-        updatedMessages[user.email.toLowerCase()] = new Array(
-          fixedDayDatesArray.length
-        ).fill('');
+        updatedMessages[user.email.toLowerCase()] = new Array(fixedDayDatesArray.length).fill('');
       }
 
       const userMessages = [...updatedMessages[user.email.toLowerCase()]];
@@ -263,7 +269,7 @@ const NightlyPageContent = ({
     // expression that is evaluated against the current cell value at certify
     // time, allowing append/remove operations from multiple players to compose
     // correctly rather than overwriting each other.
-    const titles = userTableTitle?.value ?? { extraUserColumns: [], extraDayColumns: [] };
+    const titles = userTableTitleValue ?? { extraUserColumns: [], extraDayColumns: [] };
     const allPlannedUpdates: PlannedUpdate[] = [];
 
     for (const user of certifiedUsers) {
@@ -274,7 +280,7 @@ const NightlyPageContent = ({
     }
 
     let finalUsers = certifiedUsers;
-    let finalMorningMessages = morningMessagesList.value ?? {};
+    let finalMorningMessages = morningMessagesValue;
     if (allPlannedUpdates.length > 0) {
       // Apply regular table updates (skips morningMessage updates)
       finalUsers = executePlannedUpdates(certifiedUsers, allPlannedUpdates, titles);
@@ -302,7 +308,7 @@ const NightlyPageContent = ({
     }
 
     setUserTable(finalUsers);
-    if (!deepEqual(finalMorningMessages, morningMessagesList.value ?? {})) {
+    if (!deepEqual(finalMorningMessages, morningMessagesValue)) {
       setMorningMessagesList(finalMorningMessages);
     }
     setDoSync(true);
@@ -316,10 +322,9 @@ const NightlyPageContent = ({
   return (
     <LoadingContainer
       dependencies={[hasInitiallyLoaded, areAllColumnsReady]}
-      loadingText='Loading nightly data'
-      className='min-h-[760px]'
-    >
-      <Column className='min-h-[760px] gap-4 py-3 sm:px-4'>
+      loadingText="Loading nightly data"
+      className="min-h-190">
+      <Column className="min-h-190 gap-4 py-3 sm:px-4">
         {users.length > 0 ? (
           <Animated.View entering={FadeIn.duration(300)}>
             <Column className="gap-4">
@@ -385,7 +390,9 @@ const NightlyPageContent = ({
                     </Row>
                   </Column>
                   <Column className="gap-0">
-                    <View style={{ width: daysTableWidth, opacity: selectionMode ? 0.4 : 1 }} pointerEvents={selectionMode ? 'none' : 'auto'}>
+                    <View
+                      style={{ width: daysTableWidth, opacity: selectionMode ? 0.4 : 1 }}
+                      pointerEvents={selectionMode ? 'none' : 'auto'}>
                       <ComprehensiveDaySelector
                         gameId={gameId}
                         showAddButton={true}
@@ -406,7 +413,7 @@ const NightlyPageContent = ({
                         onWidthChange={(width: number) => {
                           setDaysTableWidth(width);
                         }}
-                        morningMessagesList={morningMessagesList.value || {}}
+                        morningMessagesList={morningMessagesValue}
                         updateMorningMessage={updateMorningMessage}
                         bulkUpdateMorningMessages={bulkUpdateMorningMessages}
                         onColumnsReady={setIsDaysTableColumnsReady}
@@ -415,6 +422,12 @@ const NightlyPageContent = ({
                   </Column>
                 </Row>
               </ShadowScrollView>
+
+              <Row className="w-full justify-end px-4">
+                <Column className="min-w-0 flex-1 items-end">
+                  <TableFreezeControls controller={freezeController} />
+                </Column>
+              </Row>
 
               <NightlyCertificationDialog
                 isOpen={isCertificationDialogOpen}

@@ -69,7 +69,9 @@ const RoleTable = ({
     }
   );
 
-  const roles = roleTable?.value ?? [];
+  const roles = roleTable.scheduledUpdate?.value ?? roleTable.value ?? [];
+  const defaultVoteMessageValue =
+    defaultVoteMessage.scheduledUpdate?.value ?? defaultVoteMessage.value ?? DEFAULT_VOTE_MESSAGE;
   const visibleRoles = roles.filter((role) => role.isVisible !== false);
 
   useEffect(() => {
@@ -78,7 +80,7 @@ const RoleTable = ({
   }, [doSync]);
 
   const UNDOABLEsetRoleName = (roleIndex: number, newRoleName: string) => {
-    const previousRoleTable = createUndoSnapshot(roleTable?.value ?? []);
+    const previousRoleTable = createUndoSnapshot(roles);
     if (roleIndex < 0 || roleIndex >= previousRoleTable.length) return;
 
     const nextRoleTable = createUndoSnapshot(previousRoleTable);
@@ -95,7 +97,7 @@ const RoleTable = ({
   };
 
   const UNDOABLEsetDoesRoleVote = (roleIndex: number, newDoesRoleVote: boolean) => {
-    const previousRoleTable = createUndoSnapshot(roleTable?.value ?? []);
+    const previousRoleTable = createUndoSnapshot(roles);
     if (roleIndex < 0 || roleIndex >= previousRoleTable.length) return;
 
     const nextRoleTable = createUndoSnapshot(previousRoleTable);
@@ -112,7 +114,7 @@ const RoleTable = ({
   };
 
   const UNDOABLEsetHiddenFromRulebook = (roleIndex: number, value: boolean) => {
-    const previousRoleTable = createUndoSnapshot(roleTable?.value ?? []);
+    const previousRoleTable = createUndoSnapshot(roles);
     if (roleIndex < 0 || roleIndex >= previousRoleTable.length) return;
 
     const nextRoleTable = createUndoSnapshot(previousRoleTable);
@@ -129,7 +131,7 @@ const RoleTable = ({
   };
 
   const UNDOABLEsetRoleMessage = (roleIndex: number, newRoleMessage: string) => {
-    const previousRoleTable = createUndoSnapshot(roleTable?.value ?? []);
+    const previousRoleTable = createUndoSnapshot(roles);
     if (roleIndex < 0 || roleIndex >= previousRoleTable.length) return;
 
     const nextRoleTable = createUndoSnapshot(previousRoleTable);
@@ -146,7 +148,7 @@ const RoleTable = ({
   };
 
   const UNDOABLEsetVoteMessage = (roleIndex: number, newVoteMessage: string) => {
-    const previousRoleTable = createUndoSnapshot(roleTable?.value ?? []);
+    const previousRoleTable = createUndoSnapshot(roles);
     if (roleIndex < 0 || roleIndex >= previousRoleTable.length) return;
 
     const nextRoleTable = createUndoSnapshot(previousRoleTable);
@@ -163,7 +165,7 @@ const RoleTable = ({
   };
 
   const UNDOABLEsetAboutRole = (roleIndex: number, newAboutRole: string) => {
-    const previousRoleTable = createUndoSnapshot(roleTable?.value ?? []);
+    const previousRoleTable = createUndoSnapshot(roles);
     if (roleIndex < 0 || roleIndex >= previousRoleTable.length) return;
 
     const nextRoleTable = createUndoSnapshot(previousRoleTable);
@@ -180,7 +182,7 @@ const RoleTable = ({
   };
 
   const UNDOABLEdeleteRole = (roleIndex: number) => {
-    const previousRoleTable = createUndoSnapshot(roleTable?.value ?? []);
+    const previousRoleTable = createUndoSnapshot(roles);
     if (roleIndex < 0 || roleIndex >= previousRoleTable.length) return;
 
     const nextRoleTable = createUndoSnapshot(previousRoleTable);
@@ -227,7 +229,7 @@ const RoleTable = ({
       setBulkRoleMessage(role.roleMessage ?? '');
       setIsBulkRoleMessageOpen(true);
     } else if (cellType === 'voteMessage') {
-      setBulkVoteMessage(role.voteMessage ?? defaultVoteMessage?.value ?? DEFAULT_VOTE_MESSAGE);
+      setBulkVoteMessage(role.voteMessage ?? defaultVoteMessageValue);
       setIsBulkVoteMessageOpen(true);
     } else if (cellType === 'aboutRole') {
       setBulkAboutRole(role.aboutRole ?? '');
@@ -241,7 +243,7 @@ const RoleTable = ({
   }, [registerEditHandler, handleBulkEdit]);
 
   const handleBulkRoleNameUpdate = (name: string) => {
-    const previousRoleTable = createUndoSnapshot(roleTable?.value ?? []);
+    const previousRoleTable = createUndoSnapshot(roles);
     const nextRoleTable = createUndoSnapshot(previousRoleTable);
     for (const cellId of selectedCells) {
       const parts = cellId.split('-');
@@ -260,7 +262,7 @@ const RoleTable = ({
   };
 
   const handleBulkRoleMessageUpdate = ({ markdown }: { markdown: string }) => {
-    const previousRoleTable = createUndoSnapshot(roleTable?.value ?? []);
+    const previousRoleTable = createUndoSnapshot(roles);
     const nextRoleTable = createUndoSnapshot(previousRoleTable);
     for (const cellId of selectedCells) {
       const parts = cellId.split('-');
@@ -279,7 +281,7 @@ const RoleTable = ({
   };
 
   const handleBulkVoteMessageUpdate = ({ markdown }: { markdown: string }) => {
-    const previousRoleTable = createUndoSnapshot(roleTable?.value ?? []);
+    const previousRoleTable = createUndoSnapshot(roles);
     const nextRoleTable = createUndoSnapshot(previousRoleTable);
     for (const cellId of selectedCells) {
       const parts = cellId.split('-');
@@ -301,7 +303,7 @@ const RoleTable = ({
   };
 
   const handleBulkAboutRoleUpdate = ({ markdown }: { markdown: string }) => {
-    const previousRoleTable = createUndoSnapshot(roleTable?.value ?? []);
+    const previousRoleTable = createUndoSnapshot(roles);
     const nextRoleTable = createUndoSnapshot(previousRoleTable);
     for (const cellId of selectedCells) {
       const parts = cellId.split('-');
@@ -326,19 +328,25 @@ const RoleTable = ({
           <Column className={`border-border w-min gap-0 rounded border-2 ${className || ''}`}>
             {/* Title Row */}
             <Row className={`bg-background border-border h-12 w-min gap-0 rounded-t-lg border-b-2`}>
-              <Column className="h-full w-32 items-center justify-center gap-4" style={{ position: 'relative' }}>
+              <Column
+                className="h-full w-32 items-center justify-center gap-4"
+                style={{ position: 'relative' }}>
                 <FontText weight="medium" className="text-center">
                   Role
                 </FontText>
                 <SelectableColumnOverlay columnCellIds={roleNameColumnIds} cellType="roleName" />
               </Column>
-              <Column className="h-full w-64 items-center justify-center gap-4" style={{ position: 'relative' }}>
+              <Column
+                className="h-full w-64 items-center justify-center gap-4"
+                style={{ position: 'relative' }}>
                 <FontText weight="medium" className="text-center">
                   Role Message
                 </FontText>
                 <SelectableColumnOverlay columnCellIds={roleMsgColumnIds} cellType="roleMessage" />
               </Column>
-              <Column className="h-full w-64 items-center justify-center gap-4" style={{ position: 'relative' }}>
+              <Column
+                className="h-full w-64 items-center justify-center gap-4"
+                style={{ position: 'relative' }}>
                 {!selectionMode && (
                   <Pressable
                     onPress={() => setIsDefaultVoteMessageOpen(true)}
@@ -358,7 +366,9 @@ const RoleTable = ({
                 )}
                 <SelectableColumnOverlay columnCellIds={voteMsgColumnIds} cellType="voteMessage" />
               </Column>
-              <Column className="h-full w-64 items-center justify-center gap-4" style={{ position: 'relative' }}>
+              <Column
+                className="h-full w-64 items-center justify-center gap-4"
+                style={{ position: 'relative' }}>
                 <FontText weight="medium" className="text-center">
                   About Role
                 </FontText>
@@ -381,7 +391,7 @@ const RoleTable = ({
                   setHiddenFromRulebook={UNDOABLEsetHiddenFromRulebook}
                   setRoleMessage={UNDOABLEsetRoleMessage}
                   setVoteMessage={UNDOABLEsetVoteMessage}
-                  defaultVoteMessage={defaultVoteMessage?.value ?? DEFAULT_VOTE_MESSAGE}
+                  defaultVoteMessage={defaultVoteMessageValue}
                   setAboutRole={UNDOABLEsetAboutRole}
                   onDeleteRole={UNDOABLEdeleteRole}
                   onEditStart={() => handleRowEditStart(actualIndex)}
@@ -399,7 +409,7 @@ const RoleTable = ({
         isOpen={isDefaultVoteMessageOpen}
         onOpenChange={setIsDefaultVoteMessageOpen}
         title="Default Vote Message"
-        initialMarkdown={defaultVoteMessage?.value ?? DEFAULT_VOTE_MESSAGE}
+        initialMarkdown={defaultVoteMessageValue}
         onSubmit={({ markdown }) => setDefaultVoteMessage(markdown)}
         gameId={gameId}
         showInputs={showInputs}
@@ -414,7 +424,9 @@ const RoleTable = ({
         isOpen={isBulkRoleEditOpen}
         onOpenChange={setIsBulkRoleEditOpen}
         roleIndex={-1}
-        role={{ role: bulkRoleName, doesRoleVote: true, hiddenFromRulebook: false } as RoleTableItem}
+        role={
+          { role: bulkRoleName, doesRoleVote: true, hiddenFromRulebook: false } as RoleTableItem
+        }
         onSetRoleName={(_, name) => handleBulkRoleNameUpdate(name)}
         onSetDoesRoleVote={() => {}}
         onSetHiddenFromRulebook={() => {}}

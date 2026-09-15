@@ -8,6 +8,12 @@ import { decodeUserValue, encodeUserValue } from './userValueSerialization';
 import { globalRateLimitMonitor } from './useRateLimitMonitor';
 import { deepEqual } from '../utils/deepEqual';
 import { useToast } from '../contexts/ToastContext';
+import {
+  ScheduledSetOptions,
+  ScheduledUpdate,
+  ScheduledValueSetter,
+  useScheduledTarget,
+} from './useScheduledUpdates';
 
 type ObjectKeys<T> = T extends object ? Extract<keyof T, string> : never;
 type PrimitiveIndexValue = string | number | boolean;
@@ -54,6 +60,7 @@ export type UserVariableRecord<T> = {
 
 export type UserVariableResult<T> = UserVariableRecord<T> & {
   confirmedValue?: T;
+  scheduledUpdate?: ScheduledUpdate<T>;
   state: SyncState;
 };
 
@@ -237,10 +244,15 @@ export function useUserVariable<T>({
   overwriteStoredConfig?: boolean;
   overwriteStoredPrivacy?: boolean;
   onOpStatusChange?: (info: UserVarOpStatusInfo<T>) => void;
-}): [UserVariableResult<T>, (newValue: T) => void] {
+}): [UserVariableResult<T>, ScheduledValueSetter<T>] {
   const record = useQuery(api.user_vars.get, { key });
+  const {
+    isLoading: isScheduledUpdateSyncing,
+    scheduledUpdate,
+    stageValue,
+  } = useScheduledTarget<T>({ targetType: 'variable', key });
 
-  const isSyncing = record === undefined;
+  const isSyncing = record === undefined || isScheduledUpdateSyncing;
   const { showToast } = useToast();
 
   const [confirmedValue, setConfirmedValue] = useState<T | undefined>(undefined);
@@ -329,7 +341,7 @@ export function useUserVariable<T>({
     );
   });
 
-  const setValue = (newValue: T) => {
+  const setValue = (newValue: T, options: ScheduledSetOptions = {}) => {
     // Track mutation for rate limit monitoring
     globalRateLimitMonitor.trackCall(`user_vars:${key}`);
 
@@ -345,19 +357,39 @@ export function useUserVariable<T>({
       return;
     }
 
-    // Compare encoded forms: encodeUserValue strips `undefined` keys, so the
-    // stored value never contains them. Comparing raw values would fail
-    // forever for callers that include `field: undefined`, creating a
-    // write -> invalidate -> rewrite loop.
-    if (deepEqual(encodeUserValue(newValue), encodeUserValue(valueRef.current))) {
-      return;
-    }
-
     if (isConvexAuthLoading || !isConvexAuthenticated) {
       devWarn(
         'uservar_auth_not_ready',
         `Blocked set for key="${key}" because Convex auth is not ready.`
       );
+      return;
+    }
+
+    if (record === undefined || isScheduledUpdateSyncing) return;
+
+    const shouldStage = options.stage || options.scheduleAt !== undefined || scheduledUpdate;
+    if (shouldStage) {
+      if (
+        scheduledUpdate &&
+        options.scheduleAt === undefined &&
+        (!options.batchId || options.batchId === scheduledUpdate.batchId) &&
+        deepEqual(encodeUserValue(newValue), encodeUserValue(scheduledUpdate.value))
+      ) {
+        return;
+      }
+      return stageValue(encodeUserValue(newValue), options).catch((error) => {
+        console.error(`useUserVariable scheduled set failed for key="${key}"`, error);
+      });
+    }
+
+    // Compare encoded forms: encodeUserValue strips `undefined` keys, so the
+    // stored value never contains them. Comparing raw values would fail
+    // forever for callers that include `field: undefined`, creating a
+    // write -> invalidate -> rewrite loop.
+    if (
+      record !== null &&
+      deepEqual(encodeUserValue(newValue), encodeUserValue(valueRef.current))
+    ) {
       return;
     }
 
@@ -488,11 +520,19 @@ export function useUserVariable<T>({
     if (isConvexAuthLoading) return;
     if (!isConvexAuthenticated) return;
     if (record !== null) return;
+    if (isScheduledUpdateSyncing || scheduledUpdate) return;
     if (defaultValue === undefined) return;
 
     didAutoCreateRef.current = true;
     setValue(defaultValue as T);
-  }, [record, defaultValue, isConvexAuthLoading, isConvexAuthenticated]);
+  }, [
+    record,
+    defaultValue,
+    isConvexAuthLoading,
+    isConvexAuthenticated,
+    isScheduledUpdateSyncing,
+    scheduledUpdate,
+  ]);
 
   useEffect(() => {
     return () => {
@@ -509,6 +549,7 @@ export function useUserVariable<T>({
       ...(record ?? {}),
       value,
       confirmedValue,
+      scheduledUpdate,
       state: {
         isSyncing,
         lastOpStatus: opState.lastOpStatus,

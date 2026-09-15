@@ -67,7 +67,8 @@ const PlayerTable = ({
   const [userTable, setUserTable] = useList<UserTableItem[]>('userTable', gameId);
   // User Row.tsx
 
-  const users = userTable?.value ?? [];
+  const userTableValue = userTable.scheduledUpdate?.value ?? userTable.value;
+  const users = userTableValue ?? [];
   // Ref that mirrors `users` but is also updated synchronously when we call
   // setUserTable, so that handleTagsAdded can see the tag change that was
   // just applied via onChange (before React re-renders).
@@ -87,7 +88,12 @@ const PlayerTable = ({
     { privacy: 'PUBLIC' }
   );
 
-  const titles = userTableTitle?.value ?? { extraUserColumns: [], extraDayColumns: [] };
+  const userTableTitleValue = userTableTitle.scheduledUpdate?.value ?? userTableTitle.value;
+  const columnVisibilityValue =
+    userTableColumnVisibility.scheduledUpdate?.value ?? userTableColumnVisibility.value;
+  const nightlyVisibilityValue =
+    nightlyVisibility.scheduledUpdate?.value ?? nightlyVisibility.value;
+  const titles = userTableTitleValue ?? { extraUserColumns: [], extraDayColumns: [] };
   const { fireTagTriggers } = useTagTriggers(gameId, users, titles, (updated) =>
     setUserTable(updated)
   );
@@ -144,21 +150,21 @@ const PlayerTable = ({
     }
 
     const normalizedState = normalizePlayerPageState({
-      titles: userTableTitle?.value,
-      visibility: userTableColumnVisibility?.value,
-      users: userTable?.value,
+      titles: userTableTitleValue,
+      visibility: columnVisibilityValue,
+      users: userTableValue,
       targetDayCount: dayDatesArray.length,
     });
 
-    const currentTitles = userTableTitle?.value ?? { extraUserColumns: [], extraDayColumns: [] };
-    const currentVisibility = userTableColumnVisibility?.value ?? {
+    const currentTitles = userTableTitleValue ?? { extraUserColumns: [], extraDayColumns: [] };
+    const currentVisibility = columnVisibilityValue ?? {
       extraUserColumns: [],
       extraDayColumns: [],
     };
-    const currentUsers = userTable?.value ?? [];
+    const currentUsers = userTableValue ?? [];
 
     // Normalize nightly visibility to match column counts, defaulting to false
-    const currentNightly = nightlyVisibility?.value ?? {
+    const currentNightly = nightlyVisibilityValue ?? {
       extraUserColumns: [],
       extraDayColumns: [],
     };
@@ -201,9 +207,9 @@ const PlayerTable = ({
 
   const syncAllColumnsToTitles = useCallback(() => {
     const normalizedState = normalizePlayerPageState({
-      titles: userTableTitle?.value,
-      visibility: userTableColumnVisibility?.value,
-      users: userTable?.value,
+      titles: userTableTitleValue,
+      visibility: columnVisibilityValue,
+      users: userTableValue,
       targetDayCount: dayDatesArray.length,
     });
 
@@ -218,9 +224,9 @@ const PlayerTable = ({
     dayDatesArray.length,
     setUserTable,
     setUserTableColumnVisibility,
-    userTable?.value,
-    userTableColumnVisibility?.value,
-    userTableTitle?.value,
+    userTableValue,
+    columnVisibilityValue,
+    userTableTitleValue,
   ]);
 
   useEffect(() => {
@@ -231,7 +237,7 @@ const PlayerTable = ({
   }, [doSync, setDoSync, syncAllColumnsToTitles]);
 
   const UNDOABLEsetLivingState = (userIndex: number, newLivingState: 'alive' | 'dead') => {
-    const previousUserTable = createUndoSnapshot(userTable?.value ?? []);
+    const previousUserTable = createUndoSnapshot(userTableValue ?? []);
     if (userIndex < 0 || userIndex >= previousUserTable.length) return;
 
     const nextUserTable = createUndoSnapshot(previousUserTable);
@@ -285,7 +291,7 @@ const PlayerTable = ({
 
   const UNDOABLEsetColumnTitle = (columnIndex: number, newTitle: string) => {
     const previousTitles = createUndoSnapshot(
-      userTableTitle?.value ?? { extraUserColumns: [], extraDayColumns: [] }
+      userTableTitleValue ?? { extraUserColumns: [], extraDayColumns: [] }
     );
     const nextTitles = createUndoSnapshot(previousTitles);
     nextTitles.extraUserColumns[columnIndex] = newTitle;
@@ -299,11 +305,11 @@ const PlayerTable = ({
 
   const UNDOABLEaddColumn = () => {
     const previousTitles = createUndoSnapshot(
-      userTableTitle?.value ?? { extraUserColumns: [], extraDayColumns: [] }
+      userTableTitleValue ?? { extraUserColumns: [], extraDayColumns: [] }
     );
-    const previousUserTable = createUndoSnapshot(userTable?.value ?? []);
+    const previousUserTable = createUndoSnapshot(userTableValue ?? []);
     const previousVisibility = createUndoSnapshot(
-      userTableColumnVisibility?.value ?? { extraUserColumns: [], extraDayColumns: [] }
+      columnVisibilityValue ?? { extraUserColumns: [], extraDayColumns: [] }
     );
 
     const newTitle = `Column ${previousTitles.extraUserColumns.length + 1}`;
@@ -342,7 +348,7 @@ const PlayerTable = ({
 
   const UNDOABLEsetColumnVisibility = (columnIndex: number, visibility: boolean) => {
     const previousVisibility = createUndoSnapshot(
-      userTableColumnVisibility?.value ?? { extraUserColumns: [], extraDayColumns: [] }
+      columnVisibilityValue ?? { extraUserColumns: [], extraDayColumns: [] }
     );
     const nextVisibility = {
       ...previousVisibility,
@@ -359,7 +365,7 @@ const PlayerTable = ({
   };
 
   const toggleNightlyVisibility = (columnIndex: number) => {
-    const current = nightlyVisibility?.value ?? { extraUserColumns: [], extraDayColumns: [] };
+    const current = nightlyVisibilityValue ?? { extraUserColumns: [], extraDayColumns: [] };
     const colCount = currentTitles.extraUserColumns.length;
     // Normalize to full length, defaulting to false (not shown in nightly)
     const normalized = Array.from(
@@ -381,7 +387,7 @@ const PlayerTable = ({
   );
 
   // Calculate extra user column widths based on sizes
-  const currentTitles = userTableTitle?.value ?? { extraUserColumns: [], extraDayColumns: [] };
+  const currentTitles = userTableTitleValue ?? { extraUserColumns: [], extraDayColumns: [] };
   const extraUserColumnWidths = currentTitles.extraUserColumns.map((_: string, index: number) => {
     const size = columnSizes.value?.playerExtraColumns?.[index] ?? 'small';
     return getWidthForColumnSize(112, size);
@@ -399,17 +405,17 @@ const PlayerTable = ({
 
   const UNDOABLEdeleteExtraUserColumn = (columnIndex: number) => {
     const previousTitles = createUndoSnapshot(
-      userTableTitle?.value ?? { extraUserColumns: [], extraDayColumns: [] }
+      userTableTitleValue ?? { extraUserColumns: [], extraDayColumns: [] }
     );
-    const previousUserTable = createUndoSnapshot(userTable?.value ?? []);
+    const previousUserTable = createUndoSnapshot(userTableValue ?? []);
     const previousVisibility = createUndoSnapshot(
-      userTableColumnVisibility?.value ?? { extraUserColumns: [], extraDayColumns: [] }
+      columnVisibilityValue ?? { extraUserColumns: [], extraDayColumns: [] }
     );
     const previousColumnSizes = createUndoSnapshot(
       columnSizes.value ?? defaultPlayerPageColumnSizes
     );
     const previousNightlyVisibility = createUndoSnapshot(
-      nightlyVisibility?.value ?? { extraUserColumns: [], extraDayColumns: [] }
+      nightlyVisibilityValue ?? { extraUserColumns: [], extraDayColumns: [] }
     );
 
     const nextTitles = {
@@ -464,7 +470,7 @@ const PlayerTable = ({
   };
 
   // Compute column cell IDs for column selection
-  const extraColumnCellIds = (userTableTitle?.value?.extraUserColumns ?? []).map((_, colIdx) =>
+  const extraColumnCellIds = (userTableTitleValue?.extraUserColumns ?? []).map((_, colIdx) =>
     users.map((_, i) => `p-e-${i}-${colIdx}`)
   );
 
@@ -532,8 +538,8 @@ const PlayerTable = ({
       <Row className="gap-0">
         <Column className={`border-border w-min gap-0 rounded border-2 ${className || ''}`}>
           <TitleRow
-            userTableTitle={userTableTitle?.value}
-            userTableColumnVisibility={userTableColumnVisibility?.value}
+            userTableTitle={userTableTitleValue}
+            userTableColumnVisibility={columnVisibilityValue}
             setColumnTitle={UNDOABLEsetColumnTitle}
             setColumnVisibility={UNDOABLEsetColumnVisibility}
             onEditStart={() => handleRowEditStart('title')}
@@ -543,7 +549,7 @@ const PlayerTable = ({
             extraUserColumnSizes={columnSizes.value?.playerExtraColumns}
             onSetExtraUserColumnSize={setExtraUserColumnSize}
             onDeleteExtraUserColumn={UNDOABLEdeleteExtraUserColumn}
-            nightlyVisibility={nightlyVisibility?.value?.extraUserColumns}
+            nightlyVisibility={nightlyVisibilityValue?.extraUserColumns}
             onToggleNightlyVisibility={toggleNightlyVisibility}
             selectionMode={selectionMode}
             columnCellIds={extraColumnCellIds}
@@ -557,7 +563,7 @@ const PlayerTable = ({
               isLast={index === users.length - 1}
               setLivingState={UNDOABLEsetLivingState}
               setExtraColumnValue={UNDOABLEsetExtraColumnValue}
-              userTableColumnVisibility={userTableColumnVisibility?.value}
+              userTableColumnVisibility={columnVisibilityValue}
               onEditStart={() => handleRowEditStart(index)}
               onEditEnd={handleRowEditEnd}
               isEditing={editingRow === index}

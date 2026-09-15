@@ -17,196 +17,204 @@ import { useKeyboardShortcutHint } from '../../../contexts/KeyboardShortcutHintC
 import CloseButton from '../ui/dialog/CloseButton';
 
 interface UserAddDialogProps {
-    isOpen: boolean;
-    onOpenChange: (open: boolean) => void;
-    gameId: string;
+  isOpen: boolean;
+  onOpenChange: (open: boolean) => void;
+  gameId: string;
 }
 
-const UserAddDialog = ({
-    isOpen,
-    onOpenChange,
-    gameId
-}: UserAddDialogProps) => {
-    const { setHint } = useKeyboardShortcutHint();
+const UserAddDialog = ({ isOpen, onOpenChange, gameId }: UserAddDialogProps) => {
+  const { setHint } = useKeyboardShortcutHint();
 
-    const [realName, setRealName] = useState('');
-    const [email, setEmail] = useState('');
-    const [role, setRole] = useState('');
+  const [realName, setRealName] = useState('');
+  const [email, setEmail] = useState('');
+  const [role, setRole] = useState('');
 
-    // Use the same userList as PlayerTable - this is the cloud variable benefit!
-    const [userTable, setUserTable] = useList<UserTableItem[]>("userTable", gameId);
+  // Use the same userList as PlayerTable - this is the cloud variable benefit!
+  const [userTable, setUserTable] = useList<UserTableItem[]>('userTable', gameId);
 
-    const users = userTable?.value;
+  const users = userTable.scheduledUpdate?.value ?? userTable.value;
 
-    const [userTableTitle] = useList<UserTableTitle>("userTableTitle", gameId);
+  const [userTableTitle] = useList<UserTableTitle>('userTableTitle', gameId);
 
-    const [dayDatesArray] = useList<string[]>("dayDatesArray", gameId);
+  const [dayDatesArray] = useList<string[]>('dayDatesArray', gameId);
 
-    const [roleTable] = useList<RoleTableItem[]>("roleTable", gameId, { privacy: "PUBLIC" });
+  const [roleTable] = useList<RoleTableItem[]>('roleTable', gameId, { privacy: 'PUBLIC' });
 
-    const roleOptions = (roleTable?.value ?? [])
-        .filter((roleItem) => roleItem.role.trim().length > 0 && roleItem.isVisible !== false)
-        .map((roleItem) => ({
-            value: roleItem.role,
-            label: roleItem.role,
-        }));
+  const roleOptions = (roleTable.scheduledUpdate?.value ?? roleTable.value ?? [])
+    .filter((roleItem) => roleItem.role.trim().length > 0 && roleItem.isVisible !== false)
+    .map((roleItem) => ({
+      value: roleItem.role,
+      label: roleItem.role,
+    }));
 
-    const handleDialogOpenChange = (open: boolean) => {
-        onOpenChange(open);
-    };
+  const handleDialogOpenChange = (open: boolean) => {
+    onOpenChange(open);
+  };
 
-    const [isUniqueEmail, setIsUniqueEmail] = useState(false);
-    const [isValidEmail, setIsValidEmail] = useState(false);
+  const [isUniqueEmail, setIsUniqueEmail] = useState(false);
+  const [isValidEmail, setIsValidEmail] = useState(false);
 
-    // Basic email validation function
-    const isValidEmailFormat = (email: string): boolean => {
-        const emailRegex = /^[^@]+@[^@]+\.[^@]+$/;
-        return emailRegex.test(email.trim());
-    };
+  // Basic email validation function
+  const isValidEmailFormat = (email: string): boolean => {
+    const emailRegex = /^[^@]+@[^@]+\.[^@]+$/;
+    return emailRegex.test(email.trim());
+  };
 
-    useEffect(() => {
-        const emailExists = (users ?? []).some((user) =>
-            user.email.trim().toLowerCase() === email.trim().toLowerCase()
-        );
-        setIsUniqueEmail(!emailExists);
-        setIsValidEmail(isValidEmailFormat(email));
-    }, [email, users]);
-
-    const handleSubmit = () => {
-        // Check for email uniqueness and format
-        const emailExists = (users ?? []).some((user) =>
-            user.email.trim().toLowerCase() === email.trim().toLowerCase()
-        );
-
-        if (emailExists) {
-            console.warn("Email already exists!");
-            return;
-        }
-
-        if (!isValidEmailFormat(email)) {
-            console.warn("Invalid email format!");
-            return;
-        }
-
-        // Validate that required fields are filled (role is optional)
-        if (!realName.trim() || !email.trim()) {
-            console.warn("Name and email must be filled!");
-            return;
-        }
-
-        const currentTitles = userTableTitle?.value ?? { extraUserColumns: [], extraDayColumns: [] };
-        const newUser: UserTableItem = {
-            realName: realName.trim(),
-            email: email.trim().toLowerCase(),
-            userId: "NOT-JOINED",
-            role: role.trim() || "UNSET",
-            playerData: {
-                livingState: "alive",
-                extraColumns: Array(currentTitles.extraUserColumns.length).fill(""),
-            },
-            days: Array(dayDatesArray.value.length).fill(null).map(() => ({
-                vote: "",
-                action: "",
-                extraColumns: Array(currentTitles.extraDayColumns.length).fill(""),
-            })),
-        };
-
-        setUserTable([...(users ?? []), newUser]);
-
-        // Reset form
-        setRealName('');
-        setEmail('');
-        setRole('');
-
-        onOpenChange(false);
-    };
-
-    const handleCancel = () => {
-        setRealName('');
-        setEmail('');
-        setRole('');
-        onOpenChange(false);
-    };
-
-    useKeyboardShortcuts({
-        onPrimaryAction: handleSubmit,
-        onClose: handleCancel,
-        enabled: isOpen,
-    });
-
-    return (
-        <ConvexDialog.Root isOpen={isOpen} onOpenChange={handleDialogOpenChange}>
-            <ConvexDialog.Trigger asChild>
-                <View>
-                    {/* This will be replaced by the actual pressable in PlayerPageOPERATOR */}
-                </View>
-            </ConvexDialog.Trigger>
-            <ConvexDialog.Portal>
-                <ConvexDialog.Overlay />
-
-                <ConvexDialog.Content className="max-w-xl">
-                    <CloseButton onPress={() => onOpenChange(false)} />
-                    <DialogHeader
-                        text={`Add User`}
-                        subtext={`Enter the user details`}
-                    />
-                    <Column className='gap-4 p-0 sm:p-5'>
-                        <Column className='gap-2'>
-                            <FontText weight='medium'>Real Name</FontText>
-                            <FontTextInput
-                                placeholder="Enter real name..."
-                                variant="styled"
-                                className="w-full p-2"
-                                value={realName}
-                                onChangeText={setRealName}
-                            />
-
-                            <FontText weight='medium'>Email</FontText>
-                            <FontTextInput
-                                placeholder="Enter email..."
-                                variant="styled"
-                                className="w-full p-2"
-                                value={email}
-                                onChangeText={setEmail}
-                            />
-
-                            <FontText weight='medium'>Role</FontText>
-                            <AppDropdown
-                                options={roleOptions}
-                                value={role}
-                                onValueChange={setRole}
-                                placeholder='Select a role'
-                                emptyText='No roles available'
-                                isInDialog={true}
-                            />
-                        </Column>
-
-                        <Column className='gap-4 w-full items-center justify-center'>
-                            <Column className='gap-4 w-min'>
-                                <Row className='gap-4 w-min max-w-full'>
-                                    {isUniqueEmail && isValidEmail && realName.trim() && email.trim() ? (
-                                        <AppButton className='w-30 sm:w-48 h-10' variant='black' onPress={handleSubmit} onHoverIn={() => setHint(['enter'])} onHoverOut={() => setHint(null)}>
-                                            <FontText color='white' weight='medium'>Add User</FontText>
-                                        </AppButton>
-                                    ) : (
-                                        <StatusButton
-                                            className='w-30 sm:w-48 h-10'
-                                            buttonText='Add User'
-                                            buttonAltText={!isUniqueEmail ? 'Email Used' : 'Invalid'}
-                                        />
-                                    )}
-
-                                    <AppButton className='w-22 sm:w-48 h-10' variant='outline' onPress={handleCancel} onHoverIn={() => setHint(['esc'])} onHoverOut={() => setHint(null)}>
-                                        <FontText color='black' weight='medium'>Cancel</FontText>
-                                    </AppButton>
-                                </Row>
-                            </Column>
-                        </Column>
-                    </Column>
-                </ConvexDialog.Content>
-            </ConvexDialog.Portal>
-        </ConvexDialog.Root>
+  useEffect(() => {
+    const emailExists = (users ?? []).some(
+      (user) => user.email.trim().toLowerCase() === email.trim().toLowerCase()
     );
+    setIsUniqueEmail(!emailExists);
+    setIsValidEmail(isValidEmailFormat(email));
+  }, [email, users]);
+
+  const handleSubmit = () => {
+    // Check for email uniqueness and format
+    const emailExists = (users ?? []).some(
+      (user) => user.email.trim().toLowerCase() === email.trim().toLowerCase()
+    );
+
+    if (emailExists) {
+      console.warn('Email already exists!');
+      return;
+    }
+
+    if (!isValidEmailFormat(email)) {
+      console.warn('Invalid email format!');
+      return;
+    }
+
+    // Validate that required fields are filled (role is optional)
+    if (!realName.trim() || !email.trim()) {
+      console.warn('Name and email must be filled!');
+      return;
+    }
+
+    const currentTitles = userTableTitle.scheduledUpdate?.value ??
+      userTableTitle.value ?? { extraUserColumns: [], extraDayColumns: [] };
+    const newUser: UserTableItem = {
+      realName: realName.trim(),
+      email: email.trim().toLowerCase(),
+      userId: 'NOT-JOINED',
+      role: role.trim() || 'UNSET',
+      playerData: {
+        livingState: 'alive',
+        extraColumns: Array(currentTitles.extraUserColumns.length).fill(''),
+      },
+      days: Array(dayDatesArray.value.length)
+        .fill(null)
+        .map(() => ({
+          vote: '',
+          action: '',
+          extraColumns: Array(currentTitles.extraDayColumns.length).fill(''),
+        })),
+    };
+
+    setUserTable([...(users ?? []), newUser]);
+
+    // Reset form
+    setRealName('');
+    setEmail('');
+    setRole('');
+
+    onOpenChange(false);
+  };
+
+  const handleCancel = () => {
+    setRealName('');
+    setEmail('');
+    setRole('');
+    onOpenChange(false);
+  };
+
+  useKeyboardShortcuts({
+    onPrimaryAction: handleSubmit,
+    onClose: handleCancel,
+    enabled: isOpen,
+  });
+
+  return (
+    <ConvexDialog.Root isOpen={isOpen} onOpenChange={handleDialogOpenChange}>
+      <ConvexDialog.Trigger asChild>
+        <View>{/* This will be replaced by the actual pressable in PlayerPageOPERATOR */}</View>
+      </ConvexDialog.Trigger>
+      <ConvexDialog.Portal>
+        <ConvexDialog.Overlay />
+
+        <ConvexDialog.Content className="max-w-xl">
+          <CloseButton onPress={() => onOpenChange(false)} />
+          <DialogHeader text={`Add User`} subtext={`Enter the user details`} />
+          <Column className="gap-4 p-0 sm:p-5">
+            <Column className="gap-2">
+              <FontText weight="medium">Real Name</FontText>
+              <FontTextInput
+                placeholder="Enter real name..."
+                variant="styled"
+                className="w-full p-2"
+                value={realName}
+                onChangeText={setRealName}
+              />
+
+              <FontText weight="medium">Email</FontText>
+              <FontTextInput
+                placeholder="Enter email..."
+                variant="styled"
+                className="w-full p-2"
+                value={email}
+                onChangeText={setEmail}
+              />
+
+              <FontText weight="medium">Role</FontText>
+              <AppDropdown
+                options={roleOptions}
+                value={role}
+                onValueChange={setRole}
+                placeholder="Select a role"
+                emptyText="No roles available"
+                isInDialog={true}
+              />
+            </Column>
+
+            <Column className="w-full items-center justify-center gap-4">
+              <Column className="w-min gap-4">
+                <Row className="w-min max-w-full gap-4">
+                  {isUniqueEmail && isValidEmail && realName.trim() && email.trim() ? (
+                    <AppButton
+                      className="w-30 h-10 sm:w-48"
+                      variant="black"
+                      onPress={handleSubmit}
+                      onHoverIn={() => setHint(['enter'])}
+                      onHoverOut={() => setHint(null)}>
+                      <FontText color="white" weight="medium">
+                        Add User
+                      </FontText>
+                    </AppButton>
+                  ) : (
+                    <StatusButton
+                      className="w-30 h-10 sm:w-48"
+                      buttonText="Add User"
+                      buttonAltText={!isUniqueEmail ? 'Email Used' : 'Invalid'}
+                    />
+                  )}
+
+                  <AppButton
+                    className="w-22 h-10 sm:w-48"
+                    variant="outline"
+                    onPress={handleCancel}
+                    onHoverIn={() => setHint(['esc'])}
+                    onHoverOut={() => setHint(null)}>
+                    <FontText color="black" weight="medium">
+                      Cancel
+                    </FontText>
+                  </AppButton>
+                </Row>
+              </Column>
+            </Column>
+          </Column>
+        </ConvexDialog.Content>
+      </ConvexDialog.Portal>
+    </ConvexDialog.Root>
+  );
 };
 
 export default UserAddDialog;

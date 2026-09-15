@@ -8,6 +8,7 @@ import AppDropdownEmptyState from './dropdown/AppDropdownEmptyState';
 import AppDropdownItem from './dropdown/AppDropdownItem';
 import AppDropdownMenu from './dropdown/AppDropdownMenu';
 import AppDropdownTrigger from './dropdown/AppDropdownTrigger';
+import ShadowScrollView from '../../ui/ShadowScrollView';
 import FontText from '../text/FontText';
 import ConvexDialog from '../dialog/ConvexDialog';
 
@@ -300,16 +301,14 @@ const AppDropdown = ({
             <ConvexDialog.Portal>
               <ConvexDialog.Overlay />
               <ConvexDialog.Content className="max-w-sm">
-                {React.createElement(
-                  'div',
-                  {
-                    id: menuId,
-                    role: 'listbox',
-                    className:
-                      `max-h-[60vh] w-full overflow-y-auto rounded ${contentClassName}`.trim(),
-                  },
-                  dialogDropdownList
-                )}
+                <ShadowScrollView
+                  id={menuId}
+                  role="listbox"
+                  className={`max-h-[60vh] w-full rounded ${contentClassName}`.trim()}
+                  scrollViewClassName="w-full"
+                >
+                  {dialogDropdownList}
+                </ShadowScrollView>
               </ConvexDialog.Content>
             </ConvexDialog.Portal>
           </ConvexDialog.Root>

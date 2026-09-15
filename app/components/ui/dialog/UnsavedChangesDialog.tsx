@@ -63,7 +63,7 @@ const UnsavedChangesDialog = ({
               </AppButton>
               <AppButton
                 variant="filled"
-                className="w-24"
+                className="w-28"
                 onPress={() => {
                   onOpenChange(false);
                   onSave();

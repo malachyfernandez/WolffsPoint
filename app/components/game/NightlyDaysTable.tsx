@@ -39,11 +39,7 @@ interface NightlyDaysTableProps {
   morningMessagesList: Record<string, string[]>;
   updateMorningMessage: (dayIndex: number, userIndex: number, value: string) => void;
   /** Bulk-update morning messages in one shot (avoids stale-state overwrite). */
-  bulkUpdateMorningMessages: (
-    dayIndex: number,
-    userIndices: number[],
-    value: string
-  ) => void;
+  bulkUpdateMorningMessages: (dayIndex: number, userIndices: number[], value: string) => void;
   onColumnsReady?: (ready: boolean) => void;
 }
 
@@ -121,8 +117,10 @@ const NightlyDaysTable = ({
     { defaultValue: defaultPlayerPageColumnSizes, privacy: 'PUBLIC' }
   );
 
-  const titles = userTableTitle?.value ?? { extraUserColumns: [], extraDayColumns: [] };
-  const nightlyVis = nightlyVisibility?.value ?? { extraUserColumns: [], extraDayColumns: [] };
+  const titles = userTableTitle.scheduledUpdate?.value ??
+    userTableTitle.value ?? { extraUserColumns: [], extraDayColumns: [] };
+  const nightlyVis = nightlyVisibility.scheduledUpdate?.value ??
+    nightlyVisibility.value ?? { extraUserColumns: [], extraDayColumns: [] };
 
   // Compute which extra day columns are visible in nightly
   const nightlyExtraDayColumns = titles.extraDayColumns
@@ -178,7 +176,8 @@ const NightlyDaysTable = ({
     privacy: 'PUBLIC',
   });
 
-  const users = userTable?.value ?? [];
+  const userTableValue = userTable.scheduledUpdate?.value ?? userTable.value;
+  const users = userTableValue ?? [];
 
   const setVoteValue = (userIndex: number, newVoteValue: VoteValue, voteMultiplier: number) => {
     const updatedUsers = [...users];
@@ -210,7 +209,7 @@ const NightlyDaysTable = ({
     newVoteValue: VoteValue,
     voteMultiplier: number
   ) => {
-    const previousUserTable = createUndoSnapshot(userTable?.value ?? []);
+    const previousUserTable = createUndoSnapshot(userTableValue ?? []);
     if (userIndex < 0 || userIndex >= previousUserTable.length) return;
 
     const nextUserTable = createUndoSnapshot(previousUserTable);
@@ -264,7 +263,7 @@ const NightlyDaysTable = ({
   };
 
   const UNDOABLEsetActionValue = (userIndex: number, newActionValue: string) => {
-    const previousUserTable = createUndoSnapshot(userTable?.value ?? []);
+    const previousUserTable = createUndoSnapshot(userTableValue ?? []);
     if (userIndex < 0 || userIndex >= previousUserTable.length) return;
 
     const nextUserTable = createUndoSnapshot(previousUserTable);
@@ -376,7 +375,7 @@ const NightlyDaysTable = ({
   }, [registerEditHandler, handleBulkEdit]);
 
   const handleBulkVoteUpdate = (vote: VoteValue, multiplier: number) => {
-    const previousUserTable = createUndoSnapshot(userTable?.value ?? []);
+    const previousUserTable = createUndoSnapshot(userTableValue ?? []);
     const nextUserTable = createUndoSnapshot(previousUserTable);
     for (const cellId of selectedCells) {
       const parts = cellId.split('-');
@@ -401,7 +400,7 @@ const NightlyDaysTable = ({
   };
 
   const handleBulkActionUpdate = (action: string) => {
-    const previousUserTable = createUndoSnapshot(userTable?.value ?? []);
+    const previousUserTable = createUndoSnapshot(userTableValue ?? []);
     const nextUserTable = createUndoSnapshot(previousUserTable);
     for (const cellId of selectedCells) {
       const parts = cellId.split('-');
@@ -443,8 +442,7 @@ const NightlyDaysTable = ({
       undoAction: () => {
         userIndices.forEach((userIndex) => {
           const user = users[userIndex];
-          const prevValue =
-            previousMessagesList[user.email.toLowerCase()]?.[dayNumber] ?? '';
+          const prevValue = previousMessagesList[user.email.toLowerCase()]?.[dayNumber] ?? '';
           updateMorningMessage(dayNumber, userIndex, prevValue);
         });
       },
@@ -455,7 +453,7 @@ const NightlyDaysTable = ({
   };
 
   const handleBulkTagUpdate = (newValue: string) => {
-    const previousUserTable = createUndoSnapshot(userTable?.value ?? []);
+    const previousUserTable = createUndoSnapshot(userTableValue ?? []);
     const nextUserTable = createUndoSnapshot(previousUserTable);
     for (const cellId of selectedCells) {
       const parts = cellId.split('-');

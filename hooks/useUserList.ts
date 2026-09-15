@@ -1,28 +1,31 @@
-import { useMutation, useQuery } from "convex/react";
-import { api } from "../convex/_generated/api";
-import { useEffect, useRef, useState } from "react";
-import { devWarn } from "../utils/devWarnings";
-import { userVarConfig } from "../utils/userVarConfig";
-import { decodeUserValue, encodeUserValue } from "./userValueSerialization";
-import { globalRateLimitMonitor } from "./useRateLimitMonitor";
-import { deepEqual } from "../utils/deepEqual";
-import { useToast } from "../contexts/ToastContext";
+import { useConvexAuth, useMutation, useQuery } from 'convex/react';
+import { api } from '../convex/_generated/api';
+import { useEffect, useRef, useState } from 'react';
+import { devWarn } from '../utils/devWarnings';
+import { userVarConfig } from '../utils/userVarConfig';
+import { decodeUserValue, encodeUserValue } from './userValueSerialization';
+import { globalRateLimitMonitor } from './useRateLimitMonitor';
+import { deepEqual } from '../utils/deepEqual';
+import { useToast } from '../contexts/ToastContext';
+import {
+  ScheduledSetOptions,
+  ScheduledUpdate,
+  ScheduledValueSetter,
+  useScheduledTarget,
+} from './useScheduledUpdates';
 
 type ObjectKeys<T> = T extends object ? Extract<keyof T, string> : never;
 type PrimitiveIndexValue = string | number | boolean;
 
-export type Privacy = "PUBLIC" | "PRIVATE" | string[];
+export type Privacy = 'PUBLIC' | 'PRIVATE' | string[];
 
-export type StoredPrivacy =
-  | "PUBLIC"
-  | "PRIVATE"
-  | { allowList: string[] };
+export type StoredPrivacy = 'PUBLIC' | 'PRIVATE' | { allowList: string[] };
 
-export type OptimisticTimeoutBehavior = "reset" | "keep";
+export type OptimisticTimeoutBehavior = 'reset' | 'keep';
 
 type SyncState = {
   isSyncing: boolean;
-  lastOpStatus?: "idle" | "pending" | "confirmed" | "timed_out";
+  lastOpStatus?: 'idle' | 'pending' | 'confirmed' | 'timed_out';
   lastOpStartedAt?: number;
   lastOpTimedOutAt?: number;
 };
@@ -54,13 +57,14 @@ export type UserListRecord<T> = {
 
 export type UserListResult<T> = UserListRecord<T> & {
   confirmedValue?: T;
+  scheduledUpdate?: ScheduledUpdate<T>;
   state: SyncState;
 };
 
 export type UserListOpStatusInfo<T> = {
   key: string;
   itemId: string;
-  status: "pending" | "confirmed" | "timed_out";
+  status: 'pending' | 'confirmed' | 'timed_out';
   optimisticValue: T;
   lastConfirmedValue: T | undefined;
   msSinceSet: number;
@@ -210,12 +214,12 @@ export function useUserList<T>({
   key,
   itemId,
   defaultValue,
-  privacy = "PRIVATE",
+  privacy = 'PRIVATE',
   filterKey,
   searchKeys,
   sortKey,
   timeoutMs = userVarConfig.defaultTimeoutMs,
-  optimisticTimeoutBehavior = "reset",
+  optimisticTimeoutBehavior = 'reset',
   overwriteStoredConfig = userVarConfig.overwriteStoredConfigOnSet,
   overwriteStoredPrivacy = userVarConfig.overwriteStoredPrivacyOnSet,
   onOpStatusChange,
@@ -232,20 +236,31 @@ export function useUserList<T>({
   overwriteStoredConfig?: boolean;
   overwriteStoredPrivacy?: boolean;
   onOpStatusChange?: (info: UserListOpStatusInfo<T>) => void;
-}): [UserListResult<T>, (newValue: T) => void] {
+}): [UserListResult<T>, ScheduledValueSetter<T>] {
   const record = useQuery(api.user_lists.get, { key, itemId });
+  const {
+    isLoading: isScheduledUpdateSyncing,
+    scheduledUpdate,
+    stageValue,
+  } = useScheduledTarget<T>({
+    targetType: 'list',
+    key,
+    itemId,
+  });
 
-  const isSyncing = record === undefined;
+  const isSyncing = record === undefined || isScheduledUpdateSyncing;
   const { showToast } = useToast();
+  const { isLoading: isConvexAuthLoading, isAuthenticated: isConvexAuthenticated } =
+    useConvexAuth();
 
   const [confirmedValue, setConfirmedValue] = useState<T | undefined>(undefined);
   const confirmedValueRef = useRef<T | undefined>(undefined);
 
   const [opState, setOpState] = useState<{
-    lastOpStatus: SyncState["lastOpStatus"];
+    lastOpStatus: SyncState['lastOpStatus'];
     lastOpStartedAt?: number;
     lastOpTimedOutAt?: number;
-  }>({ lastOpStatus: "idle" });
+  }>({ lastOpStatus: 'idle' });
 
   const pendingOpRef = useRef<{
     id: number;
@@ -259,9 +274,7 @@ export function useUserList<T>({
   const didAutoCreateRef = useRef(false);
 
   const decodedRecordValue =
-    record?.value === undefined
-      ? undefined
-      : decodeUserValue(record.value as T);
+    record?.value === undefined ? undefined : decodeUserValue(record.value as T);
 
   const baseValue: T = isSyncing
     ? (defaultValue as T)
@@ -276,10 +289,10 @@ export function useUserList<T>({
     setConfirmedValue(next);
   }, [record]);
 
-  const shouldAutoResetOnTimeout = optimisticTimeoutBehavior === "reset";
+  const shouldAutoResetOnTimeout = optimisticTimeoutBehavior === 'reset';
 
   const value: T =
-    shouldAutoResetOnTimeout && opState.lastOpStatus === "timed_out"
+    shouldAutoResetOnTimeout && opState.lastOpStatus === 'timed_out'
       ? ((confirmedValue ?? defaultValue) as T)
       : baseValue;
 
@@ -288,31 +301,27 @@ export function useUserList<T>({
 
   useEffect(() => {
     if (!shouldAutoResetOnTimeout) return;
-    if (opState.lastOpStatus !== "timed_out") return;
+    if (opState.lastOpStatus !== 'timed_out') return;
     if (!opState.lastOpTimedOutAt) return;
 
     devWarn(
-      "uservar_rollback",
-      `Rolled back list key="${key}" itemId="${itemId}" to last confirmed value after timeout.` 
+      'uservar_rollback',
+      `Rolled back list key="${key}" itemId="${itemId}" to last confirmed value after timeout.`
     );
-  }, [
-    itemId,
-    key,
-    opState.lastOpStatus,
-    opState.lastOpTimedOutAt,
-    shouldAutoResetOnTimeout,
-  ]);
+  }, [itemId, key, opState.lastOpStatus, opState.lastOpTimedOutAt, shouldAutoResetOnTimeout]);
 
-  const setMutation = useMutation(api.user_lists.set).withOptimisticUpdate(
-    (localStore, args) => {
-      const existing = localStore.getQuery(api.user_lists.get, {
-        key,
-        itemId,
-      }) as any;
+  const setMutation = useMutation(api.user_lists.set).withOptimisticUpdate((localStore, args) => {
+    const existing = localStore.getQuery(api.user_lists.get, {
+      key,
+      itemId,
+    }) as any;
 
-      const now = Date.now();
+    const now = Date.now();
 
-      localStore.setQuery(api.user_lists.get, { key, itemId }, {
+    localStore.setQuery(
+      api.user_lists.get,
+      { key, itemId },
+      {
         ...(existing ?? {}),
         key,
         itemId,
@@ -330,11 +339,11 @@ export function useUserList<T>({
         filterValue: existing?.filterValue,
         searchValue: existing?.searchValue,
         sortValue: existing?.sortValue,
-      });
-    }
-  );
+      }
+    );
+  });
 
-  const setValue = (newValue: T) => {
+  const setValue = (newValue: T, options: ScheduledSetOptions = {}) => {
     // Track mutation for rate limit monitoring
     globalRateLimitMonitor.trackCall(`user_lists:${key}:${itemId}`);
 
@@ -343,18 +352,49 @@ export function useUserList<T>({
         const msg = `⚠️ High data activity detected — possible infinite loop bug (list "${key}/${itemId}"). Writes paused.`;
         showToast(msg);
         devWarn(
-          "uservar_rate_limited",
+          'uservar_rate_limited',
           `Blocked set for list key="${key}" itemId="${itemId}" — mutation rate limit exceeded. Likely infinite write loop.`
         );
       }
       return;
     }
 
+    if (isConvexAuthLoading || !isConvexAuthenticated) {
+      devWarn(
+        'uservar_auth_not_ready',
+        `Blocked set for list key="${key}" itemId="${itemId}" because Convex auth is not ready.`
+      );
+      return;
+    }
+
+    if (record === undefined || isScheduledUpdateSyncing) return;
+
+    const shouldStage = options.stage || options.scheduleAt !== undefined || scheduledUpdate;
+    if (shouldStage) {
+      if (
+        scheduledUpdate &&
+        options.scheduleAt === undefined &&
+        (!options.batchId || options.batchId === scheduledUpdate.batchId) &&
+        deepEqual(encodeUserValue(newValue), encodeUserValue(scheduledUpdate.value))
+      ) {
+        return;
+      }
+      return stageValue(encodeUserValue(newValue), options).catch((error) => {
+        console.error(
+          `useUserList scheduled set failed for key="${key}" itemId="${itemId}"`,
+          error
+        );
+      });
+    }
+
     // Compare encoded forms: encodeUserValue strips `undefined` keys, so the
     // stored value never contains them. Comparing raw values would fail
     // forever for callers that include `field: undefined`, creating a
     // write -> invalidate -> rewrite loop.
-    if (deepEqual(encodeUserValue(newValue), encodeUserValue(valueRef.current))) {
+    if (
+      record !== null &&
+      deepEqual(encodeUserValue(newValue), encodeUserValue(valueRef.current))
+    ) {
       return;
     }
 
@@ -368,7 +408,7 @@ export function useUserList<T>({
     }
 
     setOpState({
-      lastOpStatus: "pending",
+      lastOpStatus: 'pending',
       lastOpStartedAt: startedAt,
       lastOpTimedOutAt: undefined,
     });
@@ -376,15 +416,13 @@ export function useUserList<T>({
     onOpStatusChange?.({
       key,
       itemId,
-      status: "pending",
+      status: 'pending',
       optimisticValue: newValue,
       lastConfirmedValue: confirmedValueRef.current,
       msSinceSet: 0,
     });
 
-    const backendPrivacy = Array.isArray(privacy)
-      ? { allowList: privacy }
-      : privacy;
+    const backendPrivacy = Array.isArray(privacy) ? { allowList: privacy } : privacy;
 
     const timeoutHandle = setTimeout(() => {
       const pending = pendingOpRef.current;
@@ -393,14 +431,14 @@ export function useUserList<T>({
       const msSinceSet = Date.now() - startedAt;
 
       devWarn(
-        "uservar_op_timeout",
-        `Setter for list key="${key}" itemId="${itemId}" has not been confirmed after ${msSinceSet}ms (timeoutMs=${timeoutMs}). ResetBehavior=${optimisticTimeoutBehavior}.` 
+        'uservar_op_timeout',
+        `Setter for list key="${key}" itemId="${itemId}" has not been confirmed after ${msSinceSet}ms (timeoutMs=${timeoutMs}). ResetBehavior=${optimisticTimeoutBehavior}.`
       );
 
       pending.hasTimedOut = true;
 
       setOpState({
-        lastOpStatus: "timed_out",
+        lastOpStatus: 'timed_out',
         lastOpStartedAt: startedAt,
         lastOpTimedOutAt: Date.now(),
       });
@@ -408,7 +446,7 @@ export function useUserList<T>({
       onOpStatusChange?.({
         key,
         itemId,
-        status: "timed_out",
+        status: 'timed_out',
         optimisticValue: newValue,
         lastConfirmedValue: confirmedValueRef.current,
         msSinceSet,
@@ -454,7 +492,7 @@ export function useUserList<T>({
         setConfirmedValue(newValue);
 
         setOpState({
-          lastOpStatus: "confirmed",
+          lastOpStatus: 'confirmed',
           lastOpStartedAt: startedAt,
           lastOpTimedOutAt: undefined,
         });
@@ -462,7 +500,7 @@ export function useUserList<T>({
         onOpStatusChange?.({
           key,
           itemId,
-          status: "confirmed",
+          status: 'confirmed',
           optimisticValue: newValue,
           lastConfirmedValue: newValue,
           msSinceSet: Date.now() - startedAt,
@@ -478,7 +516,7 @@ export function useUserList<T>({
 
         pendingOpRef.current = null;
         setOpState({
-          lastOpStatus: "idle",
+          lastOpStatus: 'idle',
           lastOpStartedAt: undefined,
           lastOpTimedOutAt: undefined,
         });
@@ -487,12 +525,21 @@ export function useUserList<T>({
 
   useEffect(() => {
     if (didAutoCreateRef.current) return;
+    if (isConvexAuthLoading || !isConvexAuthenticated) return;
     if (record !== null) return;
+    if (isScheduledUpdateSyncing || scheduledUpdate) return;
     if (defaultValue === undefined) return;
 
     didAutoCreateRef.current = true;
     setValue(defaultValue as T);
-  }, [record, defaultValue]);
+  }, [
+    record,
+    defaultValue,
+    isConvexAuthLoading,
+    isConvexAuthenticated,
+    isScheduledUpdateSyncing,
+    scheduledUpdate,
+  ]);
 
   useEffect(() => {
     return () => {
@@ -509,6 +556,7 @@ export function useUserList<T>({
       ...(record ?? {}),
       value,
       confirmedValue,
+      scheduledUpdate,
       state: {
         isSyncing,
         lastOpStatus: opState.lastOpStatus,

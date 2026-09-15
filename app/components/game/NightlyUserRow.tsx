@@ -50,14 +50,15 @@ const NightlyUserRow = ({
   const [userTable, setUserTable] = useList<UserTableItem[]>('userTable', gameId, {
     privacy: 'PUBLIC',
   });
+  const userTableValue = userTable.scheduledUpdate?.value ?? userTable.value;
 
   const deleteUser = (userIndex: number) => {
-    const filteredUserTable = userTable?.value?.filter((userRow, index) => index != userIndex);
+    const filteredUserTable = userTableValue?.filter((userRow, index) => index != userIndex);
     setUserTable(filteredUserTable ?? []);
   };
 
   const setExtraColumnValue = (userIndex: number, columnIndex: number, newValue: string) => {
-    const currentUsers = userTable?.value ?? [];
+    const currentUsers = userTableValue ?? [];
     if (userIndex < 0 || userIndex >= currentUsers.length) return;
     const updatedUsers = [...currentUsers];
     const u = updatedUsers[userIndex];

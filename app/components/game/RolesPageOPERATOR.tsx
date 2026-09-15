@@ -13,6 +13,8 @@ import { RoleTableItem } from '../../../types/roleTable';
 import { Plus } from 'lucide-react-native';
 import { MultiSelectProvider } from './multiSelect/MultiSelectContext';
 import MultiSelectToolbar from './multiSelect/MultiSelectToolbar';
+import TableFreezeControls from './TableFreezeControls';
+import { useRolesFreeze } from '../../../hooks/useTableFreeze';
 
 interface RolesPageOPERATORProps {
   currentUserId: string;
@@ -35,7 +37,8 @@ const RolesPageContent = ({ currentUserId, gameId }: RolesPageOPERATORProps) => 
     privacy: 'PUBLIC',
   });
 
-  const roles = roleTable?.value ?? [];
+  const freezeController = useRolesFreeze(gameId);
+  const roles = roleTable.scheduledUpdate?.value ?? roleTable.value ?? [];
   const visibleRoles = roles.filter((role) => role.isVisible !== false);
   const isSyncing = roleTable?.state?.isSyncing ?? false;
   const lastOpStatus = roleTable?.state?.lastOpStatus ?? 'idle';
@@ -52,10 +55,10 @@ const RolesPageContent = ({ currentUserId, gameId }: RolesPageOPERATORProps) => 
   }, [isSyncing, hasInitiallyLoaded]);
 
   const addRole = (newRole: RoleTableItem) => {
-    const previousRoleTable = createUndoSnapshot(roleTable?.value ?? []);
+    const previousRoleTable = createUndoSnapshot(roles);
     executeCommand({
       action: () => {
-        setRoleTable([...(roleTable?.value ?? []), newRole]);
+        setRoleTable([...roles, newRole]);
         setDoSync(true);
       },
       undoAction: () => {
@@ -70,8 +73,7 @@ const RolesPageContent = ({ currentUserId, gameId }: RolesPageOPERATORProps) => 
     <LoadingContainer
       dependencies={[roleTable, hasInitiallyLoaded]}
       loadingText="Loading roles"
-      className="min-h-190"
-    >
+      className="min-h-190">
       <Column className="gap-4 py-3 sm:px-4">
         <MultiSelectToolbar />
         {visibleRoles.length > 0 ? (
@@ -97,7 +99,7 @@ const RolesPageContent = ({ currentUserId, gameId }: RolesPageOPERATORProps) => 
                 </Column>
               </Row>
             </ShadowScrollView>
-            <Row className="-mt-2 gap-4 sm:-mt-6 sm:ml-4">
+            <Row className="-mt-2 w-full flex-wrap items-start justify-between gap-4 px-4 sm:-mt-6">
               <AppButton variant="accent" className="w-36" onPress={() => setIsAddDialogOpen(true)}>
                 <Row className="items-center gap-2">
                   <Plus size={20} color="white" />
@@ -106,10 +108,13 @@ const RolesPageContent = ({ currentUserId, gameId }: RolesPageOPERATORProps) => 
                   </FontText>
                 </Row>
               </AppButton>
+              <Column className="min-w-0 flex-1 items-end">
+                <TableFreezeControls controller={freezeController} />
+              </Column>
             </Row>
           </Column>
         ) : (
-          <Row className="w-full items-center justify-center gap-4">
+          <Row className="w-full flex-wrap items-start justify-between gap-4 px-4">
             <AppButton variant="accent" className="w-36" onPress={() => setIsAddDialogOpen(true)}>
               <Row className="items-center gap-2">
                 <Plus size={20} color="white" />
@@ -118,6 +123,9 @@ const RolesPageContent = ({ currentUserId, gameId }: RolesPageOPERATORProps) => 
                 </FontText>
               </Row>
             </AppButton>
+            <Column className="min-w-0 flex-1 items-end">
+              <TableFreezeControls controller={freezeController} />
+            </Column>
           </Row>
         )}
       </Column>

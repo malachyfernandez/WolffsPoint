@@ -1,27 +1,34 @@
-import { useEffect, useSyncExternalStore, useMemo } from "react";
-import { DATA_CONFIG } from "../utils/dataConfig";
-import { globalDataStore } from "../contexts/DataProvider";
-import { useUserListSet } from "./useUserListSet";
-import { useUserListRemove } from "./useUserListRemove";
-import { useUserVariablePrivacy } from "./useUserVariablePrivacy";
-import { useUserListPrivacy } from "./useUserListPrivacy";
+import { useEffect, useSyncExternalStore, useMemo } from 'react';
+import { DATA_CONFIG } from '../utils/dataConfig';
+import { globalDataStore } from '../contexts/DataProvider';
+import { useUserListSet } from './useUserListSet';
+import { useUserListRemove } from './useUserListRemove';
+import { useUserVariablePrivacy } from './useUserVariablePrivacy';
+import { useUserListPrivacy } from './useUserListPrivacy';
 
-import type { UserVariableResult, UserVariableRecord } from "./useUserVariable";
-import type { UserListRecord } from "./useUserList";
+import type { UserVariableResult, UserVariableRecord } from './useUserVariable';
+import type { UserListRecord } from './useUserList';
+import type { ScheduledValueSetter } from './useScheduledUpdates';
 
 // Fallback states before the background subscriber mounts
 const NO_OP = () => {};
 const FALLBACK_GET = undefined;
 
 /**
- * Gets or creates a single variable per user. 
+ * Gets or creates a single variable per user.
  * Combines subscriptions in the background across components.
  */
-export function useValue<T = any>(key: string, overrides: any = {}): [UserVariableResult<T>, (val: T) => void] {
+export function useValue<T = any>(
+  key: string,
+  overrides: any = {}
+): [UserVariableResult<T>, ScheduledValueSetter<T>] {
   const baseConfig = DATA_CONFIG[key] || {};
-  const args = useMemo(() => ({ ...baseConfig, ...overrides }), [JSON.stringify(baseConfig), JSON.stringify(overrides)]);
+  const args = useMemo(
+    () => ({ ...baseConfig, ...overrides }),
+    [JSON.stringify(baseConfig), JSON.stringify(overrides)]
+  );
   const subId = useMemo(() => JSON.stringify({ type: 'variable', key, args }), [key, args]);
-  
+
   useEffect(() => {
     return globalDataStore.register(subId, { type: 'variable', key, args });
   }, [subId, key, args]);
@@ -32,22 +39,32 @@ export function useValue<T = any>(key: string, overrides: any = {}): [UserVariab
   );
 
   const finalResult = result || [{ value: args.defaultValue, state: { isSyncing: true } }, NO_OP];
-  
+
   return finalResult;
 }
 
 /**
  * Gets or creates a single item in a list per user.
  */
-export function useList<T = any>(key: string, itemId: string, overrides: any = {}): [UserVariableResult<T>, (val: T) => void] {
+export function useList<T = any>(
+  key: string,
+  itemId: string,
+  overrides: any = {}
+): [UserVariableResult<T>, ScheduledValueSetter<T>] {
   const baseConfig = DATA_CONFIG[key] || {};
-  const args = useMemo(() => ({ ...baseConfig, ...overrides }), [JSON.stringify(baseConfig), JSON.stringify(overrides)]);
-  const subId = useMemo(() => JSON.stringify({ type: 'list', key, itemId, args }), [key, itemId, args]);
+  const args = useMemo(
+    () => ({ ...baseConfig, ...overrides }),
+    [JSON.stringify(baseConfig), JSON.stringify(overrides)]
+  );
+  const subId = useMemo(
+    () => JSON.stringify({ type: 'list', key, itemId, args }),
+    [key, itemId, args]
+  );
 
   useEffect(() => {
     const unregister = globalDataStore.register(subId, { type: 'list', key, itemId, args });
     return () => {
-        unregister();
+      unregister();
     };
   }, [subId, key, itemId, args]);
 
@@ -62,15 +79,21 @@ export function useList<T = any>(key: string, itemId: string, overrides: any = {
 /**
  * Finds accessible variables across all users based on search/filter criteria.
  */
-export function useFindValues<T = any>(key: string, queryArgs: {
-  searchFor?: string;
-  filterFor?: string | number | boolean;
-  userIds?: string[];
-  returnTop?: number;
-  startAfter?: number;
-} = {}) {
+export function useFindValues<T = any>(
+  key: string,
+  queryArgs: {
+    searchFor?: string;
+    filterFor?: string | number | boolean;
+    userIds?: string[];
+    returnTop?: number;
+    startAfter?: number;
+  } = {}
+) {
   const baseConfig = DATA_CONFIG[key] || {};
-  const args = useMemo(() => ({ ...baseConfig, ...queryArgs }), [JSON.stringify(baseConfig), JSON.stringify(queryArgs)]);
+  const args = useMemo(
+    () => ({ ...baseConfig, ...queryArgs }),
+    [JSON.stringify(baseConfig), JSON.stringify(queryArgs)]
+  );
   const subId = useMemo(() => JSON.stringify({ type: 'find-values', key, args }), [key, args]);
 
   useEffect(() => {
@@ -90,22 +113,28 @@ export function useFindValues<T = any>(key: string, queryArgs: {
 /**
  * Finds accessible list items across all users based on search/filter criteria.
  */
-export function useFindListItems<T = any>(key: string, queryArgs: {
-  itemId?: string;
-  searchFor?: string;
-  filterFor?: string | number | boolean;
-  userIds?: string[];
-  returnTop?: number;
-  startAfter?: number;
-} = {}) {
+export function useFindListItems<T = any>(
+  key: string,
+  queryArgs: {
+    itemId?: string;
+    searchFor?: string;
+    filterFor?: string | number | boolean;
+    userIds?: string[];
+    returnTop?: number;
+    startAfter?: number;
+  } = {}
+) {
   const baseConfig = DATA_CONFIG[key] || {};
-  const args = useMemo(() => ({ ...baseConfig, ...queryArgs }), [JSON.stringify(baseConfig), JSON.stringify(queryArgs)]);
+  const args = useMemo(
+    () => ({ ...baseConfig, ...queryArgs }),
+    [JSON.stringify(baseConfig), JSON.stringify(queryArgs)]
+  );
   const subId = useMemo(() => JSON.stringify({ type: 'find-list-items', key, args }), [key, args]);
 
   useEffect(() => {
     const unregister = globalDataStore.register(subId, { type: 'find-list-items', key, args });
     return () => {
-        unregister();
+      unregister();
     };
   }, [subId, key, args]);
 
@@ -140,7 +169,10 @@ export function useValueCount(key: string, queryArgs: { filterFor: string | numb
 /**
  * Gets the exact count of accessible list items for a given filter.
  */
-export function useListCount(key: string, queryArgs: { filterFor: string | number | boolean, itemId?: string }) {
+export function useListCount(
+  key: string,
+  queryArgs: { filterFor: string | number | boolean; itemId?: string }
+) {
   const baseConfig = DATA_CONFIG[key] || {};
   const args = { ...baseConfig, ...queryArgs };
   const subId = JSON.stringify({ type: 'list-count', key, args });
@@ -158,7 +190,7 @@ export function useListCount(key: string, queryArgs: { filterFor: string | numbe
 }
 
 // -----------------------------------------------------------------------------
-// Mutation Utilities 
+// Mutation Utilities
 // These don't need background subscriptions, but they do pull from DATA_CONFIG
 // -----------------------------------------------------------------------------
 

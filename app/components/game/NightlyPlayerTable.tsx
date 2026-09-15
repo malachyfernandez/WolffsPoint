@@ -57,7 +57,8 @@ const NightlyPlayerTable = ({
     privacy: 'PUBLIC',
   });
 
-  const users = userTable?.value ?? [];
+  const userTableValue = userTable.scheduledUpdate?.value ?? userTable.value;
+  const users = userTableValue ?? [];
 
   const [selectedDayIndex, setSelectedDayIndex] = useList<number>('selectedDayIndex', gameId, {
     privacy: 'PUBLIC',
@@ -75,8 +76,10 @@ const NightlyPlayerTable = ({
     privacy: 'PUBLIC',
   });
 
-  const titles = userTableTitle?.value ?? { extraUserColumns: [], extraDayColumns: [] };
-  const nightlyVis = nightlyVisibility?.value ?? { extraUserColumns: [], extraDayColumns: [] };
+  const titles = userTableTitle.scheduledUpdate?.value ??
+    userTableTitle.value ?? { extraUserColumns: [], extraDayColumns: [] };
+  const nightlyVis = nightlyVisibility.scheduledUpdate?.value ??
+    nightlyVisibility.value ?? { extraUserColumns: [], extraDayColumns: [] };
 
   // Compute which extra user columns are visible in nightly
   const nightlyExtraUserColumns = titles.extraUserColumns
@@ -100,7 +103,7 @@ const NightlyPlayerTable = ({
   }, [doSync]);
 
   const UNDOABLEupdatePlayerLivingState = (userIndex: number, livingState: 'alive' | 'dead') => {
-    const previousUserTable = createUndoSnapshot(userTable?.value ?? []);
+    const previousUserTable = createUndoSnapshot(userTableValue ?? []);
     if (userIndex < 0 || userIndex >= previousUserTable.length) return;
 
     const nextUserTable = createUndoSnapshot(previousUserTable);

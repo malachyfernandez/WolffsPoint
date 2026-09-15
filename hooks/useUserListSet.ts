@@ -1,7 +1,7 @@
-import { useMutation } from "convex/react";
-import { api } from "../convex/_generated/api";
-import type { Privacy } from "./useUserList";
-import { encodeUserValue } from "./userValueSerialization";
+import { useMutation } from 'convex/react';
+import { api } from '../convex/_generated/api';
+import type { Privacy } from './useUserList';
+import { encodeUserValue } from './userValueSerialization';
 
 type ObjectKeys<T> = T extends object ? Extract<keyof T, string> : never;
 
@@ -59,6 +59,8 @@ type ObjectKeys<T> = T extends object ? Extract<keyof T, string> : never;
  */
 export function useUserListSet<T = any>() {
   const mutation = useMutation(api.user_lists.set);
+  const stageMutation = useMutation(api.scheduled_updates.stageTarget);
+  const scheduleMutation = useMutation(api.scheduled_updates.scheduleBatch);
 
   /**
    * Upsert one list item by key + itemId.
@@ -122,6 +124,9 @@ export function useUserListSet<T = any>() {
     sortKey,
     overwriteStoredConfig,
     overwriteStoredPrivacy,
+    stage,
+    scheduleAt,
+    batchId,
   }: {
     key: string;
     itemId: string;
@@ -132,11 +137,25 @@ export function useUserListSet<T = any>() {
     sortKey?: ObjectKeys<T> | string;
     overwriteStoredConfig?: boolean;
     overwriteStoredPrivacy?: boolean;
+    stage?: boolean;
+    scheduleAt?: number;
+    batchId?: string;
   }) {
-    const backendPrivacy = Array.isArray(privacy)
-      ? { allowList: privacy }
-      : privacy;
+    const backendPrivacy = Array.isArray(privacy) ? { allowList: privacy } : privacy;
     const encodedValue = encodeUserValue(value);
+
+    if (stage || scheduleAt !== undefined) {
+      const scheduledBatchId = batchId ?? `list:${key}:${itemId}`;
+      return stageMutation({
+        target: { targetType: 'list', key, itemId },
+        encodedValue,
+        batchId: scheduledBatchId,
+      }).then(async () => {
+        if (scheduleAt !== undefined) {
+          await scheduleMutation({ batchId: scheduledBatchId, scheduledTime: scheduleAt });
+        }
+      });
+    }
 
     return mutation({
       key,

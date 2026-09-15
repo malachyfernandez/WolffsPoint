@@ -65,6 +65,38 @@ Output:
 - `[record, setValue]`
 - same record-state shape as `useValue`
 
+### Staged and scheduled updates
+
+`useValue` and `useList` support one optional pending replacement per owned variable or list item. `record.value` always remains the published value. When a pending update exists, its value and timing are available through `record.scheduledUpdate`.
+
+```ts
+const [table, setTable] = useList<TableRow[]>("table", gameId);
+
+await setTable(table.value, { stage: true, batchId: `game:${gameId}:tables` });
+
+const editableRows = table.scheduledUpdate?.value ?? table.value;
+setTable(updateRows(editableRows));
+
+await table.scheduledUpdate?.schedule(Date.now() + 60_000);
+await table.scheduledUpdate?.publishNow();
+await table.scheduledUpdate?.cancel();
+```
+
+Setter options:
+- `stage: true` creates or replaces the pending value without a publication time.
+- `scheduleAt` creates or replaces the pending value and schedules its publication.
+- `batchId` groups pending values so they publish or cancel atomically.
+- Once a pending value exists, ordinary setter calls replace that pending value. They do not change `record.value`.
+
+`record.scheduledUpdate` is only returned by owner-scoped `useValue` and `useList` hooks. It contains:
+- `value`: the one pending replacement value.
+- `status`: `"staged"` or `"scheduled"`.
+- `scheduledTime`: the publication timestamp, or `null` for an unscheduled draft.
+- `batchId`: the atomic publication batch.
+- `schedule(time)`, `publishNow()`, and `cancel()` controls.
+
+After publication, the pending update is removed and its value becomes `record.value`.
+
 ### `useFindValues`
 
 Reads accessible variable rows by key across multiple users. **Requires an exact configuration of filters**.

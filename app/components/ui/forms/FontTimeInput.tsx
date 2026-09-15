@@ -8,6 +8,7 @@ interface FontTimeInputProps {
     value?: string;
     onChangeText: (value: string) => void;
     className?: string;
+    isInDialog?: boolean;
 }
 
 const HOUR_OPTIONS: AppDropdownOption[] = Array.from({ length: 12 }, (_, index) => {
@@ -67,7 +68,7 @@ const toCanonicalTime = (hour12: string, minute: string, period: string) => {
     return `${`${hour24}`.padStart(2, '0')}:${`${parsedMinute}`.padStart(2, '0')}`;
 };
 
-const FontTimeInput = ({ value = '08:00', onChangeText, className = '' }: FontTimeInputProps) => {
+const FontTimeInput = ({ value = '08:00', onChangeText, className = '', isInDialog = false }: FontTimeInputProps) => {
     const timeParts = useMemo(() => getTimeParts(value), [value]);
 
     return (
@@ -79,6 +80,7 @@ const FontTimeInput = ({ value = '08:00', onChangeText, className = '' }: FontTi
                     onValueChange={(nextHour) => onChangeText(toCanonicalTime(nextHour, timeParts.minute, timeParts.period))}
                     triggerClassName='min-w-[86px] rounded-2xl border border-border/15 bg-text/5 px-3 py-3'
                     contentClassName='border border-border/15'
+                    isInDialog={isInDialog}
                 />
                 <FontText weight='medium' className='opacity-40'>:</FontText>
                 <AppDropdown
@@ -87,6 +89,7 @@ const FontTimeInput = ({ value = '08:00', onChangeText, className = '' }: FontTi
                     onValueChange={(nextMinute) => onChangeText(toCanonicalTime(timeParts.hour12, nextMinute, timeParts.period))}
                     triggerClassName='min-w-[86px] rounded-2xl border border-border/15 bg-text/5 px-3 py-3'
                     contentClassName='border border-border/15'
+                    isInDialog={isInDialog}
                 />
                 <AppDropdown
                     options={PERIOD_OPTIONS}
@@ -94,6 +97,7 @@ const FontTimeInput = ({ value = '08:00', onChangeText, className = '' }: FontTi
                     onValueChange={(nextPeriod) => onChangeText(toCanonicalTime(timeParts.hour12, timeParts.minute, nextPeriod))}
                     triggerClassName='min-w-[92px] rounded-2xl border border-border/15 bg-text/5 px-3 py-3'
                     contentClassName='border border-border/15'
+                    isInDialog={isInDialog}
                 />
             </Row>
             <FontText variant='subtext'>Stored as {value}</FontText>

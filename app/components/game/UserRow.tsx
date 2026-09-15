@@ -107,16 +107,17 @@ const UserRow = ({
   const [userTable, setUserTable] = useList<UserTableItem[]>('userTable', gameId);
   // User Row.tsx
   // UserEditDialouge.tsx
+  const userTableValue = userTable.scheduledUpdate?.value ?? userTable.value;
 
   const deleteUser = (userIndex: number) => {
-    const filteredUserTable = userTable?.value?.filter((userRow, index) => index != userIndex);
+    const filteredUserTable = userTableValue?.filter((userRow, index) => index != userIndex);
     setUserTable(filteredUserTable ?? []);
   };
 
   const { executeCommand } = useUndoRedo();
 
   const UNDOABLEdeleteUser = (userIndex: number) => {
-    const previousUserTable = createUndoSnapshot(userTable?.value ?? []);
+    const previousUserTable = createUndoSnapshot(userTableValue ?? []);
     const nextUserTable = previousUserTable.filter((_, index) => index !== userIndex);
 
     executeCommand({
