@@ -95,7 +95,7 @@ const ColumnActionsDialog = ({
                   className="mt-2 w-full justify-center px-4"
                   variant="red"
                   onPress={() => setIsDeleteConfirmOpen(true)}>
-                  <FontText weight="medium" color="red">
+                  <FontText weight="medium" color="red-700">
                     Delete Column
                   </FontText>
                 </AppButton>

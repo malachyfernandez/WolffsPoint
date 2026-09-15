@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View } from 'react-native';
 import { Trash2 } from 'lucide-react-native';
-import { useCSSVariable } from 'uniwind';
+
 import { NewspaperDividerStyle, NewspaperSectionDefaults, NewspaperTitleFont } from '../../../../types/usepaper';
 import {
     NEWSPAPER_DIVIDER_STYLES,
@@ -93,7 +93,6 @@ const NewspaperSectionOptionsDialog = ({
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const { showToast } = useToast();
   const [sectionDefaults, setSectionDefaults] = useValue<NewspaperSectionDefaults>('newspaperSectionDefaults');
-  const redColor = String(useCSSVariable('--color-red-700') || 'rgb(185, 28, 28)');
   useNewspaperFonts();
 
   const defaultTitleFont = resolveTitleFont({ titleFont: sectionDefaults?.value?.titleFont });
@@ -162,12 +161,11 @@ const NewspaperSectionOptionsDialog = ({
                 className="w-full">
                 <Row className="items-center justify-center gap-2">
                   <View style={{ opacity: canDelete ? 1 : 0.4 }}>
-                    <Trash2 size={17} color={redColor} />
+                    <Trash2 size={17} color="rgb(185, 28, 28)" />
                   </View>
                   <FontText
                     weight="medium"
-                    color="red-700"
-                    className={!canDelete ? 'opacity-40' : ''}>
+                    className={!canDelete ? 'text-red-700 opacity-40' : 'text-red-700'}>
                     {canDelete ? 'Delete Section' : 'The only section cannot be deleted'}
                   </FontText>
                 </Row>

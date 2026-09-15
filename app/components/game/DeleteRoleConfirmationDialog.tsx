@@ -59,7 +59,7 @@ const DeleteConfirmationDialog = ({ isOpen, onOpenChange, onConfirm, itemType, i
                                     }}
                                     keyboardHint={['del']}
                                 >
-                                    <FontText weight='medium' color='red'>{confirmButtonText}</FontText>
+                                    <FontText weight='medium' color='red-700'>{confirmButtonText}</FontText>
                                 </AppButton>
                             </View>
                         </Column>

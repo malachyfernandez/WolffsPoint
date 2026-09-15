@@ -236,7 +236,7 @@ const UserEditDialog = ({
                     className="h-10 w-full"
                     variant="red"
                     onPress={() => setIsDeleteConfirmOpen(true)}>
-                    <FontText color="red" weight="medium">
+                    <FontText color="red-700" weight="medium">
                       Delete User
                     </FontText>
                   </AppButton>

@@ -52,7 +52,7 @@ export default function DatabaseNukeButton() {
   };
 
   return (
-    <View className="bg-red-900 border-b-2 border-red-600">
+    <View className="bg-red-900 border-b-2 border-red-700">
       <View className="p-3 mt-8">
         <Text className="text-white text-xs font-bold mb-2 text-center">
           🔥 DEV TOOLS - DATABASE NUKE 🔥
@@ -72,7 +72,7 @@ export default function DatabaseNukeButton() {
           <TouchableOpacity
             onPress={handleNuke}
             disabled={isLoading}
-            className="bg-red-600 px-3 py-1 rounded"
+            className="bg-red-700 px-3 py-1 rounded"
           >
             <Text className="text-white text-xs font-bold">
               ⚠️ NUKE ALL

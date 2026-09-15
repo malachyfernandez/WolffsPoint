@@ -120,7 +120,7 @@ const FontNumberInput = ({
                 inline ? (
                     <View className="w-20" >
                         <TextInput
-                            className={`${className} ${useDefaultStyling ? 'h-10 pl-4 border border-subtle-border' : ''} focus:outline-none rounded ${showError ? 'border-red-500' : ''}`}
+                            className={`${className} ${useDefaultStyling ? 'h-10 pl-4 border border-subtle-border' : ''} focus:outline-none rounded ${showError ? 'border-red-700' : ''}`}
                             style={{
                                 fontFamily: fontsLoaded ? 'LibreBaskerville' : undefined,
                                 fontWeight: WEIGHT_MAP[weight] as '400' | '500' | '700',
@@ -136,7 +136,7 @@ const FontNumberInput = ({
                         <Row className='gap-4 h-10 overflow-visible absolute -bottom-10'>
                         {helperText.length > 0 && (
                             <Text
-                                className={`text-sm text-nowrap mt-1 ${showError ? 'text-red-500' : 'text-gray-600'}`}
+                                className={`text-sm text-nowrap mt-1 ${showError ? 'text-red-700' : 'text-gray-600'}`}
                                 style={{
                                     fontFamily: fontsLoaded ? 'LibreBaskerville' : undefined,
                                     fontWeight: '400'
@@ -151,7 +151,7 @@ const FontNumberInput = ({
                 ) : (
                     <View className="w-full">
                         <TextInput
-                            className={`${className} ${useDefaultStyling ? 'h-10 pl-4 border border-subtle-border' : ''} focus:outline-none rounded ${showError ? 'border-red-500' : ''}`}
+                            className={`${className} ${useDefaultStyling ? 'h-10 pl-4 border border-subtle-border' : ''} focus:outline-none rounded ${showError ? 'border-red-700' : ''}`}
                             style={{
                                 fontFamily: fontsLoaded ? 'LibreBaskerville' : undefined,
                                 fontWeight: WEIGHT_MAP[weight] as '400' | '500' | '700',
@@ -166,7 +166,7 @@ const FontNumberInput = ({
                         />
                         {helperText.length > 0 && (
                             <Text
-                                className={`text-sm mt-1 ${showError ? 'text-red-500' : 'text-gray-600'}`}
+                                className={`text-sm mt-1 ${showError ? 'text-red-700' : 'text-gray-600'}`}
                                 style={{
                                     fontFamily: fontsLoaded ? 'LibreBaskerville' : undefined,
                                     fontWeight: 'normal'

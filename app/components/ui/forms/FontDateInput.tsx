@@ -266,7 +266,7 @@ const FontDateInput = ({
     return (
         <View className="w-full">
             <TextInput
-                className={`${className} focus:outline-none rounded ${showError ? 'border-red-500' : ''}`}
+                className={`${className} focus:outline-none rounded ${showError ? 'border-red-700' : ''}`}
                 style={{
                     fontFamily: fontsLoaded ? 'LibreBaskerville' : undefined,
                     fontWeight: WEIGHT_MAP[weight] as '400' | '500' | '700',
@@ -283,7 +283,7 @@ const FontDateInput = ({
             />
             {helperText.length > 0 && (
                 <Text
-                    className={`text-sm mt-1 ${showValidationError ? 'text-red-500' : 'text-gray-600'}`}
+                    className={`text-sm mt-1 ${showValidationError ? 'text-red-700' : 'text-gray-600'}`}
                     style={{
                         fontFamily: fontsLoaded ? 'LibreBaskerville' : undefined,
                         fontWeight: '400'

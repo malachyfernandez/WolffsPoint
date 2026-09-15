@@ -181,7 +181,7 @@ const AppButton = ({
         extraStyles = `${bg} group hover:brightness-150 active:brightness-50`;
     } else if (variant === 'red') {
         const bg = 'bg-none';
-        extraStyles = `border-2 border-red-500 ${bg} group hover:bg-red-500/10`;
+        extraStyles = `border-2 border-red-700 ${bg} group hover:bg-red-700/10`;
     } else {
         const bg = 'bg-text';
         extraStyles = `${bg} group hover:brightness-150 active:brightness-50`;

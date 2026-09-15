@@ -279,7 +279,7 @@ const AddTagDialog = ({
                       variant="red"
                       onPress={handleDelete}
                       dropShadow={false}>
-                      <Trash2 size={16} color="#EF4444" />
+                      <Trash2 size={16} color="rgb(185, 28, 28)" />
                     </AppButton>
                   </View>
                 ) : null}

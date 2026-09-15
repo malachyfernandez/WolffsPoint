@@ -1,7 +1,7 @@
 import React, { PropsWithChildren } from 'react';
 import { Text, TextStyle, LayoutChangeEvent } from 'react-native';
 import { useFonts } from 'expo-font';
-import { useCSSVariable } from 'uniwind';
+import { useCSSVariable, useResolveClassNames } from 'uniwind';
 
 type FontWeight = 'regular' | 'medium' | 'bold';
 type FontTextVariant = 'default' | 'heading' | 'subtext' | 'cardHeader' | 'lowercaseCardHeader';
@@ -61,7 +61,9 @@ const FontText = ({
   });
 
   const colorToken = color || getColorTokenFromClassName(className) || 'text';
-  const resolvedColor = String(useCSSVariable(`--color-${colorToken}`) || colorToken);
+  const colorClass = `text-${colorToken}`;
+  const resolvedStyle = useResolveClassNames(colorClass);
+  const resolvedColor = String(resolvedStyle?.color ?? (useCSSVariable(`--color-${colorToken}`) || colorToken));
 
   if (variant === 'subtext') {
     className += ' text-xs opacity-70';

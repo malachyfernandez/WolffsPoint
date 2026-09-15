@@ -83,7 +83,7 @@ const ProfileInfo = () => {
                             className='h-12 w-full'
                             onPress={handleSignOut}
                         >
-                            <FontText weight='medium' color='red'>
+                            <FontText weight='medium' color='red-700'>
                                 Sign Out
                             </FontText>
                         </AppButton>

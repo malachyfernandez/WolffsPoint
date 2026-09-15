@@ -70,7 +70,7 @@ const ConfirmDialog = ({
             </AppButton>
             <AppButton
               variant="filled"
-              className={`w-24 ${danger ? 'bg-red-500' : ''}`}
+              className={`w-24 ${danger ? 'bg-red-700' : ''}`}
               onPress={() => {
                 onOpenChange(false);
                 onConfirm();

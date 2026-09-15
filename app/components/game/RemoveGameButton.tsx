@@ -37,7 +37,7 @@ const RemoveGameButton = ({ gameId, className }: RemoveGameButtonProps) => {
                 className='h-12 max-w-96 w-full'
                 onPress={() => setIsOpen(true)}
             >
-                <FontText weight='medium' color='red'>
+                <FontText weight='medium' color='red-700'>
                     Delete Game
                 </FontText>
             </AppButton>

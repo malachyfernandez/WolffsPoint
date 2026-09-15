@@ -667,7 +667,7 @@ const ModalItemRow = ({
             e.stopPropagation();
             item.onUnsave?.();
           }}
-          className="bg-text/10 absolute right-1 top-1 z-10 h-6 w-6 items-center justify-center rounded-full hover:bg-red-500/20">
+          className="bg-text/10 absolute right-1 top-1 z-10 h-6 w-6 items-center justify-center rounded-full hover:bg-red-700/20">
           <X size={14} color="rgb(46, 41, 37)" />
         </Pressable>
       )}

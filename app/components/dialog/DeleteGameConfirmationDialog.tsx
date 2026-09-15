@@ -54,7 +54,7 @@ const DeleteGameConfirmationDialog = ({ isOpen, onOpenChange, onConfirm }: Delet
                                     onPress={onConfirm}
                                     keyboardHint={['del']}
                                 >
-                                    <FontText weight='medium' color='red'>
+                                    <FontText weight='medium' color='red-700'>
                                         Delete Game
                                     </FontText>
                                 </AppButton>
