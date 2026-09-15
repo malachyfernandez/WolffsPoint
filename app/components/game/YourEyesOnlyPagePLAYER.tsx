@@ -63,6 +63,7 @@ const YourEyesOnlyPagePLAYER = ({ gameId, currentEmail, matchingPlayer, currentP
     const isVoteLocked = deadlineDayIndex < currentDayIndex || !isNightWindowOpen(voteDeadlineBaseDate, voteDeadlineTime, now);
     const isActionLocked = deadlineDayIndex < currentDayIndex || !isNightWindowOpen(actionDeadlineBaseDate, actionDeadlineTime, now);
     const isSleepWindow = dayDates.length > 0 && isVoteLocked && isActionLocked && now.getTime() < nextWakeUp.getTime();
+    const isPastMidnight = new Date(now).setHours(0, 0, 0, 0) > new Date(laterDeadline).setHours(0, 0, 0, 0);
     // Content is released if:
     // 1. It's a previous day (selectedDayIndex < currentDayIndex) - always released
     // 2. It's the current/future day - only blocked on the START DATE until wake-up time
@@ -131,12 +132,12 @@ const YourEyesOnlyPagePLAYER = ({ gameId, currentEmail, matchingPlayer, currentP
         className='flex-1 min-h-190'
     >
         {isSleepWindow ? (
-            <Column className='gap-7 flex-1 min-h-190 pb-8 items-center justify-center'>
+            <Column className='gap-7 flex-1 min-h-190 pb-8 items-center pt-10'>
                 <PlaceholderCard>
                     <Column className='gap-3 items-center'>
                         <Moon size={48} color='rgb(46, 41, 37)' />
                         <FontText weight='bold' className='text-xl text-center'>
-                            Go to sleep, man.
+                            {isPastMidnight ? 'Go back to sleep, man.' : 'Go to sleep, man.'}
                         </FontText>
                         <FontText variant='subtext' className='text-center'>
                             Your vote and action are locked. Come back in the morning.
