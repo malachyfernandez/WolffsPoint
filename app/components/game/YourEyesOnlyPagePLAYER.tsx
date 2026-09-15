@@ -35,7 +35,7 @@ const YourEyesOnlyPagePLAYER = ({ gameId, currentEmail, matchingPlayer, currentP
     const { operatorUserId, isLoading: isOperatorLoading } = useGameOperatorUserId(gameId);
     const operatorUserIds = operatorUserId ? [operatorUserId] : undefined;
     const { value: dayDateStrings, record: dayDateStringsRecord } = useSharedListValue<string[]>({ key: 'dayDatesArray', itemId: gameId, defaultValue: [], userIds: operatorUserIds });
-    const { value: numberOfRealDaysPerInGameDay, record: numberOfRealDaysRecord } = useSharedListValue<number>({ key: 'numberOfRealDaysPerInGameDay', itemId: gameId, defaultValue: 2, userIds: operatorUserIds });
+    const { value: numberOfRealDaysPerInGameDay, record: numberOfRealDaysRecord, isLoading: isNumberOfRealDaysLoading } = useSharedListValue<number>({ key: 'numberOfRealDaysPerInGameDay', itemId: gameId, defaultValue: 2, userIds: operatorUserIds });
     const roleTable = useSharedListValue<RoleTableItem[]>({ key: 'roleTable', itemId: gameId, defaultValue: [], userIds: operatorUserIds });
     const scheduleRecord = useSharedVariableValue({ key: getGameScopedKey('gameSchedule', gameId), defaultValue: defaultGameSchedule, userIds: operatorUserIds });
     const [now, setNow] = useState(() => new Date());
@@ -143,7 +143,7 @@ const YourEyesOnlyPagePLAYER = ({ gameId, currentEmail, matchingPlayer, currentP
 
     return (
     <LoadingContainer
-        dependencies={[dayDateStringsRecord, numberOfRealDaysRecord, roleTable.record, scheduleRecord.record, !isOperatorLoading]}
+        dependencies={[dayDateStringsRecord, !isNumberOfRealDaysLoading, roleTable.record, scheduleRecord.record, !isOperatorLoading]}
         loadingText="Loading..."
         className='flex-1 min-h-190'
         onReady={() => console.log(`[YourEyesOnly][PROD-DIAG][Page] LOADING-CONTAINER-READY gameId=${gameId}`)}
