@@ -6,6 +6,36 @@ conversation.
 
 ---
 
+## 0. What was completed in this thread
+
+The production **Your Eyes Only** player-tab loading hang was diagnosed and
+fixed.
+
+- **Diagnosis:** The `numberOfRealDaysPerInGameDay` list item for game
+  `InMWQuJR` / operator `user_3Cbf5yT6oC4L55Mn5ymUsWDS9M9` returned
+  `results=0` in production. Every other dependency (`dayDatesArray`,
+  `roleTable`, `gameSchedule`) resolved successfully. The record being missing
+  or inaccessible left `numberOfRealDaysRecord` as `undefined`.
+- **Why it hung:** `YourEyesOnlyPagePLAYER` gated its `LoadingContainer` on
+  the `numberOfRealDaysRecord` object itself, not on whether the query had
+  finished. `useSharedListValue` already supplied `defaultValue: 2`, so the
+  page could render without that record.
+- **Fix:** In `app/components/game/YourEyesOnlyPagePLAYER.tsx`, destructured
+  `isLoading` from `useSharedListValue('numberOfRealDaysPerInGameDay', ...)` and
+  changed the `LoadingContainer` dependency from `numberOfRealDaysRecord` to
+  `!isNumberOfRealDaysLoading`. The page now exits loading once the query
+  resolves and falls back to the default `2` real days per in-game day when no
+  accessible record exists.
+- **Caveat:** If the operator previously set a custom value and the record is
+  `PRIVATE`, players will continue to see the default `2` instead. Existing
+  missing or private records may need a data repair if the operator wants the
+  custom value to be visible.
+
+The `[YourEyesOnly][PROD-DIAG]` logs from this session are still in place.
+They can be removed or downgraded once the fix is verified in production.
+
+---
+
 ## 1. The enduring objective: operator freeze tables
 
 The broader feature being built is an operator-side **freeze / schedule /
@@ -111,12 +141,20 @@ The color commit has already been made.
 
 ---
 
-## 5. The production-only "Your Eyes Only" loading issue
+## 5. The production-only "Your Eyes Only" loading issue (RESOLVED)
 
-### Symptom
+### What happened
 
-The **Your Eyes Only** tab is stuck on a permanent loading screen in
-**production only**. Development loads fine.
+The **Your Eyes Only** tab was stuck on a permanent loading screen in
+production. The diagnostic logs showed that the only unresolved dependency was
+`numberOfRealDaysPerInGameDay`:
+
+- `dayDatesArray` → `records=1`
+- `roleTable` → `records=1`
+- `gameSchedule` → `records=1`
+- `numberOfRealDaysPerInGameDay` → `results=0`
+
+Operator for game `InMWQuJR`: `user_3Cbf5yT6oC4L55Mn5ymUsWDS9M9`.
 
 ### Known non-causes
 
@@ -144,7 +182,7 @@ The page wraps its content in `LoadingContainer` with these dependencies:
 <LoadingContainer
   dependencies={[
     dayDateStringsRecord,
-    numberOfRealDaysRecord,
+    !isNumberOfRealDaysLoading,
     roleTable.record,
     scheduleRecord.record,
     !isOperatorLoading,
@@ -155,7 +193,11 @@ The page wraps its content in `LoadingContainer` with these dependencies:
 ```
 
 If any of those is `undefined`, `false`, or `isSyncing`, the page stays on the
-loading screen.
+loading screen. Previously the container gated on `numberOfRealDaysRecord`,
+which is `undefined` when the record is missing or not accessible to the
+player. The container now gates on `!isNumberOfRealDaysLoading` so the page
+exits loading once the query resolves and uses the `defaultValue: 2` when no
+accessible record exists.
 
 The dependencies come from:
 
@@ -172,29 +214,36 @@ The dependencies come from:
 - `hooks/useUserListGet.ts` / `hooks/useUserVariableGet.ts` → raw `useQuery`
   from `convex/react`
 
-### Likely root-cause direction (not yet proven)
+### Root cause and fix
 
-Because the issue is **production-only** and **player-only**, the leading
-hypothesis is an authorization / permission issue:
+The issue was not an auth or query hang. The logs showed every other
+dependency resolved (`dayDatesArray`, `roleTable`, `gameSchedule`) while
+`numberOfRealDaysPerInGameDay` returned `results=0`. The missing or
+inaccessible record left `numberOfRealDaysRecord` as `undefined`.
 
-- `YourEyesOnlyPagePLAYER` loads operator-scoped data (`gameSchedule`,
-  `dayDatesArray`, `numberOfRealDaysPerInGameDay`, `roleTable`).
-- If the logged-in player is not allowed to read the operator's values,
-  `useFindListItems` / `useFindValues` may return an **empty array** (`[]`)
-  instead of `undefined`.
+The fix was in `app/components/game/YourEyesOnlyPagePLAYER.tsx`:
+
+- Destructured `isLoading` from the `useSharedListValue<number>({ key: 'numberOfRealDaysPerInGameDay', itemId: gameId, defaultValue: 2, userIds: operatorUserIds })` call.
+- Changed the `LoadingContainer` dependency from `numberOfRealDaysRecord` to
+  `!isNumberOfRealDaysLoading`.
+
+This lets the page exit loading once the query resolves, using the default `2`
+real days per in-game day when the operator has not set or has not made the
+value public.
+
+### Notes
+
 - `useSharedListValue` / `useSharedVariableValue` set `record = records?.[0]`.
-  An empty array means `record` is `undefined`.
-- `LoadingContainer` sees `dayDateStringsRecord` / `scheduleRecord.record` as
-  `undefined` and continues loading forever.
-
-Another possibility is that `useGameOperatorUserId` cannot resolve the operator
-user for the game in production, leaving `isOperatorLoading` true.
-
-A third possibility is that a `DataSubscriber` or a Convex query is hanging and
-never returning, so the `records` stay `undefined`.
-
-The root cause has **not** been fixed. The next step is to read the production
-logs described below.
+  An empty `records` array makes `record` `undefined`, which `LoadingContainer`
+  treats as loading. The `isLoading` field they also return is the safer gate
+  for cross-user reads that may legitimately come back empty.
+- The record may be `PRIVATE` because of an earlier write before `DATA_CONFIG`
+  stabilized this key as `PUBLIC`. New writes use `DATA_CONFIG`'s `PUBLIC`
+  setting.
+- If the operator has a custom `numberOfRealDaysPerInGameDay` value, players
+  will not see it until the record is made public or a data migration fixes it.
+- The `[YourEyesOnly][PROD-DIAG]` logs are still in place and can be removed
+  once the fix is verified.
 
 ---
 
@@ -336,19 +385,15 @@ background subscriber per query.
 
 ## 9. What still needs to happen
 
-1. **Diagnose the production loading issue.**
-   - Build and deploy the current code so the new logs appear in production.
+1. **Verify the loading fix in production.**
+   - Build and deploy the updated `YourEyesOnlyPagePLAYER.tsx`.
    - Open the production **Your Eyes Only** tab.
-   - Copy the `[YourEyesOnly][PROD-DIAG]` console output.
-   - Determine which dependency is stuck and why.
-2. **Fix the root cause.**
-   - If it is a permission issue, adjust Convex access rules or use a
-     player-accessible mirror of the operator values.
-   - If it is a missing query result, investigate the Convex query/index/
-     deployment.
-   - If it is a client subscription problem, fix the `DataProvider` or hook.
-3. **(Optional) Remove or downgrade the diagnostic logs** once the issue is
-   resolved. They are intentionally temporary.
+   - Confirm the page exits loading and renders the in-game days.
+2. **(Optional) Remove or downgrade the diagnostic logs** once the fix is
+   verified. They are intentionally temporary.
+3. **(Optional) Repair the production `numberOfRealDaysPerInGameDay` record** if
+   the operator intended a value other than the default `2`. Make the record
+   `PUBLIC` so players can read it.
 4. **Resume color work if requested.**
    - See `utils/color-implementation.md`.
    - The current shipped state uses the `color` prop and a direct
@@ -356,6 +401,8 @@ background subscriber per query.
 5. **Button sizing audit is essentially complete.**
    - `utils/button-sizing-audit.md` holds the findings.
    - Apply targeted fixes only for actual primary/secondary mismatch issues.
+6. **Continue the freeze/schedule/publish workflow** for Players, Roles, and
+   Nightly.
 
 ---
 
@@ -373,11 +420,12 @@ background subscriber per query.
 
 ## 11. Known unknowns
 
-- The exact production cause of the Your Eyes Only loading hang is **not yet
-  known**.
-- Whether the player has permission to read operator-scoped values in production
-  has not been verified.
-- Whether the `games` list query returns a row with a `userToken` for the
-  production game has not been verified.
-- The logs in this session are the first real attempt to observe the failure in
-  production.
+- The production `numberOfRealDaysPerInGameDay` record is missing or
+  inaccessible to the player. The `LoadingContainer` gate now tolerates this by
+  using `!isNumberOfRealDaysLoading`, so the page renders, but the actual
+  operator value (if any) may not be visible to players until the record is made
+  public or is repaired.
+- Whether the freeze/schedule/publish implementation works correctly across
+  Players, Roles, and Nightly remains to be verified.
+- The temporary `[YourEyesOnly][PROD-DIAG]` diagnostic logs can be removed once
+  the fix is verified.
