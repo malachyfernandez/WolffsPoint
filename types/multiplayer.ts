@@ -1,4 +1,4 @@
-import type { TableUpdate } from '../app/script/registry';
+import type { TableUpdate } from '../script/registry';
 
 /** A planned cell update computed at input time. Unlike TableUpdate (which
  * stores the final value), PlannedUpdate stores a partially-evaluated

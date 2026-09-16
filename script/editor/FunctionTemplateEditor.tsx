@@ -8,13 +8,18 @@ import ConvexDialog from '../../components/ui/dialog/ConvexDialog';
 import { CloseButton } from '../../components/game/markdownEditor';
 import AppButton from '../../components/ui/buttons/AppButton';
 import UnsavedChangesDialog from '../../components/ui/dialog/UnsavedChangesDialog';
-import { StableTextInput, ExpressionSocket } from './Canvas';
 import InsertModal, { type DefinedFunction, type InsertTarget } from './InsertModal';
 import type { Expression, FunctionTemplatePiece, Statement } from '../lang/ast';
 import { emptySpan } from '../lang/ast';
 import type { ExpressionLocation } from './expressionEditor';
 import TemplatePickerModal from './TemplatePickerModal';
 import TemplateInputModal from './TemplateInputModal';
+
+// Canvas.tsx imports this file, so its exports are resolved lazily inside
+// components to avoid a require cycle.
+const getCanvasExports = () =>
+  // eslint-disable-next-line @typescript-eslint/no-require-imports -- intentional lazy require to break the module cycle
+  require('./Canvas') as typeof import('./Canvas');
 
 interface FunctionTemplateEditorProps {
   template: FunctionTemplatePiece[];
@@ -76,6 +81,7 @@ const FunctionTemplateEditor = ({
   entryKeysBySource,
   onEditMarkdown,
 }: FunctionTemplateEditorProps) => {
+  const { StableTextInput } = getCanvasExports();
   // --- Modal open states (each is a separate dialog object, always mounted) ---
   const [pickerOpen, setPickerOpen] = useState(false);
   const [swapPickerOpen, setSwapPickerOpen] = useState(false);
@@ -588,6 +594,7 @@ const EditInputContent = ({
   onRemove: () => void;
   onSwap: () => void;
 }) => {
+  const { StableTextInput, ExpressionSocket } = getCanvasExports();
   const [insertTarget, setInsertTarget] = useState<InsertTarget | null>(null);
 
   const draftLocation: ExpressionLocation = {

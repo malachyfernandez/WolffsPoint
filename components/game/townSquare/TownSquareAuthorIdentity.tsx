@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
-import { useFindValues } from '../../../../hooks/useData';
-import { PlayerProfile } from '../../../../types/multiplayer';
-import { getGameScopedKey } from '../../../../utils/multiplayer';
+import { useFindValues } from 'hooks/useData';
+import { PlayerProfile } from 'types/multiplayer';
+import { getGameScopedKey } from 'utils/multiplayer';
 import FontText from '../../ui/text/FontText';
 import TownSquareAvatar from './TownSquareAvatar';
 

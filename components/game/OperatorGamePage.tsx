@@ -15,9 +15,9 @@ import TownSquareIcon from '../ui/icons/TownSquare';
 import NewspaperIcon from '../ui/icons/Newspaper';
 import ConfigIcon from '../ui/icons/Config';
 import PaperContainer from '../ui/PaperContainer';
-import { BodyReportScope } from '../../../contexts/BodyReadinessContext';
-import { PlayerProfile } from '../../../types/multiplayer';
-import { PlayerStatusProvider } from '../../../contexts/PlayerStatusContext';
+import { BodyReportScope } from 'contexts/BodyReadinessContext';
+import { PlayerProfile } from 'types/multiplayer';
+import { PlayerStatusProvider } from 'contexts/PlayerStatusContext';
 
 export type OperatorTab = 'players' | 'config' | 'nightly' | 'forum' | 'newspaper' | 'rulebook';
 

@@ -2,12 +2,12 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Image, Pressable, View } from 'react-native';
 import Animated, { FadeIn, useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
 import { ChevronLeft } from 'lucide-react-native';
-import { useValue, useFindValues, useFindListItems } from '../../../hooks/useData';
-import { useGameOperatorUserId } from '../../../hooks/useGameOperatorUserId';
-import { PlayerProfile } from '../../../types/multiplayer';
-import { UserTableItem } from '../../../types/playerTable';
-import { getGameScopedKey } from '../../../utils/multiplayer';
-import { getNewserAssignmentKey, NewserAssignment } from '../../../utils/newspaperControl';
+import { useValue, useFindValues, useFindListItems } from 'hooks/useData';
+import { useGameOperatorUserId } from 'hooks/useGameOperatorUserId';
+import { PlayerProfile } from 'types/multiplayer';
+import { UserTableItem } from 'types/playerTable';
+import { getGameScopedKey } from 'utils/multiplayer';
+import { getNewserAssignmentKey, NewserAssignment } from 'utils/newspaperControl';
 import LoadingText from '../ui/loading/LoadingText';
 import LoadingContainer from '../ui/loading/LoadingContainer';
 import { useTownSquareAuthorIdentity } from './townSquare/TownSquareAuthorIdentity';

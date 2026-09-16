@@ -3,10 +3,10 @@ import { Pressable, View } from 'react-native';
 import Column from '../../layout/Column';
 import Row from '../../layout/Row';
 import FontText from '../text/FontText';
-import { useListSet } from '../../../../hooks/useData';
-import { useSharedListValue } from '../../../../hooks/useSharedListValue';
+import { useListSet } from 'hooks/useData';
+import { useSharedListValue } from 'hooks/useSharedListValue';
 import { ChevronLeft, ChevronRight } from 'lucide-react-native';
-import { getContextualDayRangeLabel, parseStoredDayDates } from '../../../../utils/multiplayer';
+import { getContextualDayRangeLabel, parseStoredDayDates } from 'utils/multiplayer';
 
 interface OperatorDayNavigationProps {
     gameId: string;

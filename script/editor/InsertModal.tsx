@@ -8,7 +8,7 @@ import ConfirmDialog from '../../components/ui/dialog/ConfirmDialog';
 import ShadowScrollView from '../../components/ui/ShadowScrollView';
 import Column from '../../components/layout/Column';
 import { useTooltip } from './useTooltip';
-import { useKeyboardShortcuts } from '../../../hooks/useKeyboardShortcuts';
+import { useKeyboardShortcuts } from 'hooks/useKeyboardShortcuts';
 import Row from '../../components/layout/Row';
 import FontText from '../../components/ui/text/FontText';
 import AppButton from '../../components/ui/buttons/AppButton';
@@ -41,7 +41,6 @@ import {
   parseLiteralValue,
 } from './editorReducer';
 import type { ExpressionLocation } from './expressionEditor';
-import { BlockPreview } from './Canvas';
 import {
   inferExpressionType,
   inferBlockResultType,
@@ -629,6 +628,12 @@ const CROSS_CATEGORY_BLOCKS: { blockId: string; category: string }[] = [
   { blockId: 'index', category: 'list' },
 ];
 
+// Canvas.tsx imports this file for BUILTIN_FUNCTION_NAMES, so its exports are
+// resolved lazily inside components to avoid a require cycle.
+const getCanvasExports = () =>
+  // eslint-disable-next-line @typescript-eslint/no-require-imports -- intentional lazy require to break the module cycle
+  require('./Canvas') as typeof import('./Canvas');
+
 /** Renders a single modal item. When disabled, shows a hover-following tooltip
  * explaining why (same tooltip system as the script editor canvas). */
 const ModalItemRow = ({
@@ -646,6 +651,7 @@ const ModalItemRow = ({
   definedVariables?: string[];
   isTriggerContext?: boolean;
 }) => {
+  const { BlockPreview } = getCanvasExports();
   const tooltipId = useId();
   const { setHovered } = useTooltip(tooltipId, item.disabledReason);
   const hasPreview = item.previewStatement || item.previewExpression;
@@ -735,11 +741,7 @@ const InsertModal = ({
 
   const handleBuiltinInfoConfirm = () => {
     if (pendingBuiltin && target) {
-      onInsertBuiltinFunction(
-        pendingBuiltin.fnStatement,
-        pendingBuiltin.callExpression,
-        target
-      );
+      onInsertBuiltinFunction(pendingBuiltin.fnStatement, pendingBuiltin.callExpression, target);
     }
     setHasSeenBuiltinInfo(true);
     AsyncStorage.setItem(BUILTIN_INFO_SEEN_KEY, 'true');

@@ -8,8 +8,8 @@ import AppButton from '../ui/buttons/AppButton';
 import ProfilePhotoCircle from '../ui/profile/ProfilePhotoCircle';
 import ConvexDialog from '../ui/dialog/ConvexDialog';
 import DialogHeader from '../ui/dialog/DialogHeader';
-import { useKeyboardShortcuts } from '../../../hooks/useKeyboardShortcuts';
-import { useKeyboardShortcutHint } from '../../../contexts/KeyboardShortcutHintContext';
+import { useKeyboardShortcuts } from 'hooks/useKeyboardShortcuts';
+import { useKeyboardShortcutHint } from 'contexts/KeyboardShortcutHintContext';
 import CloseButton from '../ui/dialog/CloseButton';
 
 interface CustomUserInfo {

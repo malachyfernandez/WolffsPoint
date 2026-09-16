@@ -20,8 +20,8 @@ import {
   defaultPlayerPageColumnSizes,
   getPlayerPageColumnSizesKey,
 } from './playerTableColumnSizing';
-import { VoteValue } from '../../../types/multiplayer';
-import { getPlayerActionSummary } from '../../../utils/multiplayer';
+import { VoteValue } from 'types/multiplayer';
+import { getPlayerActionSummary } from 'utils/multiplayer';
 import ActionEditorDialog from './ActionEditorDialog';
 import VoteEditorDialog from './VoteEditorDialog';
 import MarkdownEditorDialog from './MarkdownEditorDialog';

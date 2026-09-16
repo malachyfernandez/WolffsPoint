@@ -2,11 +2,11 @@ import React, { useState } from 'react';
 import { useAction } from 'convex/react';
 import { ActivityIndicator, Platform } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { api } from '../../../../convex/_generated/api';
+import { api } from '../../../convex/_generated/api';
 import AppButton from '../buttons/AppButton';
 import FontText from '../text/FontText';
-import { prepareImageForUpload, prepareWebFileForUpload, UploadThingReactNativeFile } from '../../../../utils/imageCompression';
-import { useToast } from '../../../../contexts/ToastContext';
+import { prepareImageForUpload, prepareWebFileForUpload, UploadThingReactNativeFile } from 'utils/imageCompression';
+import { useToast } from 'contexts/ToastContext';
 
 type UrlSetter = (url: string) => void;
 

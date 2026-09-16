@@ -7,7 +7,7 @@ import AppButton from '../ui/buttons/AppButton';
 import FontText from '../ui/text/FontText';
 import ScheduleTableUpdateDialog from './ScheduleTableUpdateDialog';
 import UnsavedChangesDialog from '../ui/dialog/UnsavedChangesDialog';
-import { useToast } from '../../../contexts/ToastContext';
+import { useToast } from 'contexts/ToastContext';
 
 interface TableFreezeController {
   isLoading: boolean;

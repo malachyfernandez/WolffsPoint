@@ -9,9 +9,9 @@ import FontTextInput from '../ui/forms/FontTextInput';
 import DialogHeader from '../ui/dialog/DialogHeader';
 import CustomCheckbox from '../ui/CustomCheckbox';
 import StatusButton from '../ui/StatusButton';
-import { RoleTableItem } from '../../../types/roleTable';
-import { useKeyboardShortcuts } from '../../../hooks/useKeyboardShortcuts';
-import { useKeyboardShortcutHint } from '../../../contexts/KeyboardShortcutHintContext';
+import { RoleTableItem } from 'types/roleTable';
+import { useKeyboardShortcuts } from 'hooks/useKeyboardShortcuts';
+import { useKeyboardShortcutHint } from 'contexts/KeyboardShortcutHintContext';
 import CloseButton from '../ui/dialog/CloseButton';
 
 interface RoleAddDialogProps {

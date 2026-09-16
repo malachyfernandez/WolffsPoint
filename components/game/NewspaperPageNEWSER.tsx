@@ -9,15 +9,15 @@ import OperatorDayNavigation from '../ui/daySelector/OperatorDayNavigation';
 import NewspaperDayView from './NewspaperDayView';
 import FontText from '../ui/text/FontText';
 import PlaceholderCard from '../ui/PlaceholderCard';
-import { useGameOperatorUserId } from '../../../hooks/useGameOperatorUserId';
-import { useSharedListValue } from '../../../hooks/useSharedListValue';
+import { useGameOperatorUserId } from 'hooks/useGameOperatorUserId';
+import { useSharedListValue } from 'hooks/useSharedListValue';
 import { useFindListItems, useValue } from 'hooks/useData';
-import { getNewspaperDayItemId, getNewserAcceptedKey, NewserAccepted } from '../../../utils/newspaperControl';
+import { getNewspaperDayItemId, getNewserAcceptedKey, NewserAccepted } from 'utils/newspaperControl';
 import { useNewspaperDayOwner } from './useNewspaperDayOwner';
-import { usePendingColumnOpen } from '../../../hooks/usePendingColumnOpen';
-import { Usepaper } from '../../../types/usepaper';
+import { usePendingColumnOpen } from 'hooks/usePendingColumnOpen';
+import { Usepaper } from 'types/usepaper';
 import { Newspaper } from 'lucide-react-native';
-import { hasNewspaperContent } from '../../../utils/newspaperSections';
+import { hasNewspaperContent } from 'utils/newspaperSections';
 
 interface NewspaperPageNEWSERProps {
     currentUserId: string;
@@ -208,7 +208,7 @@ const NewspaperPageNEWSER = ({ currentUserId, currentEmail, gameId }: NewspaperP
                                 isReady={!selectedDayOwner.isLoading && (activeTab === 'writing' || readyDayKey === selectedDayKey)}
                             >
                                 {selectedDayOwner.isLoading ? (
-                                    <Column className='min-h-190 items-center justify-center'>
+                                    <Column className='items-center justify-center py-24'>
                                         <FontText variant='subtext'>Loading newspaper…</FontText>
                                     </Column>
                                 ) : (

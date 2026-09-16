@@ -7,14 +7,14 @@ import FontText from '../ui/text/FontText';
 import FontTextInput from '../ui/forms/FontTextInput';
 import MarkdownRenderer from '../ui/markdown/MarkdownRenderer';
 import { InputOptionsProvider } from './markdownEditor/InputOptionsProvider';
-import { useValue, useList } from '../../../hooks/useData';
-import { getGameScopedKey } from '../../../utils/multiplayer';
+import { useValue, useList } from 'hooks/useData';
+import { getGameScopedKey } from 'utils/multiplayer';
 import MarkdownEditorDialog from './MarkdownEditorDialog';
 import RuleBookRoleDescriptions from './RuleBookRoleDescriptions';
 import TableOfContentsDialog from './ruleBook/TableOfContentsDialog';
 import StickyTocButton from './ruleBook/StickyTocButton';
-import { RuleBookData } from '../../../types/ruleBook';
-import { RoleTableItem } from '../../../types/roleTable';
+import { RuleBookData } from 'types/ruleBook';
+import { RoleTableItem } from 'types/roleTable';
 
 interface RuleBookPageOPERATORProps {
   gameId: string;

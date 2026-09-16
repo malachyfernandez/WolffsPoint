@@ -23,26 +23,32 @@ interface ShadowScrollViewProps {
   [key: string]: any;
 }
 
-const ShadowScrollView = React.forwardRef<any, ShadowScrollViewProps>(({
-  children,
-  className,
-  scrollViewClassName,
-  horizontal,
-  scrollViewComponent: ScrollViewComponent = ScrollView,
-  ...scrollViewProps
-}, ref) => {
-  return (
-    <ScrollShadow LinearGradientComponent={LinearGradient} className={className}>
-      <ScrollViewComponent
-        ref={ref}
-        className={scrollViewClassName}
-        horizontal={horizontal}
-        {...scrollViewProps}
-      >
-        {children}
-      </ScrollViewComponent>
-    </ScrollShadow>
-  );
-});
+const ShadowScrollView = React.forwardRef<any, ShadowScrollViewProps>(
+  (
+    {
+      children,
+      className,
+      scrollViewClassName,
+      horizontal,
+      pointerEvents,
+      scrollViewComponent: ScrollViewComponent = ScrollView,
+      ...scrollViewProps
+    },
+    ref
+  ) => {
+    return (
+      <ScrollShadow LinearGradientComponent={LinearGradient} className={className}>
+        <ScrollViewComponent
+          ref={ref}
+          className={scrollViewClassName}
+          horizontal={horizontal}
+          {...scrollViewProps}
+          style={[scrollViewProps.style, pointerEvents ? { pointerEvents } : null]}>
+          {children}
+        </ScrollViewComponent>
+      </ScrollShadow>
+    );
+  }
+);
 
 export default ShadowScrollView;

@@ -15,7 +15,7 @@ import {
   UserTableColumnNightlyVisibility,
 } from 'types/playerTable';
 import { normalizePlayerPageState } from './playerTableNormalization';
-import { useTagTriggers, type CellContext } from '../../../hooks/useTagTriggers';
+import { useTagTriggers, type CellContext } from 'hooks/useTagTriggers';
 import {
   PlayerPageColumnSizes,
   defaultPlayerPageColumnSizes,

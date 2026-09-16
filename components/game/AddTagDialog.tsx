@@ -14,10 +14,10 @@ import TagPill, { TAG_COLORS, type TagColor } from './TagPill';
 import ScriptEditorDialog from '../../script/editor/ScriptEditorDialog';
 import { useValue, useList } from 'hooks/useData';
 import { getGameScopedKey } from 'utils/multiplayer';
-import type { UserTableItem, UserTableTitle } from '../../../types/playerTable';
+import type { UserTableItem, UserTableTitle } from 'types/playerTable';
 import type { ScriptSourceData } from '../../script/runtime/sources';
-import { useKeyboardShortcuts } from '../../../hooks/useKeyboardShortcuts';
-import { useKeyboardShortcutHint } from '../../../contexts/KeyboardShortcutHintContext';
+import { useKeyboardShortcuts } from 'hooks/useKeyboardShortcuts';
+import { useKeyboardShortcutHint } from 'contexts/KeyboardShortcutHintContext';
 
 interface AddTagDialogProps {
   isOpen: boolean;

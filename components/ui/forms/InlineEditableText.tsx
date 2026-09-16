@@ -41,9 +41,9 @@ const InlineEditableText = ({
     const inputRef = useRef<TextInput>(null);
 
     const [fontsLoaded] = useFonts({
-        'Poppins-Regular': require('../../../../assets/fonts/Poppins/Poppins-Regular.ttf'),
-        'Poppins-Medium': require('../../../../assets/fonts/Poppins/Poppins-Medium.ttf'),
-        'Poppins-Bold': require('../../../../assets/fonts/Poppins/Poppins-Bold.ttf'),
+        'Poppins-Regular': require('../../../assets/fonts/Poppins/Poppins-Regular.ttf'),
+        'Poppins-Medium': require('../../../assets/fonts/Poppins/Poppins-Medium.ttf'),
+        'Poppins-Bold': require('../../../assets/fonts/Poppins/Poppins-Bold.ttf'),
     });
 
     // Update editValue when prop value changes (sync with external state)

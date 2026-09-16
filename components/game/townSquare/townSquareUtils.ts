@@ -1,4 +1,4 @@
-import { TownSquareComment, TownSquarePost } from '../../../../types/multiplayer';
+import { TownSquareComment, TownSquarePost } from 'types/multiplayer';
 
 export type SelectionRange = {
     start: number;

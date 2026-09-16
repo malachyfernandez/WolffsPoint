@@ -3,7 +3,7 @@ import { Platform, TextInput } from 'react-native';
 import Column from '../../layout/Column';
 import FontTextInput from '../../ui/forms/FontTextInput';
 import { SelectionRange } from './townSquareUtils';
-import { useToast } from '../../../../contexts/ToastContext';
+import { useToast } from 'contexts/ToastContext';
 
 interface TownSquareComposerEditorPaneProps {
     onBodyChange: (value: string) => void;

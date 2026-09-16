@@ -7,17 +7,17 @@ import MarkdownRenderer, {
   MarkdownRendererInputDataProvider,
 } from '../ui/markdown/MarkdownRenderer';
 import ChainWraper from './ChainWraper';
-import { useGameOperatorUserId } from '../../../hooks/useGameOperatorUserId';
-import { useSharedListValue } from '../../../hooks/useSharedListValue';
-import { useSharedVariableValue } from '../../../hooks/useSharedVariableValue';
-import { useValue } from '../../../hooks/useData';
-import { PlannedUpdate, PlayerNightSubmission } from '../../../types/multiplayer';
-import { DEFAULT_VOTE_MESSAGE, RoleTableItem } from '../../../types/roleTable';
-import { UserTableItem, UserTableTitle } from '../../../types/playerTable';
+import { useGameOperatorUserId } from 'hooks/useGameOperatorUserId';
+import { useSharedListValue } from 'hooks/useSharedListValue';
+import { useSharedVariableValue } from 'hooks/useSharedVariableValue';
+import { useValue } from 'hooks/useData';
+import { PlannedUpdate, PlayerNightSubmission } from 'types/multiplayer';
+import { DEFAULT_VOTE_MESSAGE, RoleTableItem } from 'types/roleTable';
+import { UserTableItem, UserTableTitle } from 'types/playerTable';
 import {
   inspectMarkdownVoteInput,
   planMarkdownScriptUpdates,
-} from '../../../utils/runMarkdownScriptsWithUpdates';
+} from 'utils/runMarkdownScriptsWithUpdates';
 import {
   buildScheduledDate,
   defaultGameSchedule,
@@ -36,8 +36,8 @@ import {
   normalizeGameSchedule,
   normalizePlayerActionState,
   parseStoredDayDates,
-} from '../../../utils/multiplayer';
-import { deepEqual } from '../../../utils/deepEqual';
+} from 'utils/multiplayer';
+import { deepEqual } from 'utils/deepEqual';
 
 interface YourEyesOnlyDayContentPLAYERProps {
   gameId: string;
@@ -54,10 +54,6 @@ const YourEyesOnlyDayContentPLAYER = ({
 }: YourEyesOnlyDayContentPLAYERProps) => {
   const { operatorUserId } = useGameOperatorUserId(gameId);
   const operatorUserIds = operatorUserId ? [operatorUserId] : [];
-
-  useEffect(() => {
-    console.log(`[YourEyesOnly][PROD-DIAG][DayContent] MOUNT gameId=${gameId} dayIndex=${dayIndex} currentEmail=${currentEmail} currentUserId=${currentUserId} operatorUserId=${operatorUserId ? 'set' : 'missing'}`);
-  }, [gameId, dayIndex, currentEmail, currentUserId, operatorUserId]);
 
   const { value: userTable } = useSharedListValue<UserTableItem[]>({
     key: 'userTable',

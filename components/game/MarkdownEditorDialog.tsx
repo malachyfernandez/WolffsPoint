@@ -10,9 +10,9 @@ import Row from '../layout/Row';
 import AppButton from '../ui/buttons/AppButton';
 import FontText from '../ui/text/FontText';
 import { Code2 } from 'lucide-react-native';
-import { useUndoRedo, useCreateUndoSnapshot } from '../../../hooks/useUndoRedo';
-import { useSaveHistory, SavedEntry } from '../../../hooks/useSaveHistory';
-import { useKeyboardShortcuts } from '../../../hooks/useKeyboardShortcuts';
+import { useUndoRedo, useCreateUndoSnapshot } from 'hooks/useUndoRedo';
+import { useSaveHistory, SavedEntry } from 'hooks/useSaveHistory';
+import { useKeyboardShortcuts } from 'hooks/useKeyboardShortcuts';
 import {
   SelectionRange,
   emptySelection,
@@ -29,7 +29,7 @@ import Column from '../layout/Column';
 import PlayerPreviewModal from './markdownEditor/PlayerPreviewModal';
 import MarkdownVariableDialog from './markdownEditor/MarkdownVariableDialog';
 import { createMarkdownVariableMarker } from '../../script/markdownVariables';
-import type { NewspaperDividerStyle, NewspaperTitleFont } from '../../../types/usepaper';
+import type { NewspaperDividerStyle, NewspaperTitleFont } from 'types/usepaper';
 
 /** Find all `/*script ... script*\/` blocks in the markdown text. */
 const findScriptBlocks = (text: string): { start: number; end: number; content: string }[] => {

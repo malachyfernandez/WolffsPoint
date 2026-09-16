@@ -13,7 +13,7 @@ import {
   getCurrentPlayableDayIndex,
   getDayRangeLabel,
   parseStoredDayDates,
-} from '../../../../utils/multiplayer';
+} from 'utils/multiplayer';
 
 export type DaySelectorMode = 'player' | 'nightly' | 'newspaper';
 

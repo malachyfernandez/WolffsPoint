@@ -6,9 +6,9 @@ import CloseButton from './CloseButton';
 import Row from '../../layout/Row';
 import AppButton from '../buttons/AppButton';
 import FontText from '../text/FontText';
-import { useKeyboardShortcutHint } from '../../../../contexts/KeyboardShortcutHintContext';
-import { useKeyboardShortcuts } from '../../../../hooks/useKeyboardShortcuts';
-import { SavedEntry } from '../../../../hooks/useSaveHistory';
+import { useKeyboardShortcutHint } from 'contexts/KeyboardShortcutHintContext';
+import { useKeyboardShortcuts } from 'hooks/useKeyboardShortcuts';
+import { SavedEntry } from 'hooks/useSaveHistory';
 
 interface ViewOnlyPreviewModalProps {
     isOpen: boolean;

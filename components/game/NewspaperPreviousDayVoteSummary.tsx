@@ -6,15 +6,15 @@ import Row from '../layout/Row';
 import FontText from '../ui/text/FontText';
 import TownSquareAvatar from './townSquare/TownSquareAvatar';
 import { useTownSquareAuthorIdentity } from './townSquare/TownSquareAuthorIdentity';
-import { useFindListItems, useFindValues } from '../../../hooks/useData';
-import { PlayerProfile } from '../../../types/multiplayer';
-import { UserTableItem } from '../../../types/playerTable';
+import { useFindListItems, useFindValues } from 'hooks/useData';
+import { PlayerProfile } from 'types/multiplayer';
+import { UserTableItem } from 'types/playerTable';
 import {
   getGameScopedKey,
   normalizeGameSchedule,
   normalizeVoteTargets,
   defaultGameSchedule,
-} from '../../../utils/multiplayer';
+} from 'utils/multiplayer';
 import ConvexDialog from '../ui/dialog/ConvexDialog';
 import DialogHeader from '../ui/dialog/DialogHeader';
 import CloseButton from '../ui/dialog/CloseButton';

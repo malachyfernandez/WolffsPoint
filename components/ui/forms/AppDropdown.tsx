@@ -3,7 +3,7 @@ import { Platform, Pressable, View } from 'react-native';
 import { Popover } from 'heroui-native';
 import { ChevronDown } from 'lucide-react-native';
 import Column from '../../layout/Column';
-import { WebDropdownPortal } from '../../../../contexts/WebDropdownProvider';
+import { WebDropdownPortal } from 'contexts/WebDropdownProvider';
 import AppDropdownEmptyState from './dropdown/AppDropdownEmptyState';
 import AppDropdownItem from './dropdown/AppDropdownItem';
 import AppDropdownMenu from './dropdown/AppDropdownMenu';

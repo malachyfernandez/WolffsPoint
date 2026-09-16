@@ -15,8 +15,8 @@ import FontText from '../ui/text/FontText';
 import FontTextInput from '../ui/forms/FontTextInput';
 import AppButton from '../ui/buttons/AppButton';
 import ImageUploadDialog from '../ui/dialog/ImageUploadDialog';
-import { PlayerProfile } from '../../../types/multiplayer';
-import { deepEqual } from '../../../utils/deepEqual';
+import { PlayerProfile } from 'types/multiplayer';
+import { deepEqual } from 'utils/deepEqual';
 import PlayerProfilePreviewCard, {
   PlayerProfileAvatar,
   PlayerProfileContactInfo,
@@ -24,9 +24,9 @@ import PlayerProfilePreviewCard, {
 import BioEditorDialog from './BioEditorDialog';
 import MarkdownRenderer from '../ui/markdown/MarkdownRenderer';
 import { TabSelector } from './markdownEditor';
-import { useSaveHistory, SavedEntry } from '../../../hooks/useSaveHistory';
-import { useKeyboardShortcuts } from '../../../hooks/useKeyboardShortcuts';
-import { useKeyboardShortcutHint } from '../../../contexts/KeyboardShortcutHintContext';
+import { useSaveHistory, SavedEntry } from 'hooks/useSaveHistory';
+import { useKeyboardShortcuts } from 'hooks/useKeyboardShortcuts';
+import { useKeyboardShortcutHint } from 'contexts/KeyboardShortcutHintContext';
 
 interface PlayerProfileDialogNEWProps {
   initialValue: PlayerProfile;

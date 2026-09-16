@@ -7,7 +7,7 @@ import FontText from '../ui/text/FontText';
 import Row from '../layout/Row';
 import { GameInfo } from 'types/games';
 import { Usepaper } from 'types/usepaper';
-import { getNewspaperSections, hasNewspaperContent } from '../../../utils/newspaperSections';
+import { getNewspaperSections, hasNewspaperContent } from 'utils/newspaperSections';
 import JSZip from 'jszip';
 
 interface DownloadNewspaperButtonProps {

@@ -1,12 +1,12 @@
 import React from 'react';
-import { useValue } from '../../../../hooks/useData';
-import { GameSchedule } from '../../../../types/multiplayer';
+import { useValue } from 'hooks/useData';
+import { GameSchedule } from 'types/multiplayer';
 import {
   getGameScopedKey,
   normalizeGameSchedule,
   defaultGameSchedule,
   formatTimeLabel,
-} from '../../../../utils/multiplayer';
+} from 'utils/multiplayer';
 import ConfigSectionRow from '../../ui/forms/ConfigSectionRow';
 import FontTimeInput from '../../ui/forms/FontTimeInput';
 import DayOffsetDropdown from '../../ui/forms/DayOffsetDropdown';

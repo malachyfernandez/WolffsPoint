@@ -1,4 +1,4 @@
-import { getGameScopedKey } from '../../../utils/multiplayer';
+import { getGameScopedKey } from 'utils/multiplayer';
 
 export type ColumnSizeOption = 'small' | 'medium' | 'large';
 

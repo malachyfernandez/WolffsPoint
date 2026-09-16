@@ -2,8 +2,8 @@ import { useCallback } from 'react';
 import { useValue } from './useData';
 import { getGameScopedKey } from '../utils/multiplayer';
 import { UserTableItem, UserTableTitle } from '../types/playerTable';
-import { interpretScript } from '../app/script/runtime/interpreter';
-import { createScriptGlobals } from '../app/script/runtime/sources';
+import { interpretScript } from '../script/runtime/interpreter';
+import { createScriptGlobals } from '../script/runtime/sources';
 import {
   applyTableUpdates,
   applyMorningMessageUpdates,
@@ -14,7 +14,7 @@ import {
   ACTION_COLUMN,
   MORNING_MESSAGE_COLUMN,
 } from '../utils/applyTableUpdates';
-import { TableUpdate } from '../app/script/registry';
+import { TableUpdate } from '../script/registry';
 import { parseCell } from '../utils/tagEncoding';
 
 /**

@@ -11,7 +11,6 @@ import KeyCap from '../../components/ui/KeyCap';
 import FontText from '../../components/ui/text/FontText';
 import ShadowScrollView from '../../components/ui/ShadowScrollView';
 import { CloseButton } from '../../components/game/markdownEditor';
-import MarkdownEditorDialog from '../../components/game/MarkdownEditorDialog';
 import { parseScript } from '../lang/parser';
 import { printExpression, printScript, printScriptBlock, parseScriptBlock } from '../lang/printer';
 import type { Expression, FunctionTemplatePiece, Script, Statement } from '../lang/ast';
@@ -45,12 +44,12 @@ import {
 } from './expressionEditor';
 import { useTooltip } from './useTooltip';
 import type { EntryKeysBySource } from './typeInference';
-import { useUndoRedo, useCreateUndoSnapshot } from '../../../hooks/useUndoRedo';
-import { useSavedFunctions } from '../../../hooks/useSavedFunctions';
-import { useToast } from '../../../contexts/ToastContext';
-import { useKeyboardShortcuts } from '../../../hooks/useKeyboardShortcuts';
-import { useKeyboardShortcutHint } from '../../../contexts/KeyboardShortcutHintContext';
-import { SavedEntry } from '../../../hooks/useSaveHistory';
+import { useUndoRedo, useCreateUndoSnapshot } from 'hooks/useUndoRedo';
+import { useSavedFunctions } from 'hooks/useSavedFunctions';
+import { useToast } from 'contexts/ToastContext';
+import { useKeyboardShortcuts } from 'hooks/useKeyboardShortcuts';
+import { useKeyboardShortcutHint } from 'contexts/KeyboardShortcutHintContext';
+import { SavedEntry } from 'hooks/useSaveHistory';
 import SaveHistoryPill from '../../components/ui/dialog/SaveHistoryPill';
 import SaveHistoryDialog from '../../components/ui/dialog/SaveHistoryDialog';
 import ViewOnlyPreviewModal from '../../components/ui/dialog/ViewOnlyPreviewModal';
@@ -534,6 +533,14 @@ const ShelfItem = ({
   );
 };
 
+// MarkdownEditorDialog imports this file, so it is resolved lazily inside the
+// component to avoid a require cycle.
+const getMarkdownEditorDialog = () =>
+  // eslint-disable-next-line @typescript-eslint/no-require-imports -- intentional lazy require to break the module cycle
+  (
+    require('../../components/game/MarkdownEditorDialog') as typeof import('../../components/game/MarkdownEditorDialog')
+  ).default;
+
 const ScriptEditorDialog = ({
   isOpen,
   onOpenChange,
@@ -552,6 +559,7 @@ const ScriptEditorDialog = ({
   renderPreviewContent,
   readOnly = false,
 }: ScriptEditorDialogProps) => {
+  const MarkdownEditorDialog = getMarkdownEditorDialog();
   const [state, dispatch] = useReducer(editorReducer, createScript(), (ast) => initialState(ast));
   const { executeCommand, undo, redo, canUndo, canRedo } = useUndoRedo();
   const createUndoSnapshot = useCreateUndoSnapshot();
@@ -1365,272 +1373,297 @@ const ScriptEditorDialog = ({
         <ConvexDialog.Portal>
           <ConvexDialog.Overlay />
           <ConvexDialog.Content className="h-[85vh] max-w-5xl" isSwipeable={false}>
-            <View className="flex-1 min-h-0">
-            <CloseButton onPress={readOnly ? () => onOpenChange(false) : handleAttemptClose} />
-            {onSaveToServer && !readOnly && (
-              <SaveHistoryPill
-                hasUnsavedChanges={hasModifications}
-                isInvalid={!canSubmit || !!moveSession}
-                invalidMessage={!canSubmit ? 'Script is empty' : undefined}
-                onSave={handleSave}
-                onOpenHistory={() => setIsHistoryOpen(true)}
+            <View className="min-h-0 flex-1">
+              <CloseButton onPress={readOnly ? () => onOpenChange(false) : handleAttemptClose} />
+              {onSaveToServer && !readOnly && (
+                <SaveHistoryPill
+                  hasUnsavedChanges={hasModifications}
+                  isInvalid={!canSubmit || !!moveSession}
+                  invalidMessage={!canSubmit ? 'Script is empty' : undefined}
+                  onSave={handleSave}
+                  onOpenHistory={() => setIsHistoryOpen(true)}
+                />
+              )}
+              <DialogHeader
+                text={title}
+                subtext={
+                  isTriggerContext
+                    ? 'Runs when this tag is added to a cell'
+                    : 'Build dynamic inputs with blocks or text'
+                }
               />
-            )}
-            <DialogHeader
-              text={title}
-              subtext={
-                isTriggerContext
-                  ? 'Runs when this tag is added to a cell'
-                  : 'Build dynamic inputs with blocks or text'
-              }
-            />
-            <Column className="min-h-0 flex-1 gap-3 pt-3">
-              <Row className="justify-between gap-2">
-                <Row className="gap-2">
-                  {mode === 'blocks' && !readOnly && (
-                    <>
+              <Column className="min-h-0 flex-1 gap-3 pt-3">
+                <Row className="justify-between gap-2">
+                  <Row className="gap-2">
+                    {mode === 'blocks' && !readOnly && (
+                      <>
+                        <AppButton
+                          variant="outline"
+                          className="h-8 px-3"
+                          onPress={undo}
+                          dropShadow={false}
+                          disabled={!canUndo || !!moveSession}>
+                          <FontText className="text-sm">Undo</FontText>
+                        </AppButton>
+                        <AppButton
+                          variant="outline"
+                          className="h-8 px-3"
+                          onPress={redo}
+                          dropShadow={false}
+                          disabled={!canRedo || !!moveSession}>
+                          <FontText className="text-sm">Redo</FontText>
+                        </AppButton>
+                      </>
+                    )}
+                  </Row>
+                  {!readOnly && (
+                    <Row className="gap-2">
                       <AppButton
-                        variant="outline"
+                        variant={mode === 'blocks' ? 'filled' : 'outline'}
                         className="h-8 px-3"
-                        onPress={undo}
-                        dropShadow={false}
-                        disabled={!canUndo || !!moveSession}>
-                        <FontText className="text-sm">Undo</FontText>
+                        onPress={() => handleSwitchMode('blocks')}
+                        dropShadow={false}>
+                        <FontText
+                          className="text-sm"
+                          color={mode === 'blocks' ? 'white' : undefined}>
+                          Blocks
+                        </FontText>
                       </AppButton>
                       <AppButton
-                        variant="outline"
+                        variant={mode === 'text' ? 'filled' : 'outline'}
                         className="h-8 px-3"
-                        onPress={redo}
-                        dropShadow={false}
-                        disabled={!canRedo || !!moveSession}>
-                        <FontText className="text-sm">Redo</FontText>
+                        onPress={() => handleSwitchMode('text')}
+                        disabled={!!moveSession}
+                        dropShadow={false}>
+                        <FontText className="text-sm" color={mode === 'text' ? 'white' : undefined}>
+                          Text
+                        </FontText>
                       </AppButton>
-                    </>
+                    </Row>
                   )}
                 </Row>
-                {!readOnly && (
-                  <Row className="gap-2">
-                    <AppButton
-                      variant={mode === 'blocks' ? 'filled' : 'outline'}
-                      className="h-8 px-3"
-                      onPress={() => handleSwitchMode('blocks')}
-                      dropShadow={false}>
-                      <FontText className="text-sm" color={mode === 'blocks' ? 'white' : undefined}>
-                        Blocks
-                      </FontText>
-                    </AppButton>
-                    <AppButton
-                      variant={mode === 'text' ? 'filled' : 'outline'}
-                      className="h-8 px-3"
-                      onPress={() => handleSwitchMode('text')}
-                      disabled={!!moveSession}
-                      dropShadow={false}>
-                      <FontText className="text-sm" color={mode === 'text' ? 'white' : undefined}>
-                        Text
-                      </FontText>
-                    </AppButton>
-                  </Row>
-                )}
-              </Row>
 
-              {parseError && (
-                <View className="rounded-lg border border-red-400/30 bg-red-400/5 p-2">
-                  <FontText className="text-xs">{parseError}</FontText>
-                </View>
-              )}
-
-              <View className="min-h-0 flex-1">
-                {mode === 'text' ? (
-                  <TextInput
-                    multiline
-                    value={textDraft}
-                    onChangeText={readOnly ? undefined : handleTextChange}
-                    onKeyPress={readOnly ? () => showToast('Preview only') : undefined}
-                    editable={!readOnly}
-                    placeholder={`Variable({\n  NAME = "deadPlayers",\n  VALUE = players.Filter(Item => Item.entry("isAlive") == false),\n});\n\nCreateSelectInput({\n  NAME = "revive",\n  LIST = deadPlayers,\n  LABEL = "Back From Dead",\n  NUMSELECTABLE = (deadPlayers.length / 2).floor,\n});`}
-                    placeholderTextColor="#0004"
-                    className="bg-text/5 min-h-0 flex-1 rounded-xl p-4 font-mono text-sm"
-                    style={{
-                      lineHeight: 20,
-                      textAlignVertical: 'top',
-                    }}
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                  />
-                ) : (
-                  <ShadowScrollView className="flex-1" scrollViewClassName="flex-1 rounded-xl p-3">
-                    <Canvas
-                      statements={state.ast.statements}
-                      definedVariables={definedVariables}
-                      definedFunctions={definedFunctions}
-                      onAdd={readOnly ? () => showToast('Preview only') : (target) => {
-                        if (!moveSession) setInsertTarget(target);
-                      }}
-                      moveTool={readOnly ? undefined : moveToolControls}
-                      onSetExpression={readOnly ? (() => showToast('Preview only')) : handleSetExpression}
-                      onSetStatementField={readOnly ? (() => showToast('Preview only')) : handleSetStatementField}
-                      onDeleteStatement={readOnly ? (() => showToast('Preview only')) : handleDeleteStatement}
-                      onRenameVariable={readOnly ? (() => showToast('Preview only')) : handleRenameVariable}
-                      entryKeysBySource={entryKeysBySource}
-                      inputSources={inputSources}
-                      isTriggerContext={isTriggerContext}
-                      gameId={gameId}
-                      savedFunctionNames={savedFunctionNames}
-                      onSaveFunction={readOnly ? (() => showToast('Preview only')) : handleSaveFunction}
-                      onUnsaveFunction={readOnly ? (() => showToast('Preview only')) : unsaveFunction}
-                      onLockedFunctionClick={readOnly ? (() => showToast('Preview only')) : handleLockedFunctionClick}
-                      decoupledFunctionNames={decoupledFunctions}
-                      onSetComment={readOnly ? (() => showToast('Preview only')) : handleSetComment}
-                      onEditMarkdown={readOnly ? (() => showToast('Preview only')) : (value, onSave) =>
-                        setMarkdownEditor({ isOpen: true, value, onSave })
-                      }
-                    />
-                  </ShadowScrollView>
-                )}
-                {moveSession && moveSession.selections.length > 0 && (
-                  <View className="border-subtle-border bg-background/95 absolute bottom-3 left-3 right-3 z-30 rounded-2xl border p-2 shadow-lg">
-                    <Row className="mb-1 items-center justify-between px-1">
-                      <FontText weight="medium" className="text-xs">
-                        {moveSession.operation === 'move' ? 'Moving' : 'Cloning'}{' '}
-                        {moveSession.category === 'block' ? 'blocks' : 'expressions'}
-                      </FontText>
-                      <FontText variant="subtext" className="text-xs">
-                        {moveSession.phase === 'place'
-                          ? 'Choose a green target'
-                          : 'Click an item to return it'}
-                      </FontText>
-                    </Row>
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                      <Row className="items-center gap-1">
-                        {moveSession.selections.map((selection) => (
-                          <ShelfItem
-                            key={selection.number}
-                            selection={selection}
-                            onReturn={() => handleReturnSelection(selection.number)}
-                            entryKeysBySource={entryKeysBySource}
-                            definedFunctions={definedFunctions}
-                          />
-                        ))}
-                      </Row>
-                    </ScrollView>
+                {parseError && (
+                  <View className="rounded-lg border border-red-400/30 bg-red-400/5 p-2">
+                    <FontText className="text-xs">{parseError}</FontText>
                   </View>
                 )}
-              </View>
 
-              <Row className="items-center justify-between gap-4 pt-2">
-                <Row className="gap-2">
-                  {mode === 'blocks' && !readOnly &&
-                    (moveSession ? (
-                      moveSession.phase === 'place' ? (
-                        <AppButton
-                          variant="filled"
-                          className="h-8 px-4"
-                          onPress={handleBackToCollect}
-                          dropShadow={false}>
-                          <FontText className="text-sm" color="white">
-                            Back to {moveSession.operation === 'move' ? 'Move' : 'Clone'}
-                          </FontText>
-                        </AppButton>
+                <View className="min-h-0 flex-1">
+                  {mode === 'text' ? (
+                    <TextInput
+                      multiline
+                      value={textDraft}
+                      onChangeText={readOnly ? undefined : handleTextChange}
+                      onKeyPress={readOnly ? () => showToast('Preview only') : undefined}
+                      editable={!readOnly}
+                      placeholder={`Variable({\n  NAME = "deadPlayers",\n  VALUE = players.Filter(Item => Item.entry("isAlive") == false),\n});\n\nCreateSelectInput({\n  NAME = "revive",\n  LIST = deadPlayers,\n  LABEL = "Back From Dead",\n  NUMSELECTABLE = (deadPlayers.length / 2).floor,\n});`}
+                      placeholderTextColor="#0004"
+                      className="bg-text/5 min-h-0 flex-1 rounded-xl p-4 font-mono text-sm"
+                      style={{
+                        lineHeight: 20,
+                        textAlignVertical: 'top',
+                      }}
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                    />
+                  ) : (
+                    <ShadowScrollView
+                      className="flex-1"
+                      scrollViewClassName="flex-1 rounded-xl p-3">
+                      <Canvas
+                        statements={state.ast.statements}
+                        definedVariables={definedVariables}
+                        definedFunctions={definedFunctions}
+                        onAdd={
+                          readOnly
+                            ? () => showToast('Preview only')
+                            : (target) => {
+                                if (!moveSession) setInsertTarget(target);
+                              }
+                        }
+                        moveTool={readOnly ? undefined : moveToolControls}
+                        onSetExpression={
+                          readOnly ? () => showToast('Preview only') : handleSetExpression
+                        }
+                        onSetStatementField={
+                          readOnly ? () => showToast('Preview only') : handleSetStatementField
+                        }
+                        onDeleteStatement={
+                          readOnly ? () => showToast('Preview only') : handleDeleteStatement
+                        }
+                        onRenameVariable={
+                          readOnly ? () => showToast('Preview only') : handleRenameVariable
+                        }
+                        entryKeysBySource={entryKeysBySource}
+                        inputSources={inputSources}
+                        isTriggerContext={isTriggerContext}
+                        gameId={gameId}
+                        savedFunctionNames={savedFunctionNames}
+                        onSaveFunction={
+                          readOnly ? () => showToast('Preview only') : handleSaveFunction
+                        }
+                        onUnsaveFunction={
+                          readOnly ? () => showToast('Preview only') : unsaveFunction
+                        }
+                        onLockedFunctionClick={
+                          readOnly ? () => showToast('Preview only') : handleLockedFunctionClick
+                        }
+                        decoupledFunctionNames={decoupledFunctions}
+                        onSetComment={readOnly ? () => showToast('Preview only') : handleSetComment}
+                        onEditMarkdown={
+                          readOnly
+                            ? () => showToast('Preview only')
+                            : (value, onSave) => setMarkdownEditor({ isOpen: true, value, onSave })
+                        }
+                      />
+                    </ShadowScrollView>
+                  )}
+                  {moveSession && moveSession.selections.length > 0 && (
+                    <View className="border-subtle-border bg-background/95 absolute bottom-3 left-3 right-3 z-30 rounded-2xl border p-2 shadow-lg">
+                      <Row className="mb-1 items-center justify-between px-1">
+                        <FontText weight="medium" className="text-xs">
+                          {moveSession.operation === 'move' ? 'Moving' : 'Cloning'}{' '}
+                          {moveSession.category === 'block' ? 'blocks' : 'expressions'}
+                        </FontText>
+                        <FontText variant="subtext" className="text-xs">
+                          {moveSession.phase === 'place'
+                            ? 'Choose a green target'
+                            : 'Click an item to return it'}
+                        </FontText>
+                      </Row>
+                      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                        <Row className="items-center gap-1">
+                          {moveSession.selections.map((selection) => (
+                            <ShelfItem
+                              key={selection.number}
+                              selection={selection}
+                              onReturn={() => handleReturnSelection(selection.number)}
+                              entryKeysBySource={entryKeysBySource}
+                              definedFunctions={definedFunctions}
+                            />
+                          ))}
+                        </Row>
+                      </ScrollView>
+                    </View>
+                  )}
+                </View>
+
+                <Row className="items-center justify-between gap-4 pt-2">
+                  <Row className="gap-2">
+                    {mode === 'blocks' &&
+                      !readOnly &&
+                      (moveSession ? (
+                        moveSession.phase === 'place' ? (
+                          <AppButton
+                            variant="filled"
+                            className="h-8 px-4"
+                            onPress={handleBackToCollect}
+                            dropShadow={false}>
+                            <FontText className="text-sm" color="white">
+                              Back to {moveSession.operation === 'move' ? 'Move' : 'Clone'}
+                            </FontText>
+                          </AppButton>
+                        ) : (
+                          <>
+                            <AppButton
+                              variant="outline"
+                              className="h-8 px-3"
+                              onPress={cancelMoveSession}
+                              dropShadow={false}>
+                              <FontText className="text-sm">Cancel</FontText>
+                            </AppButton>
+                            <View
+                              onPointerEnter={() => setPlaceHovered(true)}
+                              onPointerLeave={() => setPlaceHovered(false)}>
+                              <AppButton
+                                variant="filled"
+                                className={`h-8 px-3 ${placeDisabledReason ? 'opacity-50' : ''}`}
+                                onPress={handleEnterPlacePhase}
+                                dropShadow={false}>
+                                <FontText className="text-sm" color="white">
+                                  Place
+                                </FontText>
+                              </AppButton>
+                            </View>
+                          </>
+                        )
                       ) : (
                         <>
-                          <AppButton
-                            variant="outline"
-                            className="h-8 px-3"
-                            onPress={cancelMoveSession}
-                            dropShadow={false}>
-                            <FontText className="text-sm">Cancel</FontText>
-                          </AppButton>
                           <View
-                            onPointerEnter={() => setPlaceHovered(true)}
-                            onPointerLeave={() => setPlaceHovered(false)}>
+                            onPointerEnter={() => setMoveHovered(true)}
+                            onPointerLeave={() => setMoveHovered(false)}>
                             <AppButton
-                              variant="filled"
-                              className={`h-8 px-3 ${placeDisabledReason ? 'opacity-50' : ''}`}
-                              onPress={handleEnterPlacePhase}
+                              variant="outline"
+                              className="h-8 px-3"
+                              onPress={() => startMoveSession('move')}
                               dropShadow={false}>
-                              <FontText className="text-sm" color="white">
-                                Place
-                              </FontText>
+                              <FontText className="text-sm">Move</FontText>
+                            </AppButton>
+                          </View>
+                          <View
+                            onPointerEnter={() => setCloneHovered(true)}
+                            onPointerLeave={() => setCloneHovered(false)}>
+                            <AppButton
+                              variant="outline"
+                              className="h-8 px-3"
+                              onPress={() => startMoveSession('clone')}
+                              dropShadow={false}>
+                              <FontText className="text-sm">Clone</FontText>
                             </AppButton>
                           </View>
                         </>
-                      )
+                      ))}
+                  </Row>
+                  <Row className="minimize-hide gap-4">
+                    {!readOnly && (
+                      <AppButton variant="outline" className="w-28" onPress={handleAttemptClose}>
+                        <FontText weight="medium">Cancel</FontText>
+                      </AppButton>
+                    )}
+                    {readOnly ? (
+                      <AppButton
+                        variant="filled"
+                        className="w-36"
+                        onPress={() => onOpenChange(false)}>
+                        <FontText weight="medium" color="white">
+                          Close
+                        </FontText>
+                      </AppButton>
                     ) : (
-                      <>
-                        <View
-                          onPointerEnter={() => setMoveHovered(true)}
-                          onPointerLeave={() => setMoveHovered(false)}>
-                          <AppButton
-                            variant="outline"
-                            className="h-8 px-3"
-                            onPress={() => startMoveSession('move')}
-                            dropShadow={false}>
-                            <FontText className="text-sm">Move</FontText>
-                          </AppButton>
-                        </View>
-                        <View
-                          onPointerEnter={() => setCloneHovered(true)}
-                          onPointerLeave={() => setCloneHovered(false)}>
-                          <AppButton
-                            variant="outline"
-                            className="h-8 px-3"
-                            onPress={() => startMoveSession('clone')}
-                            dropShadow={false}>
-                            <FontText className="text-sm">Clone</FontText>
-                          </AppButton>
-                        </View>
-                      </>
-                    ))}
+                      <AppButton
+                        variant="filled"
+                        className="w-36"
+                        disabled={!doneEnabled}
+                        onPress={handleSubmit}>
+                        <FontText weight="medium" color="white">
+                          Done
+                        </FontText>
+                      </AppButton>
+                    )}
+                  </Row>
                 </Row>
-                <Row className="minimize-hide gap-4">
-                  {!readOnly && (
-                    <AppButton variant="outline" className="w-28" onPress={handleAttemptClose}>
-                      <FontText weight="medium">Cancel</FontText>
-                    </AppButton>
-                  )}
-                  {readOnly ? (
-                    <AppButton
-                      variant="filled"
-                      className="w-36"
-                      onPress={() => onOpenChange(false)}>
-                      <FontText weight="medium" color="white">
-                        Close
-                      </FontText>
-                    </AppButton>
-                  ) : (
-                    <AppButton
-                      variant="filled"
-                      className="w-36"
-                      disabled={!doneEnabled}
-                      onPress={handleSubmit}>
-                      <FontText weight="medium" color="white">
-                        Done
-                      </FontText>
-                    </AppButton>
-                  )}
-                </Row>
-              </Row>
-            </Column>
+              </Column>
 
-            <InsertModal
-              isOpen={insertTarget !== null}
-              target={insertTarget}
-              definedVariables={definedVariables}
-              definedFunctions={definedFunctions}
-              entryKeysBySource={entryKeysBySource}
-              onInsertStatement={handleInsertStatement}
-              onInsertExpression={handleInsertExpression}
-              onInsertChainLink={handleInsertChainLink}
-              onInsertBuiltinFunction={handleInsertBuiltinFunction}
-              onRemove={handleRemove}
-              hideInputs={hideInputs}
-              allowVoteInput={allowVoteInput}
-              isTriggerContext={isTriggerContext}
-              gameId={gameId}
-              savedFunctions={savedFunctions}
-              onUnsaveFunction={unsaveFunction}
-              onClose={() => setInsertTarget(null)}
-            />
+              <InsertModal
+                isOpen={insertTarget !== null}
+                target={insertTarget}
+                definedVariables={definedVariables}
+                definedFunctions={definedFunctions}
+                entryKeysBySource={entryKeysBySource}
+                onInsertStatement={handleInsertStatement}
+                onInsertExpression={handleInsertExpression}
+                onInsertChainLink={handleInsertChainLink}
+                onInsertBuiltinFunction={handleInsertBuiltinFunction}
+                onRemove={handleRemove}
+                hideInputs={hideInputs}
+                allowVoteInput={allowVoteInput}
+                isTriggerContext={isTriggerContext}
+                gameId={gameId}
+                savedFunctions={savedFunctions}
+                onUnsaveFunction={unsaveFunction}
+                onClose={() => setInsertTarget(null)}
+              />
             </View>
           </ConvexDialog.Content>
         </ConvexDialog.Portal>
@@ -1773,13 +1806,16 @@ const ScriptEditorDialog = ({
           />
           <ViewOnlyPreviewModal
             isOpen={previewEntry !== null}
-            onOpenChange={(open) => { if (!open) setPreviewEntry(null); }}
+            onOpenChange={(open) => {
+              if (!open) setPreviewEntry(null);
+            }}
             title="Preview Saved Version"
             subtext={previewEntry ? new Date(previewEntry.savedAt).toLocaleString() : undefined}
             entry={previewEntry}
-            onReplace={() => { /* script editor doesn't directly replace; parent handles it */ setPreviewEntry(null); }}
-            contentClassName="h-[85vh] max-w-5xl"
-          >
+            onReplace={() => {
+              /* script editor doesn't directly replace; parent handles it */ setPreviewEntry(null);
+            }}
+            contentClassName="h-[85vh] max-w-5xl">
             {previewEntry && renderPreviewContent && renderPreviewContent(previewEntry)}
           </ViewOnlyPreviewModal>
         </>

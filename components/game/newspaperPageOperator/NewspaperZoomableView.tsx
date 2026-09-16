@@ -8,8 +8,8 @@ import { InputOptionsProvider } from '../markdownEditor/InputOptionsProvider';
 import PressLogo from '../../ui/icons/Press';
 import { ZoomIn, ZoomOut, Maximize } from 'lucide-react-native';
 import ShadowScrollView from '../../ui/ShadowScrollView';
-import { Usepaper } from '../../../../types/usepaper';
-import { getNewspaperSections } from '../../../../utils/newspaperSections';
+import { Usepaper } from 'types/usepaper';
+import { getNewspaperSections } from 'utils/newspaperSections';
 import NewspaperSectionDivider from './NewspaperSectionDivider';
 
 interface NewspaperZoomableViewProps {

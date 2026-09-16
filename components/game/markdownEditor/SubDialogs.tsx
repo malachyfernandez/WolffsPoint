@@ -12,7 +12,7 @@ import {
   insertMarkdownImage,
   insertAtSelection,
 } from '../townSquare/townSquareUtils';
-import { encodeMarkdownImageAlt } from '../../../../utils/markdownImageOptions';
+import { encodeMarkdownImageAlt } from 'utils/markdownImageOptions';
 
 interface SubDialogsProps {
   gameId: string | undefined;

@@ -24,7 +24,7 @@ import {
   resolveDividerStyle,
   resolveTitleFont,
   withNewspaperSections,
-} from '../../../utils/newspaperSections';
+} from 'utils/newspaperSections';
 
 interface NewspaperWritingViewProps {
   gameId: string; // This will now be in format "originalGameId-day-year-month-day"

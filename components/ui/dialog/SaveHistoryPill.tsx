@@ -2,8 +2,8 @@ import React from 'react';
 import { Pressable, View } from 'react-native';
 import { History } from 'lucide-react-native';
 import FontText from '../text/FontText';
-import { useToast } from '../../../../contexts/ToastContext';
-import { useKeyboardShortcutHint } from '../../../../contexts/KeyboardShortcutHintContext';
+import { useToast } from 'contexts/ToastContext';
+import { useKeyboardShortcutHint } from 'contexts/KeyboardShortcutHintContext';
 import { useMinimize } from '../minimize/MinimizeContext';
 
 interface SaveHistoryPillProps {

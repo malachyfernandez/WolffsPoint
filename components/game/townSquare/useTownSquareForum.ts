@@ -1,9 +1,9 @@
 import { useCallback, useMemo } from 'react';
-import { useFindListItems, useValue } from '../../../../hooks/useData';
-import { useListSet, useListRemove } from '../../../../hooks/useData';
-import { useUndoRedo, createUndoSnapshot } from '../../../../hooks/useUndoRedo';
-import { PlayerProfile, TownSquareComment, TownSquarePost } from '../../../../types/multiplayer';
-import { createClientId, getGameScopedKey } from '../../../../utils/multiplayer';
+import { useFindListItems, useValue } from 'hooks/useData';
+import { useListSet, useListRemove } from 'hooks/useData';
+import { useUndoRedo, createUndoSnapshot } from 'hooks/useUndoRedo';
+import { PlayerProfile, TownSquareComment, TownSquarePost } from 'types/multiplayer';
+import { createClientId, getGameScopedKey } from 'utils/multiplayer';
 import {
     ComposerSubmitPayload,
     ReplyViewModel,

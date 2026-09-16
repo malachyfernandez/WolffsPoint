@@ -14,8 +14,8 @@ import { useCreateUndoSnapshot, useUndoRedo } from 'hooks/useUndoRedo';
 import Row from '../layout/Row';
 import StatusButton from '../ui/StatusButton';
 import DeleteConfirmationDialog from './DeleteRoleConfirmationDialog';
-import { useKeyboardShortcuts } from '../../../hooks/useKeyboardShortcuts';
-import { useKeyboardShortcutHint } from '../../../contexts/KeyboardShortcutHintContext';
+import { useKeyboardShortcuts } from 'hooks/useKeyboardShortcuts';
+import { useKeyboardShortcutHint } from 'contexts/KeyboardShortcutHintContext';
 import CloseButton from '../ui/dialog/CloseButton';
 
 interface UserEditDialogProps {

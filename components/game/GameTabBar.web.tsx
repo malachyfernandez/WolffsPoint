@@ -1,7 +1,7 @@
 import React, { ReactElement, useState, useRef, useEffect } from 'react';
 import { useWindowDimensions } from 'react-native';
 import { useCSSVariable } from 'uniwind';
-import { usePlayerStatus } from '../../../contexts/PlayerStatusContext';
+import { usePlayerStatus } from 'contexts/PlayerStatusContext';
 import { guildedButtonRingPresets } from '../ui/buttons/GuildedButton.shared';
 import FadeInAfterDelay from '../ui/loading/FadeInAfterDelay';
 

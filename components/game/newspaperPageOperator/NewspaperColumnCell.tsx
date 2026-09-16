@@ -7,7 +7,7 @@ import MarkdownEditorDialog from '../MarkdownEditorDialog';
 import NewspaperColumnEmptyState from './NewspaperColumnEmptyState';
 import NewspaperColumnFooter from './NewspaperColumnFooter';
 import NewspaperColumnHeader from './NewspaperColumnHeader';
-import type { ResolvedNewspaperSection } from '../../../../utils/newspaperSections';
+import type { ResolvedNewspaperSection } from 'utils/newspaperSections';
 
 interface NewspaperColumnCellProps {
     /** Composite newspaper day ID (e.g. "gameId-day-year-month-day"). Used for historyKey. */

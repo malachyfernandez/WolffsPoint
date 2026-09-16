@@ -1,7 +1,7 @@
-import { interpretScript } from '../app/script/runtime/interpreter';
-import { createScriptGlobals, type ScriptSourceData } from '../app/script/runtime/sources';
-import { decodeStoredInputState } from '../app/script/runtime/values';
-import { TableUpdate } from '../app/script/registry';
+import { interpretScript } from '../script/runtime/interpreter';
+import { createScriptGlobals, type ScriptSourceData } from '../script/runtime/sources';
+import { decodeStoredInputState } from '../script/runtime/values';
+import { TableUpdate } from '../script/registry';
 import { UserTableItem, UserTableTitle } from '../types/playerTable';
 import { MarkdownInputState, PlannedUpdate } from '../types/multiplayer';
 import {

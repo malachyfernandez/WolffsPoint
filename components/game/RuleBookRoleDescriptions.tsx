@@ -9,14 +9,14 @@ import MarkdownRenderer from '../ui/markdown/MarkdownRenderer';
 import AppButton from '../ui/buttons/AppButton';
 import ConvexDialog from '../ui/dialog/ConvexDialog';
 import DialogHeader from '../ui/dialog/DialogHeader';
-import { useList, useValue } from '../../../hooks/useData';
-import { useUndoRedo, useCreateUndoSnapshot } from '../../../hooks/useUndoRedo';
-import { getGameScopedKey } from '../../../utils/multiplayer';
-import { RuleBookData } from '../../../types/ruleBook';
-import { RoleTableItem } from '../../../types/roleTable';
+import { useList, useValue } from 'hooks/useData';
+import { useUndoRedo, useCreateUndoSnapshot } from 'hooks/useUndoRedo';
+import { getGameScopedKey } from 'utils/multiplayer';
+import { RuleBookData } from 'types/ruleBook';
+import { RoleTableItem } from 'types/roleTable';
 import MarkdownEditorDialog from './MarkdownEditorDialog';
 import CloseButton from '../ui/dialog/CloseButton';
-import { useKeyboardShortcuts } from '../../../hooks/useKeyboardShortcuts';
+import { useKeyboardShortcuts } from 'hooks/useKeyboardShortcuts';
 
 interface RuleBookRoleDescriptionsProps {
   gameId: string;

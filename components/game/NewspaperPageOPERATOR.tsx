@@ -9,15 +9,15 @@ import FontText from '../ui/text/FontText';
 import LoadingContainer from '../ui/loading/LoadingContainer';
 import NewspaperWritingView from './NewspaperWritingView';
 import { useFindListItems, useListSet } from 'hooks/useData';
-import { useGameOperatorUserId } from '../../../hooks/useGameOperatorUserId';
-import { useSharedListValue } from '../../../hooks/useSharedListValue';
+import { useGameOperatorUserId } from 'hooks/useGameOperatorUserId';
+import { useSharedListValue } from 'hooks/useSharedListValue';
 import OperatorDayNavigation from '../ui/daySelector/OperatorDayNavigation';
 import NewspaperDayView from './NewspaperDayView';
 import { useNewspaperDayOwner } from './useNewspaperDayOwner';
-import { usePendingColumnOpen } from '../../../hooks/usePendingColumnOpen';
-import { Usepaper } from '../../../types/usepaper';
-import { NewspaperControlState, getNewspaperControlKey, getNewspaperDayControlItemId, getNewspaperDayItemId } from '../../../utils/newspaperControl';
-import { hasNewspaperContent } from '../../../utils/newspaperSections';
+import { usePendingColumnOpen } from 'hooks/usePendingColumnOpen';
+import { Usepaper } from 'types/usepaper';
+import { NewspaperControlState, getNewspaperControlKey, getNewspaperDayControlItemId, getNewspaperDayItemId } from 'utils/newspaperControl';
+import { hasNewspaperContent } from 'utils/newspaperSections';
 
 interface NewspaperPageOPERATORProps {
     currentUserId: string;
@@ -170,7 +170,7 @@ const NewspaperPageOPERATOR = ({ currentUserId, gameId }: NewspaperPageOPERATORP
 
         if (!hasControl) {
             return (
-                <Column className='gap-4 min-h-190 items-center pt-48'>
+                <Column className='gap-4 items-center pt-48'>
                     <AppButton
                         variant='accent'
                         className='w-full sm:w-auto sm:min-w-65'
@@ -286,7 +286,7 @@ const NewspaperPageOPERATOR = ({ currentUserId, gameId }: NewspaperPageOPERATORP
                                 isReady={!selectedDayOwner.isLoading && (activeTab === 'writing' || readyDayKey === selectedDayKey)}
                             >
                                 {selectedDayOwner.isLoading ? (
-                                    <Column className='min-h-190 items-center justify-center'>
+                                    <Column className='items-center justify-center py-24'>
                                         <FontText variant='subtext'>Loading newspaper…</FontText>
                                     </Column>
                                 ) : (

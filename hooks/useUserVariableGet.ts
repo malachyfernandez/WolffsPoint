@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import { useQuery } from "convex/react";
 import { api } from "../convex/_generated/api";
 import type { UserVariableRecord } from "./useUserVariable";
@@ -70,10 +69,6 @@ export function useUserVariableGet<TValue = any>({
     returnTop,
     startAfter,
   });
-
-  useEffect(() => {
-    console.log(`[YourEyesOnly][PROD-DIAG][VarGet] key=${key} userIds=${userIds ? userIds.join(',') : 'none'} results=${results === undefined ? 'undefined' : results.length}`);
-  }, [results]);
 
   const mappedResults = results?.map((record) => ({
     ...record,

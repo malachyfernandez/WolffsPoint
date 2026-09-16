@@ -31,8 +31,8 @@ fixed.
   missing or private records may need a data repair if the operator wants the
   custom value to be visible.
 
-The `[YourEyesOnly][PROD-DIAG]` logs from this session are still in place.
-They can be removed or downgraded once the fix is verified in production.
+The temporary `[YourEyesOnly][PROD-DIAG]` logs used to diagnose the hang have
+been removed from the loading path.
 
 ---
 
@@ -242,87 +242,31 @@ value public.
   setting.
 - If the operator has a custom `numberOfRealDaysPerInGameDay` value, players
   will not see it until the record is made public or a data migration fixes it.
-- The `[YourEyesOnly][PROD-DIAG]` logs are still in place and can be removed
-  once the fix is verified.
+- The temporary `[YourEyesOnly][PROD-DIAG]` logs have been removed.
 
 ---
 
-## 6. Diagnostic logs added in this session
+## 6. Diagnostic logs
 
-A set of clearly-prefixed `console.log` statements was added to the production
-relevant loading path. They are intentionally in production so the user can
-paste the browser console output to the next thread.
+A temporary `[YourEyesOnly][PROD-DIAG]` console-log set was added to diagnose the
+production loading hang. It identified `numberOfRealDaysPerInGameDay` as the only
+unresolved cross-user dependency (`results=0`) while `dayDatesArray`,
+`roleTable`, and `gameSchedule` resolved.
 
-Search the console for the prefix:
-
-```
-[YourEyesOnly][PROD-DIAG]
-```
-
-Files modified:
+All of those temporary logs have now been removed from:
 
 - `app/components/game/YourEyesOnlyPagePLAYER.tsx`
-  - `[YourEyesOnly][PROD-DIAG][Page] MOUNT / UNMOUNT`
-  - `[YourEyesOnly][PROD-DIAG][Page] DATA` — operator loading state and which
-    shared records are resolved.
-  - `[YourEyesOnly][PROD-DIAG][Page] DERIVED` — day/date/render decision.
-  - `LoadingContainer onReady` log when the container exits loading.
 - `app/components/game/YourEyesOnlyDayContentPLAYER.tsx`
-  - `[YourEyesOnly][PROD-DIAG][DayContent] MOUNT` — confirms the child is
-    actually being rendered.
 - `app/components/ui/loading/LoadingContainer.tsx`
-  - `[YourEyesOnly][PROD-DIAG][Loading] isLoading=true/false` plus a
-    dependency-by-dependency breakdown (e.g. `dep[0]=undefined`).
-- `hooks/useGameOperatorUserId.ts`
-  - `[YourEyesOnly][PROD-DIAG][OperatorId]` — game rows undefined/empty/set and
-    the resolved operator user id.
-- `hooks/useSharedListValue.ts`
-  - `[YourEyesOnly][PROD-DIAG][SharedList]` — records undefined/0/N for each
-    list key.
-- `hooks/useSharedVariableValue.ts`
-  - `[YourEyesOnly][PROD-DIAG][SharedVar]` — records undefined/0/N for each
-    variable key.
-- `hooks/useUserListGet.ts`
-  - `[YourEyesOnly][PROD-DIAG][ListGet]` — raw Convex `user_lists_get.search`
-    results undefined/length.
-- `hooks/useUserVariableGet.ts`
-  - `[YourEyesOnly][PROD-DIAG][VarGet]` — raw Convex `user_vars_get.search`
-    results undefined/length.
 - `contexts/DataProvider.tsx`
-  - `[YourEyesOnly][PROD-DIAG][DataProvider]` — `DataSubscriber` results for
-    `find-values` and `find-list-items` only (with key, itemId, userIds, result
-    summary, refCount).
+- `hooks/useGameOperatorUserId.ts`
+- `hooks/useSharedListValue.ts`
+- `hooks/useSharedVariableValue.ts`
+- `hooks/useUserListGet.ts`
+- `hooks/useUserVariableGet.ts`
 
-### How to interpret the logs
-
-1. Open the browser console on the production **Your Eyes Only** tab.
-2. Filter for `[YourEyesOnly][PROD-DIAG]`.
-3. Look for the first `[YourEyesOnly][PROD-DIAG][Loading]` line.
-   - It tells you which `dep[0..N]` is not `ready`.
-   - `dep[N]=undefined` means the underlying `useFind...` hook has not resolved.
-   - `dep[N]=syncing` means a `useValue`/`useList` result has
-     `state.isSyncing`.
-   - `dep[N]=false` means an explicit boolean flag is still false.
-4. Cross-reference with `[YourEyesOnly][PROD-DIAG][SharedList]` /
-   `[SharedVar]` / `[ListGet]` / `[VarGet]` to see whether Convex returned
-   `undefined`, `0`, or a populated result.
-   - `undefined` → query is still loading or never returned.
-   - `0` → the query finished but the caller is not authorized to see any rows,
-     or no rows exist.
-   - `>0` → the query found data.
-5. Check `[YourEyesOnly][PROD-DIAG][OperatorId]` to confirm the operator user
-   was resolved. If it is `missing`, the `games` list query is not returning the
-   expected row.
-6. If `DataProvider` logs `result=undefined` forever for a key, the Convex
-   `useQuery` for that key is not resolving (auth, network, server error,
-   missing index, permission rule rejecting silently).
-
-### Important note
-
-`DataProvider.tsx` does **not** have an error boundary around individual
-`DataSubscriber` components. If a `useUser...` hook throws, the whole React tree
-crashes rather than logging. Watch for a white screen or uncaught errors in the
-console. If that appears, the stack trace is more useful than the planned logs.
+If this issue recurs, use the loading semantics documented in section 5 rather
+than re-adding broad production logging.
 
 ---
 
@@ -389,19 +333,17 @@ background subscriber per query.
    - Build and deploy the updated `YourEyesOnlyPagePLAYER.tsx`.
    - Open the production **Your Eyes Only** tab.
    - Confirm the page exits loading and renders the in-game days.
-2. **(Optional) Remove or downgrade the diagnostic logs** once the fix is
-   verified. They are intentionally temporary.
-3. **(Optional) Repair the production `numberOfRealDaysPerInGameDay` record** if
+2. **(Optional) Repair the production `numberOfRealDaysPerInGameDay` record** if
    the operator intended a value other than the default `2`. Make the record
    `PUBLIC` so players can read it.
-4. **Resume color work if requested.**
+3. **Resume color work if requested.**
    - See `utils/color-implementation.md`.
    - The current shipped state uses the `color` prop and a direct
      `useCSSVariable` call; a later pass can switch to pure class-based styling.
-5. **Button sizing audit is essentially complete.**
+4. **Button sizing audit is essentially complete.**
    - `utils/button-sizing-audit.md` holds the findings.
    - Apply targeted fixes only for actual primary/secondary mismatch issues.
-6. **Continue the freeze/schedule/publish workflow** for Players, Roles, and
+5. **Continue the freeze/schedule/publish workflow** for Players, Roles, and
    Nightly.
 
 ---
@@ -427,5 +369,4 @@ background subscriber per query.
   public or is repaired.
 - Whether the freeze/schedule/publish implementation works correctly across
   Players, Roles, and Nightly remains to be verified.
-- The temporary `[YourEyesOnly][PROD-DIAG]` diagnostic logs can be removed once
-  the fix is verified.
+- The temporary `[YourEyesOnly][PROD-DIAG]` diagnostic logs have been removed.

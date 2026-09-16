@@ -86,7 +86,7 @@ const FontDateInput = ({
     ...props
 }: FontDateInputProps) => {
     const [fontsLoaded] = useFonts({
-        'LibreBaskerville': require('../../../../assets/fonts/Libre_Baskerville/LibreBaskerville-VariableFont_wght.ttf'),
+        'LibreBaskerville': require('../../../assets/fonts/Libre_Baskerville/LibreBaskerville-VariableFont_wght.ttf'),
     });
 
     const toRawDigits = (input?: string): string => (input ?? '').replace(/\D/g, '').slice(0, 8);

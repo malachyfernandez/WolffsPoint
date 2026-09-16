@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { View, Text, TouchableOpacity, Alert, ScrollView } from "react-native";
-import { useNukeDatabase, useTableCounts } from "../../../hooks/useNukeDatabase";
+import { useNukeDatabase, useTableCounts } from "hooks/useNukeDatabase";
 
 /**
  * Dev-only component to nuke all database tables

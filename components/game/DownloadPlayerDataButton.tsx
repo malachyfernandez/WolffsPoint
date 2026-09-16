@@ -7,7 +7,7 @@ import FontText from '../ui/text/FontText';
 import Row from '../layout/Row';
 import { UserTableItem, UserTableTitle } from 'types/playerTable';
 import { GameInfo } from 'types/games';
-import { getPlayerActionSummary } from '../../../utils/multiplayer';
+import { getPlayerActionSummary } from 'utils/multiplayer';
 import { resolveVoteEmailToName } from './VoteEditorDialog';
 import * as XLSX from 'xlsx';
 

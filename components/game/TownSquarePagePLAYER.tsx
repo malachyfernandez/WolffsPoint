@@ -2,8 +2,8 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ScrollView } from 'react-native';
 import LayoutStateAnimatedView, { fromRight } from '../ui/LayoutStateAnimatedView';
 import Column from '../layout/Column';
-import { PlayerProfile } from '../../../types/multiplayer';
-import { usePlayerStatus } from '../../../contexts/PlayerStatusContext';
+import { PlayerProfile } from 'types/multiplayer';
+import { usePlayerStatus } from 'contexts/PlayerStatusContext';
 import MarkdownEditorDialog from './MarkdownEditorDialog';
 import { useTownSquareAuthorIdentity } from './townSquare/TownSquareAuthorIdentity';
 import TownSquareThreadDetailView from './townSquare/TownSquareThreadDetailView';
@@ -11,8 +11,8 @@ import TownSquareThreadListView from './townSquare/TownSquareThreadListView';
 import { ThreadViewModel, truncateText } from './townSquare/townSquareUtils';
 import { useTownSquareForum } from './townSquare/useTownSquareForum';
 import LoadingContainer from '../ui/loading/LoadingContainer';
-import { useCanEditScripts } from '../../../hooks/useCanEditScripts';
-import { useGameOperatorUserId } from '../../../hooks/useGameOperatorUserId';
+import { useCanEditScripts } from 'hooks/useCanEditScripts';
+import { useGameOperatorUserId } from 'hooks/useGameOperatorUserId';
 
 interface TownSquarePagePLAYERProps {
     gameId: string;

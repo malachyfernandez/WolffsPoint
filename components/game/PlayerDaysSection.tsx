@@ -8,7 +8,7 @@ import ShadowScrollView from '../ui/ShadowScrollView';
 import DaySelectionDialog from './DaySelectionDialog';
 import ChooseDayDialog from './ChooseDayDialog';
 import DaysTable from './DaysTable';
-import { getDayRangeLabel, parseStoredDayDates } from '../../../utils/multiplayer';
+import { getDayRangeLabel, parseStoredDayDates } from 'utils/multiplayer';
 
 interface PlayerDaysSectionProps {
     gameId: string;

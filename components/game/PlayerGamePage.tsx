@@ -15,7 +15,7 @@ import RuleBookIcon from '../ui/icons/RuleBook';
 import YourEyeIcon from '../ui/icons/YourEye';
 import PhoneBookIcon from '../ui/icons/PhoneBook';
 import PaperContainer from '../ui/PaperContainer';
-import { BodyReportScope } from '../../../contexts/BodyReadinessContext';
+import { BodyReportScope } from 'contexts/BodyReadinessContext';
 
 export type PlayerTab = 'townSquare' | 'newspaper' | 'ruleBook' | 'eyesOnly' | 'phoneBook';
 

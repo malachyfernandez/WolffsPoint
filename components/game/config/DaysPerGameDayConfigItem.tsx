@@ -1,5 +1,5 @@
 import React from 'react';
-import { useList, useValue } from '../../../../hooks/useData';
+import { useList } from 'hooks/useData';
 import ConfigSectionRow from '../../ui/forms/ConfigSectionRow';
 import FontNumberInput from '../../ui/forms/FontNumberInput';
 import FontText from '../../ui/text/FontText';

@@ -1,5 +1,5 @@
 import { UserTableItem, UserTableTitle } from '../types/playerTable';
-import { TableUpdate } from '../app/script/registry';
+import { TableUpdate } from '../script/registry';
 import { parseCell, encodeTags } from './tagEncoding';
 
 /**

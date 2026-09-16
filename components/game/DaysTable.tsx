@@ -22,9 +22,9 @@ import {
   getWidthForColumnSize,
 } from './playerTableColumnSizing';
 import { getTargetDayCount, normalizePlayerPageState } from './playerTableNormalization';
-import { useTagTriggers, type CellContext } from '../../../hooks/useTagTriggers';
-import { VoteValue } from '../../../types/multiplayer';
-import { getPlayerActionSummary } from '../../../utils/multiplayer';
+import { useTagTriggers, type CellContext } from 'hooks/useTagTriggers';
+import { VoteValue } from 'types/multiplayer';
+import { getPlayerActionSummary } from 'utils/multiplayer';
 import ActionEditorDialog from './ActionEditorDialog';
 import VoteEditorDialog from './VoteEditorDialog';
 import TagCellEditor from './TagCellEditor';

@@ -1,4 +1,4 @@
-import Row from 'app/components/layout/Row';
+import Row from 'components/layout/Row';
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { View, Text, Pressable } from 'react-native';
 import Animated, {

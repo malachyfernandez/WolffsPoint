@@ -10,8 +10,8 @@ import DialogHeader from '../ui/dialog/DialogHeader';
 import SmartDateInput from '../ui/forms/SmartDateInput';
 import StatusButton from '../ui/StatusButton';
 import CustomCheckbox from '../ui/CustomCheckbox';
-import { useKeyboardShortcuts } from '../../../hooks/useKeyboardShortcuts';
-import { useKeyboardShortcutHint } from '../../../contexts/KeyboardShortcutHintContext';
+import { useKeyboardShortcuts } from 'hooks/useKeyboardShortcuts';
+import { useKeyboardShortcutHint } from 'contexts/KeyboardShortcutHintContext';
 import CloseButton from '../ui/dialog/CloseButton';
 
 interface DaySelectionDialogProps {

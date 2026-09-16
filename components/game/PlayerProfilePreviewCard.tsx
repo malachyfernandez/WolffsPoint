@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { Image, View } from 'react-native';
 import { Phone } from 'lucide-react-native';
-import { PlayerProfile } from '../../../types/multiplayer';
+import { PlayerProfile } from 'types/multiplayer';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
 import MarkdownRenderer from '../ui/markdown/MarkdownRenderer';

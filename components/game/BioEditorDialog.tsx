@@ -3,7 +3,7 @@ import { View } from 'react-native';
 import ConvexDialog from '../ui/dialog/ConvexDialog';
 import DialogHeader from '../ui/dialog/DialogHeader';
 import Row from '../layout/Row';
-import { useUndoRedo, useCreateUndoSnapshot } from '../../../hooks/useUndoRedo';
+import { useUndoRedo, useCreateUndoSnapshot } from 'hooks/useUndoRedo';
 import {
   SelectionRange,
   emptySelection,
@@ -15,7 +15,7 @@ import { CloseButton, MainContent, ActionButtons, SubDialogs } from './markdownE
 import { InputOptionsProvider } from './markdownEditor/InputOptionsProvider';
 import ShadowScrollView from '../ui/ShadowScrollView';
 import PlayerProfilePreviewCard from './PlayerProfilePreviewCard';
-import { PlayerProfile } from '../../../types/multiplayer';
+import { PlayerProfile } from 'types/multiplayer';
 
 interface BioEditorDialogProps {
   isOpen: boolean;

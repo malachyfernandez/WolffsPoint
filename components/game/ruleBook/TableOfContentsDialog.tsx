@@ -5,8 +5,8 @@ import DialogHeader from '../../ui/dialog/DialogHeader';
 import Column from '../../layout/Column';
 import FontText from '../../ui/text/FontText';
 import ShadowScrollView from '../../ui/ShadowScrollView';
-import { parseHeadings, scrollToHeading, scrollToElement } from '../../../../utils/parseHeadings';
-import { RoleTableItem } from '../../../../types/roleTable';
+import { parseHeadings, scrollToHeading, scrollToElement } from 'utils/parseHeadings';
+import { RoleTableItem } from 'types/roleTable';
 import CloseButton from '../../ui/dialog/CloseButton';
 
 interface TableOfContentsDialogProps {

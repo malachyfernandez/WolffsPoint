@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { Platform } from 'react-native';
 import { MathDocumentPage } from 'types/mathDocuments';
-import { useToast } from '../../../../contexts/ToastContext';
+import { useToast } from 'contexts/ToastContext';
 import { useListSet } from 'hooks/useData';
-import { buildViewOnlyDocumentUrl } from '../../../../utils/buildViewOnlyDocumentUrl';
+import { buildViewOnlyDocumentUrl } from 'utils/buildViewOnlyDocumentUrl';
 import AppButton from './AppButton';
 import FontText from '../text/FontText';
 

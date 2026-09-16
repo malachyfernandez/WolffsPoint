@@ -14,12 +14,12 @@ import Row from '../layout/Row';
 import FontText from '../ui/text/FontText';
 import AppButton from '../ui/buttons/AppButton';
 import DisableableButton from '../ui/buttons/DisableableButton';
-import { UserTableItem } from '../../../types/playerTable';
-import { MarkdownInputState, VoteValue } from '../../../types/multiplayer';
-import { normalizeVoteTargets } from '../../../utils/multiplayer';
-import { useSaveHistory, SavedEntry } from '../../../hooks/useSaveHistory';
-import { useKeyboardShortcuts } from '../../../hooks/useKeyboardShortcuts';
-import { useKeyboardShortcutHint } from '../../../contexts/KeyboardShortcutHintContext';
+import { UserTableItem } from 'types/playerTable';
+import { MarkdownInputState, VoteValue } from 'types/multiplayer';
+import { normalizeVoteTargets } from 'utils/multiplayer';
+import { useSaveHistory, SavedEntry } from 'hooks/useSaveHistory';
+import { useKeyboardShortcuts } from 'hooks/useKeyboardShortcuts';
+import { useKeyboardShortcutHint } from 'contexts/KeyboardShortcutHintContext';
 const formatInputValue = (value: string) => {
   try {
     const parsed = JSON.parse(value);

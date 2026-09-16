@@ -7,11 +7,11 @@ import Row from '../../layout/Row';
 import AppButton from '../../ui/buttons/AppButton';
 import FontText from '../../ui/text/FontText';
 import ShadowScrollView from '../../ui/ShadowScrollView';
-import { Usepaper } from '../../../../types/usepaper';
+import { Usepaper } from 'types/usepaper';
 import NewspaperZoomableView from './NewspaperZoomableView';
 import CloseButton from '../../ui/dialog/CloseButton';
-import { useKeyboardShortcuts } from '../../../../hooks/useKeyboardShortcuts';
-import { hasNewspaperContent } from '../../../../utils/newspaperSections';
+import { useKeyboardShortcuts } from 'hooks/useKeyboardShortcuts';
+import { hasNewspaperContent } from 'utils/newspaperSections';
 
 interface ImportDraftDialogProps {
     isOpen: boolean;

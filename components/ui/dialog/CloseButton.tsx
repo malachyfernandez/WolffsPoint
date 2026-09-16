@@ -1,7 +1,7 @@
 import React from 'react';
 import { Pressable } from 'react-native';
 import FontText from '../text/FontText';
-import { useKeyboardShortcutHint } from '../../../../contexts/KeyboardShortcutHintContext';
+import { useKeyboardShortcutHint } from 'contexts/KeyboardShortcutHintContext';
 
 interface CloseButtonProps {
     onPress: () => void;

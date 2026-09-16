@@ -1,7 +1,7 @@
 import React, { ReactNode, useMemo, useState } from 'react';
 import { View } from 'react-native';
-import { useValue } from '../../../hooks/useData';
-import { useSharedListValue } from '../../../hooks/useSharedListValue';
+import { useValue } from 'hooks/useData';
+import { useSharedListValue } from 'hooks/useSharedListValue';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
@@ -9,12 +9,12 @@ import FontText from '../ui/text/FontText';
 import LoadingText from '../ui/loading/LoadingText';
 import AppButton from '../ui/buttons/AppButton';
 import PlayerProfileDialog from './PlayerProfileDialogNEW';
-import { useGameOperatorUserId } from '../../../hooks/useGameOperatorUserId';
-import { UserTableItem } from '../../../types/playerTable';
-import { PlayerProfile } from '../../../types/multiplayer';
-import { getGameScopedKey } from '../../../utils/multiplayer';
-import { PlayerStatusProvider } from '../../../contexts/PlayerStatusContext';
-import { useBodyLoadReport } from '../../../hooks/useBodyLoadReport';
+import { useGameOperatorUserId } from 'hooks/useGameOperatorUserId';
+import { UserTableItem } from 'types/playerTable';
+import { PlayerProfile } from 'types/multiplayer';
+import { getGameScopedKey } from 'utils/multiplayer';
+import { PlayerStatusProvider } from 'contexts/PlayerStatusContext';
+import { useBodyLoadReport } from 'hooks/useBodyLoadReport';
 
 interface UserData {
   name: string;

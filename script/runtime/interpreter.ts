@@ -31,7 +31,7 @@ import {
   type ExpressionContext,
   type TableUpdate,
 } from '../registry';
-import type { PlannedUpdate } from '../../../types/multiplayer';
+import type { PlannedUpdate } from 'types/multiplayer';
 
 export type RenderInstructionKind =
   | 'select'

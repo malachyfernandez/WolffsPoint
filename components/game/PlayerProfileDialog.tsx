@@ -9,7 +9,7 @@ import AppButton from '../ui/buttons/AppButton';
 import DialogHeader from '../ui/dialog/DialogHeader';
 import SimpleImageUpload from '../ui/imageUpload/SimpleImageUpload';
 import MarkdownRenderer from '../ui/markdown/MarkdownRenderer';
-import { PlayerProfile } from '../../../types/multiplayer';
+import { PlayerProfile } from 'types/multiplayer';
 import CloseButton from '../ui/dialog/CloseButton';
 
 interface PlayerProfileDialogProps {

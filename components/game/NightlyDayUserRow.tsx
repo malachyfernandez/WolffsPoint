@@ -10,9 +10,9 @@ import ActionEditorDialog from './ActionEditorDialog';
 import VoteEditorDialog, { resolveVoteEmailToName } from './VoteEditorDialog';
 import ActionPills from './ActionPills';
 import TagCellDisplay from './TagCellDisplay';
-import { UserTableItem } from '../../../types/playerTable';
-import { VoteValue } from '../../../types/multiplayer';
-import { getPlayerActionSummary } from '../../../utils/multiplayer';
+import { UserTableItem } from 'types/playerTable';
+import { VoteValue } from 'types/multiplayer';
+import { getPlayerActionSummary } from 'utils/multiplayer';
 import { useList } from 'hooks/useData';
 import { SelectableOverlay } from './multiSelect/SelectableOverlay';
 

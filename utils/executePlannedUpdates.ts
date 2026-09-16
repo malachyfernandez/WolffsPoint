@@ -1,6 +1,6 @@
 import { UserTableItem, UserTableTitle } from '../types/playerTable';
 import { PlannedUpdate } from '../types/multiplayer';
-import { interpretScript } from '../app/script/runtime/interpreter';
+import { interpretScript } from '../script/runtime/interpreter';
 import {
   VOTE_MULTIPLIER_COLUMN,
   LIVING_STATE_COLUMN,

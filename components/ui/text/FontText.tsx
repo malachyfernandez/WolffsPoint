@@ -57,7 +57,7 @@ const FontText = ({
   ellipsizeMode,
 }: FontTextProps) => {
   const [fontsLoaded] = useFonts({
-    LibreBaskerville: require('../../../../assets/fonts/Libre_Baskerville/LibreBaskerville-VariableFont_wght.ttf'),
+    LibreBaskerville: require('../../../assets/fonts/Libre_Baskerville/LibreBaskerville-VariableFont_wght.ttf'),
   });
 
   const colorToken = color || getColorTokenFromClassName(className) || 'text';

@@ -1,5 +1,5 @@
-import type { UserTableItem, UserTableTitle, DayData } from '../../../types/playerTable';
-import type { RoleTableItem } from '../../../types/roleTable';
+import type { UserTableItem, UserTableTitle, DayData } from 'types/playerTable';
+import type { RoleTableItem } from 'types/roleTable';
 
 export type ScriptCapability = 'operator' | 'player' | 'newser';
 

@@ -7,7 +7,6 @@ import ConvexDialog from '../../components/ui/dialog/ConvexDialog';
 import { CloseButton } from '../../components/game/markdownEditor';
 import AppButton from '../../components/ui/buttons/AppButton';
 import UnsavedChangesDialog from '../../components/ui/dialog/UnsavedChangesDialog';
-import { StableTextInput, ExpressionSocket } from './Canvas';
 import InsertModal, { type DefinedFunction, type InsertTarget } from './InsertModal';
 import type { Expression, FunctionTemplatePiece, Statement } from '../lang/ast';
 import { emptySpan } from '../lang/ast';
@@ -68,6 +67,12 @@ interface TemplateInputModalProps {
  * When the user clicks "Done", calls `onDone` with the constructed piece.
  * Uses the unsaved-changes confirmation pattern on close.
  */
+// Canvas.tsx imports this file (through FunctionTemplateEditor), so its
+// exports are resolved lazily inside components to avoid a require cycle.
+const getCanvasExports = () =>
+  // eslint-disable-next-line @typescript-eslint/no-require-imports -- intentional lazy require to break the module cycle
+  require('./Canvas') as typeof import('./Canvas');
+
 const TemplateInputModal = ({
   isOpen,
   onOpenChange,
@@ -78,6 +83,7 @@ const TemplateInputModal = ({
   entryKeysBySource,
   onEditMarkdown,
 }: TemplateInputModalProps) => {
+  const { StableTextInput, ExpressionSocket } = getCanvasExports();
   const [labelDraft, setLabelDraft] = useState('');
   const [originalLabel, setOriginalLabel] = useState('');
   const [exprDraft, setExprDraft] = useState<Expression>({

@@ -1,9 +1,9 @@
 import React, { useMemo, useState } from 'react';
 import { ScrollView, View } from 'react-native';
-import { useFindListItems } from '../../../hooks/useData';
-import { useListSet } from '../../../hooks/useData';
-import { PlayerProfile, TownSquareComment, TownSquarePost } from '../../../types/multiplayer';
-import { createClientId, getGameScopedKey } from '../../../utils/multiplayer';
+import { useFindListItems } from 'hooks/useData';
+import { useListSet } from 'hooks/useData';
+import { PlayerProfile, TownSquareComment, TownSquarePost } from 'types/multiplayer';
+import { createClientId, getGameScopedKey } from 'utils/multiplayer';
 import ConvexDialog from '../ui/dialog/ConvexDialog';
 import DialogHeader from '../ui/dialog/DialogHeader';
 import Column from '../layout/Column';
@@ -14,7 +14,7 @@ import { InputOptionsProvider } from './markdownEditor/InputOptionsProvider';
 import AppButton from '../ui/buttons/AppButton';
 import MarkdownEditorDialog from './MarkdownEditorDialog';
 import { TownSquareAuthorAvatar, TownSquareAuthorName } from './townSquare/TownSquareAuthorIdentity';
-import { useCanEditScripts } from '../../../hooks/useCanEditScripts';
+import { useCanEditScripts } from 'hooks/useCanEditScripts';
 import CloseButton from '../ui/dialog/CloseButton';
 
 interface TownSquarePostDialogProps {

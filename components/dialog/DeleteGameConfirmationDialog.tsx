@@ -5,7 +5,7 @@ import FontText from '../ui/text/FontText';
 import ConvexDialog from '../ui/dialog/ConvexDialog';
 import DialogHeader from '../ui/dialog/DialogHeader';
 import Column from '../layout/Column';
-import { useKeyboardShortcuts } from '../../../hooks/useKeyboardShortcuts';
+import { useKeyboardShortcuts } from 'hooks/useKeyboardShortcuts';
 import CloseButton from '../ui/dialog/CloseButton';
 
 interface DeleteGameConfirmationDialogProps {

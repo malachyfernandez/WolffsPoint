@@ -13,7 +13,6 @@ import DialogHeader from '../../components/ui/dialog/DialogHeader';
 import UnsavedChangesDialog from '../../components/ui/dialog/UnsavedChangesDialog';
 import { CloseButton } from '../../components/game/markdownEditor';
 import { getTagColor } from '../../components/game/TagPill';
-import AddTagDialog from '../../components/game/AddTagDialog';
 import { useValue } from 'hooks/useData';
 import { getGameScopedKey } from 'utils/multiplayer';
 import type { TagDefinitionsData } from '../../components/game/TagCellEditor';
@@ -195,8 +194,8 @@ const PaperTexture = ({ radius = 12 }: { radius?: number }) => (
       backgroundRepeat: 'repeat',
       backgroundSize: '642px 642px',
       mixBlendMode: 'multiply',
+      pointerEvents: 'none',
     }}
-    pointerEvents="none"
   />
 );
 
@@ -212,8 +211,8 @@ const HoverOverlay = ({ radius = 12 }: { radius?: number }) => (
       bottom: 0,
       borderRadius: radius,
       backgroundColor: 'rgba(0,0,0,0.12)',
+      pointerEvents: 'none',
     }}
-    pointerEvents="none"
   />
 );
 
@@ -1679,9 +1678,7 @@ const VariableRenameModal = ({
                 />
               </Column>
               {hasCollision && (
-                <FontText className="text-sm">
-                  A variable already uses this name.
-                </FontText>
+                <FontText className="text-sm">A variable already uses this name.</FontText>
               )}
               <Row className="justify-end gap-4 pt-2">
                 <AppButton variant="outline" className="w-32 px-6" onPress={handleAttemptClose}>
@@ -1803,6 +1800,14 @@ let openTagManagerFn: (() => void) | null = null;
  * Tag manager modal — list of tags with edit buttons + New Tag.
  * Rendered once at the Canvas root, triggered by `openTagManagerFn`.
  */
+// AddTagDialog imports ScriptEditorDialog which imports this file, so it is
+// resolved lazily inside components to avoid a require cycle.
+const getAddTagDialog = () =>
+  // eslint-disable-next-line @typescript-eslint/no-require-imports -- intentional lazy require to break the module cycle
+  (
+    require('../../components/game/AddTagDialog') as typeof import('../../components/game/AddTagDialog')
+  ).default;
+
 const TagManagerModal = ({
   gameId,
   tagDefinitions,
@@ -1812,6 +1817,7 @@ const TagManagerModal = ({
   tagDefinitions: TagDefinitionsData;
   setTagDefs: (defs: TagDefinitionsData) => void;
 }) => {
+  const AddTagDialog = getAddTagDialog();
   const [isOpen, setIsOpen] = useState(false);
   const [isAddTagOpen, setIsAddTagOpen] = useState(false);
   const [editingTag, setEditingTag] = useState<{ name: string; color: string } | null>(null);
@@ -2807,7 +2813,7 @@ const StatementBlock = ({
       ? statement.body.statements.slice(0, -1)
       : statement.body.statements;
     content = (
-      <View pointerEvents={isLockedFunction ? 'none' : 'auto'}>
+      <View style={{ pointerEvents: isLockedFunction ? 'none' : 'auto' }}>
         <Column className="gap-0">
           <View className="bg-text/10 rounded-t-xl p-2">
             <Column className="gap-2">
@@ -3056,7 +3062,7 @@ export const BlockPreview = ({
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={{ flexGrow: 1 }}>
-        <View pointerEvents="none">
+        <View style={{ pointerEvents: 'none' }}>
           <StatementBlock
             statement={statement}
             index={0}
@@ -3080,7 +3086,7 @@ export const BlockPreview = ({
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={{ flexGrow: 1 }}>
-        <View pointerEvents="none">
+        <View style={{ pointerEvents: 'none' }}>
           <ExpressionSocket
             expression={expression}
             location={noopLocation}

@@ -5,8 +5,8 @@ import ConfigSectionRow from '../../ui/forms/ConfigSectionRow';
 import FontText from '../../ui/text/FontText';
 import FontTextInput from '../../ui/forms/FontTextInput';
 import AppButton from '../../ui/buttons/AppButton';
-import { useValue, useFindValues } from '../../../../hooks/useData';
-import { NewserAssignment, PublicUserData, getNewserAssignmentKey, resolveJoinedUserByEmail } from '../../../../utils/newspaperControl';
+import { useValue, useFindValues } from 'hooks/useData';
+import { NewserAssignment, PublicUserData, getNewserAssignmentKey, resolveJoinedUserByEmail } from 'utils/newspaperControl';
 
 interface NewserConfigItemProps {
     gameId: string;

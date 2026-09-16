@@ -1,4 +1,4 @@
-import { parseMarkdown } from '../app/components/ui/markdown/MarkdownRenderer';
+import { parseMarkdown } from '../components/ui/markdown/MarkdownRenderer';
 
 export interface MarkdownHeading {
     /** Index of the block in the parsed markdown (matches the id assigned by MarkdownRenderer) */

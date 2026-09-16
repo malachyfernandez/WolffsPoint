@@ -1,6 +1,6 @@
 import React from 'react';
 import { useCSSVariable } from 'uniwind';
-import { usePlayerStatus } from '../../../../contexts/PlayerStatusContext';
+import { usePlayerStatus } from 'contexts/PlayerStatusContext';
 import {
     getGuildedInnerHeight,
     guildedButtonDefaults,

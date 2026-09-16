@@ -16,9 +16,9 @@ import AppButton from '../ui/buttons/AppButton';
 import DisableableButton from '../ui/buttons/DisableableButton';
 import ActionPills from './ActionPills';
 import ShadowScrollView from '../ui/ShadowScrollView';
-import { useSaveHistory, SavedEntry } from '../../../hooks/useSaveHistory';
-import { useKeyboardShortcuts } from '../../../hooks/useKeyboardShortcuts';
-import { useKeyboardShortcutHint } from '../../../contexts/KeyboardShortcutHintContext';
+import { useSaveHistory, SavedEntry } from 'hooks/useSaveHistory';
+import { useKeyboardShortcuts } from 'hooks/useKeyboardShortcuts';
+import { useKeyboardShortcutHint } from 'contexts/KeyboardShortcutHintContext';
 
 interface ActionEditorDialogProps {
   isOpen: boolean;

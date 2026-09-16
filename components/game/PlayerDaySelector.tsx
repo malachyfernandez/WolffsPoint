@@ -3,7 +3,7 @@ import ShadowScrollView from '../ui/ShadowScrollView';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
 import DayButton from '../ui/daySelector/DayButton';
-import { getContextualDayRangeLabel } from '../../../utils/multiplayer';
+import { getContextualDayRangeLabel } from 'utils/multiplayer';
 
 interface PlayerDaySelectorProps {
     dayDates: Date[];

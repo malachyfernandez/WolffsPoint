@@ -15,7 +15,7 @@ import { useGlobalRateLimitMonitor } from '../hooks/useRateLimitMonitor';
 import { GenerationProvider } from '../contexts/GenerationContext';
 import { WebDropdownProvider } from '../contexts/WebDropdownProvider';
 import { DataProvider } from '../contexts/DataProvider';
-import { MinimizeProvider, MinimizeRow } from './components/ui/minimize';
+import { MinimizeProvider, MinimizeRow } from '../components/ui/minimize';
 import { useEffect } from "react";
 import "../global.css";
 

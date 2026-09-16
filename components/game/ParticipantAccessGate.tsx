@@ -1,16 +1,16 @@
 import React, { ReactNode, useMemo, useState } from 'react';
 import Animated, { FadeInUp } from 'react-native-reanimated';
-import { useValue } from '../../../hooks/useData';
+import { useValue } from 'hooks/useData';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
 import FontText from '../ui/text/FontText';
 import LoadingText from '../ui/loading/LoadingText';
 import AppButton from '../ui/buttons/AppButton';
 import PlayerProfileDialog from './PlayerProfileDialogNEW';
-import { PlayerProfile } from '../../../types/multiplayer';
-import { getGameScopedKey } from '../../../utils/multiplayer';
-import { PlayerStatusProvider } from '../../../contexts/PlayerStatusContext';
-import { useBodyLoadReport } from '../../../hooks/useBodyLoadReport';
+import { PlayerProfile } from 'types/multiplayer';
+import { getGameScopedKey } from 'utils/multiplayer';
+import { PlayerStatusProvider } from 'contexts/PlayerStatusContext';
+import { useBodyLoadReport } from 'hooks/useBodyLoadReport';
 
 interface UserData {
   name: string;

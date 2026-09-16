@@ -3,7 +3,7 @@ import Row from '../../layout/Row';
 import AppButton from '../../ui/buttons/AppButton';
 import DisableableButton from '../../ui/buttons/DisableableButton';
 import FontText from '../../ui/text/FontText';
-import { useKeyboardShortcutHint } from '../../../../contexts/KeyboardShortcutHintContext';
+import { useKeyboardShortcutHint } from 'contexts/KeyboardShortcutHintContext';
 
 interface ActionButtonsProps {
     canSubmit: boolean;

@@ -2,12 +2,12 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Column from '../layout/Column';
 import Row from '../layout/Row';
 import FontText from '../ui/text/FontText';
-import { useGameOperatorUserId } from '../../../hooks/useGameOperatorUserId';
-import { useSharedListValue } from '../../../hooks/useSharedListValue';
-import { useSharedVariableValue } from '../../../hooks/useSharedVariableValue';
-import { PlayerProfile, GameSchedule } from '../../../types/multiplayer';
-import { UserTableItem } from '../../../types/playerTable';
-import { getContextualDayRangeLabel, getCurrentPlayableDayIndex, getGameScopedKey, normalizeGameSchedule, parseStoredDayDates, defaultGameSchedule, formatTimeLabel, formatContextualDateLabel, isDayReleasedAtTime } from '../../../utils/multiplayer';
+import { useGameOperatorUserId } from 'hooks/useGameOperatorUserId';
+import { useSharedListValue } from 'hooks/useSharedListValue';
+import { useSharedVariableValue } from 'hooks/useSharedVariableValue';
+import { PlayerProfile, GameSchedule } from 'types/multiplayer';
+import { UserTableItem } from 'types/playerTable';
+import { getContextualDayRangeLabel, getCurrentPlayableDayIndex, getGameScopedKey, normalizeGameSchedule, parseStoredDayDates, defaultGameSchedule, formatTimeLabel, formatContextualDateLabel, isDayReleasedAtTime } from 'utils/multiplayer';
 import { ChevronLeft, ChevronRight, Newspaper } from 'lucide-react-native';
 import { Pressable, View } from 'react-native';
 import LayoutStateAnimatedView, { fromRight } from '../ui/LayoutStateAnimatedView';
@@ -151,7 +151,7 @@ const YourEyesOnlyPagePLAYER = ({ gameId, currentEmail, matchingPlayer, currentP
                                         isReady={!selectedDayOwner.isLoading && (!hasNewspaperReleased || readyDayKey === selectedDayKey)}
                                     >
                                         {selectedDayOwner.isLoading ? (
-                                            <Column className='min-h-190 items-center justify-center'>
+                                            <Column className='items-center justify-center py-24'>
                                                 <LoadingText text='Loading newspaper' />
                                             </Column>
                                         ) : hasNewspaperReleased ? (

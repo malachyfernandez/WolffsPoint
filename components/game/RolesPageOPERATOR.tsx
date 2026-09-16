@@ -7,14 +7,14 @@ import RoleAddDialog from './RoleAddDialog';
 import AppButton from '../ui/buttons/AppButton';
 import FontText from '../ui/text/FontText';
 import LoadingContainer from '../ui/loading/LoadingContainer';
-import { useList } from '../../../hooks/useData';
-import { useUndoRedo, useCreateUndoSnapshot } from '../../../hooks/useUndoRedo';
-import { RoleTableItem } from '../../../types/roleTable';
+import { useList } from 'hooks/useData';
+import { useUndoRedo, useCreateUndoSnapshot } from 'hooks/useUndoRedo';
+import { RoleTableItem } from 'types/roleTable';
 import { Plus } from 'lucide-react-native';
 import { MultiSelectProvider } from './multiSelect/MultiSelectContext';
 import MultiSelectToolbar from './multiSelect/MultiSelectToolbar';
 import TableFreezeControls from './TableFreezeControls';
-import { useRolesFreeze } from '../../../hooks/useTableFreeze';
+import { useRolesFreeze } from 'hooks/useTableFreeze';
 
 interface RolesPageOPERATORProps {
   currentUserId: string;

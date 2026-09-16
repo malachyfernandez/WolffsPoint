@@ -6,7 +6,7 @@ import TownSquarePagePLAYER from './TownSquarePagePLAYER';
 import RuleBookPagePLAYER from './RuleBookPagePLAYER';
 import PhoneBookPagePLAYER from './PhoneBookPagePLAYER';
 import PaperContainer from '../ui/PaperContainer';
-import { BodyReportScope } from '../../../contexts/BodyReadinessContext';
+import { BodyReportScope } from 'contexts/BodyReadinessContext';
 import ParticipantAccessGate from './ParticipantAccessGate';
 import NewspaperPageNEWSER from './NewspaperPageNEWSER';
 import TownSquareIcon from '../ui/icons/TownSquare';

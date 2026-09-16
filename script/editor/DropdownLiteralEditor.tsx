@@ -9,9 +9,14 @@ import ConvexDialog from '../../components/ui/dialog/ConvexDialog';
 import { CloseButton } from '../../components/game/markdownEditor';
 import AppButton from '../../components/ui/buttons/AppButton';
 import UnsavedChangesDialog from '../../components/ui/dialog/UnsavedChangesDialog';
-import { StableTextInput } from './Canvas';
 import type { DropdownLiteral } from '../lang/ast';
 import { emptySpan } from '../lang/ast';
+
+// Canvas.tsx imports this file, so its exports are resolved lazily inside
+// components to avoid a require cycle.
+const getCanvasExports = () =>
+  // eslint-disable-next-line @typescript-eslint/no-require-imports -- intentional lazy require to break the module cycle
+  require('./Canvas') as typeof import('./Canvas');
 
 interface DropdownLiteralEditorProps {
   expression: DropdownLiteral;
@@ -24,6 +29,7 @@ const DropdownLiteralEditor = ({
   onChange,
   onEditOptions,
 }: DropdownLiteralEditorProps) => {
+  const { StableTextInput } = getCanvasExports();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isLeaveConfirmOpen, setIsLeaveConfirmOpen] = useState(false);
 

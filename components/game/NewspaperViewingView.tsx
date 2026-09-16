@@ -6,7 +6,7 @@ import PlaceholderCard from '../ui/PlaceholderCard';
 import { Newspaper } from 'lucide-react-native';
 import { Usepaper } from 'types/usepaper';
 import NewspaperZoomableView from './newspaperPageOperator/NewspaperZoomableView';
-import { hasNewspaperContent } from '../../../utils/newspaperSections';
+import { hasNewspaperContent } from 'utils/newspaperSections';
 
 interface NewspaperViewingViewProps {
     gameId: string;

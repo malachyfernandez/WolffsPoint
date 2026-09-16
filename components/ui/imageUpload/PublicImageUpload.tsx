@@ -51,12 +51,12 @@ import React, { Dispatch, SetStateAction, useState } from 'react';
 import { useAction } from 'convex/react';
 import { ActivityIndicator, Image, View, Platform } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { api } from '../../../../convex/_generated/api';
+import { api } from '../../../convex/_generated/api';
 import Column from '../../layout/Column';
 import AppButton from '../buttons/AppButton';
 import FontText from '../text/FontText';
-import { prepareImageForUpload, prepareWebFileForUpload, UploadThingReactNativeFile } from '../../../../utils/imageCompression';
-import { useToast } from '../../../../contexts/ToastContext';
+import { prepareImageForUpload, prepareWebFileForUpload, UploadThingReactNativeFile } from 'utils/imageCompression';
+import { useToast } from 'contexts/ToastContext';
 
 type UrlSetter = Dispatch<SetStateAction<string>>;
 

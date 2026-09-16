@@ -10,9 +10,9 @@ import DialogHeader from './DialogHeader';
 import DisableableButton from '../buttons/DisableableButton';
 import ImagePreview from './ImagePreview';
 import UrlInputControls from './UrlInputControls';
-import { useToast } from '../../../../contexts/ToastContext';
-import { api } from '../../../../convex/_generated/api';
-import { prepareWebFileForUpload, UploadThingReactNativeFile } from '../../../../utils/imageCompression';
+import { useToast } from 'contexts/ToastContext';
+import { api } from '../../../convex/_generated/api';
+import { prepareWebFileForUpload, UploadThingReactNativeFile } from 'utils/imageCompression';
 import CloseButton from './CloseButton';
 
 interface UploadThingSignedUpload {

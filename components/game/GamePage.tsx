@@ -17,10 +17,10 @@ import {
   PublicUserData,
   getNewserAssignmentKey,
   resolveValidNewserAssignment,
-} from '../../../utils/newspaperControl';
+} from 'utils/newspaperControl';
 import FadeInAfterDelay from '../ui/loading/FadeInAfterDelay';
 import LoadingContainer from '../ui/loading/LoadingContainer';
-import { BodyReadinessProvider } from '../../../contexts/BodyReadinessContext';
+import { BodyReadinessProvider } from 'contexts/BodyReadinessContext';
 
 interface GamePageProps {
   gameId: string;

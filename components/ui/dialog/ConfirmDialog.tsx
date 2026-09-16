@@ -6,7 +6,7 @@ import FontText from '../text/FontText';
 import ConvexDialog from './ConvexDialog';
 import DialogHeader from './DialogHeader';
 import CloseButton from './CloseButton';
-import { useKeyboardShortcuts } from '../../../../hooks/useKeyboardShortcuts';
+import { useKeyboardShortcuts } from 'hooks/useKeyboardShortcuts';
 
 interface ConfirmDialogProps {
   isOpen: boolean;

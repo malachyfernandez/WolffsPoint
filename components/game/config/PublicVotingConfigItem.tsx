@@ -1,12 +1,12 @@
 import React from 'react';
 import { Pressable } from 'react-native';
-import { useValue } from '../../../../hooks/useData';
-import { GameSchedule } from '../../../../types/multiplayer';
+import { useValue } from 'hooks/useData';
+import { GameSchedule } from 'types/multiplayer';
 import {
   getGameScopedKey,
   normalizeGameSchedule,
   defaultGameSchedule,
-} from '../../../../utils/multiplayer';
+} from 'utils/multiplayer';
 import ConfigSectionRow from '../../ui/forms/ConfigSectionRow';
 import CustomCheckbox from '../../ui/CustomCheckbox';
 import FontText from '../../ui/text/FontText';

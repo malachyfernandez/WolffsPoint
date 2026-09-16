@@ -5,8 +5,8 @@ import AppButton from '../ui/buttons/AppButton';
 import FontText from '../ui/text/FontText';
 import { HomeIcon } from '../ui/icons/HomeIcon';
 import { TouchableOpacity } from 'react-native';
-import { useValue, useFindListItems } from '../../../hooks/useData';
-import { GameInfo } from '../../../types/games';
+import { useValue, useFindListItems } from 'hooks/useData';
+import { GameInfo } from 'types/games';
 import CopyableText from '../ui/CopyableText';
 import { BlurView } from 'expo-blur';
 

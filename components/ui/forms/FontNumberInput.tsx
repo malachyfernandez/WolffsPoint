@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { TextInput, TextInputProps, TextStyle, Text, View } from 'react-native';
 import { useFonts } from 'expo-font';
-import Row from 'app/components/layout/Row';
+import Row from 'components/layout/Row';
 
 type FontWeight = 'regular' | 'medium' | 'bold';
 
@@ -41,7 +41,7 @@ const FontNumberInput = ({
     ...props
 }: FontNumberInputProps) => {
     const [fontsLoaded] = useFonts({
-        'LibreBaskerville': require('../../../../assets/fonts/Libre_Baskerville/LibreBaskerville-VariableFont_wght.ttf'),
+        'LibreBaskerville': require('../../../assets/fonts/Libre_Baskerville/LibreBaskerville-VariableFont_wght.ttf'),
     });
 
     const [inputValue, setInputValue] = useState(() => sanitizeInput(value));

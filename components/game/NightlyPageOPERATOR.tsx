@@ -19,16 +19,16 @@ import {
   getGameScopedKey,
   hasPlayerActionContent,
   hasVoteContent,
-} from '../../../utils/multiplayer';
-import { deepEqual } from '../../../utils/deepEqual';
-import { PlayerNightSubmission, PlannedUpdate } from '../../../types/multiplayer';
+} from 'utils/multiplayer';
+import { deepEqual } from 'utils/deepEqual';
+import { PlayerNightSubmission, PlannedUpdate } from 'types/multiplayer';
 import {
   executePlannedUpdates,
   executeMorningMessagePlannedUpdates,
-} from '../../../utils/executePlannedUpdates';
-import { fireTagTriggersForNetChanges } from '../../../hooks/useTagTriggers';
+} from 'utils/executePlannedUpdates';
+import { fireTagTriggersForNetChanges } from 'hooks/useTagTriggers';
 import TableFreezeControls from './TableFreezeControls';
-import { usePlayerDataFreeze } from '../../../hooks/useTableFreeze';
+import { usePlayerDataFreeze } from 'hooks/useTableFreeze';
 interface NightlyPageOPERATORProps {
   currentUserId: string;
   gameId: string;
@@ -391,8 +391,11 @@ const NightlyPageContent = ({
                   </Column>
                   <Column className="gap-0">
                     <View
-                      style={{ width: daysTableWidth, opacity: selectionMode ? 0.4 : 1 }}
-                      pointerEvents={selectionMode ? 'none' : 'auto'}>
+                      style={{
+                        width: daysTableWidth,
+                        opacity: selectionMode ? 0.4 : 1,
+                        pointerEvents: selectionMode ? 'none' : 'auto',
+                      }}>
                       <ComprehensiveDaySelector
                         gameId={gameId}
                         showAddButton={true}

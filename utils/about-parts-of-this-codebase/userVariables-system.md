@@ -67,18 +67,22 @@ Output:
 
 ### Staged and scheduled updates
 
-`useValue` and `useList` support one optional pending replacement per owned variable or list item. `record.value` always remains the published value. When a pending update exists, its value and timing are available through `record.scheduledUpdate`.
+`useValue` and `useList` support one optional pending replacement per owned variable or list item. This is implemented by `hooks/useScheduledUpdates.ts` and `convex/scheduled_updates.ts`.
+
+`record.value` always remains the published value. When a pending update exists, operators can render the private draft through `record.scheduledUpdate.value`.
 
 ```ts
 const [table, setTable] = useList<TableRow[]>("table", gameId);
 
+// Create a pending value without changing the published table.
 await setTable(table.value, { stage: true, batchId: `game:${gameId}:tables` });
 
-const editableRows = table.scheduledUpdate?.value ?? table.value;
-setTable(updateRows(editableRows));
+// While a pending update exists, ordinary writes update the draft.
+setTable(updateRows(table.scheduledUpdate?.value ?? table.value));
 
-await table.scheduledUpdate?.schedule(Date.now() + 60_000);
+// Publish now, schedule publication, or discard the draft.
 await table.scheduledUpdate?.publishNow();
+await table.scheduledUpdate?.schedule(Date.now() + 60_000);
 await table.scheduledUpdate?.cancel();
 ```
 
@@ -87,15 +91,35 @@ Setter options:
 - `scheduleAt` creates or replaces the pending value and schedules its publication.
 - `batchId` groups pending values so they publish or cancel atomically.
 - Once a pending value exists, ordinary setter calls replace that pending value. They do not change `record.value`.
+- If no `batchId` is provided, the target uses `variable:${key}` or `list:${key}:${itemId}`.
 
-`record.scheduledUpdate` is only returned by owner-scoped `useValue` and `useList` hooks. It contains:
-- `value`: the one pending replacement value.
+`record.scheduledUpdate` contains:
+- `value`: the pending replacement value.
 - `status`: `"staged"` or `"scheduled"`.
 - `scheduledTime`: the publication timestamp, or `null` for an unscheduled draft.
 - `batchId`: the atomic publication batch.
 - `schedule(time)`, `publishNow()`, and `cancel()` controls.
 
-After publication, the pending update is removed and its value becomes `record.value`.
+Use `useScheduledBatch(batchId)` when UI controls need to operate on all targets in a group:
+
+```ts
+const batch = useScheduledBatch(`game:${gameId}:player-data`);
+
+if (batch.isActive) {
+  await batch.schedule(Date.now() + 60_000);
+  // or: await batch.publishNow();
+  // or: await batch.cancel();
+}
+```
+
+Batch state includes `isLoading`, `isActive`, `isScheduled`, `scheduledTime`, and `batch.targetCount`. Scheduled publication is performed by Convex's scheduler. Publication applies every target in the batch through the normal variable/list setters, then removes the pending target rows and batch row.
+
+Important model rules:
+- Pending values are owner-only. Cross-user readers such as `useFindValues` and `useFindListItems` continue to see only the published value.
+- There is at most one pending update per variable or list item.
+- `batchId` is only a grouping mechanism for atomic publish/schedule/cancel; it is not a separate publication-group model.
+- Publishing preserves the existing stored list/variable configuration and privacy. The pending row stores the replacement value only.
+- For table freezing, capture each published table value into the same batch with `{ stage: true, batchId }`, then edit `record.scheduledUpdate?.value ?? record.value`.
 
 ### `useFindValues`
 

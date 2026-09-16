@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
-import { useList, useValue } from '../../../../hooks/useData';
-import { RoleTableItem } from '../../../../types/roleTable';
-import { UserTableItem, UserTableTitle } from '../../../../types/playerTable';
+import { useList, useValue } from 'hooks/useData';
+import { RoleTableItem } from 'types/roleTable';
+import { UserTableItem, UserTableTitle } from 'types/playerTable';
 import { MarkdownRendererInputDataProvider } from '../../ui/markdown/MarkdownRenderer';
 import type { ScriptSourceData } from '../../../script/runtime/sources';
 

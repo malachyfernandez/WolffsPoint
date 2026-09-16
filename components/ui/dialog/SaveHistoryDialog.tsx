@@ -8,8 +8,8 @@ import FontText from '../text/FontText';
 import Row from '../../layout/Row';
 import Column from '../../layout/Column';
 import AppButton from '../buttons/AppButton';
-import { SavedEntry } from '../../../../hooks/useSaveHistory';
-import { useKeyboardShortcuts } from '../../../../hooks/useKeyboardShortcuts';
+import { SavedEntry } from 'hooks/useSaveHistory';
+import { useKeyboardShortcuts } from 'hooks/useKeyboardShortcuts';
 
 interface SaveHistoryDialogProps {
     isOpen: boolean;

@@ -20,9 +20,9 @@ import AddTagDialog from './AddTagDialog';
 import { useValue } from 'hooks/useData';
 import { getGameScopedKey } from 'utils/multiplayer';
 import { parseCell, encodeTags, encodeText, type ParsedCell } from 'utils/tagEncoding';
-import { useSaveHistory, SavedEntry } from '../../../hooks/useSaveHistory';
-import { useKeyboardShortcuts } from '../../../hooks/useKeyboardShortcuts';
-import { useKeyboardShortcutHint } from '../../../contexts/KeyboardShortcutHintContext';
+import { useSaveHistory, SavedEntry } from 'hooks/useSaveHistory';
+import { useKeyboardShortcuts } from 'hooks/useKeyboardShortcuts';
+import { useKeyboardShortcutHint } from 'contexts/KeyboardShortcutHintContext';
 
 export interface TagDefinition {
   name: string;

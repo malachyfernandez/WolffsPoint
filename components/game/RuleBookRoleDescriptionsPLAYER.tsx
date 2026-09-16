@@ -5,10 +5,10 @@ import Row from '../layout/Row';
 import FontText from '../ui/text/FontText';
 import MarkdownRenderer from '../ui/markdown/MarkdownRenderer';
 import { InputOptionsProvider } from './markdownEditor/InputOptionsProvider';
-import { useFindListItems, useFindValues } from '../../../hooks/useData';
-import { getGameScopedKey } from '../../../utils/multiplayer';
-import { RoleTableItem } from '../../../types/roleTable';
-import { RuleBookData } from '../../../types/ruleBook';
+import { useFindListItems, useFindValues } from 'hooks/useData';
+import { getGameScopedKey } from 'utils/multiplayer';
+import { RoleTableItem } from 'types/roleTable';
+import { RuleBookData } from 'types/ruleBook';
 
 interface RuleBookRoleDescriptionsPLAYERProps {
   gameId: string;

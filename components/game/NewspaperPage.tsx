@@ -5,7 +5,7 @@ import Row from '../layout/Row';
 import AppButton from '../ui/buttons/AppButton';
 import FontText from '../ui/text/FontText';
 import NewspaperWritingView from './NewspaperWritingView';
-import { usePendingColumnOpen } from '../../../hooks/usePendingColumnOpen';
+import { usePendingColumnOpen } from 'hooks/usePendingColumnOpen';
 import { useList, useValue } from 'hooks/useData';
 import ShadowScrollView from '../ui/ShadowScrollView';
 import DaySelectionDialog from './DaySelectionDialog';

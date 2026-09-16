@@ -1,6 +1,6 @@
-import { interpretScript } from '../app/script/runtime/interpreter';
-import { createScriptGlobals, type ScriptSourceData } from '../app/script/runtime/sources';
-import { TableUpdate } from '../app/script/registry';
+import { interpretScript } from '../script/runtime/interpreter';
+import { createScriptGlobals, type ScriptSourceData } from '../script/runtime/sources';
+import { TableUpdate } from '../script/registry';
 import { UserTableItem, UserTableTitle } from '../types/playerTable';
 import {
   VOTE_MULTIPLIER_COLUMN,

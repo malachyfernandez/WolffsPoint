@@ -14,13 +14,13 @@ import {
   stripMarkdownSyntax,
   truncateText,
 } from './townSquare/townSquareUtils';
-import { usePlayerStatus } from '../../../contexts/PlayerStatusContext';
-import { useCanEditScripts } from '../../../hooks/useCanEditScripts';
-import { useFindListItems, useListRemove, useListSet, useValue } from '../../../hooks/useData';
-import { useUndoRedo } from '../../../hooks/useUndoRedo';
-import { TownSquareComment } from '../../../types/multiplayer';
-import { createClientId, getGameScopedKey } from '../../../utils/multiplayer';
-import { getNewspaperDayItemId } from '../../../utils/newspaperControl';
+import { usePlayerStatus } from 'contexts/PlayerStatusContext';
+import { useCanEditScripts } from 'hooks/useCanEditScripts';
+import { useFindListItems, useListRemove, useListSet, useValue } from 'hooks/useData';
+import { useUndoRedo } from 'hooks/useUndoRedo';
+import { TownSquareComment } from 'types/multiplayer';
+import { createClientId, getGameScopedKey } from 'utils/multiplayer';
+import { getNewspaperDayItemId } from 'utils/newspaperControl';
 
 interface NewspaperDayCommentsProps {
   gameId: string;

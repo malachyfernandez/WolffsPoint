@@ -9,7 +9,7 @@ import {
   useWindowDimensions,
   TextStyle,
 } from 'react-native';
-import { UserTableItem } from '../../../../types/playerTable';
+import { UserTableItem } from 'types/playerTable';
 import Column from '../../layout/Column';
 import Row from '../../layout/Row';
 import AppDropdown, { AppDropdownOption } from '../forms/AppDropdown';
@@ -17,10 +17,10 @@ import FontTextInput from '../forms/FontTextInput';
 import FontText from '../text/FontText';
 import ScriptRuntime, { collectActiveInputKeys } from '../../../script/runtime/ScriptRuntime';
 import type { ScriptSourceData } from '../../../script/runtime/sources';
-import type { NewspaperDividerStyle, NewspaperTitleFont } from '../../../../types/usepaper';
-import { getNewspaperFontFamily } from '../../../../utils/newspaperSections';
-import { parseMarkdownImageAlt } from '../../../../utils/markdownImageOptions';
-import { useNewspaperFonts } from '../../../../hooks/useNewspaperFonts';
+import type { NewspaperDividerStyle, NewspaperTitleFont } from 'types/usepaper';
+import { getNewspaperFontFamily } from 'utils/newspaperSections';
+import { parseMarkdownImageAlt } from 'utils/markdownImageOptions';
+import { useNewspaperFonts } from 'hooks/useNewspaperFonts';
 
 interface MarkdownRendererProps {
   markdown: string;

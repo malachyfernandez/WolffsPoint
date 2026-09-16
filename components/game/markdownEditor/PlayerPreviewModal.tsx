@@ -13,9 +13,9 @@ import MarkdownRenderer, {
   MarkdownRendererInputDataProvider,
 } from '../../ui/markdown/MarkdownRenderer';
 import ChainWraper from '../ChainWraper';
-import { useList, useValue } from '../../../../hooks/useData';
-import { UserTableItem, UserTableTitle } from '../../../../types/playerTable';
-import { DEFAULT_VOTE_MESSAGE, RoleTableItem } from '../../../../types/roleTable';
+import { useList, useValue } from 'hooks/useData';
+import { UserTableItem, UserTableTitle } from 'types/playerTable';
+import { DEFAULT_VOTE_MESSAGE, RoleTableItem } from 'types/roleTable';
 import type { ScriptSourceData } from '../../../script/runtime/sources';
 import {
   defaultGameSchedule,
@@ -24,7 +24,7 @@ import {
   getGameScopedKey,
   normalizeGameSchedule,
   parseStoredDayDates,
-} from '../../../../utils/multiplayer';
+} from 'utils/multiplayer';
 import CloseButton from '../../ui/dialog/CloseButton';
 
 interface PlayerPreviewModalProps {

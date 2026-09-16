@@ -59,7 +59,7 @@ import { Platform, TouchableOpacity } from 'react-native';
 import Row from '../../layout/Row';
 import { BlurView } from 'expo-blur';
 import GuildedButton from './GuildedButton';
-import { useKeyboardShortcutHint } from '../../../../contexts/KeyboardShortcutHintContext';
+import { useKeyboardShortcutHint } from 'contexts/KeyboardShortcutHintContext';
 
 interface AppButtonProps {
     children: React.ReactNode;

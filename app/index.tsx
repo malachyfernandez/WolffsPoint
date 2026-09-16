@@ -7,12 +7,12 @@ import * as AuthSession from "expo-auth-session";
 import * as WebBrowser from "expo-web-browser";
 import { Uniwind } from "uniwind";
 
-import AuthButton from "./components/ui/buttons/AuthButton";
-import AuthFailureFallback from "./components/AuthFailureFallback";
-import Column from "./components/layout/Column";
-import MainPage from "./components/MainPage";
-import GuildedFrame from "./components/ui/chrome/GuildedFrame";
-import FontText from "./components/ui/text/FontText";
+import AuthButton from "../components/ui/buttons/AuthButton";
+import AuthFailureFallback from "../components/AuthFailureFallback";
+import Column from "../components/layout/Column";
+import MainPage from "../components/MainPage";
+import GuildedFrame from "../components/ui/chrome/GuildedFrame";
+import FontText from "../components/ui/text/FontText";
 
 const useWarmUpBrowser = () => {
   useEffect(() => {
@@ -108,8 +108,8 @@ export default function HomeScreen() {
 // import { SafeAreaView } from "react-native-safe-area-context";
 // import React from "react";
 
-// import MainPage from "./components/MainPage";
-// import DatabaseNukeButton from "./components/dev/DatabaseNukeButton";
+// import MainPage from "../components/MainPage";
+// import DatabaseNukeButton from "../components/dev/DatabaseNukeButton";
 // import { useNukeDatabase, useTableCounts } from "../hooks/useNukeDatabase";
 
 // export default function DevNukeScreen() {

@@ -1,5 +1,5 @@
 import React from 'react';
-import { usePlayerStatus } from '../../../../contexts/PlayerStatusContext';
+import { usePlayerStatus } from 'contexts/PlayerStatusContext';
 import {
     type GuildedButtonVariant,
 } from '../buttons/GuildedButton.shared';

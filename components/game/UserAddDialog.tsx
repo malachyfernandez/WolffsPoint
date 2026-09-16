@@ -12,8 +12,8 @@ import { RoleTableItem } from 'types/roleTable';
 import { UserTableItem, UserTableTitle } from 'types/playerTable';
 import Row from '../layout/Row';
 import StatusButton from '../ui/StatusButton';
-import { useKeyboardShortcuts } from '../../../hooks/useKeyboardShortcuts';
-import { useKeyboardShortcutHint } from '../../../contexts/KeyboardShortcutHintContext';
+import { useKeyboardShortcuts } from 'hooks/useKeyboardShortcuts';
+import { useKeyboardShortcutHint } from 'contexts/KeyboardShortcutHintContext';
 import CloseButton from '../ui/dialog/CloseButton';
 
 interface UserAddDialogProps {

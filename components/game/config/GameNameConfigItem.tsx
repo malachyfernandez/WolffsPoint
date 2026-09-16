@@ -1,6 +1,6 @@
 import React from 'react';
-import { useList, useValue } from '../../../../hooks/useData';
-import { GameInfo } from '../../../../types/games';
+import { useList, useValue } from 'hooks/useData';
+import { GameInfo } from 'types/games';
 import ConfigSectionRow from '../../ui/forms/ConfigSectionRow';
 import FontTextInput from '../../ui/forms/FontTextInput';
 

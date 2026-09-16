@@ -56,7 +56,7 @@ const FontTextInput = ({
     ...props
 }: FontTextInputProps) => {
     const [fontsLoaded] = useFonts({
-        'LibreBaskerville': require('../../../../assets/fonts/Libre_Baskerville/LibreBaskerville-VariableFont_wght.ttf'),
+        'LibreBaskerville': require('../../../assets/fonts/Libre_Baskerville/LibreBaskerville-VariableFont_wght.ttf'),
     });
     const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 

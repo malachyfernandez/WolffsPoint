@@ -13,7 +13,7 @@ import LoadingContainer from '../ui/loading/LoadingContainer';
 import { MultiSelectProvider, useMultiSelect } from './multiSelect/MultiSelectContext';
 import MultiSelectToolbar from './multiSelect/MultiSelectToolbar';
 import TableFreezeControls from './TableFreezeControls';
-import { usePlayerDataFreeze } from '../../../hooks/useTableFreeze';
+import { usePlayerDataFreeze } from 'hooks/useTableFreeze';
 
 interface PlayerPageOPERATORProps {
   currentUserId: string;
@@ -115,8 +115,11 @@ const PlayerPageContent = ({ currentUserId, gameId }: PlayerPageOPERATORProps) =
               <Column className="gap-0">
                 <View
                   className=""
-                  style={{ width: daysTableWidth, opacity: selectionMode ? 0.4 : 1 }}
-                  pointerEvents={selectionMode ? 'none' : 'auto'}>
+                  style={{
+                    width: daysTableWidth,
+                    opacity: selectionMode ? 0.4 : 1,
+                    pointerEvents: selectionMode ? 'none' : 'auto',
+                  }}>
                   <ComprehensiveDaySelector gameId={gameId} showAddButton={true} />
                 </View>
                 <Row className={`${isDaysTableBeingEdited ? 'z-10 ' : ''}gap-4 w-min max-w-min`}>

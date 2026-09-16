@@ -12,7 +12,7 @@ import { interpretScript } from '../runtime/interpreter';
 import { decodeStoredInputState } from '../runtime/values';
 import { createScriptGlobals, type ScriptSourceData } from '../runtime/sources';
 import type { Script } from '../lang/ast';
-import type { RoleTableItem } from '../../../types/roleTable';
+import type { RoleTableItem } from 'types/roleTable';
 
 interface PreviewPanelProps {
   ast: Script;

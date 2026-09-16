@@ -6,13 +6,13 @@ import FontText from '../ui/text/FontText';
 import LoadingContainer from '../ui/loading/LoadingContainer';
 import MarkdownRenderer from '../ui/markdown/MarkdownRenderer';
 import { InputOptionsProvider } from './markdownEditor/InputOptionsProvider';
-import { useFindListItems, useFindValues } from '../../../hooks/useData';
-import { getGameScopedKey } from '../../../utils/multiplayer';
+import { useFindListItems, useFindValues } from 'hooks/useData';
+import { getGameScopedKey } from 'utils/multiplayer';
 import RuleBookRoleDescriptionsPLAYER from './RuleBookRoleDescriptionsPLAYER';
 import TableOfContentsDialog from './ruleBook/TableOfContentsDialog';
 import StickyTocButton from './ruleBook/StickyTocButton';
-import { RuleBookData } from '../../../types/ruleBook';
-import { RoleTableItem } from '../../../types/roleTable';
+import { RuleBookData } from 'types/ruleBook';
+import { RoleTableItem } from 'types/roleTable';
 
 interface RuleBookPagePLAYERProps {
     gameId: string;

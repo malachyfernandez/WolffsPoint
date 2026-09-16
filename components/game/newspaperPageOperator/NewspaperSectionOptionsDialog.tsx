@@ -2,13 +2,13 @@ import React, { useState } from 'react';
 import { View } from 'react-native';
 import { Trash2 } from 'lucide-react-native';
 
-import { NewspaperDividerStyle, NewspaperSectionDefaults, NewspaperTitleFont } from '../../../../types/usepaper';
+import { NewspaperDividerStyle, NewspaperSectionDefaults, NewspaperTitleFont } from 'types/usepaper';
 import {
     NEWSPAPER_DIVIDER_STYLES,
     NEWSPAPER_TITLE_FONTS,
     resolveDividerStyle,
     resolveTitleFont,
-} from '../../../../utils/newspaperSections';
+} from 'utils/newspaperSections';
 import Row from '../../layout/Row';
 import AppButton from '../../ui/buttons/AppButton';
 import ConvexDialog from '../../ui/dialog/ConvexDialog';
@@ -17,7 +17,7 @@ import DialogHeader from '../../ui/dialog/DialogHeader';
 import FontText from '../../ui/text/FontText';
 import VisualDropdown from '../../ui/forms/VisualDropdown';
 import DeleteConfirmationDialog from '../DeleteRoleConfirmationDialog';
-import { useNewspaperFonts } from '../../../../hooks/useNewspaperFonts';
+import { useNewspaperFonts } from 'hooks/useNewspaperFonts';
 import { useValue } from 'hooks/useData';
 import { useToast } from 'contexts/ToastContext';
 

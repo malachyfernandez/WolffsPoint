@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useFindListItems, useFindValues } from '../../../hooks/useData';
+import { useFindListItems, useFindValues } from 'hooks/useData';
 import {
     NewserAccepted,
     NewserAssignment,
@@ -12,7 +12,7 @@ import {
     normalizeNewserEmail,
     resolveNewspaperOwnerUserId,
     resolveValidNewserAssignment,
-} from '../../../utils/newspaperControl';
+} from 'utils/newspaperControl';
 
 interface UseNewspaperDayOwnerArgs {
     gameId: string;

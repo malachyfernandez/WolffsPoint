@@ -7,7 +7,7 @@ import CloseButton from '../dialog/CloseButton';
 import Column from '../../layout/Column';
 import Row from '../../layout/Row';
 import AppButton from '../buttons/AppButton';
-import { useKeyboardShortcuts } from '../../../../hooks/useKeyboardShortcuts';
+import { useKeyboardShortcuts } from 'hooks/useKeyboardShortcuts';
 
 interface MustSaveDialogProps {
   isOpen: boolean;
