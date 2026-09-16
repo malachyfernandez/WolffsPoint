@@ -261,7 +261,7 @@ const NewspaperDayComments = ({ gameId, dayIndex }: NewspaperDayCommentsProps) =
           {!isPlayerDead && (
             <AppButton
               variant="outline"
-              className="w-20 sm:w-36"
+              className="w-36 whitespace-nowrap"
               onPress={() => {
                 setReplyTargetCommentId(null);
                 setIsReplyComposerOpen(true);
