@@ -8,6 +8,8 @@ import { useGameOperatorUserId } from 'hooks/useGameOperatorUserId';
 import PlaceholderCard from '../ui/PlaceholderCard';
 import { useSharedListValue } from 'hooks/useSharedListValue';
 import { useSharedVariableValue } from 'hooks/useSharedVariableValue';
+import { useValue } from 'hooks/useData';
+import { useToast } from 'contexts/ToastContext';
 import { PlayerProfile } from 'types/multiplayer';
 import { RoleTableItem } from 'types/roleTable';
 import { UserTableItem } from 'types/playerTable';
@@ -171,6 +173,73 @@ const YourEyesOnlyPagePLAYER = ({
         : '',
     [currentDayIndex, dayDates, numberOfRealDaysPerInGameDay, selectedDayIndex]
   );
+
+  // TEMP debug: dump every value feeding isSleepWindow into the player's
+  // 'sleepWindowDebugLog' user variable when the window wrongly triggers.
+  // Normal players stay 'noSleepWindow'. Remove with SHOW_SLEEP_SCREEN.
+  const [sleepDebugRecord, setSleepWindowDebugLog] = useValue<
+    string | Record<string, unknown>
+  >('sleepWindowDebugLog');
+  const sleepDebugSnapshotRef = useRef<Record<string, unknown>>({});
+  const sleepDebugWrittenRef = useRef<'log' | 'noSleepWindow' | null>(null);
+  const { showToast } = useToast();
+  sleepDebugSnapshotRef.current = {
+    capturedAtISO: now.toISOString(),
+    timezoneOffsetMinutes: now.getTimezoneOffset(),
+    gameId,
+    currentEmail,
+    playerUserId: currentProfile.userId,
+    matchingPlayer,
+    currentProfile,
+    operatorUserId,
+    dayDateStrings,
+    dayDatesISO: dayDates.map((d) => d.toISOString()),
+    numberOfRealDaysPerInGameDay,
+    schedule,
+    currentDayIndex,
+    currentDayStartDateISO: currentDayStartDate?.toISOString() ?? null,
+    deadlineDayIndex,
+    deadlineDayEndDateISO: deadlineDayEndDate.toISOString(),
+    voteDeadlineTime,
+    actionDeadlineTime,
+    voteDayOffset: schedule.voteDayOffset,
+    actionDayOffset: schedule.actionDayOffset,
+    wakeUpTime: schedule.wakeUpTime,
+    voteDeadlineISO: voteDeadline.toISOString(),
+    actionDeadlineISO: actionDeadline.toISOString(),
+    laterDeadlineISO: laterDeadline.toISOString(),
+    sameDayWakeUpISO: sameDayWakeUp.toISOString(),
+    nextWakeUpISO: nextWakeUp.toISOString(),
+    isVoteLocked,
+    isActionLocked,
+    isSleepWindow,
+    isPastMidnight,
+    selectedDayIndex,
+    hasWokenUp,
+    isPreviousDay,
+    isStartOfSelectedDay,
+    selectedDayStartDateISO: selectedDayStartDate?.toISOString() ?? null,
+  };
+
+  useEffect(() => {
+    if (sleepDebugRecord.state.isSyncing) return;
+    if (isSleepWindow) {
+      if (sleepDebugWrittenRef.current !== 'log') {
+        sleepDebugWrittenRef.current = 'log';
+        setSleepWindowDebugLog({
+          status: 'SLEEP_WINDOW',
+          ...sleepDebugSnapshotRef.current,
+        });
+        showToast('log sent');
+      }
+      return;
+    }
+    // Once a log is written keep it so the bad player stays findable in Convex.
+    if (sleepDebugWrittenRef.current === null) {
+      sleepDebugWrittenRef.current = 'noSleepWindow';
+      setSleepWindowDebugLog('noSleepWindow');
+    }
+  }, [isSleepWindow, sleepDebugRecord.state.isSyncing, setSleepWindowDebugLog, showToast]);
 
   const roleData = roleTable.value.find((roleItem) => roleItem.role === matchingPlayer.role);
   const hasInitializedSelectedDayRef = useRef(false);
