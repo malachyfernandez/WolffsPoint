@@ -12,6 +12,7 @@ import LoadingText from '../ui/loading/LoadingText';
 import LoadingContainer from '../ui/loading/LoadingContainer';
 import { useTownSquareAuthorIdentity } from './townSquare/TownSquareAuthorIdentity';
 import Column from '../layout/Column';
+import MasonryGrid from '../layout/MasonryGrid';
 import Row from '../layout/Row';
 import FontText from '../ui/text/FontText';
 import MarkdownRenderer from '../ui/markdown/MarkdownRenderer';
@@ -110,19 +111,18 @@ const PhoneBookGrid = ({ gameId, players }: { gameId: string; players: { userId:
                 </View>
             )}
             <Animated.View style={animatedStyle}>
-                <Row className='gap-4 flex-wrap'>
-                    {players.map((player) => (
+                <MasonryGrid
+                    items={players}
+                    keyExtractor={(player) => `${player.userId}-${player.email}`}
+                    renderItem={(player) => (
                         <PlayerCardWithContainer
-                            key={`${player.userId}-${player.email}`}
                             userId={player.userId}
                             gameId={gameId}
                             email={player.email}
                             onReady={markReady}
                         />
-                    ))}
-                    <View className='flex-1 min-w-[280px] opacity-0 pointer-events-none' />
-                    <View className='flex-1 min-w-[280px] opacity-0 pointer-events-none' />
-                </Row>
+                    )}
+                />
             </Animated.View>
         </View>
     );
@@ -202,11 +202,7 @@ const PlayerCardWithContainer = ({ userId, gameId, email, onReady }: { userId: s
         return null;
     }
 
-    return (
-        <View className='flex-1 min-w-[280px]'>
-            <PlayerCard userId={userId} gameId={gameId} email={email} />
-        </View>
-    );
+    return <PlayerCard userId={userId} gameId={gameId} email={email} />;
 };
 
 // Hook to get all profiles

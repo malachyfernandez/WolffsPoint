@@ -387,7 +387,7 @@ const TagCellEditor = ({
                       />
                     )}
 
-                    <Row className="minimize-hide justify-end gap-2">
+                    <Row className="minimize-hide flex-wrap justify-end gap-2">
                       <AppButton
                         className="h-8 w-20"
                         variant="outline"
@@ -397,7 +397,7 @@ const TagCellEditor = ({
                         </FontText>
                       </AppButton>
                       <AppButton
-                        className="h-8 w-20"
+                        className="h-8 min-w-20 px-3"
                         variant="black"
                         onPress={handleSave}
                         disabled={!doneEnabled}>

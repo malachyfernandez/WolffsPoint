@@ -15,6 +15,7 @@ import { getGameScopedKey } from 'utils/multiplayer';
 import { getNewserAssignmentKey, NewserAssignment } from 'utils/newspaperControl';
 import { useTownSquareAuthorIdentity } from './townSquare/TownSquareAuthorIdentity';
 import Column from '../layout/Column';
+import MasonryGrid from '../layout/MasonryGrid';
 import Row from '../layout/Row';
 import FontText from '../ui/text/FontText';
 import LoadingText from '../ui/loading/LoadingText';
@@ -250,20 +251,19 @@ const PhoneBookGrid = ({
         </View>
       )}
       <Animated.View style={animatedStyle}>
-        <Row className="flex-wrap gap-4">
-          {players.map((player, index) => (
+        <MasonryGrid
+          items={players}
+          keyExtractor={(player) => `${player.userId}-${player.email}-${readyKey}`}
+          renderItem={(player, index) => (
             <PlayerCard
-              key={`${player.userId}-${player.email}-${readyKey}`}
               userId={player.userId}
               gameId={gameId}
               email={player.email}
               index={index}
               onReady={markReady}
             />
-          ))}
-          <View className="min-w-70 pointer-events-none flex-1 opacity-0" />
-          <View className="min-w-70 pointer-events-none flex-1 opacity-0" />
-        </Row>
+          )}
+        />
       </Animated.View>
     </View>
   );
@@ -380,19 +380,17 @@ const PlayerCard = ({
   const bioMarkdown = profile?.bioMarkdown?.trim().length ? profile.bioMarkdown : '*No Bio*';
 
   return (
-    <View className="min-w-70 flex-1">
-      <Animated.View entering={FadeIn.duration(300).delay(index * 50)}>
-        <PlayerProfilePreviewCard
-          displayName={displayName}
-          bioMarkdown={bioMarkdown}
-          imageUrl={identity.imageUrl || undefined}
-          initials={identity.fallbackInitials === '?' ? '' : identity.fallbackInitials}
-          profile={profile}
-          email={email}
-          isLoading={isLoading}
-        />
-      </Animated.View>
-    </View>
+    <Animated.View entering={FadeIn.duration(300).delay(index * 50)}>
+      <PlayerProfilePreviewCard
+        displayName={displayName}
+        bioMarkdown={bioMarkdown}
+        imageUrl={identity.imageUrl || undefined}
+        initials={identity.fallbackInitials === '?' ? '' : identity.fallbackInitials}
+        profile={profile}
+        email={email}
+        isLoading={isLoading}
+      />
+    </Animated.View>
   );
 };
 
