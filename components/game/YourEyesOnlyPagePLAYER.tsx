@@ -33,6 +33,10 @@ import LayoutStateAnimatedView, { fromRight } from '../ui/LayoutStateAnimatedVie
 import YourEyesOnlyDayContentPLAYER from './YourEyesOnlyDayContentPLAYER';
 import LoadingContainer from '../ui/loading/LoadingContainer';
 
+// TODO: temporarily disabled — the sleep screen pops up early for some players.
+// Flip back to true to re-enable.
+const SHOW_SLEEP_SCREEN = false;
+
 interface YourEyesOnlyPagePLAYERProps {
   gameId: string;
   currentEmail: string;
@@ -222,7 +226,7 @@ const YourEyesOnlyPagePLAYER = ({
       ]}
       loadingText="Loading..."
       className="min-h-190 flex-1">
-      {isSleepWindow ? (
+      {SHOW_SLEEP_SCREEN && isSleepWindow ? (
         <Column className="min-h-190 flex-1 items-center gap-7 pb-8 pt-10">
           <PlaceholderCard>
             <Column className="items-center gap-3">
