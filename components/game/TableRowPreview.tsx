@@ -1,5 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { Platform, Pressable, useWindowDimensions, View } from 'react-native';
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { Eye } from 'lucide-react-native';
 import FontText from '../ui/text/FontText';
 import PlayerPreviewModal from './markdownEditor/PlayerPreviewModal';
@@ -46,6 +47,9 @@ const CIRCLE_SIZE_PX = 28;
 const EDGE_ZONE_PX = 20;
 /** Tailwind's `sm` breakpoint — below this the pill is a plain circle. */
 const MOBILE_BREAKPOINT_PX = 640;
+/** How long after the last scroll event before pills fade back in. */
+const SCROLL_END_MS = 150;
+const FADE_MS = 200;
 
 const snapshotRect = (rect: {
   top: number;
@@ -141,6 +145,17 @@ const TableRowPreview = ({ gameId, children }: TableRowPreviewProps) => {
   const isMobileWidth = windowWidth < MOBILE_BREAKPOINT_PX;
   const pillWidth = isMobileWidth ? CIRCLE_SIZE_PX : PILL_WIDTH_PX;
 
+  // Pills fade out while scrolling (they'd lag behind) and while any dialog
+  // is open.
+  const [isScrolling, setIsScrolling] = useState(false);
+  const [dialogsOpen, setDialogsOpen] = useState(false);
+  const scrollEndTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastPointerRef = useRef<{ x: number; y: number } | null>(null);
+  const hoveredRef = useRef<typeof hovered>(null);
+  useEffect(() => {
+    hoveredRef.current = hovered;
+  }, [hovered]);
+
   const cancelHide = useCallback(() => {
     if (hideTimerRef.current) {
       clearTimeout(hideTimerRef.current);
@@ -166,33 +181,14 @@ const TableRowPreview = ({ gameId, children }: TableRowPreviewProps) => {
     };
   }, []);
 
-  const getWrapperLeft = () =>
-    (wrapperRef.current as unknown as HTMLElement | null)?.getBoundingClientRect?.().left ?? 0;
+  const getWrapperRect = () =>
+    (wrapperRef.current as unknown as HTMLElement | null)?.getBoundingClientRect?.();
 
-  // While touch input is active, every row's pill is always visible — keep
-  // their positions fresh as the page scrolls/resizes.
-  useEffect(() => {
-    if (!isTouchInput || Platform.OS !== 'web') return;
-    const bump = () => setLayoutTick((tick) => tick + 1);
-    window.addEventListener('scroll', bump, true);
-    window.addEventListener('resize', bump);
-    return () => {
-      window.removeEventListener('scroll', bump, true);
-      window.removeEventListener('resize', bump);
-    };
-  }, [isTouchInput]);
-
-  // Window-level pointer tracking (mouse mode only): any position inside the
-  // table area — plus the pill's edge zone — at a registered row's height
-  // shows that row's pill.
-  useEffect(() => {
-    if (Platform.OS !== 'web' || isTouchInput) return;
-    const handleMove = (event: MouseEvent) => {
-      const x = event.clientX;
-      const y = event.clientY;
-      const wrapperRect = (
-        wrapperRef.current as unknown as HTMLElement | null
-      )?.getBoundingClientRect?.();
+  // Resolves which registered row (if any) sits at the given pointer position
+  // and shows/updates/hides the pill accordingly.
+  const resolvePointer = useCallback(
+    (x: number, y: number) => {
+      const wrapperRect = getWrapperRect();
       if (!wrapperRect) return;
 
       const pillLeft = wrapperRect.left + PILL_INSIDE_PX - pillWidth;
@@ -223,7 +219,7 @@ const TableRowPreview = ({ gameId, children }: TableRowPreviewProps) => {
       }
 
       if (!matchRect || !matchTarget) {
-        if (hovered) scheduleHide();
+        if (hoveredRef.current) scheduleHide();
         return;
       }
 
@@ -252,10 +248,64 @@ const TableRowPreview = ({ gameId, children }: TableRowPreviewProps) => {
           ? prev
           : { top: matchRect!.top, left, target: matchTarget! }
       );
+    },
+    [cancelHide, scheduleHide, pillWidth]
+  );
+
+  // Window-level pointer tracking (mouse mode only).
+  useEffect(() => {
+    if (Platform.OS !== 'web' || isTouchInput) return;
+    const handleMove = (event: MouseEvent) => {
+      lastPointerRef.current = { x: event.clientX, y: event.clientY };
+      resolvePointer(event.clientX, event.clientY);
     };
     window.addEventListener('mousemove', handleMove);
     return () => window.removeEventListener('mousemove', handleMove);
-  }, [cancelHide, scheduleHide, hovered, isTouchInput, pillWidth]);
+  }, [resolvePointer, isTouchInput]);
+
+  // Fade pills out the moment any scrolling starts (they'd lag behind); on
+  // scroll end, re-measure positions — in mouse mode also re-resolve whichever
+  // row now sits under the pointer.
+  useEffect(() => {
+    if (Platform.OS !== 'web') return;
+    const handleScroll = () => {
+      setIsScrolling(true);
+      if (isTouchInput) setLayoutTick((tick) => tick + 1);
+      if (scrollEndTimerRef.current) clearTimeout(scrollEndTimerRef.current);
+      scrollEndTimerRef.current = setTimeout(() => {
+        setIsScrolling(false);
+        if (isTouchInput) {
+          setLayoutTick((tick) => tick + 1);
+        } else {
+          const pointer = lastPointerRef.current;
+          if (pointer) resolvePointer(pointer.x, pointer.y);
+        }
+      }, SCROLL_END_MS);
+    };
+    window.addEventListener('scroll', handleScroll, true);
+    window.addEventListener('resize', handleScroll);
+    return () => {
+      window.removeEventListener('scroll', handleScroll, true);
+      window.removeEventListener('resize', handleScroll);
+    };
+  }, [isTouchInput, resolvePointer]);
+
+  // Hide pills whenever any dialog is open (all dialogs on these pages are
+  // heroui-native ConvexDialogs — Content renders role="dialog" + aria-modal).
+  useEffect(() => {
+    if (Platform.OS !== 'web') return;
+    const check = () =>
+      setDialogsOpen(!!document.querySelector('[role="dialog"][aria-modal="true"]'));
+    check();
+    const observer = new MutationObserver(check);
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['role', 'aria-modal'],
+    });
+    return () => observer.disconnect();
+  }, []);
 
   // After the pill renders, log where it actually landed vs where we asked.
   useEffect(() => {
@@ -284,12 +334,21 @@ const TableRowPreview = ({ gameId, children }: TableRowPreviewProps) => {
 
   const contextValue = React.useMemo(() => ({ registerRow }), [registerRow]);
 
+  // Pills fade out while scrolling (they'd lag behind the rows) and while any
+  // dialog is open, then fade back in — quick 200ms opacity fade.
+  const pillsHidden = isScrolling || dialogsOpen;
+  const pillOpacity = useSharedValue(1);
+  useEffect(() => {
+    pillOpacity.value = withTiming(pillsHidden ? 0 : 1, { duration: FADE_MS });
+  }, [pillsHidden, pillOpacity]);
+  const pillFadeStyle = useAnimatedStyle(() => ({ opacity: pillOpacity.value }));
+
   // Touch mode shows every registered row's pill at once (deduped by row
   // band — the player and day tables share row heights). Mouse mode shows
   // only the single hovered row's pill.
   const pillItems: { key: string; top: number; left: number; target: RowPreviewTarget }[] = [];
   if (isTouchInput && Platform.OS === 'web') {
-    const left = getWrapperLeft() + PILL_INSIDE_PX - pillWidth;
+    const left = (getWrapperRect()?.left ?? 0) + PILL_INSIDE_PX - pillWidth;
     const seenTops = new Set<number>();
     for (const [el, target] of rowRegistryRef.current) {
       const rect = el.getBoundingClientRect();
@@ -316,31 +375,35 @@ const TableRowPreview = ({ gameId, children }: TableRowPreviewProps) => {
           <WebDropdownPortal>
             {/* Inside the portal root (fixed, inset:0 over the viewport) an
                 absolute child positions in viewport coordinates. */}
-            {pillItems.map((item, index) => (
-              <View
-                key={item.key}
-                ref={index === 0 ? pillStripRef : undefined}
-                pointerEvents="box-none"
-                style={{
-                  position: 'absolute',
-                  top: item.top,
-                  left: item.left,
-                  height: ROW_HEIGHT,
-                  justifyContent: 'center',
-                }}>
-                <View pointerEvents="auto">
-                  <PreviewPill
-                    circle={isMobileWidth}
-                    onPress={() => {
-                      setPreviewTarget(item.target);
-                      setHovered(null);
-                    }}
-                    onHoverIn={cancelHide}
-                    onHoverOut={scheduleHide}
-                  />
+            <Animated.View
+              pointerEvents={pillsHidden ? 'none' : 'box-none'}
+              style={[{ position: 'absolute', inset: 0 }, pillFadeStyle]}>
+              {pillItems.map((item, index) => (
+                <View
+                  key={item.key}
+                  ref={index === 0 ? pillStripRef : undefined}
+                  pointerEvents="box-none"
+                  style={{
+                    position: 'absolute',
+                    top: item.top,
+                    left: item.left,
+                    height: ROW_HEIGHT,
+                    justifyContent: 'center',
+                  }}>
+                  <View pointerEvents="auto">
+                    <PreviewPill
+                      circle={isMobileWidth}
+                      onPress={() => {
+                        setPreviewTarget(item.target);
+                        setHovered(null);
+                      }}
+                      onHoverIn={cancelHide}
+                      onHoverOut={scheduleHide}
+                    />
+                  </View>
                 </View>
-              </View>
-            ))}
+              ))}
+            </Animated.View>
           </WebDropdownPortal>
         )}
         <PlayerPreviewModal
