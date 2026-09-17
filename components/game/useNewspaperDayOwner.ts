@@ -30,12 +30,12 @@ export const useNewspaperDayOwner = ({ gameId, dayIndex, disabled = false }: Use
         returnTop: 500,
     });
     const assignmentRecords = useFindValues<NewserAssignment>(getNewserAssignmentKey(gameId), {
-        userIds: operatorUserId ? [operatorUserId] : undefined,
+        userIds: operatorUserId ? [operatorUserId] : [],
         returnTop: 1,
     });
     const controlRecords = useFindListItems<NewspaperControlState>(getNewspaperControlKey(gameId), {
         itemId: getNewspaperDayControlItemId(dayIndex),
-        userIds: operatorUserId ? [operatorUserId] : undefined,
+        userIds: operatorUserId ? [operatorUserId] : [],
         returnTop: 1,
     });
     const acceptedRecords = useFindValues<NewserAccepted>(getNewserAcceptedKey(gameId), {

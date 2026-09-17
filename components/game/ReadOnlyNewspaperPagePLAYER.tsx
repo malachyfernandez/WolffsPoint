@@ -26,7 +26,7 @@ interface YourEyesOnlyPagePLAYERProps {
 
 const YourEyesOnlyPagePLAYER = ({ gameId, currentEmail, matchingPlayer, currentProfile }: YourEyesOnlyPagePLAYERProps) => {
     const { operatorUserId } = useGameOperatorUserId(gameId);
-    const operatorUserIds = operatorUserId ? [operatorUserId] : undefined;
+    const operatorUserIds = operatorUserId ? [operatorUserId] : [];
     const { value: dayDateStrings } = useSharedListValue<string[]>({ key: 'dayDatesArray', itemId: gameId, defaultValue: [], userIds: operatorUserIds });
     const { value: numberOfRealDaysPerInGameDay } = useSharedListValue<number>({ key: 'numberOfRealDaysPerInGameDay', itemId: gameId, defaultValue: 2, userIds: operatorUserIds });
     const scheduleRecord = useSharedVariableValue<GameSchedule>({ key: getGameScopedKey('gameSchedule', gameId), defaultValue: defaultGameSchedule, userIds: operatorUserIds });

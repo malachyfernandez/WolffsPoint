@@ -34,7 +34,7 @@ const NewspaperPageOPERATOR = ({ currentUserId, gameId }: NewspaperPageOPERATORP
         key: 'dayDatesArray',
         itemId: gameId,
         defaultValue: [],
-        userIds: operatorUserId ? [operatorUserId] : undefined,
+        userIds: operatorUserId ? [operatorUserId] : [],
     });
 
     // Get operator's selected day index to seed local state
@@ -42,7 +42,7 @@ const NewspaperPageOPERATOR = ({ currentUserId, gameId }: NewspaperPageOPERATORP
         key: 'selectedDayIndex',
         itemId: gameId,
         defaultValue: 0,
-        userIds: operatorUserId ? [operatorUserId] : undefined,
+        userIds: operatorUserId ? [operatorUserId] : [],
     });
 
     const totalDays = operatorDayDates.length;

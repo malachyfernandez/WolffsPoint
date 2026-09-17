@@ -585,23 +585,19 @@ const YourEyesOnlyDayContentPLAYER = ({
                   {canVote && (
                     <Pressable
                       onPress={() => {
+                        const voteInput = inspectMarkdownVoteInput(voteMessage, currentVoteState, {
+                          capability: 'player',
+                          players: userTable,
+                          roles: roleTable.value,
+                          currentUserId,
+                          currentEmail,
+                          currentDay: dayIndex,
+                          dayDates: dayDateStrings,
+                          schedule,
+                          userTableTitle,
+                          morningMessagesList,
+                        });
                         if (isSkipVote) {
-                          const voteInput = inspectMarkdownVoteInput(
-                            voteMessage,
-                            currentVoteState,
-                            {
-                              capability: 'player',
-                              players: userTable,
-                              roles: roleTable.value,
-                              currentUserId,
-                              currentEmail,
-                              currentDay: dayIndex,
-                              dayDates: dayDateStrings,
-                              schedule,
-                              userTableTitle,
-                              morningMessagesList,
-                            }
-                          );
                           const targets = voteInput
                             ? normalizeVoteTargets(currentVoteState[voteInput.key])
                             : [];
@@ -615,6 +611,7 @@ const YourEyesOnlyDayContentPLAYER = ({
                           setSubmission({
                             ...submission.value,
                             vote: 'SKIP_VOTE',
+                            voteMultiplier: voteInput?.multiplier ?? 1,
                             submittedVoteAt: Date.now(),
                           });
                         }

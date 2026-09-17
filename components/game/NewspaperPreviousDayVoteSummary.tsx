@@ -32,13 +32,14 @@ export const useIsPreviousDayVoteSummaryReady = (gameId: string, dayIndex: numbe
   const operatorUserId = gameRows?.[0]?.userToken ?? '';
   const operatorUserTableRecords = useFindListItems<UserTableItem[]>('userTable', {
     itemId: gameId,
-    userIds: operatorUserId ? [operatorUserId] : undefined,
+    userIds: operatorUserId ? [operatorUserId] : [],
     returnTop: 1,
   });
   const allProfiles = useFindValues<PlayerProfile>(getGameScopedKey('playerProfile', gameId), {
     returnTop: 200,
   });
   const scheduleRecord = useFindValues(getGameScopedKey('gameSchedule', gameId), {
+    userIds: operatorUserId ? [operatorUserId] : [],
     returnTop: 1,
   });
 
@@ -289,7 +290,7 @@ const NewspaperPreviousDayVoteSummary = ({
   const operatorUserId = gameRows?.[0]?.userToken ?? '';
   const operatorUserTableRecords = useFindListItems<UserTableItem[]>('userTable', {
     itemId: gameId,
-    userIds: operatorUserId ? [operatorUserId] : undefined,
+    userIds: operatorUserId ? [operatorUserId] : [],
     returnTop: 1,
   });
   // Fetch all player profiles to map email -> userId for NOT-JOINED players
@@ -297,6 +298,7 @@ const NewspaperPreviousDayVoteSummary = ({
     returnTop: 200,
   });
   const scheduleRecord = useFindValues(getGameScopedKey('gameSchedule', gameId), {
+    userIds: operatorUserId ? [operatorUserId] : [],
     returnTop: 1,
   });
   const schedule = normalizeGameSchedule(scheduleRecord?.[0]?.value ?? defaultGameSchedule);
@@ -337,7 +339,7 @@ const NewspaperPreviousDayVoteSummary = ({
       const multiplier = player.days?.[targetDay]?.voteMultiplier ?? 1;
 
       if (votes.length === 1 && votes[0] === 'SKIP_VOTE') {
-        skipVotes += 1;
+        skipVotes += multiplier;
         skipVoterList.push(player);
         return;
       }
@@ -376,9 +378,12 @@ const NewspaperPreviousDayVoteSummary = ({
   }, [dayIndex, operatorUserTableRecords]);
 
   // Use the largest absolute total so negative multipliers can't overflow the bar
-  const maxVoteCount = Math.max(skipVoteCount, ...voteRows.map((row) => Math.abs(row.voteCount)));
+  const maxVoteCount = Math.max(
+    Math.abs(skipVoteCount),
+    ...voteRows.map((row) => Math.abs(row.voteCount))
+  );
 
-  if (dayIndex <= 0 || (voteRows.length === 0 && skipVoteCount === 0)) {
+  if (dayIndex <= 0 || (voteRows.length === 0 && skipVoters.length === 0)) {
     return null;
   }
 
@@ -393,7 +398,7 @@ const NewspaperPreviousDayVoteSummary = ({
         </FontText>
       </Column>
       <Column className="gap-4">
-        {skipVoteCount > 0 && (
+        {skipVoters.length > 0 && (
           <SkipVoteRow
             voteCount={skipVoteCount}
             maxVoteCount={maxVoteCount}

@@ -33,13 +33,13 @@ const NewspaperPageNEWSER = ({ currentUserId, currentEmail, gameId }: NewspaperP
         key: 'dayDatesArray',
         itemId: gameId,
         defaultValue: [],
-        userIds: operatorUserId ? [operatorUserId] : undefined,
+        userIds: operatorUserId ? [operatorUserId] : [],
     });
     const { value: operatorSelectedDayIndex, isLoading: isSelectedDayLoading } = useSharedListValue<number>({
         key: 'selectedDayIndex',
         itemId: gameId,
         defaultValue: 0,
-        userIds: operatorUserId ? [operatorUserId] : undefined,
+        userIds: operatorUserId ? [operatorUserId] : [],
     });
 
     const totalDays = operatorDayDates.length;
@@ -61,7 +61,7 @@ const NewspaperPageNEWSER = ({ currentUserId, currentEmail, gameId }: NewspaperP
     // Load the operator's draft so the newser can import it when they have control
     const operatorDraftRecords = useFindListItems<Usepaper>('newspaper', {
         itemId: currentDayItemId,
-        userIds: operatorUserId ? [operatorUserId] : [''],
+        userIds: operatorUserId ? [operatorUserId] : [],
         returnTop: 1,
     });
     const operatorDraft = hasNewspaperContent(operatorDraftRecords?.[0]?.value)

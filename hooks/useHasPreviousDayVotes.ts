@@ -12,7 +12,7 @@ export function useHasPreviousDayVotes(gameId: string, dayIndex: number): boolea
 
   const operatorUserTableRecords = useFindListItems<UserTableItem[]>('userTable', {
     itemId: gameId,
-    userIds: operatorUserId ? [operatorUserId] : undefined,
+    userIds: operatorUserId ? [operatorUserId] : [],
     returnTop: 1,
   });
 
