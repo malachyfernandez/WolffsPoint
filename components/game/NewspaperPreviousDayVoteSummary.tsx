@@ -52,7 +52,9 @@ export const useIsPreviousDayVoteSummaryReady = (gameId: string, dayIndex: numbe
 
   const players = operatorUserTableRecords[0]?.value ?? [];
   const targetDay = dayIndex - 1;
-  const hasVotes = players.some((player) => normalizeVoteTargets(player.days?.[targetDay]?.vote).length > 0);
+  const hasVotes = players.some(
+    (player) => normalizeVoteTargets(player.days?.[targetDay]?.vote).length > 0
+  );
 
   return !hasVotes || (allProfiles !== undefined && scheduleRecord !== undefined);
 };
@@ -256,7 +258,7 @@ const VoteSummaryRow = ({
             <Column className="gap-4">
               <DialogHeader
                 text="VOTES RECEIVED"
-                subtext={`${voteCount} vote${voteCount === 1 ? '' : 's'} for ${displayName}`}
+                subtext={`${voteCount} vote${Math.abs(voteCount) === 1 ? '' : 's'} for ${displayName}`}
               />
               <Column className="gap-3">
                 {voters.map((voter) => (
@@ -373,7 +375,8 @@ const NewspaperPreviousDayVoteSummary = ({
     };
   }, [dayIndex, operatorUserTableRecords]);
 
-  const maxVoteCount = Math.max(Math.abs(voteRows[0]?.voteCount ?? 0), skipVoteCount);
+  // Use the largest absolute total so negative multipliers can't overflow the bar
+  const maxVoteCount = Math.max(skipVoteCount, ...voteRows.map((row) => Math.abs(row.voteCount)));
 
   if (dayIndex <= 0 || (voteRows.length === 0 && skipVoteCount === 0)) {
     return null;

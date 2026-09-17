@@ -78,6 +78,8 @@ const DayUserRow = ({
   }, []);
 
   const dayData = user.days[dayNumber] || { vote: '', action: '', extraColumns: [] };
+  const voteMultiplier = dayData.voteMultiplier ?? 1;
+  const hasMultiplierBadge = voteMultiplier !== 1;
 
   const handleColumnEditStart = (columnIndex: number) => {
     setEditingColumns((prev) => ({ ...prev, [columnIndex]: true }));
@@ -121,6 +123,11 @@ const DayUserRow = ({
             )}
           </FontText>
         </Pressable>
+        {hasMultiplierBadge && (
+          <View className="bg-border/30 absolute bottom-0.5 right-0.5 rounded px-1 py-0.5">
+            <FontText className="text-text/60 text-[10px]">{voteMultiplier}x</FontText>
+          </View>
+        )}
         <SelectableOverlay cellId={`d-v-${index}`} cellType="daysVote" />
       </Column>
       <Column
