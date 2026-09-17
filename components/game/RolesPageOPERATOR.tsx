@@ -14,6 +14,7 @@ import { Plus } from 'lucide-react-native';
 import { MultiSelectProvider } from './multiSelect/MultiSelectContext';
 import MultiSelectToolbar from './multiSelect/MultiSelectToolbar';
 import TableFreezeControls from './TableFreezeControls';
+import TableRowPreview from './TableRowPreview';
 import { useRolesFreeze } from 'hooks/useTableFreeze';
 
 interface RolesPageOPERATORProps {
@@ -78,27 +79,29 @@ const RolesPageContent = ({ currentUserId, gameId }: RolesPageOPERATORProps) => 
         <MultiSelectToolbar />
         {visibleRoles.length > 0 ? (
           <Column className="gap-4">
-            <ShadowScrollView
-              direction="horizontal"
-              className="mr-1"
-              scrollViewClassName="px-1 py-5"
-              horizontal>
-              <Row className="gap-0 pr-4">
-                <Column className="gap-1">
-                  <Row className="h-6 gap-0">{/* spacer to align with table */}</Row>
-                  <Row className={`gap-0 ${isRoleTableBeingEdited ? 'z-50' : ''}`.trim()}>
-                    <RoleTable
-                      gameId={gameId}
-                      doSync={doSync}
-                      setDoSync={setDoSync}
-                      isBeingEdited={isRoleTableBeingEdited}
-                      setIsBeingEdited={setIsRoleTableBeingEdited}
-                      showInputs={true}
-                    />
-                  </Row>
-                </Column>
-              </Row>
-            </ShadowScrollView>
+            <TableRowPreview gameId={gameId}>
+              <ShadowScrollView
+                direction="horizontal"
+                className="mr-1"
+                scrollViewClassName="px-1 py-5"
+                horizontal>
+                <Row className="gap-0 pr-4">
+                  <Column className="gap-1">
+                    <Row className="h-6 gap-0">{/* spacer to align with table */}</Row>
+                    <Row className={`gap-0 ${isRoleTableBeingEdited ? 'z-50' : ''}`.trim()}>
+                      <RoleTable
+                        gameId={gameId}
+                        doSync={doSync}
+                        setDoSync={setDoSync}
+                        isBeingEdited={isRoleTableBeingEdited}
+                        setIsBeingEdited={setIsRoleTableBeingEdited}
+                        showInputs={true}
+                      />
+                    </Row>
+                  </Column>
+                </Row>
+              </ShadowScrollView>
+            </TableRowPreview>
             <Row className="-mt-2 w-full flex-wrap items-start justify-between gap-4 px-4 sm:-mt-6">
               <AppButton variant="accent" className="w-36" onPress={() => setIsAddDialogOpen(true)}>
                 <Row className="items-center gap-2">

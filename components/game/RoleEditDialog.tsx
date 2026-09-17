@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { Pressable, View } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { Pressable, TextInput, View } from 'react-native';
 import ConvexDialog from '../ui/dialog/ConvexDialog';
 import UnsavedChangesDialog from '../ui/dialog/UnsavedChangesDialog';
 import Column from '../layout/Column';
@@ -42,6 +42,7 @@ const RoleEditDialog = ({
   const [doesRoleVote, setDoesRoleVote] = useState(role.doesRoleVote);
   const [hiddenFromRulebook, setHiddenFromRulebook] = useState(role.hiddenFromRulebook === true);
   const [isLeaveConfirmDialogOpen, setIsLeaveConfirmDialogOpen] = useState(false);
+  const nameInputRef = useRef<TextInput>(null);
 
   const { setHint } = useKeyboardShortcutHint();
   const { targetRef, performMinimize } = useMinimizeTarget({
@@ -55,6 +56,9 @@ const RoleEditDialog = ({
       setRoleName(role.role || '');
       setDoesRoleVote(role.doesRoleVote);
       setHiddenFromRulebook(role.hiddenFromRulebook === true);
+      // Focus the role name field after the dialog's open animation.
+      const timer = setTimeout(() => nameInputRef.current?.focus(), 100);
+      return () => clearTimeout(timer);
     }
   }, [isOpen, role]);
 
@@ -138,6 +142,7 @@ const RoleEditDialog = ({
                 <Column className="gap-2">
                   <FontText weight="medium">Role Name</FontText>
                   <FontTextInput
+                    ref={nameInputRef}
                     placeholder="Enter role name..."
                     variant="styled"
                     className="w-full p-2"

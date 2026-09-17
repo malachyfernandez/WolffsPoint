@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import ConvexDialog from '../ui/dialog/ConvexDialog';
 import Column from '../layout/Column';
 import AppButton from '../ui/buttons/AppButton';
@@ -6,7 +6,7 @@ import FontText from '../ui/text/FontText';
 import FontTextInput from '../ui/forms/FontTextInput';
 import AppDropdown from '../ui/forms/AppDropdown';
 import DialogHeader from '../ui/dialog/DialogHeader';
-import { View, Text } from 'react-native';
+import { TextInput, View, Text } from 'react-native';
 import { useList, useValue } from 'hooks/useData';
 import { RoleTableItem } from 'types/roleTable';
 import { UserTableItem } from 'types/playerTable';
@@ -45,6 +45,14 @@ const UserEditDialog = ({
   const [realName, setRealName] = useState(currentRealName || '');
   const [email, setEmail] = useState(currentEmail || '');
   const [role, setRole] = useState(currentRole || '');
+  const nameInputRef = useRef<TextInput>(null);
+
+  // Focus the name field after the dialog's open animation.
+  useEffect(() => {
+    if (!isOpen) return;
+    const timer = setTimeout(() => nameInputRef.current?.focus(), 100);
+    return () => clearTimeout(timer);
+  }, [isOpen]);
 
   // Use the same userList as PlayerTable - this is the cloud variable benefit!
   const [userTable, setUserTable] = useList<UserTableItem[]>('userTable', gameId, {
@@ -171,6 +179,7 @@ const UserEditDialog = ({
               <Column className="gap-2">
                 <FontText weight="medium">Real Name</FontText>
                 <FontTextInput
+                  ref={nameInputRef}
                   placeholder="Enter real name..."
                   variant="styled"
                   className="w-full p-2"

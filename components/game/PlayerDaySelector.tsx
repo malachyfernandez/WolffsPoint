@@ -11,9 +11,11 @@ interface PlayerDaySelectorProps {
     currentDayIndex: number;
     onSelectDay: (index: number) => void;
     fallbackSpanDays?: number;
+    /** IANA game timezone for today/yesterday labels; device-local when unset. */
+    timeZone?: string;
 }
 
-const PlayerDaySelector = ({ dayDates, selectedDayIndex, currentDayIndex, onSelectDay, fallbackSpanDays = 1 }: PlayerDaySelectorProps) => {
+const PlayerDaySelector = ({ dayDates, selectedDayIndex, currentDayIndex, onSelectDay, fallbackSpanDays = 1, timeZone }: PlayerDaySelectorProps) => {
     return (
         <Column className='gap-4'>
             <ShadowScrollView direction='horizontal' className='mr-1 pr-1 max-w-min -mb-3 -mt-1' scrollViewClassName='px-1 m-0 h-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]' horizontal>
@@ -25,7 +27,7 @@ const PlayerDaySelector = ({ dayDates, selectedDayIndex, currentDayIndex, onSele
                                     key={index}
                                     date={date}
                                     index={index}
-                                    label={getContextualDayRangeLabel(dayDates, index, fallbackSpanDays)}
+                                    label={getContextualDayRangeLabel(dayDates, index, fallbackSpanDays, new Date(), timeZone)}
                                     isSelected={selectedDayIndex === index}
                                     showCurrentDayIndicator={index === currentDayIndex}
                                     onPress={() => {

@@ -1,11 +1,12 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import FontText from '../ui/text/FontText';
 import InlineEditableText from '../ui/forms/InlineEditableText';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
-import { Pressable, View } from 'react-native';
+import { Platform, Pressable, View } from 'react-native';
 import { Pencil } from 'lucide-react-native';
 import MarkdownEditorDialog from './MarkdownEditorDialog';
+import { useTableRowPreview } from './TableRowPreview';
 import ActionEditorDialog from './ActionEditorDialog';
 import VoteEditorDialog, { resolveVoteEmailToName } from './VoteEditorDialog';
 import ActionPills from './ActionPills';
@@ -66,6 +67,19 @@ const NightlyDayUserRow = ({
   const [isActionDialogOpen, setIsActionDialogOpen] = useState(false);
   const [isVoteDialogOpen, setIsVoteDialogOpen] = useState(false);
 
+  // Registers this row's element + preview target with the shared floating
+  // preview pill (web only — it resolves hovered rows by pointer position).
+  const rowPreview = useTableRowPreview();
+  const rowRef = useRef<View>(null);
+  useEffect(() => {
+    if (Platform.OS !== 'web' || !rowPreview || selectionMode) return;
+    return rowPreview.registerRow(rowRef.current as unknown as HTMLElement | null, {
+      kind: 'player',
+      email: user.email,
+      dayIndex: dayNumber,
+    });
+  }, [rowPreview, selectionMode, user.email, dayNumber]);
+
   const [userTable, setUserTable] = useList<UserTableItem[]>('userTable', gameId ?? '', {
     privacy: 'PUBLIC',
   });
@@ -114,7 +128,7 @@ const NightlyDayUserRow = ({
   }
 
   return (
-    <>
+    <View ref={rowRef} className="relative">
       <Row className={`h-12 w-min gap-0 ${isEditing ? 'z-50' : ''}`}>
         <Column
           className={`border-subtle-border z-10 h-full items-center justify-center gap-4 border`}
@@ -290,7 +304,7 @@ const NightlyDayUserRow = ({
         users={users}
         historyKey={`vote:${gameId}:${dayNumber}:${index}`}
       />
-    </>
+    </View>
   );
 };
 

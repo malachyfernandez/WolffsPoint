@@ -7,7 +7,8 @@ import { useSharedListValue } from 'hooks/useSharedListValue';
 import { useSharedVariableValue } from 'hooks/useSharedVariableValue';
 import { PlayerProfile, GameSchedule } from 'types/multiplayer';
 import { UserTableItem } from 'types/playerTable';
-import { getContextualDayRangeLabel, getCurrentPlayableDayIndex, getGameScopedKey, normalizeGameSchedule, parseStoredDayDates, defaultGameSchedule, formatTimeLabel, formatContextualDateLabel, isDayReleasedAtTime } from 'utils/multiplayer';
+import { getContextualDayRangeLabel, getCurrentPlayableDayIndex, getGameScopedKey, normalizeGameSchedule, parseStoredDayDates, resolveGameTimeZone, defaultGameSchedule, formatTimeLabel, formatContextualDateLabel, isDayReleasedAtTime } from 'utils/multiplayer';
+import { getDateTokenDayValue, getZonedDayValue } from 'utils/timezone';
 import { ChevronLeft, ChevronRight, Newspaper } from 'lucide-react-native';
 import { Pressable, View } from 'react-native';
 import LayoutStateAnimatedView, { fromRight } from '../ui/LayoutStateAnimatedView';
@@ -32,9 +33,11 @@ const YourEyesOnlyPagePLAYER = ({ gameId, currentEmail, matchingPlayer, currentP
     const scheduleRecord = useSharedVariableValue<GameSchedule>({ key: getGameScopedKey('gameSchedule', gameId), defaultValue: defaultGameSchedule, userIds: operatorUserIds });
     const [now, setNow] = useState(() => new Date());
 
+    const schedule = normalizeGameSchedule(scheduleRecord.value ?? defaultGameSchedule);
+    const gameTimeZone = resolveGameTimeZone(schedule);
     const dayDates = useMemo(() => parseStoredDayDates(dayDateStrings), [dayDateStrings]);
-    const currentDayIndex = useMemo(() => getCurrentPlayableDayIndex(dayDates), [dayDates]);
-    const [selectedDayIndex, setSelectedDayIndex] = useState(() => getCurrentPlayableDayIndex(parseStoredDayDates(dayDateStrings)));
+    const currentDayIndex = useMemo(() => getCurrentPlayableDayIndex(dayDates, new Date(), gameTimeZone), [dayDates, gameTimeZone]);
+    const [selectedDayIndex, setSelectedDayIndex] = useState(() => getCurrentPlayableDayIndex(parseStoredDayDates(dayDateStrings), new Date(), gameTimeZone));
     const selectedDayOwner = useNewspaperDayOwner({
         gameId,
         dayIndex: selectedDayIndex,
@@ -44,25 +47,26 @@ const YourEyesOnlyPagePLAYER = ({ gameId, currentEmail, matchingPlayer, currentP
     const handleSelectedDayReady = useCallback(() => {
         setReadyDayKey(selectedDayKey);
     }, [selectedDayKey]);
-    const schedule = normalizeGameSchedule(scheduleRecord.value ?? defaultGameSchedule);
     // Content is released if:
     // 1. It's a previous day (selectedDayIndex < currentDayIndex) - always released
     // 2. It's the current/future day - only blocked on the START DATE until wake-up time
     const selectedDayStartDate = dayDates[selectedDayIndex];
     const isPreviousDay = selectedDayIndex < currentDayIndex;
-    const isStartOfSelectedDay = selectedDayStartDate ? new Date(now).setHours(0, 0, 0, 0) === new Date(selectedDayStartDate).setHours(0, 0, 0, 0) : false;
+    const isStartOfSelectedDay = selectedDayStartDate
+        ? getZonedDayValue(now.getTime(), gameTimeZone) === getDateTokenDayValue(selectedDayStartDate)
+        : false;
     const hasNewspaperReleased = useMemo(() => {
         if (isPreviousDay) return true; // Previous days are always released
         if (!selectedDayStartDate) return false;
         // For current/future days, only apply wake-up time on the start date itself
         if (!isStartOfSelectedDay) return true; // Not the start date, so released
         // It's the start date - check if wake-up time has passed
-        return isDayReleasedAtTime(selectedDayStartDate, schedule.wakeUpTime, now);
-    }, [isPreviousDay, selectedDayStartDate, isStartOfSelectedDay, schedule.wakeUpTime, now]);
-    const releaseDateLabel = useMemo(() => selectedDayStartDate ? formatContextualDateLabel(selectedDayStartDate, undefined, now, 'lower') : '', [selectedDayStartDate, now]);
-    const selectedDayRangeLabel = useMemo(() => getContextualDayRangeLabel(dayDates, selectedDayIndex, numberOfRealDaysPerInGameDay), [selectedDayIndex, dayDates, numberOfRealDaysPerInGameDay]);
-    const previousDayLabel = useMemo(() => selectedDayIndex > 0 ? getContextualDayRangeLabel(dayDates, selectedDayIndex - 1, numberOfRealDaysPerInGameDay) : '', [dayDates, numberOfRealDaysPerInGameDay, selectedDayIndex]);
-    const nextDayLabel = useMemo(() => selectedDayIndex < currentDayIndex ? getContextualDayRangeLabel(dayDates, selectedDayIndex + 1, numberOfRealDaysPerInGameDay) : '', [currentDayIndex, dayDates, numberOfRealDaysPerInGameDay, selectedDayIndex]);
+        return isDayReleasedAtTime(selectedDayStartDate, schedule.wakeUpTime, now, gameTimeZone);
+    }, [isPreviousDay, selectedDayStartDate, isStartOfSelectedDay, schedule.wakeUpTime, now, gameTimeZone]);
+    const releaseDateLabel = useMemo(() => selectedDayStartDate ? formatContextualDateLabel(selectedDayStartDate, undefined, now, 'lower', gameTimeZone) : '', [selectedDayStartDate, now, gameTimeZone]);
+    const selectedDayRangeLabel = useMemo(() => getContextualDayRangeLabel(dayDates, selectedDayIndex, numberOfRealDaysPerInGameDay, now, gameTimeZone), [selectedDayIndex, dayDates, numberOfRealDaysPerInGameDay, now, gameTimeZone]);
+    const previousDayLabel = useMemo(() => selectedDayIndex > 0 ? getContextualDayRangeLabel(dayDates, selectedDayIndex - 1, numberOfRealDaysPerInGameDay, now, gameTimeZone) : '', [dayDates, numberOfRealDaysPerInGameDay, selectedDayIndex, now, gameTimeZone]);
+    const nextDayLabel = useMemo(() => selectedDayIndex < currentDayIndex ? getContextualDayRangeLabel(dayDates, selectedDayIndex + 1, numberOfRealDaysPerInGameDay, now, gameTimeZone) : '', [currentDayIndex, dayDates, numberOfRealDaysPerInGameDay, selectedDayIndex, now, gameTimeZone]);
     const hasInitializedSelectedDayRef = useRef(false);
 
     useEffect(() => {

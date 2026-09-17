@@ -8,6 +8,8 @@ Observed bug: a player whose device was set to **UTC** (while the game intended 
 
 **Goal:** the operator sets one IANA timezone per game (stored in `gameSchedule`). All players interpret every schedule wall-clock time and every "what day is it" question in **that** timezone, regardless of device settings.
 
+> **Amended semantics (implemented):** every game ALWAYS has a shared zone — device-local is not an option for players. `TimezoneConfigItem` seeds `schedule.timezone` from the **operator's device zone** the first time the operator opens Config; from then on the stored value governs everyone. `resolveGameTimeZone` never returns `undefined`: it falls back to `getDeviceTimeZone()` for schedules that predate the field (results identical to the old device-local paths until the operator's config visit stamps it).
+
 ## Mental model — read this first
 
 - `dayDatesArray` stores `"M/D/YYYY"` strings. These are **calendar dates**, not instants. They need no migration and no timezone — a calendar date is the same value in every zone.
@@ -238,15 +240,15 @@ Leave it `undefined` when unset — do NOT stamp `getDeviceTimeZone()` inside `n
 Add a small resolver export in `utils/multiplayer.ts` or `utils/timezone.ts`:
 
 ```ts
-/** The zone all game timing uses. Falls back to the device zone for
- * schedules that predate the timezone field (preserves legacy behavior). */
-export const resolveGameTimeZone = (schedule?: Partial<GameSchedule> | null): string | undefined => {
+/** The zone all game timing uses. Every game shares one zone, set by the
+ * operator (the config item seeds it from the operator's device on first
+ * open). Schedules that predate the timezone field fall back to the device
+ * zone, which produces identical results to the legacy device-local paths. */
+export const resolveGameTimeZone = (schedule?: Partial<GameSchedule> | null): string => {
   const tz = schedule?.timezone;
-  return tz && isValidTimeZone(tz) ? tz : undefined;
+  return tz && isValidTimeZone(tz) ? tz : getDeviceTimeZone();
 };
 ```
-
-Returning `undefined` (not the device zone) is deliberate: every multiplayer helper treats `undefined` as "legacy device-local", which is exactly the old behavior for games that never set a zone.
 
 ## Step 4 — operator UI: `components/game/config/TimezoneConfigItem.tsx`
 
@@ -254,7 +256,9 @@ New config item following the exact pattern of `components/game/config/WakeUpTim
 
 - `useValue<GameSchedule>(getGameScopedKey('gameSchedule', gameId), { defaultValue: defaultGameSchedule, privacy: 'PUBLIC' })`
 - `const schedule = normalizeGameSchedule(gameSchedule.value);`
-- Wrap in `ConfigSectionRow` with `title='Game timezone'` and subtext like `` `All deadlines and wake-up times use ${schedule.timezone ?? 'each player\'s device timezone'}.` ``
+- Wrap in `ConfigSectionRow` with `title='Game timezone'` and subtext showing the effective zone.
+- **Seeding:** a `useEffect` writes `{ ...schedule, timezone: getDeviceTimeZone() }` when the stored zone is absent/invalid (guarded on `isSyncing` and device-zone validity). This stamps the operator's device zone on first config open.
+- **No unselect:** `allowUnselect={false}` — a zone is required; the dropdown value is `schedule.timezone ?? deviceTimeZone`.
 - For the input, use `components/ui/forms/AppDropdown.tsx` (`AppDropdownOption[]` = `{ value, label }`) with a curated list of common zones plus the device's current zone:
 
 ```ts

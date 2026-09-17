@@ -1,5 +1,5 @@
-import React, { useEffect, useState, useMemo } from 'react';
-import { View } from 'react-native';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
+import { TextInput, View } from 'react-native';
 import FontTextInput from '../ui/forms/FontTextInput';
 import ConvexDialog from '../ui/dialog/ConvexDialog';
 import DialogHeader from '../ui/dialog/DialogHeader';
@@ -84,6 +84,7 @@ const VoteEditorDialog = ({
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [previewEntry, setPreviewEntry] = useState<SavedEntry | null>(null);
   const [hasEverBeenEnabled, setHasEverBeenEnabled] = useState(false);
+  const voteInputRef = useRef<TextInput>(null);
 
   const { targetRef, performMinimize } = useMinimizeTarget({
     title,
@@ -107,6 +108,9 @@ const VoteEditorDialog = ({
     setIsLeaveConfirmDialogOpen(false);
     setIsHistoryOpen(false);
     setPreviewEntry(null);
+    // Focus the vote target input after the dialog's open animation.
+    const timer = setTimeout(() => voteInputRef.current?.focus(), 100);
+    return () => clearTimeout(timer);
   }, [initialVoteMultiplier, initialVoteText, isOpen]);
 
   const parsedMultiplier = parseInt(draftMultiplier, 10);
@@ -256,6 +260,7 @@ const VoteEditorDialog = ({
                     Vote target emails
                   </FontText>
                   <FontTextInput
+                    ref={voteInputRef}
                     value={draftVote}
                     onChangeText={setDraftVote}
                     placeholder="Enter one or more emails, separated by commas..."

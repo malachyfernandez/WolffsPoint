@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
-import { Pressable } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { Platform, Pressable, View } from 'react-native';
 import FontText from '../ui/text/FontText';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
 import AppButton from '../ui/buttons/AppButton';
 import RoleEditDialog from './RoleEditDialog';
+import { useTableRowPreview } from './TableRowPreview';
 import MarkdownEditorDialog from './MarkdownEditorDialog';
 import VoteEnableDialog from './VoteEnableDialog';
 import DeleteConfirmationDialog from './DeleteRoleConfirmationDialog';
@@ -57,8 +58,20 @@ const RoleRow = ({
   const [isAboutRoleDialogOpen, setIsAboutRoleDialogOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
 
+  // Registers this row's element + preview target with the shared floating
+  // preview pill (web only — it resolves hovered rows by pointer position).
+  const rowPreview = useTableRowPreview();
+  const rowRef = useRef<View>(null);
+  useEffect(() => {
+    if (Platform.OS !== 'web' || !rowPreview || selectionMode) return;
+    return rowPreview.registerRow(rowRef.current as unknown as HTMLElement | null, {
+      kind: 'role',
+      roleName: role.role,
+    });
+  }, [rowPreview, selectionMode, role.role]);
+
   return (
-    <>
+    <View ref={rowRef} className="relative">
       <Row className={`h-12 w-min gap-0 ${isEditing ? 'z-50' : ''}`}>
         <Column
           className={`border-subtle-border h-full w-32 items-center justify-center gap-4 border ${isLast ? 'rounded-bl-lg' : ''}`}
@@ -233,7 +246,7 @@ const RoleRow = ({
         itemType="Role"
         itemName={role.role || 'this role'}
       />
-    </>
+    </View>
   );
 };
 

@@ -10,6 +10,7 @@ import { RuleBookData } from 'types/ruleBook';
 import { RoleTableItem } from 'types/roleTable';
 import { getGameScopedKey } from 'utils/multiplayer';
 import ActionDeadlineConfigItem from './config/ActionDeadlineConfigItem';
+import TimezoneConfigItem from './config/TimezoneConfigItem';
 import VoteDeadlineConfigItem from './config/VoteDeadlineConfigItem';
 import WakeUpTimeConfigItem from './config/WakeUpTimeConfigItem';
 import DaysPerGameDayConfigItem from './config/DaysPerGameDayConfigItem';
@@ -151,6 +152,7 @@ const ConfigPageOPERATOR = ({ gameId, currentUserId }: ConfigPageOPERATORProps) 
             </Column>
 
             <Column className="border-border/15 gap-0 border-y">
+              <TimezoneConfigItem gameId={gameId} />
               <ActionDeadlineConfigItem gameId={gameId} />
               <VoteDeadlineConfigItem gameId={gameId} />
               <WakeUpTimeConfigItem gameId={gameId} />

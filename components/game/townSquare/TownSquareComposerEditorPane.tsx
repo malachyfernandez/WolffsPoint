@@ -11,9 +11,11 @@ interface TownSquareComposerEditorPaneProps {
     value: string;
     /** When true, the editor is non-editable (view-only). */
     readOnly?: boolean;
+    /** Optional ref forwarded to the underlying text input. */
+    inputRef?: React.Ref<TextInput>;
 }
 
-const TownSquareComposerEditorPane = ({ onBodyChange, onSelectionChange, value, readOnly = false }: TownSquareComposerEditorPaneProps) => {
+const TownSquareComposerEditorPane = ({ onBodyChange, onSelectionChange, value, readOnly = false, inputRef }: TownSquareComposerEditorPaneProps) => {
     const [contentHeight, setContentHeight] = useState(0);
     const { showToast } = useToast();
     const lineCount = value.split('\n').length;
@@ -35,6 +37,7 @@ const TownSquareComposerEditorPane = ({ onBodyChange, onSelectionChange, value, 
         return (
             <Column className='gap-2 flex-1 grow min-w-0'>
                 <FontTextInput
+                    ref={inputRef}
                     autoGrow
                     multiline
                     className='min-w-0 rounded-3xl bg-text/10 p-4 text-base text-text'
@@ -53,6 +56,7 @@ const TownSquareComposerEditorPane = ({ onBodyChange, onSelectionChange, value, 
     return (
         <Column className='gap-2 flex-1 grow min-w-0'>
             <TextInput
+                ref={inputRef}
                 multiline={true}
                 className='min-w-0 min-h-[50vh] rounded-3xl bg-text/10 overflow-hidden p-4 text-base text-text'
                 onChangeText={readOnly ? undefined : onBodyChange}

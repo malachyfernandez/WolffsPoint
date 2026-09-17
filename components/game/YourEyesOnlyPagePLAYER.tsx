@@ -8,14 +8,12 @@ import { useGameOperatorUserId } from 'hooks/useGameOperatorUserId';
 import PlaceholderCard from '../ui/PlaceholderCard';
 import { useSharedListValue } from 'hooks/useSharedListValue';
 import { useSharedVariableValue } from 'hooks/useSharedVariableValue';
-import { useValue } from 'hooks/useData';
-import { useToast } from 'contexts/ToastContext';
 import { PlayerProfile } from 'types/multiplayer';
 import { RoleTableItem } from 'types/roleTable';
 import { UserTableItem } from 'types/playerTable';
 import {
-  addDays,
   buildScheduledDate,
+  buildScheduledDateOnInstantDay,
   getContextualDayRangeLabel,
   getCurrentPlayableDayIndex,
   getDayEndDate,
@@ -23,21 +21,20 @@ import {
   isNightWindowOpen,
   normalizeGameSchedule,
   parseStoredDayDates,
+  resolveGameTimeZone,
   defaultGameSchedule,
   formatTimeLabel,
   formatContextualDateLabel,
   isDayReleasedAtTime,
 } from 'utils/multiplayer';
+
+import { getDateTokenDayValue, getZonedDayValue } from 'utils/timezone';
 import { ChevronLeft, ChevronRight, Eye, Moon, Sun } from 'lucide-react-native';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import LayoutStateAnimatedView, { fromRight } from '../ui/LayoutStateAnimatedView';
 import YourEyesOnlyDayContentPLAYER from './YourEyesOnlyDayContentPLAYER';
 import LoadingContainer from '../ui/loading/LoadingContainer';
-
-// TODO: temporarily disabled — the sleep screen pops up early for some players.
-// Flip back to true to re-enable.
-const SHOW_SLEEP_SCREEN = false;
 
 interface YourEyesOnlyPagePLAYERProps {
   gameId: string;
@@ -85,17 +82,21 @@ const YourEyesOnlyPagePLAYER = ({
   });
   const [now, setNow] = useState(() => new Date());
 
-  const dayDates = useMemo(() => parseStoredDayDates(dayDateStrings), [dayDateStrings]);
-  const currentDayIndex = useMemo(() => getCurrentPlayableDayIndex(dayDates), [dayDates]);
-  const [selectedDayIndex, setSelectedDayIndex] = useState(() =>
-    getCurrentPlayableDayIndex(parseStoredDayDates(dayDateStrings))
-  );
   const schedule = normalizeGameSchedule(scheduleRecord.value ?? defaultGameSchedule);
+  const gameTimeZone = resolveGameTimeZone(schedule);
+  const dayDates = useMemo(() => parseStoredDayDates(dayDateStrings), [dayDateStrings]);
+  const currentDayIndex = useMemo(
+    () => getCurrentPlayableDayIndex(dayDates, new Date(), gameTimeZone),
+    [dayDates, gameTimeZone]
+  );
+  const [selectedDayIndex, setSelectedDayIndex] = useState(() =>
+    getCurrentPlayableDayIndex(parseStoredDayDates(dayDateStrings), new Date(), gameTimeZone)
+  );
   const currentDayStartDate = dayDates[currentDayIndex];
   const deadlineDayIndex =
     currentDayIndex > 0 &&
     currentDayStartDate &&
-    !isDayReleasedAtTime(currentDayStartDate, schedule.wakeUpTime, now)
+    !isDayReleasedAtTime(currentDayStartDate, schedule.wakeUpTime, now, gameTimeZone)
       ? currentDayIndex - 1
       : currentDayIndex;
   const deadlineDayEndDate = getDayEndDate(
@@ -113,32 +114,42 @@ const YourEyesOnlyPagePLAYER = ({
     schedule.voteDeadlineTime ?? defaultGameSchedule.voteDeadlineTime ?? '22:00';
   const actionDeadlineTime =
     schedule.actionDeadlineTime ?? defaultGameSchedule.actionDeadlineTime ?? '22:00';
-  const voteDeadline = buildScheduledDate(voteDeadlineBaseDate, voteDeadlineTime);
-  const actionDeadline = buildScheduledDate(actionDeadlineBaseDate, actionDeadlineTime);
+  const voteDeadline = buildScheduledDate(voteDeadlineBaseDate, voteDeadlineTime, gameTimeZone);
+  const actionDeadline = buildScheduledDate(
+    actionDeadlineBaseDate,
+    actionDeadlineTime,
+    gameTimeZone
+  );
   const laterDeadline =
     voteDeadline.getTime() >= actionDeadline.getTime() ? voteDeadline : actionDeadline;
-  const sameDayWakeUp = buildScheduledDate(laterDeadline, schedule.wakeUpTime);
+  const sameDayWakeUp = buildScheduledDateOnInstantDay(
+    laterDeadline,
+    schedule.wakeUpTime,
+    gameTimeZone
+  );
   const nextWakeUp =
     sameDayWakeUp.getTime() > laterDeadline.getTime()
       ? sameDayWakeUp
-      : buildScheduledDate(addDays(laterDeadline, 1), schedule.wakeUpTime);
+      : buildScheduledDateOnInstantDay(laterDeadline, schedule.wakeUpTime, gameTimeZone, 1);
   const isVoteLocked =
     deadlineDayIndex < currentDayIndex ||
-    !isNightWindowOpen(voteDeadlineBaseDate, voteDeadlineTime, now);
+    !isNightWindowOpen(voteDeadlineBaseDate, voteDeadlineTime, now, gameTimeZone);
   const isActionLocked =
     deadlineDayIndex < currentDayIndex ||
-    !isNightWindowOpen(actionDeadlineBaseDate, actionDeadlineTime, now);
+    !isNightWindowOpen(actionDeadlineBaseDate, actionDeadlineTime, now, gameTimeZone);
   const isSleepWindow =
     dayDates.length > 0 && isVoteLocked && isActionLocked && now.getTime() < nextWakeUp.getTime();
   const isPastMidnight =
-    new Date(now).setHours(0, 0, 0, 0) > new Date(laterDeadline).setHours(0, 0, 0, 0);
+    getZonedDayValue(now.getTime(), gameTimeZone) >
+    getZonedDayValue(laterDeadline.getTime(), gameTimeZone);
   // Content is released if:
   // 1. It's a previous day (selectedDayIndex < currentDayIndex) - always released
   // 2. It's the current/future day - only blocked on the START DATE until wake-up time
   const selectedDayStartDate = dayDates[selectedDayIndex];
   const isPreviousDay = selectedDayIndex < currentDayIndex;
   const isStartOfSelectedDay = selectedDayStartDate
-    ? new Date(now).setHours(0, 0, 0, 0) === new Date(selectedDayStartDate).setHours(0, 0, 0, 0)
+    ? getZonedDayValue(now.getTime(), gameTimeZone) ===
+      getDateTokenDayValue(selectedDayStartDate)
     : false;
   const hasWokenUp = useMemo(() => {
     if (isPreviousDay) return true; // Previous days are always released
@@ -146,100 +157,59 @@ const YourEyesOnlyPagePLAYER = ({
     // For current/future days, only apply wake-up time on the start date itself
     if (!isStartOfSelectedDay) return true; // Not the start date, so released
     // It's the start date - check if wake-up time has passed
-    return isDayReleasedAtTime(selectedDayStartDate, schedule.wakeUpTime, now);
-  }, [isPreviousDay, selectedDayStartDate, isStartOfSelectedDay, schedule.wakeUpTime, now]);
+    return isDayReleasedAtTime(selectedDayStartDate, schedule.wakeUpTime, now, gameTimeZone);
+  }, [
+    isPreviousDay,
+    selectedDayStartDate,
+    isStartOfSelectedDay,
+    schedule.wakeUpTime,
+    now,
+    gameTimeZone,
+  ]);
   const releaseDateLabel = useMemo(
     () =>
       selectedDayStartDate
-        ? formatContextualDateLabel(selectedDayStartDate, undefined, now, 'lower')
+        ? formatContextualDateLabel(selectedDayStartDate, undefined, now, 'lower', gameTimeZone)
         : '',
-    [selectedDayStartDate, now]
+    [selectedDayStartDate, now, gameTimeZone]
   );
   const selectedDayRangeLabel = useMemo(
-    () => getContextualDayRangeLabel(dayDates, selectedDayIndex, numberOfRealDaysPerInGameDay),
-    [selectedDayIndex, dayDates, numberOfRealDaysPerInGameDay]
+    () =>
+      getContextualDayRangeLabel(
+        dayDates,
+        selectedDayIndex,
+        numberOfRealDaysPerInGameDay,
+        now,
+        gameTimeZone
+      ),
+    [selectedDayIndex, dayDates, numberOfRealDaysPerInGameDay, now, gameTimeZone]
   );
   const previousDayLabel = useMemo(
     () =>
       selectedDayIndex > 0
-        ? getContextualDayRangeLabel(dayDates, selectedDayIndex - 1, numberOfRealDaysPerInGameDay)
+        ? getContextualDayRangeLabel(
+            dayDates,
+            selectedDayIndex - 1,
+            numberOfRealDaysPerInGameDay,
+            now,
+            gameTimeZone
+          )
         : '',
-    [dayDates, numberOfRealDaysPerInGameDay, selectedDayIndex]
+    [dayDates, numberOfRealDaysPerInGameDay, selectedDayIndex, now, gameTimeZone]
   );
   const nextDayLabel = useMemo(
     () =>
       selectedDayIndex < currentDayIndex
-        ? getContextualDayRangeLabel(dayDates, selectedDayIndex + 1, numberOfRealDaysPerInGameDay)
+        ? getContextualDayRangeLabel(
+            dayDates,
+            selectedDayIndex + 1,
+            numberOfRealDaysPerInGameDay,
+            now,
+            gameTimeZone
+          )
         : '',
-    [currentDayIndex, dayDates, numberOfRealDaysPerInGameDay, selectedDayIndex]
+    [currentDayIndex, dayDates, numberOfRealDaysPerInGameDay, selectedDayIndex, now, gameTimeZone]
   );
-
-  // TEMP debug: dump every value feeding isSleepWindow into the player's
-  // 'sleepWindowDebugLog' user variable when the window wrongly triggers.
-  // Normal players stay 'noSleepWindow'. Remove with SHOW_SLEEP_SCREEN.
-  const [sleepDebugRecord, setSleepWindowDebugLog] = useValue<
-    string | Record<string, unknown>
-  >('sleepWindowDebugLog');
-  const sleepDebugSnapshotRef = useRef<Record<string, unknown>>({});
-  const sleepDebugWrittenRef = useRef<'log' | 'noSleepWindow' | null>(null);
-  const { showToast } = useToast();
-  sleepDebugSnapshotRef.current = {
-    capturedAtISO: now.toISOString(),
-    timezoneOffsetMinutes: now.getTimezoneOffset(),
-    gameId,
-    currentEmail,
-    playerUserId: currentProfile.userId,
-    matchingPlayer,
-    currentProfile,
-    operatorUserId,
-    dayDateStrings,
-    dayDatesISO: dayDates.map((d) => d.toISOString()),
-    numberOfRealDaysPerInGameDay,
-    schedule,
-    currentDayIndex,
-    currentDayStartDateISO: currentDayStartDate?.toISOString() ?? null,
-    deadlineDayIndex,
-    deadlineDayEndDateISO: deadlineDayEndDate.toISOString(),
-    voteDeadlineTime,
-    actionDeadlineTime,
-    voteDayOffset: schedule.voteDayOffset,
-    actionDayOffset: schedule.actionDayOffset,
-    wakeUpTime: schedule.wakeUpTime,
-    voteDeadlineISO: voteDeadline.toISOString(),
-    actionDeadlineISO: actionDeadline.toISOString(),
-    laterDeadlineISO: laterDeadline.toISOString(),
-    sameDayWakeUpISO: sameDayWakeUp.toISOString(),
-    nextWakeUpISO: nextWakeUp.toISOString(),
-    isVoteLocked,
-    isActionLocked,
-    isSleepWindow,
-    isPastMidnight,
-    selectedDayIndex,
-    hasWokenUp,
-    isPreviousDay,
-    isStartOfSelectedDay,
-    selectedDayStartDateISO: selectedDayStartDate?.toISOString() ?? null,
-  };
-
-  useEffect(() => {
-    if (sleepDebugRecord.state.isSyncing) return;
-    if (isSleepWindow) {
-      if (sleepDebugWrittenRef.current !== 'log') {
-        sleepDebugWrittenRef.current = 'log';
-        setSleepWindowDebugLog({
-          status: 'SLEEP_WINDOW',
-          ...sleepDebugSnapshotRef.current,
-        });
-        showToast('log sent');
-      }
-      return;
-    }
-    // Once a log is written keep it so the bad player stays findable in Convex.
-    if (sleepDebugWrittenRef.current === null) {
-      sleepDebugWrittenRef.current = 'noSleepWindow';
-      setSleepWindowDebugLog('noSleepWindow');
-    }
-  }, [isSleepWindow, sleepDebugRecord.state.isSyncing, setSleepWindowDebugLog, showToast]);
 
   const roleData = roleTable.value.find((roleItem) => roleItem.role === matchingPlayer.role);
   const hasInitializedSelectedDayRef = useRef(false);
@@ -295,7 +265,7 @@ const YourEyesOnlyPagePLAYER = ({
       ]}
       loadingText="Loading..."
       className="min-h-190 flex-1">
-      {SHOW_SLEEP_SCREEN && isSleepWindow ? (
+      {isSleepWindow ? (
         <Column className="min-h-190 flex-1 items-center gap-7 pb-8 pt-10">
           <PlaceholderCard>
             <Column className="items-center gap-3">

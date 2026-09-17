@@ -15,8 +15,9 @@ import Animated, {
   FadeInDown,
   FadeOutUp,
 } from 'react-native-reanimated';
-import { Pressable, View } from 'react-native';
+import { Platform, Pressable, View } from 'react-native';
 import UserEditDialog from './UserEditDialog';
+import { useTableRowPreview } from './TableRowPreview';
 import { useList } from 'hooks/useData';
 import { UserTableItem } from 'types/playerTable';
 import { createUndoSnapshot, useUndoRedo } from 'hooks/useUndoRedo';
@@ -78,6 +79,18 @@ const UserRow = ({
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const hasMounted = useRef(false);
 
+  // Registers this row's element + preview target with the shared floating
+  // preview pill (web only — it resolves hovered rows by pointer position).
+  const rowPreview = useTableRowPreview();
+  const rowRef = useRef<View>(null);
+  useEffect(() => {
+    if (Platform.OS !== 'web' || !rowPreview || selectionMode) return;
+    return rowPreview.registerRow(rowRef.current as unknown as HTMLElement | null, {
+      kind: 'player',
+      email: user.email,
+    });
+  }, [rowPreview, selectionMode, user.email]);
+
   useEffect(() => {
     // Mark as mounted after initial render to enable animations for add/remove
     const timer = setTimeout(() => {
@@ -128,7 +141,7 @@ const UserRow = ({
   };
 
   return (
-    <>
+    <View ref={rowRef} className="relative">
       <Row className={`h-12 w-min gap-0 ${isEditing ? 'z-50' : ''}`}>
         <Column
           className={`border-subtle-border h-full w-12 items-center justify-center gap-4 border ${isLast ? 'rounded-bl-lg' : ''}`}>
@@ -222,7 +235,7 @@ const UserRow = ({
         gameId={gameId}
         onDelete={() => UNDOABLEdeleteUser(index)}
       />
-    </>
+    </View>
   );
 };
 

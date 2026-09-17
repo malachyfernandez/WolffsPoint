@@ -5,7 +5,8 @@ export type DevWarningKey =
     | "uservar_rollback"
     | "uservar_auth_not_ready"
     | "uservar_rate_limited"
-    | "userlist_length_shared_item";
+    | "userlist_length_shared_item"
+    | "timezone_unsupported";
 
 export function devWarn(key: DevWarningKey, message: string) {
     if (!userVarConfig.devWarningsEnabled) return;

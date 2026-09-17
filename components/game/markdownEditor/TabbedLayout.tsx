@@ -1,4 +1,5 @@
 import React from 'react';
+import { TextInput } from 'react-native';
 import { Tabs } from 'heroui-native';
 import ShadowScrollView from '../../ui/ShadowScrollView';
 import Column from '../../layout/Column';
@@ -33,6 +34,8 @@ interface TabbedLayoutProps {
   renderPreview?: () => React.ReactNode;
   /** When true, the editor is non-editable (view-only) and only the preview tab is shown. */
   readOnly?: boolean;
+  /** Optional ref forwarded to the body text input. */
+  inputRef?: React.Ref<TextInput>;
 }
 
 export function TabbedLayout({
@@ -59,6 +62,7 @@ export function TabbedLayout({
   onPreviewAsPlayer,
   renderPreview,
   readOnly = false,
+  inputRef,
 }: TabbedLayoutProps) {
   // When readOnly, keep both tabs but make editing non-editable (matches original layout).
   return (
@@ -85,6 +89,7 @@ export function TabbedLayout({
             onSelectionChange={onSelectionChange}
             value={draftBody}
             readOnly={readOnly}
+            inputRef={inputRef}
           />
         </ShadowScrollView>
       </Tabs.Content>

@@ -1,4 +1,5 @@
 import React from 'react';
+import { TextInput } from 'react-native';
 import Row from '../../layout/Row';
 import Column from '../../layout/Column';
 import { EditorPane } from './EditorPane';
@@ -29,6 +30,8 @@ interface SideBySideLayoutProps {
   renderPreview?: () => React.ReactNode;
   /** When true, the editor is non-editable (view-only) and only the preview pane is shown. */
   readOnly?: boolean;
+  /** Optional ref forwarded to the body text input. */
+  inputRef?: React.Ref<TextInput>;
 }
 
 export function SideBySideLayout({
@@ -53,6 +56,7 @@ export function SideBySideLayout({
   onPreviewAsPlayer,
   renderPreview,
   readOnly = false,
+  inputRef,
 }: SideBySideLayoutProps) {
   return (
     <Row className="min-h-0 flex-1 gap-4">
@@ -70,6 +74,7 @@ export function SideBySideLayout({
         onScript={onScript}
         onVariable={onVariable}
         readOnly={readOnly}
+        inputRef={inputRef}
       />
 
       <Column className={`min-w-0 flex-1 gap-4`}>

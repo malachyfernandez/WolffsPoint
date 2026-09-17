@@ -1,5 +1,5 @@
 import React from 'react';
-import { useWindowDimensions } from 'react-native';
+import { TextInput, useWindowDimensions } from 'react-native';
 import Column from '../../layout/Column';
 import { TitleInputSection } from './TitleInputSection';
 import { TabSelector } from './TabSelector';
@@ -37,6 +37,8 @@ interface MainContentProps {
   renderPreview?: () => React.ReactNode;
   /** When true, the editor is non-editable (view-only). */
   readOnly?: boolean;
+  /** Optional ref forwarded to the body text input. */
+  inputRef?: React.Ref<TextInput>;
 }
 
 export function MainContent({
@@ -67,6 +69,7 @@ export function MainContent({
   onPreviewAsPlayer,
   renderPreview,
   readOnly = false,
+  inputRef,
 }: MainContentProps) {
   const { width } = useWindowDimensions();
   const isSideBySide = width > 800;
@@ -106,6 +109,7 @@ export function MainContent({
           onPreviewAsPlayer={onPreviewAsPlayer}
           renderPreview={renderPreview}
           readOnly={readOnly}
+          inputRef={inputRef}
         />
       ) : (
         <TabbedLayout
@@ -132,6 +136,7 @@ export function MainContent({
           onPreviewAsPlayer={onPreviewAsPlayer}
           renderPreview={renderPreview}
           readOnly={readOnly}
+          inputRef={inputRef}
         />
       )}
     </Column>

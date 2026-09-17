@@ -4,6 +4,14 @@ import {
   PlayerActionValue,
   VoteValue,
 } from '../types/multiplayer';
+import {
+  getDateTokenDayValue,
+  getDeviceTimeZone,
+  getZonedDayValue,
+  isValidTimeZone,
+  zonedWallTimeOnInstantDayMs,
+  zonedWallTimeToInstantMs,
+} from './timezone';
 
 const DEFAULT_SCHEDULE: GameSchedule = {
   nightlyDeadlineTime: '22:00',
@@ -41,6 +49,7 @@ export const normalizeGameSchedule = (schedule?: Partial<GameSchedule> | null): 
   const actionDayOffset = schedule?.actionDayOffset ?? 0;
   const voteDayOffset = schedule?.voteDayOffset ?? 0;
   const publicVoting = schedule?.publicVoting ?? false;
+  const timezone = schedule?.timezone;
 
   return {
     nightlyDeadlineTime: fallbackDeadlineTime,
@@ -52,7 +61,17 @@ export const normalizeGameSchedule = (schedule?: Partial<GameSchedule> | null): 
     actionDayOffset,
     voteDayOffset,
     publicVoting,
+    timezone,
   };
+};
+
+/** The zone all game timing uses. Every game shares one zone, set by the
+ * operator (the config item seeds it from the operator's device on first
+ * open). Schedules that predate the timezone field fall back to the device
+ * zone, which produces identical results to the legacy device-local paths. */
+export const resolveGameTimeZone = (schedule?: Partial<GameSchedule> | null): string => {
+  const tz = schedule?.timezone;
+  return tz && isValidTimeZone(tz) ? tz : getDeviceTimeZone();
 };
 
 export const getGameScopedKey = (baseKey: string, gameId: string) => {
@@ -80,10 +99,52 @@ export const formatTimeLabel = (time24: string) => {
   return `${normalizedHours}:${normalizedMinutes} ${suffix}`;
 };
 
-export const buildScheduledDate = (baseDate: Date, time24: string) => {
+export const buildScheduledDate = (baseDate: Date, time24: string, timeZone?: string) => {
   const [hoursString, minutesString] = time24.split(':');
+  if (timeZone) {
+    return new Date(
+      zonedWallTimeToInstantMs(
+        {
+          year: baseDate.getFullYear(),
+          month: baseDate.getMonth() + 1,
+          day: baseDate.getDate(),
+          hour: Number(hoursString || '0'),
+          minute: Number(minutesString || '0'),
+        },
+        timeZone
+      )
+    );
+  }
   const scheduledDate = new Date(baseDate);
   scheduledDate.setHours(Number(hoursString || '0'), Number(minutesString || '0'), 0, 0);
+  return scheduledDate;
+};
+
+/**
+ * `time24` on the calendar day that `instant` falls on — in `timeZone` when
+ * given, else device-local. Use when the base is a real instant (e.g. a
+ * deadline) rather than a calendar-date token. `dayOffset` shifts by whole
+ * calendar days.
+ */
+export const buildScheduledDateOnInstantDay = (
+  instant: Date,
+  time24: string,
+  timeZone?: string,
+  dayOffset: number = 0
+) => {
+  const [hoursString, minutesString] = time24.split(':');
+  const hour = Number(hoursString || '0');
+  const minute = Number(minutesString || '0');
+  if (timeZone) {
+    return new Date(
+      zonedWallTimeOnInstantDayMs(instant.getTime(), timeZone, hour, minute, dayOffset)
+    );
+  }
+  const scheduledDate = new Date(instant);
+  if (dayOffset !== 0) {
+    scheduledDate.setDate(scheduledDate.getDate() + dayOffset);
+  }
+  scheduledDate.setHours(hour, minute, 0, 0);
   return scheduledDate;
 };
 
@@ -111,10 +172,14 @@ const getCalendarDayValue = (date: Date) => {
 export const getRelativeCalendarLabel = (
   date: Date,
   casing: 'lower' | 'title' = 'title',
-  now: Date = new Date()
+  now: Date = new Date(),
+  timeZone?: string
 ) => {
+  const nowDayValue = timeZone
+    ? getZonedDayValue(now.getTime(), timeZone)
+    : getCalendarDayValue(now);
   const dayDifference = Math.round(
-    (getCalendarDayValue(date) - getCalendarDayValue(now)) / 86400000
+    (getCalendarDayValue(date) - nowDayValue) / 86400000
   );
   const relativeLabel =
     dayDifference === -1
@@ -138,9 +203,10 @@ export const formatContextualDateLabel = (
   date: Date,
   fallbackLabel: string = formatCalendarDateLabel(date),
   now: Date = new Date(),
-  casing: 'lower' | 'title' = 'title'
+  casing: 'lower' | 'title' = 'title',
+  timeZone?: string
 ) => {
-  return getRelativeCalendarLabel(date, casing, now) ?? fallbackLabel;
+  return getRelativeCalendarLabel(date, casing, now, timeZone) ?? fallbackLabel;
 };
 
 export const getDayEndDate = (dayDates: Date[], dayIndex: number, fallbackSpanDays: number = 1) => {
@@ -157,22 +223,28 @@ export const getDayEndDate = (dayDates: Date[], dayIndex: number, fallbackSpanDa
   return addDays(startDate, Math.max(fallbackSpanDays, 1) - 1);
 };
 
-export const getDayReleaseDate = (dayDates: Date[], dayIndex: number, wakeUpTime24: string) => {
+export const getDayReleaseDate = (
+  dayDates: Date[],
+  dayIndex: number,
+  wakeUpTime24: string,
+  timeZone?: string
+) => {
   const nextStartDate = dayDates[dayIndex + 1];
   if (!nextStartDate) {
     return null;
   }
 
-  return buildScheduledDate(nextStartDate, wakeUpTime24);
+  return buildScheduledDate(nextStartDate, wakeUpTime24, timeZone);
 };
 
 export const isDayContentReleased = (
   dayDates: Date[],
   dayIndex: number,
   wakeUpTime24: string,
-  now: Date = new Date()
+  now: Date = new Date(),
+  timeZone?: string
 ) => {
-  const releaseDate = getDayReleaseDate(dayDates, dayIndex, wakeUpTime24);
+  const releaseDate = getDayReleaseDate(dayDates, dayIndex, wakeUpTime24, timeZone);
   if (!releaseDate) {
     return false;
   }
@@ -206,7 +278,8 @@ export const getContextualDayRangeLabel = (
   dayDates: Date[],
   dayIndex: number,
   fallbackSpanDays: number = 1,
-  now: Date = new Date()
+  now: Date = new Date(),
+  timeZone?: string
 ) => {
   const startDate = dayDates[dayIndex];
   if (!startDate) {
@@ -219,13 +292,15 @@ export const getContextualDayRangeLabel = (
     startDate,
     formatCalendarDateLabel(startDate, includeYear),
     now,
-    'title'
+    'title',
+    timeZone
   );
   const endLabel = formatContextualDateLabel(
     endDate,
     formatCalendarDateLabel(endDate, includeYear),
     now,
-    'title'
+    'title',
+    timeZone
   );
 
   if (startDate.getTime() === endDate.getTime()) {
@@ -235,8 +310,35 @@ export const getContextualDayRangeLabel = (
   return `${startLabel} - ${endLabel}`;
 };
 
-export const getCurrentPlayableDayIndex = (dayDates: Date[], now: Date = new Date()) => {
+export const getCurrentPlayableDayIndex = (
+  dayDates: Date[],
+  now: Date = new Date(),
+  timeZone?: string
+) => {
   if (dayDates.length === 0) {
+    return 0;
+  }
+
+  if (timeZone) {
+    const todayValue = getZonedDayValue(now.getTime(), timeZone);
+    const dayValues = dayDates.map(getDateTokenDayValue);
+
+    const zonedTodayIndex = dayValues.findIndex((value) => value === todayValue);
+    if (zonedTodayIndex >= 0) {
+      return zonedTodayIndex;
+    }
+
+    const zonedLatestPastIndex = dayValues.reduce((bestIndex, value, index) => {
+      if (value <= todayValue) {
+        return index;
+      }
+      return bestIndex;
+    }, -1);
+
+    if (zonedLatestPastIndex >= 0) {
+      return zonedLatestPastIndex;
+    }
+
     return 0;
   }
 
@@ -270,16 +372,22 @@ export const getCurrentPlayableDayIndex = (dayDates: Date[], now: Date = new Dat
   return 0;
 };
 
-export const isDayReleasedAtTime = (dayDate: Date, time24: string, now: Date = new Date()) => {
-  return now.getTime() >= buildScheduledDate(dayDate, time24).getTime();
+export const isDayReleasedAtTime = (
+  dayDate: Date,
+  time24: string,
+  now: Date = new Date(),
+  timeZone?: string
+) => {
+  return now.getTime() >= buildScheduledDate(dayDate, time24, timeZone).getTime();
 };
 
 export const isNightWindowOpen = (
   dayDate: Date,
   deadlineTime24: string,
-  now: Date = new Date()
+  now: Date = new Date(),
+  timeZone?: string
 ) => {
-  const deadline = buildScheduledDate(dayDate, deadlineTime24);
+  const deadline = buildScheduledDate(dayDate, deadlineTime24, timeZone);
   return now.getTime() <= deadline.getTime();
 };
 
@@ -350,7 +458,8 @@ export const hasPlayerActionContent = (action: PlayerActionValue | undefined) =>
 export const getLatestReleasedDayIndex = (
   dayDates: Date[],
   wakeUpTime24: string,
-  now: Date = new Date()
+  now: Date = new Date(),
+  timeZone?: string
 ) => {
   if (dayDates.length === 0) {
     return -1;
@@ -359,7 +468,7 @@ export const getLatestReleasedDayIndex = (
   let latestReleasedIndex = -1;
 
   dayDates.forEach((dayDate, index) => {
-    if (isDayContentReleased(dayDates, index, wakeUpTime24, now)) {
+    if (isDayContentReleased(dayDates, index, wakeUpTime24, now, timeZone)) {
       latestReleasedIndex = index;
     }
   });

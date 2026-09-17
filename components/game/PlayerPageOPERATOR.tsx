@@ -13,6 +13,7 @@ import LoadingContainer from '../ui/loading/LoadingContainer';
 import { MultiSelectProvider, useMultiSelect } from './multiSelect/MultiSelectContext';
 import MultiSelectToolbar from './multiSelect/MultiSelectToolbar';
 import TableFreezeControls from './TableFreezeControls';
+import TableRowPreview from './TableRowPreview';
 import { usePlayerDataFreeze } from 'hooks/useTableFreeze';
 
 interface PlayerPageOPERATORProps {
@@ -92,56 +93,58 @@ const PlayerPageContent = ({ currentUserId, gameId }: PlayerPageOPERATORProps) =
         <Column className="gap-4 py-3 sm:px-4">
           <MultiSelectToolbar />
 
-          <ShadowScrollView
-            direction="horizontal"
-            className="mr-1 pt-1"
-            scrollViewClassName="px-1 py-5"
-            horizontal>
-            <Row className="gap-4">
-              <Column className="gap-1">
-                <Row className="h-9 gap-4">{/* spacer to align with days table */}</Row>
-                <Row className={`gap-4 ${isPlayerTableBeingEdited ? 'z-50' : ''}`.trim()}>
-                  <PlayerTable
-                    gameId={gameId}
-                    doSync={doSync}
-                    setDoSync={setDoSync}
-                    isBeingEdited={isPlayerTableBeingEdited}
-                    setIsBeingEdited={setIsPlayerTableBeingEdited}
-                    dayDatesArray={fixedDayDatesArray}
-                    onColumnsReady={setIsPlayerTableColumnsReady}
-                  />
-                </Row>
-              </Column>
-              <Column className="gap-0">
-                <View
-                  className=""
-                  style={{
-                    width: daysTableWidth,
-                    opacity: selectionMode ? 0.4 : 1,
-                    pointerEvents: selectionMode ? 'none' : 'auto',
-                  }}>
-                  <ComprehensiveDaySelector gameId={gameId} showAddButton={true} />
-                </View>
-                <Row className={`${isDaysTableBeingEdited ? 'z-10 ' : ''}gap-4 w-min max-w-min`}>
-                  <DaysTable
-                    gameId={gameId}
-                    dayNumber={selectedDayIndex.value}
-                    dayCount={fixedDayDatesArray.length}
-                    isBeingEdited={isDaysTableBeingEdited}
-                    setIsBeingEdited={setIsDaysTableBeingEdited}
-                    onLayout={(event) => {
-                      const { width } = event.nativeEvent.layout;
-                      setDaysTableWidth(width);
-                    }}
-                    onWidthChange={(width) => {
-                      setDaysTableWidth(width);
-                    }}
-                    onColumnsReady={setIsDaysTableColumnsReady}
-                  />
-                </Row>
-              </Column>
-            </Row>
-          </ShadowScrollView>
+          <TableRowPreview gameId={gameId}>
+            <ShadowScrollView
+              direction="horizontal"
+              className="mr-1 pt-1"
+              scrollViewClassName="px-1 py-5"
+              horizontal>
+              <Row className="gap-4">
+                <Column className="gap-1">
+                  <Row className="h-9 gap-4">{/* spacer to align with days table */}</Row>
+                  <Row className={`gap-4 ${isPlayerTableBeingEdited ? 'z-50' : ''}`.trim()}>
+                    <PlayerTable
+                      gameId={gameId}
+                      doSync={doSync}
+                      setDoSync={setDoSync}
+                      isBeingEdited={isPlayerTableBeingEdited}
+                      setIsBeingEdited={setIsPlayerTableBeingEdited}
+                      dayDatesArray={fixedDayDatesArray}
+                      onColumnsReady={setIsPlayerTableColumnsReady}
+                    />
+                  </Row>
+                </Column>
+                <Column className="gap-0">
+                  <View
+                    className=""
+                    style={{
+                      width: daysTableWidth,
+                      opacity: selectionMode ? 0.4 : 1,
+                      pointerEvents: selectionMode ? 'none' : 'auto',
+                    }}>
+                    <ComprehensiveDaySelector gameId={gameId} showAddButton={true} />
+                  </View>
+                  <Row className={`${isDaysTableBeingEdited ? 'z-10 ' : ''}gap-4 w-min max-w-min`}>
+                    <DaysTable
+                      gameId={gameId}
+                      dayNumber={selectedDayIndex.value}
+                      dayCount={fixedDayDatesArray.length}
+                      isBeingEdited={isDaysTableBeingEdited}
+                      setIsBeingEdited={setIsDaysTableBeingEdited}
+                      onLayout={(event) => {
+                        const { width } = event.nativeEvent.layout;
+                        setDaysTableWidth(width);
+                      }}
+                      onWidthChange={(width) => {
+                        setDaysTableWidth(width);
+                      }}
+                      onColumnsReady={setIsDaysTableColumnsReady}
+                    />
+                  </Row>
+                </Column>
+              </Row>
+            </ShadowScrollView>
+          </TableRowPreview>
           <PlayerAddUserSection
             gameId={gameId}
             rightContent={<TableFreezeControls controller={freezeController} />}

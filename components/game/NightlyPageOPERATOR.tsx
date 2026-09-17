@@ -15,11 +15,7 @@ import ComprehensiveDaySelector from '../ui/daySelector/ComprehensiveDaySelector
 import { MultiSelectProvider, useMultiSelect } from './multiSelect/MultiSelectContext';
 import MultiSelectToolbar from './multiSelect/MultiSelectToolbar';
 import NightlyCertificationDialog from './NightlyCertificationDialog';
-import {
-  getGameScopedKey,
-  hasPlayerActionContent,
-  hasVoteContent,
-} from 'utils/multiplayer';
+import { getGameScopedKey, hasPlayerActionContent, hasVoteContent } from 'utils/multiplayer';
 import { deepEqual } from 'utils/deepEqual';
 import { PlayerNightSubmission, PlannedUpdate } from 'types/multiplayer';
 import {
@@ -28,6 +24,7 @@ import {
 } from 'utils/executePlannedUpdates';
 import { fireTagTriggersForNetChanges } from 'hooks/useTagTriggers';
 import TableFreezeControls from './TableFreezeControls';
+import TableRowPreview from './TableRowPreview';
 import { usePlayerDataFreeze } from 'hooks/useTableFreeze';
 interface NightlyPageOPERATORProps {
   currentUserId: string;
@@ -368,63 +365,65 @@ const NightlyPageContent = ({
 
               <MultiSelectToolbar />
 
-              <ShadowScrollView
-                direction="horizontal"
-                className="mr-1 pt-1"
-                scrollViewClassName="px-1 py-5"
-                horizontal>
-                <Row className="gap-4">
-                  <Column className="gap-1">
-                    <Row className="h-9 gap-4">{/* spacer to align with days table */}</Row>
-                    <Row className={`gap-4 ${isPlayerTableBeingEdited ? 'z-50' : ''}`.trim()}>
-                      <NightlyPlayerTable
-                        gameId={gameId}
-                        doSync={doSync}
-                        setDoSync={setDoSync}
-                        isBeingEdited={isPlayerTableBeingEdited}
-                        setIsBeingEdited={setIsPlayerTableBeingEdited}
-                        dayDatesArray={fixedDayDatesArray}
-                        updatePlayerLivingState={updatePlayerLivingState}
-                        onColumnsReady={setIsPlayerTableColumnsReady}
-                      />
-                    </Row>
-                  </Column>
-                  <Column className="gap-0">
-                    <View
-                      style={{
-                        width: daysTableWidth,
-                        opacity: selectionMode ? 0.4 : 1,
-                        pointerEvents: selectionMode ? 'none' : 'auto',
-                      }}>
-                      <ComprehensiveDaySelector
-                        gameId={gameId}
-                        showAddButton={true}
-                        showInitialSetupDialog={true}
-                      />
-                    </View>
-                    <Row
-                      className={`${isDaysTableBeingEdited ? 'z-10 ' : ''}gap-4 w-min max-w-min`}>
-                      <NightlyDaysTable
-                        gameId={gameId}
-                        dayNumber={selectedDayIndex.value}
-                        isBeingEdited={isDaysTableBeingEdited}
-                        setIsBeingEdited={setIsDaysTableBeingEdited}
-                        onLayout={(event: any) => {
-                          const { width } = event.nativeEvent.layout;
-                          setDaysTableWidth(width);
-                        }}
-                        onWidthChange={(width: number) => {
-                          setDaysTableWidth(width);
-                        }}
-                        morningMessagesList={morningMessagesValue}
-                        updateMorningMessage={updateMorningMessage}
-                        bulkUpdateMorningMessages={bulkUpdateMorningMessages}
-                        onColumnsReady={setIsDaysTableColumnsReady}
-                      />
-                    </Row>
-                  </Column>
-                </Row>
-              </ShadowScrollView>
+              <TableRowPreview gameId={gameId}>
+                <ShadowScrollView
+                  direction="horizontal"
+                  className="mr-1 pt-1"
+                  scrollViewClassName="px-1 py-5"
+                  horizontal>
+                  <Row className="gap-4">
+                    <Column className="gap-1">
+                      <Row className="h-9 gap-4">{/* spacer to align with days table */}</Row>
+                      <Row className={`gap-4 ${isPlayerTableBeingEdited ? 'z-50' : ''}`.trim()}>
+                        <NightlyPlayerTable
+                          gameId={gameId}
+                          doSync={doSync}
+                          setDoSync={setDoSync}
+                          isBeingEdited={isPlayerTableBeingEdited}
+                          setIsBeingEdited={setIsPlayerTableBeingEdited}
+                          dayDatesArray={fixedDayDatesArray}
+                          updatePlayerLivingState={updatePlayerLivingState}
+                          onColumnsReady={setIsPlayerTableColumnsReady}
+                        />
+                      </Row>
+                    </Column>
+                    <Column className="gap-0">
+                      <View
+                        style={{
+                          width: daysTableWidth,
+                          opacity: selectionMode ? 0.4 : 1,
+                          pointerEvents: selectionMode ? 'none' : 'auto',
+                        }}>
+                        <ComprehensiveDaySelector
+                          gameId={gameId}
+                          showAddButton={true}
+                          showInitialSetupDialog={true}
+                        />
+                      </View>
+                      <Row
+                        className={`${isDaysTableBeingEdited ? 'z-10 ' : ''}gap-4 w-min max-w-min`}>
+                        <NightlyDaysTable
+                          gameId={gameId}
+                          dayNumber={selectedDayIndex.value}
+                          isBeingEdited={isDaysTableBeingEdited}
+                          setIsBeingEdited={setIsDaysTableBeingEdited}
+                          onLayout={(event: any) => {
+                            const { width } = event.nativeEvent.layout;
+                            setDaysTableWidth(width);
+                          }}
+                          onWidthChange={(width: number) => {
+                            setDaysTableWidth(width);
+                          }}
+                          morningMessagesList={morningMessagesValue}
+                          updateMorningMessage={updateMorningMessage}
+                          bulkUpdateMorningMessages={bulkUpdateMorningMessages}
+                          onColumnsReady={setIsDaysTableColumnsReady}
+                        />
+                      </Row>
+                    </Column>
+                  </Row>
+                </ShadowScrollView>
+              </TableRowPreview>
 
               <Row className="w-full justify-end px-4">
                 <Column className="min-w-0 flex-1 items-end">

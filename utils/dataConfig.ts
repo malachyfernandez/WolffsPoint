@@ -130,10 +130,4 @@ export const DATA_CONFIG: DataConfigType = {
     privacy: 'PRIVATE',
     defaultValue: [],
   },
-  // TEMP debug: YourEyesOnlyPagePLAYER writes 'noSleepWindow' here, or a full
-  // diagnostic snapshot when the sleep window wrongly triggers. Remove with SHOW_SLEEP_SCREEN.
-  sleepWindowDebugLog: {
-    type: 'variable',
-    privacy: 'PRIVATE',
-  },
 };

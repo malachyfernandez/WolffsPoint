@@ -8,7 +8,9 @@ import ShadowScrollView from '../ui/ShadowScrollView';
 import DaySelectionDialog from './DaySelectionDialog';
 import ChooseDayDialog from './ChooseDayDialog';
 import DaysTable from './DaysTable';
-import { getDayRangeLabel, parseStoredDayDates } from 'utils/multiplayer';
+import { defaultGameSchedule, getDayRangeLabel, getGameScopedKey, normalizeGameSchedule, parseStoredDayDates, resolveGameTimeZone } from 'utils/multiplayer';
+import { getZonedDayToken } from 'utils/timezone';
+import { GameSchedule } from 'types/multiplayer';
 
 interface PlayerDaysSectionProps {
     gameId: string;
@@ -19,6 +21,8 @@ const PlayerDaysSection = ({ gameId, addNewDay }: PlayerDaysSectionProps) => {
     const [selectedDayIndex, setSelectedDayIndex] = useList<number>("selectedDayIndex", gameId, { privacy: "PUBLIC", defaultValue: 0 });
     const [numberOfRealDaysPerInGameDay] = useList<number>("numberOfRealDaysPerInGameDay", gameId, { privacy: "PUBLIC", defaultValue: 2 });
     const [dayDatesArray, setDayDatesArray] = useList<string[]>("dayDatesArray", gameId, { privacy: "PUBLIC", defaultValue: [] });
+    const [gameSchedule] = useValue<GameSchedule>(getGameScopedKey('gameSchedule', gameId), { defaultValue: defaultGameSchedule, privacy: 'PUBLIC' });
+    const gameTimeZone = resolveGameTimeZone(normalizeGameSchedule(gameSchedule.value));
 
     const fixedDayDatesArray = parseStoredDayDates(dayDatesArray?.value ?? []);
 
@@ -76,7 +80,7 @@ const PlayerDaysSection = ({ gameId, addNewDay }: PlayerDaysSectionProps) => {
                                         index={index}
                                         dayDate={date}
                                         buttonLabel={label}
-                                        previousDate={index > 0 ? fixedDayDatesArray[index - 1] : new Date()}
+                                        previousDate={index > 0 ? fixedDayDatesArray[index - 1] : getZonedDayToken(Date.now(), gameTimeZone)}
                                         followingDate={index < fixedDayDatesArray.length - 1 ? fixedDayDatesArray[index + 1] : undefined}
                                         onPress={() => setSelectedDayIndex(index)}
                                         replaceDayDate={replaceDayDate}

@@ -23,6 +23,8 @@ const NewWolffspointButtonAndDialogue = ({ onCreate, condensed }: NewWolffspoint
     const [date, setDate] = useState('');
     const [isDateValid, setIsDateValid] = useState(false);
 
+    // A new game has no schedule yet — the game timezone is seeded from the
+    // operator's device when they first open the game's config page.
     const todaysDate = new Date()
 
     const setUserListItem = useListSet();

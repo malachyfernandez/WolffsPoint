@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { ChevronLeft, ChevronRight } from 'lucide-react-native';
 import ConvexDialog from '../../ui/dialog/ConvexDialog';
@@ -20,7 +20,7 @@ import type { ScriptSourceData } from '../../../script/runtime/sources';
 import {
   defaultGameSchedule,
   formatTimeLabel,
-  getContextualDayRangeLabel,
+  getDayRangeLabel,
   getGameScopedKey,
   normalizeGameSchedule,
   parseStoredDayDates,
@@ -31,18 +31,27 @@ interface PlayerPreviewModalProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   gameId: string;
-  roleName: string;
+  /** Role-scoped preview (opened from the role message editor): the player
+   *  dropdown is limited to players with this role. */
+  roleName?: string;
+  /** Row-scoped preview (opened from a player row in the operator tables):
+   *  preselects this player and lets the operator switch between all players. */
+  playerEmail?: string;
+  /** Day the preview opens on. Defaults to the game's selected day index. */
+  initialDayIndex?: number;
 }
 
 /**
- * Modal that lets an operator preview a role message as a specific player.
- * Uses client-side state only — nothing is saved to Convex.
+ * Modal that lets an operator preview the "your eyes only" page as a specific
+ * player. Uses client-side state only — nothing is saved to Convex.
  */
 const PlayerPreviewModal = ({
   isOpen,
   onOpenChange,
   gameId,
-  roleName,
+  roleName = '',
+  playerEmail,
+  initialDayIndex,
 }: PlayerPreviewModalProps) => {
   const [selectedPlayerEmail, setSelectedPlayerEmail] = useState<string | undefined>();
   const [emulatedVoteState, setEmulatedVoteState] = useState<Record<string, string | undefined>>(
@@ -81,12 +90,22 @@ const PlayerPreviewModal = ({
     privacy: 'PUBLIC',
     defaultValue: DEFAULT_VOTE_MESSAGE,
   });
+  const [morningMessagesRecord] = useList<Record<string, string[]>>('morningMessagesList', gameId, {
+    privacy: 'PUBLIC',
+    defaultValue: {},
+  });
   const [scheduleRecord] = useValue(getGameScopedKey('gameSchedule', gameId), {
     defaultValue: defaultGameSchedule,
   });
 
   const players = useMemo(() => userTable?.value ?? [], [userTable?.value]);
   const roles = useMemo(() => roleTable?.value ?? [], [roleTable?.value]);
+  const morningMessagesList = useMemo(
+    () => morningMessagesRecord?.value ?? {},
+    [morningMessagesRecord?.value]
+  );
+
+  const isPlayerScopedPreview = playerEmail !== undefined;
 
   // Filter players to only those with the matching role
   const rolePlayers = useMemo(
@@ -96,8 +115,17 @@ const PlayerPreviewModal = ({
       ),
     [players, roleName]
   );
-  const currentDay = selectedDayIndex?.value ?? 0;
+  // Row-scoped previews can switch between every player; role-scoped previews
+  // stay limited to players that have the role.
+  const previewablePlayers = isPlayerScopedPreview ? players : rolePlayers;
+
+  // The preview is decoupled from the real clock — it opens on the requested
+  // day and every day created in the table is navigable.
+  const [previewDayIndex, setPreviewDayIndex] = useState(0);
   const dayDates = useMemo(() => dayDatesArray?.value ?? [], [dayDatesArray?.value]);
+  const parsedDayDates = useMemo(() => parseStoredDayDates(dayDates), [dayDates]);
+  const daySpan = numberOfRealDaysPerInGameDay?.value ?? 2;
+  const maxDayIndex = Math.max(parsedDayDates.length - 1, 0);
   const schedule = useMemo(
     () => normalizeGameSchedule(scheduleRecord.value ?? defaultGameSchedule),
     [scheduleRecord.value]
@@ -107,56 +135,106 @@ const PlayerPreviewModal = ({
   const actionDeadlineTime =
     schedule.actionDeadlineTime ?? defaultGameSchedule.actionDeadlineTime ?? '22:00';
   const selectedDayRangeLabel = useMemo(
+    () => getDayRangeLabel(parsedDayDates, previewDayIndex, daySpan),
+    [parsedDayDates, previewDayIndex, daySpan]
+  );
+  const previousDayLabel = useMemo(
     () =>
-      getContextualDayRangeLabel(
-        parseStoredDayDates(dayDates),
-        currentDay,
-        numberOfRealDaysPerInGameDay?.value ?? 2
-      ),
-    [currentDay, dayDates, numberOfRealDaysPerInGameDay?.value]
+      previewDayIndex > 0 ? getDayRangeLabel(parsedDayDates, previewDayIndex - 1, daySpan) : '',
+    [parsedDayDates, previewDayIndex, daySpan]
+  );
+  const nextDayLabel = useMemo(
+    () =>
+      previewDayIndex < maxDayIndex
+        ? getDayRangeLabel(parsedDayDates, previewDayIndex + 1, daySpan)
+        : '',
+    [parsedDayDates, previewDayIndex, maxDayIndex, daySpan]
   );
 
   useEffect(() => {
     if (!isOpen) return;
+    const requested = initialDayIndex ?? selectedDayIndex?.value ?? 0;
+    setPreviewDayIndex(Math.min(Math.max(requested, 0), Math.max(parsedDayDates.length - 1, 0)));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
+
+  // Keep the previewed day inside the table's created days as they load in.
+  useEffect(() => {
+    setPreviewDayIndex((current) => Math.min(Math.max(current, 0), maxDayIndex));
+  }, [maxDayIndex]);
+
+  const wasOpenRef = useRef(false);
+  useEffect(() => {
+    const justOpened = isOpen && !wasOpenRef.current;
+    wasOpenRef.current = isOpen;
+    if (!isOpen) return;
     setSelectedPlayerEmail((currentEmail) => {
-      const currentPlayerStillExists = rolePlayers.some(
+      // A fresh row-scoped open always previews the row that was clicked —
+      // the previous selection may linger if the dialog was closed through a
+      // path that skipped the reset (e.g. the X button).
+      if (justOpened && isPlayerScopedPreview) {
+        const requestedPlayer = players.find(
+          (player) => player.email.toLowerCase() === playerEmail.toLowerCase()
+        );
+        if (requestedPlayer) return requestedPlayer.email;
+      }
+      const currentPlayerStillExists = previewablePlayers.some(
         (player) => player.email.toLowerCase() === currentEmail?.toLowerCase()
       );
       if (currentPlayerStillExists) return currentEmail;
+      if (isPlayerScopedPreview) {
+        const requestedPlayer = players.find(
+          (player) => player.email.toLowerCase() === playerEmail.toLowerCase()
+        );
+        if (requestedPlayer) return requestedPlayer.email;
+      }
       return (
-        rolePlayers.find((player) => player.playerData.livingState === 'alive') ?? rolePlayers[0]
+        previewablePlayers.find((player) => player.playerData.livingState === 'alive') ??
+        previewablePlayers[0]
       )?.email;
     });
-  }, [isOpen, rolePlayers]);
+  }, [isOpen, previewablePlayers, isPlayerScopedPreview, playerEmail, players]);
 
   useEffect(() => {
     if (!isOpen) return;
     setEmulatedVoteState({});
     setEmulatedActionState({});
     setIsSkipVote(false);
-  }, [isOpen, selectedPlayerEmail]);
+  }, [isOpen, selectedPlayerEmail, previewDayIndex]);
 
   const playerDropdownOptions = useMemo(
     () =>
-      rolePlayers.map((player) => ({
+      previewablePlayers.map((player) => ({
         value: player.email,
         label: `${player.realName}${player.playerData.livingState === 'dead' ? ' (dead)' : ''}`,
       })),
-    [rolePlayers]
+    [previewablePlayers]
   );
 
   const selectedPlayer = useMemo(
     () =>
-      rolePlayers.find(
+      previewablePlayers.find(
         (player) => player.email.toLowerCase() === selectedPlayerEmail?.toLowerCase()
       ),
-    [rolePlayers, selectedPlayerEmail]
+    [previewablePlayers, selectedPlayerEmail]
   );
 
+  // In row-scoped previews the role comes from whichever player is selected.
+  const effectiveRoleName = isPlayerScopedPreview ? (selectedPlayer?.role ?? '') : roleName;
   const roleData = useMemo(
-    () => roles.find((role) => role.role.trim().toLowerCase() === roleName.trim().toLowerCase()),
-    [roleName, roles]
+    () =>
+      roles.find(
+        (role) => role.role.trim().toLowerCase() === effectiveRoleName.trim().toLowerCase()
+      ),
+    [effectiveRoleName, roles]
   );
+
+  // The "Last Night" card mirrors YourEyesOnlyDayContentPLAYER: on game day D
+  // the player sees the message the operator wrote during night D - 1.
+  const previewMorningMessage = useMemo(() => {
+    if (!selectedPlayer || previewDayIndex <= 0) return '';
+    return morningMessagesList[selectedPlayer.email.toLowerCase()]?.[previewDayIndex - 1] ?? '';
+  }, [morningMessagesList, previewDayIndex, selectedPlayer]);
   const voteMessage = roleData?.voteMessage?.trim()
     ? roleData.voteMessage
     : defaultVoteMessage?.value || DEFAULT_VOTE_MESSAGE;
@@ -190,13 +268,22 @@ const PlayerPreviewModal = ({
       roles,
       currentUserId: selectedPlayer.userId,
       currentEmail: selectedPlayer.email,
-      currentDay,
+      currentDay: previewDayIndex,
       dayDates,
       schedule,
       userTableTitle: userTableTitle?.value,
-      morningMessagesList: {},
+      morningMessagesList,
     };
-  }, [currentDay, dayDates, players, roles, schedule, selectedPlayer, userTableTitle?.value]);
+  }, [
+    previewDayIndex,
+    dayDates,
+    players,
+    roles,
+    schedule,
+    selectedPlayer,
+    userTableTitle?.value,
+    morningMessagesList,
+  ]);
 
   const actionSummary = Object.values(emulatedActionState)
     .filter((value): value is string => Boolean(value))
@@ -215,18 +302,33 @@ const PlayerPreviewModal = ({
       <ConvexDialog.Portal>
         <ConvexDialog.Overlay />
         <ConvexDialog.Content className="h-[90vh]">
-          <CloseButton onPress={() => onOpenChange(false)} />
-          <DialogHeader text="Preview As Player" subtext={`Role: ${roleName || 'Unnamed role'}`} />
+          <CloseButton onPress={() => handleOpenChange(false)} />
+          <DialogHeader
+            text="Preview As Player"
+            subtext={
+              isPlayerScopedPreview
+                ? `Player: ${selectedPlayer?.realName || playerEmail || 'Unknown'}`
+                : `Role: ${roleName || 'Unnamed role'}`
+            }
+          />
 
           <Column className="min-h-0 flex-1 gap-3 pt-3">
-            {rolePlayers.length === 0 ? (
+            {previewablePlayers.length === 0 ? (
               <View className="border-subtle-border bg-text/5 rounded-lg border p-4">
-                <FontText variant="subtext" className="text-center">
-                  No players are assigned to the role &quot;{roleName || 'Unnamed role'}&quot;.
-                </FontText>
-                <FontText variant="subtext" className="mt-1 text-center">
-                  Assign a player to this role to preview their view.
-                </FontText>
+                {isPlayerScopedPreview ? (
+                  <FontText variant="subtext" className="text-center">
+                    There are no players in this game to preview.
+                  </FontText>
+                ) : (
+                  <>
+                    <FontText variant="subtext" className="text-center">
+                      No players are assigned to the role &quot;{roleName || 'Unnamed role'}&quot;.
+                    </FontText>
+                    <FontText variant="subtext" className="mt-1 text-center">
+                      Assign a player to this role to preview their view.
+                    </FontText>
+                  </>
+                )}
               </View>
             ) : (
               <>
@@ -271,10 +373,15 @@ const PlayerPreviewModal = ({
 
                         <Column className="border-border/15 gap-5 border-y py-5">
                           <Row className="items-start justify-between gap-4">
-                            <Pressable disabled className="w-20 items-center opacity-30">
+                            <Pressable
+                              onPress={() =>
+                                setPreviewDayIndex((current) => Math.max(0, current - 1))
+                              }
+                              disabled={previewDayIndex <= 0}
+                              className={`w-20 items-center ${previewDayIndex <= 0 ? 'opacity-30' : ''}`}>
                               <ChevronLeft size={28} color="rgb(46, 41, 37)" />
                               <FontText variant="subtext" className="text-center text-xs">
-                                {' '}
+                                {previousDayLabel || ' '}
                               </FontText>
                             </Pressable>
 
@@ -283,23 +390,45 @@ const PlayerPreviewModal = ({
                                 {selectedDayRangeLabel || 'Current game day'}
                               </FontText>
                               <FontText variant="subtext" className="text-center text-xs">
-                                Day {currentDay + 1}
+                                Day {previewDayIndex + 1}
                               </FontText>
                             </Column>
 
-                            <Pressable disabled className="w-20 items-center opacity-30">
+                            <Pressable
+                              onPress={() =>
+                                setPreviewDayIndex((current) => Math.min(maxDayIndex, current + 1))
+                              }
+                              disabled={previewDayIndex >= maxDayIndex}
+                              className={`w-20 items-center ${previewDayIndex >= maxDayIndex ? 'opacity-30' : ''}`}>
                               <ChevronRight size={28} color="rgb(46, 41, 37)" />
                               <FontText variant="subtext" className="text-center text-xs">
-                                {' '}
+                                {nextDayLabel || ' '}
                               </FontText>
                             </Pressable>
                           </Row>
 
                           <Column className="gap-5">
                             <Column className="bg-text/5 m-auto w-full max-w-lg items-center gap-2 rounded p-4">
-                              <FontText variant="cardHeader" className="text-center">
-                                Morning messages are not part of this preview.
-                              </FontText>
+                              {previewMorningMessage.trim() ? (
+                                <>
+                                  <FontText variant="cardHeader" className="text-center">
+                                    Last Night:
+                                  </FontText>
+                                  <MarkdownRenderer
+                                    markdown={previewMorningMessage}
+                                    isInDialog
+                                    state={emulatedActionState}
+                                    setState={setEmulatedActionState}
+                                    className="w-full"
+                                    textAlign="center"
+                                    viewHeightImages={20}
+                                  />
+                                </>
+                              ) : (
+                                <FontText variant="cardHeader" className="text-center">
+                                  No updates from last night
+                                </FontText>
+                              )}
                             </Column>
 
                             <Column className="items-center gap-1">

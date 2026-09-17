@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View } from 'react-native';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
@@ -10,6 +10,9 @@ import { useList, useValue } from 'hooks/useData';
 import ShadowScrollView from '../ui/ShadowScrollView';
 import DaySelectionDialog from './DaySelectionDialog';
 import FontNumberInput from '../ui/forms/FontNumberInput';
+import { GameSchedule } from 'types/multiplayer';
+import { defaultGameSchedule, getGameScopedKey, normalizeGameSchedule, resolveGameTimeZone } from 'utils/multiplayer';
+import { getZonedDayToken } from 'utils/timezone';
 
 interface NewspaperPageProps {
     gameId: string;
@@ -24,6 +27,15 @@ const NewspaperPage = ({ gameId }: NewspaperPageProps) => {
 
     // Shared day dates array (same as players tab and nightly tab)
     const [dayDatesArray, setDayDatesArray] = useList<string[]>("dayDatesArray", gameId, { privacy: "PUBLIC", defaultValue: [] });
+
+    const [gameSchedule] = useValue<GameSchedule>(getGameScopedKey('gameSchedule', gameId), { defaultValue: defaultGameSchedule, privacy: "PUBLIC" });
+    const gameTimeZone = resolveGameTimeZone(normalizeGameSchedule(gameSchedule.value));
+
+    // "Today" as a calendar token in the shared game zone
+    const todayToken = useCallback(
+        () => getZonedDayToken(Date.now(), gameTimeZone),
+        [gameTimeZone]
+    );
 
     // Convert stored MM/DD/YYYY strings back to real Date objects for UI use
     const fixedDayDatesArray = dayDatesArray.value.map(dateStr => {
@@ -43,9 +55,9 @@ const NewspaperPage = ({ gameId }: NewspaperPageProps) => {
 
     useEffect(() => {
         if (dayDatesArray.value.length === 0 && dayDatesArray.state.isSyncing === false) {
-            setFixedDayDatesArray([new Date()]);
+            setFixedDayDatesArray([todayToken()]);
         }
-    }, [dayDatesArray, setFixedDayDatesArray]);
+    }, [dayDatesArray, setFixedDayDatesArray, todayToken]);
 
     const addNewDay = () => {
         const currentDays = [...fixedDayDatesArray];
@@ -125,7 +137,7 @@ const NewspaperPage = ({ gameId }: NewspaperPageProps) => {
                                                     onOpenChange={setIsDialogOpen}
                                                     index={index}
                                                     dayDate={date}
-                                                    previousDate={index > 0 ? fixedDayDatesArray[index - 1] : new Date()}
+                                                    previousDate={index > 0 ? fixedDayDatesArray[index - 1] : todayToken()}
                                                     followingDate={index < fixedDayDatesArray.length - 1 ? fixedDayDatesArray[index + 1] : undefined}
                                                     onPress={() => setSelectedDayIndex(index)}
                                                     replaceDayDate={replaceDayDate}

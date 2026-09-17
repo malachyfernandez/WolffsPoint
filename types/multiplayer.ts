@@ -55,6 +55,10 @@ export type GameSchedule = {
   voteDayOffset?: number;
   /** When true, players can see who voted for whom on the newspaper screen. */
   publicVoting?: boolean;
+  /** IANA timezone name, e.g. "America/New_York". All schedule wall-clock
+   * times (wakeUpTime, deadlines) are interpreted in this zone for every
+   * player, regardless of device timezone. Absent = device-local (legacy). */
+  timezone?: string;
 };
 
 export type TownSquarePost = {

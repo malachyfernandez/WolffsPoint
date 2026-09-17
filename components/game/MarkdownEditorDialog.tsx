@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { View } from 'react-native';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { TextInput, View } from 'react-native';
 import ConvexDialog from '../ui/dialog/ConvexDialog';
 import DialogHeader from '../ui/dialog/DialogHeader';
 import SaveHistoryPill from '../ui/dialog/SaveHistoryPill';
@@ -335,6 +335,7 @@ const MarkdownEditorDialog = ({
 
   // Sticky-enabled: once Done becomes enabled, it stays enabled (until dialog closes)
   const [hasEverBeenEnabled, setHasEverBeenEnabled] = useState(false);
+  const bodyInputRef = useRef<TextInput>(null);
 
   useEffect(() => {
     if (!isOpen) {
@@ -358,7 +359,14 @@ const MarkdownEditorDialog = ({
     setPreviewInputState({});
     setIsHistoryOpen(false);
     setPreviewEntry(null);
-  }, [initialMarkdown, initialTitle, isOpen]);
+    // Focus the body after the dialog's open animation so the user can type right away.
+    const timer = readOnly
+      ? null
+      : setTimeout(() => bodyInputRef.current?.focus(), 100);
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [initialMarkdown, initialTitle, isOpen, readOnly]);
 
   const handleTabChange = (newTab: string) => {
     if (activeTab === 'editing' && newTab === 'preview') {
@@ -698,6 +706,7 @@ const MarkdownEditorDialog = ({
                     </Column>
                   ) : undefined}
                   readOnly={readOnly}
+                  inputRef={bodyInputRef}
                 />
                 <Row className="-mx-3 items-center justify-between gap-4 pt-4 sm:mx-0">
                   {cursorScriptBlock && !readOnly ? (

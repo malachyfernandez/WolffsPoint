@@ -4,16 +4,22 @@ import Column from '../../layout/Column';
 import Row from '../../layout/Row';
 import AppButton from '../buttons/AppButton';
 import FontText from '../text/FontText';
-import { useList } from 'hooks/useData';
+import { useList, useValue } from 'hooks/useData';
 import ShadowScrollView from '../../ui/ShadowScrollView';
 import DaySelectionDialog from '../../game/DaySelectionDialog';
 import ChooseDayDialog from '../../game/ChooseDayDialog';
 import DayButton from './DayButton';
+import { GameSchedule } from 'types/multiplayer';
 import {
+  defaultGameSchedule,
   getCurrentPlayableDayIndex,
   getDayRangeLabel,
+  getGameScopedKey,
+  normalizeGameSchedule,
   parseStoredDayDates,
+  resolveGameTimeZone,
 } from 'utils/multiplayer';
+import { getZonedDayToken } from 'utils/timezone';
 
 export type DaySelectorMode = 'player' | 'nightly' | 'newspaper';
 
@@ -58,9 +64,22 @@ const ComprehensiveDaySelector = ({
     defaultValue: [],
   });
 
+  const [gameSchedule] = useValue<GameSchedule>(getGameScopedKey('gameSchedule', gameId), {
+    defaultValue: defaultGameSchedule,
+    privacy: 'PUBLIC',
+  });
+  const gameTimeZone = resolveGameTimeZone(normalizeGameSchedule(gameSchedule.value));
+
+  // "Today" as a calendar token in the shared game zone
+  const todayToken = () => getZonedDayToken(Date.now(), gameTimeZone);
+
   // Convert stored MM/DD/YYYY strings back to real Date objects for UI use
   const fixedDayDatesArray = parseStoredDayDates(dayDatesArray.value);
-  const currentPlayableDayIndex = getCurrentPlayableDayIndex(fixedDayDatesArray);
+  const currentPlayableDayIndex = getCurrentPlayableDayIndex(
+    fixedDayDatesArray,
+    new Date(),
+    gameTimeZone
+  );
 
   // Clean setter that accepts Date[] and handles string conversion internally
   const setFixedDayDatesArray = useCallback(
@@ -110,7 +129,7 @@ const ComprehensiveDaySelector = ({
   const addNewDay = (customDaysPerGameDay?: number) => {
     const currentDays = [...fixedDayDatesArray];
     if (currentDays.length === 0) {
-      const firstDay = new Date();
+      const firstDay = todayToken();
       setFixedDayDatesArray([firstDay]);
       setSelectedDayIndex(0);
       setHasCompletedInitialDaySetup(true);
@@ -193,7 +212,7 @@ const ComprehensiveDaySelector = ({
 
   const handleInitialDaySetupSubmit = (daysPerGameDay: number) => {
     if (fixedDayDatesArray.length === 0) {
-      setFixedDayDatesArray([new Date()]);
+      setFixedDayDatesArray([todayToken()]);
       setSelectedDayIndex(0);
     }
 
@@ -257,7 +276,7 @@ const ComprehensiveDaySelector = ({
                       index={index}
                       dayDate={date}
                       buttonLabel={label}
-                      previousDate={index > 0 ? fixedDayDatesArray[index - 1] : new Date()}
+                      previousDate={index > 0 ? fixedDayDatesArray[index - 1] : todayToken()}
                       followingDate={
                         index < fixedDayDatesArray.length - 1
                           ? fixedDayDatesArray[index + 1]

@@ -5,6 +5,7 @@ import { useFonts } from 'expo-font';
 type FontWeight = 'regular' | 'medium' | 'bold';
 
 interface FontTextInputProps extends TextInputProps {
+    ref?: React.Ref<TextInput>;
     className?: string;
     weight?: FontWeight;
     style?: TextStyle;
@@ -53,6 +54,7 @@ const FontTextInput = ({
     onBlur,
     autoFocus,
     editable,
+    ref,
     ...props
 }: FontTextInputProps) => {
     const [fontsLoaded] = useFonts({
@@ -132,7 +134,15 @@ const FontTextInput = ({
     if (Platform.OS === 'web' && autoGrow) {
         return (
             <textarea
-                ref={textareaRef}
+                ref={(el) => {
+                    textareaRef.current = el;
+                    if (typeof ref === 'function') {
+                        ref(el as unknown as TextInput);
+                    } else if (ref) {
+                        (ref as React.MutableRefObject<TextInput | null>).current =
+                            el as unknown as TextInput;
+                    }
+                }}
                 placeholder={placeholder}
                 value={typeof value === 'string' ? value : ''}
                 autoFocus={autoFocus}
@@ -182,6 +192,7 @@ const FontTextInput = ({
 
     return (
         <TextInput
+            ref={ref}
             className={`${className} ${getVariantClasses()} text-text focus:outline-none rounded`}
             style={{
                 fontFamily: fontsLoaded ? 'LibreBaskerville' : undefined,

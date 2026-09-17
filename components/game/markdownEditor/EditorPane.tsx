@@ -1,4 +1,5 @@
 import React from 'react';
+import { TextInput } from 'react-native';
 import ShadowScrollView from '../../ui/ShadowScrollView';
 import Column from '../../layout/Column';
 import TownSquareComposerToolbar from '../townSquare/TownSquareComposerToolbar';
@@ -20,6 +21,8 @@ interface EditorPaneProps {
     onVariable?: () => void;
     /** When true, the editor is non-editable (view-only) and the toolbar is hidden. */
     readOnly?: boolean;
+    /** Optional ref forwarded to the body text input. */
+    inputRef?: React.Ref<TextInput>;
 }
 
 export function EditorPane({
@@ -36,6 +39,7 @@ export function EditorPane({
     onScript,
     onVariable,
     readOnly = false,
+    inputRef,
 }: EditorPaneProps) {
     return (
         <Column className='gap-1 flex-1 min-w-0'>
@@ -58,6 +62,7 @@ export function EditorPane({
                         onSelectionChange={onSelectionChange}
                         value={value}
                         readOnly={readOnly}
+                        inputRef={inputRef}
                     />
             </ShadowScrollView>
         </Column>

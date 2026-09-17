@@ -111,6 +111,8 @@ const StickyTocButton = ({ onPress, isOpen = false }: StickyTocButtonProps) => {
             justify-content: center;
             z-index: 2147483647;
             cursor: pointer;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
             transition: ${isStuck ? 'opacity 0.3s, background 0.3s' : 'none'};
             user-select: none;

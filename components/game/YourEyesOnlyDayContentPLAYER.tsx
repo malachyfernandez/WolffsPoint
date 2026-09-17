@@ -36,7 +36,9 @@ import {
   normalizeGameSchedule,
   normalizePlayerActionState,
   parseStoredDayDates,
+  resolveGameTimeZone,
 } from 'utils/multiplayer';
+import { getZonedDayToken } from 'utils/timezone';
 import { deepEqual } from 'utils/deepEqual';
 
 interface YourEyesOnlyDayContentPLAYERProps {
@@ -117,10 +119,14 @@ const YourEyesOnlyDayContentPLAYER = ({
   const [now, setNow] = useState(() => new Date());
 
   const dayDates = useMemo(() => parseStoredDayDates(dayDateStrings), [dayDateStrings]);
-  const currentDayIndex = useMemo(() => getCurrentPlayableDayIndex(dayDates), [dayDates]);
   const schedule = useMemo(
     () => normalizeGameSchedule(scheduleRecord.value ?? defaultGameSchedule),
     [scheduleRecord.value]
+  );
+  const gameTimeZone = resolveGameTimeZone(schedule);
+  const currentDayIndex = useMemo(
+    () => getCurrentPlayableDayIndex(dayDates, new Date(), gameTimeZone),
+    [dayDates, gameTimeZone]
   );
   const selectedDayEndDate = useMemo(
     () => getDayEndDate(dayDates, dayIndex, numberOfRealDaysPerInGameDay),
@@ -129,7 +135,7 @@ const YourEyesOnlyDayContentPLAYER = ({
   const selectedMorningDayIndex = dayIndex - 1;
   const hasSelectedMorning =
     selectedMorningDayIndex >= 0 &&
-    isDayContentReleased(dayDates, selectedMorningDayIndex, schedule.wakeUpTime, now);
+    isDayContentReleased(dayDates, selectedMorningDayIndex, schedule.wakeUpTime, now, gameTimeZone);
   const matchingPlayer = useMemo(
     () =>
       userTable.find(
@@ -203,10 +209,11 @@ const YourEyesOnlyDayContentPLAYER = ({
     [voteDayOffset, selectedDayEndDate]
   );
   const isVoteLocked =
-    dayIndex < currentDayIndex || !isNightWindowOpen(voteDeadlineBaseDate, voteDeadlineTime, now);
+    dayIndex < currentDayIndex ||
+    !isNightWindowOpen(voteDeadlineBaseDate, voteDeadlineTime, now, gameTimeZone);
   const isActionLocked =
     dayIndex < currentDayIndex ||
-    !isNightWindowOpen(actionDeadlineBaseDate, actionDeadlineTime, now);
+    !isNightWindowOpen(actionDeadlineBaseDate, actionDeadlineTime, now, gameTimeZone);
   const isVotingSkipped = (skipVotingDays ?? []).includes(dayIndex);
   const isActionsSkipped = (skipActionsDays ?? []).includes(dayIndex);
   const isSkipVote = submission.value.vote === 'SKIP_VOTE';
@@ -385,12 +392,12 @@ const YourEyesOnlyDayContentPLAYER = ({
   }, [plannedUpdates, userTable]);
 
   const voteDeadline = useMemo(
-    () => buildScheduledDate(voteDeadlineBaseDate, voteDeadlineTime),
-    [voteDeadlineBaseDate, voteDeadlineTime]
+    () => buildScheduledDate(voteDeadlineBaseDate, voteDeadlineTime, gameTimeZone),
+    [voteDeadlineBaseDate, voteDeadlineTime, gameTimeZone]
   );
   const actionDeadline = useMemo(
-    () => buildScheduledDate(actionDeadlineBaseDate, actionDeadlineTime),
-    [actionDeadlineTime, actionDeadlineBaseDate]
+    () => buildScheduledDate(actionDeadlineBaseDate, actionDeadlineTime, gameTimeZone),
+    [actionDeadlineTime, actionDeadlineBaseDate, gameTimeZone]
   );
 
   // Determine which deadline comes first
@@ -419,8 +426,23 @@ const YourEyesOnlyDayContentPLAYER = ({
   const secondaryIsLocked = isVotePrimary ? isActionLocked : isVoteLocked;
   const secondaryLabel = isVotePrimary ? 'Actions' : 'Voting';
   const secondarySkipped = isVotePrimary ? isActionsSkipped : isVotingSkipped;
-  const primaryDateLabel = formatContextualDateLabel(primaryDeadline, undefined, now, 'lower');
-  const secondaryDateLabel = formatContextualDateLabel(secondaryDeadline, undefined, now, 'lower');
+  // Deadlines are real instants — convert to the game-zone calendar day so
+  // the today/tomorrow label matches what the schedule means.
+  const deadlineDayToken = (instant: Date) => getZonedDayToken(instant.getTime(), gameTimeZone);
+  const primaryDateLabel = formatContextualDateLabel(
+    deadlineDayToken(primaryDeadline),
+    undefined,
+    now,
+    'lower',
+    gameTimeZone
+  );
+  const secondaryDateLabel = formatContextualDateLabel(
+    deadlineDayToken(secondaryDeadline),
+    undefined,
+    now,
+    'lower',
+    gameTimeZone
+  );
 
   return (
     <Column className="gap-5">

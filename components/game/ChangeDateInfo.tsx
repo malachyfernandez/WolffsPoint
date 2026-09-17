@@ -11,8 +11,11 @@ import SmartNumberInput from '../ui/forms/SmartNumberInput';
 import StatusButton from '../ui/StatusButton';
 import JoinHandler from '../ui/forms/JoinHandler';
 import DialogHeader from '../ui/dialog/DialogHeader';
-import { useList } from 'hooks/useData';
+import { useList, useValue } from 'hooks/useData';
 import CloseButton from '../ui/dialog/CloseButton';
+import { GameSchedule } from 'types/multiplayer';
+import { defaultGameSchedule, getGameScopedKey, normalizeGameSchedule, resolveGameTimeZone } from 'utils/multiplayer';
+import { getZonedDayToken } from 'utils/timezone';
 
 interface ChangeDateInfoProps {
     gameId: string;
@@ -73,7 +76,9 @@ const ChangeDateInfo = ({ gameId, isGettingStarted }: ChangeDateInfoProps) => {
 
     const isFormValid = isDateValid && isNumberValid;
 
-    const todaysDate = new Date()
+    const [gameSchedule] = useValue<GameSchedule>(getGameScopedKey('gameSchedule', gameId), { defaultValue: defaultGameSchedule, privacy: 'PUBLIC' });
+    const gameTimeZone = resolveGameTimeZone(normalizeGameSchedule(gameSchedule.value));
+    const todaysDate = getZonedDayToken(Date.now(), gameTimeZone)
 
         return (
 

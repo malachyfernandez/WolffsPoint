@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { View, ScrollView } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { TextInput, View, ScrollView } from 'react-native';
 import FontTextInput from '../ui/forms/FontTextInput';
 import ConvexDialog from '../ui/dialog/ConvexDialog';
 import DialogHeader from '../ui/dialog/DialogHeader';
@@ -51,6 +51,7 @@ const ActionEditorDialog = ({
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [previewEntry, setPreviewEntry] = useState<SavedEntry | null>(null);
   const [hasEverBeenEnabled, setHasEverBeenEnabled] = useState(false);
+  const actionInputRef = useRef<TextInput>(null);
 
   const { targetRef, performMinimize } = useMinimizeTarget({
     title,
@@ -68,6 +69,9 @@ const ActionEditorDialog = ({
     setEditingStartAction(initialAction);
     setIsHistoryOpen(false);
     setPreviewEntry(null);
+    // Focus the action text after the dialog's open animation.
+    const timer = setTimeout(() => actionInputRef.current?.focus(), 100);
+    return () => clearTimeout(timer);
   }, [initialAction, isOpen]);
 
   const hasUnsavedChanges = draftAction.trim() !== (editingStartAction?.trim() || '');
@@ -177,6 +181,7 @@ const ActionEditorDialog = ({
                     Action Text
                   </FontText>
                   <FontTextInput
+                    ref={actionInputRef}
                     value={draftAction}
                     onChangeText={setDraftAction}
                     placeholder="e.g., Kill: Ty Pace • Weapon: Piano"

@@ -1,6 +1,6 @@
-import React, { useMemo, useState, useEffect } from 'react';
-import { Pressable, View, ScrollView } from 'react-native';
-import { Pencil, Plus } from 'lucide-react-native';
+import React, { useMemo, useRef, useState, useEffect } from 'react';
+import { Pressable, TextInput, View, ScrollView } from 'react-native';
+import { Pencil, Plus, Search } from 'lucide-react-native';
 import ConvexDialog from '../ui/dialog/ConvexDialog';
 import CloseButton from '../ui/dialog/CloseButton';
 import SaveHistoryPill from '../ui/dialog/SaveHistoryPill';
@@ -88,6 +88,8 @@ const TagCellEditor = ({
   const [selectedTagNames, setSelectedTagNames] = useState<string[]>([]);
   const [textValue, setTextValue] = useState('');
   const [isAddTagOpen, setIsAddTagOpen] = useState(false);
+  const [tagSearch, setTagSearch] = useState('');
+  const searchInputRef = useRef<TextInput>(null);
   const [editingTag, setEditingTag] = useState<TagDefinition | null>(null);
   const [isLeaveConfirmOpen, setIsLeaveConfirmOpen] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
@@ -113,10 +115,18 @@ const TagCellEditor = ({
     setIsLeaveConfirmOpen(false);
     setIsHistoryOpen(false);
     setPreviewEntry(null);
+    setTagSearch('');
+    // Focus after the dialog's open animation so the user can type right away.
+    const timer = setTimeout(() => searchInputRef.current?.focus(), 100);
+    return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
   const definitions = tagDefs.value ?? [];
+  const tagQuery = tagSearch.trim().toLowerCase();
+  const filteredDefinitions = tagQuery
+    ? definitions.filter((d) => d.name.toLowerCase().includes(tagQuery))
+    : definitions;
   const isInTagMode = selectedTagNames.length > 0;
 
   // Detect unsaved changes by comparing current draft to the snapshot taken
@@ -290,14 +300,24 @@ const TagCellEditor = ({
                 <Row className="items-stretch gap-3">
                   {/* Left: Tag sidebar */}
                   <Column className="w-44 gap-2">
+                    <Row className="border-subtle-border items-center gap-1.5 rounded-lg border px-2">
+                      <Search size={13} color="rgb(46, 41, 37)" style={{ opacity: 0.6 }} />
+                      <FontTextInput
+                        ref={searchInputRef}
+                        placeholder="Search tags..."
+                        className="h-8 flex-1 text-xs"
+                        value={tagSearch}
+                        onChangeText={setTagSearch}
+                      />
+                    </Row>
                     <ShadowScrollView className="border-subtle-border max-h-[240px] rounded-lg border">
                       <Column className="gap-1 p-2">
-                        {definitions.length === 0 ? (
+                        {filteredDefinitions.length === 0 ? (
                           <FontText variant="subtext" className="px-1 py-4 text-center text-xs">
-                            No tags yet
+                            {definitions.length === 0 ? 'No tags yet' : 'No matching tags'}
                           </FontText>
                         ) : (
-                          definitions.map((def) => {
+                          filteredDefinitions.map((def) => {
                             const color = getTagColor(def.color);
                             const isSelected = selectedTagNames.includes(def.name);
                             return (
