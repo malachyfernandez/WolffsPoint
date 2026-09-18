@@ -25,6 +25,7 @@ import { parseScript } from '../lang/parser';
 import { printStatement } from '../lang/printer';
 import type { InputType } from '../registry';
 import { STATEMENT_BLOCKS, EXPRESSION_BLOCKS } from '../registry';
+import { getCategoryTint } from './blockColors';
 import { useValue } from 'hooks/useData';
 import { getGameScopedKey } from 'utils/multiplayer';
 import type { TagDefinitionsData } from '../../components/game/TagCellEditor';
@@ -655,11 +656,13 @@ const ModalItemRow = ({
   const tooltipId = useId();
   const { setHovered } = useTooltip(tooltipId, item.disabledReason);
   const hasPreview = item.previewStatement || item.previewExpression;
+  const categoryTint = getCategoryTint(item.category);
   return (
     <Pressable
       onPress={() => !item.disabledReason && onSelect()}
       onHoverIn={() => item.disabledReason && setHovered(true)}
       onHoverOut={() => setHovered(false)}
+      style={{ borderLeftWidth: 3, borderLeftColor: categoryTint.solid }}
       className={`border-subtle-border relative rounded-lg border px-3 py-2 ${
         item.disabledReason
           ? 'opacity-40'
@@ -1598,18 +1601,25 @@ const InsertModal = ({
               />
               {!search.trim() && categoryOrder.length > 1 && (
                 <Row className="flex-wrap gap-1">
-                  {categoryOrder.map((category) => (
-                    <Pressable
-                      key={category}
-                      onPress={() => setActiveCategory(category)}
-                      className={`rounded-lg px-3 py-1.5 ${effectiveCategory === category ? 'bg-accent' : 'bg-text/10'}`}>
-                      <FontText
-                        className="text-xs"
-                        color={effectiveCategory === category ? 'white' : undefined}>
-                        {CATEGORY_LABELS[category] ?? category}
-                      </FontText>
-                    </Pressable>
-                  ))}
+                  {categoryOrder.map((category) => {
+                    const tint = getCategoryTint(category);
+                    const active = effectiveCategory === category;
+                    return (
+                      <Pressable
+                        key={category}
+                        onPress={() => setActiveCategory(category)}
+                        style={{
+                          backgroundColor: active ? tint.solid : tint.soft,
+                          borderColor: tint.solid,
+                          borderWidth: 1,
+                        }}
+                        className="rounded-lg px-3 py-1.5">
+                        <FontText className="text-xs" color={active ? 'white' : undefined}>
+                          {CATEGORY_LABELS[category] ?? category}
+                        </FontText>
+                      </Pressable>
+                    );
+                  })}
                 </Row>
               )}
               <ShadowScrollView

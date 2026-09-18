@@ -739,70 +739,68 @@ const DaysTable = ({
   };
 
   return (
-    <>
-      <Column onLayout={onLayout} ref={tableRef} className="gap-0">
-        <Row className="gap-0">
-          <Column className={`border-border w-min gap-0 rounded border-2 ${className || ''}`}>
-            <DayTitleRow
-              userTableTitle={userTableTitleValue}
+    <Column onLayout={onLayout} ref={tableRef} className="gap-0">
+      <Row className="gap-0">
+        <Column className={`border-border w-min gap-0 rounded border-2 ${className || ''}`}>
+          <DayTitleRow
+            userTableTitle={userTableTitleValue}
+            userTableColumnVisibility={columnVisibilityValue}
+            setColumnTitle={UNDOABLEsetDayColumnTitle}
+            onEditStart={() => handleRowEditStart('title')}
+            onEditEnd={handleRowEditEnd}
+            isEditing={editingRow === 'title'}
+            dayBaseColumnWidths={dayBaseColumnWidths}
+            extraDayColumnWidths={extraDayColumnWidths}
+            dayBaseColumnSizes={columnSizes.value.dayBaseColumns}
+            extraDayColumnSizes={columnSizes.value.dayExtraColumns}
+            onSetDayBaseColumnSize={setDayBaseColumnSize}
+            onSetExtraDayColumnSize={setDayExtraColumnSize}
+            onDeleteExtraDayColumn={UNDOABLEdeleteDayColumn}
+            nightlyVisibility={nightlyVisibilityValue?.extraDayColumns}
+            onToggleNightlyVisibility={toggleNightlyVisibility}
+            selectionMode={selectionMode}
+            columnCellIds={{
+              vote: voteColumnCellIds,
+              action: actionColumnCellIds,
+              extra: extraColumnCellIds,
+            }}
+          />
+
+          {users.map((user, index) => (
+            <DayUserRow
+              key={index}
+              user={user}
+              index={index}
+              isLast={index === users.length - 1}
+              dayNumber={dayNumber}
+              gameId={gameId}
+              setVoteValue={UNDOABLEsetVoteValue}
+              setActionValue={UNDOABLEsetActionValue}
+              setExtraColumnValue={UNDOABLEsetExtraDayColumnValue}
               userTableColumnVisibility={columnVisibilityValue}
-              setColumnTitle={UNDOABLEsetDayColumnTitle}
-              onEditStart={() => handleRowEditStart('title')}
+              onEditStart={() => handleRowEditStart(index)}
               onEditEnd={handleRowEditEnd}
-              isEditing={editingRow === 'title'}
+              isEditing={editingRow === index}
               dayBaseColumnWidths={dayBaseColumnWidths}
               extraDayColumnWidths={extraDayColumnWidths}
-              dayBaseColumnSizes={columnSizes.value.dayBaseColumns}
-              extraDayColumnSizes={columnSizes.value.dayExtraColumns}
-              onSetDayBaseColumnSize={setDayBaseColumnSize}
-              onSetExtraDayColumnSize={setDayExtraColumnSize}
-              onDeleteExtraDayColumn={UNDOABLEdeleteDayColumn}
-              nightlyVisibility={nightlyVisibilityValue?.extraDayColumns}
-              onToggleNightlyVisibility={toggleNightlyVisibility}
+              users={users}
+              dayColumnTitles={titles.extraDayColumns}
+              onTagsAdded={handleTagsAdded}
+              onTagsRemoved={handleTagsRemoved}
               selectionMode={selectionMode}
-              columnCellIds={{
-                vote: voteColumnCellIds,
-                action: actionColumnCellIds,
-                extra: extraColumnCellIds,
-              }}
             />
-
-            {users.map((user, index) => (
-              <DayUserRow
-                key={index}
-                user={user}
-                index={index}
-                isLast={index === users.length - 1}
-                dayNumber={dayNumber}
-                gameId={gameId}
-                setVoteValue={UNDOABLEsetVoteValue}
-                setActionValue={UNDOABLEsetActionValue}
-                setExtraColumnValue={UNDOABLEsetExtraDayColumnValue}
-                userTableColumnVisibility={columnVisibilityValue}
-                onEditStart={() => handleRowEditStart(index)}
-                onEditEnd={handleRowEditEnd}
-                isEditing={editingRow === index}
-                dayBaseColumnWidths={dayBaseColumnWidths}
-                extraDayColumnWidths={extraDayColumnWidths}
-                users={users}
-                dayColumnTitles={titles.extraDayColumns}
-                onTagsAdded={handleTagsAdded}
-                onTagsRemoved={handleTagsRemoved}
-                selectionMode={selectionMode}
-              />
-            ))}
-          </Column>
-          {!selectionMode && (
-            <Row className="bg-light -z-10 h-12 w-12 items-center justify-center gap-4">
-              <AppButton variant="filled" className="h-8! w-8" onPress={UNDOABLEaddDayColumn}>
-                <FontText weight="bold" color="white" className="mt-[-0.1rem] text-xl">
-                  +
-                </FontText>
-              </AppButton>
-            </Row>
-          )}
-        </Row>
-      </Column>
+          ))}
+        </Column>
+        {!selectionMode && (
+          <Row className="bg-light -z-10 h-12 w-12 items-center justify-center gap-4">
+            <AppButton variant="filled" className="h-8! w-8" onPress={UNDOABLEaddDayColumn}>
+              <FontText weight="bold" color="white" className="mt-[-0.1rem] text-xl">
+                +
+              </FontText>
+            </AppButton>
+          </Row>
+        )}
+      </Row>
 
       {/* Bulk editor dialogs */}
       <VoteEditorDialog
@@ -833,7 +831,7 @@ const DaysTable = ({
         onChange={(newValue) => handleBulkTagUpdate(newValue)}
         submitLabel="Update All"
       />
-    </>
+    </Column>
   );
 };
 

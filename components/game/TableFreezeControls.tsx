@@ -107,7 +107,10 @@ const TableFreezeControls = ({ controller }: TableFreezeControlsProps) => {
               <FontText weight="medium">Cancel Update</FontText>
             </Row>
           </AppButton>
-          {!isButtonsWrapped && <View className="h-5 w-px bg-text/20" />}
+          {/* Always rendered so the wrap measurement stays stable — toggling
+              this in/out of the layout makes wrap → remove → unwrap → add →
+              wrap loop forever. Faded out instead when wrapped. */}
+          <View className={`h-5 w-px ${isButtonsWrapped ? 'opacity-0' : 'bg-text/20'}`} />
           <AppButton
             variant="outline"
             className="min-w-40 px-3"

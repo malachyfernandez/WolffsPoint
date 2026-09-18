@@ -17,8 +17,8 @@ interface ActionPillsProps {
 export const parseActionPills = (actionText: string): ActionPill[] => {
     if (!actionText.trim()) return [];
 
-    // Split by bullet character
-    const segments = actionText.split('•');
+    // Split by bullet character or double dash
+    const segments = actionText.split(/•|--/);
 
     return segments.map(segment => {
         const trimmed = segment.trim();

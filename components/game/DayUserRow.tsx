@@ -198,29 +198,29 @@ const DayUserRow = ({
             </Animated.View>
           );
         })}
-        <ActionEditorDialog
-          isOpen={isActionDialogOpen}
-          onOpenChange={setIsActionDialogOpen}
-          title={`${user.realName || 'User'} Action`}
-          initialAction={getPlayerActionSummary(dayData.action)}
-          onSubmit={(action) => setActionValue?.(index, action)}
-          dialogSubtext={`Set the action for ${user.realName || 'User'}.`}
-          historyKey={`action:${gameId}:${dayNumber}:${index}`}
-        />
-        <VoteEditorDialog
-          isOpen={isVoteDialogOpen}
-          onOpenChange={setIsVoteDialogOpen}
-          title={`${user.realName || 'User'} Vote`}
-          initialVote={dayData.vote || ''}
-          initialVoteMultiplier={dayData.voteMultiplier ?? 1}
-          voteInputs={dayData.voteInputs}
-          voteInputKey={dayData.voteInputKey}
-          onSubmit={(vote, multiplier) => setVoteValue?.(index, vote, multiplier)}
-          dialogSubtext={`Set the vote target for ${user.realName || 'User'}.`}
-          users={users}
-          historyKey={`vote:${gameId}:${dayNumber}:${index}`}
-        />
       </Row>
+      <ActionEditorDialog
+        isOpen={isActionDialogOpen}
+        onOpenChange={setIsActionDialogOpen}
+        title={`${user.realName || 'User'} Action`}
+        initialAction={getPlayerActionSummary(dayData.action)}
+        onSubmit={(action) => setActionValue?.(index, action)}
+        dialogSubtext={`Set the action for ${user.realName || 'User'}.`}
+        historyKey={`action:${gameId}:${dayNumber}:${index}`}
+      />
+      <VoteEditorDialog
+        isOpen={isVoteDialogOpen}
+        onOpenChange={setIsVoteDialogOpen}
+        title={`${user.realName || 'User'} Vote`}
+        initialVote={dayData.vote || ''}
+        initialVoteMultiplier={dayData.voteMultiplier ?? 1}
+        voteInputs={dayData.voteInputs}
+        voteInputKey={dayData.voteInputKey}
+        onSubmit={(vote, multiplier) => setVoteValue?.(index, vote, multiplier)}
+        dialogSubtext={`Set the vote target for ${user.realName || 'User'}.`}
+        users={users}
+        historyKey={`vote:${gameId}:${dayNumber}:${index}`}
+      />
     </View>
   );
 };

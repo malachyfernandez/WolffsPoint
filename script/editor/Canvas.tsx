@@ -35,6 +35,7 @@ import { printExpression, printStatement } from '../lang/printer';
 import { getMarkdownVariableNames } from '../markdownVariables';
 import type { BlockInput, InputType } from '../registry';
 import { EXPRESSION_BLOCKS, STATEMENT_BLOCKS } from '../registry';
+import { getCategoryTint, getInputTypeTint, type BlockTint } from './blockColors';
 import type { DefinedFunction, InsertTarget } from './InsertModal';
 import { BUILTIN_FUNCTION_NAMES } from './InsertModal';
 import {
@@ -68,6 +69,23 @@ const TagDefinitionsContext = React.createContext<TagDefinitionsContextValue | n
 const BOOLEAN_OPERATORS: BinaryOperator[] = ['==', '!=', '>', '<', '>=', '<=', 'AND', 'OR'];
 const MATH_OPERATORS: BinaryOperator[] = ['+', '-', '*', '/', '%'];
 const isMathOperator = (op: BinaryOperator) => MATH_OPERATORS.includes(op);
+
+/** Script globals that count as "data" sources (vs user-defined variables). */
+const DATA_SOURCE_NAMES = new Set([
+  'players',
+  'roles',
+  'currentPlayer',
+  'currentDay',
+  'dayDates',
+  'schedule',
+  'profiles',
+  'Inputs',
+  'InputsWithData',
+  'placedTag',
+  'placedUser',
+  'placedDay',
+  'placedColumn',
+]);
 
 const sanitizeIdentifier = (value: string) =>
   value.replace(/[^a-zA-Z0-9_]/g, '').replace(/^[0-9]/, '_$&');
@@ -264,6 +282,7 @@ const Swapable = ({
   indent = 0,
   tooltipText,
   moveTarget,
+  tint,
 }: {
   label: string;
   onSwap: () => void;
@@ -273,6 +292,8 @@ const Swapable = ({
   indent?: number;
   tooltipText?: string;
   moveTarget?: ExpressionMoveTarget | { kind: 'block'; path: number[]; statement: Statement };
+  /** Category/type color — tints the block background and border. */
+  tint?: BlockTint;
 }) => {
   const moveTool = React.useContext(MoveToolContext);
   const moveKind = moveTarget?.kind === 'block' ? 'block' : moveTarget ? 'expression' : undefined;
@@ -306,9 +327,10 @@ const Swapable = ({
   //   block/statement: rounded-xl(12px) - 1 = 11px
   const radius = variant === 'piece' ? 3 : 11;
 
+  const bgClass = tint ? '' : 'bg-inner-background';
   const containerClassName = (() => {
     if (variant === 'piece') {
-      return `border-subtle-border rounded border px-2 py-1 relative overflow-hidden bg-inner-background ${
+      return `border-subtle-border rounded border px-2 py-1 relative overflow-hidden ${bgClass} ${
         hovered ? 'border-text/30' : 'border-subtle-border'
       }`;
     }
@@ -316,18 +338,24 @@ const Swapable = ({
       return hovered ? 'bg-text/20' : 'bg-transparent';
     }
     if (variant === 'statement') {
-      return `rounded-xl border ${isFunction ? 'p-1' : 'p-3'} relative overflow-hidden bg-inner-background ${
+      return `rounded-xl border ${isFunction ? 'p-1' : 'p-3'} relative overflow-hidden ${bgClass} ${
         hovered ? 'border-text/30' : 'border-subtle-border'
       }`;
     }
-    return `rounded-xl border px-2 py-1 relative overflow-hidden bg-inner-background ${
+    return `rounded-xl border px-2 py-1 relative overflow-hidden ${bgClass} ${
       hovered ? 'border-text/30' : 'border-subtle-border'
     }`;
   })();
 
   return (
     <View
-      style={{ marginLeft: indent }}
+      style={[
+        { marginLeft: indent },
+        tint && {
+          backgroundColor: tint.bg,
+          borderColor: hovered ? tint.solid : tint.border,
+        },
+      ]}
       className={containerClassName}
       {...({ 'data-swapable': true, 'data-move-kind': moveKind } as Record<string, unknown>)}
       {...({
@@ -445,6 +473,7 @@ const PuzzleConnector = ({
   const isVertical = direction === 'vertical';
   const isList = type === 'list';
   const disabled = !!moveTool && !validPlace;
+  const socketTint = getInputTypeTint(type);
   const handlePress = () => {
     if (!moveTool) return onPress();
     if (!validPlace || !placeTarget) return;
@@ -460,6 +489,11 @@ const PuzzleConnector = ({
       onHoverOut={() => setHovered(false)}
       className={`relative m-0 h-7 w-7 items-center justify-center ${isVertical ? 'my-1 w-full' : ''}`}>
       <View
+        style={
+          !validPlace && type
+            ? { borderColor: socketTint.solid, backgroundColor: socketTint.soft }
+            : undefined
+        }
         className={`items-center justify-center border transition-all ${
           isList ? 'rounded-[3px]' : 'rounded-full'
         } ${
@@ -635,11 +669,13 @@ const BooleanSocket = ({
   tooltip,
   location,
   linkIndex,
+  type,
 }: {
   onAdd: () => void;
   tooltip?: string;
   location?: ExpressionLocation;
   linkIndex?: number;
+  type?: InputType;
 }) => {
   const moveTool = React.useContext(MoveToolContext);
   const validPlace =
@@ -664,6 +700,14 @@ const BooleanSocket = ({
       onHoverIn={() => (!moveTool || validPlace) && setHovered(true)}
       onHoverOut={() => setHovered(false)}>
       <View
+        style={
+          !validPlace && type
+            ? {
+                borderColor: getInputTypeTint(type).solid,
+                backgroundColor: getInputTypeTint(type).soft,
+              }
+            : undefined
+        }
         className={`h-8 min-w-16 items-center justify-center rounded border border-dashed px-3 ${
           validPlace ? 'border-green-800 bg-green-700' : 'border-subtle-border bg-transparent'
         } ${moveTool && !validPlace ? 'opacity-30' : ''}`}>
@@ -909,6 +953,7 @@ export const ExpressionSocket = ({
         onAdd={() => openExpressionModal('whole', expectedType)}
         tooltip={`Add ${label}`}
         location={location}
+        type={expectedType}
       />
     );
   }
@@ -919,6 +964,7 @@ export const ExpressionSocket = ({
         label={expressionLabel}
         moveTarget={{ kind: 'whole', location, expression }}
         variant="piece"
+        tint={getCategoryTint('boolean')}
         onSwap={() => openExpressionModal('whole', 'boolean')}>
         <FontText weight="medium" className="text-sm">
           {String(expression.value)}
@@ -981,6 +1027,7 @@ export const ExpressionSocket = ({
         label={expressionLabel}
         moveTarget={{ kind: 'whole', location, expression }}
         variant="block"
+        tint={getCategoryTint(isMathOperator(expression.operator) ? 'math' : 'operator')}
         onSwap={() => openExpressionModal('whole', expectedType)}>
         {binaryContent}
       </Swapable>
@@ -1061,6 +1108,13 @@ export const ExpressionSocket = ({
         label={expressionLabel}
         moveTarget={{ kind: 'whole', location, expression }}
         variant="block"
+        tint={getCategoryTint(
+          expression.operator === 'NOT'
+            ? 'operator'
+            : expression.operator === 'ISTRUTHY' || expression.operator === 'ISFALSY'
+              ? 'boolean'
+              : 'math'
+        )}
         onSwap={() => openExpressionModal('whole', expectedType)}>
         {unaryContent}
       </Swapable>
@@ -1110,6 +1164,7 @@ export const ExpressionSocket = ({
         label={expressionLabel}
         moveTarget={{ kind: 'whole', location, expression }}
         variant="block"
+        tint={getCategoryTint('display')}
         onSwap={() => openExpressionModal('whole', expectedType)}>
         <Column className="gap-2">
           <Pressable
@@ -1175,6 +1230,7 @@ export const ExpressionSocket = ({
         label={expressionLabel}
         moveTarget={{ kind: 'whole', location, expression }}
         variant="block"
+        tint={getCategoryTint('string')}
         onSwap={() => openExpressionModal('whole', expectedType)}>
         <DropdownLiteralEditor
           expression={expression}
@@ -1191,6 +1247,7 @@ export const ExpressionSocket = ({
         label={expressionLabel}
         moveTarget={{ kind: 'whole', location, expression }}
         variant="block"
+        tint={getCategoryTint('list')}
         onSwap={() => openExpressionModal('whole', expectedType)}>
         <ListLiteralEditor
           expression={expression}
@@ -1263,6 +1320,7 @@ export const ExpressionSocket = ({
           onAdd={() => openExpressionModal('whole', 'boolean')}
           tooltip={`Add ${label}`}
           location={location}
+          type="boolean"
         />
       );
     if (expectedType === 'string' || base.expr.kind === 'StringLiteral') {
@@ -1352,6 +1410,7 @@ export const ExpressionSocket = ({
                     tooltip="Add expression"
                     location={location}
                     linkIndex={0}
+                    type={expectedType}
                   />
                 )
               ) : link.expr.kind === 'IdentifierExpression' ? (
@@ -1364,6 +1423,9 @@ export const ExpressionSocket = ({
                     link,
                   }}
                   variant="piece"
+                  tint={getCategoryTint(
+                    DATA_SOURCE_NAMES.has(link.expr.name) ? 'data' : 'variable'
+                  )}
                   onSwap={() => openExpressionModal('chainBase', expectedType, chainBaseLabel)}>
                   <FontText className="text-sm">{printExpression(link.expr)}</FontText>
                 </Swapable>
@@ -1378,6 +1440,11 @@ export const ExpressionSocket = ({
                     link,
                   }}
                   variant="block"
+                  tint={getCategoryTint(
+                    (link.expr.callee as IdentifierExpression).name === 'tag'
+                      ? 'data'
+                      : 'function'
+                  )}
                   onSwap={() => openExpressionModal('chainBase', expectedType, chainBaseLabel)}>
                   <FunctionCallRenderer
                     call={link.expr}
@@ -1416,6 +1483,11 @@ export const ExpressionSocket = ({
                   link,
                 }}
                 variant="piece"
+                tint={getCategoryTint(
+                  EXPRESSION_BLOCKS.find(
+                    (block) => block.id.toLowerCase() === link.name.toLowerCase()
+                  )?.category
+                )}
                 onSwap={() =>
                   onAdd({
                     kind: 'chainSwap',
@@ -1534,6 +1606,7 @@ const MethodLink = ({
         link,
       }}
       variant="block"
+      tint={getCategoryTint(definition?.category)}
       onSwap={onSwapWhole}>
       <Row className="items-center gap-1.5">
         <FontText className="text-sm">.{link.name}</FontText>
@@ -2334,6 +2407,32 @@ const StatementBlock = ({
     if (statement.kind === 'ReturnStatement') return 'Return';
     return statement.kind;
   })();
+  // Category drives the block's color tint (see blockColors.ts).
+  const blockCategory = (() => {
+    if (
+      statement.kind === 'ExpressionStatement' &&
+      statement.expression.kind === 'CallExpression' &&
+      statement.expression.callee.kind === 'IdentifierExpression'
+    ) {
+      const callee = (statement.expression as CallExpression)
+        .callee as IdentifierExpression;
+      return STATEMENT_BLOCKS.find(
+        (block) => block.id.toLowerCase() === callee.name.toLowerCase()
+      )?.category;
+    }
+    if (statement.kind === 'IfStatement' || statement.kind === 'ForEachStatement')
+      return 'control';
+    if (statement.kind === 'UpdateCellStatement') return 'table';
+    if (
+      statement.kind === 'OnTagAddedStatement' ||
+      statement.kind === 'OnTagRemovedStatement'
+    )
+      return 'control';
+    if (statement.kind === 'FunctionStatement' || statement.kind === 'ReturnStatement')
+      return 'function';
+    return undefined;
+  })();
+  const blockTint = getCategoryTint(blockCategory);
   const isSavedFunction =
     savedFunctionNames?.includes(statement.kind === 'FunctionStatement' ? statement.name : '') ??
     false;
@@ -2429,7 +2528,7 @@ const StatementBlock = ({
     const condition = statement.branches[0]?.condition ?? { kind: 'NothingLiteral' as const, span };
     content = (
       <Column className="gap-0">
-        <View className="bg-text/10 rounded-t-xl p-2">
+        <View className="rounded-t-xl p-2" style={{ backgroundColor: blockTint.soft }}>
           <Column className="gap-2">
             <Row className="items-center justify-between gap-2">
               <FontText weight="medium">If</FontText>
@@ -2476,13 +2575,16 @@ const StatementBlock = ({
             stmtPath={currentPath}
           />
         </View>
-        <View className="bg-text/10 rounded-b-xl p-2" />
+        <View
+          className="rounded-b-xl p-2"
+          style={{ backgroundColor: blockTint.soft }}
+        />
       </Column>
     );
   } else if (statement.kind === 'ForEachStatement') {
     content = (
       <Column className="gap-0">
-        <View className="bg-text/10 rounded-t-xl p-2">
+        <View className="rounded-t-xl p-2" style={{ backgroundColor: blockTint.soft }}>
           <Column className="gap-2">
             <Row className="items-center justify-between gap-2">
               <Row className="items-center gap-2">
@@ -2542,7 +2644,10 @@ const StatementBlock = ({
             stmtPath={currentPath}
           />
         </View>
-        <View className="bg-text/10 rounded-b-xl p-2" />
+        <View
+          className="rounded-b-xl p-2"
+          style={{ backgroundColor: blockTint.soft }}
+        />
       </Column>
     );
   } else if (statement.kind === 'UpdateCellStatement') {
@@ -2655,7 +2760,7 @@ const StatementBlock = ({
           </Column>
         </View>
         {/* ForEach section (column layout, dark background) */}
-        <View className="bg-text/10 p-2">
+        <View className="p-2" style={{ backgroundColor: blockTint.soft }}>
           <Column className="gap-2">
             <Row className="items-center justify-between gap-2">
               <FontText weight="medium">For each</FontText>
@@ -2722,7 +2827,10 @@ const StatementBlock = ({
           </Row>
         </View>
         {/* Bottom strip (dark background, like ForEach) */}
-        <View className="bg-text/10 rounded-b-xl p-2" />
+        <View
+          className="rounded-b-xl p-2"
+          style={{ backgroundColor: blockTint.soft }}
+        />
       </Column>
     );
   } else if (statement.kind === 'OnTagAddedStatement') {
@@ -2760,7 +2868,10 @@ const StatementBlock = ({
             stmtPath={currentPath}
           />
         </View>
-        <View className="bg-text/10 rounded-b-xl p-2" />
+        <View
+          className="rounded-b-xl p-2"
+          style={{ backgroundColor: blockTint.soft }}
+        />
       </Column>
     );
   } else if (statement.kind === 'OnTagRemovedStatement') {
@@ -2798,7 +2909,10 @@ const StatementBlock = ({
             stmtPath={currentPath}
           />
         </View>
-        <View className="bg-text/10 rounded-b-xl p-2" />
+        <View
+          className="rounded-b-xl p-2"
+          style={{ backgroundColor: blockTint.soft }}
+        />
       </Column>
     );
   } else if (statement.kind === 'FunctionStatement') {
@@ -2815,7 +2929,7 @@ const StatementBlock = ({
     content = (
       <View style={{ pointerEvents: isLockedFunction ? 'none' : 'auto' }}>
         <Column className="gap-0">
-          <View className="bg-text/10 rounded-t-xl p-2">
+          <View className="rounded-t-xl p-2" style={{ backgroundColor: blockTint.soft }}>
             <Column className="gap-2">
               <Row className="items-center justify-between">
                 <FontText weight="medium">Function</FontText>
@@ -2872,7 +2986,7 @@ const StatementBlock = ({
               stmtPath={currentPath}
             />
           </View>
-          <View className="bg-text/10 rounded-b-xl p-2">
+          <View className="rounded-b-xl p-2" style={{ backgroundColor: blockTint.soft }}>
             <Row className="items-center gap-2">
               <FontText weight="medium">Return</FontText>
               {returnStatement?.kind === 'ReturnStatement' ? (
@@ -3010,6 +3124,7 @@ const StatementBlock = ({
           onSwap={swapStatement}
           isFunction={isFunction}
           indent={0}
+          tint={blockCategory ? blockTint : undefined}
           tooltipText={isLockedFunction ? 'Click to edit' : undefined}>
           {content}
         </Swapable>

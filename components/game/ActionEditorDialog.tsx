@@ -192,7 +192,7 @@ const ActionEditorDialog = ({
                     style={{ fontFamily: 'Poppins-Regular' }}
                   />
                   <FontText className="text-xs opacity-50">
-                    Use • to separate multiple actions. Use : to separate label from value.
+                    Use • or -- to separate multiple actions. Use : to separate label from value.
                   </FontText>
                 </Column>
 
