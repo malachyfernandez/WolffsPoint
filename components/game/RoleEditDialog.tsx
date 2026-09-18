@@ -181,7 +181,7 @@ const RoleEditDialog = ({
                   <Row className="minimize-hide gap-4">
                     {hasChange && roleName.trim() ? (
                       <AppButton
-                        className="h-10 w-48"
+                        className="h-10 w-32 sm:w-48"
                         variant="black"
                         onPress={handleSave}
                         onHoverIn={() => setHint(['enter'])}
@@ -192,13 +192,13 @@ const RoleEditDialog = ({
                       </AppButton>
                     ) : (
                       <StatusButton
-                        className="h-10 w-48"
+                        className="h-10 w-32 sm:w-48"
                         buttonText={submitLabel}
                         buttonAltText="No changes"
                       />
                     )}
                     <AppButton
-                      className="h-10 w-48"
+                      className="h-10 w-32 sm:w-48"
                       variant="outline"
                       onPress={handleCancel}
                       onHoverIn={() => setHint(['esc'])}

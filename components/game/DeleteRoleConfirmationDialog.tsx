@@ -33,7 +33,7 @@ const DeleteConfirmationDialog = ({ isOpen, onOpenChange, onConfirm, itemType, i
         <ConvexDialog.Root isOpen={isOpen} onOpenChange={onOpenChange}>
             <ConvexDialog.Portal>
                 <ConvexDialog.Overlay />
-                <ConvexDialog.Content className='w-md'>
+                <ConvexDialog.Content className='max-w-md'>
                     <CloseButton onPress={() => onOpenChange(false)} />
                     <Column className='gap-4'>
                         <DialogHeader text={`Delete ${itemType}`} subtext='This action cannot be undone' />

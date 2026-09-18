@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
-import { Animated, Pressable, ScrollView, TextInput, View } from 'react-native';
+import { Animated, Pressable, ScrollView, TextInput, useWindowDimensions, View } from 'react-native';
+import { Copy, Move, Redo2, Undo2 } from 'lucide-react-native';
 import ConvexDialog from '../../components/ui/dialog/ConvexDialog';
 import DialogHeader from '../../components/ui/dialog/DialogHeader';
 import UnsavedChangesDialog from '../../components/ui/dialog/UnsavedChangesDialog';
@@ -592,6 +593,12 @@ const ScriptEditorDialog = ({
   const { savedFunctions, savedFunctionNames, saveFunction, unsaveFunction } = useSavedFunctions();
   const { showToast } = useToast();
   const { setHint } = useKeyboardShortcutHint();
+  const { width: windowWidth } = useWindowDimensions();
+  // Below 480px Move/Clone collapse to icons; below sm (640px) the dialog's
+  // Done/Cancel hide while a move session is active — Place + Cancel crowd
+  // the row on narrow screens.
+  const isTinyScreen = windowWidth < 480;
+  const hideDialogActions = moveSession !== null && windowWidth < 640;
   const moveTooltipId = React.useId();
   const cloneTooltipId = React.useId();
   const placeTooltipId = React.useId();
@@ -1403,7 +1410,7 @@ const ScriptEditorDialog = ({
                           onPress={undo}
                           dropShadow={false}
                           disabled={!canUndo || !!moveSession}>
-                          <FontText className="text-sm">Undo</FontText>
+                          <Undo2 size={16} color="#1a1a1a" />
                         </AppButton>
                         <AppButton
                           variant="outline"
@@ -1411,7 +1418,7 @@ const ScriptEditorDialog = ({
                           onPress={redo}
                           dropShadow={false}
                           disabled={!canRedo || !!moveSession}>
-                          <FontText className="text-sm">Redo</FontText>
+                          <Redo2 size={16} color="#1a1a1a" />
                         </AppButton>
                       </>
                     )}
@@ -1598,7 +1605,11 @@ const ScriptEditorDialog = ({
                               className="h-8 px-3"
                               onPress={() => startMoveSession('move')}
                               dropShadow={false}>
-                              <FontText className="text-sm">Move</FontText>
+                              {isTinyScreen ? (
+                                <Move size={16} color="#1a1a1a" />
+                              ) : (
+                                <FontText className="text-sm">Move</FontText>
+                              )}
                             </AppButton>
                           </View>
                           <View
@@ -1609,39 +1620,48 @@ const ScriptEditorDialog = ({
                               className="h-8 px-3"
                               onPress={() => startMoveSession('clone')}
                               dropShadow={false}>
-                              <FontText className="text-sm">Clone</FontText>
+                              {isTinyScreen ? (
+                                <Copy size={16} color="#1a1a1a" />
+                              ) : (
+                                <FontText className="text-sm">Clone</FontText>
+                              )}
                             </AppButton>
                           </View>
                         </>
                       ))}
                   </Row>
-                  <Row className="minimize-hide gap-4">
-                    {!readOnly && (
-                      <AppButton variant="outline" className="w-28" onPress={handleAttemptClose}>
-                        <FontText weight="medium">Cancel</FontText>
-                      </AppButton>
-                    )}
-                    {readOnly ? (
-                      <AppButton
-                        variant="filled"
-                        className="w-36"
-                        onPress={() => onOpenChange(false)}>
-                        <FontText weight="medium" color="white">
-                          Close
-                        </FontText>
-                      </AppButton>
-                    ) : (
-                      <AppButton
-                        variant="filled"
-                        className="w-36"
-                        disabled={!doneEnabled}
-                        onPress={handleSubmit}>
-                        <FontText weight="medium" color="white">
-                          Done
-                        </FontText>
-                      </AppButton>
-                    )}
-                  </Row>
+                  {!hideDialogActions && (
+                    <Row className="minimize-hide gap-4">
+                      {!readOnly && (
+                        <AppButton
+                          variant="outline"
+                          className="h-8 px-3 sm:h-12 sm:w-28"
+                          onPress={handleAttemptClose}>
+                          <FontText weight="medium">Cancel</FontText>
+                        </AppButton>
+                      )}
+                      {readOnly ? (
+                        <AppButton
+                          variant="filled"
+                          className="h-8 px-3 sm:h-12 sm:w-36"
+                          onPress={() => onOpenChange(false)}>
+                          <FontText weight="medium" color="white">
+                            Close
+                          </FontText>
+                        </AppButton>
+                      ) : (
+                        <AppButton
+                          variant="filled"
+                          className="h-8 px-3 sm:h-12 sm:w-36"
+                          disabled={!doneEnabled}
+                          onPress={handleSubmit}>
+                          <FontText weight="medium" color="white">
+                            Done
+                          </FontText>
+                        </AppButton>
+                      )}
+                    </Row>
+                  )}
                 </Row>
               </Column>
 

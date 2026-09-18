@@ -23,7 +23,7 @@ import {
   executeMorningMessagePlannedUpdates,
 } from 'utils/executePlannedUpdates';
 import { fireTagTriggersForNetChanges } from 'hooks/useTagTriggers';
-import TableFreezeControls from './TableFreezeControls';
+import TableFreezeControls, { CONTROLS_STACKED_BREAKPOINT } from './TableFreezeControls';
 import TableRowPreview from './TableRowPreview';
 import { usePlayerDataFreeze } from 'hooks/useTableFreeze';
 interface NightlyPageOPERATORProps {
@@ -46,6 +46,11 @@ const NightlyPageContent = ({
   const { selectionMode } = useMultiSelect();
   const [isCertificationDialogOpen, setIsCertificationDialogOpen] = useState(false);
   const { width } = useWindowDimensions();
+  const [controlsRowWidth, setControlsRowWidth] = useState(0);
+
+  // Below CONTROLS_STACKED_BREAKPOINT the freeze controls stack full-width.
+  // Change the value in TableFreezeControls.tsx.
+  const isControlsStacked = controlsRowWidth > 0 && controlsRowWidth < CONTROLS_STACKED_BREAKPOINT;
 
   // Shared user table (same as players tab)
   const [userTable, setUserTable] = useList<UserTableItem[]>('userTable', gameId, {
@@ -425,9 +430,14 @@ const NightlyPageContent = ({
                 </ShadowScrollView>
               </TableRowPreview>
 
-              <Row className="w-full justify-end px-4">
+              <Row
+                className="w-full justify-end px-4"
+                onLayout={(event: any) => setControlsRowWidth(event.nativeEvent.layout.width)}>
                 <Column className="min-w-0 flex-1 items-end">
-                  <TableFreezeControls controller={freezeController} />
+                  <TableFreezeControls
+                    controller={freezeController}
+                    fullWidth={isControlsStacked}
+                  />
                 </Column>
               </Row>
 

@@ -40,6 +40,7 @@ const PlayerPageContent = ({ currentUserId, gameId }: PlayerPageOPERATORProps) =
 
   const [userTable] = useList<UserTableItem[]>('userTable', gameId);
   const freezeController = usePlayerDataFreeze(gameId);
+  const [isFreezeControlsWrapped, setIsFreezeControlsWrapped] = useState(false);
 
   const users = userTable.scheduledUpdate?.value ?? userTable.value ?? [];
 
@@ -147,17 +148,19 @@ const PlayerPageContent = ({ currentUserId, gameId }: PlayerPageOPERATORProps) =
           </TableRowPreview>
           <PlayerAddUserSection
             gameId={gameId}
-            rightContent={<TableFreezeControls controller={freezeController} />}
+            onRightContentWrapChange={setIsFreezeControlsWrapped}
+            rightContent={
+              <TableFreezeControls
+                controller={freezeController}
+                fullWidth={isFreezeControlsWrapped}
+              />
+            }
           />
         </Column>
       ) : (
         // <FontText>Hellow</FontText>
         <Column className="py-3 sm:px-4">
-          <PlayerAddUserSection
-            gameId={gameId}
-            removeBottomSpace
-            rightContent={<TableFreezeControls controller={freezeController} />}
-          />
+          <PlayerAddUserSection gameId={gameId} removeBottomSpace />
         </Column>
       )}
     </LoadingContainer>

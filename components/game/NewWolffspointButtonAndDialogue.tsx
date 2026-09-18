@@ -96,7 +96,7 @@ const NewWolffspointButtonAndDialogue = ({ onCreate, condensed }: NewWolffspoint
             <ConvexDialog.Portal>
                 <ConvexDialog.Overlay />
 
-                <ConvexDialog.Content className='w-md'>
+                <ConvexDialog.Content className='max-w-md'>
 
                     <CloseButton onPress={() => setIsHeroDialogOpen(false)} />
 

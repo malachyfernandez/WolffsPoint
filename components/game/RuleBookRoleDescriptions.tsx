@@ -280,7 +280,7 @@ const RuleBookRoleDescriptions = ({ gameId, headingIdPrefix }: RuleBookRoleDescr
         onOpenChange={(open: boolean) => !open && setHidingRoleIndex(null)}>
         <ConvexDialog.Portal>
           <ConvexDialog.Overlay />
-          <ConvexDialog.Content className="w-md">
+          <ConvexDialog.Content className="max-w-md">
             <CloseButton onPress={() => setHidingRoleIndex(null)} />
             <Column className="gap-4">
               <DialogHeader text="Hide from rulebook" />

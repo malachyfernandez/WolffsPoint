@@ -13,7 +13,7 @@ import { RoleTableItem } from 'types/roleTable';
 import { Plus } from 'lucide-react-native';
 import { MultiSelectProvider } from './multiSelect/MultiSelectContext';
 import MultiSelectToolbar from './multiSelect/MultiSelectToolbar';
-import TableFreezeControls from './TableFreezeControls';
+import TableFreezeControls, { CONTROLS_STACKED_BREAKPOINT } from './TableFreezeControls';
 import TableRowPreview from './TableRowPreview';
 import { useRolesFreeze } from 'hooks/useTableFreeze';
 
@@ -48,6 +48,12 @@ const RolesPageContent = ({ currentUserId, gameId }: RolesPageOPERATORProps) => 
   const [isRoleTableBeingEdited, setIsRoleTableBeingEdited] = useState(false);
   const [hasInitiallyLoaded, setHasInitiallyLoaded] = useState(false);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [controlsRowWidth, setControlsRowWidth] = useState(0);
+
+  // Below CONTROLS_STACKED_BREAKPOINT the button and controls can't share a
+  // line comfortably, so both stack full-width. Change the value in
+  // TableFreezeControls.tsx.
+  const isControlsStacked = controlsRowWidth > 0 && controlsRowWidth < CONTROLS_STACKED_BREAKPOINT;
 
   useEffect(() => {
     if (!isSyncing && !hasInitiallyLoaded) {
@@ -76,9 +82,9 @@ const RolesPageContent = ({ currentUserId, gameId }: RolesPageOPERATORProps) => 
       loadingText="Loading roles"
       className="min-h-190">
       <Column className="gap-4 py-3 sm:px-4">
-        <MultiSelectToolbar />
         {visibleRoles.length > 0 ? (
           <Column className="gap-4">
+            <MultiSelectToolbar />
             <TableRowPreview gameId={gameId}>
               <ShadowScrollView
                 direction="horizontal"
@@ -102,8 +108,13 @@ const RolesPageContent = ({ currentUserId, gameId }: RolesPageOPERATORProps) => 
                 </Row>
               </ShadowScrollView>
             </TableRowPreview>
-            <Row className="-mt-2 w-full flex-wrap items-start justify-between gap-4 px-4 sm:-mt-6">
-              <AppButton variant="accent" className="w-36" onPress={() => setIsAddDialogOpen(true)}>
+            <Row
+              className="-mt-2 w-full flex-wrap items-start justify-between gap-4 px-4 sm:-mt-6"
+              onLayout={(event: any) => setControlsRowWidth(event.nativeEvent.layout.width)}>
+              <AppButton
+                variant="accent"
+                className={isControlsStacked ? 'w-full' : 'w-36'}
+                onPress={() => setIsAddDialogOpen(true)}>
                 <Row className="items-center gap-2">
                   <Plus size={20} color="white" />
                   <FontText weight="medium" color="white">
@@ -111,8 +122,9 @@ const RolesPageContent = ({ currentUserId, gameId }: RolesPageOPERATORProps) => 
                   </FontText>
                 </Row>
               </AppButton>
-              <Column className="min-w-0 flex-1 items-end">
-                <TableFreezeControls controller={freezeController} />
+              {/* Stacked = full-width line of its own below the button. */}
+              <Column className={isControlsStacked ? 'w-full items-end' : 'flex-1 items-end'}>
+                <TableFreezeControls controller={freezeController} fullWidth={isControlsStacked} />
               </Column>
             </Row>
           </Column>
@@ -126,9 +138,6 @@ const RolesPageContent = ({ currentUserId, gameId }: RolesPageOPERATORProps) => 
                 </FontText>
               </Row>
             </AppButton>
-            <Column className="min-w-0 flex-1 items-end">
-              <TableFreezeControls controller={freezeController} />
-            </Column>
           </Row>
         )}
       </Column>

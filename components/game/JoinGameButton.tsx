@@ -33,7 +33,7 @@ const JoinGameButton = ({ onJoin, condensed }: JoinGameButtonProps) => {
                 <ConvexDialog.Portal>
                     <ConvexDialog.Overlay />
 
-                    <ConvexDialog.Content className='w-md'>
+                    <ConvexDialog.Content className='max-w-md'>
 
                         <CloseButton onPress={() => setIsHeroDialogOpen(false)} />
 

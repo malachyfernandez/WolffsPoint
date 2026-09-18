@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
+import { useIsTouchInput } from 'hooks/useIsTouchInput';
 
 // Global mouse position tracker — listens on document so it works regardless of
 // which element is under the cursor.
@@ -75,14 +76,18 @@ function moveTooltip(x: number, y: number) {
  */
 export const useTooltip = (id: string, content: ReactNode | undefined) => {
   const [hovered, setHovered] = useState(false);
+  // Tooltips are a mouse affordance — on touch input (always on native, and
+  // on web once a touch pointer is observed) hover events still fire, so
+  // gate the tooltip itself rather than every call site.
+  const isTouch = useIsTouchInput();
   useGlobalMouse();
   useEffect(() => {
-    if (hovered && content) {
+    if (hovered && content && !isTouch) {
       showTooltip(id, content);
     } else {
       hideTooltip(id);
     }
-  }, [hovered, id, content]);
+  }, [hovered, id, content, isTouch]);
   useEffect(() => () => hideTooltip(id), [id]);
   return { hovered, setHovered };
 };

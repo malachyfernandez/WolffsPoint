@@ -155,23 +155,29 @@ const NightlyCertificationDialog = ({
             </AppButton>
             <AppButton
               variant="black"
-              className="px-6 py-2"
+              className="px-3 py-2 sm:px-6"
               onPress={() => {
                 onCertifyVotes();
                 onOpenChange(false);
               }}>
-              <FontText weight="medium" color="white">
+              <FontText weight="medium" color="white" className="sm:hidden">
+                Add Votes
+              </FontText>
+              <FontText weight="medium" color="white" className="hidden sm:block">
                 Add Votes To Table
               </FontText>
             </AppButton>
             <AppButton
               variant="black"
-              className="px-6 py-2"
+              className="px-3 py-2 sm:px-6"
               onPress={() => {
                 onCertifyActions();
                 onOpenChange(false);
               }}>
-              <FontText weight="medium" color="white">
+              <FontText weight="medium" color="white" className="sm:hidden">
+                Add Actions
+              </FontText>
+              <FontText weight="medium" color="white" className="hidden sm:block">
                 Add Actions To Table
               </FontText>
             </AppButton>

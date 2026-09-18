@@ -111,19 +111,19 @@ const RoleAddDialog = ({ isOpen, onOpenChange, onAddRole }: RoleAddDialogProps) 
             <Column className="w-full items-center justify-center gap-4">
               <Row className="gap-4">
                 {roleName.trim() ? (
-                  <AppButton className="h-10 w-48" variant="black" onPress={handleSubmit} onHoverIn={() => setHint(['enter'])} onHoverOut={() => setHint(null)}>
+                  <AppButton className="h-10 w-32 sm:w-48" variant="black" onPress={handleSubmit} onHoverIn={() => setHint(['enter'])} onHoverOut={() => setHint(null)}>
                     <FontText color="white" weight="medium">
                       Add Role
                     </FontText>
                   </AppButton>
                 ) : (
                   <StatusButton
-                    className="h-10 w-48"
+                    className="h-10 w-32 sm:w-48"
                     buttonText="Add Role"
                     buttonAltText="Enter a name"
                   />
                 )}
-                <AppButton className="h-10 w-48" variant="outline" onPress={handleCancel} onHoverIn={() => setHint(['esc'])} onHoverOut={() => setHint(null)}>
+                <AppButton className="h-10 w-32 sm:w-48" variant="outline" onPress={handleCancel} onHoverIn={() => setHint(['esc'])} onHoverOut={() => setHint(null)}>
                   <FontText color="black" weight="medium">
                     Cancel
                   </FontText>
