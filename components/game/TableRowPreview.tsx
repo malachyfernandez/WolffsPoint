@@ -263,30 +263,49 @@ const TableRowPreview = ({ gameId, children }: TableRowPreviewProps) => {
     return () => window.removeEventListener('mousemove', handleMove);
   }, [resolvePointer, isTouchInput]);
 
-  // Fade pills out the moment any scrolling starts (they'd lag behind); on
-  // scroll end, re-measure positions — in mouse mode also re-resolve whichever
-  // row now sits under the pointer.
+  // Fade pills out the moment VERTICAL scrolling starts (they'd lag behind).
+  // Horizontal pans inside the table don't move row bands, so pills stay put.
+  // On scroll end, positions are recalculated in the same commit BEFORE the
+  // pills fade back in — so they never flash at a stale position.
+  const lastScrollPosRef = useRef<WeakMap<object, { top: number; left: number }>>(new WeakMap());
   useEffect(() => {
     if (Platform.OS !== 'web') return;
-    const handleScroll = () => {
+    const recheckThenShow = () => {
+      if (isTouchInput) {
+        setLayoutTick((tick) => tick + 1);
+      } else {
+        const pointer = lastPointerRef.current;
+        if (pointer) resolvePointer(pointer.x, pointer.y);
+      }
+      // Batched with the re-measure above → pills reappear already positioned.
+      setIsScrolling(false);
+    };
+    const handleScroll = (event: Event) => {
+      const target = (
+        event.target === document ? document.documentElement : event.target
+      ) as HTMLElement;
+      const prev = lastScrollPosRef.current.get(target) ?? {
+        top: target.scrollTop,
+        left: target.scrollLeft,
+      };
+      const isVertical = target.scrollTop !== prev.top;
+      lastScrollPosRef.current.set(target, { top: target.scrollTop, left: target.scrollLeft });
+      if (!isVertical) return;
       setIsScrolling(true);
       if (isTouchInput) setLayoutTick((tick) => tick + 1);
       if (scrollEndTimerRef.current) clearTimeout(scrollEndTimerRef.current);
-      scrollEndTimerRef.current = setTimeout(() => {
-        setIsScrolling(false);
-        if (isTouchInput) {
-          setLayoutTick((tick) => tick + 1);
-        } else {
-          const pointer = lastPointerRef.current;
-          if (pointer) resolvePointer(pointer.x, pointer.y);
-        }
-      }, SCROLL_END_MS);
+      scrollEndTimerRef.current = setTimeout(recheckThenShow, SCROLL_END_MS);
+    };
+    const handleResize = () => {
+      setIsScrolling(true);
+      if (scrollEndTimerRef.current) clearTimeout(scrollEndTimerRef.current);
+      scrollEndTimerRef.current = setTimeout(recheckThenShow, SCROLL_END_MS);
     };
     window.addEventListener('scroll', handleScroll, true);
-    window.addEventListener('resize', handleScroll);
+    window.addEventListener('resize', handleResize);
     return () => {
       window.removeEventListener('scroll', handleScroll, true);
-      window.removeEventListener('resize', handleScroll);
+      window.removeEventListener('resize', handleResize);
     };
   }, [isTouchInput, resolvePointer]);
 
