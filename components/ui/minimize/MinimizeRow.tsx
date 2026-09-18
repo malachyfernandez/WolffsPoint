@@ -31,6 +31,7 @@ const MinimizeRow = () => {
     <>
       {createPortal(
         <div
+          data-minimize-dock
           style={{
             position: 'fixed',
             bottom: 0,

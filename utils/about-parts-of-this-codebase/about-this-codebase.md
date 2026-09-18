@@ -14,6 +14,7 @@ Welcome to Paper! This document provides a comprehensive overview of the codebas
 - [State Management](#state-management)
 - [Undo/Redo System](#undo-redo-system)
 - [Toast Notifications](#toast-notifications)
+- [App Versioning](#app-versioning)
 - [Third-Party Libraries](#third-party-libraries)
 - [Development Patterns](#development-patterns)
 
@@ -314,6 +315,16 @@ showToast("Operation completed successfully!");
 // Toast automatically disappears after 3 seconds
 // User can tap to dismiss manually
 ```
+
+## App Versioning
+
+The app can prompt connected clients to reload when a newer version is released:
+
+- `utils/appVersion.ts` exports `CLIENT_VERSION` — baked into every bundle
+- The Convex `globals` table stores `latestClientVersion`
+- `useAppVersionStatus()` compares them; when outdated, `VersionUpdateNotice` overlays a reload prompt in the bottom-left corner (a standalone fixed portal, modeled on the minimize row)
+
+To release a new version: `npm run version:bump` (add `-- --prod` for production). See [versioning-system.md](./versioning-system.md).
 
 ## Third-Party Libraries
 

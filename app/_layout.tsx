@@ -16,6 +16,7 @@ import { GenerationProvider } from '../contexts/GenerationContext';
 import { WebDropdownProvider } from '../contexts/WebDropdownProvider';
 import { DataProvider } from '../contexts/DataProvider';
 import { MinimizeProvider, MinimizeRow } from '../components/ui/minimize';
+import VersionUpdateNotice from '../components/ui/VersionUpdateNotice';
 import { useEffect } from "react";
 import "../global.css";
 
@@ -148,6 +149,7 @@ export default function RootLayout() {
                         <Slot />
                         <PortalHost />
                         <MinimizeRow />
+                        <VersionUpdateNotice />
                     </DataProvider>
                   </ConvexProviderWithClerk>
                 </WebDropdownProvider>

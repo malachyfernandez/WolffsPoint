@@ -110,6 +110,7 @@ See `app/components/game/MarkdownEditorDialog.tsx` for the canonical implementat
 <!-- unsaved-changes-confirmation-end -->
 
 <!-- scripting-tag-system-start -->
+
 ## Scripting: Tag System, UpdateCell, and Tag Triggers
 
 There are exactly **two places** where scripts run:
@@ -161,3 +162,39 @@ The scripting language has been extended with tag-related features:
 - `app/script/registry.ts` — `UpdateCell` block + `TableUpdate` type
 - `app/script/runtime/interpreter.ts` — `tag()` builtin, `tableUpdates` in result
 <!-- scripting-tag-system-end -->
+
+<!-- app-versioning-start -->
+
+## App Versioning & the Update Notice
+
+The app can prompt connected clients to reload when a newer version is released.
+
+### NEVER bump the version unless the user explicitly asks
+
+**Do not run `version:bump`, edit `CLIENT_VERSION`, or set `latestClientVersion` unless the user explicitly tells you to.** Most updates should ship WITHOUT forcing a reload — the notice is disruptive by design. Committing and deploying code on its own never changes the version: `latestClientVersion` lives in the Convex database, not in the repo, so nothing prompts clients until a bump is deliberately run.
+
+### How it works
+
+- `utils/appVersion.ts` exports `CLIENT_VERSION` — baked into every bundle.
+- The Convex `globals` table stores the newest released version under the key `latestClientVersion`.
+- `hooks/useAppVersionStatus.ts` compares them (`latest > client` → `isOutdated`). Never-set or loading counts as up-to-date.
+- `components/ui/VersionUpdateNotice.tsx` is a standalone bottom-left overlay mounted in `app/_layout.tsx` (own `document.body` portal on web, absolute view on native). It persists until reload; its "−" button shrinks it to a small "Update" pill (modeled on the minimize row's pills/animations, but not part of `MinimizeContext`).
+
+### How to increment the version (only when told to)
+
+A bump has TWO halves — `npm run version:bump` does both:
+
+1. `CLIENT_VERSION` increments in `utils/appVersion.ts` (bakes into the next deployed bundle).
+2. `latestClientVersion` is pushed to a Convex deployment — **dev and prod are separate databases**.
+
+```bash
+npm run version:bump               # bump file + push to dev Convex
+npm run version:bump -- --prod     # bump file + push to production Convex
+npm run version:bump -- --no-push  # bump the file only
+```
+
+For a prod release: run `npm run version:bump -- --prod`, commit, and let the frontend deploy (git push → Vercel). Connected clients get the prompt when the global lands; reloading pulls the new bundle once the deploy is live and the notice clears. Manual equivalent: `npx convex run --prod globals:set '{"key":"latestClientVersion","value":<N>}'`.
+
+Full details: `utils/about-parts-of-this-codebase/versioning-system.md`.
+
+<!-- app-versioning-end -->
