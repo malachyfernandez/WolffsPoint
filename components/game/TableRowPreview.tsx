@@ -47,8 +47,13 @@ const CIRCLE_SIZE_PX = 28;
 const EDGE_ZONE_PX = 20;
 /** Tailwind's `sm` breakpoint — below this the pill is a plain circle. */
 const MOBILE_BREAKPOINT_PX = 640;
-/** How long after the last scroll event before pills fade back in. */
+/** How long after the last scroll event before checking if rows settled. */
 const SCROLL_END_MS = 150;
+/** Poll interval for the settle check — pills only fade back in once row
+ *  positions stop changing between two consecutive measurements. */
+const SETTLE_POLL_MS = 80;
+/** Max time to keep waiting for rows to settle before showing anyway. */
+const SETTLE_MAX_WAIT_MS = 1500;
 const FADE_MS = 200;
 
 const snapshotRect = (rect: {
@@ -97,7 +102,7 @@ const PreviewPill = ({ onPress, onHoverIn, onHoverOut, circle = false }: Preview
         onHoverOut();
       }}
       className={`border-border/40 bg-text/10 items-center justify-center rounded-full border backdrop-blur-sm ${
-        circle ? 'h-7 w-7' : 'h-7 w-13'
+        circle ? 'h-7 w-7' : 'w-13 h-7'
       }`}>
       {!circle && isPillHovered ? (
         <FontText weight="medium" className="text-[9px]">
@@ -127,10 +132,8 @@ interface TableRowPreviewProps {
  */
 const TableRowPreview = ({ gameId, children }: TableRowPreviewProps) => {
   const wrapperRef = useRef<View>(null);
-  const pillStripRef = useRef<View>(null);
   const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const rowRegistryRef = useRef<Map<HTMLElement, RowPreviewTarget>>(new Map());
-  const lastHoverKeyRef = useRef<string | null>(null);
   const [hovered, setHovered] = useState<{
     top: number;
     left: number;
@@ -165,11 +168,7 @@ const TableRowPreview = ({ gameId, children }: TableRowPreviewProps) => {
 
   const scheduleHide = useCallback(() => {
     cancelHide();
-    hideTimerRef.current = setTimeout(() => {
-      setHovered(null);
-      lastHoverKeyRef.current = null;
-      console.log('[TableRowPreview] HIDE — pill removed after leave delay');
-    }, HIDE_DELAY_MS);
+    hideTimerRef.current = setTimeout(() => setHovered(null), HIDE_DELAY_MS);
   }, [cancelHide]);
 
   const registerRow = useCallback((element: HTMLElement | null, target: RowPreviewTarget) => {
@@ -185,11 +184,12 @@ const TableRowPreview = ({ gameId, children }: TableRowPreviewProps) => {
     (wrapperRef.current as unknown as HTMLElement | null)?.getBoundingClientRect?.();
 
   // Resolves which registered row (if any) sits at the given pointer position
-  // and shows/updates/hides the pill accordingly.
+  // and shows/updates/hides the pill accordingly. Returns whether a row
+  // matched.
   const resolvePointer = useCallback(
-    (x: number, y: number) => {
+    (x: number, y: number): boolean => {
       const wrapperRect = getWrapperRect();
-      if (!wrapperRect) return;
+      if (!wrapperRect) return false;
 
       const pillLeft = wrapperRect.left + PILL_INSIDE_PX - pillWidth;
       const inZone = x >= pillLeft - EDGE_ZONE_PX && x <= wrapperRect.right;
@@ -220,34 +220,17 @@ const TableRowPreview = ({ gameId, children }: TableRowPreviewProps) => {
 
       if (!matchRect || !matchTarget) {
         if (hoveredRef.current) scheduleHide();
-        return;
+        return false;
       }
 
       cancelHide();
       const left = pillLeft;
-      const key = `${targetKey(matchTarget)}@${matchRect.top}`;
-      if (key !== lastHoverKeyRef.current) {
-        lastHoverKeyRef.current = key;
-        console.log('[TableRowPreview] HOVER — master report', {
-          pointer: { x, y, inZone },
-          target: matchTarget,
-          rowRect: matchRect,
-          wrapperRect: snapshotRect(wrapperRect),
-          pillPlacingAt: { top: matchRect.top, left },
-          registeredRows: rowRegistryRef.current.size,
-          viewport: {
-            innerWidth: window.innerWidth,
-            innerHeight: window.innerHeight,
-            scrollX: window.scrollX,
-            scrollY: window.scrollY,
-          },
-        });
-      }
       setHovered((prev) =>
         prev && prev.target === matchTarget && prev.top === matchRect!.top && prev.left === left
           ? prev
           : { top: matchRect!.top, left, target: matchTarget! }
       );
+      return true;
     },
     [cancelHide, scheduleHide, pillWidth]
   );
@@ -265,21 +248,66 @@ const TableRowPreview = ({ gameId, children }: TableRowPreviewProps) => {
 
   // Fade pills out the moment VERTICAL scrolling starts (they'd lag behind).
   // Horizontal pans inside the table don't move row bands, so pills stay put.
-  // On scroll end, positions are recalculated in the same commit BEFORE the
-  // pills fade back in — so they never flash at a stale position.
+  // After scroll ends, row positions are polled until they stop changing —
+  // pills only fade back in once the rows have actually settled.
   const lastScrollPosRef = useRef<WeakMap<object, { top: number; left: number }>>(new WeakMap());
+  const settledTopsRef = useRef<number[] | null>(null);
+  const settleStartedAtRef = useRef(0);
   useEffect(() => {
     if (Platform.OS !== 'web') return;
+
+    const measureRowTops = () => {
+      const tops: number[] = [];
+      for (const el of rowRegistryRef.current.keys()) {
+        const rect = el.getBoundingClientRect();
+        if (rect.height > 0) tops.push(Math.round(rect.top * 10) / 10);
+      }
+      return tops.sort((a, b) => a - b);
+    };
+
     const recheckThenShow = () => {
       if (isTouchInput) {
         setLayoutTick((tick) => tick + 1);
       } else {
         const pointer = lastPointerRef.current;
-        if (pointer) resolvePointer(pointer.x, pointer.y);
+        const matched = pointer ? resolvePointer(pointer.x, pointer.y) : false;
+        if (!matched) {
+          // Pointer left the zone while scrolling — clear now instead of the
+          // linger-delay, so the pill never flashes back in before hiding.
+          cancelHide();
+          setHovered(null);
+        }
       }
       // Batched with the re-measure above → pills reappear already positioned.
       setIsScrolling(false);
     };
+
+    const settleCheck = () => {
+      const tops = measureRowTops();
+      const last = settledTopsRef.current;
+      settledTopsRef.current = tops;
+      const moved =
+        !last ||
+        last.length !== tops.length ||
+        tops.some((top, i) => Math.abs(top - last[i]) > 0.5);
+      const waited = performance.now() - settleStartedAtRef.current;
+      if (moved && waited < SETTLE_MAX_WAIT_MS) {
+        scrollEndTimerRef.current = setTimeout(settleCheck, SETTLE_POLL_MS);
+        return;
+      }
+      recheckThenShow();
+    };
+
+    const armScrollEnd = () => {
+      if (scrollEndTimerRef.current) clearTimeout(scrollEndTimerRef.current);
+      settleStartedAtRef.current = performance.now();
+      scrollEndTimerRef.current = setTimeout(() => {
+        // Baseline measurement — the next poll decides settled-or-not.
+        settledTopsRef.current = null;
+        settleCheck();
+      }, SCROLL_END_MS);
+    };
+
     const handleScroll = (event: Event) => {
       const target = (
         event.target === document ? document.documentElement : event.target
@@ -293,13 +321,11 @@ const TableRowPreview = ({ gameId, children }: TableRowPreviewProps) => {
       if (!isVertical) return;
       setIsScrolling(true);
       if (isTouchInput) setLayoutTick((tick) => tick + 1);
-      if (scrollEndTimerRef.current) clearTimeout(scrollEndTimerRef.current);
-      scrollEndTimerRef.current = setTimeout(recheckThenShow, SCROLL_END_MS);
+      armScrollEnd();
     };
     const handleResize = () => {
       setIsScrolling(true);
-      if (scrollEndTimerRef.current) clearTimeout(scrollEndTimerRef.current);
-      scrollEndTimerRef.current = setTimeout(recheckThenShow, SCROLL_END_MS);
+      armScrollEnd();
     };
     window.addEventListener('scroll', handleScroll, true);
     window.addEventListener('resize', handleResize);
@@ -307,7 +333,7 @@ const TableRowPreview = ({ gameId, children }: TableRowPreviewProps) => {
       window.removeEventListener('scroll', handleScroll, true);
       window.removeEventListener('resize', handleResize);
     };
-  }, [isTouchInput, resolvePointer]);
+  }, [isTouchInput, resolvePointer, cancelHide]);
 
   // Hide pills whenever any dialog is open (all dialogs on these pages are
   // heroui-native ConvexDialogs — Content renders role="dialog" + aria-modal).
@@ -325,31 +351,6 @@ const TableRowPreview = ({ gameId, children }: TableRowPreviewProps) => {
     });
     return () => observer.disconnect();
   }, []);
-
-  // After the pill renders, log where it actually landed vs where we asked.
-  useEffect(() => {
-    if (!hovered || Platform.OS !== 'web') return;
-    const raf = requestAnimationFrame(() => {
-      const el = pillStripRef.current as unknown as HTMLElement | null;
-      const rect = el?.getBoundingClientRect?.();
-      const cs = el ? window.getComputedStyle(el) : null;
-      console.log('[TableRowPreview] PILL RENDERED — placement check', {
-        expected: { top: hovered.top, left: hovered.left },
-        actualRect: rect ? snapshotRect(rect) : null,
-        computedStyle: cs
-          ? {
-              position: cs.position,
-              top: cs.top,
-              left: cs.left,
-              zIndex: cs.zIndex,
-              pointerEvents: cs.pointerEvents,
-            }
-          : null,
-        insidePortalRoot: !!el?.closest?.('#app-web-dropdown-portal-root'),
-      });
-    });
-    return () => cancelAnimationFrame(raf);
-  }, [hovered]);
 
   const contextValue = React.useMemo(() => ({ registerRow }), [registerRow]);
 
@@ -397,10 +398,9 @@ const TableRowPreview = ({ gameId, children }: TableRowPreviewProps) => {
             <Animated.View
               pointerEvents={pillsHidden ? 'none' : 'box-none'}
               style={[{ position: 'absolute', inset: 0 }, pillFadeStyle]}>
-              {pillItems.map((item, index) => (
+              {pillItems.map((item) => (
                 <View
                   key={item.key}
-                  ref={index === 0 ? pillStripRef : undefined}
                   pointerEvents="box-none"
                   style={{
                     position: 'absolute',
