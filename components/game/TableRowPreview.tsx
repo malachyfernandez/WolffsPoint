@@ -97,7 +97,7 @@ const PreviewPill = ({ onPress, onHoverIn, onHoverOut, circle = false }: Preview
         onHoverOut();
       }}
       className={`border-border/40 bg-text/10 items-center justify-center rounded-full border backdrop-blur-sm ${
-        circle ? 'h-7 w-7' : 'h-7 w-[52px]'
+        circle ? 'h-7 w-7' : 'h-7 w-13'
       }`}>
       {!circle && isPillHovered ? (
         <FontText weight="medium" className="text-[9px]">

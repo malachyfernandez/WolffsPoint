@@ -26,7 +26,7 @@ interface PhoneBookPageOPERATORProps {
 
 // View-only operator phonebook - no edit functionality
 const PhoneBookPageOPERATOR = ({ gameId, currentUserId, onBack }: PhoneBookPageOPERATORProps) => {
-    const { players, isLoading } = useAllPlayers({ gameId, currentUserId });
+    const { players, isLoading, aliveCount, totalCount } = useAllPlayers({ gameId, currentUserId });
 
     return (
         <LoadingContainer
@@ -42,7 +42,7 @@ const PhoneBookPageOPERATOR = ({ gameId, currentUserId, onBack }: PhoneBookPageO
                 </Row>
             </Pressable>
 
-            <PhoneBookHeader />
+            <PhoneBookHeader aliveCount={aliveCount} totalCount={totalCount} />
             <PhoneBookGrid gameId={gameId} players={players} />
         </Column>
         </LoadingContainer>
@@ -50,11 +50,11 @@ const PhoneBookPageOPERATOR = ({ gameId, currentUserId, onBack }: PhoneBookPageO
 };
 
 // Header component - just shows the title, no edit button
-const PhoneBookHeader = () => {
+const PhoneBookHeader = ({ aliveCount, totalCount }: { aliveCount: number; totalCount: number }) => {
     return (
         <Column className='gap-0'>
             <FontText weight='bold' className='text-xl'>Phone Book</FontText>
-            <FontText variant='subtext'>All players in the game.</FontText>
+            <FontText variant='subtext'>{aliveCount}/{totalCount} players alive</FontText>
         </Column>
     );
 };
@@ -144,6 +144,21 @@ const useAllPlayers = ({ gameId, currentUserId }: { gameId: string; currentUserI
     });
     const newserAssignment = newserAssignmentRecords?.[0]?.value ?? { email: '', userId: '', assignedAt: 0 };
     const newserEmail = newserAssignment.email?.trim()?.toLowerCase() ?? '';
+    const newserUserId = newserAssignment.userId?.trim() ?? '';
+
+    // Alive count: userTable players only, excluding the newser and the operator
+    const countablePlayers = userTable.filter((u: UserTableItem) => {
+        const email = u.email?.trim()?.toLowerCase();
+        if (newserEmail && email === newserEmail) return false;
+        if (newserUserId && u.userId === newserUserId) return false;
+        if (operatorUserId && u.userId === operatorUserId) return false;
+        if (u.userId === currentUserId) return false;
+        return true;
+    });
+    const totalCount = countablePlayers.length;
+    const aliveCount = countablePlayers.filter(
+        (u: UserTableItem) => u.playerData?.livingState === 'alive'
+    ).length;
 
     // Loading check: wait for all data sources
     const isUserTableLoading = operatorUserTableRecords === undefined || isOperatorLoading;
@@ -177,7 +192,7 @@ const useAllPlayers = ({ gameId, currentUserId }: { gameId: string; currentUserI
         })
         .sort((a, b) => a.email.localeCompare(b.email));
 
-    return { players, isLoading };
+    return { players, isLoading, aliveCount, totalCount };
 };
 
 // Player card with container that handles hiding invalid players

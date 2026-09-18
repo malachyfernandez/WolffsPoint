@@ -9,9 +9,23 @@ import { Image, Pressable, View, useWindowDimensions } from 'react-native';
 import { useValue, useFindValues, useFindListItems } from 'hooks/useData';
 import { useGameOperatorUserId } from 'hooks/useGameOperatorUserId';
 import { useDialogGuildedVariant } from 'hooks/useDialogGuildedVariant';
+import { useSharedListValue } from 'hooks/useSharedListValue';
+import { useSharedVariableValue } from 'hooks/useSharedVariableValue';
 import { PlayerProfile } from 'types/multiplayer';
 import { UserTableItem } from 'types/playerTable';
-import { getGameScopedKey } from 'utils/multiplayer';
+import {
+  buildScheduledDate,
+  buildScheduledDateOnInstantDay,
+  getCurrentPlayableDayIndex,
+  getDayEndDate,
+  getGameScopedKey,
+  isDayReleasedAtTime,
+  isNightWindowOpen,
+  normalizeGameSchedule,
+  parseStoredDayDates,
+  resolveGameTimeZone,
+  defaultGameSchedule,
+} from 'utils/multiplayer';
 import { getNewserAssignmentKey, NewserAssignment } from 'utils/newspaperControl';
 import { useTownSquareAuthorIdentity } from './townSquare/TownSquareAuthorIdentity';
 import Column from '../layout/Column';
@@ -24,7 +38,9 @@ import AppButton from '../ui/buttons/AppButton';
 import MarkdownRenderer from '../ui/markdown/MarkdownRenderer';
 import PlayerProfileDialog from './PlayerProfileDialogNEW';
 import PlayerProfilePreviewCard from './PlayerProfilePreviewCard';
+import PlaceholderCard from '../ui/PlaceholderCard';
 import ShadowScrollView from '../ui/ShadowScrollView';
+import { Moon } from 'lucide-react-native';
 
 interface PhoneBookPagePLAYERProps {
   gameId: string;
@@ -65,18 +81,29 @@ const PhoneBookPagePLAYER = ({ gameId, currentUserId, currentEmail }: PhoneBookP
     [currentEmail, currentUserId, gameId, myProfile.value]
   );
 
-  const { players, isLoading: isPhoneBookLoading } = useAllPlayers({ gameId });
+  const {
+    players,
+    isLoading: isPhoneBookLoading,
+    aliveCount,
+    totalCount,
+  } = useAllPlayers({ gameId });
+  const { isSleepWindow, isLoading: isSleepWindowLoading } = useSleepWindow({ gameId });
 
   const { width } = useWindowDimensions();
   const showEditButton = width >= 410;
 
   return (
     <LoadingContainer
-      dependencies={[myProfile, !isPhoneBookLoading]}
+      dependencies={[myProfile, !isPhoneBookLoading, !isSleepWindowLoading]}
       loadingText="Loading phone book"
       className="min-h-190 flex-1">
       <Column className="flex-1 gap-6 py-3 sm:px-4">
-        <PhoneBookHeader onEditProfile={() => setIsProfileDialogOpen(true)} />
+        <PhoneBookHeader
+          onEditProfile={() => setIsProfileDialogOpen(true)}
+          aliveCount={aliveCount}
+          totalCount={totalCount}
+          isSleepWindow={isSleepWindow}
+        />
         <MyProfileCard profile={initialProfileValue} onPress={() => setIsProfileDialogOpen(true)} />
         {!showEditButton && (
           <Row className="-mt-2">
@@ -90,7 +117,18 @@ const PhoneBookPagePLAYER = ({ gameId, currentUserId, currentEmail }: PhoneBookP
             </AppButton>
           </Row>
         )}
-        <PhoneBookGrid gameId={gameId} players={players} />
+        {isSleepWindow ? (
+          <PlaceholderCard>
+            <Column className="items-center gap-3">
+              <Moon size={48} color="rgb(46, 41, 37)" />
+              <FontText weight="bold" className="text-center text-xl">
+                You can&apos;t see alive players until the morning
+              </FontText>
+            </Column>
+          </PlaceholderCard>
+        ) : (
+          <PhoneBookGrid gameId={gameId} players={players} />
+        )}
 
         <PlayerProfileDialog
           initialValue={initialProfileValue}
@@ -156,7 +194,17 @@ const MyProfileCard = ({ profile, onPress }: { profile: PlayerProfile; onPress: 
 };
 
 // Header component - just manages the header layout and button
-const PhoneBookHeader = ({ onEditProfile }: { onEditProfile: () => void }) => {
+const PhoneBookHeader = ({
+  onEditProfile,
+  aliveCount,
+  totalCount,
+  isSleepWindow,
+}: {
+  onEditProfile: () => void;
+  aliveCount: number;
+  totalCount: number;
+  isSleepWindow: boolean;
+}) => {
   const { width } = useWindowDimensions();
   const showEditButton = width >= 410;
 
@@ -167,7 +215,11 @@ const PhoneBookHeader = ({ onEditProfile }: { onEditProfile: () => void }) => {
           <FontText weight="bold" className="text-xl">
             Phone Book
           </FontText>
-          <FontText variant="subtext">All players in the game.</FontText>
+          <FontText variant="subtext">
+            {isSleepWindow
+              ? "You can't see alive players until the morning"
+              : `${aliveCount}/${totalCount} players alive`}
+          </FontText>
         </>
       </Column>
       {showEditButton && (
@@ -299,6 +351,20 @@ const useAllPlayers = ({ gameId }: { gameId: string }) => {
     assignedAt: 0,
   };
   const newserEmail = newserAssignment.email?.trim()?.toLowerCase() ?? '';
+  const newserUserId = newserAssignment.userId?.trim() ?? '';
+
+  // Alive count: userTable players only, excluding the newser and the operator
+  const countablePlayers = userTable.filter((u: UserTableItem) => {
+    const email = u.email?.trim()?.toLowerCase();
+    if (newserEmail && email === newserEmail) return false;
+    if (newserUserId && u.userId === newserUserId) return false;
+    if (operatorUserId && u.userId === operatorUserId) return false;
+    return true;
+  });
+  const totalCount = countablePlayers.length;
+  const aliveCount = countablePlayers.filter(
+    (u: UserTableItem) => u.playerData?.livingState === 'alive'
+  ).length;
 
   // Loading check: wait for all data sources
   const isUserTableLoading = operatorUserTableRecords === undefined || isOperatorLoading;
@@ -334,7 +400,106 @@ const useAllPlayers = ({ gameId }: { gameId: string }) => {
     })
     .sort((a, b) => a.email.localeCompare(b.email));
 
-  return { players, isLoading };
+  return { players, isLoading, aliveCount, totalCount };
+};
+
+// Sleep window logic - copied verbatim from YourEyesOnlyPagePLAYER ("Go to sleep, man." screen).
+// When isSleepWindow is true, the phone book is closed until morning.
+const useSleepWindow = ({ gameId }: { gameId: string }) => {
+  const { operatorUserId, isLoading: isOperatorLoading } = useGameOperatorUserId(gameId);
+  const operatorUserIds = operatorUserId ? [operatorUserId] : undefined;
+  const { value: dayDateStrings, record: dayDateStringsRecord } = useSharedListValue<string[]>({
+    key: 'dayDatesArray',
+    itemId: gameId,
+    defaultValue: [],
+    userIds: operatorUserIds,
+  });
+  const { value: numberOfRealDaysPerInGameDay, isLoading: isNumberOfRealDaysLoading } =
+    useSharedListValue<number>({
+      key: 'numberOfRealDaysPerInGameDay',
+      itemId: gameId,
+      defaultValue: 2,
+      userIds: operatorUserIds,
+    });
+  const scheduleRecord = useSharedVariableValue({
+    key: getGameScopedKey('gameSchedule', gameId),
+    defaultValue: defaultGameSchedule,
+    userIds: operatorUserIds,
+  });
+  const [now, setNow] = useState(() => new Date());
+
+  const schedule = normalizeGameSchedule(scheduleRecord.value ?? defaultGameSchedule);
+  const gameTimeZone = resolveGameTimeZone(schedule);
+  const dayDates = useMemo(() => parseStoredDayDates(dayDateStrings), [dayDateStrings]);
+  const currentDayIndex = useMemo(
+    () => getCurrentPlayableDayIndex(dayDates, new Date(), gameTimeZone),
+    [dayDates, gameTimeZone]
+  );
+  const currentDayStartDate = dayDates[currentDayIndex];
+  const deadlineDayIndex =
+    currentDayIndex > 0 &&
+    currentDayStartDate &&
+    !isDayReleasedAtTime(currentDayStartDate, schedule.wakeUpTime, now, gameTimeZone)
+      ? currentDayIndex - 1
+      : currentDayIndex;
+  const deadlineDayEndDate = getDayEndDate(
+    dayDates,
+    deadlineDayIndex,
+    numberOfRealDaysPerInGameDay
+  );
+  const voteDeadlineBaseDate = new Date(
+    deadlineDayEndDate.getTime() - (schedule.voteDayOffset ?? 0) * 24 * 60 * 60 * 1000
+  );
+  const actionDeadlineBaseDate = new Date(
+    deadlineDayEndDate.getTime() - (schedule.actionDayOffset ?? 0) * 24 * 60 * 60 * 1000
+  );
+  const voteDeadlineTime =
+    schedule.voteDeadlineTime ?? defaultGameSchedule.voteDeadlineTime ?? '22:00';
+  const actionDeadlineTime =
+    schedule.actionDeadlineTime ?? defaultGameSchedule.actionDeadlineTime ?? '22:00';
+  const voteDeadline = buildScheduledDate(voteDeadlineBaseDate, voteDeadlineTime, gameTimeZone);
+  const actionDeadline = buildScheduledDate(
+    actionDeadlineBaseDate,
+    actionDeadlineTime,
+    gameTimeZone
+  );
+  const laterDeadline =
+    voteDeadline.getTime() >= actionDeadline.getTime() ? voteDeadline : actionDeadline;
+  const sameDayWakeUp = buildScheduledDateOnInstantDay(
+    laterDeadline,
+    schedule.wakeUpTime,
+    gameTimeZone
+  );
+  const nextWakeUp =
+    sameDayWakeUp.getTime() > laterDeadline.getTime()
+      ? sameDayWakeUp
+      : buildScheduledDateOnInstantDay(laterDeadline, schedule.wakeUpTime, gameTimeZone, 1);
+  const isVoteLocked =
+    deadlineDayIndex < currentDayIndex ||
+    !isNightWindowOpen(voteDeadlineBaseDate, voteDeadlineTime, now, gameTimeZone);
+  const isActionLocked =
+    deadlineDayIndex < currentDayIndex ||
+    !isNightWindowOpen(actionDeadlineBaseDate, actionDeadlineTime, now, gameTimeZone);
+  const isSleepWindow =
+    dayDates.length > 0 && isVoteLocked && isActionLocked && now.getTime() < nextWakeUp.getTime();
+
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      setNow(new Date());
+    }, 1000); // Update every second
+
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, []);
+
+  const isLoading =
+    dayDateStringsRecord === undefined ||
+    isNumberOfRealDaysLoading ||
+    scheduleRecord.record === undefined ||
+    isOperatorLoading;
+
+  return { isSleepWindow, isLoading };
 };
 
 // Individual player card - subscribes to its own data
