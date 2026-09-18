@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect, useMemo } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { Platform, Pressable, View } from 'react-native';
 import TagCellDisplay from './TagCellDisplay';
 import { useTableRowPreview } from './TableRowPreview';
@@ -12,7 +12,7 @@ import { VoteValue } from 'types/multiplayer';
 import { getPlayerActionSummary } from 'utils/multiplayer';
 import ActionPills from './ActionPills';
 import ActionEditorDialog from './ActionEditorDialog';
-import VoteEditorDialog, { resolveVoteEmailToName } from './VoteEditorDialog';
+import VoteEditorDialog, { ResolvedVoteName } from './VoteEditorDialog';
 import { SelectableOverlay } from './multiSelect/SelectableOverlay';
 
 interface DayUserRowProps {
@@ -113,10 +113,6 @@ const DayUserRow = ({
     setIsActionDialogOpen(true);
   };
 
-  // Resolve vote email to player name
-  const resolvedVoteName = useMemo(() => {
-    return resolveVoteEmailToName(dayData.vote || '', users);
-  }, [dayData.vote, users]);
 
   return (
     <View ref={rowRef} className="relative">
@@ -132,7 +128,7 @@ const DayUserRow = ({
               className="overflow-hidden text-nowrap text-center"
               style={{ width: dayBaseColumnWidths.vote - 16 }}>
               {dayData.vote ? (
-                resolvedVoteName
+                <ResolvedVoteName vote={dayData.vote} users={users} />
               ) : (
                 <FontText className="opacity-50">No Vote...</FontText>
               )}

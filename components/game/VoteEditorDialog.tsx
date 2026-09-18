@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useMemo } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { TextInput, View } from 'react-native';
 import FontTextInput from '../ui/forms/FontTextInput';
 import ConvexDialog from '../ui/dialog/ConvexDialog';
@@ -50,13 +50,49 @@ interface VoteEditorDialogProps {
 export const resolveVoteEmailToName = (vote: VoteValue, users: UserTableItem[]): string => {
   const targets = normalizeVoteTargets(vote);
   if (targets.length === 0) return 'No vote';
-  if (targets.length === 1 && targets[0] === 'SKIP_VOTE') return 'Skipped Vote';
   return targets
     .map((target) => {
+      if (target === 'SKIP_VOTE') return 'Skipped Vote';
       const user = users.find((item) => item.email.toLowerCase() === target.toLowerCase());
-      return user?.realName || target;
+      return user?.realName ?? 'INVALID';
     })
     .join(', ');
+};
+
+/**
+ * Renders resolved vote targets as inline text. Targets that don't match a
+ * player's email show as red "INVALID". Meant to be nested inside a FontText.
+ */
+export const ResolvedVoteName = ({
+  vote,
+  users,
+}: {
+  vote: VoteValue;
+  users: UserTableItem[];
+}) => {
+  const targets = normalizeVoteTargets(vote);
+  if (targets.length === 0) return <FontText>No vote</FontText>;
+  return (
+    <>
+      {targets.map((target, index) => {
+        const user = users.find((item) => item.email.toLowerCase() === target.toLowerCase());
+        return (
+          <React.Fragment key={`${target}-${index}`}>
+            {index > 0 ? ', ' : null}
+            {target === 'SKIP_VOTE' ? (
+              'Skipped Vote'
+            ) : user ? (
+              user.realName
+            ) : (
+              <FontText color="red" weight="medium">
+                INVALID
+              </FontText>
+            )}
+          </React.Fragment>
+        );
+      })}
+    </>
+  );
 };
 
 const VoteEditorDialog = ({
@@ -126,9 +162,6 @@ const VoteEditorDialog = ({
     }
   }, [hasUnsavedChanges]);
 
-  const resolvedName = useMemo(() => {
-    return resolveVoteEmailToName(draftVote, users);
-  }, [draftVote, users]);
   const supplementalInputs = Object.entries(voteInputs ?? {}).filter(
     ([key, value]) => key !== voteInputKey && value?.trim()
   );
@@ -279,7 +312,7 @@ const VoteEditorDialog = ({
                   </FontText>
                   <View className="bg-text border-border rounded-lg border-2 p-3">
                     <FontText color="white" weight="medium" className="text-center">
-                      {resolvedName}
+                      <ResolvedVoteName vote={draftVote} users={users} />
                     </FontText>
                   </View>
                 </Column>
@@ -399,10 +432,10 @@ const VoteEditorDialog = ({
                   </FontText>
                   <View className="bg-text border-border rounded-lg border-2 p-3">
                     <FontText color="white" weight="medium" className="text-center">
-                      {resolveVoteEmailToName(
-                        (previewEntry.value as { vote: VoteValue }).vote,
-                        users
-                      )}
+                      <ResolvedVoteName
+                        vote={(previewEntry.value as { vote: VoteValue }).vote}
+                        users={users}
+                      />
                     </FontText>
                   </View>
                 </Column>

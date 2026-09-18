@@ -10,7 +10,7 @@ import { PlayerNightSubmission } from 'types/multiplayer';
 import { UserTableItem } from 'types/playerTable';
 import { getPlayerActionSummary, normalizeVoteTargets } from 'utils/multiplayer';
 import ActionPills from './ActionPills';
-import { resolveVoteEmailToName } from './VoteEditorDialog';
+import { ResolvedVoteName } from './VoteEditorDialog';
 import CloseButton from '../ui/dialog/CloseButton';
 
 const formatInputValue = (value: string) => {
@@ -69,9 +69,7 @@ const NightlyCertificationDialog = ({
             <Column className="gap-3">
               {users.map((user) => {
                 const submission = submissionsByEmail[user.email.toLowerCase()];
-                const resolvedVote = normalizeVoteTargets(submission?.vote)
-                  .map((vote) => resolveVoteEmailToName(vote, users))
-                  .join(', ');
+                const hasVote = normalizeVoteTargets(submission?.vote).length > 0;
                 const actionSummary = getPlayerActionSummary(submission?.action);
                 const voteUpdates = submission?.votePlannedUpdates ?? [];
                 const actionUpdates = submission?.plannedUpdates ?? [];
@@ -94,7 +92,13 @@ const NightlyCertificationDialog = ({
                     <Row className="items-start gap-4" style={{ flexWrap: 'wrap' }}>
                       <Column className="min-w-[240px] flex-1 gap-2">
                         <FontText weight="medium">Vote</FontText>
-                        <FontText>{resolvedVote || '—'}</FontText>
+                        <FontText>
+                          {hasVote ? (
+                            <ResolvedVoteName vote={submission!.vote} users={users} />
+                          ) : (
+                            '—'
+                          )}
+                        </FontText>
                         {submission?.voteMultiplier !== undefined &&
                           submission.voteMultiplier !== 1 && (
                             <FontText variant="subtext">

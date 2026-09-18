@@ -13,17 +13,27 @@ import MarkdownRenderer, {
   MarkdownRendererInputDataProvider,
 } from '../../ui/markdown/MarkdownRenderer';
 import ChainWraper from '../ChainWraper';
-import { useList, useValue } from 'hooks/useData';
+import { useFindValues, useList, useValue } from 'hooks/useData';
 import { UserTableItem, UserTableTitle } from 'types/playerTable';
 import { DEFAULT_VOTE_MESSAGE, RoleTableItem } from 'types/roleTable';
+import { PlayerNightSubmission } from 'types/multiplayer';
 import type { ScriptSourceData } from '../../../script/runtime/sources';
 import {
+  buildScheduledDate,
   defaultGameSchedule,
+  formatCountdown,
   formatTimeLabel,
+  getCurrentPlayableDayIndex,
+  getDayEndDate,
   getDayRangeLabel,
   getGameScopedKey,
+  isDayContentReleased,
+  isNightWindowOpen,
   normalizeGameSchedule,
+  normalizePlayerActionState,
+  normalizeVoteTargets,
   parseStoredDayDates,
+  resolveGameTimeZone,
 } from 'utils/multiplayer';
 import CloseButton from '../../ui/dialog/CloseButton';
 
@@ -86,6 +96,14 @@ const PlayerPreviewModal = ({
     privacy: 'PUBLIC',
     defaultValue: 0,
   });
+  const [skipVotingDays] = useList<number[]>('skipVotingDays', gameId, {
+    privacy: 'PUBLIC',
+    defaultValue: [],
+  });
+  const [skipActionsDays] = useList<number[]>('skipActionsDays', gameId, {
+    privacy: 'PUBLIC',
+    defaultValue: [],
+  });
   const [defaultVoteMessage] = useList<string>('voteMessageDefault', gameId, {
     privacy: 'PUBLIC',
     defaultValue: DEFAULT_VOTE_MESSAGE,
@@ -134,6 +152,96 @@ const PlayerPreviewModal = ({
     schedule.voteDeadlineTime ?? defaultGameSchedule.voteDeadlineTime ?? '22:00';
   const actionDeadlineTime =
     schedule.actionDeadlineTime ?? defaultGameSchedule.actionDeadlineTime ?? '22:00';
+
+  // === Player emulation ===
+  // The preview "believes" it is the selected game day: an emulated `now` is
+  // placed just after wake-up on that day's start date (in the game's
+  // timezone), so release gating, deadline windows, locks, and the countdown
+  // all evaluate exactly as they would for the player on that day — regardless
+  // of the real clock.
+  const gameTimeZone = useMemo(() => resolveGameTimeZone(schedule), [schedule]);
+  const emulatedNow = useMemo(() => {
+    const dayStart = parsedDayDates[previewDayIndex];
+    if (!dayStart) return new Date();
+    return new Date(
+      buildScheduledDate(dayStart, schedule.wakeUpTime, gameTimeZone).getTime() + 60_000
+    );
+  }, [parsedDayDates, previewDayIndex, schedule.wakeUpTime, gameTimeZone]);
+  const emulatedCurrentDayIndex = useMemo(
+    () => getCurrentPlayableDayIndex(parsedDayDates, emulatedNow, gameTimeZone),
+    [parsedDayDates, emulatedNow, gameTimeZone]
+  );
+  const selectedDayEndDate = useMemo(
+    () => getDayEndDate(parsedDayDates, previewDayIndex, daySpan),
+    [parsedDayDates, previewDayIndex, daySpan]
+  );
+  const voteDeadlineBaseDate = useMemo(
+    () =>
+      new Date(
+        selectedDayEndDate.getTime() - (schedule.voteDayOffset ?? 0) * 24 * 60 * 60 * 1000
+      ),
+    [selectedDayEndDate, schedule.voteDayOffset]
+  );
+  const actionDeadlineBaseDate = useMemo(
+    () =>
+      new Date(
+        selectedDayEndDate.getTime() - (schedule.actionDayOffset ?? 0) * 24 * 60 * 60 * 1000
+      ),
+    [selectedDayEndDate, schedule.actionDayOffset]
+  );
+  const voteDeadline = useMemo(
+    () => buildScheduledDate(voteDeadlineBaseDate, voteDeadlineTime, gameTimeZone),
+    [voteDeadlineBaseDate, voteDeadlineTime, gameTimeZone]
+  );
+  const actionDeadline = useMemo(
+    () => buildScheduledDate(actionDeadlineBaseDate, actionDeadlineTime, gameTimeZone),
+    [actionDeadlineBaseDate, actionDeadlineTime, gameTimeZone]
+  );
+  const isVoteLocked =
+    previewDayIndex < emulatedCurrentDayIndex ||
+    !isNightWindowOpen(voteDeadlineBaseDate, voteDeadlineTime, emulatedNow, gameTimeZone);
+  const isActionLocked =
+    previewDayIndex < emulatedCurrentDayIndex ||
+    !isNightWindowOpen(actionDeadlineBaseDate, actionDeadlineTime, emulatedNow, gameTimeZone);
+  const isVotingSkipped = (skipVotingDays?.value ?? []).includes(previewDayIndex);
+  const isActionsSkipped = (skipActionsDays?.value ?? []).includes(previewDayIndex);
+  const bothSkipped = isVotingSkipped && isActionsSkipped;
+  const isVotePrimary = bothSkipped
+    ? false
+    : isVotingSkipped
+      ? false
+      : isActionsSkipped
+        ? true
+        : voteDeadline.getTime() <= actionDeadline.getTime();
+  const primaryDeadline = isVotePrimary ? voteDeadline : actionDeadline;
+  const primaryLocked = isVotePrimary ? isVoteLocked : isActionLocked;
+  const primaryLabel = isVotePrimary ? 'VOTE' : 'ACTION';
+  const primaryTimeLabel = isVotePrimary ? voteDeadlineTime : actionDeadlineTime;
+  const primaryCountdown = primaryLocked ? 'LOCKED' : formatCountdown(primaryDeadline, emulatedNow);
+  const secondarySkipped = isVotePrimary ? isActionsSkipped : isVotingSkipped;
+  const secondaryTimeLabel = isVotePrimary ? actionDeadlineTime : voteDeadlineTime;
+  const secondaryLabel = isVotePrimary ? 'Actions' : 'Voting';
+
+  // The previewed player's real submission for the selected day seeds the
+  // emulated input state — scripts that branch on Inputs (and the inputs
+  // themselves) reflect what that player actually submitted.
+  const submissionKey = getGameScopedKey(
+    `playerNightSubmission-day-${previewDayIndex}`,
+    gameId
+  );
+  const submissionRecords = useFindValues<PlayerNightSubmission>(submissionKey, {
+    returnTop: 200,
+  });
+  const selectedSubmission = useMemo(
+    () =>
+      (submissionRecords ?? []).find(
+        (record: any) =>
+          record.value?.playerEmail?.trim()?.toLowerCase() ===
+          selectedPlayerEmail?.trim()?.toLowerCase()
+      )?.value,
+    [submissionRecords, selectedPlayerEmail]
+  );
+
   const selectedDayRangeLabel = useMemo(
     () => getDayRangeLabel(parsedDayDates, previewDayIndex, daySpan),
     [parsedDayDates, previewDayIndex, daySpan]
@@ -195,12 +303,28 @@ const PlayerPreviewModal = ({
     });
   }, [isOpen, previewablePlayers, isPlayerScopedPreview, playerEmail, players]);
 
+  // Seed the emulated input state from the player's real submission once per
+  // (player, day) — waits for submission records to load so it doesn't clobber
+  // real data with an empty seed. Operator edits after seeding are kept.
+  const seededForRef = useRef<string | null>(null);
   useEffect(() => {
-    if (!isOpen) return;
-    setEmulatedVoteState({});
-    setEmulatedActionState({});
-    setIsSkipVote(false);
-  }, [isOpen, selectedPlayerEmail, previewDayIndex]);
+    if (!isOpen) {
+      seededForRef.current = null;
+      return;
+    }
+    const seedKey = `${selectedPlayerEmail ?? ''}:${previewDayIndex}`;
+    if (seededForRef.current === seedKey || submissionRecords === undefined) return;
+    seededForRef.current = seedKey;
+    setEmulatedActionState(normalizePlayerActionState(selectedSubmission?.action));
+    const targets = normalizeVoteTargets(selectedSubmission?.vote);
+    setEmulatedVoteState(
+      selectedSubmission?.voteInputs ??
+        (targets.length === 0 || targets[0] === 'SKIP_VOTE'
+          ? {}
+          : { Vote: targets.length === 1 ? targets[0] : JSON.stringify(targets) })
+    );
+    setIsSkipVote(selectedSubmission?.vote === 'SKIP_VOTE');
+  }, [isOpen, selectedPlayerEmail, previewDayIndex, submissionRecords, selectedSubmission]);
 
   const playerDropdownOptions = useMemo(
     () =>
@@ -230,11 +354,31 @@ const PlayerPreviewModal = ({
   );
 
   // The "Last Night" card mirrors YourEyesOnlyDayContentPLAYER: on game day D
-  // the player sees the message the operator wrote during night D - 1.
+  // the player sees the message the operator wrote during night D - 1,
+  // released at wake-up — evaluated against the emulated clock.
   const previewMorningMessage = useMemo(() => {
     if (!selectedPlayer || previewDayIndex <= 0) return '';
+    if (
+      !isDayContentReleased(
+        parsedDayDates,
+        previewDayIndex - 1,
+        schedule.wakeUpTime,
+        emulatedNow,
+        gameTimeZone
+      )
+    ) {
+      return '';
+    }
     return morningMessagesList[selectedPlayer.email.toLowerCase()]?.[previewDayIndex - 1] ?? '';
-  }, [morningMessagesList, previewDayIndex, selectedPlayer]);
+  }, [
+    morningMessagesList,
+    previewDayIndex,
+    selectedPlayer,
+    parsedDayDates,
+    schedule.wakeUpTime,
+    emulatedNow,
+    gameTimeZone,
+  ]);
   const voteMessage = roleData?.voteMessage?.trim()
     ? roleData.voteMessage
     : defaultVoteMessage?.value || DEFAULT_VOTE_MESSAGE;
@@ -432,103 +576,173 @@ const PlayerPreviewModal = ({
                             </Column>
 
                             <Column className="items-center gap-1">
-                              <FontText weight="bold" className="text-lg tracking-[0.45em]">
-                                VOTE
-                              </FontText>
-                              <FontText weight="bold" className="leading-14 text-5xl">
-                                --:--:--
-                              </FontText>
-                              <FontText variant="subtext">
-                                Voting due at {formatTimeLabel(voteDeadlineTime)}.
-                              </FontText>
-                              <FontText variant="subtext">
-                                Actions due at {formatTimeLabel(actionDeadlineTime)}.
-                              </FontText>
+                              {bothSkipped ? (
+                                <>
+                                  <FontText weight="bold" className="leading-14 text-5xl">
+                                    SKIPPED
+                                  </FontText>
+                                  <FontText variant="subtext">Voting skipped this day</FontText>
+                                  <FontText variant="subtext">Actions skipped this day</FontText>
+                                </>
+                              ) : (
+                                <>
+                                  <FontText weight="bold" className="text-lg tracking-[0.45em]">
+                                    {primaryLabel}
+                                  </FontText>
+                                  <FontText weight="bold" className="leading-14 text-5xl">
+                                    {primaryCountdown}
+                                  </FontText>
+                                  <FontText variant="subtext">
+                                    {primaryLabel === 'VOTE' ? 'Voting' : 'Actions'} due at{' '}
+                                    {formatTimeLabel(primaryTimeLabel)}.
+                                  </FontText>
+                                  <FontText variant="subtext">
+                                    {secondarySkipped
+                                      ? `${secondaryLabel} skipped this day`
+                                      : `${secondaryLabel} due at ${formatTimeLabel(secondaryTimeLabel)}.`}
+                                  </FontText>
+                                </>
+                              )}
                             </Column>
 
                             <Row className="items-start gap-4" style={{ flexWrap: 'wrap' }}>
                               <Column className="min-w-[300px] flex-1">
-                                <ChainWraper
-                                  className=""
-                                  isDisabled={roleData?.doesRoleVote === false}>
+                                {isVotingSkipped ? (
                                   <Column className="gap-3">
                                     <FontText
                                       weight="medium"
                                       className="text-sm uppercase tracking-[0.24em] opacity-60">
                                       Vote
                                     </FontText>
-                                    <MarkdownRenderer
-                                      markdown={voteMessage}
-                                      isInDialog
-                                      state={emulatedVoteState}
-                                      setState={
-                                        roleData?.doesRoleVote === false || isSkipVote
-                                          ? undefined
-                                          : setEmulatedVoteState
-                                      }
-                                    />
-                                    {roleData?.doesRoleVote !== false && (
-                                      <Pressable onPress={() => setIsSkipVote((value) => !value)}>
-                                        <Row className="items-center gap-2">
-                                          <View
-                                            className={`h-5 w-5 items-center justify-center rounded border ${isSkipVote ? 'bg-text border-text' : 'border-border bg-background'}`}>
-                                            {isSkipVote && (
-                                              <FontText
-                                                weight="bold"
-                                                color="white"
-                                                className="text-xs">
-                                                ✓
-                                              </FontText>
-                                            )}
-                                          </View>
-                                          <FontText
-                                            weight="medium"
-                                            className={isSkipVote ? '' : 'opacity-70'}>
-                                            Skip Vote
-                                          </FontText>
-                                        </Row>
-                                      </Pressable>
-                                    )}
+                                    <FontText variant="subtext">
+                                      Voting is skipped for this day.
+                                    </FontText>
                                   </Column>
-                                </ChainWraper>
-                                {isSkipVote ? (
-                                  <FontText variant="subtext">You have skipped your vote.</FontText>
-                                ) : voteSummary ? (
-                                  <FontText variant="subtext">Current vote: {voteSummary}</FontText>
-                                ) : roleData?.doesRoleVote === false ? (
-                                  <FontText variant="subtext">
-                                    This role doesn&apos;t submit a vote.
-                                  </FontText>
-                                ) : null}
+                                ) : (
+                                  <>
+                                    <ChainWraper
+                                      className=""
+                                      isDisabled={
+                                        isVoteLocked || roleData?.doesRoleVote === false
+                                      }>
+                                      <Column className="gap-3">
+                                        <FontText
+                                          weight="medium"
+                                          className="text-sm uppercase tracking-[0.24em] opacity-60">
+                                          Vote
+                                        </FontText>
+                                        <MarkdownRenderer
+                                          markdown={voteMessage}
+                                          isInDialog
+                                          state={emulatedVoteState}
+                                          setState={
+                                            isVoteLocked ||
+                                            roleData?.doesRoleVote === false ||
+                                            isSkipVote
+                                              ? undefined
+                                              : setEmulatedVoteState
+                                          }
+                                        />
+                                        {!isVoteLocked && roleData?.doesRoleVote !== false && (
+                                          <Pressable
+                                            onPress={() => setIsSkipVote((value) => !value)}>
+                                            <Row className="items-center gap-2">
+                                              <View
+                                                className={`h-5 w-5 items-center justify-center rounded border ${isSkipVote ? 'bg-text border-text' : 'border-border bg-background'}`}>
+                                                {isSkipVote && (
+                                                  <FontText
+                                                    weight="bold"
+                                                    color="white"
+                                                    className="text-xs">
+                                                    ✓
+                                                  </FontText>
+                                                )}
+                                              </View>
+                                              <FontText
+                                                weight="medium"
+                                                className={isSkipVote ? '' : 'opacity-70'}>
+                                                Skip Vote
+                                              </FontText>
+                                            </Row>
+                                          </Pressable>
+                                        )}
+                                      </Column>
+                                    </ChainWraper>
+                                    {isSkipVote ? (
+                                      <FontText variant="subtext">
+                                        You have skipped your vote.
+                                      </FontText>
+                                    ) : voteSummary ? (
+                                      <FontText variant="subtext">
+                                        {isVoteLocked ? 'Saved vote' : 'Current vote'}: {voteSummary}
+                                      </FontText>
+                                    ) : roleData?.doesRoleVote === false ? (
+                                      <FontText variant="subtext">
+                                        This role doesn&apos;t submit a vote.
+                                      </FontText>
+                                    ) : isVoteLocked ? (
+                                      <FontText variant="subtext">No vote submitted.</FontText>
+                                    ) : null}
+                                  </>
+                                )}
                               </Column>
 
                               <Column className="min-w-[300px] flex-1">
-                                <ChainWraper className="min-w-[300px] flex-1" isDisabled={false}>
+                                {isActionsSkipped ? (
                                   <Column className="gap-3">
                                     <FontText
                                       weight="medium"
                                       className="text-sm uppercase tracking-[0.24em] opacity-60">
                                       Action
                                     </FontText>
-                                    {roleData?.roleMessage?.trim().length ? (
-                                      <MarkdownRenderer
-                                        markdown={roleData.roleMessage}
-                                        isInDialog
-                                        state={emulatedActionState}
-                                        setState={setEmulatedActionState}
-                                      />
-                                    ) : (
-                                      <FontText variant="subtext">
-                                        You do not have any action set for your role.
-                                      </FontText>
-                                    )}
+                                    <FontText variant="subtext">
+                                      Actions are skipped for this day.
+                                    </FontText>
                                   </Column>
-                                </ChainWraper>
-                                {actionSummary ? (
-                                  <FontText variant="subtext">
-                                    Current action: {actionSummary}
-                                  </FontText>
-                                ) : null}
+                                ) : (
+                                  <>
+                                    <ChainWraper
+                                      className="min-w-[300px] flex-1"
+                                      isDisabled={isActionLocked}>
+                                      <Column className="gap-3">
+                                        <FontText
+                                          weight="medium"
+                                          className="text-sm uppercase tracking-[0.24em] opacity-60">
+                                          Action
+                                        </FontText>
+                                        {roleData?.roleMessage?.trim().length ? (
+                                          <MarkdownRenderer
+                                            markdown={roleData.roleMessage}
+                                            isInDialog
+                                            state={emulatedActionState}
+                                            setState={
+                                              isActionLocked ? undefined : setEmulatedActionState
+                                            }
+                                          />
+                                        ) : (
+                                          <FontText variant="subtext">
+                                            You do not have any action set for your role.
+                                          </FontText>
+                                        )}
+                                      </Column>
+                                    </ChainWraper>
+                                    {isActionLocked ? (
+                                      actionSummary ? (
+                                        <FontText variant="subtext">
+                                          Saved action: {actionSummary}
+                                        </FontText>
+                                      ) : (
+                                        <FontText variant="subtext">
+                                          The action window has closed for this day.
+                                        </FontText>
+                                      )
+                                    ) : actionSummary ? (
+                                      <FontText variant="subtext">
+                                        Current action: {actionSummary}
+                                      </FontText>
+                                    ) : null}
+                                  </>
+                                )}
                               </Column>
                             </Row>
                           </Column>

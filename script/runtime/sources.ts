@@ -97,14 +97,18 @@ export const createScriptGlobals = (source: ScriptSourceData = {}): Record<strin
   );
   const currentPlayer = players.find((entry) => {
     const e = entry as Record<string, unknown>;
-    if (source.currentUserId && e.userId === source.currentUserId) {
-      return true;
-    }
-    return Boolean(
+    // Email is the unique per-row identifier — check it first. Multiple rows
+    // can share a userId (e.g. players who haven't signed in, or the operator
+    // appearing as several table entries), so a userId match alone can resolve
+    // to the wrong player.
+    if (
       source.currentEmail &&
       typeof e.email === 'string' &&
       e.email.toLowerCase() === source.currentEmail.toLowerCase()
-    );
+    ) {
+      return true;
+    }
+    return Boolean(source.currentUserId && e.userId === source.currentUserId);
   });
   const roles = (source.roles ?? [])
     .filter((role) => role.isVisible !== false || capability === 'operator')

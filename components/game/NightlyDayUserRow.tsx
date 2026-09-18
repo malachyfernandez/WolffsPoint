@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import FontText from '../ui/text/FontText';
 import InlineEditableText from '../ui/forms/InlineEditableText';
 import Column from '../layout/Column';
@@ -8,7 +8,7 @@ import { Pencil } from 'lucide-react-native';
 import MarkdownEditorDialog from './MarkdownEditorDialog';
 import { useTableRowPreview } from './TableRowPreview';
 import ActionEditorDialog from './ActionEditorDialog';
-import VoteEditorDialog, { resolveVoteEmailToName } from './VoteEditorDialog';
+import VoteEditorDialog, { ResolvedVoteName } from './VoteEditorDialog';
 import ActionPills from './ActionPills';
 import TagCellDisplay from './TagCellDisplay';
 import { UserTableItem } from 'types/playerTable';
@@ -97,10 +97,6 @@ const NightlyDayUserRow = ({
     setIsActionDialogOpen(true);
   };
 
-  // Resolve vote email to player name
-  const resolvedVoteName = useMemo(() => {
-    return resolveVoteEmailToName(dayData.vote || '', users);
-  }, [dayData.vote, users]);
 
   const getCurrentMorningMessage = () => {
     if (
@@ -141,7 +137,7 @@ const NightlyDayUserRow = ({
               className="overflow-hidden text-nowrap text-center"
               style={{ width: columnWidths.vote - 16 }}>
               {dayData.vote ? (
-                resolvedVoteName
+                <ResolvedVoteName vote={dayData.vote} users={users} />
               ) : (
                 <FontText className="opacity-50">No Vote...</FontText>
               )}
