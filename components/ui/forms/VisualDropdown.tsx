@@ -1,8 +1,9 @@
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { Platform, Pressable, View } from 'react-native';
 import { ChevronDown, Check } from 'lucide-react-native';
 import FontText from '../text/FontText';
 import ConvexDialog from '../dialog/ConvexDialog';
+import AppDropdownSearchInput from './dropdown/AppDropdownSearchInput';
 
 export interface VisualDropdownOption {
   value: string;
@@ -23,6 +24,10 @@ interface VisualDropdownProps {
   /** When provided, renders a "Set as default" row at the bottom of the
    *  dropdown which is called with the currently selected value. */
   onSetDefault?: (value: string) => void;
+  /** Shows a search field at the top of the dialog that narrows options as
+   *  you type. Enabled by default; pass false to hide it. */
+  searchable?: boolean;
+  searchPlaceholder?: string;
 }
 
 /**
@@ -37,11 +42,33 @@ const VisualDropdown = ({
   label,
   defaultValue,
   onSetDefault,
+  searchable = true,
+  searchPlaceholder = 'Search…',
 }: VisualDropdownProps) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [searchText, setSearchText] = useState('');
   const triggerRef = useRef<any>(null);
 
   const selectedOption = options.find((option) => option.value === value);
+
+  const normalizedSearch = searchText.trim().toLowerCase();
+  const visibleOptions = useMemo(() => {
+    if (!normalizedSearch) {
+      return options;
+    }
+    return options.filter(
+      (option) =>
+        option.label.toLowerCase().includes(normalizedSearch) ||
+        option.value.toLowerCase().includes(normalizedSearch)
+    );
+  }, [normalizedSearch, options]);
+
+  const handleOpenChange = useCallback((open: boolean) => {
+    setIsOpen(open);
+    if (!open) {
+      setSearchText('');
+    }
+  }, []);
 
   const handleValueChange = useCallback(
     (nextValue: string) => {
@@ -155,11 +182,31 @@ const VisualDropdown = ({
         </Pressable>
       </View>
 
-      <ConvexDialog.Root isOpen={isOpen} onOpenChange={setIsOpen}>
+      <ConvexDialog.Root isOpen={isOpen} onOpenChange={handleOpenChange}>
         <ConvexDialog.Portal>
           <ConvexDialog.Overlay />
           <ConvexDialog.Content isSwipeable={false} className="max-w-sm">
-            <View className="flex-col gap-1 pt-2">{options.map(renderOption)}</View>
+            {searchable && options.length > 0 && (
+              <AppDropdownSearchInput
+                value={searchText}
+                onChangeText={setSearchText}
+                placeholder={searchPlaceholder}
+                onSubmit={() => {
+                  const firstOption = visibleOptions[0];
+                  if (firstOption) {
+                    handleValueChange(firstOption.value);
+                  }
+                }}
+              />
+            )}
+            <View className="flex-col gap-1 pt-2">
+              {visibleOptions.map(renderOption)}
+              {normalizedSearch.length > 0 && visibleOptions.length === 0 && (
+                <FontText variant="subtext" className="py-4 text-center">
+                  No matching options
+                </FontText>
+              )}
+            </View>
           </ConvexDialog.Content>
         </ConvexDialog.Portal>
       </ConvexDialog.Root>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { ChevronDown } from 'lucide-react-native';
 import ConvexDialog from '../../components/ui/dialog/ConvexDialog';
@@ -7,6 +7,7 @@ import ShadowScrollView from '../../components/ui/ShadowScrollView';
 import Column from '../../components/layout/Column';
 import Row from '../../components/layout/Row';
 import AppDropdown, { AppDropdownOption } from '../../components/ui/forms/AppDropdown';
+import AppDropdownSearchInput from '../../components/ui/forms/dropdown/AppDropdownSearchInput';
 import FontNumberInput from '../../components/ui/forms/FontNumberInput';
 import FontTextInput from '../../components/ui/forms/FontTextInput';
 import CustomCheckbox from '../../components/ui/CustomCheckbox';
@@ -76,6 +77,7 @@ const MultiSelectDropdown = ({
   onChange: (next: string[]) => void;
 }) => {
   const [open, setOpen] = useState(false);
+  const [searchText, setSearchText] = useState('');
   const selectedCount = selected.length;
   const triggerLabel =
     selectedCount === 0
@@ -84,11 +86,30 @@ const MultiSelectDropdown = ({
         ? (options.find((opt) => selected.includes(opt.value))?.label ?? placeholder)
         : `${selectedCount} selected`;
 
+  const normalizedSearch = searchText.trim().toLowerCase();
+  const visibleOptions = useMemo(() => {
+    if (!normalizedSearch) {
+      return options;
+    }
+    return options.filter(
+      (option) =>
+        option.label.toLowerCase().includes(normalizedSearch) ||
+        option.value.toLowerCase().includes(normalizedSearch)
+    );
+  }, [normalizedSearch, options]);
+
   const toggle = (value: string) => {
     if (selected.includes(value)) {
       onChange(selected.filter((item) => item !== value));
     } else if (selected.length < limit) {
       onChange([...selected, value]);
+    }
+  };
+
+  const handleOpenChange = (next: boolean) => {
+    setOpen(next);
+    if (!next) {
+      setSearchText('');
     }
   };
 
@@ -101,14 +122,26 @@ const MultiSelectDropdown = ({
         <FontText className={selectedCount === 0 ? 'opacity-50' : ''}>{triggerLabel}</FontText>
         <ChevronDown size={16} color="currentColor" />
       </Pressable>
-      <ConvexDialog.Root isOpen={open} onOpenChange={setOpen}>
+      <ConvexDialog.Root isOpen={open} onOpenChange={handleOpenChange}>
         <ConvexDialog.Portal>
           <ConvexDialog.Overlay />
           <ConvexDialog.Content className="max-w-sm p-1">
             <DialogHeader text={placeholder} subtext={`Select up to ${limit}`} />
             <Column className="gap-1 p-4">
+              {options.length > 0 && (
+                <AppDropdownSearchInput
+                  value={searchText}
+                  onChangeText={setSearchText}
+                  onSubmit={() => {
+                    const firstOption = visibleOptions[0];
+                    if (firstOption) {
+                      toggle(firstOption.value);
+                    }
+                  }}
+                />
+              )}
               <ShadowScrollView className="max-h-80" contentContainerStyle={{ gap: 0 }}>
-                {options.map((option) => {
+                {visibleOptions.map((option) => {
                   const isSelected = selected.includes(option.value);
                   const atLimit = selected.length >= limit && !isSelected;
                   return (
@@ -126,6 +159,11 @@ const MultiSelectDropdown = ({
                     </Pressable>
                   );
                 })}
+                {normalizedSearch.length > 0 && visibleOptions.length === 0 && (
+                  <FontText variant="subtext" className="py-4 text-center">
+                    No matching options
+                  </FontText>
+                )}
               </ShadowScrollView>
               <Row className="justify-end pt-3">
                 <Pressable onPress={() => setOpen(false)} className="px-3 py-1.5">

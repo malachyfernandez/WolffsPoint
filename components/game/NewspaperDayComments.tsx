@@ -250,7 +250,7 @@ const NewspaperDayComments = ({ gameId, dayIndex }: NewspaperDayCommentsProps) =
   };
 
   return (
-    <Column className="w-full pt-6">
+    <Column className="w-full gap-0 pt-6">
       <View className="border-border/20 mb-6 w-full border-t" />
 
       <Column className="gap-6">

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useId, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { Platform, Pressable, View } from 'react-native';
 import { Popover } from 'heroui-native';
 import { ChevronDown } from 'lucide-react-native';
@@ -7,6 +7,7 @@ import { WebDropdownPortal } from 'contexts/WebDropdownProvider';
 import AppDropdownEmptyState from './dropdown/AppDropdownEmptyState';
 import AppDropdownItem from './dropdown/AppDropdownItem';
 import AppDropdownMenu from './dropdown/AppDropdownMenu';
+import AppDropdownSearchInput from './dropdown/AppDropdownSearchInput';
 import AppDropdownTrigger from './dropdown/AppDropdownTrigger';
 import ShadowScrollView from '../../ui/ShadowScrollView';
 import FontText from '../text/FontText';
@@ -37,6 +38,10 @@ interface AppDropdownProps {
   onFooterPress?: () => void;
   renderOptionAction?: (option: AppDropdownOption) => React.ReactNode;
   onOptionAction?: (option: AppDropdownOption) => void;
+  /** Shows a search field at the top of the menu that narrows options as you
+   *  type. Enabled by default; pass false to hide it. */
+  searchable?: boolean;
+  searchPlaceholder?: string;
 }
 
 interface WebDropdownMenuPosition {
@@ -69,9 +74,12 @@ const AppDropdown = ({
   onFooterPress,
   renderOptionAction,
   onOptionAction,
+  searchable = true,
+  searchPlaceholder = 'Search…',
 }: AppDropdownProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedValue, setSelectedValue] = useState(value ?? '');
+  const [searchText, setSearchText] = useState('');
   const [webMenuPosition, setWebMenuPosition] = useState<WebDropdownMenuPosition | null>(null);
   const menuId = useId();
   const triggerRef = useRef<any>(null);
@@ -84,8 +92,26 @@ const AppDropdown = ({
 
   const closeDropdown = useCallback(() => {
     setIsOpen(false);
+    setSearchText('');
     setWebMenuPosition(null);
   }, []);
+
+  const normalizedSearch = searchText.trim().toLowerCase();
+  const visibleOptions = useMemo(() => {
+    if (!normalizedSearch) {
+      return options;
+    }
+    return options.filter(
+      (option) =>
+        option.label.toLowerCase().includes(normalizedSearch) ||
+        option.value.toLowerCase().includes(normalizedSearch)
+    );
+  }, [normalizedSearch, options]);
+
+  const showUnselectOption =
+    allowUnselect && (!normalizedSearch || unselectLabel.toLowerCase().includes(normalizedSearch));
+
+  const showSearchInput = searchable && options.length > 0;
 
   const updateWebMenuPosition = useCallback(() => {
     if (Platform.OS !== 'web' || typeof window === 'undefined') {
@@ -198,6 +224,22 @@ const AppDropdown = ({
     };
   }, [closeDropdown, isInDialog, isOpen, updateWebMenuPosition]);
 
+  const handleSearchSubmit = useCallback(() => {
+    const firstOption = visibleOptions[0];
+    if (firstOption) {
+      handleValueChange(firstOption.value);
+    }
+  }, [handleValueChange, visibleOptions]);
+
+  const searchInput = showSearchInput ? (
+    <AppDropdownSearchInput
+      value={searchText}
+      onChangeText={setSearchText}
+      placeholder={searchPlaceholder}
+      onSubmit={handleSearchSubmit}
+    />
+  ) : null;
+
   const renderOption = (option: AppDropdownOption, selectedClassName: string) => {
     const action = renderOptionAction?.(option);
     return (
@@ -225,10 +267,12 @@ const AppDropdown = ({
     );
   };
 
+  const searchEmptyText = normalizedSearch ? 'No matching options' : emptyText;
+
   const dropdownList =
-    options.length || allowUnselect ? (
+    visibleOptions.length || showUnselectOption ? (
       <Column className="w-full gap-1">
-        {allowUnselect && (
+        {showUnselectOption && (
           <AppDropdownItem
             className={itemClassName}
             isSelected={selectedValue === ''}
@@ -237,16 +281,16 @@ const AppDropdown = ({
             selectedClassName={selectedItemClassName}
           />
         )}
-        {options.map((option) => renderOption(option, selectedItemClassName))}
+        {visibleOptions.map((option) => renderOption(option, selectedItemClassName))}
       </Column>
     ) : (
-      <AppDropdownEmptyState className={emptyStateClassName} text={emptyText} />
+      <AppDropdownEmptyState className={emptyStateClassName} text={searchEmptyText} />
     );
 
   const dialogDropdownList =
-    options.length || allowUnselect ? (
+    visibleOptions.length || showUnselectOption ? (
       <Column className="w-full gap-1">
-        {allowUnselect && (
+        {showUnselectOption && (
           <AppDropdownItem
             className={itemClassName}
             isSelected={selectedValue === ''}
@@ -255,7 +299,7 @@ const AppDropdown = ({
             selectedClassName={selectedItemClassName || 'bg-accent'}
           />
         )}
-        {options.map((option) => renderOption(option, selectedItemClassName || 'bg-accent'))}
+        {visibleOptions.map((option) => renderOption(option, selectedItemClassName || 'bg-accent'))}
         {footer && (
           <Pressable
             accessibilityRole="button"
@@ -269,7 +313,7 @@ const AppDropdown = ({
       </Column>
     ) : (
       <Column className="w-full gap-1">
-        <AppDropdownEmptyState className={emptyStateClassName} text={emptyText} />
+        <AppDropdownEmptyState className={emptyStateClassName} text={searchEmptyText} />
         {footer && (
           <Pressable
             accessibilityRole="button"
@@ -297,16 +341,24 @@ const AppDropdown = ({
             disabled={disabled}
           />
 
-          <ConvexDialog.Root isOpen={isOpen} onOpenChange={setIsOpen}>
+          <ConvexDialog.Root
+            isOpen={isOpen}
+            onOpenChange={(open: boolean) => {
+              if (!open) {
+                closeDropdown();
+              } else {
+                setIsOpen(true);
+              }
+            }}>
             <ConvexDialog.Portal>
               <ConvexDialog.Overlay />
               <ConvexDialog.Content className="max-w-sm">
+                {searchInput}
                 <ShadowScrollView
                   id={menuId}
                   role="listbox"
                   className={`max-h-[60vh] w-full rounded ${contentClassName}`.trim()}
-                  scrollViewClassName="w-full"
-                >
+                  scrollViewClassName="w-full">
                   {dialogDropdownList}
                 </ShadowScrollView>
               </ConvexDialog.Content>
@@ -368,14 +420,27 @@ const AppDropdown = ({
                   ...(webMenuPosition.bottom !== undefined
                     ? { bottom: webMenuPosition.bottom }
                     : { top: webMenuPosition.top }),
+                  display: 'flex',
+                  flexDirection: 'column',
                   left: webMenuPosition.left,
                   maxHeight: webMenuPosition.maxHeight,
-                  overflowY: 'auto',
+                  overflow: 'hidden',
                   pointerEvents: 'auto',
                   position: 'fixed',
                   width: webMenuPosition.width,
                 }}>
-                {dropdownList}
+                {searchInput}
+                {React.createElement(
+                  'div',
+                  {
+                    style: {
+                      flex: '1 1 auto',
+                      minHeight: 0,
+                      overflowY: 'auto',
+                    },
+                  },
+                  dropdownList
+                )}
               </AppDropdownMenu>
             </>
           </WebDropdownPortal>
@@ -385,7 +450,15 @@ const AppDropdown = ({
   }
 
   return (
-    <Popover isOpen={isOpen} onOpenChange={setIsOpen}>
+    <Popover
+      isOpen={isOpen}
+      onOpenChange={(open) => {
+        if (!open) {
+          closeDropdown();
+        } else {
+          setIsOpen(true);
+        }
+      }}>
       <Popover.Trigger
         className={`border-subtle-border bg-background w-full flex-row items-center justify-between rounded border px-3 py-3 ${triggerClassName} ${disabled ? 'opacity-60' : ''}`.trim()}
         isDisabled={disabled}>
@@ -404,6 +477,7 @@ const AppDropdown = ({
           animation={undefined}
           className={`border-subtle-border bg-background rounded border p-1 ${contentClassName}`}
           style={undefined}>
+          {searchInput}
           {dropdownList}
         </Popover.Content>
       </Popover.Portal>
