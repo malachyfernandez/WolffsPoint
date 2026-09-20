@@ -78,6 +78,7 @@ const MultiSelectDropdown = ({
 }) => {
   const [open, setOpen] = useState(false);
   const [searchText, setSearchText] = useState('');
+  const [activeIndex, setActiveIndex] = useState(0);
   const selectedCount = selected.length;
   const triggerLabel =
     selectedCount === 0
@@ -110,7 +111,28 @@ const MultiSelectDropdown = ({
     setOpen(next);
     if (!next) {
       setSearchText('');
+      setActiveIndex(0);
     }
+  };
+
+  const handleSearchChange = (text: string) => {
+    setSearchText(text);
+    setActiveIndex(0);
+  };
+
+  const handleSearchKeyDown = (key: string) => {
+    if (visibleOptions.length === 0) {
+      return;
+    }
+    setActiveIndex((currentValue) => {
+      if (key === 'ArrowDown') {
+        return Math.min(currentValue + 1, visibleOptions.length - 1);
+      }
+      if (key === 'ArrowUp') {
+        return Math.max(currentValue - 1, 0);
+      }
+      return currentValue;
+    });
   };
 
   return (
@@ -131,25 +153,32 @@ const MultiSelectDropdown = ({
               {options.length > 0 && (
                 <AppDropdownSearchInput
                   value={searchText}
-                  onChangeText={setSearchText}
+                  onChangeText={handleSearchChange}
                   onSubmit={() => {
-                    const firstOption = visibleOptions[0];
-                    if (firstOption) {
-                      toggle(firstOption.value);
+                    const option = visibleOptions[activeIndex];
+                    if (option) {
+                      toggle(option.value);
                     }
                   }}
+                  onKeyDown={handleSearchKeyDown}
                 />
               )}
               <ShadowScrollView className="max-h-80" contentContainerStyle={{ gap: 0 }}>
-                {visibleOptions.map((option) => {
+                {visibleOptions.map((option, index) => {
                   const isSelected = selected.includes(option.value);
                   const atLimit = selected.length >= limit && !isSelected;
+                  const isActive = index === activeIndex;
                   return (
                     <Pressable
                       key={option.value}
+                      ref={(element: any) => {
+                        if (isActive) {
+                          element?.scrollIntoView?.({ block: 'nearest' });
+                        }
+                      }}
                       disabled={atLimit}
                       onPress={() => toggle(option.value)}
-                      className={`flex-row items-center gap-3 rounded-lg px-3 py-2.5 ${isSelected ? 'bg-text/5' : atLimit ? 'opacity-40' : ''}`}>
+                      className={`flex-row items-center gap-3 rounded-lg px-3 py-2.5 ${atLimit ? 'opacity-40' : ''} ${isActive ? 'bg-border/20' : isSelected ? 'bg-text/5' : ''}`.trim()}>
                       <CustomCheckbox
                         checked={isSelected}
                         onChange={() => toggle(option.value)}

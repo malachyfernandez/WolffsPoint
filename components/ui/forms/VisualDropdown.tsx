@@ -47,6 +47,7 @@ const VisualDropdown = ({
 }: VisualDropdownProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchText, setSearchText] = useState('');
+  const [activeIndex, setActiveIndex] = useState(0);
   const triggerRef = useRef<any>(null);
 
   const selectedOption = options.find((option) => option.value === value);
@@ -67,8 +68,32 @@ const VisualDropdown = ({
     setIsOpen(open);
     if (!open) {
       setSearchText('');
+      setActiveIndex(0);
     }
   }, []);
+
+  const handleSearchChange = useCallback((text: string) => {
+    setSearchText(text);
+    setActiveIndex(0);
+  }, []);
+
+  const handleSearchKeyDown = useCallback(
+    (key: string) => {
+      if (visibleOptions.length === 0) {
+        return;
+      }
+      setActiveIndex((currentValue) => {
+        if (key === 'ArrowDown') {
+          return Math.min(currentValue + 1, visibleOptions.length - 1);
+        }
+        if (key === 'ArrowUp') {
+          return Math.max(currentValue - 1, 0);
+        }
+        return currentValue;
+      });
+    },
+    [visibleOptions.length]
+  );
 
   const handleValueChange = useCallback(
     (nextValue: string) => {
@@ -78,8 +103,9 @@ const VisualDropdown = ({
     [onValueChange]
   );
 
-  const renderOption = (option: VisualDropdownOption) => {
+  const renderOption = (option: VisualDropdownOption, index: number) => {
     const isSelected = option.value === value;
+    const isActive = index === activeIndex;
     const isDefault = option.value === defaultValue;
     const cornerControl = isDefault ? (
       <View style={{ pointerEvents: 'none' }} className="absolute right-3 top-2">
@@ -102,6 +128,10 @@ const VisualDropdown = ({
           React.createElement(
             'button',
             {
+              ref: isActive
+                ? (element: { scrollIntoView?: (options: { block: string }) => void } | null) =>
+                    element?.scrollIntoView?.({ block: 'nearest' })
+                : undefined,
               type: 'button',
               role: 'option',
               'aria-selected': isSelected,
@@ -132,7 +162,7 @@ const VisualDropdown = ({
               'div',
               {
                 className:
-                  `w-full flex-row items-center gap-3 rounded-lg px-3 py-3 text-left ${isSelected ? 'bg-accent/15' : 'bg-background hover:bg-border/10'}`.trim(),
+                  `w-full flex-row items-center gap-3 rounded-lg px-3 py-3 text-left ${isSelected ? 'bg-accent/15' : isActive ? 'bg-border/20' : 'bg-background hover:bg-border/10'}`.trim(),
               },
               <View
                 className={`h-5 w-5 items-center justify-center rounded-full border ${isSelected ? 'border-accent bg-accent' : 'border-border'}`}>
@@ -143,7 +173,7 @@ const VisualDropdown = ({
           )
         ) : (
           <Pressable
-            className={`w-full flex-row items-center gap-3 rounded-lg px-3 py-3 ${isSelected ? 'bg-accent/15' : 'bg-background'}`}
+            className={`w-full flex-row items-center gap-3 rounded-lg px-3 py-3 ${isSelected ? 'bg-accent/15' : isActive ? 'bg-border/20' : 'bg-background'}`}
             onPress={() => handleValueChange(option.value)}>
             <View
               className={`h-5 w-5 items-center justify-center rounded-full border ${isSelected ? 'border-accent bg-accent' : 'border-border'}`}>
@@ -189,18 +219,19 @@ const VisualDropdown = ({
             {searchable && options.length > 0 && (
               <AppDropdownSearchInput
                 value={searchText}
-                onChangeText={setSearchText}
+                onChangeText={handleSearchChange}
                 placeholder={searchPlaceholder}
                 onSubmit={() => {
-                  const firstOption = visibleOptions[0];
-                  if (firstOption) {
-                    handleValueChange(firstOption.value);
+                  const option = visibleOptions[activeIndex];
+                  if (option) {
+                    handleValueChange(option.value);
                   }
                 }}
+                onKeyDown={handleSearchKeyDown}
               />
             )}
             <View className="flex-col gap-1 pt-2">
-              {visibleOptions.map(renderOption)}
+              {visibleOptions.map((option, index) => renderOption(option, index))}
               {normalizedSearch.length > 0 && visibleOptions.length === 0 && (
                 <FontText variant="subtext" className="py-4 text-center">
                   No matching options

@@ -80,6 +80,7 @@ const AppDropdown = ({
   const [isOpen, setIsOpen] = useState(false);
   const [selectedValue, setSelectedValue] = useState(value ?? '');
   const [searchText, setSearchText] = useState('');
+  const [activeIndex, setActiveIndex] = useState(0);
   const [webMenuPosition, setWebMenuPosition] = useState<WebDropdownMenuPosition | null>(null);
   const menuId = useId();
   const triggerRef = useRef<any>(null);
@@ -93,6 +94,7 @@ const AppDropdown = ({
   const closeDropdown = useCallback(() => {
     setIsOpen(false);
     setSearchText('');
+    setActiveIndex(0);
     setWebMenuPosition(null);
   }, []);
 
@@ -224,28 +226,61 @@ const AppDropdown = ({
     };
   }, [closeDropdown, isInDialog, isOpen, updateWebMenuPosition]);
 
+  const navigableCount = visibleOptions.length + (showUnselectOption ? 1 : 0);
+
+  const handleSearchChange = useCallback((text: string) => {
+    setSearchText(text);
+    setActiveIndex(0);
+  }, []);
+
+  const handleSearchKeyDown = useCallback(
+    (key: string) => {
+      if (navigableCount === 0) {
+        return;
+      }
+      setActiveIndex((currentValue) => {
+        if (key === 'ArrowDown') {
+          return Math.min(currentValue + 1, navigableCount - 1);
+        }
+        if (key === 'ArrowUp') {
+          return Math.max(currentValue - 1, 0);
+        }
+        return currentValue;
+      });
+    },
+    [navigableCount]
+  );
+
   const handleSearchSubmit = useCallback(() => {
-    const firstOption = visibleOptions[0];
-    if (firstOption) {
-      handleValueChange(firstOption.value);
+    const unselectOffset = showUnselectOption ? 1 : 0;
+    if (showUnselectOption && activeIndex === 0) {
+      handleValueChange('');
+      return;
     }
-  }, [handleValueChange, visibleOptions]);
+    const option = visibleOptions[activeIndex - unselectOffset];
+    if (option) {
+      handleValueChange(option.value);
+    }
+  }, [activeIndex, handleValueChange, showUnselectOption, visibleOptions]);
 
   const searchInput = showSearchInput ? (
     <AppDropdownSearchInput
       value={searchText}
-      onChangeText={setSearchText}
+      onChangeText={handleSearchChange}
       placeholder={searchPlaceholder}
       onSubmit={handleSearchSubmit}
+      onKeyDown={handleSearchKeyDown}
     />
   ) : null;
 
-  const renderOption = (option: AppDropdownOption, selectedClassName: string) => {
+  const renderOption = (option: AppDropdownOption, selectedClassName: string, index: number) => {
     const action = renderOptionAction?.(option);
+    const optionIndex = index + (showUnselectOption ? 1 : 0);
     return (
       <View key={option.value} className="relative w-full">
         <AppDropdownItem
           className={`${itemClassName} ${action ? 'pr-11' : ''}`.trim()}
+          isActive={activeIndex === optionIndex}
           isSelected={option.value === selectedValue}
           label={option.label}
           onSelect={() => handleValueChange(option.value)}
@@ -275,13 +310,14 @@ const AppDropdown = ({
         {showUnselectOption && (
           <AppDropdownItem
             className={itemClassName}
+            isActive={activeIndex === 0}
             isSelected={selectedValue === ''}
             label={unselectLabel}
             onSelect={() => handleValueChange('')}
             selectedClassName={selectedItemClassName}
           />
         )}
-        {visibleOptions.map((option) => renderOption(option, selectedItemClassName))}
+        {visibleOptions.map((option, index) => renderOption(option, selectedItemClassName, index))}
       </Column>
     ) : (
       <AppDropdownEmptyState className={emptyStateClassName} text={searchEmptyText} />
@@ -293,13 +329,16 @@ const AppDropdown = ({
         {showUnselectOption && (
           <AppDropdownItem
             className={itemClassName}
+            isActive={activeIndex === 0}
             isSelected={selectedValue === ''}
             label={unselectLabel}
             onSelect={() => handleValueChange('')}
             selectedClassName={selectedItemClassName || 'bg-accent'}
           />
         )}
-        {visibleOptions.map((option) => renderOption(option, selectedItemClassName || 'bg-accent'))}
+        {visibleOptions.map((option, index) =>
+          renderOption(option, selectedItemClassName || 'bg-accent', index)
+        )}
         {footer && (
           <Pressable
             accessibilityRole="button"
