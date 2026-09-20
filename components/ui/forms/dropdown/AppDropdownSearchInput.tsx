@@ -8,8 +8,8 @@ interface AppDropdownSearchInputProps {
   autoFocus?: boolean;
   onSubmit?: () => void;
   /** Called with 'ArrowUp' | 'ArrowDown' when those keys are pressed while the
-   *  field is focused (web only) so the parent can move a highlighted option
-   *  without focus leaving the input. */
+   *  field is focused so the parent can move a highlighted option without
+   *  focus leaving the input. */
   onKeyDown?: (key: string) => void;
   className?: string;
 }
@@ -61,6 +61,16 @@ const AppDropdownSearchInput = ({
       autoFocus={autoFocus}
       onSubmitEditing={onSubmit}
       returnKeyType="search"
+      // react-native-web's TextInput calls stopPropagation() on every keydown,
+      // so arrow keys never reach ancestor elements — onKeyPress is the only
+      // place they can be intercepted.
+      onKeyPress={(event: any) => {
+        const key = event?.key ?? event?.nativeEvent?.key;
+        if (key === 'ArrowDown' || key === 'ArrowUp') {
+          event?.preventDefault?.();
+          onKeyDown?.(key);
+        }
+      }}
     />
   );
 
@@ -72,12 +82,6 @@ const AppDropdownSearchInput = ({
     'div',
     {
       className: 'w-full pb-1',
-      onKeyDown: (event: { key?: string; preventDefault?: () => void }) => {
-        if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
-          event.preventDefault?.();
-          onKeyDown?.(event.key);
-        }
-      },
       onMouseDown: (event: { stopPropagation?: () => void }) => {
         event.stopPropagation?.();
       },
