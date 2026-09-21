@@ -4,6 +4,7 @@ import Column from '../layout/Column';
 import GameTabBar, { GameTabDefinition } from './GameTabBar';
 import TownSquarePagePLAYER from './TownSquarePagePLAYER';
 import ReadOnlyNewspaperPagePLAYER from './ReadOnlyNewspaperPagePLAYER';
+import DelayedReveal from '../ui/DelayedReveal';
 import RuleBookPagePLAYER from './RuleBookPagePLAYER';
 import YourEyesOnlyPagePLAYER from './YourEyesOnlyPagePLAYER';
 import PhoneBookPagePLAYER from './PhoneBookPagePLAYER';
@@ -74,12 +75,14 @@ const PlayerGamePage = ({ gameId, currentUserId }: PlayerGamePageProps) => {
                 className="w-full min-w-0">
               {mountedTabs.has('newspaper') && (
               <BodyReportScope enabled={activeTab === 'newspaper'}>
-                <ReadOnlyNewspaperPagePLAYER
-                  gameId={gameId}
-                  currentEmail={currentEmail}
-                  matchingPlayer={matchingPlayer}
-                  currentProfile={profile}
-                />
+                <DelayedReveal visible={activeTab === 'newspaper'}>
+                  <ReadOnlyNewspaperPagePLAYER
+                    gameId={gameId}
+                    currentEmail={currentEmail}
+                    matchingPlayer={matchingPlayer}
+                    currentProfile={profile}
+                  />
+                </DelayedReveal>
               </BodyReportScope>
               )}
               </View>
