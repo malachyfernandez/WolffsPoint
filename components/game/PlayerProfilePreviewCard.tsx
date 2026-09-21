@@ -156,8 +156,9 @@ const PlayerProfilePreviewCard = ({
     className = '',
     emptyBioLabel = 'Write whatever you want people to know about you.',
     isLoading = false,
+    isDead = false,
     rotation = 0,
-}: PlayerProfilePreviewCardProps & { email?: string; isLoading?: boolean; rotation?: number }) => {
+}: PlayerProfilePreviewCardProps & { email?: string; isLoading?: boolean; isDead?: boolean; rotation?: number }) => {
     const trimmedBioMarkdown = bioMarkdown.trim();
 
     return (
@@ -169,6 +170,17 @@ const PlayerProfilePreviewCard = ({
             }}
         >
             <PaperTextureOverlay opacity={0.4} borderRadius={3} />
+            {isDead && (
+                <View
+                    pointerEvents='none'
+                    className='absolute right-3 top-3 rounded-[2px] border-2 border-red-800/70 px-2 py-0.5'
+                    style={{ transform: [{ rotate: '9deg' }] }}
+                >
+                    <FontText weight='bold' className='text-xs uppercase tracking-widest text-red-800/80'>
+                        Dead
+                    </FontText>
+                </View>
+            )}
             <Column className='gap-4 items-center'>
                 <PlayerProfileAvatar imageUrl={imageUrl} initials={initials} isLoading={isLoading} />
                 <Column className='gap-4 w-full items-center'>

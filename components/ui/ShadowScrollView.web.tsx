@@ -47,6 +47,9 @@ const ShadowScrollView = React.forwardRef<any, ShadowScrollViewProps>(
     const resolvedLeftFade = leftFade ?? (resolvedDirection === 'horizontal' ? 24 : 0);
     const resolvedRightFade = rightFade ?? (resolvedDirection === 'horizontal' ? 24 : 0);
 
+    const hasAnyFade =
+      resolvedTopFade + resolvedBottomFade + resolvedLeftFade + resolvedRightFade > 0;
+
     const maskImage = `linear-gradient(
     to bottom,
     transparent 0px,
@@ -93,10 +96,14 @@ const ShadowScrollView = React.forwardRef<any, ShadowScrollViewProps>(
           flexDirection: 'column',
           minHeight: 0,
           ...extendedStyles,
-          maskImage,
-          WebkitMaskImage: maskImage,
-          maskComposite: 'intersect',
-          WebkitMaskComposite: 'source-in',
+          ...(hasAnyFade
+            ? {
+                maskImage,
+                WebkitMaskImage: maskImage,
+                maskComposite: 'intersect',
+                WebkitMaskComposite: 'source-in',
+              }
+            : {}),
         }}>
         <ScrollViewComponent
           ref={ref}

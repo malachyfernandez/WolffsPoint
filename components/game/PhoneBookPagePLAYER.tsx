@@ -249,7 +249,7 @@ const PhoneBookGrid = ({
   players,
 }: {
   gameId: string;
-  players: { userId: string; email: string }[];
+  players: { userId: string; email: string; isDead?: boolean }[];
 }) => {
   const [readyCount, setReadyCount] = useState(0);
   const [readyKey, setReadyKey] = useState(0);
@@ -321,6 +321,7 @@ const PhoneBookGrid = ({
               userId={player.userId}
               gameId={gameId}
               email={player.email}
+              isDead={player.isDead}
               index={index}
               onReady={markReady}
             />
@@ -403,6 +404,9 @@ const useAllPlayers = ({ gameId }: { gameId: string }) => {
         profiles.find((p: PlayerProfile) => p.userId === userId)?.email ||
         userTable.find((u: UserTableItem) => u.userId === userId)?.email ||
         '',
+      isDead:
+        userTable.find((u: UserTableItem) => u.userId === userId)?.playerData?.livingState ===
+        'dead',
     }))
     .filter((player) => {
       const playerEmail = player.email.trim().toLowerCase();
@@ -517,12 +521,14 @@ const PlayerCard = ({
   userId,
   gameId,
   email,
+  isDead = false,
   index = 0,
   onReady,
 }: {
   userId: string;
   gameId: string;
   email?: string;
+  isDead?: boolean;
   index?: number;
   onReady?: (userId: string) => void;
 }) => {
@@ -564,6 +570,7 @@ const PlayerCard = ({
         profile={profile}
         email={email}
         isLoading={isLoading}
+        isDead={isDead}
         rotation={CARD_TILTS[index % CARD_TILTS.length]}
       />
     </Animated.View>

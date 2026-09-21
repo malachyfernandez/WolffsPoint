@@ -1,7 +1,43 @@
 import React from 'react';
+import { isIOSSafari } from 'utils/browser';
 
 export const TORN_PAPER_FILTER_ID = 'wolff-torn-paper-edge';
 export const TORN_PAPER_FILTER_URL = `url(#${TORN_PAPER_FILTER_ID})`;
+
+/**
+ * Deterministic jagged polygon used as a clip-path fallback on iOS Safari,
+ * where the displacement filter causes the browser to drop and re-rasterize
+ * layer tiles while scrolling. Along-edge positions are %, perpendicular jag
+ * is px so the tear stays ~6px deep at any size.
+ */
+const buildTornEdgeClipPath = () => {
+    let seed = 11;
+    const rand = () => {
+        seed = (seed * 48271) % 2147483647;
+        return seed / 2147483647;
+    };
+    const POINTS_PER_EDGE = 10;
+    const jag = () => `${(rand() * 6).toFixed(1)}px`;
+    const jagFromFar = () => `calc(100% - ${(rand() * 6).toFixed(1)}px)`;
+    const pts: string[] = [];
+
+    for (let i = 0; i <= POINTS_PER_EDGE; i++) {
+        pts.push(`${((i / POINTS_PER_EDGE) * 100).toFixed(1)}% ${jag()}`);
+    }
+    for (let i = 1; i <= POINTS_PER_EDGE; i++) {
+        pts.push(`${jagFromFar()} ${((i / POINTS_PER_EDGE) * 100).toFixed(1)}%`);
+    }
+    for (let i = 1; i <= POINTS_PER_EDGE; i++) {
+        pts.push(`${(100 - (i / POINTS_PER_EDGE) * 100).toFixed(1)}% ${jagFromFar()}`);
+    }
+    for (let i = 1; i < POINTS_PER_EDGE; i++) {
+        pts.push(`${jag()} ${(100 - (i / POINTS_PER_EDGE) * 100).toFixed(1)}%`);
+    }
+
+    return `polygon(${pts.join(', ')})`;
+};
+
+const TORN_EDGE_CLIP_PATH = buildTornEdgeClipPath();
 
 /**
  * SVG filter defs that roughen an element's silhouette into a torn-paper edge.
@@ -61,7 +97,9 @@ export const TornPaperBackground = ({ textureUrl, tileSize }: TornPaperBackgroun
       backgroundImage: `url('${textureUrl}')`,
       backgroundRepeat: 'repeat',
       backgroundSize: `${tileSize}px ${tileSize}px`,
-      filter: TORN_PAPER_FILTER_URL,
+      ...(isIOSSafari()
+        ? { clipPath: TORN_EDGE_CLIP_PATH }
+        : { filter: TORN_PAPER_FILTER_URL }),
       boxShadow: 'inset 0 0 22px rgba(74, 55, 30, 0.4), inset 0 0 4px rgba(74, 55, 30, 0.35)',
       pointerEvents: 'none',
     }}
