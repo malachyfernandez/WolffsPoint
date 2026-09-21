@@ -57,7 +57,7 @@ const AuthButton = ({
         <AppButton variant='accent' onPress={() => handleLogin(authFlow)} className='p-4 h-14! justify-center items-center'>
             {/* <TouchableOpacity
             onPress={() => handleLogin(authFlow)}
-            className="bg-text w-64 py-4 rounded-full active:opacity-80 flex-row justify-center items-center"
+            className="bg-text w-64 py-4 rounded-[4px] active:opacity-80 flex-row justify-center items-center"
             // disable when auth is loading
             disabled={isAuthLoading}
         >

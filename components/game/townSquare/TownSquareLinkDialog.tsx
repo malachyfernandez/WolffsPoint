@@ -45,7 +45,7 @@ const TownSquareLinkDialog = ({ isOpen, onInsert, onOpenChange, selectedText }: 
                         <Column className='gap-1'>
                             <FontText weight='medium'>Link text</FontText>
                             <FontTextInput
-                                className='w-full rounded-xl border border-subtle-border px-4 py-3'
+                                className='w-full rounded-[4px] border border-subtle-border px-4 py-3'
                                 placeholder='Read more'
                                 value={label}
                                 onChangeText={setLabel}
@@ -54,7 +54,7 @@ const TownSquareLinkDialog = ({ isOpen, onInsert, onOpenChange, selectedText }: 
                         <Column className='gap-1'>
                             <FontText weight='medium'>Link URL</FontText>
                             <FontTextInput
-                                className='w-full rounded-xl border border-subtle-border px-4 py-3'
+                                className='w-full rounded-[4px] border border-subtle-border px-4 py-3'
                                 placeholder='https://example.com'
                                 value={url}
                                 onChangeText={setUrl}

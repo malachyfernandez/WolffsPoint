@@ -29,7 +29,10 @@ const TownSquareThreadListItem = ({ index, isLast, isOperator, onPress, onToggle
     const isAnnouncement = thread.postType === 'announcement';
 
     const pinIcon = isPinned ? (
-        <View className='items-center justify-center rounded-full bg-yellow-400 p-1'>
+        <View
+            className='items-center justify-center rounded-[2px] bg-accent p-1'
+            style={{ transform: [{ rotate: '-3deg' }] }}
+        >
             <Pin size={12} color="#1a1a1a" fill="#1a1a1a" />
         </View>
     ) : (
@@ -54,17 +57,25 @@ const TownSquareThreadListItem = ({ index, isLast, isOperator, onPress, onToggle
             <Row className='gap-4 items-center flex-wrap'>
                 <FontText variant='subtext'>{formatTimestamp(thread.createdAt)}</FontText>
                 {isAnnouncement ? (
-                    <FontText variant='subtext' className='bg-text/10 px-3 py-1 rounded-full'>
-                        Announcement
-                    </FontText>
+                    <View
+                        className='bg-text/10 px-3 py-1 rounded-[2px] border border-border/30'
+                        style={{ transform: [{ rotate: '-1deg' }] }}
+                    >
+                        <FontText variant='subtext' className='uppercase tracking-wider'>
+                            Announcement
+                        </FontText>
+                    </View>
                 ) : (
                     <>
                         <FontText variant='subtext'>
                             {`${thread.replyCount} repl${thread.replyCount === 1 ? 'y' : 'ies'} `}
                         </FontText>
                         {hasNewReplies && (
-                            <View className='px-1.5 py-0.5 bg-accent rounded-full'>
-                                <FontText weight='medium' className='text-xs text-white'>
+                            <View
+                                className='px-1.5 py-0.5 bg-accent rounded-[2px]'
+                                style={{ transform: [{ rotate: '1deg' }] }}
+                            >
+                                <FontText weight='medium' className='text-xs text-white uppercase tracking-wider'>
                                     {`${newReplyCount} New`}
                                 </FontText>
                             </View>
@@ -94,8 +105,11 @@ const TownSquareThreadListItem = ({ index, isLast, isOperator, onPress, onToggle
                                 <Row className='gap-4 items-center'>
                                     <FontText weight='bold' className='text-3xl leading-10'>{thread.titleResolved}</FontText>
                                     {isNeverViewed && (
-                                        <View className='px-1.5 py-0.5 bg-red-500 rounded-full'>
-                                            <FontText weight='medium' className='text-xs text-white'>New</FontText>
+                                        <View
+                                            className='px-1.5 py-0.5 bg-red-700 rounded-[2px]'
+                                            style={{ transform: [{ rotate: '-1.5deg' }] }}
+                                        >
+                                            <FontText weight='medium' className='text-xs text-white uppercase tracking-wider'>New</FontText>
                                         </View>
                                     )}
                                 </Row>
@@ -128,8 +142,11 @@ const TownSquareThreadListItem = ({ index, isLast, isOperator, onPress, onToggle
                                     {thread.titleResolved}
                                 </FontText>
                                 {isNeverViewed && (
-                                    <View className='px-1.5 py-0.5 bg-red-500 rounded-full'>
-                                        <FontText weight='medium' className='text-xs text-white'>New</FontText>
+                                    <View
+                                        className='px-1.5 py-0.5 bg-red-700 rounded-[2px]'
+                                        style={{ transform: [{ rotate: '-1.5deg' }] }}
+                                    >
+                                        <FontText weight='medium' className='text-xs text-white uppercase tracking-wider'>New</FontText>
                                     </View>
                                 )}
                             </Row>
@@ -143,9 +160,14 @@ const TownSquareThreadListItem = ({ index, isLast, isOperator, onPress, onToggle
                         <Row className='gap-4 items-center'>
                             {isAnnouncement ? (
                                 <>
-                                    <FontText variant='subtext' className='bg-text/10 px-3 py-1 rounded-full'>
-                                        Announcement
-                                    </FontText>
+                                    <View
+                                        className='bg-text/10 px-3 py-1 rounded-[2px] border border-border/30'
+                                        style={{ transform: [{ rotate: '-1deg' }] }}
+                                    >
+                                        <FontText variant='subtext' className='uppercase tracking-wider'>
+                                            Announcement
+                                        </FontText>
+                                    </View>
                                     <FontText variant='subtext' className='md:hidden'>{formatTimestamp(thread.createdAt)}</FontText>
                                 </>
                             ) : (
@@ -154,8 +176,11 @@ const TownSquareThreadListItem = ({ index, isLast, isOperator, onPress, onToggle
                                         {`${thread.replyCount} repl${thread.replyCount === 1 ? 'y' : 'ies'} `}
                                     </FontText>
                                     {hasNewReplies && (
-                                        <View className='px-1.5 py-0.5 bg-accent rounded-full'>
-                                            <FontText weight='medium' className='text-xs text-white'>
+                                        <View
+                                            className='px-1.5 py-0.5 bg-accent rounded-[2px]'
+                                            style={{ transform: [{ rotate: '1deg' }] }}
+                                        >
+                                            <FontText weight='medium' className='text-xs text-white uppercase tracking-wider'>
                                                 {`${newReplyCount} New`}
                                             </FontText>
                                         </View>

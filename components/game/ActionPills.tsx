@@ -38,7 +38,7 @@ export const parseActionPills = (actionText: string): ActionPill[] => {
 
 const ActionPill = ({ label, value }: ActionPill) => {
     return (
-        <View className="bg-text rounded-full px-3 py-1.5">
+        <View className="bg-text rounded-[3px] px-3 py-1.5">
             <Column className="gap-0 items-center">
                 {label ? (
                     <FontText color="white" className="text-xs text-center opacity-70 leading-none">

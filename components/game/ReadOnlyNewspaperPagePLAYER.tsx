@@ -14,6 +14,7 @@ import { Pressable, View } from 'react-native';
 import LayoutStateAnimatedView, { fromRight } from '../ui/LayoutStateAnimatedView';
 import NewspaperDayView from './NewspaperDayView';
 import PlaceholderCard from '../ui/PlaceholderCard';
+import PrintRule from '../ui/PrintRule';
 import LoadingContainer from '../ui/loading/LoadingContainer';
 import { useNewspaperDayOwner } from './useNewspaperDayOwner';
 import LoadingText from '../ui/loading/LoadingText';
@@ -99,7 +100,8 @@ const YourEyesOnlyPagePLAYER = ({ gameId, currentEmail, matchingPlayer, currentP
             <Column className='gap-7 flex-1'>
 
 
-                    <Column className='gap-5 border-y border-border/15 py-5'>
+                    <Column className='gap-4 py-2'>
+                        <PrintRule />
                         <Row className='gap-4 items-start justify-between'>
                             <Pressable
                                 onPress={() => {
@@ -120,7 +122,7 @@ const YourEyesOnlyPagePLAYER = ({ gameId, currentEmail, matchingPlayer, currentP
                                 <FontText weight='medium' className='text-center'>
                                     {selectedDayRangeLabel || 'Current game day'}
                                 </FontText>
-                                <FontText variant='subtext' className='text-xs text-center'>
+                                <FontText variant='subtext' className='text-xs text-center uppercase tracking-widest'>
                                     Day {selectedDayIndex + 1}
                                 </FontText>
                             </Column>
@@ -140,6 +142,7 @@ const YourEyesOnlyPagePLAYER = ({ gameId, currentEmail, matchingPlayer, currentP
                                 </FontText>
                             </Pressable>
                         </Row>
+                        <PrintRule flip />
 
                         {/* <View className='py-4 rounded-2xl' style={[styles.animatedContentContainer, {
                         // @ts-ignore: web-only CSS

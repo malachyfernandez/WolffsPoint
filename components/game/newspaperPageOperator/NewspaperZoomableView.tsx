@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { Platform, Pressable, View } from 'react-native';
 import Animated, { useAnimatedReaction, useAnimatedRef, useAnimatedStyle, useSharedValue, withTiming, Easing, scrollTo } from 'react-native-reanimated';
 import Column from '../../layout/Column';
 import Row from '../../layout/Row';
@@ -11,6 +11,7 @@ import ShadowScrollView from '../../ui/ShadowScrollView';
 import { Usepaper } from 'types/usepaper';
 import { getNewspaperSections } from 'utils/newspaperSections';
 import NewspaperSectionDivider from './NewspaperSectionDivider';
+import { TornPaperBackground, TornPaperEdgeDefs } from '../../ui/TornPaperEdge';
 
 interface NewspaperZoomableViewProps {
     usepaper: Usepaper;
@@ -26,8 +27,13 @@ const COLUMN_GAP = 16;
 const SCROLL_PADDING = 40;
 const ZOOM_FACTOR = 1.25;
 const MAX_ZOOM = 3;
+// Room around the sheet so the displaced torn edge isn't clipped by the
+// horizontal scroll view's overflow.
+const TORN_BLEED = 10;
+const NEWSPAPER_TEXTURE_URL =
+    'https://d9tic9wqq4.ufs.sh/f/e3bq9j1bOXyi6QFuqBSV3IcVxmF4QjUoPvCOdS2HLawpi0Ey';
 
-const NewspaperZoomableView = ({ usepaper, gameId, TILE_SIZE, roundBottom, onReady }: NewspaperZoomableViewProps) => {
+const NewspaperZoomableView = ({ usepaper, gameId, TILE_SIZE, onReady }: NewspaperZoomableViewProps) => {
     const sections = getNewspaperSections(usepaper);
     const [zoom, setZoom] = useState(1);
     const [containerWidth, setContainerWidth] = useState(0);
@@ -104,7 +110,7 @@ const NewspaperZoomableView = ({ usepaper, gameId, TILE_SIZE, roundBottom, onRea
     const isAtDefault = Math.abs(zoom - defaultZoom) < 0.001;
 
     const animatedScaleStyle = useAnimatedStyle(() => ({
-        transform: [{ scale: animatedZoom.value }],
+        transform: [{ scale: animatedZoom.value }, { rotate: '-0.3deg' }],
         transformOrigin: 'left top',
     }));
     const animatedWidthStyle = useAnimatedStyle(() => ({
@@ -112,12 +118,13 @@ const NewspaperZoomableView = ({ usepaper, gameId, TILE_SIZE, roundBottom, onRea
         height: unscaledContentHeight.value * animatedZoom.value,
     }));
 
-    const zoomButtonClass = 'h-9 w-9 items-center justify-center rounded-full border border-border/30 active:bg-text/5';
+    const zoomButtonClass = 'h-9 w-9 items-center justify-center rounded-[4px] border border-border/50 bg-text/5 active:bg-text/15';
 
     return (
         <View
             onLayout={(e) => setContainerWidth(e.nativeEvent.layout.width)}
         >
+            <TornPaperEdgeDefs />
             {!containerWidth ? null : (
                 <>
                     <Row className='gap-2 justify-center pb-3'>
@@ -147,29 +154,37 @@ const NewspaperZoomableView = ({ usepaper, gameId, TILE_SIZE, roundBottom, onRea
                     <ShadowScrollView
                         ref={scrollViewRef}
                         extensionPercent={0}
+                        bottomFade={22}
                         direction='horizontal'
                         className='w-full'
-                        scrollViewClassName='w-full px-5'
+                        scrollViewClassName='w-full px-[10px]'
+                        contentContainerStyle={{ marginRight: 20 }}
                         horizontal
                         scrollEventThrottle={16}
                         onScroll={(e: any) => { animatedScrollX.value = e.nativeEvent.contentOffset.x; }}
                     >
                         <Animated.View style={animatedWidthStyle}>
-                            <Animated.View
+                            <View
                                 onLayout={(e) => {
                                     unscaledContentHeight.value = e.nativeEvent.layout.height;
                                     onReady?.();
                                 }}
-                                className={`py-4 ${roundBottom ? 'rounded-2xl' : 'rounded-t-2xl'}`}
+                                style={[
+                                    { padding: TORN_BLEED, paddingBottom: TORN_BLEED + 14 },
+                                    Platform.OS === 'web'
+                                        // @ts-ignore: web-only CSS
+                                        ? { filter: 'drop-shadow(0px 10px 14px rgba(0, 0, 0, 0.35))' }
+                                        : {},
+                                ]}
+                            >
+                            <Animated.View
+                                className='relative'
                                 style={[animatedScaleStyle, {
                                     width: NEWSPAPER_WIDTH,
-                                    // @ts-ignore: web-only CSS
-                                    backgroundImage: "url('https://d9tic9wqq4.ufs.sh/f/e3bq9j1bOXyi6QFuqBSV3IcVxmF4QjUoPvCOdS2HLawpi0Ey')",
-                                    backgroundRepeat: 'repeat',
-                                    backgroundSize: `${TILE_SIZE}px ${TILE_SIZE}px`,
                                 }]}
                             >
-                                <Column className='gap-4 w-227.5'>
+                                <TornPaperBackground textureUrl={NEWSPAPER_TEXTURE_URL} tileSize={TILE_SIZE} />
+                                <Column className='gap-4 w-227.5 py-4'>
                                     <View className='items-center justify-center px-8'>
                                         <PressLogo width="100%" />
                                     </View>
@@ -199,6 +214,7 @@ const NewspaperZoomableView = ({ usepaper, gameId, TILE_SIZE, roundBottom, onRea
                                     ))}
                                 </Column>
                             </Animated.View>
+                            </View>
                         </Animated.View>
                     </ShadowScrollView>
                 </>

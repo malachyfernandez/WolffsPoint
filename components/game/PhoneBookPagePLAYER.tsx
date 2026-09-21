@@ -40,6 +40,8 @@ import PlayerProfileDialog from './PlayerProfileDialogNEW';
 import PlayerProfilePreviewCard from './PlayerProfilePreviewCard';
 import PlaceholderCard from '../ui/PlaceholderCard';
 import ShadowScrollView from '../ui/ShadowScrollView';
+import PaperTextureOverlay from '../ui/PaperTextureOverlay';
+import PrintRule from '../ui/PrintRule';
 import { Moon } from 'lucide-react-native';
 
 interface PhoneBookPagePLAYERProps {
@@ -47,6 +49,9 @@ interface PhoneBookPagePLAYERProps {
   currentUserId: string;
   currentEmail: string;
 }
+
+// Deterministic slight tilts so the directory cards look hand-placed.
+const CARD_TILTS = [-0.5, 0.4, -0.3, 0.6, -0.6, 0.3];
 
 // Simple container component - just manages the dialog and layout
 const PhoneBookPagePLAYER = ({ gameId, currentUserId, currentEmail }: PhoneBookPagePLAYERProps) => {
@@ -90,7 +95,7 @@ const PhoneBookPagePLAYER = ({ gameId, currentUserId, currentEmail }: PhoneBookP
   const { isSleepWindow, isLoading: isSleepWindowLoading } = useSleepWindow({ gameId });
 
   const { width } = useWindowDimensions();
-  const showEditButton = width >= 410;
+  const showEditButton = width >= 440;
 
   return (
     <LoadingContainer
@@ -157,16 +162,18 @@ const MyProfileCard = ({ profile, onPress }: { profile: PlayerProfile; onPress: 
   return (
     <Pressable
       onPress={onPress}
-      className="border-subtle-border hover:bg-text/5 w-full rounded-2xl border bg-none p-4 transition-colors">
+      className="border-border/30 hover:bg-text/5 w-full rounded-[3px] border bg-[#b0a999] p-4 transition-colors"
+      style={{ boxShadow: '0px 3px 8px rgba(20, 15, 8, 0.22)' }}>
+      <PaperTextureOverlay opacity={0.35} borderRadius={3} />
       <Row className="items-center gap-4">
         {profile.profileImageUrl ? (
           <Image
             source={{ uri: profile.profileImageUrl }}
-            className="border-subtle-border h-16 w-16 rounded-xl border"
+            className="border-border/40 h-16 w-16 rounded-[3px] border"
             resizeMode="cover"
           />
         ) : (
-          <View className="border-subtle-border h-16 w-16 items-center justify-center rounded-xl border bg-white">
+          <View className="border-border/40 h-16 w-16 items-center justify-center rounded-[3px] border bg-white">
             <FontText weight="bold" className="text-lg">
               {initials}
             </FontText>
@@ -206,30 +213,33 @@ const PhoneBookHeader = ({
   isSleepWindow: boolean;
 }) => {
   const { width } = useWindowDimensions();
-  const showEditButton = width >= 410;
+  const showEditButton = width >= 440;
 
   return (
-    <Row className="items-center justify-between gap-4">
-      <Column className="gap-0">
-        <>
-          <FontText weight="bold" className="text-xl">
-            Phone Book
-          </FontText>
-          <FontText variant="subtext">
-            {isSleepWindow
-              ? "You can't see alive players until the morning"
-              : `${aliveCount}/${totalCount} players alive`}
-          </FontText>
-        </>
-      </Column>
-      {showEditButton && (
-        <AppButton variant="accent" className="w-40" onPress={onEditProfile}>
-          <FontText weight="medium" color="white">
-            Edit profile
-          </FontText>
-        </AppButton>
-      )}
-    </Row>
+    <Column className="gap-3">
+      <Row className="items-center justify-between gap-4">
+        <Column className="gap-0">
+          <>
+            <FontText weight="bold" className="text-xl uppercase tracking-widest">
+              Phone Book
+            </FontText>
+            <FontText variant="subtext" style={{ fontStyle: 'italic' }}>
+              {isSleepWindow
+                ? "You can't see alive players until the morning"
+                : `${aliveCount}/${totalCount} players alive`}
+            </FontText>
+          </>
+        </Column>
+        {showEditButton && (
+          <AppButton variant="accent" className="w-40" onPress={onEditProfile}>
+            <FontText weight="medium" color="white">
+              Edit profile
+            </FontText>
+          </AppButton>
+        )}
+      </Row>
+      <PrintRule />
+    </Column>
   );
 };
 
@@ -276,7 +286,7 @@ const PhoneBookGrid = ({
   if (players.length === 0) {
     return (
       <Animated.View entering={FadeIn.duration(300)}>
-        <Column className="bg-text/5 items-center gap-4 rounded-3xl p-8">
+        <Column className="bg-text/5 items-center gap-4 rounded-[3px] p-8">
           <FontText variant="subtext" className="text-center">
             No players in this game yet.
           </FontText>
@@ -554,6 +564,7 @@ const PlayerCard = ({
         profile={profile}
         email={email}
         isLoading={isLoading}
+        rotation={CARD_TILTS[index % CARD_TILTS.length]}
       />
     </Animated.View>
   );

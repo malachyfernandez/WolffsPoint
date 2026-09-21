@@ -10,7 +10,7 @@ interface DialogHeaderProps {
 
 const DialogHeader = ({ text, subtext, className }: DialogHeaderProps) => {
     return (
-        <Column className={`minimize-hide gap-0 bg-text pt-4 pb-4 pl-5 pr-44 items-start -mx-5 -mt-5 rounded-t-sm mb-0 ${className || ''}`}>
+        <Column className={`minimize-hide gap-0 bg-text pt-4 pb-4 pl-5 pr-44 items-start -mx-5 -mt-5 rounded-t-sm mb-0 border-b border-accent/50 ${className || ''}`}>
             <FontText weight='medium' color='white' className='shrink'>{text}</FontText>
             {subtext && (
                 <FontText variant='subtext' weight='medium' color='white' className='shrink'>{subtext}</FontText>

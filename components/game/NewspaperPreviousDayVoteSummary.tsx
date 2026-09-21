@@ -100,9 +100,9 @@ const SkipVoteRow = ({
           <Ban size={20} color="rgb(46, 41, 37)" />
         </View>
         <Row className="flex-1 items-center justify-between gap-4">
-          <View className="bg-border/10 h-5 flex-1 overflow-hidden rounded-full">
+          <View className="bg-border/10 h-5 flex-1 overflow-hidden rounded-[2px]">
             <View
-              className="bg-text/80 h-full rounded-full"
+              className="bg-text/80 h-full rounded-[2px]"
               style={{ width: `${widthPercent}%` }}
             />
           </View>
@@ -229,9 +229,9 @@ const VoteSummaryRow = ({
       <Row className="items-center gap-4">
         <TownSquareAvatar fallbackLabel={avatarFallback} size={44} uri={avatarUri} />
         <Row className="flex-1 items-center justify-between gap-4">
-          <View className="bg-border/10 h-5 flex-1 overflow-hidden rounded-full">
+          <View className="bg-border/10 h-5 flex-1 overflow-hidden rounded-[2px]">
             <View
-              className="bg-text/80 h-full rounded-full"
+              className="bg-text/80 h-full rounded-[2px]"
               style={{ width: `${widthPercent}%` }}
             />
           </View>

@@ -78,7 +78,7 @@ const FontTimeInput = ({ value = '08:00', onChangeText, className = '', isInDial
                     options={HOUR_OPTIONS}
                     value={timeParts.hour12}
                     onValueChange={(nextHour) => onChangeText(toCanonicalTime(nextHour, timeParts.minute, timeParts.period))}
-                    triggerClassName='min-w-[86px] rounded-2xl border border-border/15 bg-text/5 px-3 py-3'
+                    triggerClassName='min-w-[86px] rounded-[5px] border border-border/15 bg-text/5 px-3 py-3'
                     contentClassName='border border-border/15'
                     isInDialog={isInDialog}
                 />
@@ -87,7 +87,7 @@ const FontTimeInput = ({ value = '08:00', onChangeText, className = '', isInDial
                     options={MINUTE_OPTIONS}
                     value={timeParts.minute}
                     onValueChange={(nextMinute) => onChangeText(toCanonicalTime(timeParts.hour12, nextMinute, timeParts.period))}
-                    triggerClassName='min-w-[86px] rounded-2xl border border-border/15 bg-text/5 px-3 py-3'
+                    triggerClassName='min-w-[86px] rounded-[5px] border border-border/15 bg-text/5 px-3 py-3'
                     contentClassName='border border-border/15'
                     isInDialog={isInDialog}
                 />
@@ -95,7 +95,7 @@ const FontTimeInput = ({ value = '08:00', onChangeText, className = '', isInDial
                     options={PERIOD_OPTIONS}
                     value={timeParts.period}
                     onValueChange={(nextPeriod) => onChangeText(toCanonicalTime(timeParts.hour12, timeParts.minute, nextPeriod))}
-                    triggerClassName='min-w-[92px] rounded-2xl border border-border/15 bg-text/5 px-3 py-3'
+                    triggerClassName='min-w-[92px] rounded-[5px] border border-border/15 bg-text/5 px-3 py-3'
                     contentClassName='border border-border/15'
                     isInDialog={isInDialog}
                 />

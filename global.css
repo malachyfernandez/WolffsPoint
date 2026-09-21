@@ -46,6 +46,15 @@
     --color-inverted-sections: #1a1a1a;
 }
 
+/* Warm lamp glow from above + vignette so the page reads as a physical desk
+   rather than flat digital darkness. Fixed so it doesn't scroll. */
+body {
+    background-image:
+        radial-gradient(ellipse 90% 45% at 50% -5%, rgba(217, 180, 88, 0.09), transparent 70%),
+        radial-gradient(ellipse 130% 100% at 50% 45%, transparent 55%, rgba(0, 0, 0, 0.4) 100%);
+    background-attachment: fixed;
+}
+
 @keyframes fadeIn {
     from {
         opacity: 0;

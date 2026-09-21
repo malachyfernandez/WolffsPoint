@@ -1,0 +1,33 @@
+{
+    "version": 1.1,
+    "atDirectives": [
+        {
+            "name": "@theme",
+            "description": "Tailwind CSS v4 — defines theme tokens (colors, fonts, etc.) as CSS variables."
+        },
+        {
+            "name": "@source",
+            "description": "Tailwind CSS v4 — registers an additional content source path for class scanning."
+        },
+        {
+            "name": "@utility",
+            "description": "Tailwind CSS v4 — defines a custom utility."
+        },
+        {
+            "name": "@variant",
+            "description": "Tailwind CSS v4 — applies a variant to a block of styles."
+        },
+        {
+            "name": "@plugin",
+            "description": "Tailwind CSS v4 — loads a first-party plugin."
+        },
+        {
+            "name": "@reference",
+            "description": "Tailwind CSS v4 — imports theme tokens for use in this stylesheet without emitting them."
+        },
+        {
+            "name": "@custom-variant",
+            "description": "Tailwind CSS v4 — defines a custom variant."
+        }
+    ]
+}

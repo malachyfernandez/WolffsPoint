@@ -6,6 +6,26 @@ import { guildedButtonRingPresets } from '../ui/buttons/GuildedButton.shared';
 import FadeInAfterDelay from '../ui/loading/FadeInAfterDelay';
 
 // --- ISLAND TAB SVG BACKGROUND ---
+// "Your Eyes Only" center-island tuning knobs:
+// - EXPANDED_NUB_FRACTION: width of the raised nub on the big island, as a
+//   fraction of the center tab's width (1.0 = full tab width).
+// - CONDENSED_NUB_FRACTION: width of the flat top on the small island, as a
+//   fraction of the center tab's width.
+// - CONDENSED_ISLAND_BREAKPOINT: window width (px) below which the big island
+//   collapses into the smaller condensed one. Raise to switch earlier.
+// - REDUCED_TEXT_BREAKPOINT: in-between step — below this window width the
+//   island's label text shrinks while the big island is still showing.
+//   Keep it above CONDENSED_ISLAND_BREAKPOINT.
+// - FURTHER_REDUCED_TEXT_BREAKPOINT: second shrink step — below this width the
+//   label drops to the same size as the other tabs' text, still on the big
+//   island. Keep it below REDUCED_TEXT_BREAKPOINT and above
+//   CONDENSED_ISLAND_BREAKPOINT.
+const EXPANDED_NUB_FRACTION = 0.62;
+const CONDENSED_NUB_FRACTION = 0.001;
+const CONDENSED_ISLAND_BREAKPOINT = 400;
+const REDUCED_TEXT_BREAKPOINT = 700;
+const FURTHER_REDUCED_TEXT_BREAKPOINT = 450;
+
 interface IslandTabBackgroundProps {
     isActive: boolean;
     isCondensed?: boolean;
@@ -29,10 +49,13 @@ const IslandTabBackground = ({ isActive, isCondensed = false }: IslandTabBackgro
 
     const { width, height } = dimensions;
 
-    const R = 20;
+    const R = 9;
     const T = 5;
-    const pw = 140;
-    const ph = 22;
+    // ISLAND NUB TUNING — `width` here is the center tab's own pixel width.
+    // Expanded island: width of the raised nub as a fraction of the tab width
+    // (clamped so it never eats the whole tab). Bigger fraction = wider bump.
+    const pw = Math.min(Math.max(width * EXPANDED_NUB_FRACTION, 140), width - 28);
+    const ph = 15;
 
     let pathD = "";
 
@@ -42,8 +65,9 @@ const IslandTabBackground = ({ isActive, isCondensed = false }: IslandTabBackgro
         const xR = width - T;
 
         if (isCondensed) {
-            // Condensed: Split bowl with flat plateau in middle (10% of width, min 0)
-            const plateauWidth = Math.max(width * 0.8 - 80, 0);
+            // Condensed: Split bowl with flat plateau in middle — the nub's flat
+            // top as a fraction of the tab width (see CONDENSED_NUB_FRACTION).
+            const plateauWidth = Math.max(width * CONDENSED_NUB_FRACTION, 36);
             const yApex = T;
             const yShoulder = yApex + R;
             const yBase = height + T;
@@ -125,7 +149,7 @@ const IslandTabBackground = ({ isActive, isCondensed = false }: IslandTabBackgro
                         <path
                             d={pathD}
                             fill="url(#island-tex)"
-                            style={{ mixBlendMode: 'multiply', opacity: isActive ? 0.42 : 0, transition: 'opacity 0.2s ease' }}
+                            style={{ mixBlendMode: 'multiply', opacity: isActive ? 0.42 : 0.2, transition: 'opacity 0.2s ease' }}
                         />
                         {isActive && (
                             <path d={pathD} stroke="rgba(255, 255, 255, 0.24)" strokeWidth="2" transform="translate(0, 1)" fill="none" />
@@ -173,7 +197,7 @@ const gameTabBarCSS = `
 
 .guilded-game-tab-wrap {
     margin-bottom: -12px;
-    --tab-surface-radius: 20px;
+    --tab-surface-radius: 9px;
     --tab-t-out: 1px;
     --tab-t-mid: 3px;
     --tab-t-in: 1px;
@@ -181,7 +205,7 @@ const gameTabBarCSS = `
     flex: var(--tab-flex, 1) 1 0%;
     min-width: 0;
     align-self: flex-end;
-    filter: drop-shadow(0px 5px 8px rgba(0, 0, 0, 0.18));
+    filter: drop-shadow(0px 5px 9px rgba(0, 0, 0, 0.3));
     transition: transform 0.2s ease, filter 0.2s ease;
     z-index: 0;
     padding-bottom: var(--tab-bottom-buffer);
@@ -189,12 +213,12 @@ const gameTabBarCSS = `
 
 .guilded-game-tab-wrap.is-active {
     transform: translateY(var(--active-indent, 18px));
-    filter: drop-shadow(0px 6px 9px rgba(0, 0, 0, 0.2));
+    filter: drop-shadow(0px 7px 10px rgba(0, 0, 0, 0.32));
 }
 
 .guilded-game-tab-wrap:not(.is-active):hover {
     transform: translateY(2px);
-    filter: drop-shadow(0px 6px 9px rgba(0, 0, 0, 0.2));
+    filter: drop-shadow(0px 7px 10px rgba(0, 0, 0, 0.32));
 }
 
 .guilded-game-tab-button {
@@ -266,7 +290,7 @@ const gameTabBarCSS = `
     align-items: center;
     justify-content: center;
     gap: 3px;
-    padding: 0px 4px calc(14px + var(--tab-bottom-extension));
+    padding: 0px 12px calc(14px + var(--tab-bottom-extension));
     color: var(--tab-text-inactive);
     transition: color 0.2s ease;
     box-sizing: border-box;
@@ -302,7 +326,7 @@ const gameTabBarCSS = `
 .guilded-game-tab-texture {
     position: absolute;
     inset: 0;
-    opacity: 0;
+    opacity: 0.2;
     background-image: url('https://dydrl5o9tb.ufs.sh/f/6bPCFkuBjl92dnXGroFLInwCTmuU48v7QcbPaXDEgKZzYeBq');
     background-repeat: repeat;
     background-size: 642px 642px;
@@ -356,6 +380,16 @@ const gameTabBarCSS = `
     margin-top: 10px;
 }
 
+/* In-between step: island still expanded but the label shrinks */
+.guilded-game-tab-wrap.is-expanded-island.is-reduced-text .guilded-game-tab-label {
+    font-size: 10px;
+}
+
+/* Second in-between step: label drops to the same size as the other tabs */
+.guilded-game-tab-wrap.is-expanded-island.is-further-reduced-text .guilded-game-tab-label {
+    font-size: 8px;
+}
+
 /* Allow text wrapping for center nav tab only */
 .guilded-game-tab-wrap.is-center .guilded-game-tab-label {
     white-space: normal;
@@ -395,7 +429,13 @@ const GameTabBar = <TTab extends string>({
     const hasTrueMiddle = tabs.length % 2 === 1;
     const centerIndex = Math.floor(tabs.length / 2);
     const useCondensed = width < 600;
-    const useCondensedIsland = width < 800;
+    // Window width where the big center island switches to the small condensed
+    // bump — see CONDENSED_ISLAND_BREAKPOINT at the top of this file.
+    const useCondensedIsland = width < CONDENSED_ISLAND_BREAKPOINT;
+    // In-between step: island stays expanded but the label text shrinks.
+    const useReducedIslandText = !useCondensedIsland && width < REDUCED_TEXT_BREAKPOINT;
+    // Second in-between step: label shrinks further to match the other tabs.
+    const useFurtherReducedIslandText = !useCondensedIsland && width < FURTHER_REDUCED_TEXT_BREAKPOINT;
     const { isPlayerDead } = usePlayerStatus();
     const palette = isPlayerDead ? guildedButtonRingPresets.ghostly : guildedButtonRingPresets.gold;
     const textColor = String(useCSSVariable('--color-text') || '#1a1a1a');
@@ -430,7 +470,7 @@ const GameTabBar = <TTab extends string>({
                     return (
                         <div
                             key={tab.value}
-                            className={`guilded-game-tab-wrap ${isActive ? 'is-active' : ''} ${isCenter ? 'is-center' : ''} ${isCenter && useCondensedIsland ? 'is-condensed-island' : ''} ${isCenter && !useCondensedIsland ? 'is-expanded-island' : ''}`.trim()}
+                            className={`guilded-game-tab-wrap ${isActive ? 'is-active' : ''} ${isCenter ? 'is-center' : ''} ${isCenter && useCondensedIsland ? 'is-condensed-island' : ''} ${isCenter && !useCondensedIsland ? 'is-expanded-island' : ''} ${isCenter && useReducedIslandText ? 'is-reduced-text' : ''} ${isCenter && useFurtherReducedIslandText ? 'is-further-reduced-text' : ''}`.trim()}
                             style={{ '--tab-flex': tabFlex } as React.CSSProperties & Record<string, string>}
                         >
                             <button

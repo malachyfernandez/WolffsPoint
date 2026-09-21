@@ -35,6 +35,7 @@ import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-na
 import LayoutStateAnimatedView, { fromRight } from '../ui/LayoutStateAnimatedView';
 import YourEyesOnlyDayContentPLAYER from './YourEyesOnlyDayContentPLAYER';
 import LoadingContainer from '../ui/loading/LoadingContainer';
+import PrintRule from '../ui/PrintRule';
 
 interface YourEyesOnlyPagePLAYERProps {
   gameId: string;
@@ -297,8 +298,9 @@ const YourEyesOnlyPagePLAYER = ({
             )}
           </Animated.View>
 
-          <Animated.View style={contentAnimatedStyle} className="border-border/15 border-y py-5">
-            <Column className="gap-5">
+          <Animated.View style={contentAnimatedStyle} className="py-2">
+            <Column className="gap-4">
+              <PrintRule />
               <Row className="items-start justify-between gap-4">
                 <Pressable
                   onPress={() => {
@@ -318,7 +320,7 @@ const YourEyesOnlyPagePLAYER = ({
                   <FontText weight="medium" className="text-center">
                     {selectedDayRangeLabel || 'Current game day'}
                   </FontText>
-                  <FontText variant="subtext" className="text-center text-xs">
+                  <FontText variant="subtext" className="text-center text-xs uppercase tracking-widest">
                     Day {selectedDayIndex + 1}
                   </FontText>
                 </Column>
@@ -337,6 +339,7 @@ const YourEyesOnlyPagePLAYER = ({
                   </FontText>
                 </Pressable>
               </Row>
+              <PrintRule flip />
 
               <View>
                 <LayoutStateAnimatedView.Container stateVar={String(selectedDayIndex)}>

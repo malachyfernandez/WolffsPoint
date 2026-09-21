@@ -11,7 +11,7 @@ interface TownSquareAvatarProps {
 
 const TownSquareAvatar = ({ className, fallbackLabel, size = 52, uri }: TownSquareAvatarProps) => {
     return (
-        <View className={`overflow-hidden rounded-full border border-subtle-border/60 ${className || ''}`} style={{ height: size, width: size }}>
+        <View className={`overflow-hidden rounded-[4px] border border-border/40 ${className || ''}`} style={{ height: size, width: size }}>
             {uri ? (
                 <Image source={{ uri }} style={{ height: size, width: size }} />
             ) : (

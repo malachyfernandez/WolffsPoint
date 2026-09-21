@@ -7,6 +7,7 @@ import Column from '../../layout/Column';
 import Row from '../../layout/Row';
 import AppButton from '../../ui/buttons/AppButton';
 import FontText from '../../ui/text/FontText';
+import PrintRule from '../../ui/PrintRule';
 import LoadingText from '../../ui/loading/LoadingText';
 import { ThreadViewModel, TownSquareReadState } from './townSquareUtils';
 import TownSquareThreadListItem from './TownSquareThreadListItem';
@@ -49,23 +50,23 @@ const TownSquareThreadListView = ({
     const isLargeScreen = width >= 400;
 
     return (
-        <Column className='gap-5 flex-1 px-0 sm:px-4 py-4'>
+        <Column className='gap-2.5 flex-1 px-0 sm:px-4 py-4'>
             <Row className='gap-4 items-start justify-between'>
                 {isPlayerDead && (
                     <Column className='gap-0 flex grow'>
-                        <FontText weight='bold' className='text-2xl leading-10'>Shhhhhhhh</FontText>
-                        <FontText variant='subtext'>Still the Town Square, but Ghosts don’t talk silly</FontText>
+                        <FontText weight='bold' className='text-2xl leading-10 uppercase tracking-widest'>Shhhhhhhh</FontText>
+                        <FontText variant='subtext' style={{ fontStyle: 'italic' }}>Still the Town Square, but Ghosts don’t talk silly</FontText>
                     </Column>
                 )}
 
                 {!isPlayerDead && ( isLargeScreen ? (
                     <>
-                        <Column className='gap-0 hidden sm:flex grow'>
-                            <FontText weight='bold' className='text-2xl leading-10'>Town Square</FontText>
-                            <FontText variant='subtext'>Anyone can speak their mind</FontText>
+                        <Column className='gap-0 hidden min-[700px]:flex grow'>
+                            <FontText weight='bold' className='text-2xl leading-10 uppercase tracking-widest'>Town Square</FontText>
+                            <FontText variant='subtext' style={{ fontStyle: 'italic' }}>Anyone can speak their mind</FontText>
                         </Column>
 
-                        <Row className='gap-4 justify-between sm:justify-end flex-1 items-center'>
+                        <Row className='gap-4 justify-between min-[700px]:justify-end flex-1 items-center'>
                             <AppButton variant='secondary' className='px-0' onPress={onNewAnnouncement}>
                                 <Row className='gap-3 items-center'>
                                     <Plus size={20} color='black' />
@@ -105,6 +106,7 @@ const TownSquareThreadListView = ({
                     </Column>
                 ))}
             </Row>
+            <PrintRule />
 
             <Column className='gap-3 flex-1'>
                 <Row className='gap-4 items-center justify-between border-b border-border/20 pb-3'>
@@ -117,7 +119,7 @@ const TownSquareThreadListView = ({
                         >
                             <FontText
                                 variant='subtext'
-                                className='border border-border/30 rounded-full px-3 py-1'
+                                className='border border-border/40 rounded-[3px] px-3 py-1 uppercase tracking-wider'
                             >
                                 {`Mark all ${unreadCount} as read`}
                             </FontText>

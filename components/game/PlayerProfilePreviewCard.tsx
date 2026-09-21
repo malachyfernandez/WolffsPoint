@@ -7,6 +7,7 @@ import Column from '../layout/Column';
 import Row from '../layout/Row';
 import MarkdownRenderer from '../ui/markdown/MarkdownRenderer';
 import FontText from '../ui/text/FontText';
+import PaperTextureOverlay from '../ui/PaperTextureOverlay';
 import { InstagramIcon } from '../icons/InstagramIcon';
 import { DiscordIcon } from '../icons/DiscordIcon';
 
@@ -18,6 +19,8 @@ interface PlayerProfilePreviewCardProps {
     profile?: PlayerProfile | null;
     className?: string;
     emptyBioLabel?: string;
+    /** Slight tilt in degrees so cards look hand-placed. */
+    rotation?: number;
 }
 
 interface PlayerProfileContactInfoProps {
@@ -86,20 +89,23 @@ export const PlayerProfileAvatar = ({ imageUrl, initials, isLoading }: { imageUr
     // Show placeholder space while loading or when no image
     if (isLoading || (!imageUrl && !initials)) {
         return (
-            <View className='h-24 w-24 rounded-2xl border border-subtle-border bg-white/50' />
+            <View className='h-24 w-24 rounded-[3px] border border-border/40 bg-white/50' />
         );
     }
 
     if (imageUrl) {
         return (
-            <View className='h-24 w-24 rounded-2xl border border-subtle-border bg-white'>
+            <View
+                className='h-24 w-24 rounded-[3px] border border-border/40 bg-white p-1'
+                style={{ transform: [{ rotate: '-1deg' }] }}
+            >
                 {!imageLoaded && (
-                    <View className='absolute inset-0 rounded-2xl bg-white/50' />
+                    <View className='absolute inset-0 rounded-[3px] bg-white/50' />
                 )}
                 <Animated.View entering={FadeIn.duration(300)} className='h-full w-full'>
                     <Image
                         source={{ uri: imageUrl }}
-                        className='h-full w-full rounded-2xl'
+                        className='h-full w-full rounded-[2px]'
                         resizeMode='cover'
                         onLoad={() => setImageLoaded(true)}
                     />
@@ -109,7 +115,7 @@ export const PlayerProfileAvatar = ({ imageUrl, initials, isLoading }: { imageUr
     }
 
     return (
-        <View className='h-24 w-24 items-center justify-center rounded-2xl border border-subtle-border bg-white'>
+        <View className='h-24 w-24 items-center justify-center rounded-[3px] border border-border/40 bg-white'>
             <FontText weight='bold' className='text-2xl'>{initials}</FontText>
         </View>
     );
@@ -150,11 +156,19 @@ const PlayerProfilePreviewCard = ({
     className = '',
     emptyBioLabel = 'Write whatever you want people to know about you.',
     isLoading = false,
-}: PlayerProfilePreviewCardProps & { email?: string; isLoading?: boolean }) => {
+    rotation = 0,
+}: PlayerProfilePreviewCardProps & { email?: string; isLoading?: boolean; rotation?: number }) => {
     const trimmedBioMarkdown = bioMarkdown.trim();
 
     return (
-        <Column className={`gap-4 flex-1 rounded-3xl bg-text/5 p-6 ${className}`.trim()}>
+        <Column
+            className={`gap-4 flex-1 rounded-[3px] border border-border/30 bg-[#b0a999] p-6 ${className}`.trim()}
+            style={{
+                transform: [{ rotate: `${rotation}deg` }],
+                boxShadow: '0px 4px 10px rgba(20, 15, 8, 0.28)',
+            }}
+        >
+            <PaperTextureOverlay opacity={0.4} borderRadius={3} />
             <Column className='gap-4 items-center'>
                 <PlayerProfileAvatar imageUrl={imageUrl} initials={initials} isLoading={isLoading} />
                 <Column className='gap-4 w-full items-center'>
@@ -168,6 +182,7 @@ const PlayerProfilePreviewCard = ({
                             </FontText>
                         )}
                     </Column>
+                    <View className='h-px w-2/3 bg-border/30' />
                     {trimmedBioMarkdown.length > 0 ? (
                         <MarkdownRenderer
                             markdown={trimmedBioMarkdown}

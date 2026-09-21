@@ -15,13 +15,13 @@ const guildedFrameCSS = `
 }
 
 .guilded-frame-shadow {
-    --r: 20px;
+    --r: 9px;
     --t-out: 1px;
     --t-mid: 3px;
     --t-in: 1px;
-    --out-y: 6px;
-    --out-blur: 18px;
-    --out-alpha: 0.18;
+    --out-y: 7px;
+    --out-blur: 20px;
+    --out-alpha: 0.28;
     --in-y: 1px;
     --in-blur: 10px;
     --in-alpha: 0.18;
@@ -157,6 +157,8 @@ const guildedFrameCSS = `
     mix-blend-mode: multiply;
     pointer-events: none;
     z-index: 0;
+    /* aged-paper vignette — darkens toward the frame's edges */
+    box-shadow: inset 0 0 130px rgba(54, 41, 22, 0.3), inset 0 0 22px rgba(54, 41, 22, 0.14);
 }
 
 .guilded-frame-content {

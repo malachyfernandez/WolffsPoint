@@ -360,7 +360,7 @@ const MarkdownInputField = ({
           onChangeText={onChange}
           editable={!disabled}
           placeholder={placeholder}
-          className={`bg-text/10 hover:bg-text/5 w-full rounded-xl px-4 py-3 ${disabled ? 'opacity-60' : ''}`.trim()}
+          className={`bg-text/10 hover:bg-text/5 w-full rounded-[5px] px-4 py-3 ${disabled ? 'opacity-60' : ''}`.trim()}
         />
       ) : (
         <AppDropdown
@@ -369,7 +369,7 @@ const MarkdownInputField = ({
           onValueChange={onChange}
           placeholder={placeholder}
           emptyText="No options available"
-          triggerClassName="border-0 bg-text/10 hover:bg-text/5 rounded-xl"
+          triggerClassName="border-0 bg-text/10 hover:bg-text/5 rounded-[5px]"
           contentClassName="border-0"
           isInDialog={isInDialog}
           disabled={disabled}

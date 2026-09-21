@@ -9,6 +9,7 @@ import { InputOptionsProvider } from './markdownEditor/InputOptionsProvider';
 import { useFindListItems, useFindValues } from 'hooks/useData';
 import { getGameScopedKey } from 'utils/multiplayer';
 import RuleBookRoleDescriptionsPLAYER from './RuleBookRoleDescriptionsPLAYER';
+import PrintRule from '../ui/PrintRule';
 import TableOfContentsDialog from './ruleBook/TableOfContentsDialog';
 import StickyTocButton from './ruleBook/StickyTocButton';
 import { RuleBookData } from 'types/ruleBook';
@@ -60,13 +61,14 @@ const RuleBookPagePLAYER = ({ gameId }: RuleBookPagePLAYERProps) => {
                 <Row className='items-center justify-between'>
                     <Column className='gap-2 flex-1'>
                         <View nativeID={`${headingIdPrefix}-top`}>
-                            <FontText weight='bold' className={HEADING_1_CLASS}>
+                            <FontText weight='bold' className={`${HEADING_1_CLASS} uppercase tracking-wider`}>
                                 {ruleBookTitle}
                             </FontText>
                         </View>
                     </Column>
                     <StickyTocButton onPress={() => setIsTocOpen(true)} isOpen={isTocOpen} />
                 </Row>
+                <PrintRule />
                 <Column className='gap-2'>
                     {ruleBookMarkdown.trim().length > 0 ? (
                         <InputOptionsProvider gameId={gameId} showInputs={false}>

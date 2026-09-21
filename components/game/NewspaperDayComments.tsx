@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
-import { View } from 'react-native';
+import { View, useWindowDimensions } from 'react-native';
+import { Plus } from 'lucide-react-native';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
 import AppButton from '../ui/buttons/AppButton';
@@ -37,6 +38,8 @@ interface NewspaperDayCommentsProps {
  */
 const NewspaperDayComments = ({ gameId, dayIndex }: NewspaperDayCommentsProps) => {
   const { isPlayerDead } = usePlayerStatus();
+  const { width } = useWindowDimensions();
+  const showCommentsTitle = width >= 440;
   const [userData] = useValue<{ userId?: string }>('userData');
   const currentUserId = userData.value.userId ?? '';
   const canEditScripts = useCanEditScripts(gameId, currentUserId);
@@ -255,18 +258,25 @@ const NewspaperDayComments = ({ gameId, dayIndex }: NewspaperDayCommentsProps) =
 
       <Column className="gap-6">
         <Row className="items-center justify-between gap-4">
-          <FontText weight="medium" className="text-2xl">
-            Comments
-          </FontText>
+          {showCommentsTitle && (
+            <FontText weight="bold" className="text-2xl uppercase tracking-widest">
+              Comments
+            </FontText>
+          )}
           {!isPlayerDead && (
             <AppButton
-              variant="outline"
-              className="w-36 whitespace-nowrap"
+              variant="accent"
+              className={`whitespace-nowrap ${showCommentsTitle ? '' : 'w-full'}`}
               onPress={() => {
                 setReplyTargetCommentId(null);
                 setIsReplyComposerOpen(true);
               }}>
-              <FontText weight="bold">Add comment</FontText>
+              <Row className="items-center gap-2">
+                <Plus size={20} color="white" />
+                <FontText weight="medium" color="white">
+                  Add comment
+                </FontText>
+              </Row>
             </AppButton>
           )}
         </Row>

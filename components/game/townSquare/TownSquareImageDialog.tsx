@@ -45,7 +45,7 @@ const TownSquareImageDialog = ({ isOpen, onInsert, onOpenChange }: TownSquareIma
                         <Column className='gap-1'>
                             <FontText weight='medium'>Image caption</FontText>
                             <FontTextInput
-                                className='w-full rounded-xl border border-subtle-border px-4 py-3'
+                                className='w-full rounded-[4px] border border-subtle-border px-4 py-3'
                                 placeholder='Forum image'
                                 value={caption}
                                 onChangeText={setCaption}

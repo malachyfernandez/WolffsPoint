@@ -302,7 +302,7 @@ const PlayerProfileDialogNEW = ({
                         <Column className="gap-1">
                           <FontText weight="medium">Real name</FontText>
                           <FontTextInput
-                            className="border-subtle-border w-full rounded-xl border px-4 py-3"
+                            className="border-subtle-border w-full rounded-[5px] border px-4 py-3"
                             placeholder="The name you go by"
                             value={realName}
                             onChangeText={setRealName}
@@ -312,7 +312,7 @@ const PlayerProfileDialogNEW = ({
                       <Column className="gap-1">
                         <FontText weight="medium">In-game name</FontText>
                         <FontTextInput
-                          className="border-subtle-border w-full rounded-xl border px-4 py-3"
+                          className="border-subtle-border w-full rounded-[5px] border px-4 py-3"
                           placeholder="The name everyone knows you by"
                           value={draft.inGameName}
                           onChangeText={(value) =>
@@ -325,7 +325,7 @@ const PlayerProfileDialogNEW = ({
                           <FontText weight="medium">Profile picture</FontText>
                           <Pressable
                             onPress={() => setImageDialogMode('profile')}
-                            className="border-subtle-border bg-text/5 hover:bg-text/10 h-16 items-center overflow-hidden rounded-3xl border hover:brightness-90">
+                            className="border-subtle-border bg-text/5 hover:bg-text/10 h-16 items-center overflow-hidden rounded-[5px] border hover:brightness-90">
                             <PlayerProfileAvatar
                               imageUrl={draft.profileImageUrl || undefined}
                               initials={previewInitials}
@@ -337,7 +337,7 @@ const PlayerProfileDialogNEW = ({
                           <FontText weight="medium">Socials</FontText>
                           <Pressable
                             onPress={() => setIsSocialsDialogOpen(true)}
-                            className="border-subtle-border bg-text/5 hover:bg-text/10 h-16 overflow-hidden rounded-3xl border brightness-95 hover:brightness-90">
+                            className="border-subtle-border bg-text/5 hover:bg-text/10 h-16 overflow-hidden rounded-[5px] border brightness-95 hover:brightness-90">
                             <ShadowScrollView
                               className="flex-1"
                               scrollViewClassName="flex-1 p-4"
@@ -357,7 +357,7 @@ const PlayerProfileDialogNEW = ({
                         <FontText weight="medium">Bio</FontText>
                         <Pressable
                           onPress={() => setIsBioDialogOpen(true)}
-                          className="border-subtle-border bg-text/5 hover:bg-text/10 min-h-35 max-h-20 overflow-hidden rounded-3xl border p-4 brightness-95 hover:brightness-90">
+                          className="border-subtle-border bg-text/5 hover:bg-text/10 min-h-35 max-h-20 overflow-hidden rounded-[5px] border p-4 brightness-95 hover:brightness-90">
                           {draft.bioMarkdown?.trim() ? (
                             <MarkdownRenderer markdown={draft.bioMarkdown.trim()} />
                           ) : (
@@ -584,7 +584,7 @@ const SocialsDialog = ({ isOpen, onOpenChange, onSave, initialSocials }: Socials
                     <Column className="min-w-0 flex-1 gap-1">
                       <FontText weight="medium">Phone number</FontText>
                       <FontTextInput
-                        className="border-subtle-border w-full rounded-xl border px-4 py-3"
+                        className="border-subtle-border w-full rounded-[5px] border px-4 py-3"
                         value={draft.phoneNumber}
                         onChangeText={(value) =>
                           setDraft((current) => ({ ...current, phoneNumber: value }))
@@ -596,7 +596,7 @@ const SocialsDialog = ({ isOpen, onOpenChange, onSave, initialSocials }: Socials
                     <Column className="min-w-0 flex-1 gap-1">
                       <FontText weight="medium">Instagram</FontText>
                       <FontTextInput
-                        className="border-subtle-border w-full rounded-xl border px-4 py-3"
+                        className="border-subtle-border w-full rounded-[5px] border px-4 py-3"
                         value={draft.instagram}
                         onChangeText={(value) =>
                           setDraft((current) => ({ ...current, instagram: value }))
@@ -610,7 +610,7 @@ const SocialsDialog = ({ isOpen, onOpenChange, onSave, initialSocials }: Socials
                     <Column className="min-w-0 flex-1 gap-1">
                       <FontText weight="medium">Discord</FontText>
                       <FontTextInput
-                        className="border-subtle-border w-full rounded-xl border px-4 py-3"
+                        className="border-subtle-border w-full rounded-[5px] border px-4 py-3"
                         value={draft.discord}
                         onChangeText={(value) =>
                           setDraft((current) => ({ ...current, discord: value }))
@@ -622,7 +622,7 @@ const SocialsDialog = ({ isOpen, onOpenChange, onSave, initialSocials }: Socials
                     <Column className="min-w-0 flex-1 gap-1">
                       <FontText weight="medium">Anything else</FontText>
                       <FontTextInput
-                        className="border-subtle-border w-full rounded-xl border px-4 py-3"
+                        className="border-subtle-border w-full rounded-[5px] border px-4 py-3"
                         value={draft.otherContact}
                         onChangeText={(value) =>
                           setDraft((current) => ({ ...current, otherContact: value }))
@@ -635,7 +635,7 @@ const SocialsDialog = ({ isOpen, onOpenChange, onSave, initialSocials }: Socials
 
                 <Column className="w-full shrink-0 gap-1">
                   <FontText weight="medium">Preview</FontText>
-                  <Column className="border-subtle-border bg-text/5 gap-4 rounded-3xl border p-4">
+                  <Column className="border-subtle-border bg-text/5 gap-4 rounded-[5px] border p-4">
                     <PlayerProfileContactInfo
                       profile={previewProfile}
                       emptyText="No socials yet."

@@ -40,7 +40,7 @@ const TownSquareComposerEditorPane = ({ onBodyChange, onSelectionChange, value, 
                     ref={inputRef}
                     autoGrow
                     multiline
-                    className='min-w-0 rounded-3xl bg-text/10 p-4 text-base text-text'
+                    className='min-w-0 rounded-[4px] bg-text/10 p-4 text-base text-text'
                     onChangeText={readOnly ? undefined : onBodyChange}
                     onSelectionChange={(event) => onSelectionChange(event.nativeEvent.selection)}
                     onKeyDown={readOnly ? handleReadOnlyKeyDown : undefined}
@@ -58,7 +58,7 @@ const TownSquareComposerEditorPane = ({ onBodyChange, onSelectionChange, value, 
             <TextInput
                 ref={inputRef}
                 multiline={true}
-                className='min-w-0 min-h-[50vh] rounded-3xl bg-text/10 overflow-hidden p-4 text-base text-text'
+                className='min-w-0 min-h-[50vh] rounded-[4px] bg-text/10 overflow-hidden p-4 text-base text-text'
                 onChangeText={readOnly ? undefined : onBodyChange}
                 onKeyPress={readOnly ? () => showToast('Preview only') : undefined}
                 onContentSizeChange={(event) => setContentHeight(event.nativeEvent.contentSize.height)}

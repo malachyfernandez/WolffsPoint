@@ -13,6 +13,7 @@ import { useFindListItems } from 'hooks/useData';
 import { Usepaper } from 'types/usepaper';
 import { getNewspaperDayItemId } from 'utils/newspaperControl';
 import { getNewspaperColumns, hasNewspaperContent } from 'utils/newspaperSections';
+import { TornPaperBackground, TornPaperEdgeDefs } from '../ui/TornPaperEdge';
 
 const NEWSPAPER_TEXTURE_URL =
   'https://d9tic9wqq4.ufs.sh/f/e3bq9j1bOXyi6QFuqBSV3IcVxmF4QjUoPvCOdS2HLawpi0Ey';
@@ -151,6 +152,7 @@ const NewspaperDayView = ({ gameId, dayIndex, ownerUserId, onReady }: NewspaperD
 
   return (
     <Column className="relative w-full gap-4">
+      <TornPaperEdgeDefs />
       {!isFullyReady && (
         <Column className="absolute inset-0 z-10 items-center justify-center">
           <LoadingText text="Loading newspaper" />
@@ -167,15 +169,9 @@ const NewspaperDayView = ({ gameId, dayIndex, ownerUserId, onReady }: NewspaperD
             onReady={() => setLayoutReadyKey(assetKey)}
           />
           {showVoteSummary && (
-            <View className="-mx-2 px-5 sm:mx-0">
-              <View
-                className={`rounded-b-2xl ${!hasVisibleNewspaperContent ? 'rounded-t-2xl' : ''}`}
-                style={{
-                  // @ts-ignore: web-only CSS
-                  backgroundImage: `url('${NEWSPAPER_TEXTURE_URL}')`,
-                  backgroundRepeat: 'repeat',
-                  backgroundSize: `${TILE_SIZE}px ${TILE_SIZE}px`,
-                }}>
+            <View className="-mx-2 px-5 sm:mx-0" style={{ marginTop: 4, zIndex: 1 }}>
+              <View className="relative">
+                <TornPaperBackground textureUrl={NEWSPAPER_TEXTURE_URL} tileSize={TILE_SIZE} />
                 <NewspaperPreviousDayVoteSummary dayIndex={dayIndex} gameId={gameId} />
               </View>
             </View>

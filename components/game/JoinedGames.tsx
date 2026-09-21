@@ -42,7 +42,7 @@ const JoinedGames = ({ gamesTheyJoined, setGamesTheyJoined, setActiveGameId, arc
                     <Row className='gap-4 justify-center mt-3'>
                         <AppButton
                             variant="grey"
-                            className="px-6 py-2 rounded-full"
+                            className="px-6 py-2 rounded-[4px]"
                             onPress={() => setIsArchivedDialogOpen(true)}
                         >
                             <FontText weight='medium' color='white'>
