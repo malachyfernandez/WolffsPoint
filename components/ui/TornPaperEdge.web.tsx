@@ -1,15 +1,12 @@
 import React from 'react';
-import { isMobileWeb } from 'utils/browser';
-
-export const TORN_PAPER_FILTER_ID = 'wolff-torn-paper-edge';
-export const TORN_PAPER_FILTER_URL = `url(#${TORN_PAPER_FILTER_ID})`;
 
 /**
- * Deterministic jagged polygon used as a clip-path fallback on mobile web
- * browsers, where the displacement filter causes the browser to drop and
- * re-rasterize layer tiles while scrolling. Points are generated per pixel of
- * edge length (PX_PER_POINT) so the tear has consistent density on edges of
- * any length — along-edge positions are %, perpendicular jag is px.
+ * Deterministic jagged polygon used as a clip-path for torn-paper edges.
+ * Clip-path composites cheaply on every browser (the SVG displacement filter
+ * this replaced caused mobile browsers to drop and re-rasterize layer tiles
+ * while scrolling). Points are generated per pixel of edge length
+ * (PX_PER_POINT) so the tear has consistent density on edges of any length —
+ * along-edge positions are %, perpendicular jag is px.
  */
 const PX_PER_POINT = 7;
 
@@ -63,41 +60,8 @@ const getTornEdgeClipPath = (width: number, height: number) => {
     return clipPath;
 };
 
-/**
- * SVG filter defs that roughen an element's silhouette into a torn-paper edge.
- * Render once anywhere in the tree above a `TornPaperBackground` (or any element
- * using `filter: url(#wolff-torn-paper-edge)`). Displacement only nibbles the
- * outer ~6px of the paper layer; content should sit in a sibling element so
- * text stays crisp.
- */
-export const TornPaperEdgeDefs = () => (
-  <svg aria-hidden="true" focusable="false" style={{ position: 'absolute', width: 0, height: 0 }}>
-    <defs>
-      <filter
-        id={TORN_PAPER_FILTER_ID}
-        x="-6%"
-        y="-6%"
-        width="112%"
-        height="112%"
-        colorInterpolationFilters="sRGB">
-        <feTurbulence
-          type="fractalNoise"
-          baseFrequency="0.021 0.058"
-          numOctaves="5"
-          seed="11"
-          result="noise"
-        />
-        <feDisplacementMap
-          in="SourceGraphic"
-          in2="noise"
-          scale="11"
-          xChannelSelector="R"
-          yChannelSelector="G"
-        />
-      </filter>
-    </defs>
-  </svg>
-);
+/** No-op on web — torn edges are now clip-path based, no SVG defs needed. */
+export const TornPaperEdgeDefs = () => null;
 
 interface TornPaperBackgroundProps {
   textureUrl: string;
@@ -105,19 +69,16 @@ interface TornPaperBackgroundProps {
 }
 
 /**
- * Absolute-fill paper layer with a torn silhouette. Sits behind content — pair
- * with a `position: relative` parent. The inset box-shadow rides along the
- * displaced edge so the rim reads as fibrous/darker paper.
+ * Absolute-fill paper layer with a torn silhouette plus a cheap static
+ * box-shadow behind it. Sits behind content — pair with a
+ * `position: relative` parent. The inset box-shadow rides along the clipped
+ * edge so the rim reads as fibrous/darker paper.
  */
 export const TornPaperBackground = ({ textureUrl, tileSize }: TornPaperBackgroundProps) => {
   const paperRef = React.useRef<HTMLDivElement>(null);
   const [clipPath, setClipPath] = React.useState<string>();
-  const mobileWeb = React.useMemo(() => isMobileWeb(), []);
 
   React.useLayoutEffect(() => {
-    if (!mobileWeb) {
-      return;
-    }
     const element = paperRef.current;
     if (!element) {
       return;
@@ -128,7 +89,7 @@ export const TornPaperBackground = ({ textureUrl, tileSize }: TornPaperBackgroun
     const observer = new ResizeObserver(update);
     observer.observe(element);
     return () => observer.disconnect();
-  }, [mobileWeb]);
+  }, []);
 
   return (
     <>
@@ -155,7 +116,7 @@ export const TornPaperBackground = ({ textureUrl, tileSize }: TornPaperBackgroun
           backgroundImage: `url('${textureUrl}')`,
           backgroundRepeat: 'repeat',
           backgroundSize: `${tileSize}px ${tileSize}px`,
-          ...(mobileWeb ? { clipPath } : { filter: TORN_PAPER_FILTER_URL }),
+          clipPath,
           boxShadow: 'inset 0 0 22px rgba(74, 55, 30, 0.4), inset 0 0 4px rgba(74, 55, 30, 0.35)',
           pointerEvents: 'none',
         }}

@@ -398,16 +398,24 @@ const useAllPlayers = ({ gameId }: { gameId: string }) => {
   ]);
 
   const players = Array.from(allUserIds)
-    .map((userId) => ({
-      userId,
-      email:
+    .map((userId) => {
+      const email =
         profiles.find((p: PlayerProfile) => p.userId === userId)?.email ||
         userTable.find((u: UserTableItem) => u.userId === userId)?.email ||
-        '',
-      isDead:
-        userTable.find((u: UserTableItem) => u.userId === userId)?.playerData?.livingState ===
-        'dead',
-    }))
+        '';
+      // Table rows can keep userId 'NOT-JOINED' after a player joins — match by
+      // userId first, then fall back to email (the stable identity key).
+      const tableRow =
+        userTable.find((u: UserTableItem) => u.userId === userId) ??
+        userTable.find(
+          (u: UserTableItem) => u.email?.trim()?.toLowerCase() === email.trim().toLowerCase()
+        );
+      return {
+        userId,
+        email,
+        isDead: tableRow?.playerData?.livingState === 'dead',
+      };
+    })
     .filter((player) => {
       const playerEmail = player.email.trim().toLowerCase();
       return allowedEmails.has(playerEmail);
