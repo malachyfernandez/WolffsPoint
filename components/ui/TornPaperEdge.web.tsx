@@ -16,22 +16,30 @@ const buildTornEdgeClipPath = () => {
         seed = (seed * 48271) % 2147483647;
         return seed / 2147483647;
     };
-    const POINTS_PER_EDGE = 10;
-    const jag = () => `${(rand() * 6).toFixed(1)}px`;
-    const jagFromFar = () => `calc(100% - ${(rand() * 6).toFixed(1)}px)`;
+    const POINTS_PER_EDGE = 26;
+    // Mostly shallow nicks with occasional deeper tears, like real ripped paper
+    const depth = () => (rand() < 0.15 ? 4 + rand() * 5 : rand() * 4.5);
+    const jag = () => `${depth().toFixed(1)}px`;
+    const jagFromFar = () => `calc(100% - ${depth().toFixed(1)}px)`;
+    // Jitter the along-edge positions so the zigzag spacing isn't uniform
+    const along = (i: number) =>
+        Math.min(
+            100,
+            Math.max(0, (i / POINTS_PER_EDGE) * 100 + (rand() - 0.5) * (80 / POINTS_PER_EDGE))
+        ).toFixed(1);
     const pts: string[] = [];
 
     for (let i = 0; i <= POINTS_PER_EDGE; i++) {
-        pts.push(`${((i / POINTS_PER_EDGE) * 100).toFixed(1)}% ${jag()}`);
+        pts.push(`${along(i)}% ${jag()}`);
     }
     for (let i = 1; i <= POINTS_PER_EDGE; i++) {
-        pts.push(`${jagFromFar()} ${((i / POINTS_PER_EDGE) * 100).toFixed(1)}%`);
+        pts.push(`${jagFromFar()} ${along(i)}%`);
     }
     for (let i = 1; i <= POINTS_PER_EDGE; i++) {
-        pts.push(`${(100 - (i / POINTS_PER_EDGE) * 100).toFixed(1)}% ${jagFromFar()}`);
+        pts.push(`${(100 - parseFloat(along(i))).toFixed(1)}% ${jagFromFar()}`);
     }
     for (let i = 1; i < POINTS_PER_EDGE; i++) {
-        pts.push(`${jag()} ${(100 - (i / POINTS_PER_EDGE) * 100).toFixed(1)}%`);
+        pts.push(`${jag()} ${(100 - parseFloat(along(i))).toFixed(1)}%`);
     }
 
     return `polygon(${pts.join(', ')})`;

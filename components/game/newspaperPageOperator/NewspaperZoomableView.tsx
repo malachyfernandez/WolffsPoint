@@ -156,9 +156,7 @@ const NewspaperZoomableView = ({ usepaper, gameId, TILE_SIZE, onReady }: Newspap
                     <ShadowScrollView
                         ref={scrollViewRef}
                         extensionPercent={0}
-                        bottomFade={mobileWeb ? 0 : 22}
-                        leftFade={mobileWeb ? 0 : undefined}
-                        rightFade={mobileWeb ? 0 : undefined}
+                        bottomFade={22}
                         direction='horizontal'
                         className='w-full'
                         scrollViewClassName='w-full px-[10px]'

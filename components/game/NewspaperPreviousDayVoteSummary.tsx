@@ -388,7 +388,7 @@ const NewspaperPreviousDayVoteSummary = ({
   }
 
   return (
-    <Column className="border-border/15 w-full gap-4 border-t p-4">
+    <Column className="w-full gap-4 p-4">
       <Column className="gap-1">
         <FontText weight="bold" className="text-lg">
           Previous Day Vote
