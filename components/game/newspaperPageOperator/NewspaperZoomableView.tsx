@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Platform, Pressable, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import Animated, { useAnimatedReaction, useAnimatedRef, useAnimatedStyle, useSharedValue, withTiming, Easing, scrollTo } from 'react-native-reanimated';
 import Column from '../../layout/Column';
 import Row from '../../layout/Row';
@@ -12,7 +12,6 @@ import { Usepaper } from 'types/usepaper';
 import { getNewspaperSections } from 'utils/newspaperSections';
 import NewspaperSectionDivider from './NewspaperSectionDivider';
 import { TornPaperBackground, TornPaperEdgeDefs } from '../../ui/TornPaperEdge';
-import { isMobileWeb } from 'utils/browser';
 
 interface NewspaperZoomableViewProps {
     usepaper: Usepaper;
@@ -36,7 +35,6 @@ const NEWSPAPER_TEXTURE_URL =
 
 const NewspaperZoomableView = ({ usepaper, gameId, TILE_SIZE, onReady }: NewspaperZoomableViewProps) => {
     const sections = getNewspaperSections(usepaper);
-    const mobileWeb = isMobileWeb();
     const [zoom, setZoom] = useState(1);
     const [containerWidth, setContainerWidth] = useState(0);
 
@@ -171,13 +169,7 @@ const NewspaperZoomableView = ({ usepaper, gameId, TILE_SIZE, onReady }: Newspap
                                     unscaledContentHeight.value = e.nativeEvent.layout.height;
                                     onReady?.();
                                 }}
-                                style={[
-                                    { padding: TORN_BLEED, paddingBottom: TORN_BLEED + 14 },
-                                    Platform.OS === 'web' && !mobileWeb
-                                        // @ts-ignore: web-only CSS
-                                        ? { filter: 'drop-shadow(0px 10px 14px rgba(0, 0, 0, 0.35))' }
-                                        : {},
-                                ]}
+                                style={{ padding: TORN_BLEED, paddingBottom: TORN_BLEED + 14 }}
                             >
                             <Animated.View
                                 className='relative'
