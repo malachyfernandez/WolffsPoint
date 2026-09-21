@@ -36,7 +36,7 @@ const TopSiteBar = ({ className = '', isGameBodyReady = false }: TopSiteBarProps
 
                 {/* spacer */}
                 <></>
-                {isInAGame && gameJoinCode && isGameBodyReady && (
+                {isInAGame && isGameBodyReady && (
                         <Row className='gap-4 items-center'>
 
                             {gameJoinCode && (

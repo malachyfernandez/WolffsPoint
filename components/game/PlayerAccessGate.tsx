@@ -45,6 +45,7 @@ const PlayerAccessGate = ({ gameId, currentUserId, children }: PlayerAccessGateP
     defaultValue: { name: '', email: '', userId: '' },
     privacy: 'PUBLIC',
   });
+  const [, setActiveGameId] = useValue<string>('activeGameId');
   const { value: userTable, isLoading: isUserTableLoading } = useSharedListValue<UserTableItem[]>({
     key: 'userTable',
     itemId: gameId,
@@ -137,6 +138,11 @@ const PlayerAccessGate = ({ gameId, currentUserId, children }: PlayerAccessGateP
           <FontText variant="subtext">
             Looks like you haven&apos;t been invited to this game yet. Tell the operator to add you.
           </FontText>
+          <Row className="gap-4">
+            <AppButton variant="outline" className="w-44" onPress={() => setActiveGameId('')}>
+              <FontText weight="medium">Back to games</FontText>
+            </AppButton>
+          </Row>
         </Column>
       </Animated.View>
     );

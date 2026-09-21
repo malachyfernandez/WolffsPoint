@@ -12,7 +12,7 @@ import { Usepaper } from 'types/usepaper';
 import { getNewspaperSections } from 'utils/newspaperSections';
 import NewspaperSectionDivider from './NewspaperSectionDivider';
 import { TornPaperBackground, TornPaperEdgeDefs } from '../../ui/TornPaperEdge';
-import { isIOSSafari } from 'utils/browser';
+import { isMobileWeb } from 'utils/browser';
 
 interface NewspaperZoomableViewProps {
     usepaper: Usepaper;
@@ -36,7 +36,7 @@ const NEWSPAPER_TEXTURE_URL =
 
 const NewspaperZoomableView = ({ usepaper, gameId, TILE_SIZE, onReady }: NewspaperZoomableViewProps) => {
     const sections = getNewspaperSections(usepaper);
-    const iosSafari = isIOSSafari();
+    const mobileWeb = isMobileWeb();
     const [zoom, setZoom] = useState(1);
     const [containerWidth, setContainerWidth] = useState(0);
 
@@ -156,9 +156,9 @@ const NewspaperZoomableView = ({ usepaper, gameId, TILE_SIZE, onReady }: Newspap
                     <ShadowScrollView
                         ref={scrollViewRef}
                         extensionPercent={0}
-                        bottomFade={iosSafari ? 0 : 22}
-                        leftFade={iosSafari ? 0 : undefined}
-                        rightFade={iosSafari ? 0 : undefined}
+                        bottomFade={mobileWeb ? 0 : 22}
+                        leftFade={mobileWeb ? 0 : undefined}
+                        rightFade={mobileWeb ? 0 : undefined}
                         direction='horizontal'
                         className='w-full'
                         scrollViewClassName='w-full px-[10px]'
@@ -175,11 +175,9 @@ const NewspaperZoomableView = ({ usepaper, gameId, TILE_SIZE, onReady }: Newspap
                                 }}
                                 style={[
                                     { padding: TORN_BLEED, paddingBottom: TORN_BLEED + 14 },
-                                    Platform.OS === 'web'
-                                        ? iosSafari
-                                            ? { boxShadow: '0px 8px 14px rgba(0, 0, 0, 0.3)' }
-                                            // @ts-ignore: web-only CSS
-                                            : { filter: 'drop-shadow(0px 10px 14px rgba(0, 0, 0, 0.35))' }
+                                    Platform.OS === 'web' && !mobileWeb
+                                        // @ts-ignore: web-only CSS
+                                        ? { filter: 'drop-shadow(0px 10px 14px rgba(0, 0, 0, 0.35))' }
                                         : {},
                                 ]}
                             >

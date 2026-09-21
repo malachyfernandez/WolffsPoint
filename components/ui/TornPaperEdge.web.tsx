@@ -1,14 +1,14 @@
 import React from 'react';
-import { isIOSSafari } from 'utils/browser';
+import { isMobileWeb } from 'utils/browser';
 
 export const TORN_PAPER_FILTER_ID = 'wolff-torn-paper-edge';
 export const TORN_PAPER_FILTER_URL = `url(#${TORN_PAPER_FILTER_ID})`;
 
 /**
- * Deterministic jagged polygon used as a clip-path fallback on iOS Safari,
- * where the displacement filter causes the browser to drop and re-rasterize
- * layer tiles while scrolling. Along-edge positions are %, perpendicular jag
- * is px so the tear stays ~6px deep at any size.
+ * Deterministic jagged polygon used as a clip-path fallback on mobile web
+ * browsers, where the displacement filter causes the browser to drop and
+ * re-rasterize layer tiles while scrolling. Along-edge positions are %,
+ * perpendicular jag is px so the tear stays ~6px deep at any size.
  */
 const buildTornEdgeClipPath = () => {
     let seed = 11;
@@ -97,7 +97,7 @@ export const TornPaperBackground = ({ textureUrl, tileSize }: TornPaperBackgroun
       backgroundImage: `url('${textureUrl}')`,
       backgroundRepeat: 'repeat',
       backgroundSize: `${tileSize}px ${tileSize}px`,
-      ...(isIOSSafari()
+      ...(isMobileWeb()
         ? { clipPath: TORN_EDGE_CLIP_PATH }
         : { filter: TORN_PAPER_FILTER_URL }),
       boxShadow: 'inset 0 0 22px rgba(74, 55, 30, 0.4), inset 0 0 4px rgba(74, 55, 30, 0.35)',
