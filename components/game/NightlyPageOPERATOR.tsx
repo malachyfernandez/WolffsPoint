@@ -18,6 +18,7 @@ import NightlyCertificationDialog from './NightlyCertificationDialog';
 import { getGameScopedKey, hasPlayerActionContent, hasVoteContent } from 'utils/multiplayer';
 import { deepEqual } from 'utils/deepEqual';
 import { PlayerNightSubmission, PlannedUpdate } from 'types/multiplayer';
+import { getNewserAssignmentKey, NewserAssignment } from 'utils/newspaperControl';
 import {
   executePlannedUpdates,
   executeMorningMessagePlannedUpdates,
@@ -39,10 +40,7 @@ const NightlyPageOPERATOR = (props: NightlyPageOPERATORProps) => {
   );
 };
 
-const NightlyPageContent = ({
-  currentUserId: _currentUserId,
-  gameId,
-}: NightlyPageOPERATORProps) => {
+const NightlyPageContent = ({ currentUserId, gameId }: NightlyPageOPERATORProps) => {
   const { selectionMode } = useMultiSelect();
   const [isCertificationDialogOpen, setIsCertificationDialogOpen] = useState(false);
   const { width } = useWindowDimensions();
@@ -119,10 +117,32 @@ const NightlyPageContent = ({
     PlayerNightSubmission
   >;
 
-  const voteCount = users.filter((user) =>
+  // Newser assignment (used for the same player-count exclusions as the phone book)
+  const newserAssignmentRecords = useFindValues<NewserAssignment>(
+    getNewserAssignmentKey(gameId),
+    { returnTop: 1 }
+  );
+  const newserAssignment = newserAssignmentRecords?.[0]?.value;
+  const newserEmail = newserAssignment?.email?.trim()?.toLowerCase() ?? '';
+  const newserUserId = newserAssignment?.userId?.trim() ?? '';
+
+  // Countable players = userTable rows minus the newser and the operator
+  // (same logic as the phone book's alive count).
+  const countablePlayers = users.filter((u) => {
+    const email = u.email?.trim()?.toLowerCase();
+    if (newserEmail && email === newserEmail) return false;
+    if (newserUserId && u.userId === newserUserId) return false;
+    if (u.userId === currentUserId) return false;
+    return true;
+  });
+  const alivePlayers = countablePlayers.filter(
+    (u) => u.playerData?.livingState === 'alive'
+  );
+
+  const voteCount = alivePlayers.filter((user) =>
     hasVoteContent(submissionsByEmail[user.email.toLowerCase()]?.vote)
   ).length;
-  const actionCount = users.filter((user) =>
+  const actionCount = alivePlayers.filter((user) =>
     hasPlayerActionContent(submissionsByEmail[user.email.toLowerCase()]?.action)
   ).length;
 
@@ -138,7 +158,8 @@ const NightlyPageContent = ({
     morningMessagesList?.state?.isSyncing ||
     selectedDayIndex?.state?.isSyncing ||
     dayDatesArray?.state?.isSyncing ||
-    submissionRecords === undefined;
+    submissionRecords === undefined ||
+    newserAssignmentRecords === undefined;
   const [hasInitiallyLoaded, setHasInitiallyLoaded] = useState(false);
 
   useEffect(() => {
@@ -335,8 +356,11 @@ const NightlyPageContent = ({
                   <Column className="flex-1 gap-0">
                     <FontText weight="medium">Player submissions</FontText>
                     <FontText variant="subtext">
-                      {voteCount}/{users.length} voted, {actionCount}/{users.length} submitted
-                      actions
+                      {voteCount}/{alivePlayers.length} voted, {actionCount}/
+                      {alivePlayers.length} submitted actions
+                    </FontText>
+                    <FontText variant="subtext">
+                      {alivePlayers.length}/{countablePlayers.length} players alive
                     </FontText>
                   </Column>
                   <AppButton
@@ -353,8 +377,11 @@ const NightlyPageContent = ({
                   <Column className="gap-0">
                     <FontText weight="medium">Player submissions</FontText>
                     <FontText variant="subtext">
-                      {voteCount}/{users.length} voted, {actionCount}/{users.length} submitted
-                      actions
+                      {voteCount}/{alivePlayers.length} voted, {actionCount}/
+                      {alivePlayers.length} submitted actions
+                    </FontText>
+                    <FontText variant="subtext">
+                      {alivePlayers.length}/{countablePlayers.length} players alive
                     </FontText>
                   </Column>
                   <AppButton
