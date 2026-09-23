@@ -314,7 +314,7 @@ const NewspaperDayComments = ({ gameId, dayIndex }: NewspaperDayCommentsProps) =
         ) : (
           <Column className="gap-1 py-8">
             <FontText weight="medium">No comments yet</FontText>
-            <FontText variant="subtext">Be the first person to share a comment.</FontText>
+            <FontText variant="subtext">{isPlayerDead ? 'Ghosts don’t talk silly — you can only read.' : 'Be the first person to share a comment.'}</FontText>
           </Column>
         )}
       </Column>

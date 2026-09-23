@@ -138,7 +138,7 @@ const TownSquareThreadDetailView = ({
                                 ) : (
                                     <Column className='gap-1 py-8'>
                                         <FontText weight='medium'>No replies yet</FontText>
-                                        <FontText variant='subtext'>Be the first person to answer this thread.</FontText>
+                                        <FontText variant='subtext'>{isPlayerDead ? 'Ghosts don’t talk silly — you can only listen.' : 'Be the first person to answer this thread.'}</FontText>
                                     </Column>
                                 )}
                             </Column>
