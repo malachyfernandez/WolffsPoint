@@ -42,6 +42,8 @@ import PlaceholderCard from '../ui/PlaceholderCard';
 import ShadowScrollView from '../ui/ShadowScrollView';
 import PaperTextureOverlay from '../ui/PaperTextureOverlay';
 import PrintRule from '../ui/PrintRule';
+import StickyTocButton from './ruleBook/StickyTocButton';
+import PhoneBookTocDialog from './phoneBook/PhoneBookTocDialog';
 import { Moon } from 'lucide-react-native';
 
 interface PhoneBookPagePLAYERProps {
@@ -56,6 +58,8 @@ const CARD_TILTS = [-0.5, 0.4, -0.3, 0.6, -0.6, 0.3];
 // Simple container component - just manages the dialog and layout
 const PhoneBookPagePLAYER = ({ gameId, currentUserId, currentEmail }: PhoneBookPagePLAYERProps) => {
   const [isProfileDialogOpen, setIsProfileDialogOpen] = useState(false);
+  const [isTocOpen, setIsTocOpen] = useState(false);
+  const tocAnchorPrefix = `phonebook-${gameId}`;
   const frameVariant = useDialogGuildedVariant();
   const profileKey = getGameScopedKey('playerProfile', gameId);
   const [myProfile, setMyProfile] = useValue<PlayerProfile>(profileKey, {
@@ -108,8 +112,15 @@ const PhoneBookPagePLAYER = ({ gameId, currentUserId, currentEmail }: PhoneBookP
           aliveCount={aliveCount}
           totalCount={totalCount}
           isSleepWindow={isSleepWindow}
+          onTocPress={() => setIsTocOpen(true)}
+          isTocOpen={isTocOpen}
         />
-        <MyProfileCard profile={initialProfileValue} onPress={() => setIsProfileDialogOpen(true)} />
+        <View nativeID={`${tocAnchorPrefix}-me`}>
+          <MyProfileCard
+            profile={initialProfileValue}
+            onPress={() => setIsProfileDialogOpen(true)}
+          />
+        </View>
         {!showEditButton && (
           <Row className="-mt-2">
             <AppButton
@@ -143,6 +154,15 @@ const PhoneBookPagePLAYER = ({ gameId, currentUserId, currentEmail }: PhoneBookP
           title="Edit your profile"
           frameVariant={frameVariant}
           historyKey={`playerProfile:${gameId}:${currentUserId}`}
+        />
+
+        <PhoneBookTocDialog
+          isOpen={isTocOpen}
+          onOpenChange={setIsTocOpen}
+          gameId={gameId}
+          anchorPrefix={tocAnchorPrefix}
+          players={players}
+          titleEntry={{ label: 'Your Profile', anchorId: `${tocAnchorPrefix}-me` }}
         />
       </Column>
     </LoadingContainer>
@@ -206,11 +226,15 @@ const PhoneBookHeader = ({
   aliveCount,
   totalCount,
   isSleepWindow,
+  onTocPress,
+  isTocOpen,
 }: {
   onEditProfile: () => void;
   aliveCount: number;
   totalCount: number;
   isSleepWindow: boolean;
+  onTocPress: () => void;
+  isTocOpen: boolean;
 }) => {
   const { width } = useWindowDimensions();
   const showEditButton = width >= 440;
@@ -230,13 +254,16 @@ const PhoneBookHeader = ({
             </FontText>
           </>
         </Column>
-        {showEditButton && (
-          <AppButton variant="accent" className="w-40" onPress={onEditProfile}>
-            <FontText weight="medium" color="white">
-              Edit profile
-            </FontText>
-          </AppButton>
-        )}
+        <Row className="items-center gap-2">
+          {showEditButton && (
+            <AppButton variant="accent" className="w-40" onPress={onEditProfile}>
+              <FontText weight="medium" color="white">
+                Edit profile
+              </FontText>
+            </AppButton>
+          )}
+          {!isSleepWindow && <StickyTocButton onPress={onTocPress} isOpen={isTocOpen} />}
+        </Row>
       </Row>
       <PrintRule />
     </Column>
@@ -317,14 +344,16 @@ const PhoneBookGrid = ({
           items={players}
           keyExtractor={(player) => `${player.userId}-${player.email}-${readyKey}`}
           renderItem={(player, index) => (
-            <PlayerCard
-              userId={player.userId}
-              gameId={gameId}
-              email={player.email}
-              isDead={player.isDead}
-              index={index}
-              onReady={markReady}
-            />
+            <View nativeID={`phonebook-${gameId}-player-${index}`}>
+              <PlayerCard
+                userId={player.userId}
+                gameId={gameId}
+                email={player.email}
+                isDead={player.isDead}
+                index={index}
+                onReady={markReady}
+              />
+            </View>
           )}
         />
       </Animated.View>

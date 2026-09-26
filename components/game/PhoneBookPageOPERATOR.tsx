@@ -17,6 +17,8 @@ import Row from '../layout/Row';
 import FontText from '../ui/text/FontText';
 import MarkdownRenderer from '../ui/markdown/MarkdownRenderer';
 import PlayerProfilePreviewCard from './PlayerProfilePreviewCard';
+import StickyTocButton from './ruleBook/StickyTocButton';
+import PhoneBookTocDialog from './phoneBook/PhoneBookTocDialog';
 
 interface PhoneBookPageOPERATORProps {
     gameId: string;
@@ -26,7 +28,9 @@ interface PhoneBookPageOPERATORProps {
 
 // View-only operator phonebook - no edit functionality
 const PhoneBookPageOPERATOR = ({ gameId, currentUserId, onBack }: PhoneBookPageOPERATORProps) => {
+    const [isTocOpen, setIsTocOpen] = useState(false);
     const { players, isLoading, aliveCount, totalCount } = useAllPlayers({ gameId, currentUserId });
+    const tocAnchorPrefix = `phonebook-${gameId}`;
 
     return (
         <LoadingContainer
@@ -35,16 +39,27 @@ const PhoneBookPageOPERATOR = ({ gameId, currentUserId, onBack }: PhoneBookPageO
             className='min-h-[760px]'
         >
         <Column className='gap-6 pb-6'>
-            <Pressable onPress={onBack} className='self-start py-1'>
-                <Row className='gap-4 items-center'>
-                    <ChevronLeft size={20} color='rgb(46, 41, 37)' />
-                    <FontText weight='medium'>Config</FontText>
-                </Row>
-            </Pressable>
+            <Row className='items-center justify-between'>
+                <Pressable onPress={onBack} className='self-start py-1'>
+                    <Row className='gap-4 items-center'>
+                        <ChevronLeft size={20} color='rgb(46, 41, 37)' />
+                        <FontText weight='medium'>Config</FontText>
+                    </Row>
+                </Pressable>
+                <StickyTocButton onPress={() => setIsTocOpen(true)} isOpen={isTocOpen} />
+            </Row>
 
             <PhoneBookHeader aliveCount={aliveCount} totalCount={totalCount} />
             <PhoneBookGrid gameId={gameId} players={players} />
         </Column>
+
+        <PhoneBookTocDialog
+            isOpen={isTocOpen}
+            onOpenChange={setIsTocOpen}
+            gameId={gameId}
+            anchorPrefix={tocAnchorPrefix}
+            players={players}
+        />
         </LoadingContainer>
     );
 };
@@ -114,13 +129,15 @@ const PhoneBookGrid = ({ gameId, players }: { gameId: string; players: { userId:
                 <MasonryGrid
                     items={players}
                     keyExtractor={(player) => `${player.userId}-${player.email}`}
-                    renderItem={(player) => (
-                        <PlayerCardWithContainer
-                            userId={player.userId}
-                            gameId={gameId}
-                            email={player.email}
-                            onReady={markReady}
-                        />
+                    renderItem={(player, index) => (
+                        <View nativeID={`phonebook-${gameId}-player-${index}`}>
+                            <PlayerCardWithContainer
+                                userId={player.userId}
+                                gameId={gameId}
+                                email={player.email}
+                                onReady={markReady}
+                            />
+                        </View>
                     )}
                 />
             </Animated.View>

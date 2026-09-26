@@ -5,7 +5,12 @@ import DialogHeader from '../../ui/dialog/DialogHeader';
 import Column from '../../layout/Column';
 import FontText from '../../ui/text/FontText';
 import ShadowScrollView from '../../ui/ShadowScrollView';
-import { parseHeadings, scrollToHeading, scrollToElement } from 'utils/parseHeadings';
+import {
+    closeDialogAndScroll,
+    parseHeadings,
+    scrollToHeading,
+    scrollToElement,
+} from 'utils/parseHeadings';
 import { RoleTableItem } from 'types/roleTable';
 import CloseButton from '../../ui/dialog/CloseButton';
 
@@ -52,41 +57,8 @@ const TableOfContentsDialog = ({
 
     const hasContent = headings.length > 0 || visibleRoles.length > 0;
 
-    /**
-     * Closes the dialog, then runs the scroll action once the dialog's body
-     * scroll-lock has released.
-     *
-     * The heroui-native Dialog sets `overflow: hidden` on the body while open
-     * and never removes it on close (web bug), making the document
-     * unscrollable. We force-clear the lock after closing so the scroll works.
-     */
-    const closeAndScroll = (scrollAction: () => void) => {
-        onOpenChange(false);
-        if (typeof document === 'undefined') {
-            scrollAction();
-            return;
-        }
-
-        // The heroui-native Dialog sets overflow:hidden on the body but never
-        // removes it on close (bug on web). Force-clear it so the page can
-        // scroll again.
-        const forceClearScrollLock = () => {
-            const bodyStyle = document.body.style;
-            const htmlStyle = document.documentElement.style;
-            if (window.getComputedStyle(document.body).overflowY === 'hidden') {
-                bodyStyle.overflow = '';
-            }
-            if (window.getComputedStyle(document.documentElement).overflowY === 'hidden') {
-                htmlStyle.overflow = '';
-            }
-        };
-
-        // Wait a tick for React to process the close, then force-clear and scroll.
-        requestAnimationFrame(() => {
-            forceClearScrollLock();
-            scrollAction();
-        });
-    };
+    const closeAndScroll = (scrollAction: () => void) =>
+        closeDialogAndScroll(() => onOpenChange(false), scrollAction);
 
     return (
         <ConvexDialog.Root isOpen={isOpen} onOpenChange={onOpenChange}>
