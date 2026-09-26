@@ -109,7 +109,18 @@ const TocPlayerRow = ({
     anchorId: string;
     onPress: (scrollAction: () => void) => void;
 }) => {
-    const { displayName, isLoading } = useTownSquareAuthorIdentity({ gameId, userId });
+    const { displayName, inGameName, isLoading } = useTownSquareAuthorIdentity({ gameId, userId });
+
+    // Mirror the card's validity check so the TOC only lists players whose
+    // card actually renders (skips NOT-JOINED rows and orphaned profiles
+    // that resolve to no usable name).
+    const isRenderable =
+        (displayName && displayName !== 'Unknown' && displayName.trim().length > 0) ||
+        (inGameName && inGameName.trim().length > 0);
+
+    if (!isLoading && !isRenderable) {
+        return null;
+    }
 
     return (
         <Pressable
