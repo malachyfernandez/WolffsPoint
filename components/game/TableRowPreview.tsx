@@ -359,6 +359,16 @@ const TableRowPreview = ({ gameId, children }: TableRowPreviewProps) => {
     return () => observer.disconnect();
   }, [bodyEnabled]);
 
+  // Re-measure when a hidden keep-alive pane becomes visible: bodyEnabled
+  // flips in the same commit that removes the pane's offscreen transform, so
+  // render-time rect reads above can see stale geometry. rAF fires after
+  // commit + layout — the re-render measures real positions.
+  useEffect(() => {
+    if (!bodyEnabled) return;
+    const raf = requestAnimationFrame(() => setLayoutTick((tick) => tick + 1));
+    return () => cancelAnimationFrame(raf);
+  }, [bodyEnabled]);
+
   const contextValue = React.useMemo(() => ({ registerRow }), [registerRow]);
 
   // Pills fade out while scrolling (they'd lag behind the rows) and while any
