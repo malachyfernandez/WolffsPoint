@@ -3,6 +3,7 @@ import Column from '../layout/Column';
 import Row from '../layout/Row';
 import FontText from '../ui/text/FontText';
 import { useGameOperatorUserId } from 'hooks/useGameOperatorUserId';
+import { useNow } from 'hooks/useNow';
 import { useSharedListValue } from 'hooks/useSharedListValue';
 import { useSharedVariableValue } from 'hooks/useSharedVariableValue';
 import { PlayerProfile, GameSchedule } from 'types/multiplayer';
@@ -32,7 +33,7 @@ const YourEyesOnlyPagePLAYER = ({ gameId, currentEmail, matchingPlayer, currentP
     const { value: dayDateStrings } = useSharedListValue<string[]>({ key: 'dayDatesArray', itemId: gameId, defaultValue: [], userIds: operatorUserIds });
     const { value: numberOfRealDaysPerInGameDay } = useSharedListValue<number>({ key: 'numberOfRealDaysPerInGameDay', itemId: gameId, defaultValue: 2, userIds: operatorUserIds });
     const scheduleRecord = useSharedVariableValue<GameSchedule>({ key: getGameScopedKey('gameSchedule', gameId), defaultValue: defaultGameSchedule, userIds: operatorUserIds });
-    const [now, setNow] = useState(() => new Date());
+    const now = useNow(60000);
 
     const schedule = normalizeGameSchedule(scheduleRecord.value ?? defaultGameSchedule);
     const gameTimeZone = resolveGameTimeZone(schedule);
@@ -80,15 +81,7 @@ const YourEyesOnlyPagePLAYER = ({ gameId, currentEmail, matchingPlayer, currentP
         setSelectedDayIndex((currentValue) => Math.min(currentValue, currentDayIndex));
     }, [currentDayIndex, dayDates.length]);
 
-    useEffect(() => {
-        const intervalId = setInterval(() => {
-            setNow(new Date());
-        }, 60000); // Update every minute
 
-        return () => {
-            clearInterval(intervalId);
-        };
-    }, []);
 
     return (
         <LoadingContainer

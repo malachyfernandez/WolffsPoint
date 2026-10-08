@@ -16,9 +16,22 @@ import { GenerationProvider } from '../contexts/GenerationContext';
 import { WebDropdownProvider } from '../contexts/WebDropdownProvider';
 import { DataProvider } from '../contexts/DataProvider';
 import { MinimizeProvider, MinimizeRow } from '../components/ui/minimize';
+import { MemoryPressureProvider } from '../contexts/MemoryPressureContext';
+import MemoryDebugBadge from '../components/dev/MemoryDebugBadge';
 import VersionUpdateNotice from '../components/ui/VersionUpdateNotice';
 import { useEffect } from "react";
 import "../global.css";
+
+// Sim mode: with EXPO_PUBLIC_SIM=1 the metro resolver redirects the
+// convex/react and @clerk/clerk-expo imports above onto sim/ mocks, so the
+// same provider JSX works unchanged — the mocks ignore real props. This flag
+// only gates the extra instrumentation mounts (seed, profiler, SimBar).
+import { isSimMode } from '../sim/isSim';
+import { SimProfiler } from '../sim/perf/SimProfiler';
+import SimBar from '../sim/perf/SimBar';
+import { ensureSeeded } from '../sim/seed';
+
+if (isSimMode) ensureSeeded();
 
 const convex = new ConvexReactClient(process.env.EXPO_PUBLIC_CONVEX_URL!);
 const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!;
@@ -133,6 +146,7 @@ export default function RootLayout() {
           <KeyboardShortcutHintProvider>
           <GlobalRateLimitMonitor />
           <WebThemeColorSync />
+          <MemoryPressureProvider>
           <MinimizeProvider>
           <HeroUINativeProvider
             config={{
@@ -146,10 +160,16 @@ export default function RootLayout() {
                 <WebDropdownProvider>
                   <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
                     <DataProvider>
-                        <Slot />
+                        {isSimMode ? (
+                          <SimProfiler id="app-root"><Slot /></SimProfiler>
+                        ) : (
+                          <Slot />
+                        )}
                         <PortalHost />
                         <MinimizeRow />
                         <VersionUpdateNotice />
+                        <MemoryDebugBadge />
+                        {isSimMode && <SimBar />}
                     </DataProvider>
                   </ConvexProviderWithClerk>
                 </WebDropdownProvider>
@@ -157,6 +177,7 @@ export default function RootLayout() {
             </ClerkProvider>
           </HeroUINativeProvider>
           </MinimizeProvider>
+          </MemoryPressureProvider>
           </KeyboardShortcutHintProvider>
         </ToastProvider>
       </GenerationProvider>

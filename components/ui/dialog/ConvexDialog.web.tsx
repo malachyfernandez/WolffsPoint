@@ -150,6 +150,41 @@ const renderWrappedContent = (children: React.ReactNode, outerClassName?: string
     );
 };
 
+// Escape-to-close with correct stacking. Dialogs open over each other
+// (e.g. UnsavedChangesDialog on top of an editor), so a module-level stack
+// tracks open order and only the top-most dialog consumes the key. Each
+// dialog's own `onOpenChange` fires — unsaved-changes interception is
+// preserved because we go through the same close path as the X button.
+const escapeStack: object[] = [];
+
+const ConvexDialogRoot = ({ frameVariant, isOpen, onOpenChange, ...props }: any) => {
+    const entryRef = useRef<object>({});
+
+    useEffect(() => {
+        if (!isOpen) return;
+        const entry = entryRef.current;
+        escapeStack.push(entry);
+        const onKeyDown = (e: KeyboardEvent) => {
+            if (e.key !== 'Escape') return;
+            if (escapeStack[escapeStack.length - 1] !== entry) return;
+            e.stopPropagation();
+            onOpenChange?.(false);
+        };
+        document.addEventListener('keydown', onKeyDown);
+        return () => {
+            document.removeEventListener('keydown', onKeyDown);
+            const idx = escapeStack.indexOf(entry);
+            if (idx !== -1) escapeStack.splice(idx, 1);
+        };
+    }, [isOpen, onOpenChange]);
+
+    return (
+        <DialogVariantContext.Provider value={frameVariant || 'gold'}>
+            <Dialog isOpen={isOpen} onOpenChange={onOpenChange} {...props} />
+        </DialogVariantContext.Provider>
+    );
+};
+
 const ConvexDialogPortal = ({ className, children, ...props }: any) => {
     const minimizeContext = useMinimize();
 
@@ -161,11 +196,7 @@ const ConvexDialogPortal = ({ className, children, ...props }: any) => {
 };
 
 const ConvexDialog = {
-    Root: ({ frameVariant, ...props }: any) => (
-        <DialogVariantContext.Provider value={frameVariant || 'gold'}>
-            <Dialog {...props} />
-        </DialogVariantContext.Provider>
-    ),
+    Root: ConvexDialogRoot,
     Trigger: Dialog.Trigger,
     Portal: ConvexDialogPortal,
     Overlay: ({ className, ...props }: any) => <Dialog.Overlay className={`bg-black/20 ${className || ''}`.trim()} {...props} />,

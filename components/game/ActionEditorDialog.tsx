@@ -43,7 +43,7 @@ const ActionEditorDialog = ({
   historyKey,
   submitLabel = 'Done',
 }: ActionEditorDialogProps) => {
-  const { history, addSave, clearHistory, maxSaves } = useSaveHistory(historyKey ?? null);
+  const { history, addSave, clearHistory, maxSaves } = useSaveHistory(historyKey ?? null, { enabled: isOpen });
   const { setHint } = useKeyboardShortcutHint();
   const [draftAction, setDraftAction] = useState(initialAction);
   const [editingStartAction, setEditingStartAction] = useState(initialAction);
@@ -57,6 +57,7 @@ const ActionEditorDialog = ({
     title,
     onClose: () => onOpenChange(false),
     onRestore: () => onOpenChange(true),
+    pinned: () => hasUnsavedChanges,
   });
 
   useEffect(() => {

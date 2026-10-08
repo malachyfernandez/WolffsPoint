@@ -22,23 +22,29 @@ export function useValue<T = any>(
   key: string,
   overrides: any = {}
 ): [UserVariableResult<T>, ScheduledValueSetter<T>] {
+  // `enabled` is consumed here, not forwarded: when false the hook registers
+  // nothing (no backend subscription) and resolves to the defaultValue as a
+  // settled (non-syncing) record.
+  const { enabled = true, ...restOverrides } = overrides;
   const baseConfig = DATA_CONFIG[key] || {};
   const args = useMemo(
-    () => ({ ...baseConfig, ...overrides }),
-    [JSON.stringify(baseConfig), JSON.stringify(overrides)]
+    () => ({ ...baseConfig, ...restOverrides }),
+    [JSON.stringify(baseConfig), JSON.stringify(restOverrides)]
   );
   const subId = useMemo(() => JSON.stringify({ type: 'variable', key, args }), [key, args]);
 
   useEffect(() => {
+    if (!enabled) return;
     return globalDataStore.register(subId, { type: 'variable', key, args });
-  }, [subId, key, args]);
+  }, [enabled, subId, key, args]);
 
   const result = useSyncExternalStore(
     (onStoreChange) => globalDataStore.subscribe(subId, onStoreChange),
     () => globalDataStore.getResult(subId)
   );
 
-  const finalResult = result || [{ value: args.defaultValue, state: { isSyncing: true } }, NO_OP];
+  const finalResult =
+    result || [{ value: args.defaultValue, state: { isSyncing: enabled } }, NO_OP];
 
   return finalResult;
 }
@@ -51,10 +57,11 @@ export function useList<T = any>(
   itemId: string,
   overrides: any = {}
 ): [UserVariableResult<T>, ScheduledValueSetter<T>] {
+  const { enabled = true, ...restOverrides } = overrides;
   const baseConfig = DATA_CONFIG[key] || {};
   const args = useMemo(
-    () => ({ ...baseConfig, ...overrides }),
-    [JSON.stringify(baseConfig), JSON.stringify(overrides)]
+    () => ({ ...baseConfig, ...restOverrides }),
+    [JSON.stringify(baseConfig), JSON.stringify(restOverrides)]
   );
   const subId = useMemo(
     () => JSON.stringify({ type: 'list', key, itemId, args }),
@@ -62,18 +69,19 @@ export function useList<T = any>(
   );
 
   useEffect(() => {
+    if (!enabled) return;
     const unregister = globalDataStore.register(subId, { type: 'list', key, itemId, args });
     return () => {
       unregister();
     };
-  }, [subId, key, itemId, args]);
+  }, [enabled, subId, key, itemId, args]);
 
   const result = useSyncExternalStore(
     (onStoreChange) => globalDataStore.subscribe(subId, onStoreChange),
     () => globalDataStore.getResult(subId)
   );
 
-  return result || [{ value: args.defaultValue, state: { isSyncing: true } }, NO_OP];
+  return result || [{ value: args.defaultValue, state: { isSyncing: enabled } }, NO_OP];
 }
 
 /**

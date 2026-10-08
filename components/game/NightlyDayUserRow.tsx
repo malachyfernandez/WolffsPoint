@@ -66,6 +66,11 @@ const NightlyDayUserRow = ({
   const [isMessageDialogOpen, setIsMessageDialogOpen] = useState(false);
   const [isActionDialogOpen, setIsActionDialogOpen] = useState(false);
   const [isVoteDialogOpen, setIsVoteDialogOpen] = useState(false);
+  // Mount-on-first-open: three dialogs per row; mounting all of them for
+  // every player × day is a large chunk of the game-open mount burst.
+  const [messageDialogMounted, setMessageDialogMounted] = useState(false);
+  const [actionDialogMounted, setActionDialogMounted] = useState(false);
+  const [voteDialogMounted, setVoteDialogMounted] = useState(false);
 
   // Registers this row's element + preview target with the shared floating
   // preview pill (web only — it resolves hovered rows by pointer position).
@@ -90,11 +95,18 @@ const NightlyDayUserRow = ({
   const hasMultiplierBadge = voteMultiplier !== 1;
 
   const handleVotePress = () => {
+    setVoteDialogMounted(true);
     setIsVoteDialogOpen(true);
   };
 
   const handleActionPress = () => {
+    setActionDialogMounted(true);
     setIsActionDialogOpen(true);
+  };
+
+  const handleMessagePress = () => {
+    setMessageDialogMounted(true);
+    setIsMessageDialogOpen(true);
   };
 
 
@@ -167,7 +179,7 @@ const NightlyDayUserRow = ({
           style={{ width: columnWidths.morningMessage, position: 'relative' }}>
           {getCurrentMorningMessage() ? (
             <Pressable
-              onPress={() => setIsMessageDialogOpen(true)}
+              onPress={handleMessagePress}
               style={{ width: columnWidths.morningMessage - 8 }}
               className="h-full items-center justify-center">
               <FontText
@@ -202,14 +214,14 @@ const NightlyDayUserRow = ({
                 </FontText>
               </Pressable>
               <Pressable
-                onPress={() => setIsMessageDialogOpen(true)}
+                onPress={handleMessagePress}
                 className="bg-text aspect-square h-7 w-7 items-center justify-center rounded-full">
                 <Pencil size={12} color="white" />
               </Pressable>
             </View>
           ) : (
             <Pressable
-              onPress={() => setIsMessageDialogOpen(true)}
+              onPress={handleMessagePress}
               style={{ width: columnWidths.morningMessage - 8 }}
               className="h-full items-center justify-center">
               <FontText
@@ -264,42 +276,48 @@ const NightlyDayUserRow = ({
           );
         })}
       </Row>
-      <MarkdownEditorDialog
-        isOpen={isMessageDialogOpen}
-        onOpenChange={setIsMessageDialogOpen}
-        title={`${user.realName || 'User'} Morning Message (Tomorrow)`}
-        initialMarkdown={getCurrentMorningMessage()}
-        onSubmit={({ markdown }) => updateMorningMessage(dayNumber, index, markdown)}
-        dialogSubtext={`Set the message ${user.realName || 'User'} will see after this day ends.`}
-        gameId={gameId}
-        showScript
-        showInputs
-        hideInputs={false}
-        centered={true}
-        historyKey={`morningMessage:${gameId}:${dayNumber}:${index}`}
-      />
-      <ActionEditorDialog
-        isOpen={isActionDialogOpen}
-        onOpenChange={setIsActionDialogOpen}
-        title={`${user.realName || 'User'} Action`}
-        initialAction={getPlayerActionSummary(dayData.action)}
-        onSubmit={(action) => setActionValue?.(index, action)}
-        dialogSubtext={`Set the action for ${user.realName || 'User'}.`}
-        historyKey={`action:${gameId}:${dayNumber}:${index}`}
-      />
-      <VoteEditorDialog
-        isOpen={isVoteDialogOpen}
-        onOpenChange={setIsVoteDialogOpen}
-        title={`${user.realName || 'User'} Vote`}
-        initialVote={dayData.vote || ''}
-        initialVoteMultiplier={voteMultiplier}
-        voteInputs={dayData.voteInputs}
-        voteInputKey={dayData.voteInputKey}
-        onSubmit={(vote, multiplier) => setVoteValue?.(index, vote, multiplier)}
-        dialogSubtext={`Set the vote target for ${user.realName || 'User'}.`}
-        users={users}
-        historyKey={`vote:${gameId}:${dayNumber}:${index}`}
-      />
+      {(messageDialogMounted || isMessageDialogOpen) && (
+        <MarkdownEditorDialog
+          isOpen={isMessageDialogOpen}
+          onOpenChange={setIsMessageDialogOpen}
+          title={`${user.realName || 'User'} Morning Message (Tomorrow)`}
+          initialMarkdown={getCurrentMorningMessage()}
+          onSubmit={({ markdown }) => updateMorningMessage(dayNumber, index, markdown)}
+          dialogSubtext={`Set the message ${user.realName || 'User'} will see after this day ends.`}
+          gameId={gameId}
+          showScript
+          showInputs
+          hideInputs={false}
+          centered={true}
+          historyKey={`morningMessage:${gameId}:${dayNumber}:${index}`}
+        />
+      )}
+      {(actionDialogMounted || isActionDialogOpen) && (
+        <ActionEditorDialog
+          isOpen={isActionDialogOpen}
+          onOpenChange={setIsActionDialogOpen}
+          title={`${user.realName || 'User'} Action`}
+          initialAction={getPlayerActionSummary(dayData.action)}
+          onSubmit={(action) => setActionValue?.(index, action)}
+          dialogSubtext={`Set the action for ${user.realName || 'User'}.`}
+          historyKey={`action:${gameId}:${dayNumber}:${index}`}
+        />
+      )}
+      {(voteDialogMounted || isVoteDialogOpen) && (
+        <VoteEditorDialog
+          isOpen={isVoteDialogOpen}
+          onOpenChange={setIsVoteDialogOpen}
+          title={`${user.realName || 'User'} Vote`}
+          initialVote={dayData.vote || ''}
+          initialVoteMultiplier={voteMultiplier}
+          voteInputs={dayData.voteInputs}
+          voteInputKey={dayData.voteInputKey}
+          onSubmit={(vote, multiplier) => setVoteValue?.(index, vote, multiplier)}
+          dialogSubtext={`Set the vote target for ${user.realName || 'User'}.`}
+          users={users}
+          historyKey={`vote:${gameId}:${dayNumber}:${index}`}
+        />
+      )}
     </View>
   );
 };

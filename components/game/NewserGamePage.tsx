@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback, startTransition } from 'react';
 import { View } from 'react-native';
 import Column from '../layout/Column';
 import GameTabBar, { GameTabDefinition } from './GameTabBar';
@@ -7,12 +7,16 @@ import RuleBookPagePLAYER from './RuleBookPagePLAYER';
 import PhoneBookPagePLAYER from './PhoneBookPagePLAYER';
 import PaperContainer from '../ui/PaperContainer';
 import { BodyReportScope } from 'contexts/BodyReadinessContext';
+import { SimProfiler } from '../../sim/perf/SimProfiler';
 import ParticipantAccessGate from './ParticipantAccessGate';
 import NewspaperPageNEWSER from './NewspaperPageNEWSER';
 import TownSquareIcon from '../ui/icons/TownSquare';
 import NewspaperIcon from '../ui/icons/Newspaper';
 import RuleBookIcon from '../ui/icons/RuleBook';
 import PhoneBookIcon from '../ui/icons/PhoneBook';
+import TabPane from '../layout/TabPane';
+import { useBoundedMountedTabs } from '../../hooks/useBoundedMountedTabs';
+import { useMinimize } from '../ui/minimize/MinimizeContext';
 
 interface NewserGamePageProps {
   gameId: string;
@@ -36,67 +40,75 @@ const newserTabs: GameTabDefinition<NewserTab>[] = [
 const NewserGamePage = ({ gameId, currentUserId }: NewserGamePageProps) => {
   const [activeTab, setActiveTab] = useState<NewserTab>('townSquare');
   // Tabs mount lazily on first visit, then stay mounted so dialog/minimize
-  // state survives tab switches.
-  const [mountedTabs, setMountedTabs] = useState<ReadonlySet<NewserTab>>(() => new Set(['townSquare']));
+  // state survives tab switches — bounded by device memory tier: under
+  // pressure the least-recently-active hidden panes are evicted (they
+  // re-mount on revisit, same as first visit).
+  const scopeIdForTab = useCallback((tab: NewserTab) => `newser-tab-${gameId}-${tab}`, [gameId]);
+  const { removeByScope } = useMinimize();
+  const onTabEvicted = useCallback(
+    (tab: NewserTab) => removeByScope(scopeIdForTab(tab)),
+    [removeByScope, scopeIdForTab]
+  );
+  const mountedTabs = useBoundedMountedTabs(activeTab, scopeIdForTab, onTabEvicted);
 
-  const handleTabPress = (tab: NewserTab) => {
-    setActiveTab(tab);
-    setMountedTabs((prev) => (prev.has(tab) ? prev : new Set(prev).add(tab)));
-  };
+  const handleTabPress = useCallback((tab: NewserTab) => {
+    // Non-urgent update: keeps taps responsive while a heavy cold tab mounts.
+    startTransition(() => {
+      setActiveTab(tab);
+    });
+  }, []);
 
   return (
     <ParticipantAccessGate gameId={gameId} currentUserId={currentUserId}>
       {({ currentEmail, profile }) => (
         <Column className="w-full gap-4 sm:gap-5">
           <GameTabBar activeTab={activeTab} onTabPress={handleTabPress} tabs={newserTabs} />
+          <SimProfiler id="newser-tabs">
           <PaperContainer>
             <View className="w-full min-w-0">
-              <View
-                style={{ display: activeTab === 'townSquare' ? 'flex' : 'none' }}
-                className="w-full min-w-0">
-              {mountedTabs.has('townSquare') && (
-              <BodyReportScope enabled={activeTab === 'townSquare'}>
-                <TownSquarePagePLAYER gameId={gameId} currentProfile={profile} />
-              </BodyReportScope>
-              )}
-              </View>
-              <View
-                style={{ display: activeTab === 'newspaper' ? 'flex' : 'none' }}
-                className="w-full min-w-0">
-              {mountedTabs.has('newspaper') && (
-              <BodyReportScope enabled={activeTab === 'newspaper'}>
-                <NewspaperPageNEWSER
-                  currentUserId={currentUserId}
-                  currentEmail={currentEmail}
-                  gameId={gameId}
-                />
-              </BodyReportScope>
-              )}
-              </View>
-              <View
-                style={{ display: activeTab === 'ruleBook' ? 'flex' : 'none' }}
-                className="w-full min-w-0">
-              {mountedTabs.has('ruleBook') && (
-              <BodyReportScope enabled={activeTab === 'ruleBook'}>
-                <RuleBookPagePLAYER gameId={gameId} />
-              </BodyReportScope>
-              )}
-              </View>
-              <View
-                style={{ display: activeTab === 'phoneBook' ? 'flex' : 'none' }}
-                className="w-full min-w-0">
-              {mountedTabs.has('phoneBook') && (
-              <BodyReportScope enabled={activeTab === 'phoneBook'}>
-                <PhoneBookPagePLAYER
-                  gameId={gameId}
-                  currentUserId={currentUserId}
-                  currentEmail={currentEmail}
-                />
-              </BodyReportScope>
-              )}
-              </View>
+              <TabPane
+                active={activeTab === 'townSquare'}
+                mounted={mountedTabs.has('townSquare')}
+                scopeId={scopeIdForTab('townSquare')}>
+                <BodyReportScope enabled={activeTab === 'townSquare'}>
+                  <TownSquarePagePLAYER gameId={gameId} currentProfile={profile} />
+                </BodyReportScope>
+              </TabPane>
+              <TabPane
+                active={activeTab === 'newspaper'}
+                mounted={mountedTabs.has('newspaper')}
+                scopeId={scopeIdForTab('newspaper')}>
+                <BodyReportScope enabled={activeTab === 'newspaper'}>
+                  <NewspaperPageNEWSER
+                    currentUserId={currentUserId}
+                    currentEmail={currentEmail}
+                    gameId={gameId}
+                  />
+                </BodyReportScope>
+              </TabPane>
+              <TabPane
+                active={activeTab === 'ruleBook'}
+                mounted={mountedTabs.has('ruleBook')}
+                scopeId={scopeIdForTab('ruleBook')}>
+                <BodyReportScope enabled={activeTab === 'ruleBook'}>
+                  <RuleBookPagePLAYER gameId={gameId} />
+                </BodyReportScope>
+              </TabPane>
+              <TabPane
+                active={activeTab === 'phoneBook'}
+                mounted={mountedTabs.has('phoneBook')}
+                scopeId={scopeIdForTab('phoneBook')}>
+                <BodyReportScope enabled={activeTab === 'phoneBook'}>
+                  <PhoneBookPagePLAYER
+                    gameId={gameId}
+                    currentUserId={currentUserId}
+                    currentEmail={currentEmail}
+                  />
+                </BodyReportScope>
+              </TabPane>
             </View>
           </PaperContainer>
+          </SimProfiler>
         </Column>
       )}
     </ParticipantAccessGate>

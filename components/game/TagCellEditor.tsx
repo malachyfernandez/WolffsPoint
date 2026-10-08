@@ -71,12 +71,13 @@ const TagCellEditor = ({
   historyKey,
   submitLabel = 'Done',
 }: TagCellEditorProps) => {
-  const { history, addSave, clearHistory, maxSaves } = useSaveHistory(historyKey ?? null);
+  const { history, addSave, clearHistory, maxSaves } = useSaveHistory(historyKey ?? null, { enabled: isOpen });
   const { setHint } = useKeyboardShortcutHint();
   const { targetRef, performMinimize } = useMinimizeTarget({
     title: 'Edit Tags',
     onClose: () => onOpenChange(false),
     onRestore: () => onOpenChange(true),
+    pinned: () => hasUnsavedChanges,
   });
   const [tagDefs, setTagDefs] = useValue<TagDefinitionsData>(getTagDefinitionsKey(gameId), {
     defaultValue: [],

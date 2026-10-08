@@ -475,6 +475,7 @@ const GameTabBar = <TTab extends string>({
                         >
                             <button
                                 type="button"
+                                data-testid={`gametab-${tab.value}`}
                                 className="guilded-game-tab-button"
                                 onClick={() => onTabPress(tab.value)}
                                 aria-pressed={isActive}

@@ -39,6 +39,7 @@ export interface GuildedButtonProps {
     contentPaddingX?: number;
     contentPaddingY?: number;
     background?: GuildedButtonBackground;
+    testID?: string;
 }
 
 export const guildedButtonRingPresets: Record<GuildedButtonVariant, GuildedButtonRingPalette> = {

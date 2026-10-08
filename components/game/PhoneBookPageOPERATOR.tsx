@@ -40,7 +40,7 @@ const PhoneBookPageOPERATOR = ({ gameId, currentUserId, onBack }: PhoneBookPageO
         >
         <Column className='gap-6 pb-6'>
             <Row className='items-center justify-between'>
-                <Pressable onPress={onBack} className='self-start py-1'>
+                <Pressable testID="phonebook-back" onPress={onBack} className='self-start py-1'>
                     <Row className='gap-4 items-center'>
                         <ChevronLeft size={20} color='rgb(46, 41, 37)' />
                         <FontText weight='medium'>Config</FontText>

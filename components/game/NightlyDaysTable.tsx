@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import FontText from '../ui/text/FontText';
 import { useList, useValue } from 'hooks/useData';
+import { useProgressiveCount } from 'hooks/useProgressiveCount';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
 import NightlyDayUserRow from './NightlyDayUserRow';
@@ -102,7 +103,7 @@ const NightlyDaysTable = ({
   // Subscribe to nightly page column sizes
   const [columnSizes, setColumnSizes] = useValue<NightlyPageColumnSizes>(
     getNightlyPageColumnSizesKey(gameId),
-    { defaultValue: defaultNightlyPageColumnSizes, privacy: 'PUBLIC' }
+    { defaultValue: defaultNightlyPageColumnSizes, privacy: 'PUBLIC', autoCreate: false }
   );
 
   // Subscribe to table titles and nightly visibility for extra day columns
@@ -114,7 +115,7 @@ const NightlyDaysTable = ({
   );
   const [playerPageColumnSizes] = useValue<PlayerPageColumnSizes>(
     getPlayerPageColumnSizesKey(gameId),
-    { defaultValue: defaultPlayerPageColumnSizes, privacy: 'PUBLIC' }
+    { defaultValue: defaultPlayerPageColumnSizes, privacy: 'PUBLIC', autoCreate: false }
   );
 
   const titles = userTableTitle.scheduledUpdate?.value ??
@@ -178,6 +179,8 @@ const NightlyDaysTable = ({
 
   const userTableValue = userTable.scheduledUpdate?.value ?? userTable.value;
   const users = userTableValue ?? [];
+  // Mount rows progressively — 24 rows × 3 dialogs/cells mount in one commit otherwise.
+  const mountedRowCount = useProgressiveCount(users.length);
 
   const setVoteValue = (userIndex: number, newVoteValue: VoteValue, voteMultiplier: number) => {
     const updatedUsers = [...users];
@@ -507,7 +510,7 @@ const NightlyDaysTable = ({
                 extra: extraColumnCellIds,
               }}
             />
-            {users.map((user, index) => (
+            {users.slice(0, mountedRowCount).map((user, index) => (
               <Animated.View key={index} entering={FadeIn.duration(300).delay(index * 50)}>
                 <NightlyDayUserRow
                   user={user}

@@ -47,22 +47,36 @@ const ShadowScrollView = React.forwardRef<any, ShadowScrollViewProps>(
     const resolvedLeftFade = leftFade ?? (resolvedDirection === 'horizontal' ? 24 : 0);
     const resolvedRightFade = rightFade ?? (resolvedDirection === 'horizontal' ? 24 : 0);
 
-    const hasAnyFade =
-      resolvedTopFade + resolvedBottomFade + resolvedLeftFade + resolvedRightFade > 0;
+    const hasVerticalFade = resolvedTopFade + resolvedBottomFade > 0;
+    const hasHorizontalFade = resolvedLeftFade + resolvedRightFade > 0;
+    const hasAnyFade = hasVerticalFade || hasHorizontalFade;
 
-    const maskImage = `linear-gradient(
-    to bottom,
-    transparent 0px,
-    black ${resolvedTopFade}px,
-    black calc(100% - ${resolvedBottomFade}px),
-    transparent 100%
-  ), linear-gradient(
-    to right,
-    transparent 0px,
-    black ${resolvedLeftFade}px,
-    black calc(100% - ${resolvedRightFade}px),
-    transparent 100%
-  )`;
+    // Emit one mask layer per axis that actually fades. Previously BOTH
+    // gradients were always composited (maskComposite:intersect), so a
+    // vertical-only scroller paid for a second, fully-opaque mask — a whole
+    // extra raster of the scroll content on every frame. WebKit masks are
+    // expensive enough that this halves real per-frame scroll cost.
+    const maskLayers: string[] = [];
+    if (hasVerticalFade) {
+      maskLayers.push(`linear-gradient(
+        to bottom,
+        transparent 0px,
+        black ${resolvedTopFade}px,
+        black calc(100% - ${resolvedBottomFade}px),
+        transparent 100%
+      )`);
+    }
+    if (hasHorizontalFade) {
+      maskLayers.push(`linear-gradient(
+        to right,
+        transparent 0px,
+        black ${resolvedLeftFade}px,
+        black calc(100% - ${resolvedRightFade}px),
+        transparent 100%
+      )`);
+    }
+    const maskImage = maskLayers.join(', ');
+    const needsIntersect = maskLayers.length > 1;
 
     const pct = extensionPercent / 100;
 
@@ -100,8 +114,9 @@ const ShadowScrollView = React.forwardRef<any, ShadowScrollViewProps>(
             ? {
                 maskImage,
                 WebkitMaskImage: maskImage,
-                maskComposite: 'intersect',
-                WebkitMaskComposite: 'source-in',
+                ...(needsIntersect
+                  ? { maskComposite: 'intersect', WebkitMaskComposite: 'source-in' }
+                  : {}),
               }
             : {}),
         }}>

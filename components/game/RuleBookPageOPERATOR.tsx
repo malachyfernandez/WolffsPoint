@@ -52,7 +52,7 @@ const RuleBookPageOPERATOR = ({ gameId, onBack }: RuleBookPageOPERATORProps) => 
   return (
     <Column className="gap-6 pb-6">
       <Row className="items-center justify-between">
-        <Pressable onPress={onBack} className="self-start py-1">
+        <Pressable testID="rulebook-back" onPress={onBack} className="self-start py-1">
           <Row className="items-center gap-4">
             <ChevronLeft size={20} color="rgb(46, 41, 37)" />
             <FontText weight="medium">Config</FontText>

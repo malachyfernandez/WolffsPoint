@@ -231,6 +231,7 @@ export function useUserVariable<T>({
   optimisticTimeoutBehavior = 'reset',
   overwriteStoredConfig = userVarConfig.overwriteStoredConfigOnSet,
   overwriteStoredPrivacy = userVarConfig.overwriteStoredPrivacyOnSet,
+  autoCreate = true,
   onOpStatusChange,
 }: {
   key: string;
@@ -243,6 +244,13 @@ export function useUserVariable<T>({
   optimisticTimeoutBehavior?: OptimisticTimeoutBehavior;
   overwriteStoredConfig?: boolean;
   overwriteStoredPrivacy?: boolean;
+  /**
+   * When false, a missing record resolves to `defaultValue` without writing it
+   * to the backend; the record is created by the first explicit `setValue`.
+   * Use for write-once-on-demand data (e.g. dialog save history) so mounted
+   * components don't fire a mutation just to register an empty default.
+   */
+  autoCreate?: boolean;
   onOpStatusChange?: (info: UserVarOpStatusInfo<T>) => void;
 }): [UserVariableResult<T>, ScheduledValueSetter<T>] {
   const record = useQuery(api.user_vars.get, { key });
@@ -516,6 +524,7 @@ export function useUserVariable<T>({
   };
 
   useEffect(() => {
+    if (!autoCreate) return;
     if (didAutoCreateRef.current) return;
     if (isConvexAuthLoading) return;
     if (!isConvexAuthenticated) return;
@@ -526,6 +535,7 @@ export function useUserVariable<T>({
     didAutoCreateRef.current = true;
     setValue(defaultValue as T);
   }, [
+    autoCreate,
     record,
     defaultValue,
     isConvexAuthLoading,

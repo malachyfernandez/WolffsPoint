@@ -6,6 +6,7 @@ import FontText from '../ui/text/FontText';
 import PlayerPreviewModal from './markdownEditor/PlayerPreviewModal';
 import { WebDropdownPortal } from 'contexts/WebDropdownProvider';
 import { useIsTouchInput } from 'hooks/useIsTouchInput';
+import { useBodyReportEnabled } from 'contexts/BodyReadinessContext';
 
 export type RowPreviewTarget =
   | { kind: 'player'; email: string; dayIndex?: number }
@@ -144,6 +145,12 @@ const TableRowPreview = ({ gameId, children }: TableRowPreviewProps) => {
   const [, setLayoutTick] = useState(0);
 
   const isTouchInput = useIsTouchInput();
+  // False when this preview lives inside a hidden keep-alive tab pane.
+  // Hidden panes still have real layout geometry now (they're translated
+  // offscreen, not display:none), so every window-level listener below
+  // must bail or unregister entirely — otherwise each visited table page
+  // scans its row rects on every mousemove/scroll anywhere in the app.
+  const bodyEnabled = useBodyReportEnabled();
   const { width: windowWidth } = useWindowDimensions();
   const isMobileWidth = windowWidth < MOBILE_BREAKPOINT_PX;
   const pillWidth = isMobileWidth ? CIRCLE_SIZE_PX : PILL_WIDTH_PX;
@@ -237,14 +244,14 @@ const TableRowPreview = ({ gameId, children }: TableRowPreviewProps) => {
 
   // Window-level pointer tracking (mouse mode only).
   useEffect(() => {
-    if (Platform.OS !== 'web' || isTouchInput) return;
+    if (Platform.OS !== 'web' || isTouchInput || !bodyEnabled) return;
     const handleMove = (event: MouseEvent) => {
       lastPointerRef.current = { x: event.clientX, y: event.clientY };
       resolvePointer(event.clientX, event.clientY);
     };
     window.addEventListener('mousemove', handleMove);
     return () => window.removeEventListener('mousemove', handleMove);
-  }, [resolvePointer, isTouchInput]);
+  }, [resolvePointer, isTouchInput, bodyEnabled]);
 
   // Fade pills out the moment VERTICAL scrolling starts (they'd lag behind).
   // Horizontal pans inside the table don't move row bands, so pills stay put.
@@ -254,7 +261,7 @@ const TableRowPreview = ({ gameId, children }: TableRowPreviewProps) => {
   const settledTopsRef = useRef<number[] | null>(null);
   const settleStartedAtRef = useRef(0);
   useEffect(() => {
-    if (Platform.OS !== 'web') return;
+    if (Platform.OS !== 'web' || !bodyEnabled) return;
 
     const measureRowTops = () => {
       const tops: number[] = [];
@@ -333,12 +340,12 @@ const TableRowPreview = ({ gameId, children }: TableRowPreviewProps) => {
       window.removeEventListener('scroll', handleScroll, true);
       window.removeEventListener('resize', handleResize);
     };
-  }, [isTouchInput, resolvePointer, cancelHide]);
+  }, [isTouchInput, resolvePointer, cancelHide, bodyEnabled]);
 
   // Hide pills whenever any dialog is open (all dialogs on these pages are
   // heroui-native ConvexDialogs — Content renders role="dialog" + aria-modal).
   useEffect(() => {
-    if (Platform.OS !== 'web') return;
+    if (Platform.OS !== 'web' || !bodyEnabled) return;
     const check = () =>
       setDialogsOpen(!!document.querySelector('[role="dialog"][aria-modal="true"]'));
     check();
@@ -350,7 +357,7 @@ const TableRowPreview = ({ gameId, children }: TableRowPreviewProps) => {
       attributeFilter: ['role', 'aria-modal'],
     });
     return () => observer.disconnect();
-  }, []);
+  }, [bodyEnabled]);
 
   const contextValue = React.useMemo(() => ({ registerRow }), [registerRow]);
 
@@ -367,7 +374,7 @@ const TableRowPreview = ({ gameId, children }: TableRowPreviewProps) => {
   // band — the player and day tables share row heights). Mouse mode shows
   // only the single hovered row's pill.
   const pillItems: { key: string; top: number; left: number; target: RowPreviewTarget }[] = [];
-  if (isTouchInput && Platform.OS === 'web') {
+  if (isTouchInput && Platform.OS === 'web' && bodyEnabled) {
     const left = (getWrapperRect()?.left ?? 0) + PILL_INSIDE_PX - pillWidth;
     const seenTops = new Set<number>();
     for (const [el, target] of rowRegistryRef.current) {
@@ -378,7 +385,7 @@ const TableRowPreview = ({ gameId, children }: TableRowPreviewProps) => {
       seenTops.add(top);
       pillItems.push({ key: `${targetKey(target)}@${top}`, top: rect.top, left, target });
     }
-  } else if (hovered) {
+  } else if (hovered && bodyEnabled) {
     pillItems.push({
       key: `${targetKey(hovered.target)}@${hovered.top}`,
       top: hovered.top,

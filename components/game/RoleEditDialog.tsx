@@ -49,6 +49,7 @@ const RoleEditDialog = ({
     title: 'Edit Role',
     onClose: () => onOpenChange(false),
     onRestore: () => onOpenChange(true),
+    pinned: () => hasChange,
   });
 
   useEffect(() => {

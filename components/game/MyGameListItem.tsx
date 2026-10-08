@@ -20,7 +20,7 @@ const MyGameListItem = ({ game, index, setActiveGameId }: MyGameListItemProps) =
 
     return (
 
-        <ListRow className={`justify-between ${borderClass}`} onPress={handleSetActiveGameId}>
+        <ListRow className={`justify-between ${borderClass}`} onPress={handleSetActiveGameId} testID={`game-${game.value.id}`}>
             <FontText className='text-text-inverted'>{game.value.name}</FontText>
             <FontText className='text-text-inverted'>{game.value.description}</FontText>
             <FontText className='text-text-inverted'>{game.value.id}</FontText>

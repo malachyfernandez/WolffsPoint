@@ -10,6 +10,7 @@
       "hooks/*": ["./hooks/*"],
       "lib/*": ["./lib/*"],
       "script/*": ["./script/*"],
+      "sim/*": ["./sim/*"],
       "types/*": ["./types/*"],
       "utils/*": ["./utils/*"]
     },

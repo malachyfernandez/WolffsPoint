@@ -87,7 +87,7 @@ const TownSquareThreadListItem = ({ index, isLast, isOperator, onPress, onToggle
         );
 
         return (
-            <Pressable onPress={onPress}>
+            <Pressable onPress={onPress} testID="townthread-open">
                 <Row className={`gap-4 items-start px-1 py-5 ${!isLast || index === 0 ? 'border-b border-border/20' : ''}`}>
                     <Column className='gap-4 flex-1'>
                         {/* Mobile header — avatar + author + meta on one row */}
@@ -131,7 +131,7 @@ const TownSquareThreadListItem = ({ index, isLast, isOperator, onPress, onToggle
     }
 
     return (
-        <Pressable onPress={onPress}>
+        <Pressable onPress={onPress} testID="townthread-open">
             <Row className={`gap-4 items-start px-1 py-5 ${!isLast || index === 0 ? 'border-b border-border/20' : ''}`}>
                 <TownSquareAuthorAvatar gameId={thread.gameId} userId={thread.authorUserId} />
                 <Column className='gap-4 flex-1'>

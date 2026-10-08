@@ -300,12 +300,13 @@ const MarkdownEditorDialog = ({
 }: MarkdownEditorDialogProps) => {
   const { executeCommand } = useUndoRedo();
   const createUndoSnapshot = useCreateUndoSnapshot();
-  const { history, addSave, clearHistory, maxSaves } = useSaveHistory(historyKey ?? null);
+  const { history, addSave, clearHistory, maxSaves } = useSaveHistory(historyKey ?? null, { enabled: isOpen });
 
   const { targetRef, performMinimize } = useMinimizeTarget({
     title,
     onClose: onMinimize ?? (() => onOpenChange(false)),
     onRestore: onRestore ?? (() => onOpenChange(true)),
+    pinned: () => hasUnsavedChanges,
   });
 
   const [activeTab, setActiveTab] = useState('editing');

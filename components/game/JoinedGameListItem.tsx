@@ -45,7 +45,7 @@ const JoinedGameListItem = ({ game, onArchive, className, setActiveGameId, index
 
         <LoadingContainer dependencies={[gameInfo]} loadingText="Loading games">
             <Row className='gap-0 items-center'>
-                <ListRow className={`justify-between items-center ${className || ''} ${borderClass}`} onPress={handleSetActiveGameId}>
+                <ListRow className={`justify-between items-center ${className || ''} ${borderClass}`} onPress={handleSetActiveGameId} testID={`game-${game}`}>
                     <FontText className='text-text-inverted' >
                         {`${displayName} (${displayId})`}
                         {isGameDeleted && (

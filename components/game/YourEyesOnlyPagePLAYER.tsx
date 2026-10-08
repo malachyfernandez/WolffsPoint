@@ -5,6 +5,7 @@ import FontText from '../ui/text/FontText';
 import AppButton from '../ui/buttons/AppButton';
 import MarkdownRenderer from '../ui/markdown/MarkdownRenderer';
 import { useGameOperatorUserId } from 'hooks/useGameOperatorUserId';
+import { useNow } from 'hooks/useNow';
 import PlaceholderCard from '../ui/PlaceholderCard';
 import { useSharedListValue } from 'hooks/useSharedListValue';
 import { useSharedVariableValue } from 'hooks/useSharedVariableValue';
@@ -81,7 +82,7 @@ const YourEyesOnlyPagePLAYER = ({
     defaultValue: defaultGameSchedule,
     userIds: operatorUserIds,
   });
-  const [now, setNow] = useState(() => new Date());
+  const now = useNow(1000);
 
   const schedule = normalizeGameSchedule(scheduleRecord.value ?? defaultGameSchedule);
   const gameTimeZone = resolveGameTimeZone(schedule);
@@ -225,15 +226,7 @@ const YourEyesOnlyPagePLAYER = ({
     setSelectedDayIndex((currentValue) => Math.min(currentValue, currentDayIndex));
   }, [currentDayIndex, dayDates.length]);
 
-  useEffect(() => {
-    const intervalId = setInterval(() => {
-      setNow(new Date());
-    }, 1000); // Update every second
 
-    return () => {
-      clearInterval(intervalId);
-    };
-  }, []);
 
   const overlayAnimatedStyle = useAnimatedStyle(() => ({
     opacity: overlayOpacity.value,
@@ -377,11 +370,8 @@ const YourEyesOnlyPagePLAYER = ({
 
           {!hasConfirmedAlone && (
             <Animated.View
-              style={[
-                StyleSheet.absoluteFillObject,
-                overlayAnimatedStyle,
-                { pointerEvents: overlayOpacity.value < 0.5 ? 'none' : 'auto' },
-              ]}
+              style={[StyleSheet.absoluteFillObject, overlayAnimatedStyle]}
+              pointerEvents="auto"
               className="z-50 items-center pt-10">
               <PlaceholderCard>
                 <Column className="items-center gap-3">

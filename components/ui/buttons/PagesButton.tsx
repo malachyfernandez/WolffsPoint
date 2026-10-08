@@ -4,6 +4,9 @@ import Animated, {
     useSharedValue,
     useAnimatedStyle,
     withTiming,
+    withRepeat,
+    withSequence,
+    withDelay,
     Easing,
 } from 'react-native-reanimated';
 import Row from '../../layout/Row';
@@ -19,24 +22,21 @@ export function PagesButton({ onPress }: PagesButtonProps) {
     const sidebarAnimation = useSharedValue(0);
     
     useEffect(() => {
-        const animateSidebar = () => {
-            sidebarAnimation.value = withTiming(-2, {
-                duration: 500,
-                easing: Easing.inOut(Easing.ease),
-            }, () => {
-                sidebarAnimation.value = withTiming(2, {
-                    duration: 500,
-                    easing: Easing.inOut(Easing.ease),
-                });
-            });
+        // Same rhythm as before (slide -2 → +2 over 1s, pause 500ms), but as a
+        // single worklet loop — no JS interval firing forever.
+        sidebarAnimation.value = withRepeat(
+            withSequence(
+                withTiming(-2, { duration: 500, easing: Easing.inOut(Easing.ease) }),
+                withTiming(2, { duration: 500, easing: Easing.inOut(Easing.ease) }),
+                withDelay(500, withTiming(2, { duration: 0 }))
+            ),
+            -1,
+            false
+        );
+        return () => {
+            sidebarAnimation.value = 0;
         };
-
-        // Start animation immediately, then repeat every 1500ms
-        const interval = setInterval(animateSidebar, 1500);
-        animateSidebar(); // Start first animation immediately
-
-        return () => clearInterval(interval);
-    }, []);
+    }, [sidebarAnimation]);
 
     const sidebarAnimatedStyle = useAnimatedStyle(() => ({
         transform: [{ translateX: sidebarAnimation.value }],

@@ -57,6 +57,12 @@ const RoleRow = ({
   const [isVoteMessageDialogOpen, setIsVoteMessageDialogOpen] = useState(false);
   const [isAboutRoleDialogOpen, setIsAboutRoleDialogOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  // Mount-on-first-open: six dialogs per role row — the trees only exist
+  // after first use. `|| isOpen` covers indirect opens (e.g. VoteEnable's
+  // "continue to editor" path).
+  const [mountedDialogs, setMountedDialogs] = useState<Record<string, true>>({});
+  const mountDialog = (key: string) =>
+    setMountedDialogs((prev) => (prev[key] ? prev : { ...prev, [key]: true }));
 
   // Registers this row's element + preview target with the shared floating
   // preview pill (web only — it resolves hovered rows by pointer position).
@@ -77,7 +83,10 @@ const RoleRow = ({
           className={`border-subtle-border h-full w-32 items-center justify-center gap-4 border ${isLast ? 'rounded-bl-lg' : ''}`}
           style={{ position: 'relative' }}>
           <Pressable
-            onPress={() => setIsRoleInfoDialogOpen(true)}
+            onPress={() => {
+              mountDialog('roleInfo');
+              setIsRoleInfoDialogOpen(true);
+            }}
             className="h-full w-full items-center justify-center">
             <FontText
               weight="medium"
@@ -95,7 +104,10 @@ const RoleRow = ({
           className={`border-subtle-border h-full w-64 items-center justify-center gap-4 border`}
           style={{ position: 'relative' }}>
           <Pressable
-            onPress={() => setIsRoleMessageDialogOpen(true)}
+            onPress={() => {
+              mountDialog('roleMessage');
+              setIsRoleMessageDialogOpen(true);
+            }}
             className="h-full w-60 items-center justify-center">
             <FontText
               weight="medium"
@@ -120,7 +132,10 @@ const RoleRow = ({
           className={`border-subtle-border h-full w-64 items-center justify-center gap-4 border`}
           style={{ position: 'relative' }}>
           <Pressable
-            onPress={() => setIsVoteEnableDialogOpen(true)}
+            onPress={() => {
+              mountDialog('voteEnable');
+              setIsVoteEnableDialogOpen(true);
+            }}
             className="h-full w-60 items-center justify-center">
             <FontText
               weight="medium"
@@ -144,7 +159,10 @@ const RoleRow = ({
           className={`border-subtle-border h-full w-64 items-center justify-center gap-4 border ${isLast ? 'rounded-br-lg' : ''}`}
           style={{ position: 'relative' }}>
           <Pressable
-            onPress={() => setIsAboutRoleDialogOpen(true)}
+            onPress={() => {
+              mountDialog('aboutRole');
+              setIsAboutRoleDialogOpen(true);
+            }}
             className="h-full w-full items-center justify-center">
             <FontText
               weight="medium"
@@ -170,7 +188,10 @@ const RoleRow = ({
             <AppButton
               variant="filled"
               className="max-h-8 w-8"
-              onPress={() => setIsDeleteConfirmOpen(true)}>
+              onPress={() => {
+                mountDialog('delete');
+                setIsDeleteConfirmOpen(true);
+              }}>
               <FontText weight="bold" color="white" className="mt-[-0.1rem] text-xl">
                 -
               </FontText>
@@ -179,73 +200,85 @@ const RoleRow = ({
         )}
       </Row>
 
-      <RoleEditDialog
-        isOpen={isRoleInfoDialogOpen}
-        onOpenChange={setIsRoleInfoDialogOpen}
-        roleIndex={index}
-        role={role}
-        onSetRoleName={setRoleName}
-        onSetDoesRoleVote={setDoesRoleVote}
-        onSetHiddenFromRulebook={setHiddenFromRulebook}
-      />
+      {(mountedDialogs.roleInfo || isRoleInfoDialogOpen) && (
+        <RoleEditDialog
+          isOpen={isRoleInfoDialogOpen}
+          onOpenChange={setIsRoleInfoDialogOpen}
+          roleIndex={index}
+          role={role}
+          onSetRoleName={setRoleName}
+          onSetDoesRoleVote={setDoesRoleVote}
+          onSetHiddenFromRulebook={setHiddenFromRulebook}
+        />
+      )}
 
-      <MarkdownEditorDialog
-        isOpen={isRoleMessageDialogOpen}
-        onOpenChange={setIsRoleMessageDialogOpen}
-        title={`${role.role || 'Role'} Role Message`}
-        initialMarkdown={role.roleMessage}
-        onSubmit={({ markdown }) => setRoleMessage(index, markdown)}
-        gameId={gameId}
-        showInputs={showInputs}
-        showScript
-        hideInputs={false}
-        roleName={role.role}
-        showPreviewAsPlayerOption
-        historyKey={`roleMessage:${gameId}:${index}`}
-      />
-      <VoteEnableDialog
-        isOpen={isVoteEnableDialogOpen}
-        onOpenChange={setIsVoteEnableDialogOpen}
-        roleName={role.role || ''}
-        doesRoleVote={role.doesRoleVote !== false}
-        onSetDoesRoleVote={(value) => setDoesRoleVote(index, value)}
-        onContinueToEditor={() => setIsVoteMessageDialogOpen(true)}
-      />
-      <MarkdownEditorDialog
-        isOpen={isVoteMessageDialogOpen}
-        onOpenChange={setIsVoteMessageDialogOpen}
-        title={`${role.role || 'Role'} Vote Message`}
-        initialMarkdown={role.voteMessage ?? defaultVoteMessage}
-        onSubmit={({ markdown }) => setVoteMessage(index, markdown)}
-        dialogSubtext="Saving creates an override for this role. Save an empty message to inherit the default."
-        gameId={gameId}
-        showInputs={showInputs}
-        showScript
-        hideInputs={false}
-        allowVoteInput
-        roleName={role.role}
-        showPreviewAsPlayerOption
-        historyKey={`voteMessage:${gameId}:${index}`}
-      />
-      <MarkdownEditorDialog
-        isOpen={isAboutRoleDialogOpen}
-        onOpenChange={setIsAboutRoleDialogOpen}
-        title={`About ${role.role || 'Role'}`}
-        initialMarkdown={role.aboutRole}
-        onSubmit={({ markdown }) => setAboutRole(index, markdown)}
-        gameId={gameId}
-        showScript
-        centered={true}
-        historyKey={`aboutRole:${gameId}:${index}`}
-      />
+      {(mountedDialogs.roleMessage || isRoleMessageDialogOpen) && (
+        <MarkdownEditorDialog
+          isOpen={isRoleMessageDialogOpen}
+          onOpenChange={setIsRoleMessageDialogOpen}
+          title={`${role.role || 'Role'} Role Message`}
+          initialMarkdown={role.roleMessage}
+          onSubmit={({ markdown }) => setRoleMessage(index, markdown)}
+          gameId={gameId}
+          showInputs={showInputs}
+          showScript
+          hideInputs={false}
+          roleName={role.role}
+          showPreviewAsPlayerOption
+          historyKey={`roleMessage:${gameId}:${index}`}
+        />
+      )}
+      {(mountedDialogs.voteEnable || isVoteEnableDialogOpen) && (
+        <VoteEnableDialog
+          isOpen={isVoteEnableDialogOpen}
+          onOpenChange={setIsVoteEnableDialogOpen}
+          roleName={role.role || ''}
+          doesRoleVote={role.doesRoleVote !== false}
+          onSetDoesRoleVote={(value) => setDoesRoleVote(index, value)}
+          onContinueToEditor={() => setIsVoteMessageDialogOpen(true)}
+        />
+      )}
+      {(mountedDialogs.voteMessage || isVoteMessageDialogOpen) && (
+        <MarkdownEditorDialog
+          isOpen={isVoteMessageDialogOpen}
+          onOpenChange={setIsVoteMessageDialogOpen}
+          title={`${role.role || 'Role'} Vote Message`}
+          initialMarkdown={role.voteMessage ?? defaultVoteMessage}
+          onSubmit={({ markdown }) => setVoteMessage(index, markdown)}
+          dialogSubtext="Saving creates an override for this role. Save an empty message to inherit the default."
+          gameId={gameId}
+          showInputs={showInputs}
+          showScript
+          hideInputs={false}
+          allowVoteInput
+          roleName={role.role}
+          showPreviewAsPlayerOption
+          historyKey={`voteMessage:${gameId}:${index}`}
+        />
+      )}
+      {(mountedDialogs.aboutRole || isAboutRoleDialogOpen) && (
+        <MarkdownEditorDialog
+          isOpen={isAboutRoleDialogOpen}
+          onOpenChange={setIsAboutRoleDialogOpen}
+          title={`About ${role.role || 'Role'}`}
+          initialMarkdown={role.aboutRole}
+          onSubmit={({ markdown }) => setAboutRole(index, markdown)}
+          gameId={gameId}
+          showScript
+          centered={true}
+          historyKey={`aboutRole:${gameId}:${index}`}
+        />
+      )}
 
-      <DeleteConfirmationDialog
-        isOpen={isDeleteConfirmOpen}
-        onOpenChange={setIsDeleteConfirmOpen}
-        onConfirm={() => onDeleteRole(index)}
-        itemType="Role"
-        itemName={role.role || 'this role'}
-      />
+      {(mountedDialogs.delete || isDeleteConfirmOpen) && (
+        <DeleteConfirmationDialog
+          isOpen={isDeleteConfirmOpen}
+          onOpenChange={setIsDeleteConfirmOpen}
+          onConfirm={() => onDeleteRole(index)}
+          itemType="Role"
+          itemName={role.role || 'this role'}
+        />
+      )}
     </View>
   );
 };

@@ -57,7 +57,7 @@ const TownSquareThreadDetailView = ({
 
     return (
         <Column className='gap-5 flex-1 px-0 sm:px-4 py-6'>
-            <Pressable onPress={onBack} className='self-start py-1'>
+            <Pressable onPress={onBack} className='self-start py-1' testID="townthread-back">
                 <Row className='gap-4 items-center'>
                     <ChevronLeft size={20} color='rgb(46, 41, 37)' />
                     <FontText weight='medium'>Town Square</FontText>

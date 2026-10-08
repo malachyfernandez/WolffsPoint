@@ -80,13 +80,14 @@ const PlayerProfileDialogNEW = ({
   frameVariant = 'gold',
   historyKey,
 }: PlayerProfileDialogNEWProps) => {
-  const { history, addSave, clearHistory, maxSaves } = useSaveHistory(historyKey ?? null);
+  const { history, addSave, clearHistory, maxSaves } = useSaveHistory(historyKey ?? null, { enabled: isOpen });
   const { setHint } = useKeyboardShortcutHint();
 
   const { targetRef, performMinimize } = useMinimizeTarget({
     title,
     onClose: () => onOpenChange(false),
     onRestore: () => onOpenChange(true),
+    pinned: () => hasUnsavedChanges,
   });
 
   // Main profile state

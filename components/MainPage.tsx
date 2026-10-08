@@ -1,4 +1,4 @@
-import React, { PropsWithChildren, useState, useMemo, useEffect } from 'react';
+import React, { PropsWithChildren, useState, useMemo, useEffect, useDeferredValue } from 'react';
 import { Button } from 'heroui-native/button';
 import { Dialog } from 'heroui-native/dialog';
 import { ScrollView, View } from 'react-native';
@@ -14,6 +14,7 @@ import FontTextInput from './ui/forms/FontTextInput';
 import JoinHandler from './ui/forms/JoinHandler';
 import FadeInAfterDelay from './ui/loading/FadeInAfterDelay';
 import LoadingContainer from './ui/loading/LoadingContainer';
+import { SimProfiler } from '../sim/perf/SimProfiler';
 
 
 
@@ -72,6 +73,15 @@ const MainPage: React.FC<MainPageProps> = ({
     const setUserListItem = useListSet();
     const isInAGame = activeGameId.value !== "";
     const currentScreen: ScreenState = isInAGame ? 'game' : 'allGames';
+    // Defer the screen swap so mounting GamePage is a non-urgent render —
+    // React can yield between commits instead of delivering the whole mount
+    // as one multi-second frame (measured 2.4s on iOS Safari).
+    const deferredScreen: ScreenState = useDeferredValue(currentScreen);
+    // While the deferred value lags the real one, the container would paint
+    // the *old* screen (e.g. AllGamesPage's New/Join buttons flashing before
+    // the game mounts). Render nothing during that pending window instead.
+    const visibleScreen: ScreenState | 'pending' =
+        deferredScreen === currentScreen ? deferredScreen : 'pending';
 
     // Reset body readiness when entering/leaving a game
     useEffect(() => {
@@ -90,23 +100,27 @@ const MainPage: React.FC<MainPageProps> = ({
                     className='flex-1'
                     keepMounted={false}
                 >
-                    <LayoutStateAnimatedView.Container stateVar={currentScreen} className='flex-1'>
+                    <LayoutStateAnimatedView.Container stateVar={visibleScreen} className='flex-1'>
                         <LayoutStateAnimatedView.Option page={1} stateValue='allGames'>
+                            <SimProfiler id="screen:allGames">
                             <AllGamesPage
                                 activeGameId={activeGameId.value}
                                 setActiveGameId={setActiveGameId}
                                 myGames={myGames}
                                 addNewGame={addNewGame}
                             />
+                            </SimProfiler>
                         </LayoutStateAnimatedView.Option>
 
                         <LayoutStateAnimatedView.OptionContainer pushInAnimation={fromBottom} page={2}>
                             <LayoutStateAnimatedView.Option stateValue='game'>
+                                <SimProfiler id="screen:game">
                                 <GamePage
                                     gameId={activeGameId.value}
                                     currentUserId={userId}
                                     onReady={() => setIsGameBodyReady(true)}
                                 />
+                                </SimProfiler>
                             </LayoutStateAnimatedView.Option>
                         </LayoutStateAnimatedView.OptionContainer>
                     </LayoutStateAnimatedView.Container>

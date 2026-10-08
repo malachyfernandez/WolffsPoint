@@ -68,6 +68,10 @@ const DayUserRow = ({
   const [isEditingVote, setIsEditingVote] = useState(false);
   const [isActionDialogOpen, setIsActionDialogOpen] = useState(false);
   const [isVoteDialogOpen, setIsVoteDialogOpen] = useState(false);
+  // Mount-on-first-open: each row has action + vote dialogs; mounting both for
+  // every row on every day column costs hundreds of dialog trees on open.
+  const [actionDialogMounted, setActionDialogMounted] = useState(false);
+  const [voteDialogMounted, setVoteDialogMounted] = useState(false);
   const hasMounted = useRef(false);
 
   // Registers this row's element + preview target with the shared floating
@@ -106,10 +110,12 @@ const DayUserRow = ({
   };
 
   const handleVotePress = () => {
+    setVoteDialogMounted(true);
     setIsVoteDialogOpen(true);
   };
 
   const handleActionPress = () => {
+    setActionDialogMounted(true);
     setIsActionDialogOpen(true);
   };
 
@@ -199,28 +205,32 @@ const DayUserRow = ({
           );
         })}
       </Row>
-      <ActionEditorDialog
-        isOpen={isActionDialogOpen}
-        onOpenChange={setIsActionDialogOpen}
-        title={`${user.realName || 'User'} Action`}
-        initialAction={getPlayerActionSummary(dayData.action)}
-        onSubmit={(action) => setActionValue?.(index, action)}
-        dialogSubtext={`Set the action for ${user.realName || 'User'}.`}
-        historyKey={`action:${gameId}:${dayNumber}:${index}`}
-      />
-      <VoteEditorDialog
-        isOpen={isVoteDialogOpen}
-        onOpenChange={setIsVoteDialogOpen}
-        title={`${user.realName || 'User'} Vote`}
-        initialVote={dayData.vote || ''}
-        initialVoteMultiplier={dayData.voteMultiplier ?? 1}
-        voteInputs={dayData.voteInputs}
-        voteInputKey={dayData.voteInputKey}
-        onSubmit={(vote, multiplier) => setVoteValue?.(index, vote, multiplier)}
-        dialogSubtext={`Set the vote target for ${user.realName || 'User'}.`}
-        users={users}
-        historyKey={`vote:${gameId}:${dayNumber}:${index}`}
-      />
+      {(actionDialogMounted || isActionDialogOpen) && (
+        <ActionEditorDialog
+          isOpen={isActionDialogOpen}
+          onOpenChange={setIsActionDialogOpen}
+          title={`${user.realName || 'User'} Action`}
+          initialAction={getPlayerActionSummary(dayData.action)}
+          onSubmit={(action) => setActionValue?.(index, action)}
+          dialogSubtext={`Set the action for ${user.realName || 'User'}.`}
+          historyKey={`action:${gameId}:${dayNumber}:${index}`}
+        />
+      )}
+      {(voteDialogMounted || isVoteDialogOpen) && (
+        <VoteEditorDialog
+          isOpen={isVoteDialogOpen}
+          onOpenChange={setIsVoteDialogOpen}
+          title={`${user.realName || 'User'} Vote`}
+          initialVote={dayData.vote || ''}
+          initialVoteMultiplier={dayData.voteMultiplier ?? 1}
+          voteInputs={dayData.voteInputs}
+          voteInputKey={dayData.voteInputKey}
+          onSubmit={(vote, multiplier) => setVoteValue?.(index, vote, multiplier)}
+          dialogSubtext={`Set the vote target for ${user.realName || 'User'}.`}
+          users={users}
+          historyKey={`vote:${gameId}:${dayNumber}:${index}`}
+        />
+      )}
     </View>
   );
 };

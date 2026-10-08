@@ -70,7 +70,7 @@ const RuleBookPreviewCard = ({ gameId, onPress }: RuleBookPreviewCardProps) => {
   }, [roleTable?.value]);
 
   return (
-    <Pressable onPress={onPress} className="bg-text/5 w-full rounded-3xl px-4 py-4">
+    <Pressable testID="config-open-rulebook" onPress={onPress} className="bg-text/5 w-full rounded-3xl px-4 py-4">
       <Row className="items-start gap-4">
         <Column className="flex-1 gap-1">
           <FontText weight="medium">Rule book</FontText>
@@ -100,7 +100,7 @@ const PhoneBookPreviewCard = ({ gameId, currentUserId, onPress }: PhoneBookPrevi
   ).length;
 
   return (
-    <Pressable onPress={onPress} className="bg-text/5 w-full rounded-3xl px-4 py-4">
+    <Pressable testID="config-open-phonebook" onPress={onPress} className="bg-text/5 w-full rounded-3xl px-4 py-4">
       <Row className="items-start gap-4">
         <Column className="flex-1 gap-1">
           <FontText weight="medium">Phone book</FontText>

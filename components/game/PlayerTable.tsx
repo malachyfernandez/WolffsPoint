@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import FontText from '../ui/text/FontText';
 import { useList, useValue } from 'hooks/useData';
+import { useProgressiveCount } from 'hooks/useProgressiveCount';
 import { deepEqual } from 'utils/deepEqual';
 import Column from '../layout/Column';
 import AppButton from '../ui/buttons/AppButton';
@@ -69,6 +70,8 @@ const PlayerTable = ({
 
   const userTableValue = userTable.scheduledUpdate?.value ?? userTable.value;
   const users = userTableValue ?? [];
+  // Mount rows progressively — 24 rows × cells mount in one commit otherwise.
+  const mountedRowCount = useProgressiveCount(users.length);
   // Ref that mirrors `users` but is also updated synchronously when we call
   // setUserTable, so that handleTagsAdded can see the tag change that was
   // just applied via onChange (before React re-renders).
@@ -383,7 +386,7 @@ const PlayerTable = ({
   // Subscribe to player page column sizes
   const [columnSizes, setColumnSizes] = useValue<PlayerPageColumnSizes>(
     getPlayerPageColumnSizesKey(gameId),
-    { defaultValue: defaultPlayerPageColumnSizes, privacy: 'PUBLIC' }
+    { defaultValue: defaultPlayerPageColumnSizes, privacy: 'PUBLIC', autoCreate: false }
   );
 
   // Calculate extra user column widths based on sizes
@@ -555,7 +558,7 @@ const PlayerTable = ({
             columnCellIds={extraColumnCellIds}
           />
 
-          {users.map((user, index) => (
+          {users.slice(0, mountedRowCount).map((user, index) => (
             <UserRow
               key={index}
               user={user}

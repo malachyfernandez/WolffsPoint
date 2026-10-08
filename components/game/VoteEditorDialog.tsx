@@ -126,9 +126,10 @@ const VoteEditorDialog = ({
     title,
     onClose: () => onOpenChange(false),
     onRestore: () => onOpenChange(true),
+    pinned: () => hasUnsavedChanges,
   });
 
-  const { history, addSave, clearHistory, maxSaves } = useSaveHistory(historyKey ?? null);
+  const { history, addSave, clearHistory, maxSaves } = useSaveHistory(historyKey ?? null, { enabled: isOpen });
   const { setHint } = useKeyboardShortcutHint();
 
   useEffect(() => {

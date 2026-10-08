@@ -1,6 +1,7 @@
-import React, { useRef, useCallback } from 'react';
+import { useRef, useCallback } from 'react';
 import { View } from 'react-native';
 import { useMinimize } from './MinimizeContext';
+import { useMemoryScope } from '../../../contexts/MemoryPressureContext';
 
 interface UseMinimizeTargetOptions {
   /** Title shown in the minimized card's title bar. */
@@ -9,6 +10,12 @@ interface UseMinimizeTargetOptions {
   onClose: () => void;
   /** Called to reopen the dialog (typically `() => onOpenChange(true)`). */
   onRestore: () => void;
+  /**
+   * Evaluated at minimize time: true while the dialog holds unsaved user
+   * state. Pinned entries protect their host scope from memory eviction —
+   * evicting it would strand `onRestore` and lose the draft.
+   */
+  pinned?: () => boolean;
 }
 
 /**
@@ -24,9 +31,12 @@ interface UseMinimizeTargetOptions {
  * If no MinimizeProvider is present in the tree, `performMinimize` is a no-op
  * so dialogs still work outside the operator context.
  */
-export function useMinimizeTarget({ title, onClose, onRestore }: UseMinimizeTargetOptions) {
+export function useMinimizeTarget({ title, onClose, onRestore, pinned }: UseMinimizeTargetOptions) {
   const { isAvailable, minimize } = useMinimize();
+  const scopeId = useMemoryScope();
   const targetRef = useRef<View>(null);
+  const pinnedRef = useRef(pinned);
+  pinnedRef.current = pinned;
 
   const performMinimize = useCallback(() => {
     if (!isAvailable) return;
@@ -62,11 +72,13 @@ export function useMinimizeTarget({ title, onClose, onRestore }: UseMinimizeTarg
         originalWidth: rect.width,
         originalHeight: rect.height,
         onRestore,
+        pinned: pinnedRef.current?.() ?? false,
+        scopeId,
       });
     }
 
     onClose();
-  }, [isAvailable, minimize, title, onClose, onRestore]);
+  }, [isAvailable, minimize, title, onClose, onRestore, scopeId]);
 
   return { targetRef, performMinimize };
 }

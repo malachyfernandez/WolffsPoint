@@ -62,24 +62,47 @@ const MinimizedCard = ({ entry, onRestore, onRemove }: MinimizedCardProps) => {
           border: '1px solid rgba(0,0,0,0.2)',
           cursor: 'pointer',
         }}>
-        {/* Scaled DOM clone (guilded frame with tan bg + texture) */}
-        <div
-          ref={containerRef}
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: entry.originalWidth,
-            height: entry.originalHeight,
-            transform: `scale(${scale})`,
-            transformOrigin: 'top left',
-            pointerEvents: 'none',
-          }}
-        />
+        {/* Scaled DOM clone (guilded frame with tan bg + texture).
+            Under memory pressure the snapshot may be dropped — render a
+            title placeholder instead; the card still restores the dialog. */}
+        {entry.domClone ? (
+          <div
+            ref={containerRef}
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: entry.originalWidth,
+              height: entry.originalHeight,
+              transform: `scale(${scale})`,
+              transformOrigin: 'top left',
+              pointerEvents: 'none',
+            }}
+          />
+        ) : (
+          <div
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: 'rgb(230, 214, 175)',
+              padding: 8,
+            }}>
+            <FontText weight="medium" className="text-center text-xs" color="black">
+              {entry.title}
+            </FontText>
+          </div>
+        )}
       </div>
 
       {/* Remove (×) button */}
       <Pressable
+        testID="minimized-card"
         onPress={(e) => {
           e?.stopPropagation?.();
           onRemove();

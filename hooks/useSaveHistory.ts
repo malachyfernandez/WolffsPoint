@@ -14,14 +14,23 @@ const MAX_SAVES = 5;
  * Hook for managing save history of a dialog's content.
  * Stores up to MAX_SAVES entries (newest first) in a PRIVATE user variable.
  *
+ * The backing record is lazy: no subscription is registered and no record is
+ * created until `enabled` is true AND a real historyKey exists — mounted but
+ * closed dialogs cost zero backend work. A first `addSave` creates the record.
+ *
  * @param historyKey - A scoped key like `saveHistory-markdownEditor-{gameId}-{roleName}`
+ * @param options.enabled - Subscribe only while true (typically `isOpen`)
  */
-export function useSaveHistory(historyKey: string | null) {
-    // Prefix with 'saveHistory:' to avoid collisions with other data keys
-    const storageKey = historyKey ? `saveHistory:${historyKey}` : '__saveHistory_unused__';
+export function useSaveHistory(historyKey: string | null, options?: { enabled?: boolean }) {
+    const enabled = (options?.enabled ?? true) && historyKey !== null;
+    // Prefix with 'saveHistory:' to avoid collisions with other data keys.
+    // The disabled sentinel key is never registered, so it never exists.
+    const storageKey = historyKey ? `saveHistory:${historyKey}` : '__saveHistory_disabled__';
     const [historyRecord, setHistory] = useValue<SavedEntry[]>(storageKey, {
         defaultValue: [],
         privacy: 'PRIVATE',
+        autoCreate: false,
+        enabled,
     });
 
     const history: SavedEntry[] = historyRecord?.value ?? [];

@@ -74,6 +74,7 @@ const NightlyPlayerTable = ({
   const [columnSizes] = useValue<PlayerPageColumnSizes>(getPlayerPageColumnSizesKey(gameId), {
     defaultValue: defaultPlayerPageColumnSizes,
     privacy: 'PUBLIC',
+    autoCreate: false,
   });
 
   const titles = userTableTitle.scheduledUpdate?.value ??

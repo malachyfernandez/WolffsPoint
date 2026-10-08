@@ -1,0 +1,20 @@
+import puppeteer from 'puppeteer';
+const browser = await puppeteer.launch({ headless: 'new', args: ['--no-sandbox'], defaultViewport: { width: 1280, height: 900 } });
+const page = await browser.newPage();
+await page.goto('http://localhost:8090', { waitUntil: 'networkidle2', timeout: 120000 });
+await page.waitForSelector('[data-testid="sim-run-all"]', { timeout: 60000 });
+await page.click('[data-testid="sim-modal-lab"]');
+await page.waitForSelector('[data-testid="modallab-open-town-square-post"]', { timeout: 5000 });
+await page.click('[data-testid="modallab-open-town-square-post"]');
+await page.waitForSelector('[role="dialog"]', { timeout: 5000 });
+await new Promise(r => setTimeout(r, 800));
+const box = await page.evaluate(() => {
+  const dlg = [...document.querySelectorAll('[role="dialog"]')].find(d => !!(d.offsetParent || d.getClientRects().length));
+  const r = dlg.querySelector('[aria-label="Close"]').getBoundingClientRect();
+  return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+});
+await page.mouse.click(box.x, box.y);
+await new Promise(r => setTimeout(r, 1500));
+const after = await page.evaluate(() => [...document.querySelectorAll('[role="dialog"]')].filter(d => !!(d.offsetParent || d.getClientRects().length)).length);
+console.log('dialogs after trusted click on X:', after);
+await browser.close();

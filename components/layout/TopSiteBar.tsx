@@ -54,7 +54,7 @@ const TopSiteBar = ({ className = '', isGameBodyReady = false }: TopSiteBarProps
 
 
 
-                            <AppButton variant="outline-accent-light" blurred={true} className="h-14 w-14" onPress={() => { setActiveGameId(''); }}>
+                            <AppButton testID="nav-home" variant="outline-accent-light" blurred={true} className="h-14 w-14" onPress={() => { setActiveGameId(''); }}>
                                 <HomeIcon size={24} color='accent-light' />
                             </AppButton>
 

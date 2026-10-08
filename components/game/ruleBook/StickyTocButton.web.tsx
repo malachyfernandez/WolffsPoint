@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { List } from 'lucide-react-native';
+import { useBodyReportEnabled } from 'contexts/BodyReadinessContext';
 
 interface StickyTocButtonProps {
   onPress: () => void;
@@ -16,8 +17,7 @@ const ON_HOVER_BG = 'rgba(46, 41, 37, 0.1)';
 // Tuned base offsets. A runtime offset is applied automatically:
 // when the measured new-y would be < 30 the offset is 0, otherwise -30.
 const X_BUFFER = 0;
-const SWITCH_ON_BASE = 40;
-const SWITCH_OFF_BASE = 40;
+const SWITCH_LINE = 40;
 const Y_BASE = 20;
 
 /** Walk up the DOM to find the element that actually scrolls. */
@@ -48,22 +48,44 @@ const isFixedOverlay = (el: Element, boundary: Element | null): boolean => {
 /**
  * Web-only table-of-contents button. Once the inline button scrolls under the
  * fixed site header, a fixed-position clone docks just below the header's
- * bottom edge — all measured live by hit-testing.
+ * bottom edge.
+ *
+ * Performance notes (previously this polled a ~900-call `elementFromPoint`
+ * scan on a 200ms interval AND every scroll event):
+ * - The dock position (header bottom edge) is layout-derived, not
+ *   scroll-derived, so the hit-test scan now runs only on mount, resize, and
+ *   dialog open/close.
+ * - Stuck/unstuck detection is an IntersectionObserver on the inline button's
+ *   wrapper, with `rootMargin` placing the crossing line at the dock. Scroll
+ *   events only update the floating clone's X position (one rect read).
  */
 const StickyTocButton = ({ onPress, isOpen = false }: StickyTocButtonProps) => {
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   const floatingElRef = useRef<HTMLDivElement | null>(null);
   const onPressRef = useRef(onPress);
 
-  // Latest measured position for the floating element.
+  // Latest measured dock geometry.
   const posRef = useRef({ left: 0, top: 0 });
-  const stuckRef = useRef(false);
+  const scrollParentRef = useRef<HTMLElement | null>(null);
+  const lastScrollLeftRef = useRef(-1);
+  const offsetRef = useRef(0);
 
   const [isStuck, setIsStuck] = useState(false);
+  // Bumped whenever the dock line is re-measured so the observer effect
+  // rebuilds with the fresh rootMargin.
+  const [dockVersion, setDockVersion] = useState(0);
 
-  // Tracks whether the dialog was open before the last effect run, so we can
-  // add a small resume delay when it closes.
+  // While the TOC dialog is open the floating button fades out and the
+  // stuck-state measurement is frozen (the dialog covers the inline button).
+  const isOpenRef = useRef(isOpen);
+  isOpenRef.current = isOpen;
   const wasOpenRef = useRef(false);
+
+  // False inside a hidden keep-alive tab pane. Hidden panes keep real layout
+  // geometry (translated offscreen, not display:none), so the width===0 bail
+  // below no longer detects them — gate the listeners/observers entirely or
+  // every scroll anywhere in the app does layout work in this hidden pane.
+  const bodyEnabled = useBodyReportEnabled();
 
   useEffect(() => {
     onPressRef.current = onPress;
@@ -89,8 +111,6 @@ const StickyTocButton = ({ onPress, isOpen = false }: StickyTocButtonProps) => {
     const el = floatingElRef.current;
     if (!el) return;
 
-    // Visible when stuck, but fade out while the TOC dialog is open and
-    // fade back in the moment it closes (position recompute waits 1s).
     const show = isStuck && !isOpen;
     el.innerHTML = '';
     el.onmouseenter = null;
@@ -126,54 +146,36 @@ const StickyTocButton = ({ onPress, isOpen = false }: StickyTocButtonProps) => {
     };
   }, [isStuck, isOpen]);
 
-  // Continuously measure the button, the scroll container, and the header's
-  // bottom edge so the floating element tracks resizes and layout changes.
+  // Measure the dock line (bottom edge of the fixed header, found by
+  // hit-testing straight down at the button's center-x until real scrollable
+  // content is hit) + horizontal position. Rare events only — the dock is a
+  // function of layout, not scroll position.
   useEffect(() => {
     const node = sentinelRef.current;
-    if (!node) return;
+    if (!node || !bodyEnabled) return;
 
-    const update = () => {
-      // The sentinel's parent is the 40x40 View wrapping the Pressable —
-      // measure that so we get the real button bounds.
+    const measure = () => {
       const btn = node.parentElement as HTMLElement | null;
       if (!btn) return;
       const btnRect = btn.getBoundingClientRect();
-
       const el = floatingElRef.current;
 
       // Tab hidden / not laid out yet.
-      if (btnRect.width === 0) {
-        stuckRef.current = false;
-        setIsStuck(false);
-        return;
-      }
+      if (btnRect.width === 0) return;
 
       const scrollParent = findScrollParent(node);
+      scrollParentRef.current = scrollParent;
       const scrollLeft = scrollParent ? scrollParent.scrollLeft : window.scrollX;
-
-      // Always keep the X position up to date, even if the dialog is open.
       posRef.current.left = btnRect.left + scrollLeft + X_BUFFER;
       if (el) el.style.left = `${posRef.current.left}px`;
 
-      // While the TOC dialog is open, freeze Y / stuck-state updates only.
-      if (isOpen) return;
-
-      // Where the button sits when the scroll container is at the top.
-      const restLeft = btnRect.left + scrollLeft;
-
-      const cx = btnRect.left + btnRect.width / 2;
-      const cy = btnRect.top + btnRect.height / 2;
-      const mid = cy;
-
-      // Let hit-tests pass through the floating element so it can't
-      // occlude its own measurements (which would make it drift down).
+      // Let hit-tests pass through the floating element so it can't occlude
+      // its own measurements (which would make it drift down).
       if (el) el.style.pointerEvents = 'none';
 
-      // The dock point: scan down at the button's center-x until we hit
-      // real scrollable content. That's the bottom edge of whatever
-      // overlay (the header) the button disappeared under.
       let dockTop = 0;
       if (scrollParent) {
+        const cx = btnRect.left + btnRect.width / 2;
         for (let y = 0; y < window.innerHeight; y += 1) {
           const hit = document.elementFromPoint(cx, y);
           if (
@@ -189,74 +191,104 @@ const StickyTocButton = ({ onPress, isOpen = false }: StickyTocButtonProps) => {
 
       if (el) el.style.pointerEvents = '';
 
-      // Auto-offset rule: if the natural new-y would be < 30, no offset;
-      // otherwise pull the whole switch/position system up by 30px.
       const measuredTop = dockTop + Y_BASE;
       const offset = measuredTop < 30 ? 0 : -30;
-
-      // "Passed" = the button's midpoint crossed the switch line.
-      // Separate ON/OFF lines give hysteresis so it can't flicker.
-      const onLine = dockTop + SWITCH_ON_BASE + offset;
-      const offLine = dockTop + SWITCH_OFF_BASE + offset;
-      let stuck = stuckRef.current;
-      if (cy < 0 || cy > window.innerHeight || cx < 0 || cx > window.innerWidth) {
-        stuck = true;
-      } else if (!stuck && mid <= onLine) {
-        stuck = true;
-      } else if (stuck && mid > offLine) {
-        stuck = false;
-      }
-      stuckRef.current = stuck;
-      setIsStuck(stuck);
+      offsetRef.current = offset;
 
       posRef.current = {
-        left: restLeft + X_BUFFER,
+        left: btnRect.left + scrollLeft + X_BUFFER,
         top: measuredTop + offset,
       };
-
-      // Glue the floating element to the measured dock spot.
       if (el) {
         el.style.left = `${posRef.current.left}px`;
         el.style.top = `${posRef.current.top}px`;
       }
+      setDockVersion((v) => v + 1);
+    };
+
+    // The dock geometry shifts on resize and when the TOC dialog closes
+    // (page reflow). Keep the position fresh on horizontal scroll too —
+    // that's one rect read, not a scan.
+    let measureRaf = 0;
+    const scheduleMeasure = () => {
+      cancelAnimationFrame(measureRaf);
+      measureRaf = requestAnimationFrame(measure);
+    };
+    const updateXOnly = () => {
+      const scrollParent = scrollParentRef.current;
+      const scrollLeft = scrollParent ? scrollParent.scrollLeft : window.scrollX;
+      // Skip entirely on vertical-only scrolls — the clone's X can't move.
+      // (A rect read + style write per scroll event thrashes layout.)
+      if (scrollLeft === lastScrollLeftRef.current) return;
+      lastScrollLeftRef.current = scrollLeft;
+      const btn = node.parentElement as HTMLElement | null;
+      if (!btn) return;
+      const btnRect = btn.getBoundingClientRect();
+      if (btnRect.width === 0) return;
+      posRef.current.left = btnRect.left + scrollLeft + X_BUFFER;
+      const el = floatingElRef.current;
+      if (el) el.style.left = `${posRef.current.left}px`;
     };
 
     const wasOpen = wasOpenRef.current;
     wasOpenRef.current = isOpen;
 
-    let interval: ReturnType<typeof setInterval> | null = null;
-    let timeout: ReturnType<typeof setTimeout> | null = null;
-
+    let settleTimer: ReturnType<typeof setTimeout> | null = null;
     if (isOpen) {
-      // Dialog is open — freeze Y and stuck-state, but keep X in sync
-      // on resize/horizontal scroll.
-      update();
-      window.addEventListener('resize', update);
-      window.addEventListener('scroll', update, true);
-    } else if (wasOpen) {
-      // Dialog just closed — wait 1s before resuming so the layout
-      // has time to settle and the button doesn't snap immediately.
-      timeout = setTimeout(() => {
-        update();
-        interval = setInterval(update, 200);
-        window.addEventListener('scroll', update, true);
-        window.addEventListener('resize', update);
-      }, 1000);
+      // Dialog open — it covers the screen, so a hit-scan would measure the
+      // dialog instead of the header. Freeze dock geometry; keep X in sync.
+      updateXOnly();
+      window.addEventListener('resize', updateXOnly);
+      window.addEventListener('scroll', updateXOnly, true);
     } else {
-      // Normal operation (mount / already closed) — run immediately.
-      update();
-      interval = setInterval(update, 200);
-      window.addEventListener('scroll', update, true);
-      window.addEventListener('resize', update);
+      // Re-measure the dock now (or once the close animation settles — the
+      // 1s delay preserves the old "don't snap back mid-animation" feel).
+      settleTimer = setTimeout(measure, wasOpen ? 1000 : 0);
+      window.addEventListener('resize', scheduleMeasure);
+      window.addEventListener('scroll', updateXOnly, true);
     }
 
     return () => {
-      if (timeout) clearTimeout(timeout);
-      if (interval) clearInterval(interval);
-      window.removeEventListener('scroll', update, true);
-      window.removeEventListener('resize', update);
+      if (settleTimer) clearTimeout(settleTimer);
+      cancelAnimationFrame(measureRaf);
+      window.removeEventListener('resize', scheduleMeasure);
+      window.removeEventListener('resize', updateXOnly);
+      window.removeEventListener('scroll', updateXOnly, true);
     };
-  }, [isOpen]);
+  }, [isOpen, bodyEnabled]);
+
+  // Stuck detection: the button is "stuck" once its midpoint rises above the
+  // dock line (dockTop + SWITCH_LINE + offset). IntersectionObserver does the
+  // crossing test in the compositor — zero per-scroll JS.
+  useEffect(() => {
+    const node = sentinelRef.current;
+    if (!node || !bodyEnabled || typeof IntersectionObserver === 'undefined') return;
+    const btn = node.parentElement;
+    const scrollParent = scrollParentRef.current;
+    if (!btn) return;
+
+    // Fold the switch line into the root margin: shrink the root's top edge
+    // so the button "leaves" the root exactly when its midpoint crosses the
+    // switch line. `rootMargin` is relative to the root's own top edge —
+    // dockTop measured that edge already (the scan lands on the container's
+    // first visible content row), so it must not be added again here.
+    const switchPx = SWITCH_LINE + offsetRef.current - btn.clientHeight / 2;
+    const rootMargin = `-${Math.max(switchPx, 0)}px 0px 0px 0px`;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (isOpenRef.current) return; // frozen while dialog is open
+        const entry = entries[0];
+        // Rect height 0 (hidden/unlaid-out pane) reports non-intersecting;
+        // only accept the signal when the button has real geometry.
+        if (btn.getBoundingClientRect().width === 0) return;
+        setIsStuck(!entry.isIntersecting);
+      },
+      { root: scrollParent, rootMargin, threshold: 0 }
+    );
+    observer.observe(btn);
+    return () => observer.disconnect();
+  }, [dockVersion, bodyEnabled]);
 
   return (
     <View className="relative h-10 w-10">
@@ -265,6 +297,7 @@ const StickyTocButton = ({ onPress, isOpen = false }: StickyTocButtonProps) => {
         style={{ position: 'absolute', top: 0, left: 0, width: 1, height: 1 }}
       />
       <Pressable
+        testID="rulebook-toc-btn"
         onPress={onPress}
         style={{ opacity: isStuck ? 0 : 1, pointerEvents: isStuck ? 'none' : 'auto' }}
         className="bg-text/5 hover:bg-text/10 h-10 w-10 items-center justify-center rounded-full">

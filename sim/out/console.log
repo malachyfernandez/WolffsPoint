@@ -1,0 +1,7 @@
+[info] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[log] Running application "main" with appParams:
+ [object Object] 
+Development-level warnings: ON.
+Performance optimizations: OFF.
+[log] [sim] seeded mock db in 30.7ms [object Object]
+[error] Unexpected text node: . A text node cannot be a child of a <View>.

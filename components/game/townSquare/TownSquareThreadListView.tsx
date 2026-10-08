@@ -67,7 +67,7 @@ const TownSquareThreadListView = ({
                         </Column>
 
                         <Row className='gap-4 justify-between min-[700px]:justify-end flex-1 items-center'>
-                            <AppButton variant='secondary' className='px-0' onPress={onNewAnnouncement}>
+                            <AppButton testID="townsquare-newannouncement" variant='secondary' className='px-0' onPress={onNewAnnouncement}>
                                 <Row className='gap-3 items-center'>
                                     <Plus size={20} color='black' />
                                     <Column className='gap-0 items-start'>
@@ -76,7 +76,7 @@ const TownSquareThreadListView = ({
                                     </Column>
                                 </Row>
                             </AppButton>
-                            <AppButton variant='accent' className='px-0' onPress={onNewThread}>
+                            <AppButton testID="townsquare-newthread" variant='accent' className='px-0' onPress={onNewThread}>
                                 <Row className='gap-2 items-center'>
                                     <Plus size={20} color='white' />
                                     <FontText weight='medium' color='white'>Thread</FontText>
@@ -87,14 +87,14 @@ const TownSquareThreadListView = ({
                 ) : (
                     
                     <Column className='gap-0 justify-between sm:justify-end flex-1 items-center'>
-                        <AppButton variant='accent' className='px-0 w-full' onPress={onNewThread}>
+                        <AppButton testID="townsquare-newthread" variant='accent' className='px-0 w-full' onPress={onNewThread}>
                             <Row className='gap-2 items-center'>
                                 <Plus size={20} color='white' />
                                 <FontText weight='medium' color='white'>Thread</FontText>
                             </Row>
                         </AppButton>
 
-                        <AppButton variant='secondary' className='px-0 w-full' onPress={onNewAnnouncement}>
+                        <AppButton testID="townsquare-newannouncement" variant='secondary' className='px-0 w-full' onPress={onNewAnnouncement}>
                             <Row className='gap-3 items-center'>
                                 <Plus size={20} color='black' />
                                 <Column className='gap-0 items-start'>

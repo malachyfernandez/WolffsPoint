@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState, useCallback, startTransition } from 'react';
 import { View } from 'react-native';
 import Column from '../layout/Column';
 import PlayerPageOPERATOR from './PlayerPageOPERATOR';
@@ -18,6 +18,10 @@ import PaperContainer from '../ui/PaperContainer';
 import { BodyReportScope } from 'contexts/BodyReadinessContext';
 import { PlayerProfile } from 'types/multiplayer';
 import { PlayerStatusProvider } from 'contexts/PlayerStatusContext';
+import { SimProfiler } from '../../sim/perf/SimProfiler';
+import TabPane from '../layout/TabPane';
+import { useBoundedMountedTabs } from '../../hooks/useBoundedMountedTabs';
+import { useMinimize } from '../ui/minimize/MinimizeContext';
 
 export type OperatorTab = 'players' | 'config' | 'nightly' | 'forum' | 'newspaper' | 'rulebook';
 
@@ -38,91 +42,103 @@ const operatorTabs: GameTabDefinition<OperatorTab>[] = [
 const OperatorGamePage = ({ gameId, currentUserId }: OperatorGamePageProps) => {
   const [activeTab, setActiveTab] = useState<OperatorTab>('players');
   // Tabs mount lazily on first visit (no upfront fetching for unopened tabs),
-  // then stay mounted so dialog/minimize state survives tab switches.
-  const [mountedTabs, setMountedTabs] = useState<ReadonlySet<OperatorTab>>(() => new Set(['players']));
+  // then stay mounted so dialog/minimize state survives tab switches — bounded
+  // by device memory tier: under pressure the least-recently-active hidden
+  // panes are evicted (they re-mount on revisit, same as first visit).
+  const scopeIdForTab = useCallback((tab: OperatorTab) => `op-tab-${gameId}-${tab}`, [gameId]);
+  const { removeByScope } = useMinimize();
+  // An evicted pane kills its dialogs' restore closures — drop their
+  // (non-pinned) minimized cards so no dead UI lingers in the minimize row.
+  const onTabEvicted = useCallback(
+    (tab: OperatorTab) => removeByScope(scopeIdForTab(tab)),
+    [removeByScope, scopeIdForTab]
+  );
+  const mountedTabs = useBoundedMountedTabs(activeTab, scopeIdForTab, onTabEvicted);
 
-  const handleTabPress = (tab: OperatorTab) => {
-    setActiveTab(tab);
-    setMountedTabs((prev) => (prev.has(tab) ? prev : new Set(prev).add(tab)));
-  };
+  const handleTabPress = useCallback((tab: OperatorTab) => {
+    // Non-urgent update: keeps taps responsive while a heavy cold tab mounts.
+    startTransition(() => {
+      setActiveTab(tab);
+    });
+  }, []);
 
-  // Create operator profile for TownSquare
-  const profile: PlayerProfile = {
-    gameId,
-    email: 'operator@game.local',
-    userId: currentUserId,
-    inGameName: 'Game Operator',
-    profileImageUrl: '',
-    phoneNumber: '',
-    instagram: '',
-    discord: '',
-    otherContact: '',
-    bioMarkdown: 'Game operator account',
-    claimedAt: Date.now(),
-  };
+  // Create operator profile for TownSquare — memoized: a fresh object identity
+  // every render re-renders the forum subtree even while hidden.
+  const profile: PlayerProfile = useMemo(
+    () => ({
+      gameId,
+      email: 'operator@game.local',
+      userId: currentUserId,
+      inGameName: 'Game Operator',
+      profileImageUrl: '',
+      phoneNumber: '',
+      instagram: '',
+      discord: '',
+      otherContact: '',
+      bioMarkdown: 'Game operator account',
+      claimedAt: Date.now(),
+    }),
+    [gameId, currentUserId]
+  );
 
   return (
     <PlayerStatusProvider isPlayerDead={false}>
       <Column className="w-full gap-4 sm:gap-5">
         <GameTabBar activeTab={activeTab} onTabPress={handleTabPress} tabs={operatorTabs} />
+        <SimProfiler id="op-tabs">
         <PaperContainer>
           <View className="w-full min-w-0">
-            <View
-              style={{ display: activeTab === 'players' ? 'flex' : 'none' }}
-              className="w-full min-w-0">
-              {mountedTabs.has('players') && (
+            <TabPane
+              active={activeTab === 'players'}
+              mounted={mountedTabs.has('players')}
+              scopeId={scopeIdForTab('players')}>
               <BodyReportScope enabled={activeTab === 'players'}>
-              <PlayerPageOPERATOR currentUserId={currentUserId} gameId={gameId} />
+                <PlayerPageOPERATOR currentUserId={currentUserId} gameId={gameId} />
               </BodyReportScope>
-              )}
-            </View>
-            <View
-              style={{ display: activeTab === 'config' ? 'flex' : 'none' }}
-              className="w-full min-w-0">
-              {mountedTabs.has('config') && (
+            </TabPane>
+            <TabPane
+              active={activeTab === 'config'}
+              mounted={mountedTabs.has('config')}
+              scopeId={scopeIdForTab('config')}>
               <BodyReportScope enabled={activeTab === 'config'}>
-              <RolesPageOPERATOR currentUserId={currentUserId} gameId={gameId} />
+                <RolesPageOPERATOR currentUserId={currentUserId} gameId={gameId} />
               </BodyReportScope>
-              )}
-            </View>
-            <View
-              style={{ display: activeTab === 'nightly' ? 'flex' : 'none' }}
-              className="w-full min-w-0">
-              {mountedTabs.has('nightly') && (
+            </TabPane>
+            <TabPane
+              active={activeTab === 'nightly'}
+              mounted={mountedTabs.has('nightly')}
+              scopeId={scopeIdForTab('nightly')}>
               <BodyReportScope enabled={activeTab === 'nightly'}>
-              <NightlyPageOPERATOR currentUserId={currentUserId} gameId={gameId} />
+                <NightlyPageOPERATOR currentUserId={currentUserId} gameId={gameId} />
               </BodyReportScope>
-              )}
-            </View>
-            <View
-              style={{ display: activeTab === 'forum' ? 'flex' : 'none' }}
-              className="w-full min-w-0">
-              {mountedTabs.has('forum') && (
+            </TabPane>
+            <TabPane
+              active={activeTab === 'forum'}
+              mounted={mountedTabs.has('forum')}
+              scopeId={scopeIdForTab('forum')}>
               <BodyReportScope enabled={activeTab === 'forum'}>
-              <TownSquarePagePLAYER gameId={gameId} currentProfile={profile} />
+                <TownSquarePagePLAYER gameId={gameId} currentProfile={profile} />
               </BodyReportScope>
-              )}
-            </View>
-            <View
-              style={{ display: activeTab === 'newspaper' ? 'flex' : 'none' }}
-              className="w-full min-w-0">
-              {mountedTabs.has('newspaper') && (
+            </TabPane>
+            <TabPane
+              active={activeTab === 'newspaper'}
+              mounted={mountedTabs.has('newspaper')}
+              scopeId={scopeIdForTab('newspaper')}>
               <BodyReportScope enabled={activeTab === 'newspaper'}>
-              <NewspaperPageOPERATOR currentUserId={currentUserId} gameId={gameId} />
+                <NewspaperPageOPERATOR currentUserId={currentUserId} gameId={gameId} />
               </BodyReportScope>
-              )}
-            </View>
-            <View
-              style={{ display: activeTab === 'rulebook' ? 'flex' : 'none' }}
-              className="w-full min-w-0">
-              {mountedTabs.has('rulebook') && (
+            </TabPane>
+            <TabPane
+              active={activeTab === 'rulebook'}
+              mounted={mountedTabs.has('rulebook')}
+              scopeId={scopeIdForTab('rulebook')}>
               <BodyReportScope enabled={activeTab === 'rulebook'}>
-              <ConfigPageOPERATOR gameId={gameId} currentUserId={currentUserId} />
+                <ConfigPageOPERATOR gameId={gameId} currentUserId={currentUserId} />
               </BodyReportScope>
-              )}
-            </View>
+            </TabPane>
           </View>
         </PaperContainer>
+        </SimProfiler>
       </Column>
     </PlayerStatusProvider>
   );

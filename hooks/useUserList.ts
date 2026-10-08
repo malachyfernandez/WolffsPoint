@@ -222,6 +222,7 @@ export function useUserList<T>({
   optimisticTimeoutBehavior = 'reset',
   overwriteStoredConfig = userVarConfig.overwriteStoredConfigOnSet,
   overwriteStoredPrivacy = userVarConfig.overwriteStoredPrivacyOnSet,
+  autoCreate = true,
   onOpStatusChange,
 }: {
   key: string;
@@ -235,6 +236,13 @@ export function useUserList<T>({
   optimisticTimeoutBehavior?: OptimisticTimeoutBehavior;
   overwriteStoredConfig?: boolean;
   overwriteStoredPrivacy?: boolean;
+  /**
+   * When false, a missing record resolves to `defaultValue` without writing it
+   * to the backend; the record is created by the first explicit `setValue`.
+   * Use for write-once-on-demand data so mounted components don't fire a
+   * mutation just to register an empty default.
+   */
+  autoCreate?: boolean;
   onOpStatusChange?: (info: UserListOpStatusInfo<T>) => void;
 }): [UserListResult<T>, ScheduledValueSetter<T>] {
   const record = useQuery(api.user_lists.get, { key, itemId });
@@ -524,6 +532,7 @@ export function useUserList<T>({
   };
 
   useEffect(() => {
+    if (!autoCreate) return;
     if (didAutoCreateRef.current) return;
     if (isConvexAuthLoading || !isConvexAuthenticated) return;
     if (record !== null) return;
@@ -533,6 +542,7 @@ export function useUserList<T>({
     didAutoCreateRef.current = true;
     setValue(defaultValue as T);
   }, [
+    autoCreate,
     record,
     defaultValue,
     isConvexAuthLoading,

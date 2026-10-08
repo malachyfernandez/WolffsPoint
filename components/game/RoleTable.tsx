@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Pressable } from 'react-native';
 import FontText from '../ui/text/FontText';
 import { useList } from 'hooks/useData';
+import { useProgressiveCount } from 'hooks/useProgressiveCount';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
 import RoleRow from './RoleRow';
@@ -73,6 +74,8 @@ const RoleTable = ({
   const defaultVoteMessageValue =
     defaultVoteMessage.scheduledUpdate?.value ?? defaultVoteMessage.value ?? DEFAULT_VOTE_MESSAGE;
   const visibleRoles = roles.filter((role) => role.isVisible !== false);
+  // Mount rows progressively — each RoleRow carries six dialog trees.
+  const mountedRowCount = useProgressiveCount(visibleRoles.length);
 
   useEffect(() => {
     if (!doSync) return;
@@ -376,7 +379,7 @@ const RoleTable = ({
               </Column>
             </Row>
 
-            {visibleRoles.map((role, index) => {
+            {visibleRoles.slice(0, mountedRowCount).map((role, index) => {
               // Find the actual index in the full roles array
               const actualIndex = roles.findIndex((r) => r === role);
               return (

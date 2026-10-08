@@ -323,6 +323,7 @@ export default function GuildedButton({
     contentPaddingX = guildedButtonDefaults.contentPaddingX,
     contentPaddingY = guildedButtonDefaults.contentPaddingY,
     background = guildedButtonDefaults.background,
+    testID,
 }: GuildedButtonProps) {
     const { isPlayerDead } = usePlayerStatus();
     const effectiveVariant: typeof variant =
@@ -415,6 +416,7 @@ export default function GuildedButton({
         <>
             <style dangerouslySetInnerHTML={{ __html: guildedButtonCSS }} />
             <div
+                data-testid={testID}
                 role="button"
                 tabIndex={disabled ? -1 : 0}
                 aria-disabled={disabled || undefined}

@@ -43,12 +43,13 @@ const ComprehensiveDaySelector = ({
   const [numberOfRealDaysPerInGameDay] = useList<number>('numberOfRealDaysPerInGameDay', gameId, {
     privacy: 'PUBLIC',
     defaultValue: 2,
+    autoCreate: false,
   });
 
   const [hasCompletedInitialDaySetup, setHasCompletedInitialDaySetup] = useList<boolean>(
     'hasCompletedInitialDaySetup',
     gameId,
-    { privacy: 'PUBLIC', defaultValue: false }
+    { privacy: 'PUBLIC', defaultValue: false, autoCreate: false }
   );
 
   // Shared day dates array
@@ -58,15 +59,18 @@ const ComprehensiveDaySelector = ({
   const [skipVotingDays, setSkipVotingDays] = useList<number[]>('skipVotingDays', gameId, {
     privacy: 'PUBLIC',
     defaultValue: [],
+    autoCreate: false,
   });
   const [skipActionsDays, setSkipActionsDays] = useList<number[]>('skipActionsDays', gameId, {
     privacy: 'PUBLIC',
     defaultValue: [],
+    autoCreate: false,
   });
 
   const [gameSchedule] = useValue<GameSchedule>(getGameScopedKey('gameSchedule', gameId), {
     defaultValue: defaultGameSchedule,
     privacy: 'PUBLIC',
+    autoCreate: false,
   });
   const gameTimeZone = resolveGameTimeZone(normalizeGameSchedule(gameSchedule.value));
 

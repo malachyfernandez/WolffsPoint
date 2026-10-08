@@ -33,7 +33,10 @@ const TownSquarePagePLAYER = ({ gameId, currentProfile }: TownSquarePagePLAYERPr
     const [selectedPostId, setSelectedPostId] = useState('');
     const [editingReplyId, setEditingReplyId] = useState<string | null>(null);
     const [replyTargetCommentId, setReplyTargetCommentId] = useState<string | null>(null);
-    const [threadListScrollY, setThreadListScrollY] = useState(0);
+    // Ref, not state — the value is only read when restoring scroll after
+    // returning from a thread. State here re-rendered the page every frame
+    // of every scroll.
+    const threadListScrollYRef = useRef(0);
     const [expandedBranchIds, setExpandedBranchIds] = useState<Record<string, boolean>>({});
 
     const listScrollRef = useRef<ScrollView | null>(null);
@@ -69,11 +72,11 @@ const TownSquarePagePLAYER = ({ gameId, currentProfile }: TownSquarePagePLAYERPr
         }
 
         const timeoutId = setTimeout(() => {
-            listScrollRef.current?.scrollTo({ animated: false, y: threadListScrollY });
+            listScrollRef.current?.scrollTo({ animated: false, y: threadListScrollYRef.current });
         }, 0);
 
         return () => clearTimeout(timeoutId);
-    }, [activeScreen, threadListScrollY]);
+    }, [activeScreen]);
 
     const selectedReplyTarget = useMemo(() => {
         if (!replyTargetCommentId) {
@@ -137,7 +140,9 @@ const TownSquarePagePLAYER = ({ gameId, currentProfile }: TownSquarePagePLAYERPr
                         onNewAnnouncement={() => setIsAnnouncementComposerOpen(true)}
                         onNewThread={() => setIsThreadComposerOpen(true)}
                         onOpenThread={openThread}
-                        onScrollYChange={setThreadListScrollY}
+                        onScrollYChange={(y) => {
+                            threadListScrollYRef.current = y;
+                        }}
                         onTogglePin={togglePin}
                         readStateSnapshot={readState}
                         threads={threads}

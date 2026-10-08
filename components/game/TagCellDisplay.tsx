@@ -35,6 +35,9 @@ const TagCellDisplay = ({
   onTagsRemoved,
 }: TagCellDisplayProps) => {
   const [isEditorOpen, setIsEditorOpen] = useState(false);
+  // Mount-on-first-open: TagCellDisplay renders per tag cell across the whole
+  // table, so the editor tree only exists after the cell is first tapped.
+  const [editorMounted, setEditorMounted] = useState(false);
   const [tagDefs] = useValue<TagDefinition[]>(getGameScopedKey('tagDefinitions', gameId), {
     defaultValue: [],
     privacy: 'PUBLIC',
@@ -45,6 +48,7 @@ const TagCellDisplay = ({
 
   const handleOpen = () => {
     onEditStart?.();
+    setEditorMounted(true);
     setIsEditorOpen(true);
   };
 
@@ -105,24 +109,26 @@ const TagCellDisplay = ({
         )}
       </Pressable>
 
-      <TagCellEditor
-        isOpen={isEditorOpen}
-        onOpenChange={(open) => {
-          if (open) handleOpen();
-          else handleClose();
-        }}
-        gameId={gameId}
-        value={value}
-        onChange={onChange}
-        cellContext={cellContext}
-        onTagsAdded={onTagsAdded}
-        onTagsRemoved={onTagsRemoved}
-        historyKey={
-          cellContext
-            ? `tagCell:${gameId}:${cellContext.playerIndex}:${cellContext.dayIndex ?? 'player'}:${cellContext.column}`
-            : `tagCell:${gameId}:${value.slice(0, 20)}`
-        }
-      />
+      {(editorMounted || isEditorOpen) && (
+        <TagCellEditor
+          isOpen={isEditorOpen}
+          onOpenChange={(open) => {
+            if (open) handleOpen();
+            else handleClose();
+          }}
+          gameId={gameId}
+          value={value}
+          onChange={onChange}
+          cellContext={cellContext}
+          onTagsAdded={onTagsAdded}
+          onTagsRemoved={onTagsRemoved}
+          historyKey={
+            cellContext
+              ? `tagCell:${gameId}:${cellContext.playerIndex}:${cellContext.dayIndex ?? 'player'}:${cellContext.column}`
+              : `tagCell:${gameId}:${value.slice(0, 20)}`
+          }
+        />
+      )}
     </>
   );
 };

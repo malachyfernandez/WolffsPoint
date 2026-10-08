@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Pressable, View } from 'react-native';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
@@ -8,6 +8,7 @@ import MarkdownRenderer, {
 } from '../ui/markdown/MarkdownRenderer';
 import ChainWraper from './ChainWraper';
 import { useGameOperatorUserId } from 'hooks/useGameOperatorUserId';
+import { useNow } from 'hooks/useNow';
 import { useSharedListValue } from 'hooks/useSharedListValue';
 import { useSharedVariableValue } from 'hooks/useSharedVariableValue';
 import { useValue } from 'hooks/useData';
@@ -116,7 +117,7 @@ const YourEyesOnlyDayContentPLAYER = ({
     defaultValue: defaultGameSchedule,
     userIds: operatorUserIds,
   });
-  const [now, setNow] = useState(() => new Date());
+  const now = useNow(1000);
 
   const dayDates = useMemo(() => parseStoredDayDates(dayDateStrings), [dayDateStrings]);
   const schedule = useMemo(
@@ -152,13 +153,7 @@ const YourEyesOnlyDayContentPLAYER = ({
   const actionDeadlineTime =
     schedule.actionDeadlineTime ?? defaultGameSchedule.actionDeadlineTime ?? '22:00';
 
-  useEffect(() => {
-    const intervalId = setInterval(() => {
-      setNow(new Date());
-    }, 1000);
 
-    return () => clearInterval(intervalId);
-  }, []);
 
   const [submission, setSubmission] = useValue<PlayerNightSubmission>(
     getGameScopedKey(`playerNightSubmission-day-${dayIndex}`, gameId),

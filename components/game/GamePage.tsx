@@ -21,6 +21,7 @@ import {
 import FadeInAfterDelay from '../ui/loading/FadeInAfterDelay';
 import LoadingContainer from '../ui/loading/LoadingContainer';
 import { BodyReadinessProvider } from 'contexts/BodyReadinessContext';
+import { SimProfiler } from '../../sim/perf/SimProfiler';
 
 interface GamePageProps {
   gameId: string;
@@ -59,13 +60,17 @@ const GamePage = ({ gameId, currentUserId, onReady }: GamePageProps) => {
     },
   });
 
-  // Calculate blur amount based on scroll (0px blur at top, 8px blur when scrolled 100px)
+  // Calculate blur amount based on scroll (0px blur at top, 8px blur when scrolled 100px).
+  // Blur is quantized to whole px: an animated `filter:blur()` forces a full
+  // Gaussian re-raster of this ~760px element on *every* scroll frame, which
+  // tanks WebKit. Integer steps keep the identical look but let Reanimated's
+  // style diffing skip DOM writes whenever the rounded value didn't change.
   const logoBlurStyle = useAnimatedStyle(
     () =>
       ({
         filter:
           Platform.OS === 'web'
-            ? `blur(${Math.min(Math.max((scrollAmount.value / 100) * 8, 0), 8)}px)`
+            ? `blur(${Math.round(Math.min(Math.max((scrollAmount.value / 100) * 8, 0), 8))}px)`
             : undefined,
       }) as any
   );
@@ -143,6 +148,7 @@ const GamePage = ({ gameId, currentUserId, onReady }: GamePageProps) => {
               scrollEventThrottle={16}
               scrollViewComponent={Animated.ScrollView}>
               <View className="mx-auto w-full max-w-[1000px] pt-60">
+                <SimProfiler id="game-body">
                 {isRoleDataLoading ? (
                   <View className="min-h-100" />
                 ) : isOperator ? (
@@ -152,6 +158,7 @@ const GamePage = ({ gameId, currentUserId, onReady }: GamePageProps) => {
                 ) : (
                   <PlayerGamePage currentUserId={currentUserId} gameId={gameId} />
                 )}
+                </SimProfiler>
               </View>
             </ShadowScrollView>
           </BodyReadinessProvider>

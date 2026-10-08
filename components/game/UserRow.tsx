@@ -77,6 +77,8 @@ const UserRow = ({
 }: UserRowProps) => {
   const [editingColumns, setEditingColumns] = useState<Record<number, boolean>>({});
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  // Mount-on-first-open: the editor tree only exists after the row is tapped.
+  const [dialogMounted, setDialogMounted] = useState(false);
   const hasMounted = useRef(false);
 
   // Registers this row's element + preview target with the shared floating
@@ -149,7 +151,10 @@ const UserRow = ({
         </Column>
         <Column className="border-subtle-border h-full w-28 items-center justify-center gap-0 border">
           <Pressable
-            onPress={() => setIsDialogOpen(true)}
+            onPress={() => {
+              setDialogMounted(true);
+              setIsDialogOpen(true);
+            }}
             className="h-full w-28 items-center justify-center">
             <FontText
               weight="medium"
@@ -224,6 +229,7 @@ const UserRow = ({
           );
         })}
       </Row>
+      {(dialogMounted || isDialogOpen) && (
       <UserEditDialog
         isOpen={isDialogOpen}
         onOpenChange={setIsDialogOpen}
@@ -235,6 +241,7 @@ const UserRow = ({
         gameId={gameId}
         onDelete={() => UNDOABLEdeleteUser(index)}
       />
+      )}
     </View>
   );
 };

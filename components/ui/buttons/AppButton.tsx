@@ -74,6 +74,7 @@ interface AppButtonProps {
     onHoverOut?: () => void;
     /** Keyboard shortcut keys to display as a hint when hovering (e.g. ['cmd', 's'] or ['esc']) */
     keyboardHint?: string[];
+    testID?: string;
 }
 
 const AppButton = ({
@@ -88,6 +89,7 @@ const AppButton = ({
     onHoverIn,
     onHoverOut,
     keyboardHint,
+    testID,
 }: AppButtonProps) => {
     const [isPressed, setIsPressed] = useState(false);
     const { setHint } = useKeyboardShortcutHint();
@@ -113,6 +115,7 @@ const AppButton = ({
         const isSecondary = variant === 'secondary';
         const buttonContent = (
             <GuildedButton
+                testID={testID}
                 onPress={onPress}
                 onHoverIn={handleHoverIn}
                 onHoverOut={handleHoverOut}
@@ -191,6 +194,7 @@ const AppButton = ({
 
     const buttonContent = (
         <TouchableOpacity
+            testID={testID}
             className={`${baseStyles} ${extraStyles} ${className} ${isPressed ? pressedStyles : ''} ${disabled ? 'opacity-50' : ''}`}
             onPressIn={() => !disabled && setIsPressed(true)}
             onPressOut={() => !disabled && setIsPressed(false)}

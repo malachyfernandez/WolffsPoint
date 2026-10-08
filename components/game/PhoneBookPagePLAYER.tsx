@@ -8,6 +8,7 @@ import Animated, {
 import { Image, Pressable, View, useWindowDimensions } from 'react-native';
 import { useValue, useFindValues, useFindListItems } from 'hooks/useData';
 import { useGameOperatorUserId } from 'hooks/useGameOperatorUserId';
+import { useNow } from 'hooks/useNow';
 import { useDialogGuildedVariant } from 'hooks/useDialogGuildedVariant';
 import { useSharedListValue } from 'hooks/useSharedListValue';
 import { useSharedVariableValue } from 'hooks/useSharedVariableValue';
@@ -477,7 +478,7 @@ const useSleepWindow = ({ gameId }: { gameId: string }) => {
     defaultValue: defaultGameSchedule,
     userIds: operatorUserIds,
   });
-  const [now, setNow] = useState(() => new Date());
+  const now = useNow(1000);
 
   const schedule = normalizeGameSchedule(scheduleRecord.value ?? defaultGameSchedule);
   const gameTimeZone = resolveGameTimeZone(schedule);
@@ -533,16 +534,6 @@ const useSleepWindow = ({ gameId }: { gameId: string }) => {
     !isNightWindowOpen(actionDeadlineBaseDate, actionDeadlineTime, now, gameTimeZone);
   const isSleepWindow =
     dayDates.length > 0 && isVoteLocked && isActionLocked && now.getTime() < nextWakeUp.getTime();
-
-  useEffect(() => {
-    const intervalId = setInterval(() => {
-      setNow(new Date());
-    }, 1000); // Update every second
-
-    return () => {
-      clearInterval(intervalId);
-    };
-  }, []);
 
   const isLoading =
     dayDateStringsRecord === undefined ||

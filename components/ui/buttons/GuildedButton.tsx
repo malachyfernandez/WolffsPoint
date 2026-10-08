@@ -35,6 +35,7 @@ export const GuildedButton = ({
     contentPaddingX = guildedButtonDefaults.contentPaddingX,
     contentPaddingY = guildedButtonDefaults.contentPaddingY,
     background = guildedButtonDefaults.background,
+    testID,
 }: GuildedButtonProps) => {
     const effectiveRadius = radius + outerThickness + middleThickness + innerThickness;
     const backgroundColor = typeof background === 'string' ? background : background.from;
@@ -45,6 +46,7 @@ export const GuildedButton = ({
 
     return (
         <Pressable
+            testID={testID}
             onPress={disabled ? undefined : onPress}
             onHoverIn={onHoverIn}
             onHoverOut={onHoverOut}
