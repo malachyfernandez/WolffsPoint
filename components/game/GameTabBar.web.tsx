@@ -27,53 +27,53 @@ const REDUCED_TEXT_BREAKPOINT = 700;
 const FURTHER_REDUCED_TEXT_BREAKPOINT = 450;
 
 interface IslandTabBackgroundProps {
-    isActive: boolean;
-    isCondensed?: boolean;
+  isActive: boolean;
+  isCondensed?: boolean;
 }
 
 const IslandTabBackground = ({ isActive, isCondensed = false }: IslandTabBackgroundProps) => {
-    const containerRef = useRef<HTMLDivElement>(null);
-    const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
 
-    useEffect(() => {
-        if (!containerRef.current) return;
-        const observer = new ResizeObserver((entries) => {
-            setDimensions({
-                width: entries[0].contentRect.width,
-                height: entries[0].contentRect.height,
-            });
-        });
-        observer.observe(containerRef.current);
-        return () => observer.disconnect();
-    }, []);
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const observer = new ResizeObserver((entries) => {
+      setDimensions({
+        width: entries[0].contentRect.width,
+        height: entries[0].contentRect.height,
+      });
+    });
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, []);
 
-    const { width, height } = dimensions;
+  const { width, height } = dimensions;
 
-    const R = 9;
-    const T = 5;
-    // ISLAND NUB TUNING: `width` here is the center tab's own pixel width.
-    // Expanded island: width of the raised nub as a fraction of the tab width
-    // (clamped so it never eats the whole tab). Bigger fraction = wider bump.
-    const pw = Math.min(Math.max(width * EXPANDED_NUB_FRACTION, 140), width - 28);
-    const ph = 15;
+  const R = 9;
+  const T = 5;
+  // ISLAND NUB TUNING: `width` here is the center tab's own pixel width.
+  // Expanded island: width of the raised nub as a fraction of the tab width
+  // (clamped so it never eats the whole tab). Bigger fraction = wider bump.
+  const pw = Math.min(Math.max(width * EXPANDED_NUB_FRACTION, 140), width - 28);
+  const ph = 15;
 
-    let pathD = "";
+  let pathD = '';
 
-    if (width > 0 && height > 0) {
-        const cw = width / 2;
-        const xL = T;
-        const xR = width - T;
+  if (width > 0 && height > 0) {
+    const cw = width / 2;
+    const xL = T;
+    const xR = width - T;
 
-        if (isCondensed) {
-            // Condensed: Split bowl with flat plateau in middle, the nub's flat
-            // top as a fraction of the tab width (see CONDENSED_NUB_FRACTION).
-            const plateauWidth = Math.max(width * CONDENSED_NUB_FRACTION, 36);
-            const yApex = T;
-            const yShoulder = yApex + R;
-            const yBase = height + T;
-            const halfPlateau = plateauWidth / 2;
+    if (isCondensed) {
+      // Condensed: Split bowl with flat plateau in middle, the nub's flat
+      // top as a fraction of the tab width (see CONDENSED_NUB_FRACTION).
+      const plateauWidth = Math.max(width * CONDENSED_NUB_FRACTION, 36);
+      const yApex = T;
+      const yShoulder = yApex + R;
+      const yBase = height + T;
+      const halfPlateau = plateauWidth / 2;
 
-            pathD = `
+      pathD = `
                 M ${xL} ${yBase}
                 L ${xL} ${yShoulder + R}
                 A ${R} ${R} 0 0 1 ${xL + R} ${yShoulder}
@@ -87,14 +87,14 @@ const IslandTabBackground = ({ isActive, isCondensed = false }: IslandTabBackgro
                 L ${xR} ${yBase}
                 Z
             `;
-        } else {
-            // Expanded: Full 9-part island with raised platform
-            const yApex = T;
-            const yPlatform = yApex + R;
-            const yShoulder = yPlatform + ph;
-            const yBase = height + T;
+    } else {
+      // Expanded: Full 9-part island with raised platform
+      const yApex = T;
+      const yPlatform = yApex + R;
+      const yShoulder = yPlatform + ph;
+      const yBase = height + T;
 
-            pathD = `
+      pathD = `
                 M ${xL} ${yBase}
                 L ${xL} ${yShoulder + R}
                 A ${R} ${R} 0 0 1 ${xL + R} ${yShoulder}
@@ -112,69 +112,104 @@ const IslandTabBackground = ({ isActive, isCondensed = false }: IslandTabBackgro
                 L ${xR} ${yBase}
                 Z
             `;
-        }
     }
+  }
 
-    return (
-        <div ref={containerRef} style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}>
-            {width > 0 && height > 0 && (
-                <svg width="100%" height="100%" viewBox={`0 0 ${width} ${height}`}>
-                    <defs>
-                        <linearGradient id="island-outer" x1="0" y1="1" x2="1" y2="0">
-                            <stop offset="26%" stopColor="var(--ring-outer-dark)" />
-                            <stop offset="100%" stopColor="var(--ring-outer-light)" />
-                        </linearGradient>
-                        <linearGradient id="island-inner" x1="0" y1="1" x2="1" y2="0">
-                            <stop offset="22%" stopColor="var(--ring-inner-light)" />
-                            <stop offset="100%" stopColor="var(--ring-inner-dark)" />
-                        </linearGradient>
-                        <clipPath id="island-clip">
-                            <path d={pathD} />
-                        </clipPath>
-                        <pattern id="island-tex" patternUnits="userSpaceOnUse" width="642" height="642">
-                            <image href="https://dydrl5o9tb.ufs.sh/f/6bPCFkuBjl92dnXGroFLInwCTmuU48v7QcbPaXDEgKZzYeBq" width="642" height="642" />
-                        </pattern>
-                    </defs>
+  return (
+    <div
+      ref={containerRef}
+      style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}>
+      {width > 0 && height > 0 && (
+        <svg width="100%" height="100%" viewBox={`0 0 ${width} ${height}`}>
+          <defs>
+            <linearGradient id="island-outer" x1="0" y1="1" x2="1" y2="0">
+              <stop offset="26%" stopColor="var(--ring-outer-dark)" />
+              <stop offset="100%" stopColor="var(--ring-outer-light)" />
+            </linearGradient>
+            <linearGradient id="island-inner" x1="0" y1="1" x2="1" y2="0">
+              <stop offset="22%" stopColor="var(--ring-inner-light)" />
+              <stop offset="100%" stopColor="var(--ring-inner-dark)" />
+            </linearGradient>
+            <clipPath id="island-clip">
+              <path d={pathD} />
+            </clipPath>
+            <pattern id="island-tex" patternUnits="userSpaceOnUse" width="642" height="642">
+              <image
+                href="https://dydrl5o9tb.ufs.sh/f/6bPCFkuBjl92dnXGroFLInwCTmuU48v7QcbPaXDEgKZzYeBq"
+                width="642"
+                height="642"
+              />
+            </pattern>
+          </defs>
 
-                    <path d={pathD} stroke="url(#island-outer)" strokeWidth="10" fill="none" strokeLinejoin="round" />
-                    <path d={pathD} stroke="var(--ring-middle)" strokeWidth="8" fill="none" strokeLinejoin="round" />
-                    <path d={pathD} stroke="url(#island-inner)" strokeWidth="2" fill="none" strokeLinejoin="round" />
+          <path
+            d={pathD}
+            stroke="url(#island-outer)"
+            strokeWidth="10"
+            fill="none"
+            strokeLinejoin="round"
+          />
+          <path
+            d={pathD}
+            stroke="var(--ring-middle)"
+            strokeWidth="8"
+            fill="none"
+            strokeLinejoin="round"
+          />
+          <path
+            d={pathD}
+            stroke="url(#island-inner)"
+            strokeWidth="2"
+            fill="none"
+            strokeLinejoin="round"
+          />
 
-                    <g clipPath="url(#island-clip)">
-                        <path
-                            d={pathD}
-                            fill={isActive ? 'var(--active-surface-bg)' : '#383838'}
-                            style={{ transition: 'fill 0.2s ease' }}
-                        />
-                        <path
-                            d={pathD}
-                            fill="url(#island-tex)"
-                            style={{ mixBlendMode: 'multiply', opacity: isActive ? 0.42 : 0.2, transition: 'opacity 0.2s ease' }}
-                        />
-                        {isActive && (
-                            <path d={pathD} stroke="rgba(255, 255, 255, 0.24)" strokeWidth="2" transform="translate(0, 1)" fill="none" />
-                        )}
-                    </g>
-                </svg>
+          <g clipPath="url(#island-clip)">
+            <path
+              d={pathD}
+              fill={isActive ? 'var(--active-surface-bg)' : '#383838'}
+              style={{ transition: 'fill 0.2s ease' }}
+            />
+            <path
+              d={pathD}
+              fill="url(#island-tex)"
+              style={{
+                mixBlendMode: 'multiply',
+                opacity: isActive ? 0.42 : 0.2,
+                transition: 'opacity 0.2s ease',
+              }}
+            />
+            {isActive && (
+              <path
+                d={pathD}
+                stroke="rgba(255, 255, 255, 0.24)"
+                strokeWidth="2"
+                transform="translate(0, 1)"
+                fill="none"
+              />
             )}
-        </div>
-    );
+          </g>
+        </svg>
+      )}
+    </div>
+  );
 };
 
 export type GameTabDefinition<TTab extends string> = {
-    label: string;
-    condensedLabel: string;
-    value: TTab;
-    icon: React.ReactNode;
+  label: string;
+  condensedLabel: string;
+  value: TTab;
+  icon: React.ReactNode;
+  disabled?: boolean;
 };
 
 interface GameTabBarProps<TTab extends string> {
-    activeTab: TTab;
-    onTabPress: (tab: TTab) => void;
-    tabs: GameTabDefinition<TTab>[];
-    activeTabIndent?: number;
-    iconSize?: number;
-    iconStrokeWidth?: number;
+  activeTab: TTab;
+  onTabPress: (tab: TTab) => void;
+  tabs: GameTabDefinition<TTab>[];
+  activeTabIndent?: number;
+  iconSize?: number;
+  iconStrokeWidth?: number;
 }
 
 const gameTabBarCSS = `
@@ -219,6 +254,25 @@ const gameTabBarCSS = `
 .guilded-game-tab-wrap:not(.is-active):hover {
     transform: translateY(2px);
     filter: drop-shadow(0px 7px 10px rgba(0, 0, 0, 0.32));
+}
+
+.guilded-game-tab-wrap.is-disabled {
+    opacity: 0.45;
+}
+
+.guilded-game-tab-wrap.is-disabled .guilded-game-tab-button {
+    cursor: not-allowed;
+}
+
+/* Disabled tabs stay put: no hover lift or surface brightening. The button
+   still fires onPress so the parent can explain why (e.g. a toast). */
+.guilded-game-tab-wrap.is-disabled:not(.is-active):hover {
+    transform: none;
+    filter: drop-shadow(0px 5px 9px rgba(0, 0, 0, 0.3));
+}
+
+.guilded-game-tab-wrap.is-disabled:not(.is-active):hover .guilded-game-tab-surface {
+    background-color: #2f2f2f;
 }
 
 .guilded-game-tab-button {
@@ -403,107 +457,112 @@ const gameTabBarCSS = `
 `;
 
 function cloneTabIcon(icon: React.ReactNode, color: string, size: number, strokeWidth: number) {
-    if (!React.isValidElement(icon)) {
-        return icon;
-    }
+  if (!React.isValidElement(icon)) {
+    return icon;
+  }
 
-    return React.cloneElement(icon as ReactElement<any>, {
-        color,
-        width: size,
-        height: size,
-        strokeWidth,
-    });
+  return React.cloneElement(icon as ReactElement<any>, {
+    color,
+    width: size,
+    height: size,
+    strokeWidth,
+  });
 }
 
 const GameTabBar = <TTab extends string>({
-    activeTab,
-    onTabPress,
-    tabs,
-    activeTabIndent = 5,
-    iconSize = 30,
-    iconStrokeWidth = 0,
+  activeTab,
+  onTabPress,
+  tabs,
+  activeTabIndent = 5,
+  iconSize = 30,
+  iconStrokeWidth = 0,
 }: GameTabBarProps<TTab>) => {
-    const width = useContentWidth();
-    const hasTrueMiddle = tabs.length % 2 === 1;
-    const centerIndex = Math.floor(tabs.length / 2);
-    const useCondensed = width < 600;
-    // Window width where the big center island switches to the small condensed
-    // bump: see CONDENSED_ISLAND_BREAKPOINT at the top of this file.
-    const useCondensedIsland = width < CONDENSED_ISLAND_BREAKPOINT;
-    // In-between step: island stays expanded but the label text shrinks.
-    const useReducedIslandText = !useCondensedIsland && width < REDUCED_TEXT_BREAKPOINT;
-    // Second in-between step: label shrinks further to match the other tabs.
-    const useFurtherReducedIslandText = !useCondensedIsland && width < FURTHER_REDUCED_TEXT_BREAKPOINT;
-    const { isPlayerDead } = usePlayerStatus();
-    const palette = isPlayerDead ? guildedButtonRingPresets.ghostly : guildedButtonRingPresets.gold;
-    const textColor = String(useCSSVariable('--color-text') || '#1a1a1a');
-    const innerBackground = String(useCSSVariable('--color-inner-background') || 'rgb(165, 159, 150)');
+  const width = useContentWidth();
+  const hasTrueMiddle = tabs.length % 2 === 1;
+  const centerIndex = Math.floor(tabs.length / 2);
+  const useCondensed = width < 600;
+  // Window width where the big center island switches to the small condensed
+  // bump: see CONDENSED_ISLAND_BREAKPOINT at the top of this file.
+  const useCondensedIsland = width < CONDENSED_ISLAND_BREAKPOINT;
+  // In-between step: island stays expanded but the label text shrinks.
+  const useReducedIslandText = !useCondensedIsland && width < REDUCED_TEXT_BREAKPOINT;
+  // Second in-between step: label shrinks further to match the other tabs.
+  const useFurtherReducedIslandText =
+    !useCondensedIsland && width < FURTHER_REDUCED_TEXT_BREAKPOINT;
+  const { isPlayerDead } = usePlayerStatus();
+  const palette = isPlayerDead ? guildedButtonRingPresets.ghostly : guildedButtonRingPresets.gold;
+  const textColor = String(useCSSVariable('--color-text') || '#1a1a1a');
+  const innerBackground = String(
+    useCSSVariable('--color-inner-background') || 'rgb(165, 159, 150)'
+  );
 
-    return (
-        <FadeInAfterDelay delayMs={200}>
-            <style dangerouslySetInnerHTML={{ __html: gameTabBarCSS }} />
+  return (
+    <FadeInAfterDelay delayMs={200}>
+      <style dangerouslySetInnerHTML={{ __html: gameTabBarCSS }} />
+      <div
+        className="guilded-game-tab-bar"
+        style={
+          {
+            '--ring-outer-dark': palette.outerDark,
+            '--ring-outer-light': palette.outerLight,
+            '--ring-middle': palette.middle,
+            '--ring-inner-light': palette.innerLight,
+            '--ring-inner-dark': palette.innerDark,
+            '--tab-text-active': textColor,
+            '--tab-text-inactive': palette.middle,
+            '--active-surface-bg': innerBackground,
+            '--active-indent': `${activeTabIndent}px`,
+          } as React.CSSProperties & Record<string, string>
+        }>
+        {tabs.map((tab, index) => {
+          const isCenter = hasTrueMiddle && index === centerIndex;
+          const isActive = activeTab === tab.value;
+          const tabFlex = isCenter ? '1.35' : '1';
+          const label = useCondensed ? tab.condensedLabel : tab.label;
+          const iconColor = isActive ? textColor : palette.middle;
+
+          return (
             <div
-                className="guilded-game-tab-bar"
-                style={
-                    {
-                        '--ring-outer-dark': palette.outerDark,
-                        '--ring-outer-light': palette.outerLight,
-                        '--ring-middle': palette.middle,
-                        '--ring-inner-light': palette.innerLight,
-                        '--ring-inner-dark': palette.innerDark,
-                        '--tab-text-active': textColor,
-                        '--tab-text-inactive': palette.middle,
-                        '--active-surface-bg': innerBackground,
-                        '--active-indent': `${activeTabIndent}px`,
-                    } as React.CSSProperties & Record<string, string>
-                }
-            >
-                {tabs.map((tab, index) => {
-                    const isCenter = hasTrueMiddle && index === centerIndex;
-                    const isActive = activeTab === tab.value;
-                    const tabFlex = isCenter ? '1.35' : '1';
-                    const label = useCondensed ? tab.condensedLabel : tab.label;
-                    const iconColor = isActive ? textColor : palette.middle;
-
-                    return (
-                        <div
-                            key={tab.value}
-                            className={`guilded-game-tab-wrap ${isActive ? 'is-active' : ''} ${isCenter ? 'is-center' : ''} ${isCenter && useCondensedIsland ? 'is-condensed-island' : ''} ${isCenter && !useCondensedIsland ? 'is-expanded-island' : ''} ${isCenter && useReducedIslandText ? 'is-reduced-text' : ''} ${isCenter && useFurtherReducedIslandText ? 'is-further-reduced-text' : ''} ${width < 380 ? 'is-tiny' : ''}`.trim()}
-                            style={{ '--tab-flex': tabFlex } as React.CSSProperties & Record<string, string>}
-                        >
-                            <button
-                                type="button"
-                                data-testid={`gametab-${tab.value}`}
-                                className="guilded-game-tab-button"
-                                onClick={() => onTabPress(tab.value)}
-                                aria-pressed={isActive}
-                            >
-                                {isCenter ? (
-                                    <div className="guilded-island-surface">
-                                        <IslandTabBackground isActive={isActive} isCondensed={useCondensedIsland} />
-                                        <div className="guilded-game-tab-icon">{cloneTabIcon(tab.icon, iconColor, iconSize, iconStrokeWidth)}</div>
-                                        <span className="guilded-game-tab-label">{label}</span>
-                                    </div>
-                                ) : (
-                                    <div className="guilded-game-tab-outer">
-                                        <div className="guilded-game-tab-middle">
-                                            <div className="guilded-game-tab-inner">
-                                                <div className="guilded-game-tab-surface">
-                                                    <div className="guilded-game-tab-texture" />
-                                                    <div className="guilded-game-tab-icon">{cloneTabIcon(tab.icon, iconColor, iconSize, iconStrokeWidth)}</div>
-                                                    <span className="guilded-game-tab-label">{label}</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
-                            </button>
+              key={tab.value}
+              className={`guilded-game-tab-wrap ${isActive ? 'is-active' : ''} ${tab.disabled ? 'is-disabled' : ''} ${isCenter ? 'is-center' : ''} ${isCenter && useCondensedIsland ? 'is-condensed-island' : ''} ${isCenter && !useCondensedIsland ? 'is-expanded-island' : ''} ${isCenter && useReducedIslandText ? 'is-reduced-text' : ''} ${isCenter && useFurtherReducedIslandText ? 'is-further-reduced-text' : ''} ${width < 380 ? 'is-tiny' : ''}`.trim()}
+              style={{ '--tab-flex': tabFlex } as React.CSSProperties & Record<string, string>}>
+              <button
+                type="button"
+                data-testid={`gametab-${tab.value}`}
+                className="guilded-game-tab-button"
+                onClick={() => onTabPress(tab.value)}
+                aria-pressed={isActive}
+                aria-disabled={tab.disabled || undefined}>
+                {isCenter ? (
+                  <div className="guilded-island-surface">
+                    <IslandTabBackground isActive={isActive} isCondensed={useCondensedIsland} />
+                    <div className="guilded-game-tab-icon">
+                      {cloneTabIcon(tab.icon, iconColor, iconSize, iconStrokeWidth)}
+                    </div>
+                    <span className="guilded-game-tab-label">{label}</span>
+                  </div>
+                ) : (
+                  <div className="guilded-game-tab-outer">
+                    <div className="guilded-game-tab-middle">
+                      <div className="guilded-game-tab-inner">
+                        <div className="guilded-game-tab-surface">
+                          <div className="guilded-game-tab-texture" />
+                          <div className="guilded-game-tab-icon">
+                            {cloneTabIcon(tab.icon, iconColor, iconSize, iconStrokeWidth)}
+                          </div>
+                          <span className="guilded-game-tab-label">{label}</span>
                         </div>
-                    );
-                })}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </button>
             </div>
-        </FadeInAfterDelay>
-    );
+          );
+        })}
+      </div>
+    </FadeInAfterDelay>
+  );
 };
 
 export default GameTabBar;

@@ -35,7 +35,8 @@
     "test:certification": "node scripts/test-cell-modules.mjs scripts/certificationProvenance.test.ts && node scripts/test-cell-modules.mjs scripts/liveCertification.test.ts",
     "test:move-to-file-ui": "node scripts/probe-move-to-file-ui.mjs",
     "test:island-move-to-file-ui": "node scripts/probe-island-move-to-file-ui.mjs",
-    "test:certify-resolve-ui": "node scripts/probe-certify-resolve-ui.mjs"
+    "test:certify-resolve-ui": "node scripts/probe-certify-resolve-ui.mjs",
+    "test:files-tab-gating-ui": "node scripts/probe-files-tab-gating-ui.mjs"
   },
   "dependencies": {
     "@clerk/clerk-expo": "^2.19.17",

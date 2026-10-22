@@ -28,6 +28,8 @@ import { nowMs } from 'utils/simNow';
 import { useContentWidth } from 'hooks/useContentWidth';
 import { useFileInputCleanup } from '../../hooks/useFileInputCleanup';
 import FileEditorHost from './scriptFiles/FileEditorHost';
+import { useCellModuleStatus } from '../../utils/legacySystems';
+import { useToast } from '../../contexts/ToastContext';
 
 export type OperatorTab = 'players' | 'config' | 'files' | 'forum' | 'newspaper' | 'rulebook';
 
@@ -36,10 +38,16 @@ interface OperatorGamePageProps {
   currentUserId: string;
 }
 
-const operatorTabs: GameTabDefinition<OperatorTab>[] = [
+const operatorTabs = (filesDisabled: boolean): GameTabDefinition<OperatorTab>[] => [
   { label: 'Players', condensedLabel: 'Players', value: 'players', icon: <PlayersIcon /> },
   { label: 'Roles', condensedLabel: 'Roles', value: 'config', icon: <RolesIcon /> },
-  { label: 'Files', condensedLabel: 'Files', value: 'files', icon: <FilesIcon /> },
+  {
+    label: 'Files',
+    condensedLabel: 'Files',
+    value: 'files',
+    icon: <FilesIcon />,
+    disabled: filesDisabled,
+  },
   { label: 'Town Square', condensedLabel: 'Town Sq', value: 'forum', icon: <TownSquareIcon /> },
   { label: 'Newspaper', condensedLabel: 'News', value: 'newspaper', icon: <NewspaperIcon /> },
   { label: 'Config', condensedLabel: 'Config', value: 'rulebook', icon: <ConfigIcon /> },
@@ -48,6 +56,11 @@ const operatorTabs: GameTabDefinition<OperatorTab>[] = [
 const OperatorGamePage = ({ gameId, currentUserId }: OperatorGamePageProps) => {
   useFileInputCleanup(gameId);
   const [activeTab, setActiveTab] = useState<OperatorTab>('players');
+  const { showToast } = useToast();
+  // Script files only exist for games upgraded past the legacy systems.
+  const { migrated, loading: moduleStatusLoading } = useCellModuleStatus(gameId);
+  const filesDisabled = !moduleStatusLoading && !migrated;
+  const tabs = useMemo(() => operatorTabs(filesDisabled), [filesDisabled]);
   const contentWidth = useContentWidth();
   // Tabs mount lazily on first visit (no upfront fetching for unopened tabs),
   // then stay mounted so dialog/minimize state survives tab switches, bounded
@@ -63,12 +76,19 @@ const OperatorGamePage = ({ gameId, currentUserId }: OperatorGamePageProps) => {
   );
   const mountedTabs = useBoundedMountedTabs(activeTab, scopeIdForTab, onTabEvicted);
 
-  const handleTabPress = useCallback((tab: OperatorTab) => {
-    // Non-urgent update: keeps taps responsive while a heavy cold tab mounts.
-    startTransition(() => {
-      setActiveTab(tab);
-    });
-  }, []);
+  const handleTabPress = useCallback(
+    (tab: OperatorTab) => {
+      if (tab === 'files' && filesDisabled) {
+        showToast('Files unlock after upgrading this game — see "Upgrade to files" in Config.');
+        return;
+      }
+      // Non-urgent update: keeps taps responsive while a heavy cold tab mounts.
+      startTransition(() => {
+        setActiveTab(tab);
+      });
+    },
+    [filesDisabled, showToast]
+  );
 
   // Files-tab placement chips deep-link: morning-message cells land on the
   // Players tab (morning column), role/vote cells on Roles. The target rides
@@ -120,7 +140,7 @@ const OperatorGamePage = ({ gameId, currentUserId }: OperatorGamePageProps) => {
        *  stack without limit, and minimize into the global minimize row. */}
       <FileEditorHost gameId={gameId}>
         <Column className={`w-full ${contentWidth >= 640 ? 'gap-5' : 'gap-4'}`}>
-          <GameTabBar activeTab={activeTab} onTabPress={handleTabPress} tabs={operatorTabs} />
+          <GameTabBar activeTab={activeTab} onTabPress={handleTabPress} tabs={tabs} />
           <SimProfiler id="op-tabs">
             <PaperContainer>
               <View className="w-full min-w-0">
