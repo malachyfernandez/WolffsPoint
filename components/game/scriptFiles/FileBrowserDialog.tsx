@@ -1954,7 +1954,7 @@ export const FileBrowserContent = ({
                     icon={<Code2 size={15} color="#6a4a8a" />}
                     label="New Script"
                     active={false}
-                    first={!fileKindsSet || fileKindsSet.has('markdown')}
+                    first={!!fileKindsSet && !fileKindsSet.has('markdown')}
                     onPress={() => openNewFilePrompt('script')}
                   />
                 )}
