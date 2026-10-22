@@ -15,6 +15,9 @@ interface ConfirmDialogProps {
   onConfirm: () => void;
   title?: string;
   message?: string;
+  /** Extra content (e.g. a bullet list) rendered between the message and
+   *  the buttons. */
+  children?: React.ReactNode;
   confirmLabel?: string;
   cancelLabel?: string;
   /** When true, the confirm button uses the danger (red) style. */
@@ -31,11 +34,11 @@ const ConfirmDialog = ({
   onConfirm,
   title = 'Confirm',
   message,
+  children,
   confirmLabel = 'Confirm',
   cancelLabel = 'Cancel',
   danger = false,
 }: ConfirmDialogProps) => {
-
   // Enter = primary action (confirm), Esc = cancel.
   // Danger (destructive) confirms require Del/Backspace instead of Enter.
   useKeyboardShortcuts({
@@ -60,7 +63,8 @@ const ConfirmDialog = ({
               <FontText className="text-center">{message}</FontText>
             </Column>
           )}
-          <Row className="gap-4 justify-center pt-4">
+          {children && <Column className="gap-1 self-start pt-1">{children}</Column>}
+          <Row className="justify-center gap-4 pt-4">
             <AppButton
               variant="outline"
               className="w-24"

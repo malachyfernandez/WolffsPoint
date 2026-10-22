@@ -61,10 +61,21 @@ const WholeGameMigration = ({ gameId }: LegacySystemsConfigItemProps) => {
           if (state !== 'working') setConfirmOpen(open);
         }}
         title="Upgrade the whole game?"
-        message="Convert all legacy tags, messages, and file columns together in a new copy, then open it. The original is kept as a backup. The upgraded copy will only use the modular file system."
+        message="Move this game onto the file system — content becomes reusable files you can edit and organize in the new Files tab. A copy is made and opened; the original stays as a backup."
         confirmLabel={state === 'working' ? 'Migrating...' : 'Upgrade'}
-        onConfirm={handleMigrate}
-      />
+        onConfirm={handleMigrate}>
+        <FontText weight="medium" className="pb-1">
+          Moves into files:
+        </FontText>
+        {[
+          'Tags and their trigger scripts',
+          'Role, vote, and morning messages',
+          'About Role and the rulebook',
+          'File-capable table cells',
+        ].map((line) => (
+          <FontText key={line}>{`•  ${line}`}</FontText>
+        ))}
+      </ConfirmDialog>
     </>
   );
 };
