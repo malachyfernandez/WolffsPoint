@@ -1,5 +1,5 @@
 import React, { useMemo, useRef, useState, useEffect } from 'react';
-import { Pressable, TextInput, View, ScrollView } from 'react-native';
+import { Pressable, TextInput, View, ScrollView, useWindowDimensions } from 'react-native';
 import { Pencil, Plus, Search } from 'lucide-react-native';
 import ConvexDialog from '../ui/dialog/ConvexDialog';
 import CloseButton from '../ui/dialog/CloseButton';
@@ -17,9 +17,22 @@ import ShadowScrollView from '../ui/ShadowScrollView';
 import UnsavedChangesDialog from '../ui/dialog/UnsavedChangesDialog';
 import TagPill, { getTagColor, type TagColor } from './TagPill';
 import AddTagDialog from './AddTagDialog';
+import FileEditorDialog from './scriptFiles/FileEditorDialog';
+import { useFileEditorHost } from './scriptFiles/FileEditorHostContext';
 import { useValue } from 'hooks/useData';
 import { getGameScopedKey } from 'utils/multiplayer';
-import { parseCell, encodeTags, encodeText, type ParsedCell } from 'utils/tagEncoding';
+import { parseCell, type ParsedCell } from 'utils/tagEncoding';
+import { applyCellOp, MANUAL_SRC, type TagRef } from 'utils/cellPieces';
+import {
+  createTagFileSource,
+  getTagMeta,
+  isTagFile,
+  tagFileName,
+  tagFileTriggerSource,
+  tagLookupFromIndex,
+  TAGS_FOLDER,
+} from 'utils/scriptFiles';
+import { useScriptFiles } from 'hooks/useScriptFiles';
 import { useSaveHistory, SavedEntry } from 'hooks/useSaveHistory';
 import { useKeyboardShortcuts } from 'hooks/useKeyboardShortcuts';
 import { useKeyboardShortcutHint } from 'contexts/KeyboardShortcutHintContext';
@@ -27,6 +40,8 @@ import { useKeyboardShortcutHint } from 'contexts/KeyboardShortcutHintContext';
 export interface TagDefinition {
   name: string;
   color: string;
+  /** Set when the tag is backed by a file in `tags/` - its stable identity. */
+  tagId?: string;
 }
 
 export type TagDefinitionsData = TagDefinition[];
@@ -50,13 +65,14 @@ interface TagCellEditorProps {
   /** Context for tag triggers (player index, day index, column title) */
   cellContext?: CellContext;
   /** Called when new tags are added (for firing tag triggers) */
-  onTagsAdded?: (tagNames: string[], context: CellContext) => void;
+  onTagsAdded?: (tagRefs: (string | TagRef)[], context: CellContext) => void;
   /** Called when tags are removed (for firing tag-removed triggers) */
-  onTagsRemoved?: (tagNames: string[], context: CellContext) => void;
+  onTagsRemoved?: (tagRefs: (string | TagRef)[], context: CellContext) => void;
   /** Scoped key for save history storage. If omitted, save history is disabled. */
   historyKey?: string;
   /** Label for the submit button. Defaults to "Done". */
   submitLabel?: string;
+  tagsOnly?: boolean;
 }
 
 const TagCellEditor = ({
@@ -70,8 +86,13 @@ const TagCellEditor = ({
   onTagsRemoved,
   historyKey,
   submitLabel = 'Done',
+  tagsOnly = true,
 }: TagCellEditorProps) => {
-  const { history, addSave, clearHistory, maxSaves } = useSaveHistory(historyKey ?? null, { enabled: isOpen });
+  const { width: windowWidth } = useWindowDimensions();
+  const compact = windowWidth < 520;
+  const { history, addSave, clearHistory, maxSaves } = useSaveHistory(historyKey ?? null, {
+    enabled: isOpen,
+  });
   const { setHint } = useKeyboardShortcutHint();
   const { targetRef, performMinimize } = useMinimizeTarget({
     title: 'Edit Tags',
@@ -83,7 +104,11 @@ const TagCellEditor = ({
     defaultValue: [],
     privacy: 'PUBLIC',
   });
-
+  const filesApi = useScriptFiles(gameId);
+  const tagLookup = useMemo(
+    () => (filesApi.index ? tagLookupFromIndex(filesApi.index) : undefined),
+    [filesApi.index]
+  );
   const parsed: ParsedCell = useMemo(() => parseCell(value), [value]);
 
   const [selectedTagNames, setSelectedTagNames] = useState<string[]>([]);
@@ -92,6 +117,12 @@ const TagCellEditor = ({
   const [tagSearch, setTagSearch] = useState('');
   const searchInputRef = useRef<TextInput>(null);
   const [editingTag, setEditingTag] = useState<TagDefinition | null>(null);
+  /** File-backed tags edit in the file editor (name + color + trigger body
+   *  all live in the tag file) instead of the tag dialog. */
+  const [editingFileId, setEditingFileId] = useState<string | null>(null);
+  const fileEditorHost = useFileEditorHost();
+  const openTagFile = (tagId: string) =>
+    fileEditorHost ? fileEditorHost.openFile(tagId) : setEditingFileId(tagId);
   const [isLeaveConfirmOpen, setIsLeaveConfirmOpen] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [previewEntry, setPreviewEntry] = useState<SavedEntry | null>(null);
@@ -123,12 +154,32 @@ const TagCellEditor = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
-  const definitions = tagDefs.value ?? [];
+  // File-backed tags (tags/ folder) are ground truth; legacy tagDefinitions
+  // entries remain until migrated. File tags win name conflicts.
+  const definitions = useMemo<TagDefinition[]>(() => {
+    const out: TagDefinition[] = [];
+    const seen = new Set<string>();
+    if (filesApi.index) {
+      for (const file of filesApi.index.byId.values()) {
+        if (!isTagFile(file)) continue;
+        const meta = getTagMeta(file);
+        const name = tagFileName(file);
+        seen.add(name.toLowerCase());
+        out.push({ name, color: meta?.color ?? 'Grey', tagId: file.id });
+      }
+    }
+    for (const def of tagDefs.value ?? []) {
+      if (seen.has(def.name.toLowerCase())) continue;
+      out.push(def);
+    }
+    return out.sort((a, b) => a.name.localeCompare(b.name));
+  }, [filesApi.index, tagDefs.value]);
+
   const tagQuery = tagSearch.trim().toLowerCase();
   const filteredDefinitions = tagQuery
     ? definitions.filter((d) => d.name.toLowerCase().includes(tagQuery))
     : definitions;
-  const isInTagMode = selectedTagNames.length > 0;
+  const isInTagMode = tagsOnly || selectedTagNames.length > 0;
 
   // Detect unsaved changes by comparing current draft to the snapshot taken
   // when the dialog opened.
@@ -179,41 +230,108 @@ const TagCellEditor = ({
     setSelectedTagNames((prev) => prev.filter((n) => n !== name));
   };
 
+  /** New tags are created as files in the pinned `tags/` folder - the file
+   *  is the tag's ground truth (meta + trigger body). */
   const handleAddTagDef = (name: string, color: string) => {
-    setTagDefs([...definitions, { name, color }]);
+    const file = filesApi.createFile(
+      TAGS_FOLDER,
+      filesApi.suggestName(name, TAGS_FOLDER),
+      'script',
+      'trigger'
+    );
+    if (!file) return;
+    filesApi.updateFileSource(file.id, createTagFileSource(name, color));
     setSelectedTagNames((prev) => [...prev, name]);
     if (!isInTagMode) setTextValue('');
+    openTagFile(file.id);
   };
 
   const handleEditTagDef = (oldName: string, newName: string, color: string) => {
-    setTagDefs(definitions.map((d) => (d.name === oldName ? { name: newName, color } : d)));
+    const def = definitions.find((d) => d.name === oldName);
+    if (def?.tagId && filesApi.index) {
+      // File-backed: rewrite the Tag meta header; identity (id) survives.
+      const file = filesApi.index.byId.get(def.tagId);
+      if (file) {
+        const body = tagFileTriggerSource(file);
+        filesApi.updateFileSource(file.id, createTagFileSource(newName, color, body));
+      }
+    } else {
+      setTagDefs(
+        (tagDefs.value ?? []).map((d) => (d.name === oldName ? { ...d, name: newName, color } : d))
+      );
+    }
     setSelectedTagNames((prev) => prev.map((n) => (n === oldName ? newName : n)));
   };
 
   const handleDeleteTagDef = (name: string) => {
-    setTagDefs(definitions.filter((d) => d.name !== name));
+    const def = definitions.find((d) => d.name === name);
+    if (def?.tagId) {
+      filesApi.deleteFile(def.tagId);
+    } else {
+      setTagDefs((tagDefs.value ?? []).filter((d) => d.name !== name));
+    }
     setSelectedTagNames((prev) => prev.filter((n) => n !== name));
   };
 
+  /** Resolve a selected tag name to a TagRef (id when file-backed). */
+  const refForName = (name: string): TagRef => {
+    const def = definitions.find((d) => d.name === name);
+    return def?.tagId ? { tagId: def.tagId, name } : { name };
+  };
+
+  /**
+   * Build the new cell value via provenance ops - manual edits are attributed
+   * to 'manual'. Tag diffs append/remove pieces; text edits set the base.
+   * Other sources' contributions (certify pieces, trigger writes) survive.
+   */
+  const buildSavedValue = (): { newValue: string; addedRefs: TagRef[]; removedRefs: TagRef[] } => {
+    let next = value;
+    const selected = new Set(selectedTagNames);
+    const existingRefs = parsed.tags;
+    const existingNames = new Set(existingRefs.map((t) => t.name));
+
+    const removedRefs = existingRefs.filter((t) => !selected.has(t.name));
+    const addedRefs = selectedTagNames.filter((n) => !existingNames.has(n)).map(refForName);
+
+    for (const ref of removedRefs) {
+      next = applyCellOp(
+        next,
+        { mode: 'remove', value: `[/TAG: "${ref.name}"/]`, source: MANUAL_SRC },
+        tagLookup
+      );
+    }
+    for (const ref of addedRefs) {
+      next = applyCellOp(
+        next,
+        { mode: 'append', value: `[/TAG: "${ref.name}"/]`, source: MANUAL_SRC },
+        tagLookup
+      );
+    }
+    // Text edits only apply in text mode (tag-mode has no text input).
+    if (!tagsOnly && selectedTagNames.length === 0 && textValue.trim() !== parsed.text.trim()) {
+      next = applyCellOp(
+        next,
+        { mode: 'replace', value: textValue.trim(), source: MANUAL_SRC },
+        tagLookup
+      );
+    }
+    return { newValue: next, addedRefs, removedRefs };
+  };
+
   const handleSave = () => {
-    const newValue = isInTagMode ? encodeTags(selectedTagNames) : encodeText(textValue.trim());
+    const { newValue, addedRefs, removedRefs } = buildSavedValue();
 
     // Apply the cell change first, then fire tag triggers on top.
     // This ensures trigger scripts see the updated cell value.
     onChange(newValue);
     onOpenChange(false);
 
-    // Detect newly added and removed tags
-    if (isInTagMode && cellContext) {
-      const originalTagNames = new Set(parsed.tags.map((t) => t.name));
-      const newTagNames = new Set(selectedTagNames);
-      const addedTags = selectedTagNames.filter((name) => !originalTagNames.has(name));
-      const removedTags = parsed.tags.map((t) => t.name).filter((name) => !newTagNames.has(name));
-      if (addedTags.length > 0 && onTagsAdded) {
-        onTagsAdded(addedTags, cellContext);
+    if (cellContext) {
+      if (addedRefs.length > 0 && onTagsAdded) {
+        onTagsAdded(addedRefs, cellContext);
       }
-      if (removedTags.length > 0 && onTagsRemoved) {
-        onTagsRemoved(removedTags, cellContext);
+      if (removedRefs.length > 0 && onTagsRemoved) {
+        onTagsRemoved(removedRefs, cellContext);
       }
     }
 
@@ -224,27 +342,22 @@ const TagCellEditor = ({
     }
   };
 
-  // Save without closing — persists via onChange and adds to history
+  // Save without closing: persists via onChange and adds to history
   const handleSaveWithoutClose = () => {
     if (!hasUnsavedChanges) return;
-    const newValue = isInTagMode ? encodeTags(selectedTagNames) : encodeText(textValue.trim());
+    const { newValue, addedRefs, removedRefs } = buildSavedValue();
     onChange(newValue);
 
     // Update the initial snapshot so hasUnsavedChanges becomes false
     setInitialSelectedTagNames([...selectedTagNames]);
     setInitialTextValue(textValue);
 
-    // Fire tag triggers
-    if (isInTagMode && cellContext) {
-      const originalTagNames = new Set(parsed.tags.map((t) => t.name));
-      const newTagNames = new Set(selectedTagNames);
-      const addedTags = selectedTagNames.filter((name) => !originalTagNames.has(name));
-      const removedTags = parsed.tags.map((t) => t.name).filter((name) => !newTagNames.has(name));
-      if (addedTags.length > 0 && onTagsAdded) {
-        onTagsAdded(addedTags, cellContext);
+    if (cellContext) {
+      if (addedRefs.length > 0 && onTagsAdded) {
+        onTagsAdded(addedRefs, cellContext);
       }
-      if (removedTags.length > 0 && onTagsRemoved) {
-        onTagsRemoved(removedTags, cellContext);
+      if (removedRefs.length > 0 && onTagsRemoved) {
+        onTagsRemoved(removedRefs, cellContext);
       }
     }
 
@@ -298,9 +411,11 @@ const TagCellEditor = ({
               )}
               <DialogHeader text="Edit Cell" />
               <Column className="gap-3 p-0 sm:p-5">
-                <Row className="items-stretch gap-3">
+                <Row
+                  className="items-stretch gap-3"
+                  style={{ flexDirection: compact ? 'column' : 'row' }}>
                   {/* Left: Tag sidebar */}
-                  <Column className="w-44 gap-2">
+                  <Column className={compact ? 'w-full gap-2' : 'w-44 gap-2'}>
                     <Row className="border-subtle-border items-center gap-1.5 rounded-lg border px-2">
                       <Search size={13} color="rgb(46, 41, 37)" style={{ opacity: 0.6 }} />
                       <FontTextInput
@@ -338,13 +453,14 @@ const TagCellEditor = ({
                                     ellipsizeMode="tail">
                                     {def.name}
                                   </FontText>
-                                  {isSelected && (
-                                    <FontText className="text-xs">✓</FontText>
-                                  )}
+                                  {isSelected && <FontText className="text-xs">✓</FontText>}
                                   <Pressable
                                     onPress={() => {
-                                      setEditingTag(def);
-                                      setIsAddTagOpen(true);
+                                      if (def.tagId) openTagFile(def.tagId);
+                                      else {
+                                        setEditingTag(def);
+                                        setIsAddTagOpen(true);
+                                      }
                                     }}
                                     className="items-center justify-center self-stretch rounded"
                                     style={{ width: 28, marginLeft: -2 }}>
@@ -364,6 +480,7 @@ const TagCellEditor = ({
                     <AppButton
                       variant="outline"
                       className="h-8 w-full"
+                      disabled={filesApi.isLoading}
                       onPress={() => {
                         setEditingTag(null);
                         setIsAddTagOpen(true);
@@ -381,6 +498,11 @@ const TagCellEditor = ({
                   <Column className="flex-1 justify-between gap-2">
                     {isInTagMode ? (
                       <View className="border-subtle-border flex-row flex-wrap gap-2 rounded-lg border p-3">
+                        {selectedTagNames.length === 0 && (
+                          <FontText variant="subtext" className="text-sm">
+                            No tags selected. Choose a tag from the list.
+                          </FontText>
+                        )}
                         {selectedTagNames.map((name) => {
                           const def = definitions.find((d) => d.name === name);
                           const color: TagColor = def
@@ -406,6 +528,11 @@ const TagCellEditor = ({
                         onChangeText={setTextValue}
                         multiline
                       />
+                    )}
+                    {tagsOnly && parsed.text && (
+                      <FontText variant="subtext" className="text-xs">
+                        Existing text is preserved. This column now accepts tags only.
+                      </FontText>
                     )}
 
                     <Row className="minimize-hide flex-wrap justify-end gap-2">
@@ -455,6 +582,18 @@ const TagCellEditor = ({
         existingNames={definitions.map((d) => d.name)}
         gameId={gameId}
       />
+
+      {editingFileId && !fileEditorHost && (
+        <FileEditorDialog
+          isOpen
+          onOpenChange={(open) => {
+            if (!open) setEditingFileId(null);
+          }}
+          fileId={editingFileId}
+          filesApi={filesApi}
+          gameId={gameId}
+        />
+      )}
 
       {historyKey && (
         <>

@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sim Mode — Wolffspoint Design Proposal v2</title>
+<style>
+  :root {
+    /* real app tokens */
+    --desk: rgb(165,159,150);
+    --paper: #efe9db;
+    --paper-dim: #e6dfd0;
+    --ink: #1a1a1a;
+    --ink-50: rgba(26,26,26,.5);
+    --ink-30: rgba(26,26,26,.3);
+    --gold: #9a7a33;
+    --gold-light: #d9b458;
+    --ring-outer-dark: #bf6c18;
+    --ring-outer-light: #ecd9ab;
+    --ring-middle: #d9b458;
+    --ring-inner-light: #c79a2e;
+    --ring-inner-dark: #ba681e;
+    --tab-surface: #2f2f2f;
+    --tab-surface-hover: #383838;
+    --outer-bg: rgb(30,30,30);
+    --line: rgba(0,0,0,.35);
+    --line-soft: rgba(0,0,0,.18);
+    --tag-red: #991B1B;
+    --tag-green: #166534;
+    --tag-blue: #1D4ED8;
+    --tag-purple: #7E22CE;
+    --tag-grey: #374151;
+    --sim: #5b3d8f;
+    --sim-light: #8a6fc0;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Libre Baskerville', 'Baskerville', Georgia, 'Times New Roman', serif;
+    background:
+      radial-gradient(ellipse 90% 45% at 50% -5%, rgba(217,180,88,.12), transparent 70%),
+      radial-gradient(ellipse 130% 100% at 50% 45%, transparent 55%, rgba(0,0,0,.35) 100%),
+      var(--desk);
+    background-attachment: fixed;
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ---------- deck chrome ---------- */
+  .slide {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 48px 32px;
+    scroll-snap-align: start;
+  }
+  .deck { scroll-snap-type: y proximity; }
+  .slide-inner { width: 100%; max-width: 1080px; }
+  h1 { font-size: 44px; letter-spacing: -.5px; }
+  h2 { font-size: 30px; margin-bottom: 6px; }
+  h3 { font-size: 17px; margin-bottom: 10px; }
+  .kicker {
+    font-size: 11px; letter-spacing: .22em; text-transform: uppercase;
+    color: var(--gold); margin-bottom: 12px; font-weight: 700;
+  }
+  .lede { font-size: 15px; line-height: 1.65; color: var(--ink); max-width: 66ch; }
+  .small { font-size: 12px; color: var(--ink-50); }
+  .num {
+    position: fixed; bottom: 14px; right: 20px; font-size: 11px;
+    color: var(--ink-50); letter-spacing: .1em; z-index: 50;
+  }
+  .hint {
+    position: fixed; bottom: 14px; left: 20px; font-size: 11px;
+    color: var(--ink-50); z-index: 50;
+  }
+  .delta {
+    display:inline-block; font-size:9px; font-weight:700; letter-spacing:.1em;
+    background: var(--sim); color:#fff; border-radius:5px; padding:2px 6px;
+    vertical-align: middle; margin-left: 6px;
+  }
+
+  /* ---------- generic atoms ---------- */
+  .card {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    box-shadow: 0 2px 6px rgba(0,0,0,.12), inset 0 1px 0 rgba(255,255,255,.35);
+  }
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    border: 1px solid var(--line); border-radius: 10px;
+    padding: 6px 14px; font-size: 12.5px; font-weight: 700;
+    font-family: inherit; color: var(--ink); background: transparent;
+    cursor: default; white-space: nowrap;
+  }
+  .btn-dark { background: var(--ink); color: #f5efdd; border-color: var(--ink); }
+  .btn-gold { background: var(--gold); color: #fff; border-color: var(--gold); }
+  .btn-sim  { background: var(--sim); color: #fff; border-color: var(--sim); }
+  .btn-sm { padding: 3px 10px; font-size: 11px; border-radius: 8px; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 5px;
+    border: 1px solid var(--line-soft); border-radius: 7px;
+    background: rgba(26,26,26,.05); padding: 3px 8px; font-size: 10.5px;
+  }
+  .pill {
+    display: inline-flex; align-items: center; border-radius: 999px;
+    padding: 3px 10px; font-size: 11px; font-weight: 700; color: #fff;
+  }
+  .pill.red { background: var(--tag-red); }
+  .pill.green { background: var(--tag-green); }
+  .pill.blue { background: var(--tag-blue); }
+  .pill.purple { background: var(--tag-purple); }
+  .pill.grey { background: var(--tag-grey); }
+  .pill.sim { background: var(--sim); }
+  .input {
+    border: 1px solid var(--line-soft); border-radius: 8px;
+    padding: 5px 9px; font-size: 12px; font-family: inherit;
+    background: #fff; color: var(--ink); width: 100%;
+  }
+  .dropdown {
+    display: inline-flex; align-items: center; gap: 6px;
+    border: 1px solid var(--line-soft); border-radius: 8px;
+    padding: 5px 10px; font-size: 12px; background: #fff;
+    white-space: nowrap;
+  }
+  .caret { font-size: 8px; opacity: .6; }
+  .divider { height: 1px; background: var(--line-soft); margin: 10px 0; }
+  .callout {
+    border-left: 3px solid var(--gold);
+    background: rgba(154,122,51,.08);
+    padding: 10px 14px; border-radius: 0 10px 10px 0;
+    font-size: 13px; line-height: 1.55;
+  }
+  .callout.sim { border-color: var(--sim); background: rgba(91,61,143,.08); }
+  .callout.red { border-color: var(--tag-red); background: rgba(153,27,27,.07); }
+
+  /* ============================================================
+     FAITHFUL APP FRAME  — recreates the real chrome:
+     dark outer bg, Wolffspoint logo, gold-ring tab bar, paper card
+     ============================================================ */
+  .appframe {
+    border: 1px solid var(--line); border-radius: 18px;
+    background:
+      radial-gradient(ellipse 120% 70% at 50% 0%, rgba(217,180,88,.07), transparent 60%),
+      var(--outer-bg);
+    box-shadow: 0 18px 50px rgba(0,0,0,.35);
+    overflow: hidden; text-align: left;
+    position: relative;
+  }
+  .af-toprow {
+    position: absolute; top: 0; left: 0; right: 0;
+    display: flex; justify-content: space-between; align-items: flex-start;
+    padding: 12px 14px; z-index: 5; pointer-events: none;
+  }
+  .af-toprow > * { pointer-events: auto; }
+  .af-logo {
+    text-align: center; padding-top: 26px;
+    font-size: 34px; font-weight: 700; letter-spacing: .02em;
+    color: rgba(255,255,255,.16); font-family: inherit;
+    text-shadow: 0 -1px 0 rgba(0,0,0,.4);
+    user-select: none;
+  }
+  /* blurred top chips — matches CopyableText/Code chip + AppButton */
+  .topchip {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(30,30,30,.4);
+    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,.14);
+    border-radius: 8px; padding: 7px 12px;
+    color: #fff; font-size: 11px;
+  }
+  .topchip b { font-weight: 700; letter-spacing: .04em; }
+  .homebtn {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 42px; height: 42px; border-radius: 10px;
+    border: 1px solid var(--gold-light);
+    background: rgba(30,30,30,.35);
+    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    color: var(--gold-light); font-size: 17px;
+  }
+
+  /* persona chip — NEW element, top-left */
+  .personachip {
+    display: inline-flex; align-items: center; gap: 9px;
+    background: rgba(30,30,30,.4);
+    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,.14);
+    border-radius: 8px; padding: 7px 11px;
+    color: #fff; font-size: 11px;
+  }
+  .personachip .avatar {
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--gold); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 700;
+  }
+  .personachip.sim {
+    border-color: var(--sim-light);
+    background: rgba(91,61,143,.35);
+  }
+  .personachip.sim .avatar { background: var(--sim-light); }
+  .personachip .who { line-height: 1.25; }
+  .personachip .who .nm { font-weight: 700; }
+  .personachip .who .sub { font-size: 9px; opacity: .65; letter-spacing: .06em; text-transform: uppercase; }
+
+  /* gold-ring game tab bar — faithful to GameTabBar.web */
+  .gtabs {
+    display: flex; gap: 4px; align-items: flex-end;
+    padding: 0 8px; margin-top: 96px;
+  }
+  .gtab {
+    flex: 1 1 0%; min-width: 0;
+    filter: drop-shadow(0px 5px 9px rgba(0,0,0,.3));
+    padding-bottom: 10px;
+  }
+  .gtab .ring-outer {
+    padding: 1px 1px 0 1px;
+    border-radius: 15px 15px 0 0;
+    background: linear-gradient(to top right, var(--ring-outer-dark) 26%, var(--ring-outer-light) 100%);
+  }
+  .gtab .ring-mid {
+    padding: 3px 3px 0 3px; border-radius: 14px 14px 0 0;
+    background: var(--ring-middle);
+  }
+  .gtab .ring-inner {
+    padding: 1px 1px 0 1px; border-radius: 11px 11px 0 0;
+    background: linear-gradient(to top right, var(--ring-inner-light) 22%, var(--ring-inner-dark) 100%);
+  }
+  .gtab .face {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 4px; min-height: 74px; padding: 8px 4px 20px;
+    border-radius: 9px 9px 0 0;
+    background-color: var(--tab-surface);
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80"><rect width="80" height="80" fill="none"/><circle cx="20" cy="30" r="14" fill="rgba(255,255,255,0.025)"/><circle cx="60" cy="55" r="18" fill="rgba(0,0,0,0.05)"/><circle cx="45" cy="15" r="9" fill="rgba(255,255,255,0.02)"/></svg>');
+    color: var(--ring-middle);
+    font-size: 8px; font-weight: 700; letter-spacing: .05em;
+    text-transform: uppercase;
+    transition: background .15s ease;
+  }
+  .gtab .face .tic { font-size: 17px; line-height: 0; margin-top: -2px; }
+  .gtab.active { transform: translateY(6px); }
+  .gtab.active .face {
+    background-color: var(--desk); color: var(--ink);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.24);
+  }
+  .gtab.center { flex: 1.35 1 0%; transform: translateY(-9px); }
+  .gtab.center .face { min-height: 88px; font-size: 11px; }
+  .gtab.center .face .tic { font-size: 24px; }
+  .gtab.center.active { transform: translateY(-3px); }
+
+  /* paper body — PaperContainer */
+  .gbody {
+    background: var(--desk);
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120"><rect width="120" height="120" fill="none"/><circle cx="30" cy="40" r="20" fill="rgba(0,0,0,0.03)"/><circle cx="85" cy="75" r="26" fill="rgba(255,255,255,0.04)"/><circle cx="60" cy="15" r="12" fill="rgba(0,0,0,0.02)"/></svg>');
+    outline: 2px solid var(--gold);
+    outline-offset: -2px;
+    padding: 18px 20px 26px;
+    display: flex; flex-direction: column; gap: 14px;
+    min-height: 340px;
+  }
+
+  /* sim banner strip inside persona view */
+  .simstrip {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    background: linear-gradient(180deg, rgba(91,61,143,.14), rgba(91,61,143,.07));
+    border: 1px solid rgba(91,61,143,.5);
+    border-radius: 12px; padding: 8px 12px;
+  }
+  .simbadge {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: var(--sim); color: #fff; font-size: 9.5px; font-weight: 700;
+    letter-spacing: .12em; border-radius: 6px; padding: 3px 8px;
+  }
+  .dial { display: inline-flex; align-items: center; gap: 4px; }
+  .dial .arrow {
+    border: 1px solid var(--line-soft); border-radius: 7px;
+    padding: 2px 9px; font-size: 12px; background: #fff;
+  }
+  .daylabel { font-size: 12px; font-weight: 700; padding: 0 6px; }
+
+  /* persona dropdown mock */
+  .personamenu {
+    background: rgba(30,30,30,.92);
+    backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+    border: 1px solid rgba(255,255,255,.16);
+    border-radius: 10px; padding: 6px; width: 250px;
+    box-shadow: 0 12px 40px rgba(0,0,0,.5);
+    color: #fff; font-size: 12px;
+  }
+  .personamenu .pm-sec {
+    font-size: 8.5px; letter-spacing: .16em; text-transform: uppercase;
+    color: rgba(255,255,255,.45); padding: 8px 10px 4px;
+  }
+  .personamenu .pm-item {
+    display: flex; align-items: center; gap: 9px;
+    padding: 7px 10px; border-radius: 7px;
+  }
+  .personamenu .pm-item:hover, .personamenu .pm-item.hl {
+    background: rgba(255,255,255,.08);
+  }
+  .personamenu .pm-item .avatar {
+    width: 22px; height: 22px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 9px; font-weight: 700; color: #fff;
+  }
+  .personamenu .pm-item .meta { flex: 1; line-height: 1.25; }
+  .personamenu .pm-item .meta .sub { font-size: 9px; opacity: .55; }
+  .personamenu .pm-sep { height: 1px; background: rgba(255,255,255,.12); margin: 5px 8px; }
+  .personamenu .tick { font-size: 11px; color: var(--gold-light); }
+
+  /* table mock */
+  table.mock { border-collapse: collapse; width: 100%; font-size: 11.5px; }
+  table.mock th, table.mock td {
+    border: 1px solid var(--line-soft); padding: 5px 8px;
+    text-align: center; font-weight: 400; background: var(--paper);
+    white-space: nowrap; overflow: hidden;
+  }
+  table.mock th { font-weight: 700; font-size: 10.5px; background: var(--paper-dim); }
+  table.mock td.rowname { text-align: left; font-weight: 700; max-width: 90px; }
+  .celltext { font-size: 10px; color: var(--ink-50); text-decoration: underline dotted; }
+
+  /* town square post mock */
+  .post {
+    background: var(--paper); border: 1px solid var(--line-soft);
+    border-radius: 10px; padding: 9px 12px; font-size: 12px;
+  }
+  .post .phead { display:flex; align-items:center; gap:8px; margin-bottom:4px; }
+  .post .pavatar {
+    width: 22px; height: 22px; border-radius: 50%; background: var(--gold);
+    color: #fff; display:flex; align-items:center; justify-content:center;
+    font-size: 9px; font-weight: 700;
+  }
+  .post .ptime { font-size: 9px; color: var(--ink-50); margin-left: auto; }
+
+  /* diagrams */
+  .flow { display: flex; align-items: stretch; gap: 0; }
+  .flow .node {
+    border: 1px solid var(--line); border-radius: 10px; background: var(--paper);
+    padding: 10px 14px; font-size: 12px; text-align: center; flex: 1;
+  }
+  .flow .arr { align-self: center; padding: 0 8px; color: var(--gold); font-size: 16px; font-weight: 700; }
+  .twocol { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .threecol { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; }
+  .kv { font-size: 12px; line-height: 1.7; }
+  .kv b { display: inline-block; min-width: 150px; }
+  code.k {
+    font-family: ui-monospace, Menlo, monospace; font-size: 11px;
+    background: rgba(26,26,26,.07); border-radius: 5px; padding: 1px 5px;
+  }
+  .filetag {
+    font-family: ui-monospace, Menlo, monospace; font-size: 10.5px;
+    background: rgba(91,61,143,.1); border: 1px solid rgba(91,61,143,.3);
+    border-radius: 6px; padding: 2px 7px; color: var(--sim);
+  }
+  .markercode {
+    font-family: ui-monospace, Menlo, monospace; font-size: 10px;
+    background: #fff; border: 1px solid var(--line-soft); border-radius: 8px;
+    padding: 7px 10px; line-height: 1.7; overflow-x: auto; white-space: pre;
+  }
+  ol.steps { margin-left: 20px; font-size: 13.5px; line-height: 2.05; }
+  ol.steps li b { color: var(--gold); }
+  .phase {
+    border: 1px solid var(--line-soft); border-radius: 12px;
+    padding: 12px 16px; background: var(--paper);
+  }
+  .phase .pt { font-size: 13px; font-weight: 700; margin-bottom: 6px; }
+  .phase ul { margin-left: 18px; font-size: 12px; line-height: 1.8; color: var(--ink); }
+  .opt { display:flex; gap:10px; align-items:flex-start; padding:10px 0; border-bottom:1px dashed var(--line-soft); }
+  .opt:last-child { border-bottom:0; }
+  .optbadge { min-width: 24px; height:24px; border-radius:8px; background:var(--ink); color:#f5efdd;
+    display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; }
+  .optbadge.rec { background: var(--gold); }
+  .wire { border-left: 2px dashed rgba(91,61,143,.55); margin-left: 14px; padding-left: 14px; }
+  .arrow-note { font-size: 10px; color: var(--sim); font-weight: 700; margin: 2px 0 8px 14px; }
+</style>
+</head>
+<body>
+<div class="deck">
+
+<!-- ============================ SLIDE 1 : COVER ============================ -->
+<section class="slide">
+  <div class="slide-inner" style="text-align:center">
+    <div class="kicker">Wolffspoint · design proposal · v2</div>
+    <h1>The Persona Switcher</h1>
+    <div style="height:18px"></div>
+    <p class="lede" style="margin:0 auto">
+      Sim mode moves out of a tab and onto the top bar. One chip — top-left,
+      mirroring the Code chip top-right — swaps your entire screen between
+      <b>Operator</b> and any simulated player, running the <b>real</b> player
+      UI on an isolated sim namespace. No mocks, no screenshots, no parallel
+      implementation.
+    </p>
+    <div style="height:34px"></div>
+    <div style="display:flex;gap:10px;justify-content:center">
+      <span class="pill sim">VIEW AS</span>
+      <span class="pill grey">whole-screen swap</span>
+      <span class="pill grey">real player UI</span>
+      <span class="pill grey">sim namespace</span>
+    </div>
+    <div style="height:40px"></div>
+    <div class="small">scroll ↓ for the full proposal · 9 slides</div>
+  </div>
+</section>
+
+<!-- ==================== SLIDE 2 : THE ARCHITECTURE ==================== -->
+<section class="slide">
+  <div class="slide-inner">
+    <div class="kicker">Why this works</div>
+    <h2>The whole app already routes through one seam</h2>
+    <p class="lede">
+      <code class="k">GamePage</code> picks a screen by identity: operator →
+      <code class="k">OperatorGamePage</code>, player → <code class="k">PlayerGamePage</code>.
+      Both take the same two props — <code class="k">gameId</code> and
+      <code class="k">currentUserId</code>. And <b>every</b> record read/write in the
+      app flows through <code class="k">hooks/useData.ts</code>.
+    </p>
+    <div style="height:20px"></div>
+    <div class="card" style="padding:18px 20px">
+      <div class="flow">
+        <div class="node"><b>SimContext</b><br><span class="small">{ active, simGameId, persona }</span></div>
+        <div class="arr">→</div>
+        <div class="node"><b>useData layer</b><br><span class="small">two redirect rules, one file</span></div>
+        <div class="arr">→</div>
+        <div class="node"><b>Real screens, untouched</b><br><span class="small">PlayerGamePage · TownSquare · EyesOnly</span></div>
+      </div>
+      <div style="height:14px"></div>
+      <div class="markercode">rule 1 — game-scoped reads:   itemId === gameId        → "{gameId}:sim"     (all lists except 'games')
+rule 2 — user-scoped records: key for a persona record  → "sim:{persona}:{key}"  (operator-owned, writable)</div>
+      <div style="height:12px"></div>
+      <p class="small">
+        Rule 2 is the upgrade over the old plan: instead of a one-off submissions
+        seam, <b>every per-user record gets a per-persona clone</b> — userData,
+        playerProfile, and the <code class="k">findValues</code> submission records.
+        The faux player's submit button writes a real record through the real
+        mutation path. The previous "one injection point" becomes zero.
+      </p>
+    </div>
+    <div style="height:16px"></div>
+    <div class="callout">
+      <b>What this buys:</b> the actual <code class="k">PlayerGamePage</code> mounts —
+      real tab bar, real Town Square, real Your Eyes Only, real submit → plan →
+      certify loop — and it cannot touch the live game because every key it
+      resolves is namespaced. The operator's own records are the only ones ever
+      written; personas are just key suffixes.
+    </div>
+  </div>
+</section>
+
+<!-- ==================== SLIDE 3 : MOCK — TOP BAR, OPERATOR ==================== -->
+<section class="slide">
+  <div class="slide-inner">
+    <div class="kicker">Mock · idle state, top bar</div>
+    <h2>The switcher sits top-left, mirroring the Code chip<span class="delta">NEW UI</span></h2>
+    <p class="small" style="margin-bottom:14px">
+      Same row, same blurred-chip visual language as <code class="k">TopSiteBar</code> —
+      operator sees "Operator" with a caret. The rest of the chrome is untouched.
+    </p>
+    <div class="appframe">
+      <div class="af-toprow">
+        <!-- NEW: persona chip top-left -->
+        <div class="personachip">
+          <div class="avatar">OP</div>
+          <div class="who"><div class="nm">Operator</div><div class="sub">live game</div></div>
+          <span class="caret" style="color:rgba(255,255,255,.7)">▼</span>
+        </div>
+        <!-- existing: code chip + home -->
+        <div style="display:flex;gap:10px;align-items:center">
+          <span class="topchip"><b>Code:</b> WK7-2194</span>
+          <span class="homebtn">⌂</span>
+        </div>
+      </div>
+      <div class="af-logo">Wolffspoint</div>
+      <div class="gtabs">
+        <div class="gtab"><div class="ring-outer"><div class="ring-mid"><div class="ring-inner"><div class="face"><span class="tic">▦</span>Players</div></div></div></div></div>
+        <div class="gtab"><div class="ring-outer"><div class="ring-mid"><div class="ring-inner"><div class="face"><span class="tic">⬢</span>Roles</div></div></div></div></div>
+        <div class="gtab"><div class="ring-outer"><div class="ring-mid"><div class="ring-inner"><div class="face"><span class="tic">⬡</span>Files</div></div></div></div></div>
+        <div class="gtab active"><div class="ring-outer"><div class="ring-mid"><div class="ring-inner"><div class="face"><span class="tic">☰</span>Town Sq</div></div></div></div></div>
+        <div class="gtab"><div class="ring-outer"><div class="ring-mid"><div class="ring-inner"><div class="face"><span class="tic">✎</span>News</div></div></div></div></div>
+        <div class="gtab"><div class="ring-outer"><div class="ring-mid"><div class="ring-inner"><div class="face"><span class="tic">⚙</span>Config</div></div></div></div></div>
+      </div>
+      <div class="gbody">
+        <div style="display:flex;align-items:center;gap:14px">
+          <div>
+            <div style="font-size:14px;font-weight:700">Town Square — operator view</div>
+            <div class="small">Live game · real records · Day 3</div>
+          </div>
+        </div>
+        <div class="post"><div class="phead"><div class="pavatar">W</div><b>Willow</b><span class="ptime">2m</span></div>Real post from the live town square.</div>
+        <div class="post"><div class="phead"><div class="pavatar" style="background:var(--tag-blue)">A</div><b>Alder</b><span class="ptime">9m</span></div>Everything here is the real game, exactly as today.</div>
+      </div>
+    </div>
+    <div style="height:12px"></div>
+    <div class="small">
+      Rendered in <code class="k">MainPage.tsx</code>: the persona chip mounts as
+      <code class="k">&lt;View className="absolute top-0 left-0"&gt;</code>, symmetric to
+      <code class="k">TopSiteBar</code>'s <code class="k">top-0 right-0</code>.
+      Same <code class="k">BlurView</code> + <code class="k">CopyableText.Container</code> styling.
+    </div>
+  </div>
+</section>
+
+<!-- ==================== SLIDE 4 : MOCK — THE MENU ==================== -->
+<section class="slide">
+  <div class="slide-inner">
+    <div class="kicker">Mock · the switcher open</div>
+    <h2>One menu: personas up top, controls below</h2>
+    <p class="small" style="margin-bottom:14px">
+      Clicking the chip opens a blurred popover. Picking a persona swaps the
+      whole screen to that player. Picking "Simulation console" mounts the
+      operator UI on the sim namespace. "Operator" returns to the live game.
+    </p>
+    <div class="appframe">
+      <div class="af-toprow">
+        <div style="position:relative">
+          <div class="personachip sim">
+            <div class="avatar">S</div>
+            <div class="who"><div class="nm">Choose a persona…</div><div class="sub">simulation</div></div>
+            <span class="caret" style="color:rgba(255,255,255,.7)">▲</span>
+          </div>
+          <!-- the dropdown -->
+          <div class="personamenu" style="position:absolute;top:48px;left:0">
+            <div class="pm-sec">View as — simulated players</div>
+            <div class="pm-item hl">
+              <div class="avatar" style="background:#7c5cbf">W</div>
+              <div class="meta"><div>Faux Willow</div><div class="sub">Werewolf · alive</div></div>
+              <span class="tick">→</span>
+            </div>
+            <div class="pm-item">
+              <div class="avatar" style="background:#4a7ec2">A</div>
+              <div class="meta"><div>Faux Alder</div><div class="sub">Villager · alive</div></div>
+            </div>
+            <div class="pm-item">
+              <div class="avatar" style="background:#4a9e6b">B</div>
+              <div class="meta"><div>Faux Briar</div><div class="sub">Seer · alive</div></div>
+            </div>
+            <div class="pm-item">
+              <div class="avatar" style="background:#b06a3a">S</div>
+              <div class="meta"><div>Faux Sorrel</div><div class="sub">Doctor · alive</div></div>
+            </div>
+            <div class="pm-item" style="opacity:.55">
+              <div class="avatar" style="background:#555">J</div>
+              <div class="meta"><div>Faux Jun</div><div class="sub">Villager · dead — view as ghost</div></div>
+            </div>
+            <div class="pm-sep"></div>
+            <div class="pm-sec">Simulation</div>
+            <div class="pm-item">
+              <div class="avatar" style="background:var(--sim)">⚙</div>
+              <div class="meta"><div>Simulation console</div><div class="sub">operator UI on the sim namespace</div></div>
+            </div>
+            <div class="pm-item">
+              <div class="avatar" style="background:var(--sim)">＋</div>
+              <div class="meta"><div>Manage faux players</div><div class="sub">cast, import real players, reset</div></div>
+            </div>
+            <div class="pm-item" style="opacity:.8">
+              <div class="avatar" style="background:#7a2c2c">■</div>
+              <div class="meta"><div>End simulation</div><div class="sub">records stay namespaced &amp; idle</div></div>
+            </div>
+            <div class="pm-sep"></div>
+            <div class="pm-item">
+              <div class="avatar" style="background:var(--gold)">OP</div>
+              <div class="meta"><div>Operator</div><div class="sub">live game — the real you</div></div>
+              <span class="tick">✓</span>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center">
+          <span class="topchip"><b>Code:</b> WK7-2194</span>
+          <span class="homebtn">⌂</span>
+        </div>
+      </div>
+      <div class="af-logo">Wolffspoint</div>
+      <div class="gtabs" style="opacity:.55">
+        <div class="gtab"><div class="ring-outer"><div class="ring-mid"><div class="ring-inner"><div class="face"><span class="tic">▦</span>Players</div></div></div></div></div>
+        <div class="gtab"><div class="ring-outer"><div class="ring-mid"><div class="ring-inner"><div class="face"><span class="tic">⬢</span>Roles</div></div></div></div></div>
+        <div class="gtab"><div class="ring-outer"><div class="ring-mid"><div class="ring-inner"><div class="face"><span class="tic">⬡</span>Files</div></div></div></div></div>
+        <div class="gtab"><div class="ring-outer"><div class="ring-mid"><div class="ring-inner"><div class="face"><span class="tic">☰</span>Town Sq</div></div></div></div></div>
+        <div class="gtab"><div class="ring-outer"><div class="ring-mid"><div class="ring-inner"><div class="face"><span class="tic">✎</span>News</div></div></div></div></div>
+        <div class="gtab"><div class="ring-outer"><div class="ring-mid"><div class="ring-inner"><div class="face"><span class="tic">⚙</span>Config</div></div></div></div></div>
+      </div>
+      <div class="gbody" style="opacity:.55">
+        <div class="post"><div class="phead"><div class="pavatar">W</div><b>Willow</b><span class="ptime">2m</span></div>Live game dimmed behind the menu.</div>
+      </div>
+    </div>
+    <div style="height:12px"></div>
+    <div class="small">
+      Personas are just sim <code class="k">userTable</code> rows — the menu lists
+      them with role + living state straight from sim data. Dead players stay
+      selectable (ghost view exercises <code class="k">usePlayerStatus</code>'s dead path).
+    </div>
+  </div>
+</section>
+
+<!-- ==================== SLIDE 5 : MOCK — PERSONA VIEW ==================== -->
+<section class="slide">
+  <div class="slide-inner">
+    <div class="kicker">Mock · viewing as a player</div>
+    <h2>The entire screen becomes theirs</h2>
+    <p class="small" style="margin-bottom:14px">
+      Picking "Faux Willow" mounts the real <code class="k">PlayerGamePage</code> —
+      player tab bar, sim Town Square, her Eyes Only, her phone book. A purple
+      sim strip is the only added chrome; it carries the escape hatches.
+    </p>
+    <div class="appframe">
+      <div class="af-toprow">
+        <div class="personachip sim">
+          <div class="avatar">W</div>
+          <div class="who"><div class="nm">Faux Willow</div><div class="sub">simulation · day 3</div></div>
+          <span class="caret" style="color:rgba(255,255,255,.7)">▼</span>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center">
+          <span class="topchip" style="border-color:var(--sim-light);background:rgba(91,61,143,.35)"><b>SIM</b> no join code</span>
+          <span class="homebtn" style="border-color:var(--sim-light);color:var(--sim-light)">⌂</span>
+        </div>
+      </div>
+      <div class="af-logo">Wolffspoint</div>
+      <div class="gtabs">
+        <div class="gtab"><div class="ring-outer"><div class="ring-mid"><div class="ring-inner"><div class="face"><span class="tic">☰</span>Town Sq</div></div></div></div></div>
+        <div class="gtab"><div class="ring-outer"><div class="ring-mid"><div class="ring-inner"><div class="face"><span class="tic">✎</span>News</div></div></div></div></div>
+        <div class="gtab center active"><div class="ring-outer"><div class="ring-mid"><div class="ring-inner"><div class="face"><span class="tic">◉</span>Your Eyes Only</div></div></div></div></div>
+        <div class="gtab"><div class="ring-outer"><div class="ring-mid"><div class="ring-inner"><div class="face"><span class="tic">§</span>Rule Bk</div></div></div></div></div>
+        <div class="gtab"><div class="ring-outer"><div class="ring-mid"><div class="ring-inner"><div class="face"><span class="tic">✆</span>Phone Bk</div></div></div></div></div>
+      </div>
+      <div class="gbody">
+        <!-- sim strip: the only added chrome -->
+        <div class="simstrip">
+          <span class="simbadge">● SIMULATION</span>
+          <span style="font-size:12px">Viewing as <b>Faux Willow</b></span>
+          <div class="dial">
+            <span class="arrow">◀</span>
+            <span class="daylabel">Day 3 of 7</span>
+            <span class="arrow">▶</span>
+          </div>
+          <span style="flex:1"></span>
+          <span class="btn btn-sm">Switch player</span>
+          <span class="btn btn-sm">Console</span>
+          <span class="btn btn-dark btn-sm">Back to operator</span>
+        </div>
+        <!-- real Your Eyes Only content -->
+        <div class="card" style="padding:14px 16px">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+            <b style="font-size:13px">Faux Willow — Day 3</b>
+            <span class="pill red" style="font-size:8px">Werewolf</span>
+            <span class="pill sim" style="font-size:8px">faux</span>
+          </div>
+          <div class="small" style="margin-bottom:6px">Your nightly action</div>
+          <div class="dropdown" style="width:100%;margin-bottom:8px">Kill target — Faux Briar <span class="caret">▼</span></div>
+          <div class="small" style="margin-bottom:6px">Your vote</div>
+          <input class="input" value="Faux Sorrel" style="margin-bottom:10px">
+          <span class="btn btn-gold btn-sm">Submit</span>
+        </div>
+        <div class="small" style="text-align:center">
+          Her submission writes a real <code class="k">sim:willow:{submissionKey}</code>
+          record — picked up by the sim's certify exactly like a live player's.
+        </div>
+      </div>
+    </div>
+    <div style="height:12px"></div>
+    <div class="small">
+      <code class="k">PlayerAccessGate</code> gets one optional prop —
+      <code class="k">simIdentity: { email, userId, profile }</code> — that skips the
+      Clerk <code class="k">userData</code> lookup and the profile-claim gate.
+      Every tab below it needs nothing: data resolves through the redirect.
+    </div>
+  </div>
+</section>
+
+<!-- ==================== SLIDE 6 : HOW IDENTITY RESOLVES ==================== -->
+<section class="slide">
+  <div class="slide-inner">
+    <div class="kicker">Mechanics</div>
+    <h2>How a persona resolves, step by step</h2>
+    <div style="height:14px"></div>
+    <div class="twocol">
+      <div class="phase">
+        <div class="pt">On "View as Faux Willow"</div>
+        <ol class="steps" style="font-size:12px;line-height:1.9">
+          <li><b>Seed once</b> — sim <code class="k">userTable</code> gets a Willow row
+          (email <code class="k">willow@sim.local</code>); persona records
+          <code class="k">sim:willow:userData</code> and
+          <code class="k">sim:willow:playerProfile:{simId}</code> are written with
+          her name so the claim gate passes.</li>
+          <li><b>Mount</b> — <code class="k">GamePage</code> renders
+          <code class="k">PlayerGamePage</code> with
+          <code class="k">currentUserId="sim:willow"</code> + a SimProvider.</li>
+          <li><b>Redirect</b> — <code class="k">useData</code> rewrites keys:
+          lists → <code class="k">:sim</code>, persona records →
+          <code class="k">sim:willow:…</code>.</li>
+          <li><b>Gate passes</b> — <code class="k">matchingPlayer</code> finds
+          Willow in the sim userTable by her seeded email; profile loads
+          pre-claimed. Player tabs render.</li>
+        </ol>
+      </div>
+      <div class="phase">
+        <div class="pt">What each persona sees</div>
+        <ul>
+          <li><b>Town Square</b> — posts under <code class="k">:sim</code>. Every
+          persona (and the sim console) posts into the same sim square.</li>
+          <li><b>Your Eyes Only</b> — her role message, her cells, her
+          submission inputs. Submit writes her real record.</li>
+          <li><b>Newspaper</b> — sim issues; certify from the console publishes
+          into the sim only.</li>
+          <li><b>Phone Book</b> — sim profiles of the other faux players.</li>
+          <li><b>Day dial</b> — writes <code class="k">selectedDayIndex:{simId}</code>;
+          every persona + console shares the same sim "now".</li>
+        </ul>
+        <div style="height:8px"></div>
+        <div class="markercode">useValue("userData")            → "sim:willow:userData"
+useSharedListValue("userTable") → itemId "{gameId}:sim"
+useFindValues(submissionKey)    → "sim:willow:{key}"
+setValue("playerProfile:…")     → writes "sim:willow:…"</div>
+      </div>
+    </div>
+    <div style="height:16px"></div>
+    <div class="callout sim">
+      <b>The 'games' list is the one exemption:</b> there is no sim game row, so
+      <code class="k">useFindListItems('games')</code> keeps the real
+      <code class="k">gameId</code>. That's correct on purpose —
+      <code class="k">useGameOperatorUserId</code> still resolves the real operator
+      (who owns all sim records), while the persona switcher — not the ownership
+      check — decides which screen mounts.
+    </div>
+  </div>
+</section>
+
+<!-- ==================== SLIDE 7 : CONSOLE PERSONA ==================== -->
+<section class="slide">
+  <div class="slide-inner">
+    <div class="kicker">Mock · the other half of the loop</div>
+    <h2>"Console" is the operator UI on the sim namespace</h2>
+    <p class="small" style="margin-bottom:14px">
+      The last menu item mounts <code class="k">OperatorGamePage</code> against
+      <code class="k">{gameId}:sim</code> — the real certify table, real tag
+      triggers, real morning writes — with the console strip for staging.
+      Submit as Willow here, certify as operator here, dial forward, repeat.
+    </p>
+    <div class="appframe">
+      <div class="af-toprow">
+        <div class="personachip sim">
+          <div class="avatar">⚙</div>
+          <div class="who"><div class="nm">Sim Console</div><div class="sub">simulation · operator</div></div>
+          <span class="caret" style="color:rgba(255,255,255,.7)">▼</span>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center">
+          <span class="topchip" style="border-color:var(--sim-light);background:rgba(91,61,143,.35)"><b>SIM</b> isolated</span>
+          <span class="homebtn" style="border-color:var(--sim-light);color:var(--sim-light)">⌂</span>
+        </div>
+      </div>
+      <div class="af-logo">Wolffspoint</div>
+      <div class="gtabs">
+        <div class="gtab active"><div class="ring-outer"><div class="ring-mid"><div class="ring-inner"><div class="face"><span class="tic">▦</span>Players</div></div></div></div></div>
+        <div class="gtab"><div class="ring-outer"><div class="ring-mid"><div class="ring-inner"><div class="face"><span class="tic">⬢</span>Roles</div></div></div></div></div>
+        <div class="gtab"><div class="ring-outer"><div class="ring-mid"><div class="ring-inner"><div class="face"><span class="tic">⬡</span>Files</div></div></div></div></div>
+        <div class="gtab"><div class="ring-outer"><div class="ring-mid"><div class="ring-inner"><div class="face"><span class="tic">☰</span>Town Sq</div></div></div></div></div>
+        <div class="gtab"><div class="ring-outer"><div class="ring-mid"><div class="ring-inner"><div class="face"><span class="tic">✎</span>News</div></div></div></div></div>
+        <div class="gtab"><div class="ring-outer"><div class="ring-mid"><div class="ring-inner"><div class="face"><span class="tic">⚙</span>Config</div></div></div></div></div>
+      </div>
+      <div class="gbody">
+        <div class="simstrip">
+          <span class="simbadge">● SIMULATION</span>
+          <div class="dial"><span class="arrow">◀</span><span class="daylabel">Day 3 of 7</span><span class="arrow">▶</span></div>
+          <span class="chip">4/5 voted</span><span class="chip">3/5 acted</span>
+          <span style="flex:1"></span>
+          <span class="btn btn-sm">Manage faux players</span>
+          <span class="btn btn-sm">Re-sync from live</span>
+          <span class="btn btn-dark btn-sm">Back to operator</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:14px">
+          <div><div style="font-size:13px;font-weight:700">Player submissions</div>
+          <div class="small">4/5 voted, 3/5 submitted actions</div></div>
+          <span style="flex:1"></span>
+          <span class="btn btn-gold" style="width:160px;justify-content:center">Review / Certify</span>
+        </div>
+        <div class="card" style="padding:0;overflow:hidden">
+          <table class="mock">
+            <tr><th style="width:110px">Day 3 · 4/18</th><th>Vote</th><th>Action</th><th>Morning</th><th>Suspects</th></tr>
+            <tr><td class="rowname">Faux Willow <span class="pill sim" style="font-size:8px;padding:1px 5px">faux</span></td><td><span class="celltext">✓</span></td><td><span class="pill red">Infected</span></td><td><span class="celltext">note.md</span></td><td><span class="pill red">Infected</span></td></tr>
+            <tr><td class="rowname">Faux Alder <span class="pill sim" style="font-size:8px;padding:1px 5px">faux</span></td><td><span class="celltext">✓</span></td><td><span class="celltext">—</span></td><td><span class="celltext">—</span></td><td><span class="pill green">Cleared</span></td></tr>
+            <tr><td class="rowname">Faux Briar <span class="pill sim" style="font-size:8px;padding:1px 5px">faux</span></td><td><span class="celltext">✓</span></td><td><span class="pill blue">Marked</span></td><td><span class="celltext">day3.md</span></td><td><span class="pill blue">Marked</span></td></tr>
+            <tr><td class="rowname">Faux Sorrel <span class="pill sim" style="font-size:8px;padding:1px 5px">faux</span></td><td><span class="celltext">✓</span></td><td><span class="celltext">—</span></td><td><span class="celltext">—</span></td><td><span class="celltext">UNSET</span></td></tr>
+            <tr><td class="rowname">Faux Jun <span class="pill sim" style="font-size:8px;padding:1px 5px">faux</span></td><td><span class="celltext">—</span></td><td><span class="celltext">—</span></td><td><span class="celltext">—</span></td><td><span class="celltext">UNSET</span></td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div style="height:12px"></div>
+    <div class="small">
+      This is the old "Sim tab" idea with a better costume: the operator screens
+      you already know, pointed at the sim namespace, reachable from the same
+      persona menu — so the submit → certify → next-day loop is a two-click
+      round trip between personas.
+    </div>
+  </div>
+</section>
+
+<!-- ==================== SLIDE 8 : WORKFLOW ==================== -->
+<section class="slide">
+  <div class="slide-inner">
+    <div class="kicker">Workflow</div>
+    <h2>A testing session, top to bottom</h2>
+    <div style="height:14px"></div>
+    <ol class="steps">
+      <li><b>Open the switcher</b> — top-left chip. "Manage faux players" seeds the
+      sim cast (or "Import real cast" copies tonight's live <code class="k">userTable</code>).</li>
+      <li><b>View as Faux Willow</b> — the whole screen is her game: real player
+      tabs, real Town Square. Her Eyes Only shows the werewolf script she'd see.</li>
+      <li><b>Play her turn</b> — type a real submission; it lands in
+      <code class="k">sim:willow:…</code>. Switch persona, repeat. Two clicks per
+      player, no console needed for happy-path staging.</li>
+      <li><b>Console → Certify</b> — swap to the sim operator view, hit
+      Review/Certify. Real <code class="k">PlannedUpdate</code>s, provenance ops,
+      tag triggers, morning writes — all in the sim namespace.</li>
+      <li><b>Turn the dial</b> — ◀ ▶ through days; every persona shares the sim
+      clock. View as Alder to check his morning message landed.</li>
+      <li><b>Poke it</b> — recertify, remove a tag, starve a submission, view as
+      a dead player. The live game never notices.</li>
+      <li><b>End simulation</b> — chip → "End simulation" (or just pick
+      "Operator"). Sim records stay namespaced; "Reset" wipes them.</li>
+    </ol>
+    <div style="height:16px"></div>
+    <div class="callout">
+      <b>State &amp; reload:</b> the session (active persona + sim day) persists in a
+      per-user record <code class="k">simSession:{gameId}</code>, so a reload lands
+      you back where you were. Tabs inside the persona view are ordinary React
+      state, same as today — no router changes, no back-button weirdness.
+    </div>
+  </div>
+</section>
+
+<!-- ==================== SLIDE 9 : EDGE CASES + PLAN ==================== -->
+<section class="slide">
+  <div class="slide-inner">
+    <div class="kicker">Plan</div>
+    <h2>What it costs to build — and what could bite</h2>
+    <div class="twocol">
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div class="phase">
+          <div class="pt">Phase 1 — the switcher</div>
+          <ul>
+            <li><code class="k">SimContext</code> + the two redirect rules in <code class="k">useData.ts</code></li>
+            <li>Persona chip + menu in <code class="k">MainPage</code> (top-left)</li>
+            <li><code class="k">PlayerGamePage</code> mount with <code class="k">simIdentity</code> gate prop</li>
+            <li>Persona seeding (userTable row + userData + profile)</li>
+            <li>Sim strip (switch / console / back-to-operator)</li>
+          </ul>
+        </div>
+        <div class="phase">
+          <div class="pt">Phase 2 — the console persona</div>
+          <ul>
+            <li><code class="k">OperatorGamePage</code> on <code class="k">:sim</code> + console strip</li>
+            <li>Snapshot-copy config records (roles, files, tag defs, schedule)</li>
+            <li>Faux roster CRUD, "Import real cast", Reset / Re-sync</li>
+            <li>Day dial → <code class="k">selectedDayIndex:{simId}</code></li>
+          </ul>
+        </div>
+        <div class="phase">
+          <div class="pt">Phase 3 — depth</div>
+          <ul>
+            <li>Ghost persona (dead-player UI paths)</li>
+            <li>Scripted scenarios via the esbuild+node smoke harness</li>
+            <li>Perf: ensure redirect adds no render overhead when sim is off</li>
+          </ul>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div class="phase">
+          <div class="pt">Edge cases to get right</div>
+          <ul>
+            <li><b>'games' list exemption</b> — sim id has no games row; ownership
+            lookups must keep the real id (one allowlist entry in the redirect).</li>
+            <li><b>Profile-claim gate</b> — seeded profiles skip it; an
+            un-seeded persona would show the claim dialog (that's a valid test too).</li>
+            <li><b>Non-persona user records</b> — <code class="k">activeGameId</code>,
+            <code class="k">customUserInfo</code> stay real (they're about <i>you</i>,
+            not the persona); the redirect only rewrites keys that carry the
+            game scope or persona opt-in list.</li>
+            <li><b>Write path</b> — <code class="k">setValue</code> must redirect the
+            same way as reads, or persona writes leak to real keys.</li>
+            <li><b>Minimize/dialog state</b> — persona swap unmounts the tree;
+            minimized cards are scope-keyed, so nothing cross-contaminates.</li>
+          </ul>
+        </div>
+        <div class="callout sim">
+          <b>Perf note (ties into the bigger effort):</b> the redirect is one
+          context read inside <code class="k">useData</code> hooks — zero cost when
+          sim is inactive. Entering a persona remounts the screen once, the same
+          cost as switching games. Nothing hot-path changes.
+        </div>
+        <div class="callout">
+          <b>Open questions:</b> (1) Chip visible to operators only — confirm
+          that's the right gate (it's keyed off the same
+          <code class="k">ownedGameRows</code> check GamePage already makes).
+          (2) Persist sim session across reloads, or always start at Operator?
+          (3) Should "Import real cast" also copy cell state/tags, or roster only?
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="hint">sim-design/index.html · proposal only — no app code touched</div>
+<div class="num" id="slidenum"></div>
+</div>
+<script>
+  const slides = document.querySelectorAll('.slide');
+  const numEl = document.getElementById('slidenum');
+  const io = new IntersectionObserver((es) => {
+    es.forEach(e => {
+      if (e.isIntersecting) {
+        const i = [...slides].indexOf(e.target) + 1;
+        numEl.textContent = i + ' / ' + slides.length;
+      }
+    });
+  }, { threshold: .5 });
+  slides.forEach(s => io.observe(s));
+</script>
+</body>
+</html>

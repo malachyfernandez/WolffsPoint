@@ -1,0 +1,6 @@
+# Generated bundles, local build state, and profiling output are not source.
+/dist/
+/.expo/
+/trace_dir/
+/convex/_generated/
+/uniwind-types.d.ts

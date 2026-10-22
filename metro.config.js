@@ -5,7 +5,7 @@ const config = getDefaultConfig(__dirname);
 
 // Sim mode (`EXPO_PUBLIC_SIM=1`): transparently swap the real Convex/Clerk
 // client modules for the in-memory mocks in sim/. This is a bundle-time
-// module-resolution redirect — app source never changes, and with the flag
+// module-resolution redirect: app source never changes, and with the flag
 // off nothing here is touched. See sim/README.md.
 if (process.env.EXPO_PUBLIC_SIM === '1') {
   const path = require('path');

@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
-import { View, useWindowDimensions } from 'react-native';
+import { View } from 'react-native';
+import { useContentWidth } from 'hooks/useContentWidth';
 import { Plus } from 'lucide-react-native';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
@@ -22,6 +23,8 @@ import { useUndoRedo } from 'hooks/useUndoRedo';
 import { TownSquareComment } from 'types/multiplayer';
 import { createClientId, getGameScopedKey } from 'utils/multiplayer';
 import { getNewspaperDayItemId } from 'utils/newspaperControl';
+import { nowMs } from 'utils/simNow';
+
 
 interface NewspaperDayCommentsProps {
   gameId: string;
@@ -33,12 +36,12 @@ interface NewspaperDayCommentsProps {
  * Square reply system (TownSquareComment records, buildReplyTree,
  * TownSquareReplyBranch, MarkdownEditorDialog) but stores comments under a
  * newspaper-scoped list key with the day's newspaper itemId as the postId, so
- * each day gets one flat top-level reply list with nested replies — identical
+ * each day gets one flat top-level reply list with nested replies, identical
  * to the replies section inside a Town Square thread.
  */
 const NewspaperDayComments = ({ gameId, dayIndex }: NewspaperDayCommentsProps) => {
   const { isPlayerDead } = usePlayerStatus();
-  const { width } = useWindowDimensions();
+  const width = useContentWidth();
   const showCommentsTitle = width >= 440;
   const [userData] = useValue<{ userId?: string }>('userData');
   const currentUserId = userData.value.userId ?? '';
@@ -116,7 +119,7 @@ const NewspaperDayComments = ({ gameId, dayIndex }: NewspaperDayCommentsProps) =
     const commentValue: TownSquareComment = {
       authorUserId: currentUserId,
       commentId,
-      createdAt: Date.now(),
+      createdAt: nowMs(),
       gameId,
       markdown,
       parentCommentId,
@@ -314,7 +317,7 @@ const NewspaperDayComments = ({ gameId, dayIndex }: NewspaperDayCommentsProps) =
         ) : (
           <Column className="gap-1 py-8">
             <FontText weight="medium">No comments yet</FontText>
-            <FontText variant="subtext">{isPlayerDead ? 'Ghosts don’t talk silly — you can only read.' : 'Be the first person to share a comment.'}</FontText>
+            <FontText variant="subtext">{isPlayerDead ? 'Ghosts don’t talk silly: you can only read.' : 'Be the first person to share a comment.'}</FontText>
           </Column>
         )}
       </Column>

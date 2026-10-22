@@ -1,4 +1,5 @@
-import React, { useState, useCallback } from 'react';
+import React, { useId, useState, useCallback } from 'react';
+import { useTooltip } from 'hooks/useTooltip';
 import { Pressable } from 'react-native';
 import FontText from '../text/FontText';
 import MustSaveDialog from './MustSaveDialog';
@@ -26,6 +27,7 @@ interface MinimizeButtonProps {
 const MinimizeButton = ({ hasUnsavedChanges, onSave, onMinimize }: MinimizeButtonProps) => {
   const [mustSaveOpen, setMustSaveOpen] = useState(false);
   const { isAvailable } = useMinimize();
+  const { setHovered } = useTooltip(useId(), 'Minimize');
 
   const handlePress = useCallback(() => {
     if (hasUnsavedChanges) {
@@ -45,7 +47,12 @@ const MinimizeButton = ({ hasUnsavedChanges, onSave, onMinimize }: MinimizeButto
   return (
     <>
       <Pressable
-        onPress={handlePress}
+        onPress={() => {
+          setHovered(false);
+          handlePress();
+        }}
+        onHoverIn={() => setHovered(true)}
+        onHoverOut={() => setHovered(false)}
         accessibilityRole="button"
         accessibilityLabel="Minimize"
         className="minimize-hide bg-text-inverted/10 hover:bg-text-inverted/15 absolute right-11 top-0 z-10 h-10 w-10 items-center justify-center rounded-full">

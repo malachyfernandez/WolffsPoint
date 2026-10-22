@@ -41,7 +41,7 @@ interface LoadingContainerProps {
   fadeInDuration?: number;
   /** Keep children mounted (invisible, non-interactive) while loading so they can
    *  fetch their own data and report readiness. The loading text overlays on top.
-   *  Default true — pass keepMounted={false} to unmount children until ready. */
+   *  Default true: pass keepMounted={false} to unmount children until ready. */
   keepMounted?: boolean;
   /** Called when the container transitions from loading to ready */
   onReady?: () => void;
@@ -96,7 +96,7 @@ const LoadingContainer = ({
     return false;
   });
 
-  // Report to BodyReadinessProvider — waits for isLoading→false + fadeInDuration
+  // Report to BodyReadinessProvider: waits for isLoading→false + fadeInDuration
   useBodyLoadReport(isLoading, fadeInDuration, `LoadingContainer(${loadingText})`);
 
   useEffect(() => {

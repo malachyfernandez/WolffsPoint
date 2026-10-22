@@ -33,7 +33,7 @@ interface DefinedFunctionLike {
   returnEntrySource?: string;
 }
 
-/** Options for type inference — provides the context needed to trace sources. */
+/** Options for type inference: provides the context needed to trace sources. */
 export interface InferTypeOptions {
   /** Map of input label → data source name (from CreateSelectInput LIST args). */
   inputSources?: Record<string, string>;
@@ -75,9 +75,9 @@ export const inferDataSourceType = (
   if (lower === 'placedtag' || lower === 'placedcolumn') return 'string';
   if (lower === 'schedule') return 'object';
   if (lower === 'placeduser' || lower === 'currentplayer') return 'object';
-  // Inputs / InputsWithData are special markers — not plain lists
+  // Inputs / InputsWithData are special markers; not plain lists
   if (lower === 'inputs' || lower === 'inputswithdata') return 'any';
-  // Check entryKeysBySource — if it has keys, it could be an object or list of objects
+  // Check entryKeysBySource: if it has keys, it could be an object or list of objects
   const keys = entryKeysBySource[name] ?? entryKeysBySource[lower];
   if (keys !== undefined) {
     return 'any';
@@ -116,7 +116,7 @@ export const inferBlockResultType = (
   if (block.id === 'filter' || block.id === 'map' || block.id === 'sort') return 'list';
   // List operations that return scalars
   if (block.id === 'length' || block.id === 'count') return 'number';
-  // first/last/get return an element — object when receiver is a list of objects
+  // first/last/get return an element: object when receiver is a list of objects
   if (block.id === 'first' || block.id === 'last' || block.id === 'get') {
     if (receiverType === 'list') return 'object';
     return 'any';
@@ -130,7 +130,7 @@ export const inferBlockResultType = (
     if (block.id === 'startsWith' || block.id === 'endsWith') return 'boolean';
     return 'string';
   }
-  // entry returns whatever the field is — could be anything
+  // entry returns whatever the field is; could be anything
   if (block.id === 'entry') return 'any';
   if (block.id === 'index') return 'any';
   // Properties
@@ -360,7 +360,7 @@ const inferBaseType = (expr: Expression, ctx: TypeCtx): TypeInfo => {
       if (expr.callee.kind === 'IdentifierExpression') {
         return inferFunctionCallType(expr, ctx);
       }
-      // Chain (MemberExpression callee) — decompose and walk
+      // Chain (MemberExpression callee): decompose and walk
       const chain = decomposeChain(expr);
       if (chain.length > 1) return inferChainType(chain, ctx);
       return { type: 'any', source: undefined };
@@ -393,7 +393,7 @@ const inferBaseType = (expr: Expression, ctx: TypeCtx): TypeInfo => {
 
 /** Apply a chain method/property link to a TypeInfo, producing the next TypeInfo. */
 const applyLink = (link: ChainLink, info: TypeInfo, ctx: TypeCtx): TypeInfo => {
-  // Property access (no args) — treat as a method with empty args
+  // Property access (no args): treat as a method with empty args
   if (link.type === 'property') {
     return applyMethod(link.name, [], info, ctx);
   }
@@ -412,7 +412,7 @@ const applyMethod = (
 ): TypeInfo => {
   const lower = name.toLowerCase();
 
-  // .entry("X") — field access on an object
+  // .entry("X"): field access on an object
   if (lower === 'entry') {
     const keyArg = args[0];
     if (keyArg && keyArg.value.kind === 'StringLiteral') {
@@ -430,7 +430,7 @@ const applyMethod = (
     return { type: 'any', source: undefined };
   }
 
-  // .first()/.last()/.get() — element of a list
+  // .first()/.last()/.get(): element of a list
   if (lower === 'first' || lower === 'last' || lower === 'get') {
     if (info.type === 'list') {
       return { type: sourceElementType(info.source, ctx.entryKeysBySource), source: info.source };
@@ -438,7 +438,7 @@ const applyMethod = (
     return { type: 'any', source: undefined };
   }
 
-  // .index(position) — element at position (like first/get)
+  // .index(position): element at position (like first/get)
   if (lower === 'index') {
     if (info.type === 'list') {
       return { type: sourceElementType(info.source, ctx.entryKeysBySource), source: info.source };
@@ -446,7 +446,7 @@ const applyMethod = (
     return { type: 'any', source: undefined };
   }
 
-  // .filter()/.sort() — preserve list + source
+  // .filter()/.sort(): preserve list + source
   if (lower === 'filter' || lower === 'sort') {
     if (info.type === 'list' || info.type === 'any') {
       return { type: 'list', source: info.source };
@@ -454,7 +454,7 @@ const applyMethod = (
     return { type: 'any', source: undefined };
   }
 
-  // .map(lambda) — list of lambda body types
+  // .map(lambda): list of lambda body types
   if (lower === 'map') {
     if (info.type === 'list' || info.type === 'any') {
       const lambdaArg = args[0];
@@ -478,14 +478,14 @@ const applyMethod = (
     return { type: 'any', source: undefined };
   }
 
-  // .count()/.length() — number
+  // .count()/.length(): number
   if (lower === 'count' || lower === 'length') return { type: 'number', source: undefined };
-  // .join() — string
+  // .join(): string
   if (lower === 'join') return { type: 'string', source: undefined };
-  // .contains() — boolean
+  // .contains(): boolean
   if (lower === 'contains') return { type: 'boolean', source: undefined };
 
-  // Math/string/other blocks — use inferBlockResultType
+  // Math/string/other blocks: use inferBlockResultType
   const block = EXPRESSION_BLOCKS.find((b) => b.name.toLowerCase() === lower);
   if (block) return { type: inferBlockResultType(block, info.type), source: undefined };
 
@@ -497,7 +497,7 @@ const inferChainType = (chain: ChainLink[], ctx: TypeCtx): TypeInfo => {
   const base = chain[0];
   if (base.type !== 'base') return { type: 'any', source: undefined };
 
-  // InputsWithData.entry("X") — resolve to the input's data source
+  // InputsWithData.entry("X"): resolve to the input's data source
   if (
     base.expr.kind === 'IdentifierExpression' &&
     base.expr.name.toLowerCase() === 'inputswithdata'
@@ -525,12 +525,12 @@ const inferChainType = (chain: ChainLink[], ctx: TypeCtx): TypeInfo => {
     return { type: 'any', source: undefined };
   }
 
-  // Inputs.entry("X") — raw selected value (primitive string or array of strings)
+  // Inputs.entry("X"): raw selected value (primitive string or array of strings)
   if (base.expr.kind === 'IdentifierExpression' && base.expr.name.toLowerCase() === 'inputs') {
     for (let i = 1; i < chain.length; i++) {
       const link = chain[i];
       if (link.type === 'method' && link.name.toLowerCase() === 'entry') {
-        // After .entry("X"), the value is a primitive — source undefined
+        // After .entry("X"), the value is a primitive, source undefined
         let info: TypeInfo = { type: 'any', source: undefined };
         for (let j = i + 1; j < chain.length; j++) {
           info = applyLink(chain[j], info, ctx);
@@ -550,7 +550,7 @@ const inferChainType = (chain: ChainLink[], ctx: TypeCtx): TypeInfo => {
 };
 
 /** Infer the type of an expression based on its AST structure.
- * This is a best-effort inference — it doesn't evaluate the expression,
+ * This is a best-effort inference; it doesn't evaluate the expression,
  * just looks at its shape and traces data sources through chains. */
 export const inferExpressionType = (
   expr: Expression,

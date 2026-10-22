@@ -1,5 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import { useValue } from './useData';
+import { nowMs } from '../utils/simNow';
 
 /** A user-saved function, stored as printed source so it can be re-parsed. */
 export interface SavedFunction {
@@ -28,7 +29,7 @@ export function useSavedFunctions() {
       const current = record?.value ?? [];
       // Replace if a function with the same name already exists.
       const filtered = current.filter((fn) => fn.name !== name);
-      setRecord([...filtered, { name, source, savedAt: Date.now() }]);
+      setRecord([...filtered, { name, source, savedAt: nowMs() }]);
     },
     [record?.value, setRecord]
   );

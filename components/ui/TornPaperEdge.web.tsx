@@ -5,7 +5,7 @@ import React from 'react';
  * Clip-path composites cheaply on every browser (the SVG displacement filter
  * this replaced caused mobile browsers to drop and re-rasterize layer tiles
  * while scrolling). Points are generated per pixel of edge length
- * (PX_PER_POINT) so the tear has consistent density on edges of any length —
+ * (PX_PER_POINT) so the tear has consistent density on edges of any length,
  * along-edge positions are %, perpendicular jag is px.
  */
 const PX_PER_POINT = 7;
@@ -60,7 +60,7 @@ const getTornEdgeClipPath = (width: number, height: number) => {
     return clipPath;
 };
 
-/** No-op on web — torn edges are now clip-path based, no SVG defs needed. */
+/** No-op on web: torn edges are now clip-path based, no SVG defs needed. */
 export const TornPaperEdgeDefs = () => null;
 
 interface TornPaperBackgroundProps {
@@ -70,7 +70,7 @@ interface TornPaperBackgroundProps {
 
 /**
  * Absolute-fill paper layer with a torn silhouette plus a cheap static
- * box-shadow behind it. Sits behind content — pair with a
+ * box-shadow behind it. Sits behind content: pair with a
  * `position: relative` parent. The inset box-shadow rides along the clipped
  * edge so the rim reads as fibrous/darker paper.
  */

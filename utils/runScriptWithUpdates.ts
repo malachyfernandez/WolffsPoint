@@ -2,6 +2,7 @@ import { interpretScript } from '../script/runtime/interpreter';
 import { createScriptGlobals, type ScriptSourceData } from '../script/runtime/sources';
 import { TableUpdate } from '../script/registry';
 import { UserTableItem, UserTableTitle } from '../types/playerTable';
+import { effectiveCellText } from './cellPieces';
 import {
   VOTE_MULTIPLIER_COLUMN,
   LIVING_STATE_COLUMN,
@@ -27,8 +28,10 @@ export const runScriptWithUpdates = (
   if (!scriptText.trim()) return { updates: [], issues: [] };
 
   const globals = createScriptGlobals(source);
+  const eff = (raw: string) => effectiveCellText(raw, source.filesIndex);
 
-  // Build a getCellValue function that reads from the current user table
+  // Build a getCellValue function that reads effective cell text from the
+  // current user table
   const getCellValue = (
     playerIndex: number | null,
     dayIndex: number | null,
@@ -50,7 +53,7 @@ export const runScriptWithUpdates = (
       const extraUserColumnTitles = titles.extraUserColumns ?? [];
       const colIdx = extraUserColumnTitles.findIndex((t) => t.toLowerCase() === colLower);
       if (colIdx === -1) return '';
-      return user.playerData.extraColumns?.[colIdx] ?? '';
+      return eff(user.playerData.extraColumns?.[colIdx] ?? '');
     } else {
       // Special: morningMessage is stored in a separate structure
       if (colLower === MORNING_MESSAGE_COLUMN) {
@@ -73,7 +76,7 @@ export const runScriptWithUpdates = (
       const colIdx = extraDayColumnTitles.findIndex((t) => t.toLowerCase() === colLower);
       if (colIdx === -1) return '';
       const day = user.days?.[dayIndex];
-      return day?.extraColumns?.[colIdx] ?? '';
+      return eff(day?.extraColumns?.[colIdx] ?? '');
     }
   };
 
@@ -84,6 +87,7 @@ export const runScriptWithUpdates = (
       globals,
       tableUpdates: updates,
       getCellValue,
+      filesIndex: source.filesIndex,
     });
     return {
       updates,

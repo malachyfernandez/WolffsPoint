@@ -18,6 +18,9 @@ import { usePendingColumnOpen } from 'hooks/usePendingColumnOpen';
 import { Usepaper } from 'types/usepaper';
 import { Newspaper } from 'lucide-react-native';
 import { hasNewspaperContent } from 'utils/newspaperSections';
+import { nowMs } from 'utils/simNow';
+import { useContentWidth } from 'hooks/useContentWidth';
+
 
 interface NewspaperPageNEWSERProps {
     currentUserId: string;
@@ -29,6 +32,7 @@ const NewspaperPageNEWSER = ({ currentUserId, currentEmail, gameId }: NewspaperP
     const [activeTab, setActiveTab] = useState<'writing' | 'viewing'>('writing');
     const [selectedDayIndex, setSelectedDayIndex] = useState(0);
     const { operatorUserId, isLoading: isOperatorLoading } = useGameOperatorUserId(gameId);
+    const contentWidth = useContentWidth();
     const { value: operatorDayDates, isLoading: isDayDatesLoading } = useSharedListValue<string[]>({
         key: 'dayDatesArray',
         itemId: gameId,
@@ -96,7 +100,7 @@ const NewspaperPageNEWSER = ({ currentUserId, currentEmail, gameId }: NewspaperP
             email: currentEmail,
             userId: currentUserId,
             gameId,
-            acceptedAt: Date.now(),
+            acceptedAt: nowMs(),
         });
     }, [accepted, currentEmail, currentUserId, gameId, setAccepted]);
 
@@ -128,7 +132,7 @@ const NewspaperPageNEWSER = ({ currentUserId, currentEmail, gameId }: NewspaperP
         }
     };
 
-    // Minimized column editors restore through here — the per-day writing
+    // Minimized column editors restore through here, the per-day writing
     // views unmount on day switches, so the request must live at page level.
     const { pendingColumnOpen, requestColumnOpen, consumePendingColumnOpen } = usePendingColumnOpen(
         (dayIndex) => {
@@ -200,7 +204,7 @@ const NewspaperPageNEWSER = ({ currentUserId, currentEmail, gameId }: NewspaperP
             </View>
 
             <Column className='gap-4 max-w-237.5 w-full self-center'>
-                <View className='px-2 sm:px-0'>
+                <View className={contentWidth >= 640 ? 'px-0' : 'px-2'}>
                     <LayoutStateAnimatedView.Container stateVar={String(selectedDayIndex)} highPerformance>
                         <LayoutStateAnimatedView.OptionContainer page={selectedDayIndex} pushInAnimation={fromRight}>
                             <LayoutStateAnimatedView.Option

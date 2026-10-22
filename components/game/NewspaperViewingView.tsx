@@ -7,6 +7,7 @@ import { Newspaper } from 'lucide-react-native';
 import { Usepaper } from 'types/usepaper';
 import NewspaperZoomableView from './newspaperPageOperator/NewspaperZoomableView';
 import { hasNewspaperContent } from 'utils/newspaperSections';
+import { useContentWidth } from 'hooks/useContentWidth';
 
 interface NewspaperViewingViewProps {
     gameId: string;
@@ -19,6 +20,7 @@ interface NewspaperViewingViewProps {
 const NewspaperViewingView = ({ gameId, usepaper, TILE_SIZE, roundBottom, onReady }: NewspaperViewingViewProps) => {
     const isSkipped = Boolean(usepaper.skipped);
     const hasContent = hasNewspaperContent(usepaper);
+    const contentWidth = useContentWidth();
 
     if (isSkipped) {
         return (
@@ -53,7 +55,7 @@ const NewspaperViewingView = ({ gameId, usepaper, TILE_SIZE, roundBottom, onRead
     }
 
     return (
-        <View className='sm:mx-0 -mx-2'>
+        <View className={contentWidth >= 640 ? 'mx-0' : '-mx-2'}>
             <NewspaperZoomableView
                 usepaper={usepaper}
                 gameId={gameId}

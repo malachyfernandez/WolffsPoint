@@ -6,12 +6,11 @@ import AppButton from '../ui/buttons/AppButton';
 import ColumnActionsDialog from './ColumnActionsDialog';
 import { ColumnSizeOption, getInnerTextWidth } from './playerTableColumnSizing';
 import { SelectableColumnOverlay } from './multiSelect/SelectableOverlay';
+import type { CellContentType, UserTableTitle } from '../../types/playerTable';
 
 interface DayTitleRowProps {
-  userTableTitle?: {
-    extraUserColumns: string[];
-    extraDayColumns: string[];
-  };
+  userTableTitle?: UserTableTitle;
+  onSetColumnType?: (index: number, type: CellContentType) => void;
   userTableColumnVisibility?: {
     extraUserColumns: boolean[];
     extraDayColumns: boolean[];
@@ -23,30 +22,32 @@ interface DayTitleRowProps {
   dayBaseColumnWidths: {
     vote: number;
     action: number;
+    morningMessage: number;
   };
   extraDayColumnWidths: number[];
   dayBaseColumnSizes: {
     vote: ColumnSizeOption;
     action: ColumnSizeOption;
+    morningMessage: ColumnSizeOption;
   };
   extraDayColumnSizes: ColumnSizeOption[];
-  onSetDayBaseColumnSize?: (columnKey: 'vote' | 'action', size: ColumnSizeOption) => void;
+  onSetDayBaseColumnSize?: (
+    columnKey: 'vote' | 'action' | 'morningMessage',
+    size: ColumnSizeOption
+  ) => void;
   onSetExtraDayColumnSize?: (columnIndex: number, size: ColumnSizeOption) => void;
   onDeleteExtraDayColumn?: (columnIndex: number) => void;
-  /** Per-column nightly visibility flags (extra day columns). */
-  nightlyVisibility?: boolean[];
-  /** Toggle nightly visibility for a column. */
-  onToggleNightlyVisibility?: (columnIndex: number) => void;
   selectionMode?: boolean;
   columnCellIds?: {
     vote: string[];
     action: string[];
+    morningMessage: string[];
     extra: string[][];
   };
 }
 
 type ActiveColumnMenu =
-  | { type: 'base'; column: 'vote' | 'action' }
+  | { type: 'base'; column: 'vote' | 'action' | 'morningMessage' }
   | { type: 'extra'; index: number }
   | null;
 
@@ -64,10 +65,9 @@ const DayTitleRow = ({
   onSetDayBaseColumnSize,
   onSetExtraDayColumnSize,
   onDeleteExtraDayColumn,
-  nightlyVisibility,
-  onToggleNightlyVisibility,
   selectionMode = false,
   columnCellIds,
+  onSetColumnType,
 }: DayTitleRowProps) => {
   const titles = userTableTitle ?? { extraUserColumns: [], extraDayColumns: [] };
   const visibility = userTableColumnVisibility ?? { extraUserColumns: [], extraDayColumns: [] };
@@ -107,10 +107,7 @@ const DayTitleRow = ({
               </FontText>
             </AppButton>
           )}
-          <SelectableColumnOverlay
-            columnCellIds={columnCellIds?.vote ?? []}
-            cellType="daysVote"
-          />
+          <SelectableColumnOverlay columnCellIds={columnCellIds?.vote ?? []} cellType="daysVote" />
         </Row>
         <Row
           className="h-full items-center justify-center gap-0 px-2"
@@ -136,6 +133,32 @@ const DayTitleRow = ({
             cellType="daysAction"
           />
         </Row>
+        {dayBaseColumnWidths.morningMessage > 0 && (
+          <Row
+            className="h-full items-center justify-center gap-0 px-2"
+            style={{ width: dayBaseColumnWidths.morningMessage, position: 'relative' }}>
+            <FontText
+              weight="medium"
+              className="text-center"
+              style={{ width: getInnerTextWidth(dayBaseColumnWidths.morningMessage) }}>
+              Morning
+            </FontText>
+            {!selectionMode && (
+              <AppButton
+                variant="grey"
+                className="ml-0 mr-[0.4rem] max-h-6 w-6"
+                onPress={() => setActiveMenu({ type: 'base', column: 'morningMessage' })}>
+                <FontText weight="bold" color="white" className="mt-[-0.1rem] text-lg">
+                  ⋯
+                </FontText>
+              </AppButton>
+            )}
+            <SelectableColumnOverlay
+              columnCellIds={columnCellIds?.morningMessage ?? []}
+              cellType="morningMessage"
+            />
+          </Row>
+        )}
         {titles.extraDayColumns.map((columnTitle, index) => {
           if (!visibility.extraDayColumns[index]) return null;
 
@@ -170,16 +193,15 @@ const DayTitleRow = ({
                 </AppButton>
               )}
               {selectionMode && (
-                <FontText
-                  weight="medium"
-                  className="text-center"
-                  style={{ width: textWidth }}>
+                <FontText weight="medium" className="text-center" style={{ width: textWidth }}>
                   {columnTitle}
                 </FontText>
               )}
               <SelectableColumnOverlay
                 columnCellIds={columnCellIds?.extra[index] ?? []}
-                cellType="daysExtra"
+                cellType={
+                  titles.extraDayColumnTypes?.[index] === 'files' ? 'daysExtraFiles' : 'daysExtra'
+                }
               />
             </Row>
           );
@@ -194,6 +216,16 @@ const DayTitleRow = ({
           }
         }}
         title={activeMenu?.type === 'extra' ? 'Column options' : 'Resize column'}
+        contentType={
+          activeMenu?.type === 'extra'
+            ? (titles.extraDayColumnTypes?.[activeMenu.index] ?? 'tags')
+            : undefined
+        }
+        onSelectContentType={
+          activeMenu?.type === 'extra'
+            ? (type) => onSetColumnType?.(activeMenu.index, type)
+            : undefined
+        }
         selectedSize={
           activeMenu?.type === 'base'
             ? dayBaseColumnSizes[activeMenu.column]
@@ -214,14 +246,6 @@ const DayTitleRow = ({
         onDelete={
           activeMenu?.type === 'extra'
             ? () => onDeleteExtraDayColumn?.(activeMenu.index)
-            : undefined
-        }
-        showInNightly={
-          activeMenu?.type === 'extra' ? nightlyVisibility?.[activeMenu.index] : undefined
-        }
-        onToggleShowInNightly={
-          activeMenu?.type === 'extra' && onToggleNightlyVisibility
-            ? () => onToggleNightlyVisibility(activeMenu.index)
             : undefined
         }
       />

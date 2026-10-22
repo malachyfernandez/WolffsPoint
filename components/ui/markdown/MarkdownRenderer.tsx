@@ -21,6 +21,18 @@ import type { NewspaperDividerStyle, NewspaperTitleFont } from 'types/usepaper';
 import { getNewspaperFontFamily } from 'utils/newspaperSections';
 import { parseMarkdownImageAlt } from 'utils/markdownImageOptions';
 import { useNewspaperFonts } from 'hooks/useNewspaperFonts';
+import { expandFileMarkersInText, ScriptFilesIndexContext } from 'utils/scriptFiles';
+import { parseMarkdown, type MarkdownBlock } from 'utils/parseMarkdown';
+import {
+  evaluateMarkdownDocument,
+  type MarkdownDocumentNode,
+} from 'utils/markdownDocument';
+import MarkdownDocumentView, {
+  type MarkdownDocumentNavigationRequest,
+} from './MarkdownDocumentView';
+import { ScriptRenderers } from '../../../script/runtime/renderers';
+
+export { parseMarkdown, type MarkdownBlock } from 'utils/parseMarkdown';
 
 interface MarkdownRendererProps {
   markdown: string;
@@ -36,17 +48,10 @@ interface MarkdownRendererProps {
   newspaperTitleFont?: NewspaperTitleFont;
   /** When set, `---` rules use this divider style. */
   newspaperDividerStyle?: NewspaperDividerStyle;
+  /** Optional pre-evaluated full-document nodes shared with a table of contents. */
+  documentNodes?: MarkdownDocumentNode[];
+  navigationRequest?: MarkdownDocumentNavigationRequest;
 }
-
-export type MarkdownBlock =
-  | { type: 'heading'; level: number; text: string }
-  | { type: 'paragraph'; text: string }
-  | { type: 'list'; ordered: boolean; items: string[] }
-  | { type: 'quote'; text: string }
-  | { type: 'rule' }
-  | { type: 'space' }
-  | { type: 'script'; source: string }
-  | { type: 'image'; alt: string; url: string };
 
 type MarkdownInputKind = 'text' | 'player_alive' | 'player_dead' | 'player_all' | 'role';
 
@@ -147,7 +152,8 @@ const MarkdownImage = ({
   }, [url]);
 
   const imageOptions = parseMarkdownImageAlt(alt);
-  const hasBorder = imageOptions.hasBorderOverride ?? (Boolean(newspaperTitleFont) || removeImageBorders === false);
+  const hasBorder =
+    imageOptions.hasBorderOverride ?? (Boolean(newspaperTitleFont) || removeImageBorders === false);
   const borderAllowance = hasBorder ? 6 : 0; // 2 × 3px border
 
   const maxImageHeight = windowHeight * ((viewHeightImages || 50) / 100);
@@ -187,7 +193,12 @@ const MarkdownImage = ({
               height: 'auto',
               objectFit: 'contain',
               ...(hasBorder
-                ? { borderWidth: 3, borderStyle: 'solid', borderColor: 'rgb(46, 41, 37)', boxSizing: 'border-box' }
+                ? {
+                    borderWidth: 3,
+                    borderStyle: 'solid',
+                    borderColor: 'rgb(46, 41, 37)',
+                    boxSizing: 'border-box',
+                  }
                 : {}),
             }}
           />
@@ -499,7 +510,9 @@ const renderInlineMarkdown = (text: string, keyPrefix: string, inheritedStyle?: 
 
       if (part.startsWith('*') && part.endsWith('*')) {
         return (
-          <FontText key={`${keyPrefix}-italic-${index}`} style={{ fontStyle: 'italic', ...inheritedStyle }}>
+          <FontText
+            key={`${keyPrefix}-italic-${index}`}
+            style={{ fontStyle: 'italic', ...inheritedStyle }}>
             {part.slice(1, -1)}
           </FontText>
         );
@@ -552,124 +565,17 @@ const renderInlineMarkdown = (text: string, keyPrefix: string, inheritedStyle?: 
         }
       }
 
-      return <FontText key={`${keyPrefix}-text-${index}`} style={inheritedStyle}>{part}</FontText>;
+      return (
+        <FontText key={`${keyPrefix}-text-${index}`} style={inheritedStyle}>
+          {part}
+        </FontText>
+      );
     });
-};
-
-export const parseMarkdown = (markdown: string): MarkdownBlock[] => {
-  const processedMarkdown = markdown
-    .replace(/\r\n/g, '\n')
-    .split('\n')
-    .map((line) => line + '  ')
-    .join('\n');
-
-  const lines = processedMarkdown.split('\n');
-  const blocks: MarkdownBlock[] = [];
-  let index = 0;
-
-  while (index < lines.length) {
-    const line = lines[index].trim();
-
-    if (line.toLowerCase().startsWith('/*script')) {
-      const scriptLines: string[] = [];
-      let scriptLine = lines[index].trimEnd();
-      scriptLine = scriptLine.slice(scriptLine.toLowerCase().indexOf('/*script') + 8);
-      while (!scriptLine.toLowerCase().includes('script*/') && index + 1 < lines.length) {
-        if (scriptLine.length > 0) {
-          scriptLines.push(scriptLine);
-        }
-        index += 1;
-        scriptLine = lines[index].trimEnd();
-      }
-      const closingIndex = scriptLine.toLowerCase().indexOf('script*/');
-      const finalLine = closingIndex >= 0 ? scriptLine.slice(0, closingIndex) : scriptLine;
-      if (finalLine.length > 0) {
-        scriptLines.push(finalLine);
-      }
-      blocks.push({ type: 'script', source: scriptLines.join('\n').trim() });
-      index += 1;
-      continue;
-    }
-
-    if (line.length === 0) {
-      blocks.push({ type: 'space' });
-      index += 1;
-      continue;
-    }
-
-    const imageMatch = line.match(/^!\[([^\]]*)\]\(([^)]*)\)$/);
-    if (imageMatch) {
-      blocks.push({
-        type: 'image',
-        alt: imageMatch[1],
-        url: imageMatch[2],
-      });
-      index += 1;
-      continue;
-    }
-
-    const headingMatch = line.match(/^(#{1,3})\s+(.*)$/);
-    if (headingMatch) {
-      blocks.push({
-        type: 'heading',
-        level: headingMatch[1].length,
-        text: headingMatch[2],
-      });
-      index += 1;
-      continue;
-    }
-
-    if (/^---+$/.test(line) || /^\*\*\*+$/.test(line)) {
-      blocks.push({ type: 'rule' });
-      index += 1;
-      continue;
-    }
-
-    if (line.startsWith('> ')) {
-      const quoteLines: string[] = [];
-      while (index < lines.length && lines[index].trim().startsWith('> ')) {
-        quoteLines.push(lines[index].trim().slice(2));
-        index += 1;
-      }
-      blocks.push({ type: 'quote', text: quoteLines.join(' ') });
-      continue;
-    }
-
-    if (/^[-*]\s+/.test(line) || /^\d+\.\s+/.test(line)) {
-      const ordered = /^\d+\.\s+/.test(line);
-      const items: string[] = [];
-
-      while (index < lines.length) {
-        const listLine = lines[index].trim();
-        const nextOrdered = /^\d+\.\s+/.test(listLine);
-        const nextUnordered = /^[-*]\s+/.test(listLine);
-
-        if ((!ordered && !nextUnordered) || (ordered && !nextOrdered)) {
-          break;
-        }
-
-        items.push(listLine.replace(ordered ? /^\d+\.\s+/ : /^[-*]\s+/, ''));
-        index += 1;
-      }
-
-      blocks.push({ type: 'list', ordered, items });
-      continue;
-    }
-
-    const currentLine = lines[index].trim();
-    if (currentLine.length > 0) {
-      blocks.push({ type: 'paragraph', text: currentLine });
-      index += 1;
-      continue;
-    }
-  }
-
-  return blocks;
 };
 
 const getNewspaperHeadingStyle = (titleFont?: NewspaperTitleFont) => {
   const fontFamily = titleFont ? getNewspaperFontFamily(titleFont) : undefined;
-  // Must not emit fontFamily: undefined — spreading it would override
+  // Must not emit fontFamily: undefined: spreading it would override
   // FontText's default font and fall back to the browser default.
   return fontFamily ? { fontFamily } : {};
 };
@@ -689,11 +595,30 @@ const MarkdownRendererContent = ({
   playerOptions,
   roleOptions,
   scriptSources,
-}: MarkdownRendererProps & MarkdownRendererInputDataContextValue) => {
+  blocksOverride,
+  blockIndexOffset,
+}: MarkdownRendererProps & MarkdownRendererInputDataContextValue & {
+  blocksOverride?: MarkdownBlock[];
+  blockIndexOffset?: number;
+}) => {
   useNewspaperFonts();
-  const blocks = useMemo(() => parseMarkdown(markdown || ''), [markdown]);
+  // In file-editing contexts, expand /*file:*/ markers so previews show the
+  // composed content. Player-facing paths resolve cells before render, so the
+  // context is null there and this is a no-op.
+  const fileIndex = useContext(ScriptFilesIndexContext);
+  const resolvedMarkdown = useMemo(
+    () => (fileIndex ? expandFileMarkersInText(markdown || '', fileIndex) : markdown),
+    [markdown, fileIndex]
+  );
+  const blocks = useMemo(
+    () => blocksOverride ?? parseMarkdown(resolvedMarkdown || ''),
+    [blocksOverride, resolvedMarkdown]
+  );
 
-  const containsInputs = useMemo(() => MARKDOWN_INPUT_FINDER.test(markdown || ''), [markdown]);
+  const containsInputs = useMemo(
+    () => MARKDOWN_INPUT_FINDER.test(resolvedMarkdown || ''),
+    [resolvedMarkdown]
+  );
 
   // Collect all active input keys across ALL script blocks and inline inputs,
   // then prune stale state entries that no longer correspond to any rendered input.
@@ -724,7 +649,7 @@ const MarkdownRendererContent = ({
   useEffect(() => {
     if (!setState || !state) return;
     // If this renderer has no script blocks and no inline inputs, it doesn't
-    // own any inputs — don't prune. (Nested renderers from CreateMarkdown receive
+    // own any inputs: don't prune. (Nested renderers from CreateMarkdown receive
     // the same state/setState but render plain text, so they must not wipe state.)
     if (scriptSourcesList.length === 0 && inlineInputKeys.size === 0) return;
     const scriptKeys = collectActiveInputKeys(scriptSourcesList, scriptSources, state);
@@ -752,7 +677,8 @@ const MarkdownRendererContent = ({
 
   return (
     <Column className={`gap-3 ${className ?? ''}`.trim()}>
-      {blocks.map((block, index) => {
+      {blocks.map((block, localIndex) => {
+        const index = blockIndexOffset ?? localIndex;
         if (block.type === 'script') {
           return (
             <ScriptRuntime
@@ -798,7 +724,9 @@ const MarkdownRendererContent = ({
             );
           }
           if (newspaperDividerStyle === 'centeredShort') {
-            return <View key={`rule-${index}`} className="bg-text/70 my-1 h-px w-2/5 self-center" />;
+            return (
+              <View key={`rule-${index}`} className="bg-text/70 my-1 h-px w-2/5 self-center" />
+            );
           }
           if (newspaperDividerStyle === 'diamond') {
             return (
@@ -829,7 +757,10 @@ const MarkdownRendererContent = ({
                 keyPrefix={`heading-${index}`}
                 textAlign={textAlign}
                 textClassName={sizeClassName}
-                textStyle={{ lineHeight: block.level === 1 ? 36 : block.level === 2 ? 32 : 28, ...newspaperHeadingStyle }}
+                textStyle={{
+                  lineHeight: block.level === 1 ? 36 : block.level === 2 ? 32 : 28,
+                  ...newspaperHeadingStyle,
+                }}
                 defaultWeight="bold"
                 state={state}
                 setState={setState}
@@ -975,10 +906,61 @@ const MarkdownRendererContent = ({
   );
 };
 
+const NavigableMarkdownContent = (
+  props: MarkdownRendererProps & MarkdownRendererInputDataContextValue
+) => {
+  const fileIndex = useContext(ScriptFilesIndexContext);
+  const sources = useMemo(
+    () => fileIndex ? { ...props.scriptSources, filesIndex: fileIndex } : props.scriptSources,
+    [fileIndex, props.scriptSources]
+  );
+  const evaluated = useMemo(
+    () =>
+      props.documentNodes
+        ? { nodes: props.documentNodes, issues: [], inputKeys: new Set<string>() }
+        : evaluateMarkdownDocument(props.markdown, sources, props.state),
+    [props.documentNodes, props.markdown, sources, props.state]
+  );
+  const identity = useMemo(
+    () => ({ source: props.markdown, index: sources?.filesIndex }),
+    [props.markdown, sources?.filesIndex]
+  );
+  return (
+    <MarkdownDocumentView
+      nodes={evaluated.nodes}
+      identity={identity}
+      screenIdPrefix={props.headingIdPrefix}
+      navigationRequest={props.navigationRequest}
+      renderLeaf={(node) => node.kind === 'markdown' ? (
+        <MarkdownRendererContent
+          {...props}
+          blocksOverride={[node.block]}
+          blockIndexOffset={node.blockIndex}
+          headingIdPrefix={props.headingIdPrefix ? `${props.headingIdPrefix}-${encodeURIComponent(node.id)}` : undefined}
+          textAlign={node.presentation.align ?? props.textAlign}
+          viewHeightImages={node.presentation.imageHeight ?? props.viewHeightImages}
+        />
+      ) : (
+        <ScriptRenderers
+          instructions={[node.instruction]}
+          state={props.state}
+          setState={props.setState}
+          isInDialog={props.isInDialog}
+          renderMarkdown={() => null}
+        />
+      )}
+    />
+  );
+};
+
 const MarkdownRenderer = (props: MarkdownRendererProps) => {
   const { playerOptions, roleOptions, scriptSources } = useContext(
     MarkdownRendererInputDataContext
   );
+
+  if (/\b(?:NavButton|DisplayGroup|Folder|File)\s*\(|\/\*file:/i.test(props.markdown)) {
+    return <NavigableMarkdownContent {...props} playerOptions={playerOptions} roleOptions={roleOptions} scriptSources={scriptSources} />;
+  }
 
   return (
     <MarkdownRendererContent

@@ -23,7 +23,7 @@ let state = {
 export const simUi = {
   get: () => state,
   set(patch: Partial<typeof state>) {
-    // new object identity — useSyncExternalStore compares by reference
+    // new object identity: useSyncExternalStore compares by reference
     state = { ...state, ...patch };
     emit();
   },
@@ -36,7 +36,7 @@ export const simUi = {
   /** Force-close whichever lab dialog is open (unmount path). */
   closeModal() {
     if (state.openModalId) {
-      // must go through set() — useSyncExternalStore compares snapshot identity
+      // must go through set(): useSyncExternalStore compares snapshot identity
       this.set({ openModalId: null });
     }
   },

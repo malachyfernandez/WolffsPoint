@@ -1,6 +1,11 @@
 import { UserTableItem, UserTableTitle } from '../types/playerTable';
 import { PlannedUpdate } from '../types/multiplayer';
-import { interpretScript } from '../script/runtime/interpreter';
+import { evaluateFileCallInputs, interpretScript } from '../script/runtime/interpreter';
+import { parseScript } from '../script/lang/parser';
+import { printExpression } from '../script/lang/printer';
+import type { CallExpression } from '../script/lang/ast';
+import type { TableUpdate } from '../script/registry';
+import { applyCellOps, applyMorningMessageOps, type CellOpsOptions } from './cellOps';
 import {
   VOTE_MULTIPLIER_COLUMN,
   LIVING_STATE_COLUMN,
@@ -8,57 +13,168 @@ import {
   ACTION_COLUMN,
   MORNING_MESSAGE_COLUMN,
 } from './applyTableUpdates';
+import { effectiveCellText } from './cellPieces';
+import type { ScriptFilesIndex } from './scriptFiles';
+import { resolvePlannedUpdateTargets } from './certificationIdentity';
+
+export interface PlannedOpsOptions extends CellOpsOptions {
+  /** Provenance stamped on every op this run writes (e.g. `certify:d3:a:e`). */
+  source?: string;
+  /** Files index - lets `Add File({...})` resolve to a file piece and lets
+   *  `cellContents` bindings include file-piece content. */
+  filesIndex?: ScriptFilesIndex;
+  /** Reject index-bound legacy plans instead of guessing their current targets. */
+  requireStableTargets?: boolean;
+  /** Needed by the separately stored morning-message half for ID resolution. */
+  titles?: UserTableTitle;
+  strict?: boolean;
+}
 
 /**
  * Execute a list of PlannedUpdates against the user table.
  *
- * Each PlannedUpdate contains a partially-evaluated expression string (e.g.
- * `cellContents.append(tag("Infected"))`) where all variables have been
- * resolved to their values at input time. At certify time, we:
- *  1. Get the current cell value
- *  2. Parse the expression and evaluate it with the cell variable bound
- *  3. Apply the result to the cell
- *
- * This approach avoids conflicts when multiple players write to the same cell:
- * append/remove operations from different players are applied sequentially
- * rather than overwriting each other.
+ * Each PlannedUpdate is an operation (`op`): 'add'/'remove'/'replace' append
+ * provenance markers to the target cell, 'each' (or absent, legacy) evaluates
+ * the stored expression against the current cell and replaces the base.
+ * `source` stamps provenance on everything written.
  */
 export const executePlannedUpdates = (
   users: UserTableItem[],
   plannedUpdates: PlannedUpdate[],
-  titles: UserTableTitle
+  titles: UserTableTitle,
+  options?: PlannedOpsOptions
 ): UserTableItem[] => {
   let result = [...users];
+  const applyUpdate = (update: TableUpdate) => {
+    result = applyCellOps(result, [update], titles, options);
+  };
 
-  for (const update of plannedUpdates) {
+  const resolvedUpdates = plannedUpdates.flatMap((update) =>
+    resolvePlannedUpdateTargets(update, users, titles, options?.requireStableTargets)
+  );
+  for (const update of resolvedUpdates) {
     const { playerIndex, dayIndex, column, columnType, updateExpression, itemName } = update;
+    const op = update.op ?? 'each';
 
-    // Determine which players to update
     const indices = playerIndex === null ? result.map((_, i) => i) : [playerIndex];
 
     for (const idx of indices) {
       if (idx < 0 || idx >= result.length) continue;
 
-      const user = result[idx];
-
-      // Get the current cell value
-      const { cellValue, colIdx, isDayColumn } = getCellInfo(result, idx, dayIndex, column, titles);
-      // Skip morning message updates (colIdx -6) — they're handled separately
-      // by the caller via applyMorningMessageUpdates
+      const { cellValue, colIdx } = getCellInfo(
+        result,
+        idx,
+        dayIndex,
+        column,
+        titles,
+        options?.filesIndex
+      );
+      // Skip morning message updates (colIdx -6): handled separately by the
+      // caller via executeMorningMessagePlannedUpdates
       if (colIdx === -1 || colIdx === -6) continue;
 
-      // Parse and evaluate the update expression
-      const newValue = evaluateUpdateExpression(updateExpression, itemName, cellValue);
+      // `Add File({ID = ..., PATH = ...})` → live-linked file piece
+      if (op !== 'each') {
+        const ref = fileRefFromExpression(updateExpression);
+        if (ref) {
+          applyUpdate({
+            playerIndex: idx,
+            dayIndex: columnType === 'day' ? dayIndex : null,
+            column,
+            value: ref.id ?? ref.path ?? '',
+            valueKind: 'file',
+            fileCall: resolvePlannedFileInputs(
+              ref.expression,
+              itemName,
+              cellValue,
+              options?.strict,
+              options?.filesIndex
+            ),
+            mode: op === 'add' ? 'append' : op === 'remove' ? 'remove' : 'replace',
+            source: options?.source,
+            allowDuplicates: update.allowDuplicates,
+            autoRemove: update.autoRemove,
+          });
+          continue;
+        }
+      }
 
-      // Apply the new value to the cell
-      result = applyCellValue(result, idx, dayIndex, colIdx, isDayColumn, newValue, column, titles);
+      const newValue = evaluateUpdateExpression(
+        updateExpression,
+        itemName,
+        cellValue,
+        options?.strict
+      );
+      applyUpdate({
+        playerIndex: idx,
+        dayIndex: columnType === 'day' ? dayIndex : null,
+        column,
+        value: newValue,
+        mode: op === 'add' ? 'append' : op === 'remove' ? 'remove' : 'replace',
+        source: options?.source,
+        allowDuplicates: update.allowDuplicates,
+        autoRemove: update.autoRemove,
+      });
     }
   }
 
   return result;
 };
 
+/** Parse `expr` and, if it is a `File({ID="..", PATH=".."})` call, return
+ *  its reference. Used for `Add file` ops (they don't evaluate to a string). */
+const fileRefFromExpression = (
+  expression: string
+): { id?: string; path?: string; expression: CallExpression } | null => {
+  try {
+    const script = parseScript(`Return ${expression};`);
+    const stmt = script.statements[0];
+    if (stmt?.kind !== 'ReturnStatement' || !stmt.value) return null;
+    const expr = stmt.value;
+    if (
+      expr.kind !== 'CallExpression' ||
+      expr.callee.kind !== 'IdentifierExpression' ||
+      expr.callee.name.toLowerCase() !== 'file'
+    ) {
+      return null;
+    }
+    let id: string | undefined;
+    let path: string | undefined;
+    for (const arg of expr.arguments) {
+      if (arg.kind !== 'NamedArgument' || arg.value.kind !== 'StringLiteral') continue;
+      if (arg.name.toLowerCase() === 'id') id = arg.value.value;
+      if (arg.name.toLowerCase() === 'path') path = arg.value.value;
+    }
+    if (id === undefined && path === undefined) return null;
+    return { id, path, expression: expr };
+  } catch {
+    return null;
+  }
+};
+
+const resolvePlannedFileInputs = (
+  expression: CallExpression,
+  itemName: string,
+  cellValue: string,
+  strict = false,
+  filesIndex?: ScriptFilesIndex
+): string => {
+  const result = evaluateFileCallInputs(expression, {
+    globals: { [itemName]: cellValue, cellContents: cellValue },
+    fuel: 1000,
+    maxDepth: 10,
+    filesIndex,
+  });
+  if (strict && result.issues.length) {
+    throw new Error(result.issues.map((issue) => issue.message).join('; '));
+  }
+  return printExpression(result.expression);
+};
+
 /** Get the current cell value and column metadata for a player/day/column.
+ *  Cell values are the *effective* text (base + visible pieces, tags in
+ *  `[/TAG: "x"/]` form) so expressions like `cellContents.contains(tag("X"))`
+ *  see what the cell actually says.
  *  Special colIdx markers: -1 = not found, -2 = voteMultiplier, -3 = vote,
  *  -4 = action, -5 = livingState.
  */
@@ -67,7 +183,8 @@ const getCellInfo = (
   playerIndex: number,
   dayIndex: number | null,
   column: string,
-  titles: UserTableTitle
+  titles: UserTableTitle,
+  filesIndex?: ScriptFilesIndex
 ): { cellValue: string; colIdx: number; isDayColumn: boolean } => {
   const user = users[playerIndex];
   const colLower = column.toLowerCase();
@@ -86,7 +203,7 @@ const getCellInfo = (
     const colIdx = extraUserColumnTitles.findIndex((t) => t.toLowerCase() === colLower);
     if (colIdx === -1) return { cellValue: '', colIdx: -1, isDayColumn: false };
     return {
-      cellValue: user.playerData.extraColumns?.[colIdx] ?? '',
+      cellValue: effectiveCellText(user.playerData.extraColumns?.[colIdx] ?? '', filesIndex),
       colIdx,
       isDayColumn: false,
     };
@@ -122,7 +239,7 @@ const getCellInfo = (
     if (colIdx === -1) return { cellValue: '', colIdx: -1, isDayColumn: true };
     const day = user.days?.[dayIndex];
     return {
-      cellValue: day?.extraColumns?.[colIdx] ?? '',
+      cellValue: effectiveCellText(day?.extraColumns?.[colIdx] ?? '', filesIndex),
       colIdx,
       isDayColumn: true,
     };
@@ -133,7 +250,8 @@ const getCellInfo = (
 const evaluateUpdateExpression = (
   expression: string,
   itemName: string,
-  cellValue: string
+  cellValue: string,
+  strict = false
 ): string => {
   try {
     const result = interpretScript(`Return ${expression};`, {
@@ -143,6 +261,9 @@ const evaluateUpdateExpression = (
       fuel: 1000,
       maxDepth: 10,
     });
+    if (strict && result.issues.length) {
+      throw new Error(result.issues.map((issue) => issue.message).join('; '));
+    }
     // The interpreter returns the value of the last Return statement
     const value = result.value;
     if (typeof value === 'string') return value;
@@ -151,126 +272,96 @@ const evaluateUpdateExpression = (
     if (value === null || value === undefined) return '';
     return String(value);
   } catch (error) {
+    if (strict) throw error;
     console.warn('Failed to evaluate planned update expression:', expression, error);
     return cellValue; // keep current value on error
   }
 };
 
-/** Apply a new cell value to the user table. */
-const applyCellValue = (
-  users: UserTableItem[],
-  playerIndex: number,
-  dayIndex: number | null,
-  colIdx: number,
-  isDayColumn: boolean,
-  newValue: string,
-  column: string,
-  titles: UserTableTitle
-): UserTableItem[] => {
-  const result = [...users];
-  const user = result[playerIndex];
-
-  if (!isDayColumn) {
-    if (colIdx === -5) {
-      // livingState — 'alive' or 'dead'
-      const lower = newValue.toLowerCase();
-      const livingState = lower === 'alive' || lower === 'dead' ? lower : 'dead';
-      result[playerIndex] = {
-        ...user,
-        playerData: {
-          ...user.playerData,
-          livingState: livingState as 'alive' | 'dead',
-        },
-      };
-    } else {
-      // Player-level extra column
-      const extraColumns = [...(user.playerData.extraColumns ?? [])];
-      while (extraColumns.length < (titles.extraUserColumns ?? []).length) {
-        extraColumns.push('');
-      }
-      extraColumns[colIdx] = newValue;
-      result[playerIndex] = {
-        ...user,
-        playerData: {
-          ...user.playerData,
-          extraColumns,
-        },
-      };
-    }
-  } else {
-    // Day-level column
-    const days = [...(user.days ?? [])];
-    while (days.length <= (dayIndex ?? 0)) {
-      days.push({ vote: '', action: '', extraColumns: [] });
-    }
-    const day = { ...days[dayIndex!] };
-
-    if (colIdx === -2) {
-      // voteMultiplier — parse as number
-      const parsed = parseFloat(newValue);
-      day.voteMultiplier = isNaN(parsed) ? 1 : parsed;
-    } else if (colIdx === -3) {
-      // vote — string field
-      day.vote = newValue;
-    } else if (colIdx === -4) {
-      // action — string field
-      day.action = newValue;
-    } else {
-      const extraColumns = [...(day.extraColumns ?? [])];
-      while (extraColumns.length < (titles.extraDayColumns ?? []).length) {
-        extraColumns.push('');
-      }
-      extraColumns[colIdx] = newValue;
-      day.extraColumns = extraColumns;
-    }
-
-    days[dayIndex!] = day;
-    result[playerIndex] = {
-      ...user,
-      days,
-    };
-  }
-
-  return result;
-};
-
 /**
  * Execute morning message planned updates against a morning messages list.
  * Morning messages are stored separately from the user table, keyed by
- * email → array indexed by day. This function evaluates the planned update
- * expressions and applies them.
- *
- * @param morningMessagesList  Current morning messages
- * @param plannedUpdates  All planned updates (only morningMessage ones are applied)
- * @param users  The user table (for resolving playerIndex → email)
- * @returns Updated morning messages list
+ * email → array indexed by day.
  */
 export const executeMorningMessagePlannedUpdates = (
   morningMessagesList: Record<string, string[]>,
   plannedUpdates: PlannedUpdate[],
-  users: UserTableItem[]
+  users: UserTableItem[],
+  options?: PlannedOpsOptions
 ): Record<string, string[]> => {
-  let result = { ...morningMessagesList };
+  let result = morningMessagesList;
+  const applyUpdate = (update: TableUpdate) => {
+    result = applyMorningMessageOps(result, [update], users, options);
+  };
 
-  for (const update of plannedUpdates) {
+  const resolvedUpdates = plannedUpdates
+    .filter((update) => update.column.toLowerCase() === MORNING_MESSAGE_COLUMN)
+    .flatMap((update) => {
+      if (update.targetIds && !options?.titles) {
+        throw new Error('Morning-message identity resolution requires table titles');
+      }
+      return resolvePlannedUpdateTargets(
+        update,
+        users,
+        options?.titles ?? { extraUserColumns: [], extraDayColumns: [] },
+        options?.requireStableTargets
+      );
+    });
+  for (const update of resolvedUpdates) {
     if (update.column.toLowerCase() !== MORNING_MESSAGE_COLUMN) continue;
     if (update.dayIndex === null) continue;
+    const op = update.op ?? 'each';
 
     const indices = update.playerIndex === null ? users.map((_, i) => i) : [update.playerIndex];
     for (const idx of indices) {
       if (idx < 0 || idx >= users.length) continue;
       const user = users[idx];
       const email = user.email.toLowerCase();
-      const messages = [...(result[email] ?? [])];
-      while (messages.length <= update.dayIndex) messages.push('');
-      const cellValue = messages[update.dayIndex] ?? '';
-      const newValue = evaluateUpdateExpression(
-        update.updateExpression,
-        update.itemName,
-        cellValue
+      const cellValue = effectiveCellText(
+        result[email]?.[update.dayIndex] ?? '',
+        options?.filesIndex
       );
-      messages[update.dayIndex] = newValue;
-      result[email] = messages;
+
+      if (op !== 'each') {
+        const ref = fileRefFromExpression(update.updateExpression);
+        if (ref) {
+          applyUpdate({
+            playerIndex: idx,
+            dayIndex: update.dayIndex,
+            column: update.column,
+            value: ref.id ?? ref.path ?? '',
+            valueKind: 'file',
+            fileCall: resolvePlannedFileInputs(
+              ref.expression,
+              update.itemName,
+              cellValue,
+              options?.strict,
+              options?.filesIndex
+            ),
+            mode: op === 'add' ? 'append' : op === 'remove' ? 'remove' : 'replace',
+            source: options?.source,
+            allowDuplicates: update.allowDuplicates,
+            autoRemove: update.autoRemove,
+          });
+          continue;
+        }
+      }
+
+      applyUpdate({
+        playerIndex: idx,
+        dayIndex: update.dayIndex,
+        column: update.column,
+        value: evaluateUpdateExpression(
+          update.updateExpression,
+          update.itemName,
+          cellValue,
+          options?.strict
+        ),
+        mode: op === 'add' ? 'append' : op === 'remove' ? 'remove' : 'replace',
+        source: options?.source,
+        allowDuplicates: update.allowDuplicates,
+        autoRemove: update.autoRemove,
+      });
     }
   }
 

@@ -14,6 +14,8 @@ import {
     stripMarkdownSyntax,
     truncateText,
 } from './townSquareUtils';
+import { nowMs } from 'utils/simNow';
+
 interface UseTownSquareForumParams {
     currentProfile: PlayerProfile;
     gameId: string;
@@ -83,7 +85,7 @@ export const useTownSquareForum = ({ currentProfile, gameId, selectedPostId }: U
                     titleResolved: post.title?.trim() || truncateText(plainText || 'Untitled thread', 56),
                 };
             })
-            // Deduplicate by postId — the backend can return multiple list-item
+            // Deduplicate by postId: the backend can return multiple list-item
             // records that share the same postId (e.g. a double form submission).
             // They are the same logical thread (replies are matched by postId), so
             // only keep one entry per postId.
@@ -127,7 +129,7 @@ export const useTownSquareForum = ({ currentProfile, gameId, selectedPostId }: U
             ...currentReadState,
             [postId]: {
                 replyCount,
-                lastReadAt: Date.now(),
+                lastReadAt: nowMs(),
             },
         });
     }, [readState.value, setReadState]);
@@ -142,10 +144,10 @@ export const useTownSquareForum = ({ currentProfile, gameId, selectedPostId }: U
         return threads.reduce((total, thread) => {
             const threadReadState = readState.value[thread.postId];
             if (!threadReadState) {
-                // Never viewed — the post itself is unread
+                // Never viewed: the post itself is unread
                 return total + 1;
             }
-            // Viewed — count new replies since last read
+            // Viewed: count new replies since last read
             const newReplies = Math.max(0, thread.replyCount - (threadReadState.replyCount ?? 0));
             return total + newReplies;
         }, 0);
@@ -156,7 +158,7 @@ export const useTownSquareForum = ({ currentProfile, gameId, selectedPostId }: U
             return;
         }
         const previousReadState = createUndoSnapshot(readState.value ?? {});
-        const now = Date.now();
+        const now = nowMs();
         const nextReadState: TownSquareReadState = { ...previousReadState };
         for (const thread of threads) {
             nextReadState[thread.postId] = {
@@ -180,7 +182,7 @@ export const useTownSquareForum = ({ currentProfile, gameId, selectedPostId }: U
         const postValue: TownSquarePost = {
             authorUserId: currentProfile.userId,
             bodyMarkdown: markdown,
-            createdAt: Date.now(),
+            createdAt: nowMs(),
             gameId,
             markdown,
             plainText,
@@ -195,7 +197,7 @@ export const useTownSquareForum = ({ currentProfile, gameId, selectedPostId }: U
             ...currentReadState,
             [postId]: {
                 replyCount: 0,
-                lastReadAt: Date.now(),
+                lastReadAt: nowMs(),
             },
         };
 
@@ -240,13 +242,13 @@ export const useTownSquareForum = ({ currentProfile, gameId, selectedPostId }: U
             ...previousReadState,
             [postId]: {
                 replyCount: (currentThreadState?.replyCount ?? 0) + 1, // Optimistically increment reply count
-                lastReadAt: Date.now(),
+                lastReadAt: nowMs(),
             },
         });
         const commentValue: TownSquareComment = {
             authorUserId: currentProfile.userId,
             commentId,
-            createdAt: Date.now(),
+            createdAt: nowMs(),
             gameId,
             markdown,
             parentCommentId,

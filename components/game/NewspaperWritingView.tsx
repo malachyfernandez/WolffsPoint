@@ -44,7 +44,7 @@ interface NewspaperWritingViewProps {
   /** A pending "open this column" request from a minimized card, kept at the
    *  page level so it survives this view unmounting on day switches. */
   pendingColumnOpen?: PendingColumnOpen | null;
-  /** Requests opening a column — lives at page level so minimized cards can
+  /** Requests opening a column: lives at page level so minimized cards can
    *  still restore after this view unmounts. */
   onRequestColumnOpen?: (dayIndex: number, sectionIndex: number, columnIndex: number) => void;
   /** Clears the pending request once the target cell has opened. */
@@ -119,7 +119,7 @@ const NewspaperWritingView = ({
 
   const addColumn = (sectionIndex: number) => {
     if (sections[sectionIndex].columns.length >= 8) {
-      showToast('Too many columns — maximum 8 per section');
+      showToast('Too many columns: maximum 8 per section');
       return;
     }
     const nextSections = createUndoSnapshot(sections);

@@ -20,7 +20,7 @@ const MultiSelectToolbar = () => {
 
   if (!selectionMode) {
     return (
-      <View className="z-50 -mb-12 flex-row items-center gap-2">
+      <View className="z-50 -mb-12 flex-row items-center gap-2 self-start">
         <Pressable
           onPress={() => setSelectionMode(true)}
           className="flex-row items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-1.5">
@@ -34,7 +34,7 @@ const MultiSelectToolbar = () => {
   }
 
   return (
-    <View className="z-50 -mb-12 flex-row items-center gap-2">
+    <View className="z-50 -mb-12 flex-row items-center gap-2 self-start">
       <Pressable
         onPress={exitSelectionMode}
         className="flex-row items-center gap-1.5 rounded-lg border border-border bg-text px-3 py-1.5">

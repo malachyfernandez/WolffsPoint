@@ -1,7 +1,7 @@
 /**
  * sim/perf/log.ts
  *
- * PerfLog — the audit's measurement core. Collects:
+ * PerfLog: the audit's measurement core. Collects:
  *  - long tasks (PerformanceObserver 'longtask')
  *  - event latencies (PerformanceObserver 'event', when available)
  *  - React Profiler commits (fed by <SimProfiler> boundaries)
@@ -56,7 +56,7 @@ export interface StepResult {
   activeConvexQueries: number;
   activeDataSubs: number;
   heapMb: number | null;
-  /** number of MutationObserver records seen during the window — nonzero
+  /** number of MutationObserver records seen during the window, nonzero
    *  long after an action means something keeps mutating the DOM (pollers,
    *  style writers, clocks) */
   domMutations: number;
@@ -186,7 +186,7 @@ interface WindowOpts {
   timeoutMs?: number;
   /** extra time to keep measuring after settle (animation tail) */
   tailMs?: number;
-  /** if true, don't wait for settle — caller controls end() */
+  /** if true, don't wait for settle, caller controls end() */
   manual?: boolean;
 }
 

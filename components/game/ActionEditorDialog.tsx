@@ -91,7 +91,7 @@ const ActionEditorDialog = ({
     onOpenChange(false);
   };
 
-  // Save without closing — persists via onSubmit and adds to history
+  // Save without closing: persists via onSubmit and adds to history
   const handleSave = () => {
     if (!hasUnsavedChanges) return;
     onSubmit(draftAction.trim());

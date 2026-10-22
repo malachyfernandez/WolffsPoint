@@ -17,6 +17,7 @@ import PhoneBookIcon from '../ui/icons/PhoneBook';
 import TabPane from '../layout/TabPane';
 import { useBoundedMountedTabs } from '../../hooks/useBoundedMountedTabs';
 import { useMinimize } from '../ui/minimize/MinimizeContext';
+import { useContentWidth } from 'hooks/useContentWidth';
 
 interface NewserGamePageProps {
   gameId: string;
@@ -39,8 +40,9 @@ const newserTabs: GameTabDefinition<NewserTab>[] = [
 
 const NewserGamePage = ({ gameId, currentUserId }: NewserGamePageProps) => {
   const [activeTab, setActiveTab] = useState<NewserTab>('townSquare');
+  const contentWidth = useContentWidth();
   // Tabs mount lazily on first visit, then stay mounted so dialog/minimize
-  // state survives tab switches — bounded by device memory tier: under
+  // state survives tab switches: bounded by device memory tier: under
   // pressure the least-recently-active hidden panes are evicted (they
   // re-mount on revisit, same as first visit).
   const scopeIdForTab = useCallback((tab: NewserTab) => `newser-tab-${gameId}-${tab}`, [gameId]);
@@ -61,7 +63,7 @@ const NewserGamePage = ({ gameId, currentUserId }: NewserGamePageProps) => {
   return (
     <ParticipantAccessGate gameId={gameId} currentUserId={currentUserId}>
       {({ currentEmail, profile }) => (
-        <Column className="w-full gap-4 sm:gap-5">
+        <Column className={`w-full ${contentWidth >= 640 ? 'gap-5' : 'gap-4'}`}>
           <GameTabBar activeTab={activeTab} onTabPress={handleTabPress} tabs={newserTabs} />
           <SimProfiler id="newser-tabs">
           <PaperContainer>

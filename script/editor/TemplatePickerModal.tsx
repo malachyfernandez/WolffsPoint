@@ -23,6 +23,8 @@ interface TemplatePickerModalProps {
   onSelectNewInput: (pieceType: string) => void;
   onClose: () => void;
   title?: string;
+  /** Hide the "New Text" option, contexts that only take inputs. */
+  hideText?: boolean;
 }
 
 /**
@@ -40,6 +42,7 @@ const TemplatePickerModal = ({
   onSelectNewInput,
   onClose,
   title = 'Add a piece',
+  hideText = false,
 }: TemplatePickerModalProps) => {
   return (
     <ConvexDialog.Root isOpen={isOpen} onOpenChange={onOpenChange}>
@@ -54,19 +57,21 @@ const TemplatePickerModal = ({
             <FontText weight="medium" className="text-base">
               {title}
             </FontText>
-            <Pressable
-              accessibilityRole="button"
-              onPress={onSelectNewText}
-              className="bg-text/5 hover:bg-text/10 rounded-lg p-3">
-              <Column className="gap-0.5">
-                <FontText weight="medium" className="text-sm">
-                  New Text
-                </FontText>
-                <FontText variant="subtext" className="text-xs">
-                  Static text between inputs
-                </FontText>
-              </Column>
-            </Pressable>
+            {!hideText && (
+              <Pressable
+                accessibilityRole="button"
+                onPress={onSelectNewText}
+                className="bg-text/5 hover:bg-text/10 rounded-lg p-3">
+                <Column className="gap-0.5">
+                  <FontText weight="medium" className="text-sm">
+                    New Text
+                  </FontText>
+                  <FontText variant="subtext" className="text-xs">
+                    Static text between inputs
+                  </FontText>
+                </Column>
+              </Pressable>
+            )}
             {PIECE_TYPES.map((pt) => (
               <Pressable
                 key={pt.kind}

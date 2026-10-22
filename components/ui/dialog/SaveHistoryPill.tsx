@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useId } from 'react';
+import { useTooltip } from 'hooks/useTooltip';
 import { Pressable, View } from 'react-native';
 import { History } from 'lucide-react-native';
 import FontText from '../text/FontText';
@@ -13,6 +14,9 @@ interface SaveHistoryPillProps {
   onSave: () => void;
   onOpenHistory: () => void;
   hasMinimizeButton?: boolean;
+  /** When false the history half is hidden and Save fills the pill — for
+   *  editors with save but no history backing (avoids a dead button). */
+  hasHistoryButton?: boolean;
 }
 
 /**
@@ -32,10 +36,13 @@ export function SaveHistoryPill({
   onSave,
   onOpenHistory,
   hasMinimizeButton = false,
+  hasHistoryButton = true,
 }: SaveHistoryPillProps) {
   const { showToast } = useToast();
   const { setHint } = useKeyboardShortcutHint();
   const { isAvailable: isMinimizeAvailable } = useMinimize();
+  const { setHovered: setSaveHovered } = useTooltip(useId(), 'Save');
+  const { setHovered: setHistoryHovered } = useTooltip(useId(), 'Save history');
 
   const handleSavePress = () => {
     if (isInvalid) {
@@ -58,24 +65,46 @@ export function SaveHistoryPill({
     <View
       className={`save-history-pill-bg minimize-hide absolute ${positionClass} top-0 z-10 p-0 pl-4`}>
       <View className="h-10 flex-row items-stretch">
-        {/* Save half — fixed width, symmetric padding */}
+        {/* Save half: fixed width, symmetric padding */}
         <Pressable
-          onPress={handleSavePress}
-          onHoverIn={() => setHint(['cmd', 's'])}
-          onHoverOut={() => setHint(null)}
-          className={`${saveBgClass} h-full w-16 items-center justify-center rounded-l-full rounded-r-none pl-3 pr-2`}>
+          accessibilityRole="button"
+          accessibilityLabel="Save"
+          onPress={() => {
+            setSaveHovered(false);
+            handleSavePress();
+          }}
+          onHoverIn={() => {
+            setSaveHovered(true);
+            setHint(['cmd', 's']);
+          }}
+          onHoverOut={() => {
+            setSaveHovered(false);
+            setHint(null);
+          }}
+          className={`${saveBgClass} h-full w-16 items-center justify-center rounded-l-full ${hasHistoryButton ? 'rounded-r-none' : 'rounded-r-full'} pl-3 pr-2`}>
           <FontText color="rgb(246, 238, 219)" weight="medium" className="text-sm">
             Save
           </FontText>
         </Pressable>
 
-        {/* History half — fixed width, symmetric padding */}
-        <Pressable
-          onPress={onOpenHistory}
-          onHoverOut={() => setHint(null)}
-          className="bg-text-inverted/10 hover:bg-text-inverted/15 h-full w-10 items-center justify-center rounded-l-none rounded-r-full pl-2 pr-3">
-          <History size={16} color="rgb(246, 238, 219)" />
-        </Pressable>
+        {/* History half: fixed width, symmetric padding */}
+        {hasHistoryButton && (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Save history"
+            onPress={() => {
+              setHistoryHovered(false);
+              onOpenHistory();
+            }}
+            onHoverIn={() => setHistoryHovered(true)}
+            onHoverOut={() => {
+              setHistoryHovered(false);
+              setHint(null);
+            }}
+            className="bg-text-inverted/10 hover:bg-text-inverted/15 h-full w-10 items-center justify-center rounded-l-none rounded-r-full pl-2 pr-3">
+            <History size={16} color="rgb(246, 238, 219)" />
+          </Pressable>
+        )}
       </View>
     </View>
   );

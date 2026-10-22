@@ -1,15 +1,15 @@
 import React, { useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { View } from 'react-native';
 import ConvexDialog from '../ui/dialog/ConvexDialog';
 import DialogHeader from '../ui/dialog/DialogHeader';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
 import AppButton from '../ui/buttons/AppButton';
 import FontText from '../ui/text/FontText';
-import CustomCheckbox from '../ui/CustomCheckbox';
 import DeleteConfirmationDialog from './DeleteRoleConfirmationDialog';
 import { ColumnSizeOption } from './playerTableColumnSizing';
 import CloseButton from '../ui/dialog/CloseButton';
+import type { CellContentType } from '../../types/playerTable';
 
 interface ColumnActionsDialogProps {
   isOpen: boolean;
@@ -18,10 +18,8 @@ interface ColumnActionsDialogProps {
   selectedSize: ColumnSizeOption;
   onSelectSize: (size: ColumnSizeOption) => void;
   onDelete?: () => void;
-  /** Whether this column is shown in the nightly operator table. */
-  showInNightly?: boolean;
-  /** Toggle the "show in nightly" setting. Only shown when provided. */
-  onToggleShowInNightly?: () => void;
+  contentType?: CellContentType;
+  onSelectContentType?: (type: CellContentType) => void;
 }
 
 const sizeOptions: { value: ColumnSizeOption; label: string; description: string }[] = [
@@ -37,8 +35,8 @@ const ColumnActionsDialog = ({
   selectedSize,
   onSelectSize,
   onDelete,
-  showInNightly,
-  onToggleShowInNightly,
+  contentType = 'tags',
+  onSelectContentType,
 }: ColumnActionsDialogProps) => {
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   return (
@@ -53,6 +51,30 @@ const ColumnActionsDialog = ({
             <CloseButton onPress={() => onOpenChange(false)} />
             <DialogHeader text={title} />
             <Column className="gap-3 p-0 pt-4 sm:p-5">
+              {onSelectContentType && (
+                <Column className="gap-2">
+                  <FontText weight="medium">Cell content</FontText>
+                  <Row className="gap-2">
+                    {(['tags', 'files'] as const).map((type) => (
+                      <AppButton
+                        key={type}
+                        className="flex-1"
+                        variant={contentType === type ? 'filled' : 'outline'}
+                        onPress={() => onSelectContentType(type)}>
+                        <FontText color={contentType === type ? 'white' : undefined}>
+                          {type === 'tags' ? 'Tags' : 'Files'}
+                        </FontText>
+                      </AppButton>
+                    ))}
+                  </Row>
+                  <FontText variant="subtext" className="text-xs">
+                    {contentType === 'tags'
+                      ? 'Choose tags only.'
+                      : 'Compose cells from reusable markdown and script files.'}
+                    {' Existing content is kept when switching types.'}
+                  </FontText>
+                </Column>
+              )}
               {sizeOptions.map((option) => (
                 <AppButton
                   key={option.value}
@@ -76,19 +98,6 @@ const ColumnActionsDialog = ({
                   </Row>
                 </AppButton>
               ))}
-
-              {onToggleShowInNightly !== undefined && (
-                <Pressable
-                  onPress={onToggleShowInNightly}
-                  className="flex-row items-center gap-3 px-4 py-2">
-                  <CustomCheckbox
-                    checked={!!showInNightly}
-                    onChange={onToggleShowInNightly}
-                    monochrome
-                  />
-                  <FontText weight="medium">Show in nightly table</FontText>
-                </Pressable>
-              )}
 
               {onDelete ? (
                 <AppButton

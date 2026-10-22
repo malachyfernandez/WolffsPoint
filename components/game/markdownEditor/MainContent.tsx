@@ -15,7 +15,6 @@ interface MainContentProps {
   draftBody: string;
   isPreviewSideBySide: boolean;
   activeTab: string;
-  showInputs: boolean;
   previewInputState: Record<string, string | undefined>;
   setPreviewInputState: React.Dispatch<React.SetStateAction<Record<string, string | undefined>>>;
   setDraftTitle: (title: string) => void;
@@ -26,9 +25,9 @@ interface MainContentProps {
   onItalic: () => void;
   onLink: () => void;
   onImage: () => void;
-  onInput: () => void;
   onMore: () => void;
   onScript?: () => void;
+  scriptLabel?: string;
   onVariable?: () => void;
   centered?: boolean;
   showPreviewAsPlayer?: boolean;
@@ -49,7 +48,6 @@ export function MainContent({
   draftBody,
   isPreviewSideBySide,
   activeTab,
-  showInputs,
   previewInputState,
   setPreviewInputState,
   setDraftTitle,
@@ -60,9 +58,9 @@ export function MainContent({
   onItalic,
   onLink,
   onImage,
-  onInput,
   onMore,
   onScript,
+  scriptLabel,
   onVariable,
   centered = false,
   showPreviewAsPlayer = false,
@@ -72,9 +70,13 @@ export function MainContent({
   inputRef,
 }: MainContentProps) {
   const { width } = useWindowDimensions();
-  const isSideBySide = width > 800;
+  // Side-by-side halves the toolbar pane. Each optional insert button is
+  // ~52px wide in the pane, so each needs ~2x that in window width (plus a
+  // small buffer) before the layout can keep the groups on one line.
+  const extraToolbarButtons = (onScript ? 1 : 0) + (onVariable ? 1 : 0);
+  const isSideBySide = width > 800 + extraToolbarButtons * 120;
   return (
-    <Column className="-mx-3 min-h-0 flex-1 gap-4 pt-3 sm:mx-0">
+    <Column className={`min-h-0 flex-1 gap-4 pt-3 ${width >= 640 ? 'mx-0' : '-mx-3'}`}>
       {includeTitle && !readOnly ? (
         <TitleInputSection
           label={titleInputLabel}
@@ -91,7 +93,6 @@ export function MainContent({
           draftBody={draftBody}
           draftTitle={draftTitle}
           includeTitle={includeTitle}
-          showInputs={showInputs}
           previewInputState={previewInputState}
           setPreviewInputState={setPreviewInputState}
           onBodyChange={setDraftBody}
@@ -100,9 +101,9 @@ export function MainContent({
           onItalic={onItalic}
           onLink={onLink}
           onImage={onImage}
-          onInput={onInput}
           onMore={onMore}
           onScript={onScript}
+          scriptLabel={scriptLabel}
           onVariable={onVariable}
           centered={centered}
           showPreviewAsPlayer={showPreviewAsPlayer}
@@ -116,7 +117,6 @@ export function MainContent({
           draftBody={draftBody}
           draftTitle={draftTitle}
           includeTitle={includeTitle}
-          showInputs={showInputs}
           activeTab={activeTab}
           previewInputState={previewInputState}
           setPreviewInputState={setPreviewInputState}
@@ -127,9 +127,9 @@ export function MainContent({
           onItalic={onItalic}
           onLink={onLink}
           onImage={onImage}
-          onInput={onInput}
           onMore={onMore}
           onScript={onScript}
+          scriptLabel={scriptLabel}
           onVariable={onVariable}
           centered={centered}
           showPreviewAsPlayer={showPreviewAsPlayer}

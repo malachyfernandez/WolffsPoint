@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { View, useWindowDimensions } from 'react-native';
 import { ConvexProvider, ConvexReactClient } from 'convex/react';
-import { Dialog } from 'heroui-native/dialog';
+import { Dialog, useDialog } from 'heroui-native/dialog';
 import DialogGuildedFrame from '../chrome/DialogGuildedFrame.web';
 import { MinimizeContextBridge, useMinimize } from '../minimize/MinimizeContext';
 
@@ -11,224 +11,274 @@ const DEBUG_DISABLE_NESTED_CONVEX_PROVIDER = false;
 const DEFAULT_DIALOG_MAX_WIDTH = 960;
 
 const dialogMaxWidthByToken: Record<string, number> = {
-    xs: 320,
-    sm: 384,
-    md: 448,
-    lg: 512,
-    xl: 576,
-    '2xl': 672,
-    '3xl': 768,
-    '4xl': 896,
-    '5xl': 1024,
-    '6xl': 1152,
-    '7xl': 1280,
+  xs: 320,
+  sm: 384,
+  md: 448,
+  lg: 512,
+  xl: 576,
+  '2xl': 672,
+  '3xl': 768,
+  '4xl': 896,
+  '5xl': 1024,
+  '6xl': 1152,
+  '7xl': 1280,
 };
 
 const extractDialogMaxWidthFromClassName = (className?: string) => {
-    if (!className) {
-        return undefined;
-    }
+  if (!className) {
+    return undefined;
+  }
 
-    const match = className.match(/(?:^|\s)max-w-([^\s]+)/);
+  const match = className.match(/(?:^|\s)max-w-([^\s]+)/);
 
-    if (!match) {
-        return undefined;
-    }
+  if (!match) {
+    return undefined;
+  }
 
-    const token = match[1];
+  const token = match[1];
 
-    if (token === 'full' || token === 'screen') {
-        return Number.POSITIVE_INFINITY;
-    }
+  if (token === 'full' || token === 'screen') {
+    return Number.POSITIVE_INFINITY;
+  }
 
-    return dialogMaxWidthByToken[token];
+  return dialogMaxWidthByToken[token];
 };
 
 const hasExplicitWidthClass = (className?: string) => {
-    if (!className) {
-        return false;
-    }
+  if (!className) {
+    return false;
+  }
 
-    return /(?:^|\s)(?:w-full|w-screen|w-\[[^\]]+\]|w-\S+)/.test(className);
+  return /(?:^|\s)(?:w-full|w-screen|w-\[[^\]]+\]|w-\S+)/.test(className);
 };
 
 const hasExplicitHeightClass = (className?: string) => {
-    if (!className) {
-        return false;
-    }
+  if (!className) {
+    return false;
+  }
 
-    return /(?:^|\s)(?:h-\S+|max-h-\S+)/.test(className);
+  return /(?:^|\s)(?:h-\S+|max-h-\S+)/.test(className);
 };
 
 const splitHeightClasses = (className?: string) => {
-    if (!className) {
-        return { outerClassName: '', innerHeightClassName: '' };
-    }
+  if (!className) {
+    return { outerClassName: '', innerHeightClassName: '' };
+  }
 
-    const classNames = className.split(/\s+/).filter(Boolean);
-    const heightClasses = classNames.filter((token) => /^(?:h-|max-h-|min-h-)/.test(token));
-    const outerClasses = classNames.filter((token) => !/^(?:h-|max-h-|min-h-)/.test(token));
+  const classNames = className.split(/\s+/).filter(Boolean);
+  const heightClasses = classNames.filter((token) => /^(?:h-|max-h-|min-h-)/.test(token));
+  const outerClasses = classNames.filter((token) => !/^(?:h-|max-h-|min-h-)/.test(token));
 
-    return {
-        outerClassName: outerClasses.join(' '),
-        innerHeightClassName: heightClasses.join(' '),
-    };
+  return {
+    outerClassName: outerClasses.join(' '),
+    innerHeightClassName: heightClasses.join(' '),
+  };
 };
 
 const convex = new ConvexReactClient(process.env.EXPO_PUBLIC_CONVEX_URL!);
 const basePortalClassName = 'flex-1 w-full h-full px-4 py-6 items-center justify-center';
 
 const ConvexDialogContent = ({ children }: { children: React.ReactNode }) => {
-    const containerRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-    useEffect(() => {
-        // When a new dialog mounts, release focus from whatever element below
-        // was focused (e.g. a text input in the dialog underneath) so keyboard
-        // events target the top-most dialog's shortcut handlers instead of
-        // being swallowed by the stale field. Focus is deliberately NOT moved
-        // to a button inside this dialog — Enter must trigger the dialog's
-        // primary action, not activate a random button. If focus is already
-        // inside this dialog (e.g. an autoFocus input), leave it alone.
-        const timer = setTimeout(() => {
-            const container = containerRef.current;
-            if (!container) return;
-            const active = document.activeElement as HTMLElement | null;
-            if (!active || active === document.body || active === document.documentElement) return;
-            if (container.contains(active)) return;
-            active.blur();
-        }, 0);
-        return () => clearTimeout(timer);
-    }, []);
+  useEffect(() => {
+    // When a new dialog mounts, release focus from whatever element below
+    // was focused (e.g. a text input in the dialog underneath) so keyboard
+    // events target the top-most dialog's shortcut handlers instead of
+    // being swallowed by the stale field. Focus is deliberately NOT moved
+    // to a button inside this dialog: Enter must trigger the dialog's
+    // primary action, not activate a random button. If focus is already
+    // inside this dialog (e.g. an autoFocus input), leave it alone.
+    const timer = setTimeout(() => {
+      const container = containerRef.current;
+      if (!container) return;
+      const active = document.activeElement as HTMLElement | null;
+      if (!active || active === document.body || active === document.documentElement) return;
+      if (container.contains(active)) return;
+      active.blur();
+    }, 0);
+    return () => clearTimeout(timer);
+  }, []);
 
-    return (
-        <ConvexProvider client={convex}>
-            <div ref={containerRef} style={{ display: 'contents' }}>
-                {children}
-            </div>
-        </ConvexProvider>
-    );
+  return (
+    <ConvexProvider client={convex}>
+      <div ref={containerRef} style={{ display: 'contents' }}>
+        {children}
+      </div>
+    </ConvexProvider>
+  );
 };
 
-const baseContentClassName = 'w-full self-center bg-transparent border-0 p-0 overflow-visible shadow-none';
+const baseContentClassName =
+  'w-full self-center bg-transparent border-0 p-0 overflow-visible shadow-none';
 
-const WidthTrackingDialogContent = ({ children, outerClassName, innerHeightClassName, style, props, frameVariant }: any) => {
-    const { width } = useWindowDimensions();
-    const [initialWidth, setInitialWidth] = useState<number | null>(null);
-    const hasInitialized = useRef(false);
+const WidthTrackingDialogContent = ({
+  children,
+  outerClassName,
+  innerHeightClassName,
+  style,
+  props,
+  frameVariant,
+}: any) => {
+  const { width } = useWindowDimensions();
+  const [initialWidth, setInitialWidth] = useState<number | null>(null);
+  const hasInitialized = useRef(false);
 
-    useEffect(() => {
-        if (!hasInitialized.current && initialWidth === null) {
-            setInitialWidth(width);
-            hasInitialized.current = true;
-        }
-    }, [width, initialWidth]);
+  useEffect(() => {
+    if (!hasInitialized.current && initialWidth === null) {
+      setInitialWidth(width);
+      hasInitialized.current = true;
+    }
+  }, [width, initialWidth]);
 
-    const widthDelta = initialWidth !== null ? width - initialWidth : 0;
+  const widthDelta = initialWidth !== null ? width - initialWidth : 0;
 
-    return (
-        <Dialog.Content className={`${baseContentClassName} ${outerClassName || ''}`.trim()} style={[style, { transform: `translate(${widthDelta/2}px)` }]} {...props}>
-            <DialogGuildedFrame className='max-h-full flex flex-col' contentClassName='max-h-full min-h-0 overflow-hidden p-5 flex flex-col' backgroundToken='inner-background' variant={frameVariant || 'gold'}>
-                <View className={`flex w-full min-h-0 max-h-full flex-col ${innerHeightClassName || ''}`.trim()}>
-                    {children}
-                </View>
-            </DialogGuildedFrame>
-        </Dialog.Content>
-    );
+  return (
+    <Dialog.Content
+      className={`${baseContentClassName} ${outerClassName || ''}`.trim()}
+      style={[style, { transform: `translate(${widthDelta / 2}px)` }]}
+      {...props}>
+      <DialogGuildedFrame
+        className="flex max-h-full flex-col"
+        contentClassName="max-h-full min-h-0 overflow-hidden p-5 flex flex-col"
+        backgroundToken="inner-background"
+        variant={frameVariant || 'gold'}>
+        <View
+          className={`flex max-h-full min-h-0 w-full flex-col ${innerHeightClassName || ''}`.trim()}>
+          {children}
+        </View>
+      </DialogGuildedFrame>
+    </Dialog.Content>
+  );
 };
 
-const renderWrappedContent = (children: React.ReactNode, outerClassName?: string, innerHeightClassName?: string, style?: any, props?: any, frameVariant?: 'gold' | 'ghostly') => {
-    return (
-        <WidthTrackingDialogContent 
-            outerClassName={outerClassName}
-            innerHeightClassName={innerHeightClassName}
-            style={style}
-            props={props}
-            frameVariant={frameVariant}
-        >
-            {children}
-        </WidthTrackingDialogContent>
-    );
+const renderWrappedContent = (
+  children: React.ReactNode,
+  outerClassName?: string,
+  innerHeightClassName?: string,
+  style?: any,
+  props?: any,
+  frameVariant?: 'gold' | 'ghostly'
+) => {
+  return (
+    <WidthTrackingDialogContent
+      outerClassName={outerClassName}
+      innerHeightClassName={innerHeightClassName}
+      style={style}
+      props={props}
+      frameVariant={frameVariant}>
+      {children}
+    </WidthTrackingDialogContent>
+  );
 };
 
 // Escape-to-close with correct stacking. Dialogs open over each other
 // (e.g. UnsavedChangesDialog on top of an editor), so a module-level stack
 // tracks open order and only the top-most dialog consumes the key. Each
-// dialog's own `onOpenChange` fires — unsaved-changes interception is
+// dialog's own `onOpenChange` fires: unsaved-changes interception is
 // preserved because we go through the same close path as the X button.
 const escapeStack: object[] = [];
 
 const ConvexDialogRoot = ({ frameVariant, isOpen, onOpenChange, ...props }: any) => {
-    const entryRef = useRef<object>({});
+  const entryRef = useRef<object>({});
 
-    useEffect(() => {
-        if (!isOpen) return;
-        const entry = entryRef.current;
-        escapeStack.push(entry);
-        const onKeyDown = (e: KeyboardEvent) => {
-            if (e.key !== 'Escape') return;
-            if (escapeStack[escapeStack.length - 1] !== entry) return;
-            e.stopPropagation();
-            onOpenChange?.(false);
-        };
-        document.addEventListener('keydown', onKeyDown);
-        return () => {
-            document.removeEventListener('keydown', onKeyDown);
-            const idx = escapeStack.indexOf(entry);
-            if (idx !== -1) escapeStack.splice(idx, 1);
-        };
-    }, [isOpen, onOpenChange]);
+  useEffect(() => {
+    if (!isOpen) return;
+    const entry = entryRef.current;
+    escapeStack.push(entry);
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      if (escapeStack[escapeStack.length - 1] !== entry) return;
+      e.stopPropagation();
+      onOpenChange?.(false);
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('keydown', onKeyDown);
+      const idx = escapeStack.indexOf(entry);
+      if (idx !== -1) escapeStack.splice(idx, 1);
+    };
+  }, [isOpen, onOpenChange]);
 
-    return (
-        <DialogVariantContext.Provider value={frameVariant || 'gold'}>
-            <Dialog isOpen={isOpen} onOpenChange={onOpenChange} {...props} />
-        </DialogVariantContext.Provider>
-    );
+  return (
+    <DialogVariantContext.Provider value={frameVariant || 'gold'}>
+      <Dialog isOpen={isOpen} onOpenChange={onOpenChange} {...props} />
+    </DialogVariantContext.Provider>
+  );
 };
 
 const ConvexDialogPortal = ({ className, children, ...props }: any) => {
-    const minimizeContext = useMinimize();
+  const minimizeContext = useMinimize();
+  const { nativeID } = useDialog();
 
-    return (
-        <Dialog.Portal className={`${basePortalClassName} ${className || ''}`.trim()} {...props}>
-            <MinimizeContextBridge value={minimizeContext}>{children}</MinimizeContextBridge>
-        </Dialog.Portal>
-    );
+  // PortalHost renders portals as an unkeyed array, so when one dialog's
+  // portal is swapped for another's in the same commit React reuses the
+  // whole subtree at that index: DOM nodes keep the outgoing dialog's
+  // reanimated enter-position snapshot and hooks keep stale state (the new
+  // dialog then pins to the old rect). Keying by this root's unique id
+  // forces a real remount instead.
+  return (
+    <Dialog.Portal className={`${basePortalClassName} ${className || ''}`.trim()} {...props}>
+      <React.Fragment key={nativeID}>
+        <MinimizeContextBridge value={minimizeContext}>{children}</MinimizeContextBridge>
+      </React.Fragment>
+    </Dialog.Portal>
+  );
 };
 
 const ConvexDialog = {
-    Root: ConvexDialogRoot,
-    Trigger: Dialog.Trigger,
-    Portal: ConvexDialogPortal,
-    Overlay: ({ className, ...props }: any) => <Dialog.Overlay className={`bg-black/20 ${className || ''}`.trim()} {...props} />,
-    Content: ({ children, className, style, frameVariant: contentFrameVariant, ...props }: any) => {
-        const contextFrameVariant = useContext(DialogVariantContext);
-        const frameVariant = contentFrameVariant || contextFrameVariant;
-        const { height, width } = useWindowDimensions();
-        const { outerClassName, innerHeightClassName } = splitHeightClasses(className);
-        const targetMaxWidth = extractDialogMaxWidthFromClassName(outerClassName) ?? DEFAULT_DIALOG_MAX_WIDTH;
-        const computedWidth = Math.min(Math.max(width - 32, 0), targetMaxWidth);
-        const sharedContentStyle = [
-            !hasExplicitWidthClass(outerClassName)
-                ? {
-                    width: computedWidth,
-                    maxWidth: computedWidth,
-                }
-                : null,
-            !hasExplicitHeightClass(innerHeightClassName)
-                ? { maxHeight: height * 0.8 }
-                : null,
-            style,
-        ];
+  Root: ConvexDialogRoot,
+  Trigger: Dialog.Trigger,
+  Portal: ConvexDialogPortal,
+  Overlay: ({ className, ...props }: any) => (
+    <Dialog.Overlay className={`bg-black/20 ${className || ''}`.trim()} {...props} />
+  ),
+  Content: ({ children, className, style, frameVariant: contentFrameVariant, ...props }: any) => {
+    const contextFrameVariant = useContext(DialogVariantContext);
+    const frameVariant = contentFrameVariant || contextFrameVariant;
+    const { height, width } = useWindowDimensions();
+    const { outerClassName, innerHeightClassName } = splitHeightClasses(className);
+    const targetMaxWidth =
+      extractDialogMaxWidthFromClassName(outerClassName) ?? DEFAULT_DIALOG_MAX_WIDTH;
+    const computedWidth = Math.min(Math.max(width - 32, 0), targetMaxWidth);
+    const sharedContentStyle = [
+      !hasExplicitWidthClass(outerClassName)
+        ? {
+            width: computedWidth,
+            maxWidth: computedWidth,
+          }
+        : null,
+      !hasExplicitHeightClass(innerHeightClassName) ? { maxHeight: height * 0.8 } : null,
+      style,
+    ];
 
-        if (DEBUG_DISABLE_NESTED_CONVEX_PROVIDER) {
-            return renderWrappedContent(children, outerClassName, innerHeightClassName, sharedContentStyle, props, frameVariant);
-        }
+    if (DEBUG_DISABLE_NESTED_CONVEX_PROVIDER) {
+      return renderWrappedContent(
+        children,
+        outerClassName,
+        innerHeightClassName,
+        sharedContentStyle,
+        props,
+        frameVariant
+      );
+    }
 
-        return <ConvexDialogContent>{renderWrappedContent(children, outerClassName, innerHeightClassName, sharedContentStyle, props, frameVariant)}</ConvexDialogContent>;
-    },
-    Close: Dialog.Close,
-    Title: Dialog.Title,
-    Description: Dialog.Description,
+    return (
+      <ConvexDialogContent>
+        {renderWrappedContent(
+          children,
+          outerClassName,
+          innerHeightClassName,
+          sharedContentStyle,
+          props,
+          frameVariant
+        )}
+      </ConvexDialogContent>
+    );
+  },
+  Close: Dialog.Close,
+  Title: Dialog.Title,
+  Description: Dialog.Description,
 };
 
 export default ConvexDialog;

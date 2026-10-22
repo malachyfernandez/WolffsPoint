@@ -9,6 +9,8 @@ import { useSharedVariableValue } from 'hooks/useSharedVariableValue';
 import { ChevronLeft, ChevronRight } from 'lucide-react-native';
 import { GameSchedule } from 'types/multiplayer';
 import { getContextualDayRangeLabel, getGameScopedKey, normalizeGameSchedule, parseStoredDayDates, resolveGameTimeZone, defaultGameSchedule } from 'utils/multiplayer';
+import { useNow } from 'hooks/useNow';
+
 
 interface OperatorDayNavigationProps {
     gameId: string;
@@ -53,9 +55,11 @@ const OperatorDayNavigation = ({ gameId, ownerUserId, selectedDayIndex: controll
     const gameTimeZone = resolveGameTimeZone(schedule);
     const dayDates = useMemo(() => parseStoredDayDates(dayDateStrings), [dayDateStrings]);
     const totalDays = dayDates.length;
-    const selectedDayRangeLabel = useMemo(() => getContextualDayRangeLabel(dayDates, resolvedSelectedDayIndex, numberOfRealDaysPerInGameDay, new Date(), gameTimeZone), [resolvedSelectedDayIndex, dayDates, numberOfRealDaysPerInGameDay, gameTimeZone]);
-    const previousDayLabel = useMemo(() => resolvedSelectedDayIndex > 0 ? getContextualDayRangeLabel(dayDates, resolvedSelectedDayIndex - 1, numberOfRealDaysPerInGameDay, new Date(), gameTimeZone) : '', [dayDates, numberOfRealDaysPerInGameDay, resolvedSelectedDayIndex, gameTimeZone]);
-    const nextDayLabel = useMemo(() => resolvedSelectedDayIndex < totalDays - 1 ? getContextualDayRangeLabel(dayDates, resolvedSelectedDayIndex + 1, numberOfRealDaysPerInGameDay, new Date(), gameTimeZone) : '', [resolvedSelectedDayIndex, totalDays, dayDates, numberOfRealDaysPerInGameDay, gameTimeZone]);
+    // Ticking clock so today/yesterday labels follow the (possibly simulated) time.
+    const now = useNow(10_000);
+    const selectedDayRangeLabel = useMemo(() => getContextualDayRangeLabel(dayDates, resolvedSelectedDayIndex, numberOfRealDaysPerInGameDay, now, gameTimeZone), [resolvedSelectedDayIndex, dayDates, numberOfRealDaysPerInGameDay, gameTimeZone, now]);
+    const previousDayLabel = useMemo(() => resolvedSelectedDayIndex > 0 ? getContextualDayRangeLabel(dayDates, resolvedSelectedDayIndex - 1, numberOfRealDaysPerInGameDay, now, gameTimeZone) : '', [dayDates, numberOfRealDaysPerInGameDay, resolvedSelectedDayIndex, gameTimeZone, now]);
+    const nextDayLabel = useMemo(() => resolvedSelectedDayIndex < totalDays - 1 ? getContextualDayRangeLabel(dayDates, resolvedSelectedDayIndex + 1, numberOfRealDaysPerInGameDay, now, gameTimeZone) : '', [resolvedSelectedDayIndex, totalDays, dayDates, numberOfRealDaysPerInGameDay, gameTimeZone, now]);
     const setResolvedSelectedDayIndex = (dayIndex: number) => {
         if (onSelectedDayIndexChange) {
             onSelectedDayIndexChange(dayIndex);

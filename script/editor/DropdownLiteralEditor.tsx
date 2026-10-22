@@ -124,8 +124,9 @@ const DropdownLiteralEditor = ({
         options={options}
         value={expression.value}
         onValueChange={handleSelect}
-        placeholder="Select…"
-        triggerClassName="min-w-24 !py-1 !px-2 text-sm"
+        placeholder="Select"
+        fitContent
+        triggerClassName="!py-1 !px-2 text-sm"
         isInDialog
         allowUnselect={false}
         onFooterPress={() => setIsEditDialogOpen(true)}
@@ -151,7 +152,7 @@ const DropdownLiteralEditor = ({
                 Edit dropdown options
               </FontText>
 
-              {/* Options list — each row is typeable and draggable */}
+              {/* Options list: each row is typeable and draggable */}
               <Column className="gap-1.5">
                 {draftOptions.map((option, index) =>
                   React.createElement(
@@ -202,7 +203,7 @@ const DropdownLiteralEditor = ({
                 )}
               </Column>
 
-              {/* Add button — press first, then type */}
+              {/* Add button: press first, then type */}
               <Pressable
                 accessibilityRole="button"
                 onPress={() => {

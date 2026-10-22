@@ -3,7 +3,8 @@ import Row from '../layout/Row';
 import NavTab from '../layout/NavTab';
 import MiddleNavTab from '../layout/MiddleNavTab';
 import SvgGroup2 from '../icons/Group2';
-import { View, Text, TouchableOpacity, useWindowDimensions } from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
+import { useContentWidth } from 'hooks/useContentWidth';
 
 export type GameTabDefinition<TTab extends string> = {
     label: string;
@@ -41,7 +42,7 @@ const SvgTabContainer = ({ text, isHighlighted, onPress }: { text: string; isHig
 };
 
 const GameTabBar = <TTab extends string>({ activeTab, onTabPress, tabs, iconSize = 26, iconStrokeWidth = 0 }: GameTabBarProps<TTab>) => {
-    const { width } = useWindowDimensions();
+    const width = useContentWidth();
     const hasTrueMiddle = tabs.length % 2 === 1;
     const centerIndex = Math.floor(tabs.length / 2);
     const useCondensed = width < 650; // Switch to condensed text on narrow screens

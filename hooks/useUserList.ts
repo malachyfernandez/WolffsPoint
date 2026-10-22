@@ -6,6 +6,7 @@ import { userVarConfig } from '../utils/userVarConfig';
 import { decodeUserValue, encodeUserValue } from './userValueSerialization';
 import { globalRateLimitMonitor } from './useRateLimitMonitor';
 import { deepEqual } from '../utils/deepEqual';
+import { nowMs } from '../utils/simNow';
 import { useToast } from '../contexts/ToastContext';
 import {
   ScheduledSetOptions,
@@ -324,7 +325,7 @@ export function useUserList<T>({
       itemId,
     }) as any;
 
-    const now = Date.now();
+    const now = nowMs();
 
     localStore.setQuery(
       api.user_lists.get,
@@ -357,11 +358,11 @@ export function useUserList<T>({
 
     if (globalRateLimitMonitor.isBlocked(`user_lists:${key}:${itemId}`)) {
       if (globalRateLimitMonitor.consumeTripWarning(`user_lists:${key}:${itemId}`)) {
-        const msg = `⚠️ High data activity detected — possible infinite loop bug (list "${key}/${itemId}"). Writes paused.`;
+        const msg = `⚠️ High data activity detected, possible infinite loop bug (list "${key}/${itemId}"). Writes paused.`;
         showToast(msg);
         devWarn(
           'uservar_rate_limited',
-          `Blocked set for list key="${key}" itemId="${itemId}" — mutation rate limit exceeded. Likely infinite write loop.`
+          `Blocked set for list key="${key}" itemId="${itemId}", mutation rate limit exceeded. Likely infinite write loop.`
         );
       }
       return;
@@ -470,6 +471,7 @@ export function useUserList<T>({
     };
 
     const mutationPromise = setMutation({
+      cellWriteOrigin: options.cellWriteOrigin,
       key,
       itemId,
       value: encodedValue,

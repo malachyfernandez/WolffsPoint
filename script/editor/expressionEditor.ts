@@ -6,11 +6,12 @@ export type ExpressionSlot =
   | { kind: 'callArg'; name: string }
   | { kind: 'ifCondition'; branchIndex?: number }
   | { kind: 'forEachIterable' }
+  | { kind: 'navLabel' }
   | { kind: 'returnValue' }
   | { kind: 'templateDefault'; pieceIndex: number }
   | { kind: 'updateCellPlayers' }
   | { kind: 'updateCellDayIndex' }
-  | { kind: 'updateCellValue' }
+  | { kind: 'cellOpValue' }
   | { kind: 'updateCellColumn' };
 
 export type ExpressionPathStep =
@@ -22,6 +23,7 @@ export type ExpressionPathStep =
   | { kind: 'indexObject' }
   | { kind: 'indexValue' }
   | { kind: 'callArgument'; index: number }
+  | { kind: 'namedCallArgument'; name: string }
   | { kind: 'markdownVariable'; name: string }
   | { kind: 'chainBase' }
   | { kind: 'chainArgument'; linkIndex: number; argumentIndex: number };
@@ -194,11 +196,40 @@ export const renameIdentifierInStatements = (
           ...statement,
           players: renameIdentifier(statement.players, from, to),
           dayIndex: statement.dayIndex ? renameIdentifier(statement.dayIndex, from, to) : null,
-          updateValue: renameIdentifier(statement.updateValue, from, to),
+          column: renameIdentifier(statement.column, from, to),
+          body: {
+            ...statement.body,
+            statements: renameIdentifierInStatements(statement.body.statements, from, to),
+          },
         };
+      case 'CellOpStatement':
+        return { ...statement, value: renameIdentifier(statement.value, from, to) };
+      case 'ForEachCellStatement':
+        // The loop variable shadows outer names - don't rename its uses.
+        return statement.itemName.toLowerCase() === from.toLowerCase()
+          ? statement
+          : {
+              ...statement,
+              body: {
+                ...statement.body,
+                statements: renameIdentifierInStatements(statement.body.statements, from, to),
+              },
+            };
       case 'OnTagAddedStatement':
+      case 'NavButtonStatement':
+      case 'DisplayGroupStatement':
         return {
           ...statement,
+          ...(statement.kind === 'NavButtonStatement'
+            ? { label: renameIdentifier(statement.label, from, to) }
+            : statement.kind === 'DisplayGroupStatement'
+              ? {
+                  arguments: statement.arguments.map((arg) => ({
+                    ...arg,
+                    value: renameIdentifier(arg.value, from, to),
+                  })),
+                }
+              : {}),
           body: {
             ...statement.body,
             statements: renameIdentifierInStatements(statement.body.statements, from, to),
@@ -272,6 +303,36 @@ export const replaceExpressionAtPath = (
       return expression.kind === 'CallExpression'
         ? { ...expression, arguments: replaceArgument(expression.arguments, step.index, replace) }
         : expression;
+    case 'namedCallArgument': {
+      if (expression.kind !== 'CallExpression') return expression;
+      if (rest.length === 0 && replacement.kind === 'NothingLiteral') {
+        return {
+          ...expression,
+          arguments: expression.arguments.filter(
+            (arg) =>
+              arg.kind !== 'NamedArgument' || arg.name.toLowerCase() !== step.name.toLowerCase()
+          ),
+        };
+      }
+      const index = expression.arguments.findIndex(
+        (arg) => arg.kind === 'NamedArgument' && arg.name.toLowerCase() === step.name.toLowerCase()
+      );
+      return {
+        ...expression,
+        arguments:
+          index >= 0
+            ? replaceArgument(expression.arguments, index, replace)
+            : [
+                ...expression.arguments,
+                {
+                  kind: 'NamedArgument',
+                  name: step.name,
+                  value: replace({ kind: 'NothingLiteral', span }),
+                  span,
+                },
+              ],
+      };
+    }
     case 'markdownVariable':
       if (expression.kind !== 'MarkdownLiteral') return expression;
       return {
@@ -309,17 +370,21 @@ export const replaceExpressionAtPath = (
 
 const getRootExpression = (statement: Statement, slot: ExpressionSlot): Expression | undefined => {
   switch (slot.kind) {
-    case 'callArg':
-      if (
-        statement.kind !== 'ExpressionStatement' ||
-        statement.expression.kind !== 'CallExpression'
-      )
-        return undefined;
-      return statement.expression.arguments.find(
+    case 'callArg': {
+      const args =
+        statement.kind === 'ExpressionStatement' && statement.expression.kind === 'CallExpression'
+          ? statement.expression.arguments
+          : statement.kind === 'DisplayGroupStatement'
+            ? statement.arguments
+            : undefined;
+      return args?.find(
         (argument) =>
           argument.kind === 'NamedArgument' &&
           argument.name.toUpperCase() === slot.name.toUpperCase()
       )?.value;
+    }
+    case 'navLabel':
+      return statement.kind === 'NavButtonStatement' ? statement.label : undefined;
     case 'ifCondition':
       return statement.kind === 'IfStatement'
         ? statement.branches[slot.branchIndex ?? 0]?.condition
@@ -337,8 +402,8 @@ const getRootExpression = (statement: Statement, slot: ExpressionSlot): Expressi
       return statement.kind === 'UpdateCellStatement'
         ? (statement.dayIndex ?? undefined)
         : undefined;
-    case 'updateCellValue':
-      return statement.kind === 'UpdateCellStatement' ? statement.updateValue : undefined;
+    case 'cellOpValue':
+      return statement.kind === 'CellOpStatement' ? statement.value : undefined;
     case 'updateCellColumn':
       return statement.kind === 'UpdateCellStatement' ? statement.column : undefined;
   }
@@ -351,25 +416,51 @@ const setRootExpression = (
 ): Statement => {
   switch (slot.kind) {
     case 'callArg': {
-      if (
-        statement.kind !== 'ExpressionStatement' ||
-        statement.expression.kind !== 'CallExpression'
-      )
-        return statement;
-      const hasArgument = statement.expression.arguments.some(
+      const container =
+        statement.kind === 'ExpressionStatement' && statement.expression.kind === 'CallExpression'
+          ? statement.expression
+          : statement.kind === 'DisplayGroupStatement'
+            ? statement
+            : undefined;
+      if (!container) return statement;
+      // Setting an arg to nothing clears it entirely: a missing named arg
+      // and an explicit `NAME = nothing` are semantically identical, and
+      // removal keeps the printed source clean (flag resets rely on this).
+      if (expression.kind === 'NothingLiteral') {
+        const args = container.arguments.filter(
+          (argument) =>
+            !(
+              argument.kind === 'NamedArgument' &&
+              argument.name.toUpperCase() === slot.name.toUpperCase()
+            )
+        );
+        if (statement.kind === 'DisplayGroupStatement') {
+          return { ...statement, arguments: args };
+        }
+        return statement.kind === 'ExpressionStatement'
+          ? {
+              ...statement,
+              expression: {
+                ...statement.expression,
+                arguments: args,
+              } as typeof statement.expression,
+            }
+          : statement;
+      }
+      const hasArgument = container.arguments.some(
         (argument) =>
           argument.kind === 'NamedArgument' &&
           argument.name.toUpperCase() === slot.name.toUpperCase()
       );
       const argumentsList = hasArgument
-        ? statement.expression.arguments.map((argument) =>
+        ? container.arguments.map((argument) =>
             argument.kind === 'NamedArgument' &&
             argument.name.toUpperCase() === slot.name.toUpperCase()
               ? { ...argument, value: expression }
               : argument
           )
         : [
-            ...statement.expression.arguments,
+            ...container.arguments,
             {
               kind: 'NamedArgument',
               name: slot.name,
@@ -377,8 +468,23 @@ const setRootExpression = (
               span,
             } as NamedArgument,
           ];
-      return { ...statement, expression: { ...statement.expression, arguments: argumentsList } };
+      if (statement.kind === 'DisplayGroupStatement') {
+        return { ...statement, arguments: argumentsList };
+      }
+      return statement.kind === 'ExpressionStatement'
+        ? {
+            ...statement,
+            expression: {
+              ...statement.expression,
+              arguments: argumentsList,
+            } as typeof statement.expression,
+          }
+        : statement;
     }
+    case 'navLabel':
+      return statement.kind === 'NavButtonStatement'
+        ? { ...statement, label: expression }
+        : statement;
     case 'ifCondition': {
       if (statement.kind !== 'IfStatement') return statement;
       const branchIndex = slot.branchIndex ?? 0;
@@ -403,10 +509,8 @@ const setRootExpression = (
       return statement.kind === 'UpdateCellStatement'
         ? { ...statement, dayIndex: expression }
         : statement;
-    case 'updateCellValue':
-      return statement.kind === 'UpdateCellStatement'
-        ? { ...statement, updateValue: expression }
-        : statement;
+    case 'cellOpValue':
+      return statement.kind === 'CellOpStatement' ? { ...statement, value: expression } : statement;
     case 'updateCellColumn':
       return statement.kind === 'UpdateCellStatement'
         ? { ...statement, column: expression }
@@ -464,6 +568,13 @@ export const getExpressionAtLocation = (
         return expression.kind === 'CallExpression'
           ? expression.arguments[step.index]?.value
           : undefined;
+      case 'namedCallArgument':
+        return expression.kind === 'CallExpression'
+          ? expression.arguments.find(
+              (arg) =>
+                arg.kind === 'NamedArgument' && arg.name.toLowerCase() === step.name.toLowerCase()
+            )?.value
+          : undefined;
       case 'markdownVariable':
         return expression.kind === 'MarkdownLiteral'
           ? expression.variables?.find((variable) => variable.name === step.name)?.expression
@@ -490,7 +601,7 @@ export const updateExpressionAtLocation = (
 };
 
 /* ──────────────────────────────────────────────────────────────────────────
- * Entry source tracing — determines what "source" of data an expression
+ * Entry source tracing: determines what "source" of data an expression
  * evaluates to (e.g. "players", "day", "roles") so .entry() autocomplete
  * can suggest the right keys even through function calls and chains.
  * ────────────────────────────────────────────────────────────────────────── */
@@ -502,7 +613,7 @@ export const ENTRY_SOURCE_TRANSITIONS: Record<string, Record<string, string>> = 
   placeduser: { days: 'day' },
 };
 
-/** Global data sources — identifiers that are their own source. */
+/** Global data sources: identifiers that are their own source. */
 const GLOBAL_DATA_SOURCES = new Set([
   'players',
   'currentplayer',
@@ -592,7 +703,7 @@ const traceMethodSource = (
         ...ctx,
         varSources: { ...ctx.varSources, [param]: currentSource },
       };
-      // Lambda body can be a BlockStatement (not an Expression) — skip those
+      // Lambda body can be a BlockStatement (not an Expression), skip those
       if (body.kind === 'BlockStatement') return undefined;
       return traceEntrySource(body, lambdaCtx);
     }
@@ -681,7 +792,7 @@ export const traceEntrySource = (
         return fnDef?.returnEntrySource;
       }
 
-      // Chain (MemberExpression callee) — decompose and trace
+      // Chain (MemberExpression callee): decompose and trace
       const chain = decomposeChain(expr);
       if (chain.length > 1) {
         return traceChainSource(chain, ctx);
@@ -729,7 +840,7 @@ const traceChainSource = (chain: ChainLink[], ctx: TraceContext): string | undef
     return undefined;
   }
 
-  // Handle Inputs.entry("X") — returns the raw value, trace from input source
+  // Handle Inputs.entry("X"): returns the raw value, trace from input source
   if (base.expr.kind === 'IdentifierExpression' && base.expr.name.toLowerCase() === 'inputs') {
     for (let i = 1; i < chain.length; i++) {
       const link = chain[i];
@@ -739,10 +850,10 @@ const traceChainSource = (chain: ChainLink[], ctx: TraceContext): string | undef
           const key = keyArg.value.value.toLowerCase();
           // Inputs.entry("X") returns the raw selected value (e.g. player name string)
           // The source is the input's source, but the value is a primitive (string)
-          // So .entry() on it won't have keys — return undefined
+          // So .entry() on it won't have keys, return undefined
           let source: string | undefined;
           // For Inputs, the value is a primitive, not an object
-          // So we don't set a source — .entry() won't autocomplete
+          // So we don't set a source: .entry() won't autocomplete
           source = undefined;
           for (let j = i + 1; j < chain.length; j++) {
             source = traceMethodSource(chain[j], source, ctx);

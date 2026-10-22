@@ -28,7 +28,7 @@ interface TimezoneConfigItemProps {
 
 /**
  * Configuration item for the game's timezone.
- * Every player shares this zone — all schedule wall-clock times (wake-up,
+ * Every player shares this zone; all schedule wall-clock times (wake-up,
  * deadlines) are interpreted in it regardless of device timezone. Defaults to
  * the operator's device zone, which is stamped into the schedule on first open.
  */
@@ -44,7 +44,7 @@ const TimezoneConfigItem = ({ gameId }: TimezoneConfigItemProps) => {
     const effectiveZone = storedZone && isValidTimeZone(storedZone) ? storedZone : deviceTimeZone;
 
     // Seed the operator's device zone into the schedule the first time the
-    // config page loads — from then on every player shares the stored value.
+    // config page loads: from then on every player shares the stored value.
     useEffect(() => {
         if (gameSchedule.state.isSyncing) return;
         if ((!storedZone || !isValidTimeZone(storedZone)) && isValidTimeZone(deviceTimeZone)) {
@@ -69,7 +69,7 @@ const TimezoneConfigItem = ({ gameId }: TimezoneConfigItemProps) => {
     return (
         <ConfigSectionRow
             title='Game timezone'
-            subtext={`All players share this zone — deadlines and wake-up times use ${effectiveZone.replace(/_/g, ' ')}.`}
+            subtext={`All players share this zone, deadlines and wake-up times use ${effectiveZone.replace(/_/g, ' ')}.`}
         >
             <AppDropdown
                 options={options}

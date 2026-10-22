@@ -1,9 +1,9 @@
 /**
  * sim/perf/runTour.ts
  *
- * The "Simulate Everything" driver. Walks the entire seeded app — every game
+ * The "Simulate Everything" driver. Walks the entire seeded app, every game
  * role, every tab (cold + warm), thread-list → thread-detail navigation,
- * scroll-heavy screens, every modal in the ModalLab, minimize/restore — and
+ * scroll-heavy screens, every modal in the ModalLab, minimize/restore, and
  * records a measured StepResult per action into perfLog.
  */
 
@@ -52,7 +52,7 @@ interface StepOpts {
   timeoutMs?: number;
   tailMs?: number;
   manual?: boolean;
-  /** post-action assertion — checked after fn() (waits up to 2.5s). A failed
+  /** post-action assertion: checked after fn() (waits up to 2.5s). A failed
    *  check marks the step as an error instead of silently measuring the
    *  wrong state. */
   verify?: { desc: string; check: () => boolean };
@@ -60,7 +60,7 @@ interface StepOpts {
   expectOpenDialog?: boolean;
 }
 
-/** Kinds that assume a clean page underneath — a leaked dialog corrupts them. */
+/** Kinds that assume a clean page underneath, a leaked dialog corrupts them. */
 const PAGE_STATE_KINDS = new Set<StepKind>(['navigate', 'tab', 'scroll']);
 
 async function step(
@@ -80,7 +80,7 @@ async function step(
     const n = openDialogs().length;
     perfLog.note(
       `state-check: ${n} dialog(s) still open before "${label}"`,
-      'a previous modal-close did not take — recovered by force-closing before measuring',
+      'a previous modal-close did not take, recovered by force-closing before measuring',
       `stale dialog leak (x${n})`
     );
     await closeOpenDialogs(() => simUi.closeModal());
@@ -119,7 +119,7 @@ const clickText = (t: string) => clickEl(byText(t));
 /** Biggest scrollable region on the page (usually the screen's scrollview). */
 async function scrollMain(label: string, fraction = 0.7, durationMs = 1400) {
   return step(label, 'scroll', async () => {
-    // page scrollables only — never a scrollable inside a (possibly stale) dialog
+    // page scrollables only: never a scrollable inside a (possibly stale) dialog
     const scrollables = findPageScrollables().filter((s) => s.range > 200);
     if (scrollables.length === 0) return;
     const target = scrollables[0].el;
@@ -174,7 +174,7 @@ async function goHome() {
 
 /**
  * Close whatever dialog is open, via its real close control ([aria-label="Close"])
- * — the same path a user takes. simUi.closeModal() is only a documented fallback;
+ * the same path a user takes. simUi.closeModal() is only a documented fallback;
  * the step FAILS if any dialog remains, instead of silently measuring a leak.
  */
 async function closeDialogsStep(label: string) {
@@ -213,9 +213,9 @@ export async function runFullTour(onProgress: (p: TourProgress) => void) {
   note('Perf audit tour starting', `UA: ${navigator.userAgent}`);
 
   // ======================================================================
-  // PHASE A — game list
+  // PHASE A: game list
   // ======================================================================
-  note('Phase A — game list');
+  note('Phase A: game list');
   await waitFor(() => byTestId(`game-${GAME_OP}`), 10000);
   await scrollMain('scroll: game list', 0.6, 800);
   await step('action: New WolffsPoint dialog open', 'modal-open', async () => {
@@ -224,19 +224,19 @@ export async function runFullTour(onProgress: (p: TourProgress) => void) {
   await closeDialogsStep('modal close: New WolffsPoint').catch(() => {});
 
   // ======================================================================
-  // PHASE B — operator game
+  // PHASE B: operator game
   // ======================================================================
-  note('Phase B — operator game', 'current user owns SIMOP1234');
+  note('Phase B: operator game', 'current user owns SIMOP1234');
   await openGame(GAME_OP, 'SIMOP1234 (as operator)');
 
-  // cold pass — first mount of each tab
+  // cold pass: first mount of each tab
   for (const t of OPERATOR_TABS.slice(1)) await gotoTab(t, true, 'op:');
   await gotoTab('players', false, 'op:');
 
-  // warm pass — all tabs mounted now
+  // warm pass: all tabs mounted now
   for (const t of [...OPERATOR_TABS.slice(1), 'players']) await gotoTab(t, false, 'op:');
 
-  // rapid cycle — simulates fast tapping
+  // rapid cycle: simulates fast tapping
   await step('rapid tab cycle (all 6 operator tabs)', 'action', async () => {
     for (const t of OPERATOR_TABS) {
       clickTestId(`gametab-${t}`);
@@ -273,7 +273,7 @@ export async function runFullTour(onProgress: (p: TourProgress) => void) {
   }, { tailMs: 300, verify: dialogOpened }).catch(() => {});
   await closeDialogsStep('modal close: Review/Certify').catch(() => {});
 
-  // town square — thread nav
+  // town square: thread nav
   await gotoTab('forum', false, 'op:');
   await scrollMain('scroll: town square thread list', 0.6, 1100);
   await step('navigate: thread list → thread detail', 'navigate', async () => {
@@ -309,7 +309,7 @@ export async function runFullTour(onProgress: (p: TourProgress) => void) {
   await gotoTab('newspaper', false, 'op:');
   await scrollMain('scroll: operator newspaper', 0.8, 1500);
 
-  // config tab (labeled 'rulebook' in the tab bar) — sub-navigates to rule book + phone book
+  // config tab (labeled 'rulebook' in the tab bar), sub-navigates to rule book + phone book
   await gotoTab('rulebook', false, 'op:');
   await scrollMain('scroll: operator config page', 0.7, 1100);
   await step('navigate: config → rule book subpage', 'navigate', async () => {
@@ -347,9 +347,9 @@ export async function runFullTour(onProgress: (p: TourProgress) => void) {
   await goHome();
 
   // ======================================================================
-  // PHASE C — player game
+  // PHASE C: player game
   // ======================================================================
-  note('Phase C — player game', 'current user is a player in SIMPLY567');
+  note('Phase C: player game', 'current user is a player in SIMPLY567');
   await openGame(GAME_PLAYER, 'SIMPLY567 (as player)');
   for (const t of PLAYER_TABS.slice(1)) await gotoTab(t, true, 'player:');
   for (const t of [...PLAYER_TABS.slice(1), PLAYER_TABS[0]]) await gotoTab(t, false, 'player:');
@@ -366,9 +366,9 @@ export async function runFullTour(onProgress: (p: TourProgress) => void) {
   await goHome();
 
   // ======================================================================
-  // PHASE D — newser game
+  // PHASE D: newser game
   // ======================================================================
-  note('Phase D — newser game', 'current user is the newser of SIMNEWS9');
+  note('Phase D: newser game', 'current user is the newser of SIMNEWS9');
   await openGame(GAME_NEWSER, 'SIMNEWS9 (as newser)');
   for (const t of NEWSER_TABS.slice(1)) await gotoTab(t, true, 'newser:');
   for (const t of [...NEWSER_TABS.slice(1), NEWSER_TABS[0]]) await gotoTab(t, false, 'newser:');
@@ -377,9 +377,9 @@ export async function runFullTour(onProgress: (p: TourProgress) => void) {
   await goHome();
 
   // ======================================================================
-  // PHASE E — modal lab
+  // PHASE E: modal lab
   // ======================================================================
-  note('Phase E — modal lab', 'every dialog with fixture data, opened/closed/measured');
+  note('Phase E: modal lab', 'every dialog with fixture data, opened/closed/measured');
   simUi.set({ labOpen: true });
   await waitFor(() => byTestId('modallab-open-confirm'), 5000);
 
@@ -415,7 +415,7 @@ export async function runFullTour(onProgress: (p: TourProgress) => void) {
   simUi.set({ labOpen: false });
 
   // ======================================================================
-  // wrap up — report
+  // wrap up: report
   // ======================================================================
   const durationMs = performance.now() - runStart;
   note('Tour complete', `${stepCount} steps in ${(durationMs / 1000).toFixed(1)}s`);

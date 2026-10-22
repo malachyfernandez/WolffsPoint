@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { Trash2 } from 'lucide-react-native';
 import ConvexDialog from '../ui/dialog/ConvexDialog';
@@ -11,11 +11,8 @@ import FontTextInput from '../ui/forms/FontTextInput';
 import DialogHeader from '../ui/dialog/DialogHeader';
 import UnsavedChangesDialog from '../ui/dialog/UnsavedChangesDialog';
 import TagPill, { TAG_COLORS, type TagColor } from './TagPill';
-import ScriptEditorDialog from '../../script/editor/ScriptEditorDialog';
-import { useValue, useList } from 'hooks/useData';
+import { useValue } from 'hooks/useData';
 import { getGameScopedKey } from 'utils/multiplayer';
-import type { UserTableItem, UserTableTitle } from 'types/playerTable';
-import type { ScriptSourceData } from '../../script/runtime/sources';
 import { useKeyboardShortcuts } from 'hooks/useKeyboardShortcuts';
 import { useKeyboardShortcutHint } from 'contexts/KeyboardShortcutHintContext';
 
@@ -31,12 +28,14 @@ interface AddTagDialogProps {
   onEdit?: (oldName: string, newName: string, colorName: string) => void;
   /** Called when deleting a tag (edit mode only) */
   onDelete?: (name: string) => void;
-  /** Game ID for loading/saving tag trigger scripts */
+  /** Game ID for legacy tag-trigger cleanup on rename/delete */
   gameId?: string;
 }
 
 /**
- * Sub-modal for creating or editing a tag definition.
+ * Sub-modal for creating or editing a tag definition. Trigger scripts are
+ * not edited here - file-backed tags are edited by opening the tag FILE
+ * (name + color + trigger body live in the file editor).
  */
 const AddTagDialog = ({
   isOpen,
@@ -53,43 +52,14 @@ const AddTagDialog = ({
   const [name, setName] = useState('');
   const [selectedColor, setSelectedColor] = useState<string>(TAG_COLORS[0].name);
   const [isLeaveConfirmOpen, setIsLeaveConfirmOpen] = useState(false);
-  const [isTriggerEditorOpen, setIsTriggerEditorOpen] = useState(false);
 
-  // Tag trigger scripts: { "Infected": "script...", "Dead": "..." }
-  // Each script can contain OnTagAdded and OnTagRemoved blocks.
+  // Legacy tag trigger scripts: { "Infected": "script...", "Dead": "..." }.
+  // Only needed so renaming/deleting a legacy tag moves/cleans its trigger.
   const [tagTriggersRecord, setTagTriggersRecord] = useValue<Record<string, string>>(
     gameId ? getGameScopedKey('tagTriggers', gameId) : 'tagTriggers-noop',
     { defaultValue: {}, privacy: 'PUBLIC' }
   );
   const tagTriggers = tagTriggersRecord?.value ?? {};
-
-  // Load user table title + players so the ScriptEditorDialog can show
-  // extra columns in UpdateCell and provide proper script globals.
-  const [userTableTitle] = useList<UserTableTitle>('userTableTitle', gameId ?? '', {
-    privacy: 'PUBLIC',
-  });
-  const [userTable] = useList<UserTableItem[]>('userTable', gameId ?? '', {
-    privacy: 'PUBLIC',
-  });
-  const [morningMessagesList] = useList<Record<string, string[]>>(
-    'morningMessagesList',
-    gameId ?? '',
-    { privacy: 'PUBLIC' }
-  );
-
-  const scheduledUserTable = userTable.scheduledUpdate?.value ?? userTable.value;
-  const scheduledUserTableTitle = userTableTitle.scheduledUpdate?.value ?? userTableTitle.value;
-  const scheduledMorningMessages =
-    morningMessagesList.scheduledUpdate?.value ?? morningMessagesList.value;
-  const scriptSources = useMemo<ScriptSourceData>(
-    () => ({
-      capability: 'operator',
-      players: scheduledUserTable ?? [],
-      userTableTitle: scheduledUserTableTitle,
-      morningMessagesList: scheduledMorningMessages,
-    }),
-    [scheduledUserTable, scheduledUserTableTitle, scheduledMorningMessages]
-  );
 
   // Snapshot of the initial state when the dialog opens, used to detect
   // unsaved changes and prompt before closing.
@@ -151,7 +121,8 @@ const AddTagDialog = ({
     if (!canSubmit) return;
     if (isEditMode && editTag) {
       onEdit?.(editTag.name, trimmedName, selectedColor);
-      // Rename tag trigger if the name changed
+      // Rename legacy tag trigger if the name changed (file tags carry their
+      // trigger in the file - a rename doesn't move it).
       if (editTag.name !== trimmedName && tagTriggers[editTag.name]) {
         const next = { ...tagTriggers };
         next[trimmedName] = next[editTag.name];
@@ -167,7 +138,8 @@ const AddTagDialog = ({
   const handleDelete = () => {
     if (editTag) {
       onDelete?.(editTag.name);
-      // Also clean up the tag trigger
+      // Also clean up the legacy tag trigger (not needed for file tags -
+      // deleting the file removes the trigger with it).
       if (tagTriggers[editTag.name]) {
         const next = { ...tagTriggers };
         delete next[editTag.name];
@@ -185,7 +157,9 @@ const AddTagDialog = ({
 
   return (
     <>
-      <ConvexDialog.Root isOpen={isOpen} onOpenChange={handleOpenChange}>
+      {/* hidden Root: closed dialogs still render an empty View that eats a
+       *  flex gap in parents like the insert picker's gap-3 column */}
+      <ConvexDialog.Root className="hidden" isOpen={isOpen} onOpenChange={handleOpenChange}>
         <ConvexDialog.Portal>
           <ConvexDialog.Overlay />
           <ConvexDialog.Content className="max-w-md" isSwipeable={false}>
@@ -201,6 +175,8 @@ const AddTagDialog = ({
               <Column className="gap-1">
                 <FontText weight="medium">Name</FontText>
                 <FontTextInput
+                  autoFocus
+                  selectTextOnFocus
                   placeholder="Enter tag name..."
                   variant="styled"
                   className="w-full p-2"
@@ -208,9 +184,7 @@ const AddTagDialog = ({
                   onChangeText={setName}
                 />
                 {isDuplicate && (
-                  <FontText className="text-xs">
-                    A tag with this name already exists
-                  </FontText>
+                  <FontText className="text-xs">A tag with this name already exists</FontText>
                 )}
               </Column>
 
@@ -228,47 +202,6 @@ const AddTagDialog = ({
                   ))}
                 </Row>
               </Column>
-
-              {/* Trigger script (edit mode only) */}
-              {isEditMode && editTag && gameId && (
-                <Column className="gap-2">
-                  <Row className="gap-2">
-                    <AppButton
-                      variant="outline"
-                      className="h-9 px-4"
-                      onPress={() => setIsTriggerEditorOpen(true)}>
-                      <FontText weight="medium" className="text-sm">
-                        {tagTriggers[editTag.name]?.trim()
-                          ? 'Edit Trigger Script'
-                          : 'Add Trigger Script'}
-                      </FontText>
-                    </AppButton>
-                    {tagTriggers[editTag.name]?.trim() && (
-                      <AppButton
-                        variant="outline"
-                        className="h-9 px-4"
-                        onPress={() => {
-                          const next = { ...tagTriggers };
-                          delete next[editTag.name];
-                          setTagTriggersRecord(next);
-                        }}>
-                        <FontText weight="medium" className="text-sm">
-                          Remove
-                        </FontText>
-                      </AppButton>
-                    )}
-                  </Row>
-                  {/* Script preview when a trigger exists */}
-                  {tagTriggers[editTag.name]?.trim() && (
-                    <View className="bg-text/5 max-h-32 overflow-hidden rounded-lg p-2">
-                      <FontText className="text-xs opacity-60" style={{ fontFamily: 'monospace' }}>
-                        {tagTriggers[editTag.name].slice(0, 500)}
-                        {tagTriggers[editTag.name].length > 500 ? '…' : ''}
-                      </FontText>
-                    </View>
-                  )}
-                </Column>
-              )}
 
               {/* Buttons */}
               <Row className="gap-3">
@@ -314,28 +247,6 @@ const AddTagDialog = ({
         onSave={handleSubmit}
         onDiscard={handleConfirmLeave}
       />
-
-      {isEditMode && editTag && gameId && (
-        <ScriptEditorDialog
-          isOpen={isTriggerEditorOpen}
-          onOpenChange={setIsTriggerEditorOpen}
-          title="Tag Trigger Script"
-          initialScriptText={tagTriggers[editTag.name] ?? ''}
-          sources={scriptSources}
-          hideInputs
-          isTriggerContext
-          gameId={gameId}
-          onSubmit={(scriptText) => {
-            const next = { ...tagTriggers };
-            if (scriptText.trim()) {
-              next[editTag.name] = scriptText;
-            } else {
-              delete next[editTag.name];
-            }
-            setTagTriggersRecord(next);
-          }}
-        />
-      )}
     </>
   );
 };

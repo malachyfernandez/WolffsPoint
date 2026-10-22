@@ -2,10 +2,10 @@
  * sim/perf/SimBar.tsx
  *
  * Fixed top-center control bar for the perf-audit copy. Hosts:
- *  - "Simulate Everything" — runs the full scripted tour
+ *  - "Simulate Everything": runs the full scripted tour
  *  - live progress + cancel
- *  - "Modal Lab" — opens the dialog test bench
- *  - "Report .md" — re-exports the last (or current) measurements
+ *  - "Modal Lab": opens the dialog test bench
+ *  - "Report .md": re-exports the last (or current) measurements
  */
 
 import React, { useState } from 'react';
@@ -27,7 +27,7 @@ export default function SimBar() {
     setBusy(true);
     simUi.set({ tourRunning: true, tourProgress: 'starting…', labOpen: false });
     try {
-      await runFullTour((p) => simUi.set({ tourProgress: `${p.done}/${p.total} — ${p.label}` }));
+      await runFullTour((p) => simUi.set({ tourProgress: `${p.done}/${p.total}: ${p.label}` }));
     } catch (e) {
       simUi.set({ tourProgress: `stopped: ${e instanceof Error ? e.message : e}` });
     } finally {

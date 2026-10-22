@@ -26,11 +26,34 @@ const WEIGHT_MAP: Record<FontWeight, '400' | '500' | '700'> = {
 
 const TEXT_UTIL_CLASSES = new Set([
   'text-text',
-  'text-xs', 'text-sm', 'text-base', 'text-lg', 'text-xl',
-  'text-2xl', 'text-3xl', 'text-4xl', 'text-5xl', 'text-6xl', 'text-7xl', 'text-8xl', 'text-9xl',
-  'text-left', 'text-right', 'text-center', 'text-justify', 'text-start', 'text-end',
-  'text-wrap', 'text-nowrap', 'text-balance', 'text-pretty', 'text-ellipsis', 'text-clip',
-  'text-inherit', 'text-current', 'text-transparent',
+  'text-xs',
+  'text-sm',
+  'text-base',
+  'text-lg',
+  'text-xl',
+  'text-2xl',
+  'text-3xl',
+  'text-4xl',
+  'text-5xl',
+  'text-6xl',
+  'text-7xl',
+  'text-8xl',
+  'text-9xl',
+  'text-left',
+  'text-right',
+  'text-center',
+  'text-justify',
+  'text-start',
+  'text-end',
+  'text-wrap',
+  'text-nowrap',
+  'text-balance',
+  'text-pretty',
+  'text-ellipsis',
+  'text-clip',
+  'text-inherit',
+  'text-current',
+  'text-transparent',
 ]);
 
 const getColorTokenFromClassName = (className: string): string | null => {
@@ -63,7 +86,9 @@ const FontText = ({
   const colorToken = color || getColorTokenFromClassName(className) || 'text';
   const colorClass = `text-${colorToken}`;
   const resolvedStyle = useResolveClassNames(colorClass);
-  const resolvedColor = String(resolvedStyle?.color ?? (useCSSVariable(`--color-${colorToken}`) || colorToken));
+  const cssVariableColor = useCSSVariable(`--color-${colorToken}`);
+  // Missing web CSS variables return ''; preserve literal rgb/rgba/hex colors.
+  const resolvedColor = String(resolvedStyle?.color ?? (cssVariableColor || colorToken));
 
   if (variant === 'subtext') {
     className += ' text-xs opacity-70';

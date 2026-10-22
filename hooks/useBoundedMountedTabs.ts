@@ -9,10 +9,10 @@ import { useMemoryPolicy } from '../contexts/MemoryPressureContext';
  * Safety rules:
  * - The active tab is never evicted.
  * - A pane whose scopeId owns a pinned minimized dialog (unsaved edits) is
- *   never evicted — its `onRestore` closure lives in that subtree.
+ *   never evicted: its `onRestore` closure lives in that subtree.
  * - Evictions are deferred by `policy.tabEvictDelayMs` after a tab hides, so
  *   rapid A→B→A switching stays warm even on the tightest policy.
- * - An evicted tab re-mounts on next visit — identical to the existing
+ * - An evicted tab re-mounts on next visit, identical to the existing
  *   lazy-mount first-visit path.
  */
 export function useBoundedMountedTabs<T extends string>(
@@ -51,7 +51,7 @@ export function useBoundedMountedTabs<T extends string>(
       const dropped = evictable.slice(0, Math.min(excess, evictable.length));
       if (dropped.length === 0) return;
 
-      // Notify before the unmount — a dead scope's stale minimized cards
+      // Notify before the unmount: a dead scope's stale minimized cards
       // (non-pinned only) go with it.
       dropped.forEach((t) => onEvictRef.current?.(t));
       const drop = new Set(dropped);
@@ -67,7 +67,7 @@ export function useBoundedMountedTabs<T extends string>(
     };
   }, [order, activeTab, policy.maxHiddenTabs, policy.tabEvictDelayMs, pinnedScopes, scopeIdForTab]);
 
-  // The active tab is always considered mounted — the order-state effect that
+  // The active tab is always considered mounted; the order-state effect that
   // records it lands one render after the press, and we don't want a frame of
   // empty pane in between.
   return new Set([...order, activeTab]);

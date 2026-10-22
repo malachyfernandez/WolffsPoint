@@ -23,7 +23,7 @@ const getFormatter = (timeZone: string): Intl.DateTimeFormat | null => {
       second: 'numeric',
       hourCycle: 'h23',
     });
-    // Force a format call — invalid zones throw RangeError here on some engines.
+    // Force a format call: invalid zones throw RangeError here on some engines.
     formatter.format(0);
     formatterCache.set(timeZone, formatter);
     return formatter;
@@ -146,7 +146,7 @@ export const zonedWallTimeOnInstantDayMs = (
 
 /**
  * Calendar-date token (local-midnight Date) for the day `instantMs` falls on
- * in `timeZone`. Only its getFullYear/getMonth/getDate fields are meaningful —
+ * in `timeZone`. Only its getFullYear/getMonth/getDate fields are meaningful,
  * same convention as parseStoredDayDates. Use to convert a real instant into
  * a day token before passing it to token-based helpers.
  */
@@ -158,7 +158,7 @@ export const getZonedDayToken = (instantMs: number, timeZone: string): Date => {
 /**
  * Numeric day value (ms at UTC midnight) for the calendar date that
  * `instantMs` falls on in `timeZone`. Safe for <, ===, > comparisons and
- * sorting. NOT a real instant — never mix with Date.now().
+ * sorting. NOT a real instant: never mix with Date.now().
  */
 export const getZonedDayValue = (instantMs: number, timeZone: string): number => {
   const p = getZonedParts(instantMs, timeZone);

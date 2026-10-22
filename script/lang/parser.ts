@@ -12,6 +12,8 @@ import type {
   SourcePosition,
   SourceSpan,
   Statement,
+  CellOpStatement,
+  ForEachCellStatement,
   UpdateCellStatement,
 } from './ast';
 import { getMarkdownVariableNames } from '../markdownVariables';
@@ -97,12 +99,26 @@ class Parser {
     } else if (this.matchKeyword('RETURN')) {
       stmt = this.parseReturn(this.previous());
     } else if (
+      this.isName(this.current()) &&
+      ['NAVBUTTON', 'DISPLAYGROUP'].includes(this.current().text.toUpperCase()) &&
+      this.peek(1).text === '('
+    ) {
+      stmt = this.parseDisplayContainer();
+    } else if (
       // UpdateCell container statement: UpdateCell({ ... }) { body } Return expr;
       this.isName(this.current()) &&
       this.current().text.toUpperCase() === 'UPDATECELL' &&
       this.peek(1).text === '('
     ) {
       stmt = this.parseUpdateCell(this.current());
+    } else if (
+      // Tag file meta header: Tag({NAME = "x", COLOR = "y"})
+      this.isName(this.current()) &&
+      this.current().text.toUpperCase() === 'TAG' &&
+      this.peek(1).text === '(' &&
+      this.peek(2).text === '{'
+    ) {
+      stmt = this.parseTagStatement(this.current());
     } else if (
       // OnTagAdded container statement: OnTagAdded { body }
       this.isName(this.current()) &&
@@ -117,6 +133,15 @@ class Parser {
       this.peek(1).text === '{'
     ) {
       stmt = this.parseOnTagRemoved(this.current());
+    } else if (this.isCellLoopStart()) {
+      // `Each name { ... }` / `ForEachCell name { ... }` - cell loop block.
+      // Valid only inside UpdateCell; elsewhere the linter flags it.
+      stmt = this.parseForEachCell(this.current());
+    } else if (this.isCellOpStart() !== null) {
+      // `Add expr;` / `ForCell Remove expr;` - scope is positional
+      // (inside a cell loop → 'cell', elsewhere → 'all'); an explicit
+      // ForCell/ForAllCells prefix wins either way.
+      stmt = this.parseCellOp(this.current());
     } else if (this.matchText('{')) {
       stmt = this.parseBlockAfterOpen(this.previous());
     } else {
@@ -218,6 +243,8 @@ class Parser {
     let dayIndex: Expression | null = null;
     let column: Expression = { kind: 'StringLiteral', value: '', span: keyword.span };
     let itemName = 'cellContents';
+    let allowDuplicates: boolean | undefined;
+    let autoRemove: boolean | undefined;
     const endText = wrapped ? '}' : ')';
     while (!this.atEnd() && !this.checkText(endText)) {
       if (this.isName(this.current()) && this.peek(1).text === '=') {
@@ -242,6 +269,16 @@ class Parser {
           case 'ITEM':
             if (value.kind === 'StringLiteral') itemName = value.value;
             break;
+          case 'ALLOWDUPLICATES':
+          case 'AUTOREMOVE':
+            if (value.kind !== 'BooleanLiteral') {
+              this.error(this.previous(), `${name} must be True or False`);
+            } else if (name === 'ALLOWDUPLICATES') {
+              allowDuplicates = value.value;
+            } else {
+              autoRemove = value.value;
+            }
+            break;
         }
       }
       if (!this.matchText(',')) break;
@@ -251,17 +288,7 @@ class Parser {
     }
     this.consumeText(')', 'Expected ) after UpdateCell arguments');
 
-    const body = this.parseRequiredBlock('Expected a block after UpdateCell');
-
-    // Extract the Return statement as updateValue
-    let updateValue: Expression = { kind: 'NothingLiteral', span: body.span };
-    const bodyStatements = [...body.statements];
-    const lastIdx = bodyStatements.length - 1;
-    if (lastIdx >= 0 && bodyStatements[lastIdx].kind === 'ReturnStatement') {
-      const ret = bodyStatements[lastIdx];
-      if (ret.value) updateValue = ret.value;
-      bodyStatements.pop();
-    }
+    const { body, end } = this.parseUpdateCellBody(itemName);
 
     const result: UpdateCellStatement = {
       kind: 'UpdateCellStatement',
@@ -269,12 +296,199 @@ class Parser {
       columnType,
       dayIndex,
       column,
-      itemName,
-      body: { kind: 'BlockStatement', statements: bodyStatements, span: body.span },
-      updateValue,
-      span: joinSpan(keyword.span.start, body.span.end),
+      allowDuplicates,
+      autoRemove,
+      body,
+      span: joinSpan(keyword.span.start, end),
     };
     return result;
+  }
+
+  /** Depth of enclosing Each/ForEachCell braces - bare `Add`/`Remove`/
+   *  `Replace` keywords parse as 'cell'-scope ops inside a cell loop and
+   *  'all'-scope otherwise. */
+  private cellLoopDepth = 0;
+
+  /** True at `Each {` / `Each name {` / `ForEachCell (name) {` - a cell
+   *  loop. Requires the `{` so plain identifiers like `Each x` still parse
+   *  as expressions. */
+  private isCellLoopStart(): boolean {
+    if (!this.isName(this.current())) return false;
+    const upper = this.current().text.toUpperCase();
+    if (upper !== 'EACH' && upper !== 'FOREACHCELL') return false;
+    let i = 1;
+    if (this.isName(this.peek(i))) i++;
+    return this.peek(i).text === '{';
+  }
+
+  /** Returns the op word at the current position for a cell-op statement:
+   *  bare `Add expr` / `Remove expr` / `Replace expr`, or prefixed
+   *  `ForCell Add` / `ForAllCells Add`. Returns null when the tokens don't
+   *  form a cell op (e.g. `Add(...)` is a normal call). */
+  private isCellOpStart(): 'add' | 'remove' | 'replace' | 'cell' | 'all' | null {
+    if (!this.isName(this.current())) return null;
+    const upper = this.current().text.toUpperCase();
+    const next = this.peek(1);
+    if (
+      (upper === 'ADD' || upper === 'REMOVE' || upper === 'REPLACE') &&
+      next.text !== '(' &&
+      next.text !== '{' &&
+      next.text !== '='
+    ) {
+      return upper === 'ADD' ? 'add' : upper === 'REMOVE' ? 'remove' : 'replace';
+    }
+    if (upper === 'FORCELL' || upper === 'FORALLCELLS') {
+      const op = next.text.toUpperCase();
+      if (op === 'ADD' || op === 'REMOVE' || op === 'REPLACE') {
+        return upper === 'FORCELL' ? 'cell' : 'all';
+      }
+    }
+    return null;
+  }
+
+  /** Parse a cell-op statement: `Add expr;`, `ForCell Remove expr;`,
+   *  `ForAllCells Replace expr;`. */
+  private parseCellOp(keyword: Token): Statement {
+    const start = keyword.span.start;
+    let scope: 'all' | 'cell' = this.cellLoopDepth > 0 ? 'cell' : 'all';
+    let tok = this.advance(); // Add / Remove / Replace / ForCell / ForAllCells
+    let upper = tok.text.toUpperCase();
+    if (upper === 'FORCELL' || upper === 'FORALLCELLS') {
+      scope = upper === 'FORCELL' ? 'cell' : 'all';
+      tok = this.advance(); // the op word
+      upper = tok.text.toUpperCase();
+    }
+    const op = upper === 'ADD' ? 'add' : upper === 'REMOVE' ? 'remove' : 'replace';
+    const value = this.parseExpression();
+    const end = this.consumeOptionalSemicolon(value.span.end);
+    const result: CellOpStatement = {
+      kind: 'CellOpStatement',
+      scope,
+      op,
+      value,
+      span: joinSpan(start, end),
+    };
+    return result;
+  }
+
+  /** Parse `Each name { ... }` / `ForEachCell name { ... }` - the "For each
+   *  cell" loop. Body statements run per matched cell; `ForCell`-scoped ops
+   *  target the current cell. */
+  private parseForEachCell(keyword: Token): Statement {
+    this.advance(); // Each / ForEachCell
+    let itemName = 'cellContents';
+    if (this.isName(this.current()) && this.current().text !== '{') {
+      itemName = this.advance().text;
+    }
+    this.consumeText('{', 'Expected a block after Each');
+    this.cellLoopDepth++;
+    const statements: Statement[] = [];
+    try {
+      while (!this.atEnd() && !this.checkText('}')) {
+        const stmt = this.parseStatement();
+        if (stmt) statements.push(stmt);
+      }
+    } finally {
+      this.cellLoopDepth--;
+    }
+    const close = this.consumeText('}', 'Expected } after cell loop body');
+    const body: BlockStatement = {
+      kind: 'BlockStatement',
+      statements,
+      span: joinSpan(keyword.span.start, close.span.end),
+    };
+    const result: ForEachCellStatement = {
+      kind: 'ForEachCellStatement',
+      itemName,
+      body,
+      span: joinSpan(keyword.span.start, close.span.end),
+    };
+    return result;
+  }
+
+  /**
+   * Parse the block after UpdateCell(...) into cell-op statements.
+   *   Add expr;            → 'all'-scope CellOp
+   *   Each name { ... }    → ForEachCell loop ('cell'-scope ops inside)
+   *   ForCell Add expr;    → 'cell'-scope CellOp (lint flags it here)
+   * Legacy bodies (loose statements + trailing Return) fold into a
+   * ForEachCell so `{ ...; Return e; }` round-trips unchanged.
+   */
+  private parseUpdateCellBody(fallbackItemName: string): {
+    body: BlockStatement;
+    end: SourcePosition;
+  } {
+    const open = this.consumeText('{', 'Expected a block after UpdateCell');
+    const statements: Statement[] = [];
+    let loose: Statement[] = [];
+
+    const flushLoose = () => {
+      if (loose.length === 0) return;
+      const body: BlockStatement = {
+        kind: 'BlockStatement',
+        statements: loose,
+        span: loose[0].span,
+      };
+      statements.push({
+        kind: 'ForEachCellStatement',
+        itemName: fallbackItemName,
+        body,
+        span: loose[0].span,
+      });
+      loose = [];
+    };
+
+    while (!this.atEnd() && !this.checkText('}')) {
+      if (this.isCellLoopStart()) {
+        flushLoose();
+        statements.push(this.parseForEachCell(this.current()));
+      } else if (this.isCellOpStart() !== null) {
+        flushLoose();
+        statements.push(this.parseCellOp(this.current()));
+      } else {
+        const stmt = this.parseStatement();
+        if (stmt) loose.push(stmt);
+      }
+    }
+    flushLoose();
+    const end = this.consumeText('}', 'Expected } after UpdateCell body');
+    const body: BlockStatement = {
+      kind: 'BlockStatement',
+      statements,
+      span: joinSpan(open.span.start, end.span.end),
+    };
+    return { body, end: end.span.end };
+  }
+
+  /** Tag file meta header: Tag({NAME = "x", COLOR = "y"}) - first statement
+   *  of files inside the `tags/` folder. */
+  private parseTagStatement(keyword: Token): Statement {
+    this.advance(); // consume 'Tag'
+    this.consumeText('(', 'Expected ( after Tag');
+    this.consumeText('{', 'Expected { after Tag(');
+    let name = '';
+    let color = '';
+    while (!this.atEnd() && !this.checkText('}')) {
+      if (this.isName(this.current()) && this.peek(1).text === '=') {
+        const key = this.advance().text.toUpperCase();
+        this.advance(); // consume '='
+        const value = this.parseExpression();
+        if (value.kind === 'StringLiteral') {
+          if (key === 'NAME') name = value.value;
+          else if (key === 'COLOR') color = value.value;
+        }
+      }
+      if (!this.matchText(',')) break;
+    }
+    this.consumeText('}', 'Expected } after Tag arguments');
+    const closeParen = this.consumeText(')', 'Expected ) after Tag arguments');
+    this.consumeOptionalSemicolon(closeParen.span.end);
+    return {
+      kind: 'TagStatement',
+      name,
+      color,
+      span: joinSpan(keyword.span.start, closeParen.span.end),
+    };
   }
 
   private parseOnTagAdded(keyword: Token): Statement {
@@ -286,6 +500,29 @@ class Parser {
       span: joinSpan(keyword.span.start, body.span.end),
     };
     return result;
+  }
+
+  private parseDisplayContainer(): Statement {
+    const keyword = this.current();
+    const header = this.parseExpression();
+    const body = this.parseRequiredBlock(`Expected a block after ${keyword.text}`);
+    const args = header.kind === 'CallExpression' ? header.arguments : [];
+    const span = joinSpan(keyword.span.start, body.span.end);
+    if (keyword.text.toLowerCase() === 'displaygroup') {
+      return { kind: 'DisplayGroupStatement', arguments: args, body, span };
+    }
+    const labels = args.filter(
+      (arg) => arg.kind === 'NamedArgument' && arg.name.toLowerCase() === 'label'
+    );
+    if (labels.length !== 1 || args.length !== 1) {
+      this.error(keyword, 'NavButton requires exactly one named LABEL argument');
+    }
+    return {
+      kind: 'NavButtonStatement',
+      label: labels[0]?.value ?? { kind: 'StringLiteral', value: 'Continue', span },
+      body,
+      span,
+    };
   }
 
   private parseOnTagRemoved(keyword: Token): Statement {
@@ -501,13 +738,15 @@ class Parser {
           this.error(token, 'Markdown requires a backtick string');
         }
         const value = valueExpression.kind === 'MarkdownLiteral' ? valueExpression.value : '';
-        const variables = getMarkdownVariableNames(value).map(
-          (name) =>
-            parsedVariables.find((variable) => variable.name === name) ?? {
+        const variables = [...parsedVariables];
+        for (const name of getMarkdownVariableNames(value)) {
+          if (!variables.some((variable) => variable.name.toLowerCase() === name.toLowerCase())) {
+            variables.push({
               name,
               expression: { kind: 'NothingLiteral' as const, span: valueExpression.span },
-            }
-        );
+            });
+          }
+        }
         return {
           kind: 'MarkdownLiteral',
           value,

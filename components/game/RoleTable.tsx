@@ -7,11 +7,23 @@ import Column from '../layout/Column';
 import Row from '../layout/Row';
 import RoleRow from './RoleRow';
 import MarkdownEditorDialog from './MarkdownEditorDialog';
+import CellFilesEditorDialog from './scriptFiles/CellFilesEditorDialog';
+import { useScriptFiles } from '../../hooks/useScriptFiles';
 import RoleEditDialog from './RoleEditDialog';
 import { createUndoSnapshot, useUndoRedo } from 'hooks/useUndoRedo';
 import { DEFAULT_VOTE_MESSAGE, RoleTableItem } from 'types/roleTable';
 import { useMultiSelect } from './multiSelect/MultiSelectContext';
 import { SelectableColumnOverlay } from './multiSelect/SelectableOverlay';
+import { CellHighlight, isCellHighlightMatch, useCellHighlightRequest } from './CellHighlight';
+import {
+  displayCellEditorText,
+  fileCellEditorText,
+  parseCellPieces,
+  reconcileDisplayCell,
+  reconcileFileCell,
+} from '../../utils/cellPieces';
+import { parseFileCell } from '../../utils/scriptFiles';
+import { useCellModuleStatus } from '../../utils/legacySystems';
 
 interface RoleTableProps {
   gameId: string;
@@ -20,7 +32,6 @@ interface RoleTableProps {
   isBeingEdited: boolean;
   setIsBeingEdited: (value: boolean) => void;
   className?: string;
-  showInputs?: boolean;
 }
 
 const RoleTable = ({
@@ -30,13 +41,13 @@ const RoleTable = ({
   isBeingEdited,
   setIsBeingEdited,
   className,
-  showInputs = false,
 }: RoleTableProps) => {
   const { executeCommand } = useUndoRedo();
   const [editingRow, setEditingRow] = useState<number | null>(null);
   const [isDefaultVoteMessageOpen, setIsDefaultVoteMessageOpen] = useState(false);
   const { selectionMode, selectedCells, cellType, exitSelectionMode, registerEditHandler } =
     useMultiSelect();
+  const highlightReq = useCellHighlightRequest();
 
   // Bulk editor state
   const [isBulkRoleEditOpen, setIsBulkRoleEditOpen] = useState(false);
@@ -69,12 +80,14 @@ const RoleTable = ({
       defaultValue: DEFAULT_VOTE_MESSAGE,
     }
   );
+  const filesApi = useScriptFiles(gameId);
+  const { displayModules } = useCellModuleStatus(gameId);
 
   const roles = roleTable.scheduledUpdate?.value ?? roleTable.value ?? [];
   const defaultVoteMessageValue =
     defaultVoteMessage.scheduledUpdate?.value ?? defaultVoteMessage.value ?? DEFAULT_VOTE_MESSAGE;
   const visibleRoles = roles.filter((role) => role.isVisible !== false);
-  // Mount rows progressively — each RoleRow carries six dialog trees.
+  // Mount rows progressively: each RoleRow carries six dialog trees.
   const mountedRowCount = useProgressiveCount(visibleRoles.length);
 
   useEffect(() => {
@@ -264,6 +277,16 @@ const RoleTable = ({
     exitSelectionMode();
   };
 
+  const sharedFileCellValue = (previous: string, edited: string) => {
+    const text = parseCellPieces(edited).pieces.length
+      ? fileCellEditorText(edited, filesApi.index)
+      : edited;
+    if (parseFileCell(text) === null) return edited;
+    return parseCellPieces(previous).pieces.length || parseFileCell(previous) !== null
+      ? reconcileFileCell(previous, text, filesApi.index)
+      : text;
+  };
+
   const handleBulkRoleMessageUpdate = ({ markdown }: { markdown: string }) => {
     const previousRoleTable = createUndoSnapshot(roles);
     const nextRoleTable = createUndoSnapshot(previousRoleTable);
@@ -272,7 +295,10 @@ const RoleTable = ({
       if (parts[0] !== 'r' || parts[1] !== 'msg') continue;
       const roleIndex = parseInt(parts[2], 10);
       if (roleIndex < 0 || roleIndex >= nextRoleTable.length) continue;
-      nextRoleTable[roleIndex] = { ...nextRoleTable[roleIndex], roleMessage: markdown };
+      nextRoleTable[roleIndex] = {
+        ...nextRoleTable[roleIndex],
+        roleMessage: sharedFileCellValue(nextRoleTable[roleIndex].roleMessage ?? '', markdown),
+      };
     }
     executeCommand({
       action: () => setRoleTable(createUndoSnapshot(nextRoleTable)),
@@ -293,7 +319,9 @@ const RoleTable = ({
       if (roleIndex < 0 || roleIndex >= nextRoleTable.length) continue;
       nextRoleTable[roleIndex] = {
         ...nextRoleTable[roleIndex],
-        voteMessage: markdown.trim() ? markdown : undefined,
+        voteMessage: markdown.trim()
+          ? sharedFileCellValue(nextRoleTable[roleIndex].voteMessage ?? '', markdown)
+          : undefined,
       };
     }
     executeCommand({
@@ -313,7 +341,17 @@ const RoleTable = ({
       if (parts[0] !== 'r' || parts[1] !== 'about') continue;
       const roleIndex = parseInt(parts[2], 10);
       if (roleIndex < 0 || roleIndex >= nextRoleTable.length) continue;
-      nextRoleTable[roleIndex] = { ...nextRoleTable[roleIndex], aboutRole: markdown };
+      const previous = nextRoleTable[roleIndex].aboutRole ?? '';
+      nextRoleTable[roleIndex] = {
+        ...nextRoleTable[roleIndex],
+        aboutRole: displayModules
+          ? reconcileDisplayCell(
+              previous,
+              displayCellEditorText(markdown, filesApi.index),
+              filesApi.index
+            )
+          : markdown,
+      };
     }
     executeCommand({
       action: () => setRoleTable(createUndoSnapshot(nextRoleTable)),
@@ -368,6 +406,11 @@ const RoleTable = ({
                   </FontText>
                 )}
                 <SelectableColumnOverlay columnCellIds={voteMsgColumnIds} cellType="voteMessage" />
+                {/* "Default vote" placements target this header; it opens
+                    the shared default message editor. */}
+                <CellHighlight
+                  active={isCellHighlightMatch(highlightReq, { cellKind: 'voteDefault' })}
+                />
               </Column>
               <Column
                 className="h-full w-64 items-center justify-center gap-4"
@@ -400,26 +443,30 @@ const RoleTable = ({
                   onEditStart={() => handleRowEditStart(actualIndex)}
                   onEditEnd={handleRowEditEnd}
                   isEditing={editingRow === actualIndex}
-                  showInputs={showInputs}
                   selectionMode={selectionMode}
+                  filesApi={filesApi}
+                  displayModules={displayModules}
                 />
               );
             })}
           </Column>
         </Row>
       </Column>
-      <MarkdownEditorDialog
+      <CellFilesEditorDialog
         isOpen={isDefaultVoteMessageOpen}
         onOpenChange={setIsDefaultVoteMessageOpen}
         title="Default Vote Message"
-        initialMarkdown={defaultVoteMessageValue}
-        onSubmit={({ markdown }) => setDefaultVoteMessage(markdown)}
+        cellText={defaultVoteMessageValue}
+        onSubmitText={(text) => setDefaultVoteMessage(text)}
+        filesApi={filesApi}
+        pinnedFolder="voteMessage"
+        nameBase="Default Vote"
         gameId={gameId}
-        showInputs={showInputs}
-        showScript
         hideInputs={false}
         allowVoteInput
-        historyKey={`defaultVoteMessage:${gameId}`}
+        legacyEditorProps={{
+          historyKey: `defaultVoteMessage:${gameId}`,
+        }}
       />
 
       {/* Bulk editor dialogs */}
@@ -434,43 +481,63 @@ const RoleTable = ({
         onSetDoesRoleVote={() => {}}
         onSetHiddenFromRulebook={() => {}}
         submitLabel="Update All"
+        displayModules={displayModules}
       />
-      <MarkdownEditorDialog
+      <CellFilesEditorDialog
         isOpen={isBulkRoleMessageOpen}
         onOpenChange={setIsBulkRoleMessageOpen}
         title="Bulk Update Role Messages"
-        initialMarkdown={bulkRoleMessage}
-        onSubmit={handleBulkRoleMessageUpdate}
+        cellText={bulkRoleMessage}
+        onSubmitText={(markdown) => handleBulkRoleMessageUpdate({ markdown })}
+        filesApi={filesApi}
+        pinnedFolder="roleMessage"
+        nameBase="Shared Role Message"
         gameId={gameId}
-        showInputs={showInputs}
-        showScript
         hideInputs={false}
-        submitLabel="Update All"
+        historyKey={`bulkRoleMessage:${gameId}`}
       />
-      <MarkdownEditorDialog
+      <CellFilesEditorDialog
         isOpen={isBulkVoteMessageOpen}
         onOpenChange={setIsBulkVoteMessageOpen}
         title="Bulk Update Vote Messages"
-        initialMarkdown={bulkVoteMessage}
-        onSubmit={handleBulkVoteMessageUpdate}
+        cellText={bulkVoteMessage}
+        onSubmitText={(markdown) => handleBulkVoteMessageUpdate({ markdown })}
+        filesApi={filesApi}
+        pinnedFolder="voteMessage"
+        nameBase="Shared Vote Message"
         gameId={gameId}
-        showInputs={showInputs}
-        showScript
         hideInputs={false}
         allowVoteInput
-        submitLabel="Update All"
+        historyKey={`bulkVoteMessage:${gameId}`}
       />
-      <MarkdownEditorDialog
-        isOpen={isBulkAboutRoleOpen}
-        onOpenChange={setIsBulkAboutRoleOpen}
-        title="Bulk Update About Role"
-        initialMarkdown={bulkAboutRole}
-        onSubmit={handleBulkAboutRoleUpdate}
-        gameId={gameId}
-        showScript
-        centered={true}
-        submitLabel="Update All"
-      />
+      {displayModules ? (
+        <CellFilesEditorDialog
+          isOpen={isBulkAboutRoleOpen}
+          onOpenChange={setIsBulkAboutRoleOpen}
+          title="Bulk Update About Role"
+          cellText={bulkAboutRole}
+          onSubmitText={(markdown) => handleBulkAboutRoleUpdate({ markdown })}
+          filesApi={filesApi}
+          pinnedFolder="aboutRole"
+          nameBase="Shared About Role"
+          gameId={gameId}
+          hideInputs={false}
+          forceFiles
+          historyKey={`bulkAboutRole:${gameId}`}
+        />
+      ) : (
+        <MarkdownEditorDialog
+          isOpen={isBulkAboutRoleOpen}
+          onOpenChange={setIsBulkAboutRoleOpen}
+          title="Bulk Update About Role"
+          initialMarkdown={bulkAboutRole}
+          onSubmit={handleBulkAboutRoleUpdate}
+          gameId={gameId}
+          showScript
+          centered={true}
+          submitLabel="Update All"
+        />
+      )}
     </>
   );
 };

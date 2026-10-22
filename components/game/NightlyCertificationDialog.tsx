@@ -1,5 +1,6 @@
-import React from 'react';
-import { ScrollView, View } from 'react-native';
+import React, { useState } from 'react';
+import { Pressable, ScrollView, View } from 'react-native';
+import { ChevronDown } from 'lucide-react-native';
 import ConvexDialog from '../ui/dialog/ConvexDialog';
 import DialogHeader from '../ui/dialog/DialogHeader';
 import Column from '../layout/Column';
@@ -35,13 +36,19 @@ const formatPlannedUpdate = (
   return `${playerName} → ${dayLabel}${update.column}: ${update.updateExpression}`;
 };
 
+type CertifyType = 'votes' | 'actions';
+type AutoResolve = 'keep' | 'replace';
+
 interface NightlyCertificationDialogProps {
+  disabled?: boolean;
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   users: UserTableItem[];
   submissionsByEmail: Record<string, PlayerNightSubmission>;
-  onCertifyVotes: () => void;
-  onCertifyActions: () => void;
+  onCertifyVotes: (autoResolve?: AutoResolve) => void;
+  onCertifyActions: (autoResolve?: AutoResolve) => void;
+  /** First-pass conflict count for the resolve screen; null when unknown. */
+  onCountConflicts?: (type: CertifyType) => number | null;
 }
 
 const NightlyCertificationDialog = ({
@@ -51,7 +58,58 @@ const NightlyCertificationDialog = ({
   submissionsByEmail,
   onCertifyVotes,
   onCertifyActions,
+  onCountConflicts,
+  disabled = false,
 }: NightlyCertificationDialogProps) => {
+  const [resolveMenu, setResolveMenu] = useState<{
+    type: CertifyType;
+    count: number | null;
+  } | null>(null);
+
+  const openResolveMenu = (type: CertifyType) =>
+    setResolveMenu({ type, count: onCountConflicts?.(type) ?? null });
+
+  const confirmResolve = (choice: AutoResolve) => {
+    if (!resolveMenu) return;
+    if (resolveMenu.type === 'votes') onCertifyVotes(choice);
+    else onCertifyActions(choice);
+    setResolveMenu(null);
+    onOpenChange(false);
+  };
+
+  const certifySplit = (
+    type: CertifyType,
+    shortLabel: string,
+    label: string,
+    onCertify: (autoResolve?: AutoResolve) => void
+  ) => (
+    <Row className="gap-0.5">
+      <Pressable
+        accessibilityLabel={label}
+        onPress={() => {
+          onCertify();
+          onOpenChange(false);
+        }}
+        disabled={disabled}
+        className={`bg-text h-12 items-center justify-center overflow-hidden px-3 hover:brightness-150 active:brightness-50 sm:px-6 ${disabled ? 'opacity-50' : ''}`}
+        style={{ borderTopLeftRadius: 10, borderBottomLeftRadius: 10 }}>
+        <FontText weight="medium" color="white" className="sm:hidden">
+          {shortLabel}
+        </FontText>
+        <FontText weight="medium" color="white" className="hidden sm:block">
+          {label}
+        </FontText>
+      </Pressable>
+      <Pressable
+        accessibilityLabel={`${label}: resolve conflicts`}
+        onPress={() => openResolveMenu(type)}
+        disabled={disabled}
+        className={`bg-text h-12 items-center justify-center overflow-hidden px-2.5 hover:brightness-150 active:brightness-50 ${disabled ? 'opacity-50' : ''}`}
+        style={{ borderTopRightRadius: 10, borderBottomRightRadius: 10 }}>
+        <ChevronDown size={16} color="rgb(255, 255, 255)" />
+      </Pressable>
+    </Row>
+  );
   return (
     <ConvexDialog.Root isOpen={isOpen} onOpenChange={onOpenChange}>
       <ConvexDialog.Trigger asChild>
@@ -96,7 +154,7 @@ const NightlyCertificationDialog = ({
                           {hasVote ? (
                             <ResolvedVoteName vote={submission!.vote} users={users} />
                           ) : (
-                            '—'
+                            '-'
                           )}
                         </FontText>
                         {submission?.voteMultiplier !== undefined &&
@@ -119,7 +177,7 @@ const NightlyCertificationDialog = ({
                               </FontText>
                             ))
                           ) : (
-                            <FontText className="opacity-50">—</FontText>
+                            <FontText className="opacity-50">-</FontText>
                           )}
                         </Column>
                       </Column>
@@ -128,7 +186,7 @@ const NightlyCertificationDialog = ({
                         {actionSummary ? (
                           <ActionPills actionText={actionSummary} />
                         ) : (
-                          <FontText className="opacity-50">—</FontText>
+                          <FontText className="opacity-50">-</FontText>
                         )}
                         <Column className="gap-0.5">
                           <FontText variant="subtext">Action cell updates</FontText>
@@ -139,7 +197,7 @@ const NightlyCertificationDialog = ({
                               </FontText>
                             ))
                           ) : (
-                            <FontText className="opacity-50">—</FontText>
+                            <FontText className="opacity-50">-</FontText>
                           )}
                         </Column>
                       </Column>
@@ -153,37 +211,61 @@ const NightlyCertificationDialog = ({
             <AppButton variant="outline" className="w-20" onPress={() => onOpenChange(false)}>
               <FontText weight="medium">Close</FontText>
             </AppButton>
-            <AppButton
-              variant="black"
-              className="px-3 py-2 sm:px-6"
-              onPress={() => {
-                onCertifyVotes();
-                onOpenChange(false);
-              }}>
-              <FontText weight="medium" color="white" className="sm:hidden">
-                Add Votes
-              </FontText>
-              <FontText weight="medium" color="white" className="hidden sm:block">
-                Add Votes To Table
-              </FontText>
-            </AppButton>
-            <AppButton
-              variant="black"
-              className="px-3 py-2 sm:px-6"
-              onPress={() => {
-                onCertifyActions();
-                onOpenChange(false);
-              }}>
-              <FontText weight="medium" color="white" className="sm:hidden">
-                Add Actions
-              </FontText>
-              <FontText weight="medium" color="white" className="hidden sm:block">
-                Add Actions To Table
-              </FontText>
-            </AppButton>
+            {certifySplit('votes', 'Add Votes', 'Add Votes To Table', onCertifyVotes)}
+            {certifySplit('actions', 'Add Actions', 'Add Actions To Table', onCertifyActions)}
           </Row>
         </ConvexDialog.Content>
       </ConvexDialog.Portal>
+      {/* Arrow half: resolve every conflict one way without the per-item
+          review screen. */}
+      <ConvexDialog.Root
+        isOpen={resolveMenu !== null}
+        onOpenChange={(open: boolean) => {
+          if (!open) setResolveMenu(null);
+        }}>
+        <ConvexDialog.Portal>
+          <ConvexDialog.Overlay />
+          <ConvexDialog.Content className="max-w-sm p-4">
+            <CloseButton onPress={() => setResolveMenu(null)} />
+            <DialogHeader
+              text={`Resolve conflicts — ${resolveMenu?.type === 'votes' ? 'votes' : 'actions'}`}
+              subtext={
+                resolveMenu === null || resolveMenu.count === null
+                  ? 'Pick which side wins any conflicts this certification runs into.'
+                  : resolveMenu.count === 0
+                    ? 'No conflicts detected — this certifies the same as the main button.'
+                    : `${resolveMenu.count} conflict${
+                        resolveMenu.count === 1 ? ' clashes' : 's clash'
+                      } with existing table content. Pick one side for all of them.`
+              }
+            />
+            <Column className="gap-2 pt-3">
+              <AppButton
+                variant="outline"
+                className="w-full px-3"
+                disabled={disabled}
+                onPress={() => confirmResolve('keep')}>
+                <FontText weight="medium">Keep all current values</FontText>
+              </AppButton>
+              <AppButton
+                variant="black"
+                className="w-full px-3"
+                disabled={disabled}
+                onPress={() => confirmResolve('replace')}>
+                <FontText weight="medium" color="white">
+                  Use all new results
+                </FontText>
+              </AppButton>
+              <AppButton
+                variant="outline"
+                className="w-full px-3"
+                onPress={() => setResolveMenu(null)}>
+                <FontText weight="medium">Cancel</FontText>
+              </AppButton>
+            </Column>
+          </ConvexDialog.Content>
+        </ConvexDialog.Portal>
+      </ConvexDialog.Root>
     </ConvexDialog.Root>
   );
 };

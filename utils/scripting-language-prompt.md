@@ -2,9 +2,9 @@
 
 ## What You Are Building
 
-You are designing a **block-based scripting language** (think Scratch / visual block coding) for an app called **WolffsPoint** — a mafia-style game creation and management tool. The operator (game host) uses this app to create a mafia game, invite players via join codes, manage multi-day gameplay, and author all game content in markdown. Players join, get assigned roles, submit nightly actions/votes, read newspapers, post in a town square, and manage their profiles.
+You are designing a **block-based scripting language** (think Scratch / visual block coding) for an app called **WolffsPoint**, a mafia-style game creation and management tool. The operator (game host) uses this app to create a mafia game, invite players via join codes, manage multi-day gameplay, and author all game content in markdown. Players join, get assigned roles, submit nightly actions/votes, read newspapers, post in a town square, and manage their profiles.
 
-The scripting language will **replace the existing inline markdown input system** and **extend it to allow arbitrary logic in any markdown field**. Instead of hardcoded input token types like `/["Target":SELECT_PLAYER_ALIVE]/`, the operator will be able to write expressive logic that dynamically computes what options a dropdown should show, how many items can be selected, what labels to use, and much more — all authored in a visual block language with a text-based representation underneath.
+The scripting language will **replace the existing inline markdown input system** and **extend it to allow arbitrary logic in any markdown field**. Instead of hardcoded input token types like `/["Target":SELECT_PLAYER_ALIVE]/`, the operator will be able to write expressive logic that dynamically computes what options a dropdown should show, how many items can be selected, what labels to use, and much more, all authored in a visual block language with a text-based representation underneath.
 
 ### Example of the Target Scripting Language
 
@@ -26,7 +26,7 @@ This would:
 
 The same logic would have a **block-code visual representation** (drag-and-drop blocks in a Scratch-like editor) and a **text representation** (shown above) that the blocks compile to/from.
 
-The language should be **super customizable** — `CreateSelectInput` is just one of many functions. Other functions like `CreateMarkdown`, `CreateTextInput`, `CreateCheckbox`, `CreateConditional`, etc. should be designed. The operator should be able to write logic like this in **any markdown field** in the app.
+The language should be **super customizable**: `CreateSelectInput` is just one of many functions. Other functions like `CreateMarkdown`, `CreateTextInput`, `CreateCheckbox`, `CreateConditional`, etc. should be designed. The operator should be able to write logic like this in **any markdown field** in the app.
 
 ---
 
@@ -48,17 +48,17 @@ app/index.tsx (Entry Point)
 ├── SignedOut → Auth Flow (Google OAuth via Clerk)
 └── SignedIn → MainPage.tsx
     └── StateAnimatedView.Container
-        ├── AllGamesPage (page 1) — list of games, join/create
-        └── GamePage (page 2) — active game with tabbed interface
+        ├── AllGamesPage (page 1): list of games, join/create
+        └── GamePage (page 2): active game with tabbed interface
             ├── Operator tabs: Players, Roles/Config, Nightly, Town Square, Newspaper, Config
             └── Player tabs: Town Square, Newspaper, Your Eyes Only, Rule Book, Phone Book
 ```
 
 ### Component Philosophy
 
-- **Componentize everything** — each component owns its state and behavior
-- **Self-contained data subscriptions** — components subscribe directly to data hooks, no prop-drilling for persistent data
-- **Modular architecture** — many small self-contained components that subscribe to their own data
+- **Componentize everything**: each component owns its state and behavior
+- **Self-contained data subscriptions**: components subscribe directly to data hooks, no prop-drilling for persistent data
+- **Modular architecture**: many small self-contained components that subscribe to their own data
 - **Dialogs/modals preferred** over jumping layouts for editing flows
 - **Operator-side and player-side code paths are separate**
 
@@ -71,9 +71,9 @@ app/index.tsx (Entry Point)
 The app uses a **DataProvider** system with a global client-side cache (`DataStore`). Key principles:
 
 - Components "register" and "unregister" from the DataStore cache
-- Only **one Convex subscription per piece of data** — multiple components requesting the same data share the cached result
+- Only **one Convex subscription per piece of data**, multiple components requesting the same data share the cached result
 - Ref-count system: data stays in cache as long as at least one component is registered, with a grace period for tab switching
-- **Never pass persistent data through props** to avoid redundant queries — each component subscribes independently
+- **Never pass persistent data through props** to avoid redundant queries, each component subscribes independently
 
 ### Core Hooks (from `hooks/useData.ts`)
 
@@ -285,7 +285,7 @@ type UserTableColumnVisibility = {
 type RoleTableItem = {
   role: string;
   doesRoleVote: boolean;
-  roleMessage: string;    // Markdown with embedded input tokens — THIS IS A KEY FIELD FOR THE SCRIPTING LANGUAGE
+  roleMessage: string;    // Markdown with embedded input tokens; THIS IS A KEY FIELD FOR THE SCRIPTING LANGUAGE
   isVisible: boolean;
   aboutRole: string;      // Markdown describing the role
 };
@@ -320,7 +320,7 @@ type MarkdownInputState = Record<string, string | undefined>;
 | `games` | `GameInfo` | gameId | PUBLIC | Join code is `value.id` |
 | `dayDatesArray` | `string[]` (MM/DD/YYYY) | gameId | PUBLIC | Authoritative shared calendar for game's day sequence |
 | `numberOfRealDaysPerInGameDay` | `number` | gameId | PUBLIC | Default: 2 |
-| `startingDate` | `string` | gameId | — | Legacy setup-only data |
+| `startingDate` | `string` | gameId | - | Legacy setup-only data |
 | `userTable` | `UserTableItem[]` | gameId | PUBLIC | Operator-maintained player roster + per-day outcomes |
 | `userTableTitle` | `UserTableTitle` | gameId | PUBLIC | Extra column definitions |
 | `userTableColumnVisibility` | `UserTableColumnVisibility` | gameId | PUBLIC | Column visibility toggles |
@@ -366,19 +366,19 @@ The app currently has a markdown input system that embeds interactive form contr
 
 ### Current Architecture
 
-1. **MarkdownRenderer** (`app/components/ui/markdown/MarkdownRenderer.tsx`) — main entry point for all markdown rendering, handles parsing of input tokens, manages rendering of both static markdown and interactive inputs
-2. **MarkdownRendererInputDataProvider** — context provider that injects dropdown option data (playerOptions, roleOptions)
-3. **MarkdownInputField** — renders individual input controls (text or dropdown)
-4. **MarkdownInputBuilderDialog** — separate component for building input tokens with live preview
-5. **State management** — simple key-value object: `{ [label]: value }`, undefined for unfilled inputs
+1. **MarkdownRenderer** (`app/components/ui/markdown/MarkdownRenderer.tsx`): main entry point for all markdown rendering, handles parsing of input tokens, manages rendering of both static markdown and interactive inputs
+2. **MarkdownRendererInputDataProvider**: context provider that injects dropdown option data (playerOptions, roleOptions)
+3. **MarkdownInputField**: renders individual input controls (text or dropdown)
+4. **MarkdownInputBuilderDialog**: separate component for building input tokens with live preview
+5. **State management**: simple key-value object: `{ [label]: value }`, undefined for unfilled inputs
 6. **Inputs are disabled** when no `setState` is provided
 
 ### Where It's Used
 
-- **Role messages** (`roleTable[].roleMessage`) — the operator writes markdown with embedded input tokens as the role's nightly action prompt. Players see this in "Your Eyes Only" and interact with the inputs to submit their action.
-- **Player submissions** (`PlayerNightSubmission.action`) — can be either plain text or a structured `MarkdownInputState` object
-- **Town Square posts** — markdown with optional input tokens
-- **Rule Book** — operator-authored markdown content
+- **Role messages** (`roleTable[].roleMessage`): the operator writes markdown with embedded input tokens as the role's nightly action prompt. Players see this in "Your Eyes Only" and interact with the inputs to submit their action.
+- **Player submissions** (`PlayerNightSubmission.action`): can be either plain text or a structured `MarkdownInputState` object
+- **Town Square posts**: markdown with optional input tokens
+- **Rule Book**: operator-authored markdown content
 
 ### Current Data Flow
 
@@ -405,12 +405,12 @@ Parent setState callback → updates PlayerNightSubmission
 
 ### Limitations of the Current System
 
-1. **Fixed input types** — only 5 hardcoded types (TEXT, PLAYER_ALIVE, PLAYER_DEAD, PLAYER_ALL, ROLE)
-2. **No logic** — can't filter, compute, or dynamically determine options
-3. **No variables** — can't reference computed values across inputs
-4. **No conditionals** — can't show/hide inputs based on other input values
-5. **No math** — can't compute "half of dead players" or similar
-6. **No custom data sources** — can't build a dropdown from arbitrary data
+1. **Fixed input types**: only 5 hardcoded types (TEXT, PLAYER_ALIVE, PLAYER_DEAD, PLAYER_ALL, ROLE)
+2. **No logic**: can't filter, compute, or dynamically determine options
+3. **No variables**: can't reference computed values across inputs
+4. **No conditionals**: can't show/hide inputs based on other input values
+5. **No math**: can't compute "half of dead players" or similar
+6. **No custom data sources**: can't build a dropdown from arbitrary data
 
 ---
 
@@ -418,10 +418,10 @@ Parent setState callback → updates PlayerNightSubmission
 
 This is the primary screen where the scripting language will be used. It's the private interface where players:
 
-1. **View their role details** — rendered from `roleData.aboutRole` markdown
-2. **Receive morning messages** — navigation through released morning messages, locked by `wakeUpTime`
-3. **Submit nightly votes** — vote dropdown for selecting target player, respects `roleData.doesRoleVote`
-4. **Submit nightly actions** — live markdown action panel rendering `roleData.roleMessage` with interactive inputs
+1. **View their role details**: rendered from `roleData.aboutRole` markdown
+2. **Receive morning messages**: navigation through released morning messages, locked by `wakeUpTime`
+3. **Submit nightly votes**: vote dropdown for selecting target player, respects `roleData.doesRoleVote`
+4. **Submit nightly actions**: live markdown action panel rendering `roleData.roleMessage` with interactive inputs
 
 ### How Actions Currently Work
 
@@ -434,10 +434,10 @@ This is the primary screen where the scripting language will be used. It's the p
 
 ### Time/Deadline System
 
-- `isNightWindowOpen()` — checks if submission window is still open
-- `getLatestReleasedDayIndex()` — finds newest day whose morning message has been released
-- `getDayEndDate()` — resolves end date for an in-game day
-- `getDayRangeLabel()` — formats an in-game day as a date range like `4/11 - 4/12`
+- `isNightWindowOpen()`: checks if submission window is still open
+- `getLatestReleasedDayIndex()`: finds newest day whose morning message has been released
+- `getDayEndDate()`: resolves end date for an in-game day
+- `getDayRangeLabel()`: formats an in-game day as a date range like `4/11 - 4/12`
 - In-game days can span multiple real-world days based on `numberOfRealDaysPerInGameDay`
 - Morning messages for Day N unlock on Day N+1 after `wakeUpTime`
 
@@ -448,41 +448,41 @@ This is the primary screen where the scripting language will be used. It's the p
 The scripting language's rendered output must use these existing UI components:
 
 ### Text
-- **`PoppinsText`** — default text component. Props: `weight` ('regular'|'medium'|'bold'), `varient` ('default'|'heading'|'subtext'|'cardHeader'|'lowercaseCardHeader'), `color`, `className`
+- **`PoppinsText`**: default text component. Props: `weight` ('regular'|'medium'|'bold'), `varient` ('default'|'heading'|'subtext'|'cardHeader'|'lowercaseCardHeader'), `color`, `className`
 
 ### Buttons
-- **`AppButton`** — main button primitive. Variants: `outline`, `outline-alt`, `outline-accent`, `outline-invert`, `filled`, `grey`, `accent` (gold guilded), `secondary` (silver guilded), `red`, `none`, `black`, `green`
-- **`DisableableButton`** — wraps enabled/disabled states with explanatory text
-- **`StatusButton`** — press shows temporary alternate feedback text
+- **`AppButton`**: main button primitive. Variants: `outline`, `outline-alt`, `outline-accent`, `outline-invert`, `filled`, `grey`, `accent` (gold guilded), `secondary` (silver guilded), `red`, `none`, `black`, `green`
+- **`DisableableButton`**: wraps enabled/disabled states with explanatory text
+- **`StatusButton`**: press shows temporary alternate feedback text
 
 ### Forms
-- **`AppDropdown`** — main dropdown/select component. Supports web portal positioning, disabled state, customizable styling. **This is what dropdown inputs should render as.**
-- **`PoppinsTextInput`** — default text input. Supports `varient='styled'` for bordered style, `autoGrow` on web, multiline
-- **`PoppinsNumberInput`** — numeric input with bounds validation, returns `(displayValue, isValid, numericValue)`
-- **`PoppinsTimeInput`** — hour/minute/AM-PM dropdowns, writes canonical `HH:mm`
-- **`PoppinsDateInput`** — date entry with formatting
-- **`InlineEditableText`** — inline text editing without full dialog
+- **`AppDropdown`**: main dropdown/select component. Supports web portal positioning, disabled state, customizable styling. **This is what dropdown inputs should render as.**
+- **`PoppinsTextInput`**: default text input. Supports `varient='styled'` for bordered style, `autoGrow` on web, multiline
+- **`PoppinsNumberInput`**: numeric input with bounds validation, returns `(displayValue, isValid, numericValue)`
+- **`PoppinsTimeInput`**: hour/minute/AM-PM dropdowns, writes canonical `HH:mm`
+- **`PoppinsDateInput`**: date entry with formatting
+- **`InlineEditableText`**: inline text editing without full dialog
 
 ### Layout
-- **`Column`** — vertical layout with gap spacing (gap prop uses 4px units)
-- **`Row`** — horizontal layout with gap spacing
-- **`Divider`** — horizontal divider with configurable inset
+- **`Column`**: vertical layout with gap spacing (gap prop uses 4px units)
+- **`Row`**: horizontal layout with gap spacing
+- **`Divider`**: horizontal divider with configurable inset
 
 ### Dialogs
-- **`ConvexDialog`** — standard dialog wrapper (Root, Portal, Overlay, Content, Close)
-- **`DialogHeader`** — branded header row for dialogs
-- **`UnsavedChangesDialog`** — leave/stay confirmation
+- **`ConvexDialog`**: standard dialog wrapper (Root, Portal, Overlay, Content, Close)
+- **`DialogHeader`**: branded header row for dialogs
+- **`UnsavedChangesDialog`**: leave/stay confirmation
 
 ### Markdown
-- **`MarkdownRenderer`** — main markdown rendering primitive. Supports headings, paragraphs, lists, quotes, rules, images, and inline input tokens. Can become interactive with `state`/`setState` props.
+- **`MarkdownRenderer`**: main markdown rendering primitive. Supports headings, paragraphs, lists, quotes, rules, images, and inline input tokens. Can become interactive with `state`/`setState` props.
 
 ### Animation
-- **`StateAnimatedView`** — state-based micro-animation (small swaps, labels, icons)
-- **`LayoutStateAnimatedView`** — compound animated view for page-like state transitions (Container, Option, OptionContainer with pushInAnimation presets like `fromRight`)
+- **`StateAnimatedView`**: state-based micro-animation (small swaps, labels, icons)
+- **`LayoutStateAnimatedView`**: compound animated view for page-like state transitions (Container, Option, OptionContainer with pushInAnimation presets like `fromRight`)
 
 ### Day Selectors
-- **`ComprehensiveDaySelector`** — main day selector for multiplayer screens (horizontal scrolling day ribbon)
-- **`DaySelector`** — simpler day-selection strip
+- **`ComprehensiveDaySelector`**: main day selector for multiplayer screens (horizontal scrolling day ribbon)
+- **`DaySelector`**: simpler day-selection strip
 
 ### Styling System
 - **Tailwind CSS** (NativeWind) for all styling
@@ -497,7 +497,7 @@ The scripting language's rendered output must use these existing UI components:
 
 ## Newser Role (Special Case)
 
-The operator can assign a separate email as "Newser" — this user gets player-like access to all player tabs except "Your Eyes Only", has a profile, appears in participant-facing identity surfaces (rule book, town square, phone book), and owns newspaper functionality — all without being in the player list or userTable. The scripting language should account for this role when filtering players.
+The operator can assign a separate email as "Newser"; this user gets player-like access to all player tabs except "Your Eyes Only", has a profile, appears in participant-facing identity surfaces (rule book, town square, phone book), and owns newspaper functionality, all without being in the player list or userTable. The scripting language should account for this role when filtering players.
 
 ---
 
@@ -520,27 +520,27 @@ The operator can assign a separate email as "Newser" — this user gets player-l
 
 Design at minimum these functions (and propose additional ones):
 
-- **`Variable`** — define a named variable with a computed value
-- **`CreateSelectInput`** — dropdown/multi-select from a list
-- **`CreateTextInput`** — text input field
-- **`CreateMarkdown`** — render markdown content (possibly dynamic)
-- **`CreateCheckbox`** — boolean toggle
-- **`CreateConditional`** — show/hide content based on a condition
-- **`CreateNumberInput`** — numeric input with optional min/max
+- **`Variable`**: define a named variable with a computed value
+- **`CreateSelectInput`**: dropdown/multi-select from a list
+- **`CreateTextInput`**: text input field
+- **`CreateMarkdown`**: render markdown content (possibly dynamic)
+- **`CreateCheckbox`**: boolean toggle
+- **`CreateConditional`**: show/hide content based on a condition
+- **`CreateNumberInput`**: numeric input with optional min/max
 
 ### 4. Data Source Functions
 
 The language must be able to access the game's data:
 
-- **`players`** — the game's `userTable` (all players with their data)
-- **`roles`** — the game's `roleTable`
-- **`currentPlayer`** — the viewing player's data
-- **`currentDay`** — the current day index
-- **`dayDates`** — the `dayDatesArray` for the game
-- **`schedule`** — the `GameSchedule` for the game
-- **`submissions`** — all `PlayerNightSubmission` data for the current day
-- **`townSquarePosts`** — posts from the town square
-- **`profiles`** — all `PlayerProfile` data for the game
+- **`players`**: the game's `userTable` (all players with their data)
+- **`roles`**: the game's `roleTable`
+- **`currentPlayer`**: the viewing player's data
+- **`currentDay`**: the current day index
+- **`dayDates`**: the `dayDatesArray` for the game
+- **`schedule`**: the `GameSchedule` for the game
+- **`submissions`**: all `PlayerNightSubmission` data for the current day
+- **`townSquarePosts`**: posts from the town square
+- **`profiles`**: all `PlayerProfile` data for the game
 
 Each data source should expose filterable/queryable properties. For example, `players` items should expose:
 - `entry.realName`, `entry.email`, `entry.userId`, `entry.role`
@@ -557,25 +557,25 @@ Each data source should expose filterable/queryable properties. For example, `pl
 - **List**: `.length`, `.filter`, `.map`, `.sort`, `.first`, `.last`, `.get(index)`, `.contains`
 
 ### 6. Control Flow
-- **`If`/`Else`** — conditional execution
-- **`ForEach`** — iterate over a list
-- **`Switch`** — multi-branch conditional
+- **`If`/`Else`**: conditional execution
+- **`ForEach`**: iterate over a list
+- **`Switch`**: multi-branch conditional
 
 ### 7. State and Output
 - The result of executing the script is a set of rendered UI elements (inputs, text, etc.)
 - Input state is collected into a `MarkdownInputState`-compatible object (key-value pairs)
 - The script execution context has access to the current game, current player, current day, and all shared game data
-- Scripts are **reactive** — when underlying data changes (a player dies, a new day starts), the rendered inputs update automatically
+- Scripts are **reactive**: when underlying data changes (a player dies, a new day starts), the rendered inputs update automatically
 
 ### 8. Integration Points
 
 The scripting language should be usable in **any markdown field**, but primarily:
 
-- **Role messages** (`roleTable[].roleMessage`) — the nightly action prompt for each role
-- **Rule book** (`ruleBook-{gameId}`) — general game rules, possibly with interactive examples
-- **Town Square posts** — forum posts with embedded interactive elements
-- **Newspaper content** — newspaper articles with embedded inputs
-- **Morning messages** — daily messages to players
+- **Role messages** (`roleTable[].roleMessage`): the nightly action prompt for each role
+- **Rule book** (`ruleBook-{gameId}`): general game rules, possibly with interactive examples
+- **Town Square posts**: forum posts with embedded interactive elements
+- **Newspaper content**: newspaper articles with embedded inputs
+- **Morning messages**: daily messages to players
 
 ### 9. Backward Compatibility
 
@@ -587,21 +587,21 @@ The scripting language should be usable in **any markdown field**, but primarily
 
 - Scripts run **client-side** in the React Native app
 - Scripts have access to the DataProvider cache (same data the components see)
-- Scripts are **sandboxed** — no access to arbitrary code execution
-- Scripts are **declarative** — they describe what to render, not how to render it
+- Scripts are **sandboxed**: no access to arbitrary code execution
+- Scripts are **declarative**: they describe what to render, not how to render it
 - The runtime evaluates the script and produces a React component tree
-- The runtime is **reactive** — subscribes to the data sources used by the script and re-renders when data changes
+- The runtime is **reactive**: subscribes to the data sources used by the script and re-renders when data changes
 
 ---
 
 ## Deliverables
 
-1. **Language specification** — complete syntax reference for all functions, operators, data sources, and control flow
-2. **Block editor design** — how blocks look, snap together, and map to text representation
-3. **Runtime architecture** — how scripts are parsed, evaluated, and rendered as React components
-4. **Data source mapping** — how each game data type is exposed to the scripting language
-5. **Integration plan** — how the scripting language embeds in markdown fields and replaces the existing input token system
-6. **Example scripts** — at least 5 practical examples showing real game logic:
+1. **Language specification**: complete syntax reference for all functions, operators, data sources, and control flow
+2. **Block editor design**: how blocks look, snap together, and map to text representation
+3. **Runtime architecture**: how scripts are parsed, evaluated, and rendered as React components
+4. **Data source mapping**: how each game data type is exposed to the scripting language
+5. **Integration plan**: how the scripting language embeds in markdown fields and replaces the existing input token system
+6. **Example scripts**: at least 5 practical examples showing real game logic:
    - Filter dead players and allow selecting up to half
    - Show different inputs based on the player's role
    - Create a vote dropdown that excludes the current player
@@ -614,8 +614,8 @@ The scripting language should be usable in **any markdown field**, but primarily
 
 - The app is React Native + Expo (web + mobile), using Convex backend, Clerk auth, Tailwind/NativeWind styling
 - All data is accessed through the DataProvider hook system (`useValue`, `useList`, `useFindValues`, `useFindListItems`)
-- Components subscribe directly to their own data — no prop-drilling for persistent data
-- The existing markdown input system uses `/["Label":TYPE]/` syntax with 5 hardcoded types — this is being replaced
+- Components subscribe directly to their own data, no prop-drilling for persistent data
+- The existing markdown input system uses `/["Label":TYPE]/` syntax with 5 hardcoded types; this is being replaced
 - Input state is stored as `MarkdownInputState` = `Record<string, string | undefined>`
 - The primary use case is role messages where operators define what inputs players see for their nightly actions
 - All rendered UI must use existing components (AppDropdown, PoppinsTextInput, MarkdownRenderer, etc.)

@@ -9,6 +9,7 @@ import MarkdownRenderer, {
 import ChainWraper from './ChainWraper';
 import { useGameOperatorUserId } from 'hooks/useGameOperatorUserId';
 import { useNow } from 'hooks/useNow';
+import { useScriptFilesReader } from 'hooks/useScriptFiles';
 import { useSharedListValue } from 'hooks/useSharedListValue';
 import { useSharedVariableValue } from 'hooks/useSharedVariableValue';
 import { useValue } from 'hooks/useData';
@@ -20,20 +21,19 @@ import {
   planMarkdownScriptUpdates,
 } from 'utils/runMarkdownScriptsWithUpdates';
 import {
-  buildScheduledDate,
   defaultGameSchedule,
   formatContextualDateLabel,
   formatCountdown,
+  formatInstantTimeLabel,
   formatRelativeDuration,
-  formatTimeLabel,
   getCurrentPlayableDayIndex,
+  getDayDeadlineInstant,
   getDayEndDate,
-  getDayReleaseDate,
   getGameScopedKey,
   getPlayerActionSummary,
   normalizeVoteTargets,
   isDayContentReleased,
-  isNightWindowOpen,
+  isDayDeadlineOpen,
   normalizeGameSchedule,
   normalizePlayerActionState,
   parseStoredDayDates,
@@ -41,6 +41,7 @@ import {
 } from 'utils/multiplayer';
 import { getZonedDayToken } from 'utils/timezone';
 import { deepEqual } from 'utils/deepEqual';
+import { nowMs } from 'utils/simNow';
 
 interface YourEyesOnlyDayContentPLAYERProps {
   gameId: string;
@@ -117,6 +118,12 @@ const YourEyesOnlyDayContentPLAYER = ({
     defaultValue: defaultGameSchedule,
     userIds: operatorUserIds,
   });
+  // File-mode cells: resolve File(...) lists into flat markdown here, at the
+  // render seam, so everything downstream sees one mega-script.
+  const { resolve: resolveCellText, index: scriptFilesIndex } = useScriptFilesReader(
+    gameId,
+    operatorUserIds
+  );
   const now = useNow(1000);
 
   const dayDates = useMemo(() => parseStoredDayDates(dayDateStrings), [dayDateStrings]);
@@ -126,8 +133,8 @@ const YourEyesOnlyDayContentPLAYER = ({
   );
   const gameTimeZone = resolveGameTimeZone(schedule);
   const currentDayIndex = useMemo(
-    () => getCurrentPlayableDayIndex(dayDates, new Date(), gameTimeZone),
-    [dayDates, gameTimeZone]
+    () => getCurrentPlayableDayIndex(dayDates, now, gameTimeZone),
+    [dayDates, gameTimeZone, now]
   );
   const selectedDayEndDate = useMemo(
     () => getDayEndDate(dayDates, dayIndex, numberOfRealDaysPerInGameDay),
@@ -136,7 +143,15 @@ const YourEyesOnlyDayContentPLAYER = ({
   const selectedMorningDayIndex = dayIndex - 1;
   const hasSelectedMorning =
     selectedMorningDayIndex >= 0 &&
-    isDayContentReleased(dayDates, selectedMorningDayIndex, schedule.wakeUpTime, now, gameTimeZone);
+    isDayContentReleased(
+      dayDates,
+      selectedMorningDayIndex,
+      schedule.wakeUpTime,
+      now,
+      gameTimeZone,
+      schedule,
+      numberOfRealDaysPerInGameDay
+    );
   const matchingPlayer = useMemo(
     () =>
       userTable.find(
@@ -145,16 +160,29 @@ const YourEyesOnlyDayContentPLAYER = ({
     [currentEmail, userTable]
   );
   const roleData = roleTable.value.find((roleItem) => roleItem.role === matchingPlayer?.role);
-  const voteMessage = roleData?.voteMessage?.trim()
-    ? roleData.voteMessage
-    : defaultVoteMessage || DEFAULT_VOTE_MESSAGE;
-  const voteDeadlineTime =
-    schedule.voteDeadlineTime ?? defaultGameSchedule.voteDeadlineTime ?? '22:00';
-  const actionDeadlineTime =
-    schedule.actionDeadlineTime ?? defaultGameSchedule.actionDeadlineTime ?? '22:00';
-
-
-
+  const resolvedRoleMessage = useMemo(
+    () => resolveCellText(roleData?.roleMessage ?? ''),
+    [roleData?.roleMessage, resolveCellText]
+  );
+  const resolvedMorningMessagesList = useMemo(
+    () =>
+      Object.fromEntries(
+        Object.entries(morningMessagesList).map(([email, msgs]) => [
+          email,
+          msgs.map(resolveCellText),
+        ])
+      ),
+    [morningMessagesList, resolveCellText]
+  );
+  const voteMessage = useMemo(
+    () =>
+      resolveCellText(
+        roleData?.voteMessage?.trim()
+          ? roleData.voteMessage
+          : defaultVoteMessage || DEFAULT_VOTE_MESSAGE
+      ),
+    [roleData?.voteMessage, defaultVoteMessage, resolveCellText]
+  );
   const [submission, setSubmission] = useValue<PlayerNightSubmission>(
     getGameScopedKey(`playerNightSubmission-day-${dayIndex}`, gameId),
     {
@@ -187,28 +215,12 @@ const YourEyesOnlyDayContentPLAYER = ({
       value: role.role,
       label: role.role,
     }));
-  const actionDayOffset = schedule.actionDayOffset ?? 0;
-  const voteDayOffset = schedule.voteDayOffset ?? 0;
-  const actionDeadlineBaseDate = useMemo(
-    () =>
-      actionDayOffset > 0
-        ? new Date(selectedDayEndDate.getTime() - actionDayOffset * 24 * 60 * 60 * 1000)
-        : selectedDayEndDate,
-    [actionDayOffset, selectedDayEndDate]
-  );
-  const voteDeadlineBaseDate = useMemo(
-    () =>
-      voteDayOffset > 0
-        ? new Date(selectedDayEndDate.getTime() - voteDayOffset * 24 * 60 * 60 * 1000)
-        : selectedDayEndDate,
-    [voteDayOffset, selectedDayEndDate]
-  );
   const isVoteLocked =
     dayIndex < currentDayIndex ||
-    !isNightWindowOpen(voteDeadlineBaseDate, voteDeadlineTime, now, gameTimeZone);
+    !isDayDeadlineOpen(selectedDayEndDate, schedule, 'vote', now, gameTimeZone);
   const isActionLocked =
     dayIndex < currentDayIndex ||
-    !isNightWindowOpen(actionDeadlineBaseDate, actionDeadlineTime, now, gameTimeZone);
+    !isDayDeadlineOpen(selectedDayEndDate, schedule, 'action', now, gameTimeZone);
   const isVotingSkipped = (skipVotingDays ?? []).includes(dayIndex);
   const isActionsSkipped = (skipActionsDays ?? []).includes(dayIndex);
   const isSkipVote = submission.value.vote === 'SKIP_VOTE';
@@ -217,7 +229,7 @@ const YourEyesOnlyDayContentPLAYER = ({
   // the previous night). This is shown in the Action section with interactive
   // inputs that feed into the same submission state as the role message.
   const currentMorningMessage = hasSelectedMorning
-    ? (morningMessagesList[currentEmail.toLowerCase()]?.[selectedMorningDayIndex] ?? '')
+    ? (resolvedMorningMessagesList[currentEmail.toLowerCase()]?.[selectedMorningDayIndex] ?? '')
     : '';
   const currentActionState = useMemo(
     () => normalizePlayerActionState(submission.value.action),
@@ -246,7 +258,7 @@ const YourEyesOnlyDayContentPLAYER = ({
   );
 
   // Compute planned table updates from the role message script AND the morning
-  // message script at input time. This runs the scripts in "planning mode" —
+  // message script at input time. This runs the scripts in "planning mode",
   // variables (currentDay, Inputs, etc.) are resolved to their values, but
   // function calls (tag(), .append(), etc.) are kept as expression strings.
   // At certify time, these expressions are evaluated with the cell variable
@@ -268,18 +280,20 @@ const YourEyesOnlyDayContentPLAYER = ({
       dayDates: dayDateStrings,
       schedule,
       userTableTitle: titles,
-      morningMessagesList: morningMessagesList,
+      morningMessagesList: resolvedMorningMessagesList,
+      filesIndex: scriptFilesIndex,
     };
     const allPlanned: PlannedUpdate[] = [];
     // Role message script
-    if (roleData?.roleMessage?.trim()) {
+    if (resolvedRoleMessage.trim()) {
       const { plannedUpdates, issues } = planMarkdownScriptUpdates(
-        roleData.roleMessage,
+        resolvedRoleMessage,
         actionState,
         scriptSourceData,
         userTable,
         titles,
-        morningMessagesList
+        resolvedMorningMessagesList,
+        scriptFilesIndex
       );
       if (issues.length > 0) console.warn('Role message script issues:', issues);
       allPlanned.push(...plannedUpdates);
@@ -292,14 +306,15 @@ const YourEyesOnlyDayContentPLAYER = ({
         scriptSourceData,
         userTable,
         titles,
-        morningMessagesList
+        resolvedMorningMessagesList,
+        scriptFilesIndex
       );
       if (issues.length > 0) console.warn('Morning message script issues:', issues);
       allPlanned.push(...plannedUpdates);
     }
     return allPlanned;
   }, [
-    roleData?.roleMessage,
+    resolvedRoleMessage,
     currentMorningMessage,
     submission.value.action,
     userTable,
@@ -310,7 +325,8 @@ const YourEyesOnlyDayContentPLAYER = ({
     dayIndex,
     dayDateStrings,
     schedule,
-    morningMessagesList,
+    resolvedMorningMessagesList,
+    scriptFilesIndex,
   ]);
 
   const votePlannedUpdates = useMemo<PlannedUpdate[]>(() => {
@@ -332,11 +348,13 @@ const YourEyesOnlyDayContentPLAYER = ({
         dayDates: dayDateStrings,
         schedule,
         userTableTitle,
-        morningMessagesList,
+        morningMessagesList: resolvedMorningMessagesList,
+        filesIndex: scriptFilesIndex,
       },
       userTable,
       userTableTitle,
-      morningMessagesList
+      resolvedMorningMessagesList,
+      scriptFilesIndex
     );
     if (issues.length > 0) console.warn('Vote message script issues:', issues);
     return plannedUpdates;
@@ -348,8 +366,9 @@ const YourEyesOnlyDayContentPLAYER = ({
     dayDateStrings,
     isSkipVote,
     schedule,
-    morningMessagesList,
+    resolvedMorningMessagesList,
     roleTable.value,
+    scriptFilesIndex,
     userTable,
     userTableTitle,
     voteMessage,
@@ -387,12 +406,12 @@ const YourEyesOnlyDayContentPLAYER = ({
   }, [plannedUpdates, userTable]);
 
   const voteDeadline = useMemo(
-    () => buildScheduledDate(voteDeadlineBaseDate, voteDeadlineTime, gameTimeZone),
-    [voteDeadlineBaseDate, voteDeadlineTime, gameTimeZone]
+    () => getDayDeadlineInstant(selectedDayEndDate, schedule, 'vote', gameTimeZone),
+    [selectedDayEndDate, schedule, gameTimeZone]
   );
   const actionDeadline = useMemo(
-    () => buildScheduledDate(actionDeadlineBaseDate, actionDeadlineTime, gameTimeZone),
-    [actionDeadlineTime, actionDeadlineBaseDate, gameTimeZone]
+    () => getDayDeadlineInstant(selectedDayEndDate, schedule, 'action', gameTimeZone),
+    [selectedDayEndDate, schedule, gameTimeZone]
   );
 
   // Determine which deadline comes first
@@ -415,13 +434,13 @@ const YourEyesOnlyDayContentPLAYER = ({
       ? 'LOCKED'
       : formatCountdown(primaryDeadline, now);
   const primaryLabel = isVotePrimary ? 'VOTE' : 'ACTION';
-  const primaryTimeLabel = isVotePrimary ? voteDeadlineTime : actionDeadlineTime;
+  const primaryTimeLabel = formatInstantTimeLabel(primaryDeadline, gameTimeZone);
   const secondaryDeadline = isVotePrimary ? actionDeadline : voteDeadline;
-  const secondaryTimeLabel = isVotePrimary ? actionDeadlineTime : voteDeadlineTime;
+  const secondaryTimeLabel = formatInstantTimeLabel(secondaryDeadline, gameTimeZone);
   const secondaryIsLocked = isVotePrimary ? isActionLocked : isVoteLocked;
   const secondaryLabel = isVotePrimary ? 'Actions' : 'Voting';
   const secondarySkipped = isVotePrimary ? isActionsSkipped : isVotingSkipped;
-  // Deadlines are real instants — convert to the game-zone calendar day so
+  // Deadlines are real instants: convert to the game-zone calendar day so
   // the today/tomorrow label matches what the schedule means.
   const deadlineDayToken = (instant: Date) => getZonedDayToken(instant.getTime(), gameTimeZone);
   const primaryDateLabel = formatContextualDateLabel(
@@ -460,7 +479,8 @@ const YourEyesOnlyDayContentPLAYER = ({
                 dayDates: dayDateStrings,
                 schedule,
                 userTableTitle,
-                morningMessagesList,
+                morningMessagesList: resolvedMorningMessagesList,
+                filesIndex: scriptFilesIndex,
               }}>
               <MarkdownRenderer
                 markdown={currentMorningMessage}
@@ -471,7 +491,7 @@ const YourEyesOnlyDayContentPLAYER = ({
                         setSubmission({
                           ...submission.value,
                           action: nextState,
-                          submittedActionAt: Date.now(),
+                          submittedActionAt: nowMs(),
                         });
                       }
                     : undefined
@@ -508,15 +528,15 @@ const YourEyesOnlyDayContentPLAYER = ({
             </FontText>
             <FontText variant="subtext">
               {primaryLabel === 'VOTE'
-                ? `Voting due ${primaryDateLabel} at ${formatTimeLabel(primaryTimeLabel)}.`
-                : `Actions due ${primaryDateLabel} at ${formatTimeLabel(primaryTimeLabel)}.`}
+                ? `Voting due ${primaryDateLabel} at ${primaryTimeLabel}.`
+                : `Actions due ${primaryDateLabel} at ${primaryTimeLabel}.`}
             </FontText>
             <FontText variant="subtext">
               {secondarySkipped
                 ? `${secondaryLabel} skipped this day`
                 : secondaryIsLocked
-                  ? `${secondaryLabel} due ${secondaryDateLabel} at ${formatTimeLabel(secondaryTimeLabel)}.`
-                  : `${secondaryLabel} due in ${formatRelativeDuration(secondaryDeadline, now)} (${formatTimeLabel(secondaryTimeLabel)}).`}
+                  ? `${secondaryLabel} due ${secondaryDateLabel} at ${secondaryTimeLabel}.`
+                  : `${secondaryLabel} due in ${formatRelativeDuration(secondaryDeadline, now)} (${secondaryTimeLabel}).`}
             </FontText>
           </>
         )}
@@ -558,7 +578,8 @@ const YourEyesOnlyDayContentPLAYER = ({
                       dayDates: dayDateStrings,
                       schedule,
                       userTableTitle,
-                      morningMessagesList,
+                      morningMessagesList: resolvedMorningMessagesList,
+                      filesIndex: scriptFilesIndex,
                     }}>
                     <MarkdownRenderer
                       markdown={voteMessage}
@@ -576,7 +597,8 @@ const YourEyesOnlyDayContentPLAYER = ({
                                 dayDates: dayDateStrings,
                                 schedule,
                                 userTableTitle,
-                                morningMessagesList,
+                                morningMessagesList: resolvedMorningMessagesList,
+                                filesIndex: scriptFilesIndex,
                               });
                               const targets = voteInput
                                 ? normalizeVoteTargets(nextState[voteInput.key])
@@ -592,7 +614,7 @@ const YourEyesOnlyDayContentPLAYER = ({
                                 voteInputs: nextState,
                                 voteInputKey: voteInput?.key,
                                 voteMultiplier: voteInput?.multiplier ?? 1,
-                                submittedVoteAt: Date.now(),
+                                submittedVoteAt: nowMs(),
                               });
                             }
                           : undefined
@@ -612,7 +634,8 @@ const YourEyesOnlyDayContentPLAYER = ({
                           dayDates: dayDateStrings,
                           schedule,
                           userTableTitle,
-                          morningMessagesList,
+                          morningMessagesList: resolvedMorningMessagesList,
+                          filesIndex: scriptFilesIndex,
                         });
                         if (isSkipVote) {
                           const targets = voteInput
@@ -622,14 +645,14 @@ const YourEyesOnlyDayContentPLAYER = ({
                             ...submission.value,
                             vote: targets.length > 1 ? targets : targets[0] || '',
                             voteMultiplier: voteInput?.multiplier ?? 1,
-                            submittedVoteAt: Date.now(),
+                            submittedVoteAt: nowMs(),
                           });
                         } else {
                           setSubmission({
                             ...submission.value,
                             vote: 'SKIP_VOTE',
                             voteMultiplier: voteInput?.multiplier ?? 1,
-                            submittedVoteAt: Date.now(),
+                            submittedVoteAt: nowMs(),
                           });
                         }
                       }}
@@ -695,11 +718,12 @@ const YourEyesOnlyDayContentPLAYER = ({
                       dayDates: dayDateStrings,
                       schedule,
                       userTableTitle,
-                      morningMessagesList,
+                      morningMessagesList: resolvedMorningMessagesList,
+                      filesIndex: scriptFilesIndex,
                     }}>
-                    {roleData?.roleMessage?.trim().length ? (
+                    {resolvedRoleMessage.trim().length ? (
                       <MarkdownRenderer
-                        markdown={roleData.roleMessage}
+                        markdown={resolvedRoleMessage}
                         state={currentActionState}
                         setState={
                           !isActionLocked
@@ -707,7 +731,7 @@ const YourEyesOnlyDayContentPLAYER = ({
                                 setSubmission({
                                   ...submission.value,
                                   action: nextState,
-                                  submittedActionAt: Date.now(),
+                                  submittedActionAt: nowMs(),
                                 });
                               }
                             : undefined

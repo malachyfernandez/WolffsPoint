@@ -2,6 +2,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import FontText from '../ui/text/FontText';
 import TagCellDisplay from './TagCellDisplay';
 import type { CellContext } from './TagCellEditor';
+import type { TagRef } from 'utils/cellPieces';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
 import CustomCheckbox from '../ui/CustomCheckbox';
@@ -19,17 +20,21 @@ import { Platform, Pressable, View } from 'react-native';
 import UserEditDialog from './UserEditDialog';
 import { useTableRowPreview } from './TableRowPreview';
 import { useList } from 'hooks/useData';
-import { UserTableItem } from 'types/playerTable';
+import { UserTableItem, type CellContentType } from 'types/playerTable';
 import { createUndoSnapshot, useUndoRedo } from 'hooks/useUndoRedo';
 import { SelectableOverlay } from './multiSelect/SelectableOverlay';
+import CellOriginIndicator from './CellOriginIndicator';
+import { latestFieldSource, type FieldProvenance } from '../../utils/fieldProvenance';
 
 interface UserRowProps {
+  onDeleteUser?: (index: number) => void;
   user: {
     userId: string | 'NOT-JOINED';
     realName: string;
     email: string;
     role: string;
     playerData: {
+      fieldProvenance?: FieldProvenance;
       livingState: 'alive' | 'dead';
       extraColumns?: string[];
     };
@@ -53,8 +58,9 @@ interface UserRowProps {
   gameId: string;
   extraUserColumnWidths?: number[];
   userColumnTitles?: string[];
-  onTagsAdded?: (tagNames: string[], context: CellContext) => void;
-  onTagsRemoved?: (tagNames: string[], context: CellContext) => void;
+  columnTypes?: CellContentType[];
+  onTagsAdded?: (tagRefs: (string | TagRef)[], context: CellContext) => void;
+  onTagsRemoved?: (tagRefs: (string | TagRef)[], context: CellContext) => void;
   selectionMode?: boolean;
 }
 
@@ -71,9 +77,11 @@ const UserRow = ({
   userTableColumnVisibility,
   extraUserColumnWidths,
   userColumnTitles,
+  columnTypes,
   onTagsAdded,
   onTagsRemoved,
   selectionMode = false,
+  onDeleteUser,
 }: UserRowProps) => {
   const [editingColumns, setEditingColumns] = useState<Record<number, boolean>>({});
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -82,7 +90,7 @@ const UserRow = ({
   const hasMounted = useRef(false);
 
   // Registers this row's element + preview target with the shared floating
-  // preview pill (web only — it resolves hovered rows by pointer position).
+  // preview pill (web only; it resolves hovered rows by pointer position).
   const rowPreview = useTableRowPreview();
   const rowRef = useRef<View>(null);
   useEffect(() => {
@@ -148,6 +156,14 @@ const UserRow = ({
         <Column
           className={`border-subtle-border h-full w-12 items-center justify-center gap-4 border ${isLast ? 'rounded-bl-lg' : ''}`}>
           <CustomCheckbox checked={isDead} onChange={toggleLivingState} />
+          <CellOriginIndicator
+            gameId={gameId}
+            source={latestFieldSource(
+              user.playerData.fieldProvenance,
+              'livingState',
+              user.playerData.livingState
+            )}
+          />
         </Column>
         <Column className="border-subtle-border h-full w-28 items-center justify-center gap-0 border">
           <Pressable
@@ -209,6 +225,7 @@ const UserRow = ({
                 className={`border-subtle-border h-full items-center justify-center gap-4 border ${isLast && isLastVisibleColumn ? 'rounded-br-lg' : ''}`}
                 style={{ width: columnWidth, position: 'relative', overflow: 'hidden' }}>
                 <TagCellDisplay
+                  contentType={columnTypes?.[columnIndex]}
                   gameId={gameId}
                   value={column}
                   onChange={(newValue) => setExtraColumnValue?.(index, columnIndex, newValue)}
@@ -223,24 +240,29 @@ const UserRow = ({
                   onTagsAdded={onTagsAdded}
                   onTagsRemoved={onTagsRemoved}
                 />
-                <SelectableOverlay cellId={`p-e-${index}-${columnIndex}`} cellType="playerExtra" />
+                <SelectableOverlay
+                  cellId={`p-e-${index}-${columnIndex}`}
+                  cellType={
+                    columnTypes?.[columnIndex] === 'files' ? 'playerExtraFiles' : 'playerExtra'
+                  }
+                />
               </Column>
             </Animated.View>
           );
         })}
       </Row>
       {(dialogMounted || isDialogOpen) && (
-      <UserEditDialog
-        isOpen={isDialogOpen}
-        onOpenChange={setIsDialogOpen}
-        userIndex={index}
-        currentRealName={user.realName}
-        currentEmail={user.email}
-        currentRole={user.role}
-        onPress={() => setIsDialogOpen(true)}
-        gameId={gameId}
-        onDelete={() => UNDOABLEdeleteUser(index)}
-      />
+        <UserEditDialog
+          isOpen={isDialogOpen}
+          onOpenChange={setIsDialogOpen}
+          userIndex={index}
+          currentRealName={user.realName}
+          currentEmail={user.email}
+          currentRole={user.role}
+          onPress={() => setIsDialogOpen(true)}
+          gameId={gameId}
+          onDelete={() => (onDeleteUser ? onDeleteUser(index) : UNDOABLEdeleteUser(index))}
+        />
       )}
     </View>
   );

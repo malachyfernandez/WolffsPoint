@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import ConvexDialog from '../ui/dialog/ConvexDialog';
+import ConfirmDialog from '../ui/dialog/ConfirmDialog';
 import UnsavedChangesDialog from '../ui/dialog/UnsavedChangesDialog';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
@@ -19,6 +20,10 @@ interface VoteEnableDialogProps {
   doesRoleVote: boolean;
   onSetDoesRoleVote: (value: boolean) => void;
   onContinueToEditor: () => void;
+  /** True when the role carries a custom vote message override. */
+  hasCustomMessage?: boolean;
+  /** Clears the override so the role inherits the default vote message. */
+  onResetMessage?: () => void;
 }
 
 const VoteEnableDialog = ({
@@ -28,16 +33,20 @@ const VoteEnableDialog = ({
   doesRoleVote,
   onSetDoesRoleVote,
   onContinueToEditor,
+  hasCustomMessage = false,
+  onResetMessage,
 }: VoteEnableDialogProps) => {
   const { setHint } = useKeyboardShortcutHint();
 
   const [canVote, setCanVote] = useState(doesRoleVote);
   const [isLeaveConfirmDialogOpen, setIsLeaveConfirmDialogOpen] = useState(false);
+  const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
       setCanVote(doesRoleVote);
       setIsLeaveConfirmDialogOpen(false);
+      setIsResetConfirmOpen(false);
     }
   }, [isOpen, doesRoleVote]);
 
@@ -89,6 +98,14 @@ const VoteEnableDialog = ({
     }
   };
 
+  // Reset commits the staged vote toggle too: whatever the dialog shows is
+  // what persists. Confirmed first — the custom message is deleted.
+  const handleResetToDefault = () => {
+    onSetDoesRoleVote(canVote);
+    onResetMessage?.();
+    onOpenChange(false);
+  };
+
   useKeyboardShortcuts({
     onPrimaryAction: handlePrimary,
     onClose: handleCancel,
@@ -123,14 +140,48 @@ const VoteEnableDialog = ({
                 <FontText className={canVote ? '' : 'opacity-70'}>This role can vote</FontText>
               </Pressable>
 
+              {canVote && (
+                <Row className="items-center gap-3">
+                  {hasCustomMessage ? (
+                    <>
+                      <AppButton
+                        variant="outline"
+                        className="h-8 px-3"
+                        onPress={() => setIsResetConfirmOpen(true)}>
+                        <FontText weight="medium" className="text-sm">
+                          Use default
+                        </FontText>
+                      </AppButton>
+                      <FontText variant="subtext" className="text-sm">
+                        This role uses a custom message
+                      </FontText>
+                    </>
+                  ) : (
+                    <FontText variant="subtext" className="text-sm">
+                      Using the default vote message
+                    </FontText>
+                  )}
+                </Row>
+              )}
+
               <Column className="w-full items-center justify-center gap-4 pt-2">
                 <Row className="gap-4">
-                  <AppButton className="h-10 w-48" variant="black" onPress={handlePrimary} onHoverIn={() => setHint(['enter'])} onHoverOut={() => setHint(null)}>
+                  <AppButton
+                    className="h-10 w-48"
+                    variant="black"
+                    onPress={handlePrimary}
+                    onHoverIn={() => setHint(['enter'])}
+                    onHoverOut={() => setHint(null)}>
                     <FontText color="white" weight="medium">
                       {canVote ? 'Edit Vote Message' : 'Save'}
                     </FontText>
                   </AppButton>
-                  <AppButton className="h-10 w-48" variant="outline" onPress={handleCancel} onHoverIn={() => setHint(['esc'])} onHoverOut={() => setHint(null)}>
+                  <AppButton
+                    className="h-10 w-48"
+                    variant="outline"
+                    onPress={handleCancel}
+                    onHoverIn={() => setHint(['esc'])}
+                    onHoverOut={() => setHint(null)}>
                     <FontText color="black" weight="medium">
                       Cancel
                     </FontText>
@@ -147,6 +198,15 @@ const VoteEnableDialog = ({
         onOpenChange={setIsLeaveConfirmDialogOpen}
         onSave={handleSaveFromConfirm}
         onDiscard={handleConfirmLeave}
+      />
+      <ConfirmDialog
+        isOpen={isResetConfirmOpen}
+        onOpenChange={setIsResetConfirmOpen}
+        onConfirm={handleResetToDefault}
+        title="Use the default vote message?"
+        message="This deletes the role's custom vote message. The default message takes its place."
+        confirmLabel="Use default"
+        danger
       />
     </>
   );

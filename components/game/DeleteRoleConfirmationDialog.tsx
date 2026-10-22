@@ -15,9 +15,10 @@ interface DeleteConfirmationDialogProps {
     itemType: string;
     itemName: string;
     confirmButtonText?: string;
+    additionalMessage?: string;
 }
 
-const DeleteConfirmationDialog = ({ isOpen, onOpenChange, onConfirm, itemType, itemName, confirmButtonText = 'Delete' }: DeleteConfirmationDialogProps) => {
+const DeleteConfirmationDialog = ({ isOpen, onOpenChange, onConfirm, itemType, itemName, confirmButtonText = 'Delete', additionalMessage }: DeleteConfirmationDialogProps) => {
     // Del/Backspace = confirm delete, Esc = cancel
     useKeyboardShortcuts({
         onPrimaryAction: () => {
@@ -41,6 +42,11 @@ const DeleteConfirmationDialog = ({ isOpen, onOpenChange, onConfirm, itemType, i
                             <FontText className='text-center'>
                                 Are you sure you want to delete {itemName || `this ${itemType.toLowerCase()}`}?
                             </FontText>
+                            {additionalMessage && (
+                                <FontText variant='subtext' className='text-center'>
+                                    {additionalMessage}
+                                </FontText>
+                            )}
                             <View className='flex-row gap-3 mt-4'>
                                 <AppButton
                                     variant='outline'

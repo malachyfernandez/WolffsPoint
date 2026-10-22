@@ -150,9 +150,7 @@ const UserEditDialog = ({
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
 
   const handleDeleteUser = () => {
-    // Remove user from the users array
-    const updatedUsers = users.filter((_, index) => index !== userIndex);
-    setUserTable(updatedUsers);
+    // The table owns the undoable deletion and its tag-effect cleanup.
     onDelete();
     onOpenChange(false);
   };

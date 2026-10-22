@@ -1,14 +1,15 @@
 import { useEffect, useState } from 'react';
 import { useBodyReportEnabled } from '../contexts/BodyReadinessContext';
+import { nowDate, onSimNowChange } from '../utils/simNow';
 
 /**
  * Shared clock. Replaces per-component `setInterval(() => setNow(new Date()))`
- * timers — every caller had its own interval, and they kept re-rendering
+ * timers: every caller had its own interval, and they kept re-rendering
  * their subtrees forever, including inside hidden-but-mounted tab panes.
  *
  * - One real interval per cadence, shared across all subscribers.
  * - Subscribers inside a hidden `BodyReportScope` (inactive tab) unsubscribe
- *   entirely — zero ticking while the pane can't be seen.
+ *   entirely: zero ticking while the pane can't be seen.
  * - All ticking stops while the document itself is hidden (backgrounded tab),
  *   then fires once on return so displayed times snap to the real clock.
  */
@@ -83,16 +84,21 @@ const subscribe = (ms: number, cb: Callback): (() => void) => {
  * Passive while this component's pane or the document is hidden.
  */
 export function useNow(intervalMs = 1000): Date {
-  const [now, setNow] = useState(() => new Date());
+  const [now, setNow] = useState(() => nowDate());
   const enabled = useBodyReportEnabled();
 
   useEffect(() => {
     if (!enabled) return;
-    const update = () => setNow(new Date());
+    const update = () => setNow(nowDate());
     const unsub = subscribe(intervalMs, update);
-    // Catch up once on (re)subscription — a hidden pane's `now` is stale.
+    // Snap immediately when the simulated clock is re-pointed.
+    const unsubSim = onSimNowChange(update);
+    // Catch up once on (re)subscription; a hidden pane's `now` is stale.
     update();
-    return unsub;
+    return () => {
+      unsub();
+      unsubSim();
+    };
   }, [intervalMs, enabled]);
 
   return now;

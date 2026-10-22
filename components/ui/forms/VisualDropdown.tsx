@@ -18,7 +18,7 @@ interface VisualDropdownProps {
   onValueChange: (value: string) => void;
   placeholder?: string;
   label?: string;
-  /** Option value marked as the user's default — shows a "Default" badge
+  /** Option value marked as the user's default, shows a "Default" badge
    *  in the top right of that option row. */
   defaultValue?: string;
   /** When provided, renders a "Set as default" row at the bottom of the

@@ -4,6 +4,7 @@ import { MathDocumentPage } from 'types/mathDocuments';
 import { useToast } from 'contexts/ToastContext';
 import { useListSet } from 'hooks/useData';
 import { buildViewOnlyDocumentUrl } from 'utils/buildViewOnlyDocumentUrl';
+import { nowMs } from 'utils/simNow';
 import AppButton from './AppButton';
 import FontText from '../text/FontText';
 
@@ -53,8 +54,8 @@ const ShareButton = ({ documentTitle, documentId, activePage, className }: Share
                         id: documentId,
                         title: documentTitle,
                         description: '', // We don't have description here, but it's okay
-                        createdAt: Date.now(), // This should be preserved but we don't have it
-                        lastOpenedAt: Date.now(),
+                        createdAt: nowMs(), // This should be preserved but we don't have it
+                        lastOpenedAt: nowMs(),
                     },
                     privacy: 'PUBLIC',
                     searchKeys: ['title', 'description'],

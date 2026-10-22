@@ -26,7 +26,7 @@ const TownSquareComposerEditorPane = ({ onBodyChange, onSelectionChange, value, 
     // type into the editor. The native HTML `readOnly` attribute prevents the
     // text from actually changing; this handler just surfaces the feedback.
     const handleReadOnlyKeyDown: React.KeyboardEventHandler<HTMLTextAreaElement> = (event) => {
-        // Ignore modifier-only and navigation keys — only toast on printable input.
+        // Ignore modifier-only and navigation keys, only toast on printable input.
         if (event.metaKey || event.ctrlKey || event.altKey) return;
         if (event.key.length === 1 || event.key === 'Enter' || event.key === 'Backspace' || event.key === 'Delete' || event.key === 'Tab') {
             showToast('Preview only');

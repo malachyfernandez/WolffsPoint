@@ -23,7 +23,7 @@ interface ConfirmDialogProps {
 
 /** Generic confirmation dialog with an X (cancel) button in the top-left,
  * a secondary outline button, and a primary filled confirm button.
- * The X and the outline button both cancel — they call `onOpenChange(false)`.
+ * The X and the outline button both cancel; they call `onOpenChange(false)`.
  */
 const ConfirmDialog = ({
   isOpen,
@@ -49,7 +49,7 @@ const ConfirmDialog = ({
   });
 
   return (
-    <ConvexDialog.Root isOpen={isOpen} onOpenChange={onOpenChange}>
+    <ConvexDialog.Root className="hidden" isOpen={isOpen} onOpenChange={onOpenChange}>
       <ConvexDialog.Portal>
         <ConvexDialog.Overlay />
         <ConvexDialog.Content className="max-w-md p-6" isSwipeable={false}>

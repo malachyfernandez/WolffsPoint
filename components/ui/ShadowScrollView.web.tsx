@@ -53,7 +53,7 @@ const ShadowScrollView = React.forwardRef<any, ShadowScrollViewProps>(
 
     // Emit one mask layer per axis that actually fades. Previously BOTH
     // gradients were always composited (maskComposite:intersect), so a
-    // vertical-only scroller paid for a second, fully-opaque mask — a whole
+    // vertical-only scroller paid for a second, fully-opaque mask, a whole
     // extra raster of the scroll content on every frame. WebKit masks are
     // expensive enough that this halves real per-frame scroll cost.
     const maskLayers: string[] = [];
@@ -80,18 +80,21 @@ const ShadowScrollView = React.forwardRef<any, ShadowScrollViewProps>(
 
     const pct = extensionPercent / 100;
 
+    // Only write margins for axes that actually fade. A zero entry here is
+    // still an inline style and would stomp margin classes on className
+    // (e.g. the day selector's -mt-1/-mb-3 tightening).
     const extendedStyles = {
-      marginTop: -resolvedTopFade * pct,
-      marginBottom: -resolvedBottomFade * pct,
-      marginLeft: -resolvedLeftFade * pct,
-      marginRight: -resolvedRightFade * pct,
+      ...(resolvedTopFade ? { marginTop: -resolvedTopFade * pct } : {}),
+      ...(resolvedBottomFade ? { marginBottom: -resolvedBottomFade * pct } : {}),
+      ...(resolvedLeftFade ? { marginLeft: -resolvedLeftFade * pct } : {}),
+      ...(resolvedRightFade ? { marginRight: -resolvedRightFade * pct } : {}),
     };
 
     const fadePadding = {
-      paddingTop: resolvedTopFade * pct,
-      paddingBottom: resolvedBottomFade * pct,
-      paddingLeft: resolvedLeftFade * pct,
-      paddingRight: resolvedRightFade * pct,
+      ...(resolvedTopFade ? { paddingTop: resolvedTopFade * pct } : {}),
+      ...(resolvedBottomFade ? { paddingBottom: resolvedBottomFade * pct } : {}),
+      ...(resolvedLeftFade ? { paddingLeft: resolvedLeftFade * pct } : {}),
+      ...(resolvedRightFade ? { paddingRight: resolvedRightFade * pct } : {}),
     };
 
     const mergedContentContainerStyle = React.useMemo(() => {

@@ -8,7 +8,7 @@
 import { StepResult } from './log';
 
 const ms = (n: number | null | undefined, digits = 0) =>
-  n === null || n === undefined ? '—' : `${n.toFixed(digits)}ms`;
+  n === null || n === undefined ? '-' : `${n.toFixed(digits)}ms`;
 
 function rating(step: StepResult): string {
   // heuristics: nav/tab/modal over 700ms settle or any longtask >150ms = SLOW
@@ -41,7 +41,7 @@ export function buildMarkdownReport(meta: {
   ).perfLog.steps;
 
   const out: string[] = [];
-  out.push(`# WolffsPoint Perf Audit — Simulated Run`);
+  out.push(`# WolffsPoint Perf Audit: Simulated Run`);
   out.push('');
   out.push(`- **Started**: ${meta.startedAtIso}`);
   out.push(`- **Run duration**: ${(meta.durationMs / 1000).toFixed(1)}s`);
@@ -60,9 +60,9 @@ export function buildMarkdownReport(meta: {
     const worstProfiler = s.profilers[0];
     const profilerCell = worstProfiler
       ? `${worstProfiler.boundaryId} ${worstProfiler.totalActualMs.toFixed(0)}ms (${worstProfiler.commits} commits)`
-      : '—';
+      : '-';
     out.push(
-      `| ${i + 1} | ${s.label.replace(/\|/g, '\\|')} | ${s.kind} | ${ms(s.settleMs)} | ${ms(s.firstPaintMs)} | ${s.frames ? `p95 ${s.frames.p95Ms.toFixed(0)}ms, ${s.frames.slowFrames} slow` : '—'} | ${s.longTasks.count ? `${s.longTasks.count} (${s.longTasks.worstMs.toFixed(0)}ms worst)` : '0'} | ${profilerCell} | ${rating(s)} |`
+      `| ${i + 1} | ${s.label.replace(/\|/g, '\\|')} | ${s.kind} | ${ms(s.settleMs)} | ${ms(s.firstPaintMs)} | ${s.frames ? `p95 ${s.frames.p95Ms.toFixed(0)}ms, ${s.frames.slowFrames} slow` : '-'} | ${s.longTasks.count ? `${s.longTasks.count} (${s.longTasks.worstMs.toFixed(0)}ms worst)` : '0'} | ${profilerCell} | ${rating(s)} |`
     );
   });
   out.push('');
@@ -76,7 +76,7 @@ export function buildMarkdownReport(meta: {
   out.push('');
   sorted.forEach((s) => {
     out.push(
-      `- **${ms(s.settleMs)}** — ${s.label} (longTasks ${s.longTasks.count}/${s.longTasks.worstMs.toFixed(0)}ms, p95 frame ${s.frames?.p95Ms.toFixed(0) ?? '—'}ms)`
+      `- **${ms(s.settleMs)}**: ${s.label} (longTasks ${s.longTasks.count}/${s.longTasks.worstMs.toFixed(0)}ms, p95 frame ${s.frames?.p95Ms.toFixed(0) ?? '-'}ms)`
     );
   });
   out.push('');
@@ -86,7 +86,7 @@ export function buildMarkdownReport(meta: {
   out.push('');
   for (const s of steps) {
     if (s.kind === 'note') {
-      out.push(`### — ${s.label}`);
+      out.push(`###: ${s.label}`);
       if (s.notes) out.push(`> ${s.notes}`);
       out.push('');
       continue;

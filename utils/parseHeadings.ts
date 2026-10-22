@@ -16,7 +16,7 @@ export interface MarkdownHeading {
  * Previously this function independently parsed lines and used the LINE number
  * as the block index, which diverged from MarkdownRenderer's BLOCK index
  * whenever multi-line blocks (lists, quotes, script blocks) appeared before a
- * heading — causing the TOC to scroll to the wrong element.
+ * heading: causing the TOC to scroll to the wrong element.
  */
 export const parseHeadings = (markdown: string): MarkdownHeading[] => {
     if (!markdown) {
@@ -77,7 +77,7 @@ const scrollParentToElement = (el: HTMLElement, buffer = 80) => {
     const elRect = el.getBoundingClientRect();
     const scrollParent = findScrollParent(el);
 
-    // No scrollable ancestor found — the page relies on the window for
+    // No scrollable ancestor found: the page relies on the window for
     // scrolling. Scroll the window directly (NOT scrollIntoView, which would
     // also scroll intermediate ancestors and push the page up/off-screen).
     if (!scrollParent) {

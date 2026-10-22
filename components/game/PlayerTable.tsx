@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import FontText from '../ui/text/FontText';
 import { useList, useValue } from 'hooks/useData';
 import { useProgressiveCount } from 'hooks/useProgressiveCount';
@@ -9,14 +9,9 @@ import Row from '../layout/Row';
 import UserRow from './UserRow';
 import TitleRow from './TitleRow';
 import { createUndoSnapshot, useUndoRedo } from 'hooks/useUndoRedo';
-import {
-  UserTableItem,
-  UserTableTitle,
-  UserTableColumnVisibility,
-  UserTableColumnNightlyVisibility,
-} from 'types/playerTable';
+import { UserTableItem, UserTableTitle, UserTableColumnVisibility } from 'types/playerTable';
 import { normalizePlayerPageState } from './playerTableNormalization';
-import { useTagTriggers, type CellContext } from 'hooks/useTagTriggers';
+import { useTagTriggers } from 'hooks/useTagTriggers';
 import {
   PlayerPageColumnSizes,
   defaultPlayerPageColumnSizes,
@@ -26,11 +21,14 @@ import {
 } from './playerTableColumnSizing';
 import TagCellEditor from './TagCellEditor';
 import { useMultiSelect } from './multiSelect/MultiSelectContext';
+import ExtraColumnFilesEditor from './scriptFiles/ExtraColumnFilesEditor';
+import { cellTagRefs, fileCellEditorText, reconcileFileCell } from '../../utils/cellPieces';
+import { reconcileTagSelection } from '../../utils/tagEncoding';
+import { createClientId } from '../../utils/multiplayer';
+import { trackManualStringChange } from '../../utils/fieldProvenance';
 
 interface PlayerTableProps {
   gameId: string;
-  doSync: boolean;
-  setDoSync: (value: boolean) => void;
   isBeingEdited: boolean;
   setIsBeingEdited: (value: boolean) => void;
   className?: string;
@@ -40,8 +38,6 @@ interface PlayerTableProps {
 
 const PlayerTable = ({
   gameId,
-  doSync,
-  setDoSync,
   isBeingEdited,
   setIsBeingEdited,
   className,
@@ -70,7 +66,7 @@ const PlayerTable = ({
 
   const userTableValue = userTable.scheduledUpdate?.value ?? userTable.value;
   const users = userTableValue ?? [];
-  // Mount rows progressively — 24 rows × cells mount in one commit otherwise.
+  // Mount rows progressively: 24 rows × cells mount in one commit otherwise.
   const mountedRowCount = useProgressiveCount(users.length);
   // Ref that mirrors `users` but is also updated synchronously when we call
   // setUserTable, so that handleTagsAdded can see the tag change that was
@@ -85,39 +81,15 @@ const PlayerTable = ({
   const [userTableColumnVisibility, setUserTableColumnVisibility] =
     useList<UserTableColumnVisibility>('userTableColumnVisibility', gameId, { privacy: 'PUBLIC' });
 
-  const [nightlyVisibility, setNightlyVisibility] = useList<UserTableColumnNightlyVisibility>(
-    'userTableColumnNightlyVisibility',
-    gameId,
-    { privacy: 'PUBLIC' }
-  );
-
   const userTableTitleValue = userTableTitle.scheduledUpdate?.value ?? userTableTitle.value;
   const columnVisibilityValue =
     userTableColumnVisibility.scheduledUpdate?.value ?? userTableColumnVisibility.value;
-  const nightlyVisibilityValue =
-    nightlyVisibility.scheduledUpdate?.value ?? nightlyVisibility.value;
   const titles = userTableTitleValue ?? { extraUserColumns: [], extraDayColumns: [] };
-  const { fireTagTriggers } = useTagTriggers(gameId, users, titles, (updated) =>
-    setUserTable(updated)
-  );
-
-  const handleTagsAdded = (tagNames: string[], context: CellContext) => {
-    const projectedUsers = usersRef.current;
-    const updated = fireTagTriggers(tagNames, context, projectedUsers, 'added');
-    if (updated !== projectedUsers) {
-      usersRef.current = updated;
-      setUserTable(updated);
-    }
-  };
-
-  const handleTagsRemoved = (tagNames: string[], context: CellContext) => {
-    const projectedUsers = usersRef.current;
-    const updated = fireTagTriggers(tagNames, context, projectedUsers, 'removed');
-    if (updated !== projectedUsers) {
-      usersRef.current = updated;
-      setUserTable(updated);
-    }
-  };
+  const {
+    tagLookup,
+    env: tagEnv,
+    planTableChanges,
+  } = useTagTriggers(gameId, users, titles, (updated) => setUserTable(updated));
 
   const hasNormalizedOnceRef = useRef(false);
   const prevDayDatesLengthRef = useRef(dayDatesArray.length);
@@ -138,8 +110,7 @@ const PlayerTable = ({
     if (
       userTable?.state?.isSyncing ||
       userTableTitle?.state?.isSyncing ||
-      userTableColumnVisibility?.state?.isSyncing ||
-      nightlyVisibility?.state?.isSyncing
+      userTableColumnVisibility?.state?.isSyncing
     ) {
       hasNormalizedOnceRef.current = false;
       return;
@@ -166,22 +137,6 @@ const PlayerTable = ({
     };
     const currentUsers = userTableValue ?? [];
 
-    // Normalize nightly visibility to match column counts, defaulting to false
-    const currentNightly = nightlyVisibilityValue ?? {
-      extraUserColumns: [],
-      extraDayColumns: [],
-    };
-    const normalizedNightly = {
-      extraUserColumns: Array.from(
-        { length: normalizedState.titles.extraUserColumns.length },
-        (_, i) => currentNightly.extraUserColumns[i] ?? false
-      ),
-      extraDayColumns: Array.from(
-        { length: normalizedState.titles.extraDayColumns.length },
-        (_, i) => currentNightly.extraDayColumns[i] ?? false
-      ),
-    };
-
     if (!deepEqual(currentTitles, normalizedState.titles)) {
       setUserTableTitle(normalizedState.titles);
     }
@@ -194,50 +149,14 @@ const PlayerTable = ({
       setUserTable(normalizedState.users);
     }
 
-    if (!deepEqual(currentNightly, normalizedNightly)) {
-      setNightlyVisibility(normalizedNightly);
-    }
-
     hasNormalizedOnceRef.current = true;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     userTable?.state?.isSyncing,
     userTableTitle?.state?.isSyncing,
     userTableColumnVisibility?.state?.isSyncing,
-    nightlyVisibility?.state?.isSyncing,
     dayDatesArray.length,
   ]);
-
-  const syncAllColumnsToTitles = useCallback(() => {
-    const normalizedState = normalizePlayerPageState({
-      titles: userTableTitleValue,
-      visibility: columnVisibilityValue,
-      users: userTableValue,
-      targetDayCount: dayDatesArray.length,
-    });
-
-    setUserTableColumnVisibility(normalizedState.visibility);
-    setUserTable(normalizedState.users);
-
-    return {
-      updatedVisibility: normalizedState.visibility,
-      updatedUsers: normalizedState.users,
-    };
-  }, [
-    dayDatesArray.length,
-    setUserTable,
-    setUserTableColumnVisibility,
-    userTableValue,
-    columnVisibilityValue,
-    userTableTitleValue,
-  ]);
-
-  useEffect(() => {
-    if (!doSync) return;
-
-    syncAllColumnsToTitles();
-    setDoSync(false);
-  }, [doSync, setDoSync, syncAllColumnsToTitles]);
 
   const UNDOABLEsetLivingState = (userIndex: number, newLivingState: 'alive' | 'dead') => {
     const previousUserTable = createUndoSnapshot(userTableValue ?? []);
@@ -270,7 +189,10 @@ const PlayerTable = ({
     const nextUserTable = createUndoSnapshot(previousUserTable);
     const currentExtraColumns = nextUserTable[userIndex].playerData.extraColumns || [];
     const updatedExtraColumns = [...currentExtraColumns];
-    updatedExtraColumns[extraColumnIndex] = newExtraColumnValue;
+    updatedExtraColumns[extraColumnIndex] = trackManualStringChange(
+      currentExtraColumns[extraColumnIndex] ?? '',
+      newExtraColumnValue
+    );
 
     nextUserTable[userIndex] = {
       ...nextUserTable[userIndex],
@@ -280,15 +202,40 @@ const PlayerTable = ({
       },
     };
 
-    // Update ref synchronously so handleTagsAdded sees the tag change
-    usersRef.current = nextUserTable;
+    const changes = planTableChanges(previousUserTable, nextUserTable);
+    usersRef.current = changes.users;
     executeCommand({
-      action: () => setUserTable(createUndoSnapshot(nextUserTable)),
+      action: () => {
+        changes.commit();
+        setUserTable(createUndoSnapshot(changes.users), { cellWriteOrigin: 'tracked' });
+      },
       undoAction: () => {
+        changes.undo();
         usersRef.current = previousUserTable;
         setUserTable(createUndoSnapshot(previousUserTable));
       },
       description: 'Set Column Value',
+    });
+  };
+
+  const UNDOABLEdeleteUser = (index: number) => {
+    const previous = createUndoSnapshot(usersRef.current);
+    const changes = planTableChanges(
+      previous,
+      previous.filter((_, row) => row !== index)
+    );
+    executeCommand({
+      action: () => {
+        changes.commit();
+        usersRef.current = changes.users;
+        setUserTable(createUndoSnapshot(changes.users), { cellWriteOrigin: 'tracked' });
+      },
+      undoAction: () => {
+        changes.undo();
+        usersRef.current = previous;
+        setUserTable(createUndoSnapshot(previous));
+      },
+      description: 'Delete player',
     });
   };
 
@@ -319,6 +266,9 @@ const PlayerTable = ({
     const nextTitles = {
       ...previousTitles,
       extraUserColumns: [...previousTitles.extraUserColumns, newTitle],
+      extraUserColumnIds: previousTitles.extraUserColumnIds
+        ? [...previousTitles.extraUserColumnIds, createClientId('column')]
+        : undefined,
     };
 
     const nextUserTable = previousUserTable.map((user) => ({
@@ -367,22 +317,6 @@ const PlayerTable = ({
     });
   };
 
-  const toggleNightlyVisibility = (columnIndex: number) => {
-    const current = nightlyVisibilityValue ?? { extraUserColumns: [], extraDayColumns: [] };
-    const colCount = currentTitles.extraUserColumns.length;
-    // Normalize to full length, defaulting to false (not shown in nightly)
-    const normalized = Array.from(
-      { length: colCount },
-      (_, i) => current.extraUserColumns[i] ?? false
-    );
-    const currentValue = normalized[columnIndex] ?? false;
-    const next = {
-      ...current,
-      extraUserColumns: normalized.map((v, index) => (index === columnIndex ? !currentValue : v)),
-    };
-    setNightlyVisibility(next);
-  };
-
   // Subscribe to player page column sizes
   const [columnSizes, setColumnSizes] = useValue<PlayerPageColumnSizes>(
     getPlayerPageColumnSizesKey(gameId),
@@ -417,13 +351,14 @@ const PlayerTable = ({
     const previousColumnSizes = createUndoSnapshot(
       columnSizes.value ?? defaultPlayerPageColumnSizes
     );
-    const previousNightlyVisibility = createUndoSnapshot(
-      nightlyVisibilityValue ?? { extraUserColumns: [], extraDayColumns: [] }
-    );
 
     const nextTitles = {
       ...previousTitles,
       extraUserColumns: previousTitles.extraUserColumns.filter((_, i) => i !== columnIndex),
+      extraUserColumnIds: previousTitles.extraUserColumnIds?.filter((_, i) => i !== columnIndex),
+      extraUserColumnTypes: previousTitles.extraUserColumnTypes?.filter(
+        (_, i) => i !== columnIndex
+      ),
     };
 
     const nextUserTable = previousUserTable.map((user) => ({
@@ -446,27 +381,21 @@ const PlayerTable = ({
       ),
     };
 
-    const nextNightlyVisibility = {
-      ...previousNightlyVisibility,
-      extraUserColumns: previousNightlyVisibility.extraUserColumns.filter(
-        (_, i) => i !== columnIndex
-      ),
-    };
-
+    const changes = planTableChanges(previousUserTable, nextUserTable, nextTitles);
     executeCommand({
       action: () => {
+        changes.commit();
         setUserTableTitle(createUndoSnapshot(nextTitles));
-        setUserTable(createUndoSnapshot(nextUserTable));
+        setUserTable(createUndoSnapshot(changes.users), { cellWriteOrigin: 'tracked' });
         setUserTableColumnVisibility(createUndoSnapshot(nextVisibility));
         setColumnSizes(createUndoSnapshot(nextColumnSizes));
-        setNightlyVisibility(createUndoSnapshot(nextNightlyVisibility));
       },
       undoAction: () => {
+        changes.undo();
         setUserTableTitle(createUndoSnapshot(previousTitles));
         setUserTable(createUndoSnapshot(previousUserTable));
         setUserTableColumnVisibility(createUndoSnapshot(previousVisibility));
         setColumnSizes(createUndoSnapshot(previousColumnSizes));
-        setNightlyVisibility(createUndoSnapshot(previousNightlyVisibility));
       },
       description: 'Delete Column',
     });
@@ -479,7 +408,7 @@ const PlayerTable = ({
 
   const handleBulkEdit = () => {
     // Only handle player-extra cell types
-    if (cellType !== 'playerExtra') return;
+    if (cellType !== 'playerExtra' && cellType !== 'playerExtraFiles') return;
 
     const firstId = Array.from(selectedCells)[0];
     if (!firstId) return;
@@ -501,8 +430,7 @@ const PlayerTable = ({
     return registerEditHandler(handleBulkEdit);
   }, [registerEditHandler, handleBulkEdit]);
 
-  // Apply tag/text value to all selected extra user column cells.
-  // Tag triggers are intentionally suppressed during bulk updates.
+  // Apply the selection separately to each cell, preserving its own owners.
   const handleBulkTagUpdate = (newValue: string) => {
     const previousUserTable = createUndoSnapshot(usersRef.current);
     const nextUserTable = createUndoSnapshot(previousUserTable);
@@ -516,19 +444,28 @@ const PlayerTable = ({
 
       const user = nextUserTable[userIndex];
       const extraColumns = [...(user.playerData.extraColumns || [])];
-      extraColumns[columnIndex] = newValue;
+      const raw = extraColumns[columnIndex] ?? '';
+      extraColumns[columnIndex] =
+        cellType === 'playerExtraFiles' && tagEnv.index
+          ? reconcileFileCell(raw, fileCellEditorText(newValue, tagEnv.index), tagEnv.index)
+          : reconcileTagSelection(raw, cellTagRefs(newValue), tagLookup);
       nextUserTable[userIndex] = {
         ...user,
         playerData: { ...user.playerData, extraColumns },
       };
     }
 
-    usersRef.current = nextUserTable;
+    const changes = planTableChanges(previousUserTable, nextUserTable);
     executeCommand({
-      action: () => setUserTable(createUndoSnapshot(nextUserTable)),
+      action: () => {
+        usersRef.current = changes.users;
+        setUserTable(createUndoSnapshot(changes.users), { cellWriteOrigin: 'tracked' });
+        changes.commit();
+      },
       undoAction: () => {
         usersRef.current = previousUserTable;
         setUserTable(createUndoSnapshot(previousUserTable));
+        changes.undo();
       },
       description: 'Bulk Update Cells',
     });
@@ -544,6 +481,12 @@ const PlayerTable = ({
             userTableTitle={userTableTitleValue}
             userTableColumnVisibility={columnVisibilityValue}
             setColumnTitle={UNDOABLEsetColumnTitle}
+            onSetColumnType={(index, type) => {
+              const next = [...(titles.extraUserColumnTypes ?? [])];
+              while (next.length < titles.extraUserColumns.length) next.push('tags');
+              next[index] = type;
+              setUserTableTitle({ ...titles, extraUserColumnTypes: next });
+            }}
             setColumnVisibility={UNDOABLEsetColumnVisibility}
             onEditStart={() => handleRowEditStart('title')}
             onEditEnd={handleRowEditEnd}
@@ -552,8 +495,6 @@ const PlayerTable = ({
             extraUserColumnSizes={columnSizes.value?.playerExtraColumns}
             onSetExtraUserColumnSize={setExtraUserColumnSize}
             onDeleteExtraUserColumn={UNDOABLEdeleteExtraUserColumn}
-            nightlyVisibility={nightlyVisibilityValue?.extraUserColumns}
-            onToggleNightlyVisibility={toggleNightlyVisibility}
             selectionMode={selectionMode}
             columnCellIds={extraColumnCellIds}
           />
@@ -573,8 +514,8 @@ const PlayerTable = ({
               gameId={gameId}
               extraUserColumnWidths={extraUserColumnWidths}
               userColumnTitles={titles.extraUserColumns}
-              onTagsAdded={handleTagsAdded}
-              onTagsRemoved={handleTagsRemoved}
+              columnTypes={titles.extraUserColumnTypes}
+              onDeleteUser={UNDOABLEdeleteUser}
               selectionMode={selectionMode}
             />
           ))}
@@ -590,14 +531,26 @@ const PlayerTable = ({
         )}
       </Row>
 
-      <TagCellEditor
-        isOpen={isBulkTagEditorOpen}
-        onOpenChange={setIsBulkTagEditorOpen}
-        gameId={gameId}
-        value={bulkTagInitial}
-        onChange={(newValue) => handleBulkTagUpdate(newValue)}
-        submitLabel="Update All"
-      />
+      {cellType === 'playerExtraFiles' ? (
+        <ExtraColumnFilesEditor
+          isOpen={isBulkTagEditorOpen}
+          onOpenChange={setIsBulkTagEditorOpen}
+          gameId={gameId}
+          value={bulkTagInitial}
+          onChange={handleBulkTagUpdate}
+          title="Bulk update files"
+          historyKey={`bulkPlayerExtraFiles:${gameId}`}
+        />
+      ) : (
+        <TagCellEditor
+          isOpen={isBulkTagEditorOpen}
+          onOpenChange={setIsBulkTagEditorOpen}
+          gameId={gameId}
+          value={bulkTagInitial}
+          onChange={(newValue) => handleBulkTagUpdate(newValue)}
+          submitLabel="Update All"
+        />
+      )}
     </Column>
   );
 };

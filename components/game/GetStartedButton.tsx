@@ -16,6 +16,8 @@ import CloseButton from '../ui/dialog/CloseButton';
 import { GameSchedule } from 'types/multiplayer';
 import { defaultGameSchedule, getGameScopedKey, normalizeGameSchedule, resolveGameTimeZone } from 'utils/multiplayer';
 import { getZonedDayToken } from 'utils/timezone';
+import { nowMs } from 'utils/simNow';
+
 
 interface GetStartedButtonProps {
     gameId: string;
@@ -46,7 +48,7 @@ const GetStartedButton = ({ gameId }: GetStartedButtonProps) => {
 
     const [gameSchedule] = useValue<GameSchedule>(getGameScopedKey('gameSchedule', gameId), { defaultValue: defaultGameSchedule, privacy: 'PUBLIC' });
     const gameTimeZone = resolveGameTimeZone(normalizeGameSchedule(gameSchedule.value));
-    const todaysDate = getZonedDayToken(Date.now(), gameTimeZone)
+    const todaysDate = getZonedDayToken(nowMs(), gameTimeZone)
 
         return (
 

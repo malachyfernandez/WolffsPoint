@@ -2,7 +2,7 @@
 
 ## Current State (Working Checkpoint)
 
-All dialogs currently render with **gold** frame coloring always. They do NOT dynamically switch to ghostly when the player is dead. This is intentional — we reverted dynamic coloring to establish a stable baseline.
+All dialogs currently render with **gold** frame coloring always. They do NOT dynamically switch to ghostly when the player is dead. This is intentional: we reverted dynamic coloring to establish a stable baseline.
 
 ## The Core Problem We Hit
 
@@ -20,9 +20,9 @@ Inside a `Dialog.Portal`, the React tree is **teleported to a portal host** that
 
 ### What We Tried That Failed
 
-1. **Re-providing `ConvexProviderWithClerk` inside dialog Content** — `useConvexAuth` requires the full Clerk OAuth flow context (not just a `ConvexReactClient`). Cannot construct that inside a dialog.
-2. **Re-providing plain `ConvexProvider` + `useConvex()` to get client** — `useConvex()` itself returned `undefined` or crashed when called inside the portal tree. The portal host appears to sever context chains.
-3. **Creating a fresh `ConvexReactClient`** inside `ConvexDialog.web.tsx` module scope — this is the **only pattern that works** for `useAction` inside dialogs. It does NOT carry Clerk auth, but `uploadthing.generatePublicImageUploadUrl` is a public action that doesn't need auth.
+1. **Re-providing `ConvexProviderWithClerk` inside dialog Content**, `useConvexAuth` requires the full Clerk OAuth flow context (not just a `ConvexReactClient`). Cannot construct that inside a dialog.
+2. **Re-providing plain `ConvexProvider` + `useConvex()` to get client**, `useConvex()` itself returned `undefined` or crashed when called inside the portal tree. The portal host appears to sever context chains.
+3. **Creating a fresh `ConvexReactClient`** inside `ConvexDialog.web.tsx` module scope; this is the **only pattern that works** for `useAction` inside dialogs. It does NOT carry Clerk auth, but `uploadthing.generatePublicImageUploadUrl` is a public action that doesn't need auth.
 
 ### The Winning Architecture (Current)
 
@@ -48,7 +48,7 @@ Content: ({ children, className, ...props }: any) => {
 },
 ```
 
-**Key insight**: The `Dialog.Content` itself lives inside `ConvexDialogContent` (which is NOT a portal — it's regular JSX). But `Dialog.Portal`/`Dialog.Overlay` are the portal parts. The critical discovery is that `Dialog.Content` in `@rn-primitives/dialog` **IS rendered through a portal** by the library internally, so even wrapping it with `ConvexProvider` before passing it to `Dialog.Content` may not be sufficient. The working version places `ConvexProvider` inside the Content wrapper at the JSX level where it survives.
+**Key insight**: The `Dialog.Content` itself lives inside `ConvexDialogContent` (which is NOT a portal; it's regular JSX). But `Dialog.Portal`/`Dialog.Overlay` are the portal parts. The critical discovery is that `Dialog.Content` in `@rn-primitives/dialog` **IS rendered through a portal** by the library internally, so even wrapping it with `ConvexProvider` before passing it to `Dialog.Content` may not be sufficient. The working version places `ConvexProvider` inside the Content wrapper at the JSX level where it survives.
 
 ## The Plan to Add Dynamic Coloring Back
 
@@ -58,8 +58,8 @@ Dialogs should show **gold** when player is alive, **ghostly** when player is de
 
 ### Constraints
 
-1. **Cannot call `useConvexAuth` or `useUserVariable` inside dialog frame** — these crash inside portal trees.
-2. **Cannot call `usePlayerStatus` inside `GuildedFrame` when used in dialogs** — `PlayerStatusContext` is available (it's a plain React context), BUT `GuildedFrame.web.tsx` also contains `GuildedButton` chrome which calls `useUserVariable`.
+1. **Cannot call `useConvexAuth` or `useUserVariable` inside dialog frame**, these crash inside portal trees.
+2. **Cannot call `usePlayerStatus` inside `GuildedFrame` when used in dialogs**: `PlayerStatusContext` is available (it's a plain React context), BUT `GuildedFrame.web.tsx` also contains `GuildedButton` chrome which calls `useUserVariable`.
 3. **The dialog frame must be colorable without any Convex-Auth-dependent hooks**.
 
 ### Recommended Architecture
@@ -135,8 +135,8 @@ Cons: Need to create `DialogGuildedFrame`, update all dialog call sites to pass 
 | `app/components/ui/dialog/ConvexDialog.tsx` | Same for native |
 | `app/components/ui/chrome/DialogGuildedFrame.web.tsx` | NEW: Frame without auth hooks, accepts explicit variant |
 | `app/components/ui/chrome/DialogGuildedFrame.tsx` | NEW: Native version |
-| `app/components/ui/chrome/GuildedFrameCore.web.tsx` | Already exists — uses explicit `variant` prop, no hooks |
-| `app/components/ui/chrome/GuildedFrameCore.tsx` | Already exists — native version |
+| `app/components/ui/chrome/GuildedFrameCore.web.tsx` | Already exists: uses explicit `variant` prop, no hooks |
+| `app/components/ui/chrome/GuildedFrameCore.tsx` | Already exists: native version |
 | `~31 dialog files` | Add `frameVariant={isPlayerDead ? 'ghostly' : 'gold'}` to each `<ConvexDialog.Root>` |
 
 ### What NOT to Do
@@ -148,7 +148,7 @@ Cons: Need to create `DialogGuildedFrame`, update all dialog call sites to pass 
 ### What IS Safe Inside Dialogs
 
 - Plain React contexts (e.g., `PlayerStatusContext` if provided high enough)
-- `useConvex()` — ONLY if the dialog uses the **module-level fresh client pattern** (current working approach)
+- `useConvex()`: ONLY if the dialog uses the **module-level fresh client pattern** (current working approach)
 - `useAction` with a public action (using the module-level client)
 - `useState`, `useEffect`, `useContext` with non-Clerk contexts
 
@@ -158,7 +158,7 @@ Cons: Need to create `DialogGuildedFrame`, update all dialog call sites to pass 
 
 `DialogGuildedFrame` (used inside dialogs) must be **auth-hook-free** because dialogs render through portals.
 
-The shared rendering core is `GuildedFrameCore.web.tsx` which is already platform-agnostic and takes an explicit `variant` prop — this is the correct building block for both.
+The shared rendering core is `GuildedFrameCore.web.tsx` which is already platform-agnostic and takes an explicit `variant` prop; this is the correct building block for both.
 
 ## Open Question
 
@@ -170,6 +170,6 @@ The actual crash happens from `GuildedButton` → `useUserVariable` → `useConv
 
 - [ ] Open any dialog (e.g., profile edit, image upload)
 - [ ] Verify frame renders with correct gold/ghostly color
-- [ ] Click image upload button inside dialog — must NOT throw `useAction` error
+- [ ] Click image upload button inside dialog; must NOT throw `useAction` error
 - [ ] Verify `tsc --noEmit --skipLibCheck` passes
 - [ ] Test on both web and native builds

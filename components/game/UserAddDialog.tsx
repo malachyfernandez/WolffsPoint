@@ -15,6 +15,7 @@ import StatusButton from '../ui/StatusButton';
 import { useKeyboardShortcuts } from 'hooks/useKeyboardShortcuts';
 import { useKeyboardShortcutHint } from 'contexts/KeyboardShortcutHintContext';
 import CloseButton from '../ui/dialog/CloseButton';
+import { createClientId } from '../../utils/multiplayer';
 
 interface UserAddDialogProps {
   isOpen: boolean;
@@ -93,6 +94,7 @@ const UserAddDialog = ({ isOpen, onOpenChange, gameId }: UserAddDialogProps) => 
     const currentTitles = userTableTitle.scheduledUpdate?.value ??
       userTableTitle.value ?? { extraUserColumns: [], extraDayColumns: [] };
     const newUser: UserTableItem = {
+      id: createClientId('player'),
       realName: realName.trim(),
       email: email.trim().toLowerCase(),
       userId: 'NOT-JOINED',
@@ -103,7 +105,8 @@ const UserAddDialog = ({ isOpen, onOpenChange, gameId }: UserAddDialogProps) => 
       },
       days: Array(dayDatesArray.value.length)
         .fill(null)
-        .map(() => ({
+        .map((_, index) => ({
+          id: currentTitles.dayIds?.[index],
           vote: '',
           action: '',
           extraColumns: Array(currentTitles.extraDayColumns.length).fill(''),

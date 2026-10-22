@@ -1,5 +1,5 @@
 import React, { ReactElement, useState, useRef, useEffect } from 'react';
-import { useWindowDimensions } from 'react-native';
+import { useContentWidth } from 'hooks/useContentWidth';
 import { useCSSVariable } from 'uniwind';
 import { usePlayerStatus } from 'contexts/PlayerStatusContext';
 import { guildedButtonRingPresets } from '../ui/buttons/GuildedButton.shared';
@@ -13,10 +13,10 @@ import FadeInAfterDelay from '../ui/loading/FadeInAfterDelay';
 //   fraction of the center tab's width.
 // - CONDENSED_ISLAND_BREAKPOINT: window width (px) below which the big island
 //   collapses into the smaller condensed one. Raise to switch earlier.
-// - REDUCED_TEXT_BREAKPOINT: in-between step — below this window width the
+// - REDUCED_TEXT_BREAKPOINT: in-between step: below this window width the
 //   island's label text shrinks while the big island is still showing.
 //   Keep it above CONDENSED_ISLAND_BREAKPOINT.
-// - FURTHER_REDUCED_TEXT_BREAKPOINT: second shrink step — below this width the
+// - FURTHER_REDUCED_TEXT_BREAKPOINT: second shrink step: below this width the
 //   label drops to the same size as the other tabs' text, still on the big
 //   island. Keep it below REDUCED_TEXT_BREAKPOINT and above
 //   CONDENSED_ISLAND_BREAKPOINT.
@@ -51,7 +51,7 @@ const IslandTabBackground = ({ isActive, isCondensed = false }: IslandTabBackgro
 
     const R = 9;
     const T = 5;
-    // ISLAND NUB TUNING — `width` here is the center tab's own pixel width.
+    // ISLAND NUB TUNING: `width` here is the center tab's own pixel width.
     // Expanded island: width of the raised nub as a fraction of the tab width
     // (clamped so it never eats the whole tab). Bigger fraction = wider bump.
     const pw = Math.min(Math.max(width * EXPANDED_NUB_FRACTION, 140), width - 28);
@@ -65,7 +65,7 @@ const IslandTabBackground = ({ isActive, isCondensed = false }: IslandTabBackgro
         const xR = width - T;
 
         if (isCondensed) {
-            // Condensed: Split bowl with flat plateau in middle — the nub's flat
+            // Condensed: Split bowl with flat plateau in middle, the nub's flat
             // top as a fraction of the tab width (see CONDENSED_NUB_FRACTION).
             const plateauWidth = Math.max(width * CONDENSED_NUB_FRACTION, 36);
             const yApex = T;
@@ -396,11 +396,9 @@ const gameTabBarCSS = `
     word-wrap: break-word;
 }
 
-/* Decrease font size for non-center tabs on small screens */
-@media (max-width: 380px) {
-    .guilded-game-tab-wrap:not(.is-center) .guilded-game-tab-label {
-        font-size: 7px;
-    }
+/* Decrease font size for non-center tabs on small content areas */
+.guilded-game-tab-wrap.is-tiny:not(.is-center) .guilded-game-tab-label {
+    font-size: 7px;
 }
 `;
 
@@ -425,12 +423,12 @@ const GameTabBar = <TTab extends string>({
     iconSize = 30,
     iconStrokeWidth = 0,
 }: GameTabBarProps<TTab>) => {
-    const { width } = useWindowDimensions();
+    const width = useContentWidth();
     const hasTrueMiddle = tabs.length % 2 === 1;
     const centerIndex = Math.floor(tabs.length / 2);
     const useCondensed = width < 600;
     // Window width where the big center island switches to the small condensed
-    // bump — see CONDENSED_ISLAND_BREAKPOINT at the top of this file.
+    // bump: see CONDENSED_ISLAND_BREAKPOINT at the top of this file.
     const useCondensedIsland = width < CONDENSED_ISLAND_BREAKPOINT;
     // In-between step: island stays expanded but the label text shrinks.
     const useReducedIslandText = !useCondensedIsland && width < REDUCED_TEXT_BREAKPOINT;
@@ -470,7 +468,7 @@ const GameTabBar = <TTab extends string>({
                     return (
                         <div
                             key={tab.value}
-                            className={`guilded-game-tab-wrap ${isActive ? 'is-active' : ''} ${isCenter ? 'is-center' : ''} ${isCenter && useCondensedIsland ? 'is-condensed-island' : ''} ${isCenter && !useCondensedIsland ? 'is-expanded-island' : ''} ${isCenter && useReducedIslandText ? 'is-reduced-text' : ''} ${isCenter && useFurtherReducedIslandText ? 'is-further-reduced-text' : ''}`.trim()}
+                            className={`guilded-game-tab-wrap ${isActive ? 'is-active' : ''} ${isCenter ? 'is-center' : ''} ${isCenter && useCondensedIsland ? 'is-condensed-island' : ''} ${isCenter && !useCondensedIsland ? 'is-expanded-island' : ''} ${isCenter && useReducedIslandText ? 'is-reduced-text' : ''} ${isCenter && useFurtherReducedIslandText ? 'is-further-reduced-text' : ''} ${width < 380 ? 'is-tiny' : ''}`.trim()}
                             style={{ '--tab-flex': tabFlex } as React.CSSProperties & Record<string, string>}
                         >
                             <button

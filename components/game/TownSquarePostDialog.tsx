@@ -16,6 +16,8 @@ import MarkdownEditorDialog from './MarkdownEditorDialog';
 import { TownSquareAuthorAvatar, TownSquareAuthorName } from './townSquare/TownSquareAuthorIdentity';
 import { useCanEditScripts } from 'hooks/useCanEditScripts';
 import CloseButton from '../ui/dialog/CloseButton';
+import { nowMs } from 'utils/simNow';
+
 
 interface TownSquarePostDialogProps {
     gameId: string;
@@ -117,7 +119,7 @@ const TownSquarePostDialog = ({ gameId, isOpen, onOpenChange, post, currentProfi
                             authorUserId: currentProfile.userId,
                             markdown,
                             plainText,
-                            createdAt: Date.now(),
+                            createdAt: nowMs(),
                         },
                         privacy: 'PUBLIC',
                         filterKey: 'postId',

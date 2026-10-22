@@ -2,12 +2,23 @@
  * sim/mockDb.ts
  *
  * In-memory re-implementation of the WolffsPoint Convex backend.
- * Only exists in the perf-audit copy — replaces the real network backend
+ * Only exists in the perf-audit copy, replaces the real network backend
  * so the app runs with no auth, no network, and deterministic dummy data.
  *
  * Semantics intentionally mirror convex/user_vars.ts, user_vars_get.ts,
  * user_lists.ts, user_lists_get.ts, globals.ts and scheduled_updates.ts.
  */
+
+import { deepEqual } from '../utils/deepEqual';
+import { encodeUserValue } from '../hooks/userValueSerialization';
+import { trackManualMessages, trackManualTableChanges } from '../utils/fieldProvenance';
+import {
+  fieldStorageKey,
+  isMorningMessagesKey,
+  isPlayerTableKey,
+  joinFieldProvenance,
+  splitFieldProvenance,
+} from '../utils/fieldProvenanceStorage';
 
 export type PrimitiveIndexValue = string | number | boolean;
 export type Privacy = 'PUBLIC' | 'PRIVATE' | { allowList: string[] };
@@ -28,9 +39,7 @@ const nextId = () => `sim_${++idCounter}`;
 const DEFAULT_SORT_KEY = 'PROPERTY_LAST_MODIFIED';
 
 function isPrimitiveIndexValue(value: unknown): value is PrimitiveIndexValue {
-  return (
-    typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean'
-  );
+  return typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean';
 }
 
 function normalizePropertyRef(reference: string) {
@@ -349,7 +358,7 @@ export class MockDb {
     const result = this.dispatch(name, args);
     const ms = performance.now() - t0;
     this.stats.mutationsRun++;
-    // include the write key so reports show WHICH var/list each write hits —
+    // include the write key so reports show WHICH var/list each write hits;
     // this is what makes the mount-time write storm readable
     const key = typeof args?.key === 'string' ? args.key : null;
     const itemId = typeof args?.itemId === 'string' ? args.itemId : null;
@@ -432,7 +441,71 @@ export class MockDb {
       case 'user_lists:get': {
         const item = this.listItems.get(keyOf(this.viewerUserId, args.key, args.itemId));
         if (!item) return null;
-        return shapeListRecord(item, this.defForItem(item));
+        const record = shapeListRecord(item, this.defForItem(item));
+        if (isPlayerTableKey(args.key))
+          record.value = joinFieldProvenance(
+            record.value,
+            this.listItems.get(keyOf(this.viewerUserId, fieldStorageKey(args.key), args.itemId))
+              ?.value
+          );
+        return record;
+      }
+      case 'user_lists:certificationSubmissions':
+        return this.certificationRows(args.key, args.simulated);
+      case 'user_lists:commitCellCertification': {
+        for (const target of args.targets) {
+          const pending = this.schedTargets.get(
+            keyOf(this.viewerUserId, target.targetType, target.key, target.itemId ?? '')
+          );
+          let value = pending?.encodedValue;
+          if (!pending)
+            value =
+              target.targetType === 'variable'
+                ? this.vars.get(keyOf(this.viewerUserId, target.key))?.value
+                : this.runQuery('user_lists:get', target)?.value;
+          if (
+            !!pending !== target.pending ||
+            !deepEqual(encodeUserValue(value ?? target.defaultValue), target.expected)
+          ) {
+            throw new Error('Data changed; review certification again.');
+          }
+        }
+        const rows = this.certificationRows(args.submissionKey, args.simulated)
+          .map((row) => ({ id: String(row._id), modified: row.lastModified, value: row.value }))
+          .sort((a, b) => a.id.localeCompare(b.id));
+        if (
+          !deepEqual(
+            encodeUserValue(rows),
+            encodeUserValue(
+              [...args.submissions].sort((a: any, b: any) => a.id.localeCompare(b.id))
+            )
+          )
+        ) {
+          throw new Error('Submissions changed; review certification again.');
+        }
+        const writes = args.targets.filter((target: any) => target.next !== undefined);
+        const pendingFor = (target: any) =>
+          this.schedTargets.get(
+            keyOf(this.viewerUserId, target.targetType, target.key, target.itemId ?? '')
+          );
+        if (
+          new Set(writes.map((target: any) => pendingFor(target)?.batchId ?? 'published')).size > 1
+        ) {
+          throw new Error('Wait for table freezing to finish, then certify again.');
+        }
+        for (const target of writes) {
+          const pending = pendingFor(target);
+          if (pending) pending.encodedValue = target.next;
+          else
+            this.listSet({
+              key: target.key,
+              itemId: target.itemId,
+              value: target.next,
+              cellWriteOrigin: 'tracked',
+              privacy: 'PUBLIC',
+            });
+        }
+        return null;
       }
       case 'user_lists:set':
         return this.listSet(args);
@@ -495,7 +568,18 @@ export class MockDb {
           targetType: t.targetType,
           key: t.key,
           itemId: t.targetType === 'list' ? t.itemId : undefined,
-          encodedValue: args.encodedValue,
+          encodedValue:
+            t.targetType === 'list'
+              ? this.prepareCellTableWrite(
+                  {
+                    key: t.key,
+                    itemId: t.itemId,
+                    value: args.encodedValue,
+                    cellWriteOrigin: args.cellWriteOrigin,
+                  },
+                  existing?.encodedValue
+                )
+              : args.encodedValue,
           batchId: args.batchId,
           scheduledTime:
             existing && existing.batchId === args.batchId ? existing.scheduledTime : undefined,
@@ -539,11 +623,14 @@ export class MockDb {
           if (t.targetType === 'variable') {
             this.varSet({ key: t.key, value: t.encodedValue });
           } else {
-            this.listSet({ key: t.key, itemId: t.itemId, value: t.encodedValue });
+            this.listSet({
+              key: t.key,
+              itemId: t.itemId,
+              value: t.encodedValue,
+              cellWriteOrigin: 'restore',
+            });
           }
-          this.schedTargets.delete(
-            keyOf(this.viewerUserId, t.targetType, t.key, t.itemId ?? '')
-          );
+          this.schedTargets.delete(keyOf(this.viewerUserId, t.targetType, t.key, t.itemId ?? ''));
         }
         this.schedBatches.delete(keyOf(this.viewerUserId, args.batchId));
         return null;
@@ -609,12 +696,15 @@ export class MockDb {
       ...base,
       value: args.value,
       lastModified: now,
-      filterKey: overwriteConfig || !base.filterKey ? args.filterKey ?? base.filterKey : base.filterKey,
+      filterKey:
+        overwriteConfig || !base.filterKey ? (args.filterKey ?? base.filterKey) : base.filterKey,
       searchKeys:
-        overwriteConfig || !base.searchKeys ? args.searchKeys ?? base.searchKeys : base.searchKeys,
+        overwriteConfig || !base.searchKeys
+          ? (args.searchKeys ?? base.searchKeys)
+          : base.searchKeys,
       sortKey:
         overwriteConfig || !base.sortKey
-          ? args.sortKey ?? base.sortKey ?? DEFAULT_SORT_KEY
+          ? (args.sortKey ?? base.sortKey ?? DEFAULT_SORT_KEY)
           : base.sortKey,
     };
 
@@ -645,7 +735,10 @@ export class MockDb {
     return doc._id;
   }
 
-  private ensureListDef(key: string, config: { privacy?: Privacy; filterKey?: string; searchKeys?: string[]; sortKey?: string }) {
+  private ensureListDef(
+    key: string,
+    config: { privacy?: Privacy; filterKey?: string; searchKeys?: string[]; sortKey?: string }
+  ) {
     const defKey = keyOf(this.viewerUserId, key);
     let def = this.listDefs.get(defKey);
     const now = Date.now();
@@ -664,7 +757,7 @@ export class MockDb {
       this.listDefs.set(defKey, def);
     } else {
       if (config.privacy !== undefined && false) {
-        // overwriteStoredPrivacy default false — sticky
+        // overwriteStoredPrivacy default false: sticky
       }
       if (config.filterKey !== undefined) def.filterKey = config.filterKey;
       if (config.searchKeys !== undefined) def.searchKeys = config.searchKeys;
@@ -679,7 +772,36 @@ export class MockDb {
     return def;
   }
 
+  private prepareCellTableWrite(args: any, previousDraft?: unknown) {
+    if (args.cellWriteOrigin || (!isPlayerTableKey(args.key) && !isMorningMessagesKey(args.key))) {
+      return args.value;
+    }
+    const before =
+      previousDraft ??
+      this.runQuery('user_lists:get', {
+        key: args.key,
+        itemId: args.itemId,
+      })?.value;
+    return encodeUserValue(
+      isPlayerTableKey(args.key)
+        ? trackManualTableChanges(before ?? [], args.value)
+        : trackManualMessages((before ?? {}) as Record<string, string[]>, args.value)
+    );
+  }
+
   private listSet(args: any) {
+    args = { ...args, value: this.prepareCellTableWrite(args) };
+    if (isPlayerTableKey(args.key) && Array.isArray(args.value)) {
+      const split = splitFieldProvenance(args.value);
+      this.listSet({
+        key: fieldStorageKey(args.key),
+        itemId: args.itemId,
+        value: encodeUserValue(split.fields),
+        privacy: 'PRIVATE',
+        overwriteStoredPrivacy: true,
+      });
+      args = { ...args, value: encodeUserValue(split.users) };
+    }
     const def = this.ensureListDef(args.key, {
       privacy: args.privacy,
       filterKey: args.overwriteStoredConfig === false ? undefined : args.filterKey,
@@ -726,6 +848,20 @@ export class MockDb {
   }
 
   // ----- searches --------------------------------------------------------------
+
+  private certificationRows(key: string, simulated: boolean) {
+    const rows = (simulated ? this.allListItems() : this.allVarDocs()).filter(
+      (row) => row.key === key
+    );
+    if (rows.length > 2000) throw new Error('Too many submissions to certify safely.');
+    return rows
+      .filter((row) => (simulated ? row.userToken === this.viewerUserId : this.canViewVar(row)))
+      .map((row) => ({
+        _id: row._id,
+        lastModified: row.lastModified,
+        value: row.value,
+      }));
+  }
 
   private varSearch(args: any) {
     const limit = Math.max(1, Math.min(args.returnTop ?? 10, 200));
@@ -805,9 +941,7 @@ export class MockDb {
       sorted.map((e) => e.doc),
       args.startAfter
     );
-    return paged
-      .slice(0, limit)
-      .map((doc) => shapeListRecord(doc, this.defForItem(doc)));
+    return paged.slice(0, limit).map((doc) => shapeListRecord(doc, this.defForItem(doc)));
   }
 
   // ----- seeding API -----------------------------------------------------------
@@ -869,5 +1003,5 @@ export class MockDb {
 }
 
 export const mockDb = new MockDb();
-// debug handle for probes — lets scripts inspect query/mutation logs directly
+// debug handle for probes: lets scripts inspect query/mutation logs directly
 if (typeof window !== 'undefined') (window as any).__simDb = mockDb;

@@ -5,7 +5,7 @@
  * actualDuration logged into the perf log with this id.
  *
  * Call sites live permanently in the app (they mark named subtrees worth
- * measuring). Outside sim mode this renders children untouched — zero cost.
+ * measuring). Outside sim mode this renders children untouched, zero cost.
  */
 
 import React, { Profiler } from 'react';

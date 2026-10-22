@@ -5,6 +5,7 @@ import { interpretScript } from './interpreter';
 import { decodeStoredInputState } from './values';
 import { ScriptRenderers } from './renderers';
 import { createScriptGlobals, ScriptSourceData } from './sources';
+import { walkRenderInstructions } from './instructionTree';
 
 const scriptCache = new Map<string, Script>();
 
@@ -48,6 +49,7 @@ const ScriptRuntime = ({
           Inputs: inputState,
         },
         inputState,
+        filesIndex: sources?.filesIndex,
       }),
     [ast, inputState, sources]
   );
@@ -84,8 +86,9 @@ export const collectActiveInputKeys = (
           Inputs: decoded,
         },
         inputState: decoded,
+        filesIndex: scriptSources?.filesIndex,
       });
-      for (const instruction of result.output) {
+      for (const instruction of walkRenderInstructions(result.output)) {
         keys.add(instruction.key);
       }
     } catch {

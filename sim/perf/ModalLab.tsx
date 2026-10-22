@@ -30,7 +30,6 @@ import DeleteRoleConfirmationDialog from 'components/game/DeleteRoleConfirmation
 import EditInfoDialog from 'components/game/EditInfoDialog';
 import JoinedGameOptionsDialog from 'components/game/JoinedGameOptionsDialog';
 import MarkdownEditorDialog from 'components/game/MarkdownEditorDialog';
-import MarkdownInputBuilderDialog from 'components/game/MarkdownInputBuilderDialog';
 import NewWolffspointButtonAndDialogue from 'components/game/NewWolffspointButtonAndDialogue';
 import NightlyCertificationDialog from 'components/game/NightlyCertificationDialog';
 import PlayerProfileDialogNEW from 'components/game/PlayerProfileDialogNEW';
@@ -92,7 +91,7 @@ const sampleProfile = {
   instagram: '@amara',
   discord: 'amara#1000',
   otherContact: '',
-  bioMarkdown: `**${PLAYER_NAMES[0]}** — a fixture profile used by the perf lab.\n\nLorem ipsum dolor sit amet.`,
+  bioMarkdown: `**${PLAYER_NAMES[0]}**: a fixture profile used by the perf lab.\n\nLorem ipsum dolor sit amet.`,
   claimedAt: Date.now() - 86400000,
 };
 
@@ -129,8 +128,8 @@ const submissionsByEmail = () =>
   );
 
 const sampleSavedEntries = [
-  { id: 'se-1', savedAt: Date.now() - 7200_000, preview: 'Earlier draft — intro only', value: '# Intro\n\nDraft text.' },
-  { id: 'se-2', savedAt: Date.now() - 3600_000, preview: 'Mid revision — added sections', value: '# Mid\n\nMore text.' },
+  { id: 'se-1', savedAt: Date.now() - 7200_000, preview: 'Earlier draft: intro only', value: '# Intro\n\nDraft text.' },
+  { id: 'se-2', savedAt: Date.now() - 3600_000, preview: 'Mid revision: added sections', value: '# Mid\n\nMore text.' },
   { id: 'se-3', savedAt: Date.now() - 600_000, preview: 'Latest revision', value: '# Latest\n\nFinal text.' },
 ];
 
@@ -168,7 +167,6 @@ function useLabEntries(): LabEntry[] {
           initialMarkdown={longMarkdown}
           onSubmit={noop}
           gameId={GAME_ID}
-          showInputs
           showScript
           showVariables
           historyKey="sim-markdownEditor-lab"
@@ -245,7 +243,12 @@ function useLabEntries(): LabEntry[] {
       id: 'role-add',
       label: 'RoleAddDialog',
       render: (open, close) => (
-        <RoleAddDialog isOpen={open} onOpenChange={(o) => (o ? undefined : close())} onAddRole={noop} />
+        <RoleAddDialog
+          isOpen={open}
+          onOpenChange={(o) => (o ? undefined : close())}
+          onAddRole={noop}
+          gameId={GAME_ID}
+        />
       ),
     },
     {
@@ -438,18 +441,7 @@ function useLabEntries(): LabEntry[] {
         />
       ),
     },
-    {
-      id: 'markdown-input-builder',
-      label: 'MarkdownInputBuilderDialog',
-      render: (open, close) => (
-        <MarkdownInputBuilderDialog
-          isOpen={open}
-          onInsert={noop}
-          onOpenChange={(o) => (o ? undefined : close())}
-          selectedText="target player"
-        />
-      ),
-    },
+
     {
       id: 'markdown-variable',
       label: 'MarkdownVariableDialog',
@@ -493,8 +485,6 @@ function useLabEntries(): LabEntry[] {
           selectedSize={'medium' as any}
           onSelectSize={noop}
           onDelete={noop}
-          showInNightly
-          onToggleShowInNightly={noop}
         />
       ),
     },

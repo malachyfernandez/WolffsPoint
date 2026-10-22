@@ -21,7 +21,7 @@ import type {
   UnaryExpression,
 } from '../lang/ast';
 import { emptySpan } from '../lang/ast';
-import { parseScript } from '../lang/parser';
+import { parseExpression, parseScript } from '../lang/parser';
 import { printStatement } from '../lang/printer';
 import type { InputType } from '../registry';
 import { STATEMENT_BLOCKS, EXPRESSION_BLOCKS } from '../registry';
@@ -32,6 +32,8 @@ import type { TagDefinitionsData } from '../../components/game/TagCellEditor';
 import {
   buildDefaultMethodArgs,
   createCallStatement,
+  createCellOpStatement,
+  createForEachCellStatement,
   createForEachStatement,
   createFunctionStatement,
   createIfStatement,
@@ -41,6 +43,13 @@ import {
   createTriggerUpdateCellStatement,
   parseLiteralValue,
 } from './editorReducer';
+import {
+  cellExpressionKind,
+  cellOperationDisabledReason,
+  isCellValueChoiceAllowed,
+  type CellColumnKind,
+} from '../../utils/cellColumnTypes';
+import { useToast } from 'contexts/ToastContext';
 import type { ExpressionLocation } from './expressionEditor';
 import {
   inferExpressionType,
@@ -70,9 +79,13 @@ export interface InsertTarget {
   inputSources?: Record<string, string>;
   linkIndex?: number;
   excludeProperties?: boolean;
-  /** The current chain expression (for chainInsert/chainSwap) — used to infer
+  /** The current chain expression (for chainInsert/chainSwap), used to infer
    * the receiver type so we can show which blocks are compatible. */
   chainExpression?: Expression;
+  /** Set when inserting inside an UpdateCell body ("all") or a
+   *  For-each-cell body ("cell") - the block picker offers the matching
+   *  cell-op blocks instead of the normal statement set. */
+  cellScope?: 'all' | 'cell';
 }
 
 export interface DefinedFunction {
@@ -84,6 +97,8 @@ export interface DefinedFunction {
 }
 
 interface InsertModalProps {
+  cellColumnKind?: CellColumnKind;
+  cellValueType?: 'number' | 'string';
   isOpen: boolean;
   target: InsertTarget | null;
   definedVariables: string[];
@@ -109,8 +124,19 @@ interface InsertModalProps {
    *  Hides irrelevant data sources (currentDay, Inputs, etc.) and shows
    *  trigger-specific ones (placedTag, placedUser, placedDay, placedColumn). */
   isTriggerContext?: boolean;
+  /** Flat trigger files: the body IS the on-tag script - Update Cell is
+   *  available at the root, OnTagAdded isn't offered (OnTagRemoved stays
+   *  for irreversible remove-time work). */
+  flatTrigger?: boolean;
   /** Game ID, used to load tag definitions for the tag() function picker. */
   gameId?: string;
+  /** File contexts: shows a "File" block that opens the file browser to pick
+   *  a file, then inserts a File(...) statement at the target. */
+  onInsertFile?: (target: InsertTarget) => void;
+  /** When the file pick can also yield display blocks (composition pick in
+   *  display-module cell editors) the insert item is labeled "File / Block";
+   *  everywhere else it is a plain file pick labeled "File". */
+  fileInsertIncludesBlocks?: boolean;
   /** User-saved functions to show alongside built-in functions. */
   savedFunctions?: SavedFunction[];
   /** Called when the user clicks the X button on a saved function item. */
@@ -132,6 +158,8 @@ const CONTROL_TEMPLATES: {
    *  When 'inside', only show inside trigger blocks (not at root level).
    *  When undefined, show in both contexts (but not at trigger root level). */
   triggerOnly?: boolean | 'inside';
+  /** Hidden in flat trigger files (the body already is the on-add script). */
+  flatHidden?: boolean;
   searchTerms?: string[];
 }[] = [
   {
@@ -198,6 +226,8 @@ const CONTROL_TEMPLATES: {
     build: () => createOnTagAddedStatement(),
     /** Only shown in trigger scripts */
     triggerOnly: true,
+    /** Flat trigger files: the body itself is the on-add script. */
+    flatHidden: true,
   },
   {
     label: 'On Tag Removed',
@@ -329,6 +359,16 @@ const BUILTIN_FUNCTIONS: BuiltinFunction[] = [
   Return data.Map(Item => Item.entry("days").index(day));
 }`,
   },
+  {
+    name: 'aliveOrDeadPlayers',
+    description: 'Players filtered by dead or alive',
+    source: `Function aliveOrDeadPlayers(data, status) template(input("data", players), " ", input("status", Dropdown("alive", ["alive", "dead"]))) {
+  If ((status == "dead")) {
+    Return data.Filter(Item => Item.entry("isAlive") == false);
+  }
+  Return data.Filter(Item => Item.entry("isAlive") == true);
+}`,
+  },
 ];
 
 /** Names of all built-in functions. Used to identify locked/built-in
@@ -381,6 +421,9 @@ const buildStatementFromRegistry = (id: string): Statement => {
   if (!definition) return createCallStatement(id, {});
   const args: Record<string, Expression | undefined> = {};
   for (const input of definition.inputs) {
+    // Flag inputs are rarely-changed options: leave them unset so fresh
+    // blocks don't carry default-valued args in the printed source.
+    if (input.flag) continue;
     if (input.type === 'boolean' || input.default === undefined) {
       args[input.name] = { kind: 'NothingLiteral', span };
       continue;
@@ -509,7 +552,7 @@ const CHAIN_WRAPPING_UNARY_OPERATORS: {
 ];
 
 /** Extra search keywords for operators, keyed by operator string.
- *  Used only for search matching — never displayed. */
+ *  Used only for search matching, never displayed. */
 const OPERATOR_SEARCH_TERMS: Record<string, string[]> = {
   '==': ['==', 'equal', 'equals', 'is', 'same', 'identical'],
   '!=': ['!=', 'not equal', 'different', 'unequal', 'not same'],
@@ -530,7 +573,7 @@ const OPERATOR_SEARCH_TERMS: Record<string, string[]> = {
 };
 
 /** Extra search keywords for expression blocks, keyed by block id.
- *  Used only for search matching — never displayed. */
+ *  Used only for search matching, never displayed. */
 const BLOCK_SEARCH_TERMS: Record<string, string[]> = {
   filter: ['filter', 'where', 'select', 'condition', 'keep', 'matching'],
   map: ['map', 'transform', 'convert', 'apply', 'change', 'remap'],
@@ -595,7 +638,7 @@ interface ModalItem {
   isSavedMatch?: boolean;
   /** When set, renders an X button in the top-right corner that calls this handler. */
   onUnsave?: () => void;
-  /** Extra keywords used only for search matching — never displayed. */
+  /** Extra keywords used only for search matching, never displayed. */
   searchTerms?: string[];
 }
 
@@ -604,7 +647,7 @@ const CATEGORY_LABELS: Record<string, string> = {
   function: 'Functions',
   input: 'Inputs',
   display: 'Display',
-  control: 'Control',
+  control: 'Actions',
   data: 'Data',
   list: 'List',
   string: 'Text',
@@ -612,20 +655,22 @@ const CATEGORY_LABELS: Record<string, string> = {
   operator: 'Operators',
   math: 'Numbers',
   suggested: 'Suggested',
+  file: 'Files',
+  cell: 'Cells',
 };
 
 /** Blocks that naturally belong in more than one tab. Each entry duplicates the
  * block into the given secondary category so users find it where they'd look.
  * The block still appears in its primary category (from the registry). */
 const CROSS_CATEGORY_BLOCKS: { blockId: string; category: string }[] = [
-  // toNumber / toString convert any value — useful from the Data tab too
+  // toNumber / toString convert any value, useful from the Data tab too
   { blockId: 'toNumber', category: 'data' },
   { blockId: 'toString', category: 'data' },
   // length works on lists AND text (appliesTo: 'any')
   { blockId: 'length', category: 'string' },
   // contains works on lists AND text (appliesTo: 'any')
   { blockId: 'contains', category: 'string' },
-  // index gets an item at a position in a list — also useful from the List tab
+  // index gets an item at a position in a list, also useful from the List tab
   { blockId: 'index', category: 'list' },
 ];
 
@@ -654,12 +699,18 @@ const ModalItemRow = ({
 }) => {
   const { BlockPreview } = getCanvasExports();
   const tooltipId = useId();
+  const { showToast } = useToast();
   const { setHovered } = useTooltip(tooltipId, item.disabledReason);
   const hasPreview = item.previewStatement || item.previewExpression;
   const categoryTint = getCategoryTint(item.category);
   return (
     <Pressable
-      onPress={() => !item.disabledReason && onSelect()}
+      onPress={() => (item.disabledReason ? showToast(item.disabledReason) : onSelect())}
+      testID={`insert-item-${item.label}`}
+      accessibilityLabel={item.label}
+      accessibilityHint={item.disabledReason}
+      aria-disabled={!!item.disabledReason}
+      accessibilityState={{ disabled: !!item.disabledReason }}
       onHoverIn={() => item.disabledReason && setHovered(true)}
       onHoverOut={() => setHovered(false)}
       style={{ borderLeftWidth: 3, borderLeftColor: categoryTint.solid }}
@@ -703,6 +754,8 @@ const ModalItemRow = ({
 };
 
 const InsertModal = ({
+  cellColumnKind,
+  cellValueType = 'string',
   isOpen,
   target,
   definedVariables,
@@ -716,7 +769,10 @@ const InsertModal = ({
   hideInputs,
   allowVoteInput = false,
   isTriggerContext,
+  flatTrigger,
   gameId,
+  onInsertFile,
+  fileInsertIncludesBlocks,
   savedFunctions,
   onUnsaveFunction,
   onRemove,
@@ -791,12 +847,137 @@ const InsertModal = ({
       // In trigger context at the root level (path length <= 1), only
       // OnTagAdded, OnTagRemoved, and Function blocks are allowed.
       // Everything else must be inside an OnTagAdded/OnTagRemoved block.
-      const isTriggerRootLevel = isTriggerContext && (target.path ?? []).length <= 1;
+      // Flat trigger files are different: the body IS the on-tag script, so
+      // every level behaves like inside-a-trigger-block.
+      const isFlatTriggerRoot = isTriggerContext && flatTrigger && (target.path ?? []).length <= 1;
+      const isTriggerRootLevel =
+        isTriggerContext && !flatTrigger && (target.path ?? []).length <= 1;
+
+      // Cell-op blocks: only offered inside an UpdateCell body ('all' scope →
+      // "For All Cells" ops + the "For each cell" container) or a For-each-cell
+      // body ('cell' scope → "For Cell" ops). They get their own 'cell' tab,
+      // which sorts first in the picker (see categoryOrder).
+      const cellItems: ModalItem[] =
+        target.cellScope === 'all'
+          ? [
+              ...(['add', 'remove', 'replace'] as const).map((op) => ({
+                label: `For All Cells - ${op === 'replace' ? 'Replace With' : op[0].toUpperCase() + op.slice(1)}`,
+                disabledReason: cellOperationDisabledReason(cellColumnKind, 'all', op),
+                description:
+                  op === 'add'
+                    ? 'Append a tag, text, or file to every target cell'
+                    : op === 'remove'
+                      ? 'Remove a tag or text from every target cell'
+                      : 'Set the whole contents of every target cell',
+                category: 'cell',
+                searchTerms: ['for all cells', 'all cells', op, 'cell', 'update'],
+                previewStatement: createCellOpStatement('all', op, cellColumnKind, cellValueType),
+                onSelect: () =>
+                  onInsertStatement(
+                    createCellOpStatement('all', op, cellColumnKind, cellValueType),
+                    target.path ?? [],
+                    target.mode === 'swap'
+                  ),
+              })),
+              {
+                label: 'For each cell',
+                description:
+                  'Loop over the target cells one at a time and update them with For Cell actions',
+                category: 'cell',
+                searchTerms: ['for each cell', 'each cell', 'loop cells', 'iterate cells'],
+                previewStatement: createForEachCellStatement(),
+                onSelect: () =>
+                  onInsertStatement(
+                    createForEachCellStatement(),
+                    target.path ?? [],
+                    target.mode === 'swap'
+                  ),
+              },
+            ]
+          : target.cellScope === 'cell'
+            ? (['add', 'remove', 'replace'] as const).map((op) => ({
+                label: `For Cell - ${op === 'replace' ? 'Replace With' : op[0].toUpperCase() + op.slice(1)}`,
+                disabledReason: cellOperationDisabledReason(cellColumnKind, 'cell', op),
+                description:
+                  op === 'add'
+                    ? 'Append a tag, text, or file to the current cell'
+                    : op === 'remove'
+                      ? 'Remove a tag or text from the current cell'
+                      : 'Set the whole contents of the current cell',
+                category: 'cell',
+                searchTerms: ['for cell', 'this cell', op, 'cell', 'update'],
+                previewStatement: createCellOpStatement('cell', op, cellColumnKind, cellValueType),
+                onSelect: () =>
+                  onInsertStatement(
+                    createCellOpStatement('cell', op, cellColumnKind, cellValueType),
+                    target.path ?? [],
+                    target.mode === 'swap'
+                  ),
+              }))
+            : [];
 
       return [
+        ...cellItems,
+        ...(onInsertFile && !target.cellScope && (!isTriggerContext || flatTrigger)
+          ? [
+              {
+                label: fileInsertIncludesBlocks ? 'File / Block' : 'File',
+                description: fileInsertIncludesBlocks
+                  ? 'Include a file or add a display block'
+                  : 'Include a file or folder',
+                // 'file' keeps the indigo sliver and survives trigger
+                // filtering; the picker groups it under Display (see grouped).
+                category: 'file',
+                searchTerms: [
+                  'file',
+                  'folder',
+                  'include',
+                  'import',
+                  'reuse',
+                  'shared',
+                  ...(fileInsertIncludesBlocks
+                    ? ['block', 'nav button', 'markdown', 'divider']
+                    : []),
+                ],
+                onSelect: () => onInsertFile(target),
+              },
+            ]
+          : []),
+        ...(!target.cellScope && !isTriggerRootLevel
+          ? [
+              {
+                label: 'Nav Button',
+                description: 'A tappable row that opens another page of content',
+                category: 'display',
+                searchTerms: [
+                  'nav',
+                  'nav button',
+                  'navigation',
+                  'section',
+                  'button',
+                  'page',
+                  'screen',
+                  'nested',
+                ],
+                onSelect: () =>
+                  onInsertStatement(
+                    {
+                      kind: 'NavButtonStatement',
+                      label: { kind: 'StringLiteral', value: 'Section', span },
+                      body: { kind: 'BlockStatement', statements: [], span },
+                      span,
+                    },
+                    target.path ?? [],
+                    target.mode === 'swap'
+                  ),
+              },
+            ]
+          : []),
         ...(isTriggerRootLevel
           ? [] // No statement blocks at trigger root level
-          : STATEMENT_BLOCKS.map((block) => ({
+          : STATEMENT_BLOCKS.filter(
+              (block) => !block.hidden && (!target.cellScope || block.category === 'variable')
+            ).map((block) => ({
               label: block.name,
               description: block.description,
               category: block.category,
@@ -809,11 +990,19 @@ const InsertModal = ({
                 ),
             }))),
         ...CONTROL_TEMPLATES.filter((template) => {
-          // OnTagAdded/OnTagRemoved are only available at the trigger root level
-          if (template.triggerOnly === true) return isTriggerRootLevel;
+          if (target.cellScope) {
+            return ['If / Else', 'ForEach', 'Function'].includes(template.label);
+          }
+          // OnTagAdded/OnTagRemoved are only available at a trigger root level
+          // (flat files: root only, and OnTagAdded is redundant with the body).
+          if (template.triggerOnly === true) {
+            if (flatTrigger && template.flatHidden) return false;
+            return isTriggerRootLevel || isFlatTriggerRoot;
+          }
           // On Certify is only in non-trigger context, and only when inputs are allowed
           if (template.triggerOnly === false) return !isTriggerContext && !hideInputs;
-          // Update Cell (trigger variant) is only inside trigger blocks
+          // Update Cell (trigger variant): inside trigger blocks, or anywhere
+          // in a flat trigger file (isTriggerRootLevel is already false there).
           if (template.triggerOnly === 'inside') {
             return isTriggerContext && !isTriggerRootLevel;
           }
@@ -990,7 +1179,7 @@ const InsertModal = ({
               onSelect: () => {
                 setPendingBuiltin({ fnStatement, callExpression });
                 if (hasSeenBuiltinInfo) {
-                  // Already seen the explanation — insert immediately.
+                  // Already seen the explanation: insert immediately.
                   onInsertBuiltinFunction(fnStatement, callExpression, target);
                   setPendingBuiltin(null);
                   onClose();
@@ -1071,6 +1260,18 @@ const InsertModal = ({
       span,
     };
     const sharedItems: ModalItem[] = [
+      ...(onInsertFile && target.location?.slot.kind === 'cellOpValue'
+        ? [
+            {
+              label: 'File',
+              description: 'Write a live-linked file module',
+              previewExpression: parseExpression('File({ID = ""})'),
+              category: 'file',
+              searchTerms: ['file', 'markdown', 'module', 'reuse'],
+              onSelect: () => onInsertFile(target),
+            },
+          ]
+        : []),
       ...functionItems,
       ...builtinItems,
       ...savedItems,
@@ -1344,6 +1545,8 @@ const InsertModal = ({
       ...booleanItems,
     ];
   }, [
+    cellColumnKind,
+    cellValueType,
     target,
     definedVariables,
     definedFunctions,
@@ -1354,18 +1557,63 @@ const InsertModal = ({
     onInsertBuiltinFunction,
     tagDefinitions,
     isTriggerContext,
+    flatTrigger,
+    hideBuiltinFunctions,
+    hideInputs,
     hasSeenBuiltinInfo,
     savedFunctions,
     onUnsaveFunction,
+    onInsertFile,
     onClose,
   ]);
 
+  // Only constrain the complete cell value, never a File() input or a nested
+  // calculation operand, which still needs the full expression picker.
+  const constrainedCellValue =
+    target?.kind === 'expression' &&
+    target.location?.slot.kind === 'cellOpValue' &&
+    target.location.expressionPath.length === 0 &&
+    !!cellColumnKind;
+  const compatibleItems = useMemo(() => {
+    if (!constrainedCellValue) return items;
+    return items.filter((item) => {
+      const expression = item.previewExpression;
+      if (!expression) return false;
+      return isCellValueChoiceAllowed(
+        cellColumnKind,
+        cellExpressionKind(expression),
+        inferExpressionType(expression, entryKeysBySource ?? {}, target?.contextVariables ?? [], {
+          definedFunctions: [...definedFunctions, ...(item.previewDefinedFunctions ?? [])],
+          variableSources: target?.variableSources,
+          inputSources: target?.inputSources,
+        }),
+        cellValueType
+      );
+    });
+  }, [
+    constrainedCellValue,
+    items,
+    cellColumnKind,
+    cellValueType,
+    entryKeysBySource,
+    definedFunctions,
+    target,
+  ]);
+
   // ── Suggested tab ──────────────────────────────────────────────────────
-  // Contextual suggestions shown as the first tab for "Add Expression" and
-  // "Add Chain Link". Picks ~6 items based on the expected type / receiver
-  // type and context (trigger vs regular, available variables, swap value).
+  // Contextual suggestions shown as the first tab for "Add Expression",
+  // "Add Chain Link", and "Add Block". Picks ~6 items based on the expected
+  // type / receiver type and context (trigger vs regular, swap value, etc.).
   const suggestedItems = useMemo<ModalItem[]>(() => {
     if (!target) return [];
+    if (constrainedCellValue) {
+      const seen = new Set<string>();
+      return compatibleItems.filter((item) => {
+        if (item.disabledReason || seen.has(item.label)) return false;
+        seen.add(item.label);
+        return true;
+      });
+    }
     const isTrigger = isTriggerContext;
     const contextVar = target.contextVariables?.find(Boolean);
     // In swap mode, don't suggest the value being replaced
@@ -1406,7 +1654,7 @@ const InsertModal = ({
           labels = ['not', 'and', 'or', 'equals', 'not equal', 'isTruthy'];
           break;
         default:
-          // 'any' or unknown — show the most generally useful blocks
+          // 'any' or unknown: show the most generally useful blocks
           labels = ['entry', 'length', 'contains', 'toString', 'toNumber', 'first'];
           break;
       }
@@ -1458,25 +1706,58 @@ const InsertModal = ({
         labels = ['InputsWithData', ...labels];
       }
     } else {
-      return []; // statement targets get no suggested tab
+      // Statement targets ("Add Block"). Cell-scoped pickers already lead
+      // with the Cells tab, which is itself the focused suggestion set.
+      if (target.cellScope) return [];
+      const pathLength = (target.path ?? []).length;
+      if (isTrigger && !flatTrigger && pathLength <= 1) {
+        // Trigger root level only offers the OnTag wrappers + Function.
+        labels = ['On Tag Added', 'On Tag Removed', 'Function'];
+      } else if (isTrigger) {
+        const suggestions: string[] = [];
+        if (onInsertFile && flatTrigger) suggestions.push('File');
+        suggestions.push('Update Cell');
+        if (flatTrigger && pathLength <= 1) suggestions.push('On Tag Removed');
+        suggestions.push('Function', 'If / Else', 'Variable', 'ForEach');
+        labels = suggestions;
+      } else {
+        const suggestions: string[] = [];
+        if (onInsertFile) suggestions.push('File');
+        if (!hideInputs) {
+          suggestions.push('CreateSelectInput', 'On Certify => Update Cell');
+        }
+        suggestions.push('CreateMarkdown', 'If / Else', 'Variable', 'ForEach');
+        labels = suggestions;
+      }
     }
 
     // Filter out the value being swapped away from
     if (swapLabel) labels = labels.filter((l) => l !== swapLabel);
 
-    // Match labels to existing items (first match wins) and tag them as 'suggested'
+    // Match labels to existing items (first match wins). Copies keep their
+    // original category so each row keeps its category tint; the Suggested
+    // grouping is applied when the groups are built below.
     const result: ModalItem[] = [];
     for (const label of labels) {
-      const match = items.find(
-        (item) => item.label === label && !item.disabledReason && item.category !== 'suggested'
-      );
-      if (match) result.push({ ...match, category: 'suggested' });
+      const match = items.find((item) => item.label === label && !item.disabledReason);
+      if (match) result.push({ ...match });
     }
     return result;
-  }, [target, items, isTriggerContext, entryKeysBySource, definedFunctions]);
+  }, [
+    constrainedCellValue,
+    compatibleItems,
+    target,
+    items,
+    isTriggerContext,
+    flatTrigger,
+    hideInputs,
+    onInsertFile,
+    entryKeysBySource,
+    definedFunctions,
+  ]);
 
   const filtered = useMemo(() => {
-    let result = items;
+    let result = compatibleItems;
     if (hideInputs) {
       result = result.filter((item) => item.category !== 'input');
     }
@@ -1508,11 +1789,22 @@ const InsertModal = ({
         seen.add(item.label);
         return true;
       });
-  }, [items, search, hideInputs, allowVoteInput, isTriggerContext, entryKeysBySource]);
+  }, [compatibleItems, search, hideInputs, allowVoteInput, isTriggerContext, entryKeysBySource]);
 
   const grouped = useMemo(() => {
     const groups = filtered.reduce<Record<string, ModalItem[]>>((acc, item) => {
-      (acc[item.category] ??= []).push(item);
+      // File is a special display block: it lives in the Display tab for
+      // statement inserts (no separate Files tab) while its 'file' category
+      // keeps the indigo sliver. Expression-slot file items keep their tab.
+      // Likewise Variables fold into Actions for statements - the slate sliver
+      // stays via the 'variable' category.
+      const key =
+        target?.kind === 'statement' && item.category === 'file'
+          ? 'display'
+          : target?.kind === 'statement' && item.category === 'variable'
+            ? 'control'
+            : item.category;
+      (acc[key] ??= []).push(item);
       return acc;
     }, {});
     // Prepend suggested items (for expression and chain targets)
@@ -1520,16 +1812,17 @@ const InsertModal = ({
       groups['suggested'] = suggestedItems;
     }
     return groups;
-  }, [filtered, suggestedItems]);
+  }, [filtered, suggestedItems, target]);
 
   const categoryOrder = useMemo(() => {
     const order =
       target?.kind === 'statement'
-        ? ['input', 'control', 'display', 'variable']
+        ? ['suggested', 'cell', 'file', 'input', 'control', 'display', 'variable']
         : target?.kind === 'chainInsert' || target?.kind === 'chainSwap'
           ? ['suggested', 'list', 'math', 'operator', 'string', 'boolean', 'data']
           : [
               'suggested',
+              'file',
               'data',
               'variable',
               'function',
@@ -1544,7 +1837,20 @@ const InsertModal = ({
 
   const effectiveCategory =
     activeCategory && grouped[activeCategory] ? activeCategory : categoryOrder[0];
-  const visibleItems = search.trim() ? filtered : (grouped[effectiveCategory] ?? []);
+
+  // Labels currently featured in the Suggested tab. While searching, matches
+  // that are also suggested picks sort above everything else (stable sort
+  // keeps each group's internal order).
+  const suggestedLabelSet = useMemo(
+    () => new Set(suggestedItems.map((item) => item.label)),
+    [suggestedItems]
+  );
+  const visibleItems = useMemo(() => {
+    if (!search.trim()) return grouped[effectiveCategory] ?? [];
+    return [...filtered].sort(
+      (a, b) => Number(suggestedLabelSet.has(b.label)) - Number(suggestedLabelSet.has(a.label))
+    );
+  }, [search, filtered, grouped, effectiveCategory, suggestedLabelSet]);
 
   const handleSelect = (item: ModalItem) => {
     item.onSelect();
@@ -1584,7 +1890,7 @@ const InsertModal = ({
                     onRemove(target);
                     onClose();
                   }}>
-                  <FontText weight="bold" className="text-sm">
+                  <FontText weight="bold" color="red-700" className="text-sm">
                     Remove
                   </FontText>
                 </AppButton>

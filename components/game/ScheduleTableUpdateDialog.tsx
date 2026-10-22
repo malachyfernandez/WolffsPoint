@@ -9,6 +9,7 @@ import CloseButton from '../ui/dialog/CloseButton';
 import FontDateInput from '../ui/forms/FontDateInput';
 import FontTimeInput from '../ui/forms/FontTimeInput';
 import UnsavedChangesDialog from '../ui/dialog/UnsavedChangesDialog';
+import { nowDate, nowMs } from 'utils/simNow';
 
 interface ScheduleTableUpdateDialogProps {
   isOpen: boolean;
@@ -25,7 +26,7 @@ const formatTimeInput = (date: Date) =>
   `${`${date.getHours()}`.padStart(2, '0')}:${`${date.getMinutes()}`.padStart(2, '0')}`;
 
 const getInitialDate = (scheduledTime?: number) => {
-  const date = scheduledTime ? new Date(scheduledTime) : new Date(Date.now() + 60 * 60 * 1000);
+  const date = scheduledTime ? new Date(scheduledTime) : new Date(nowMs() + 60 * 60 * 1000);
   date.setSeconds(0, 0);
   return date;
 };
@@ -68,14 +69,7 @@ const ScheduleTableUpdateDialog = ({
   }, [canonicalDate, time]);
 
   const hasUnsavedChanges = date !== initialDate || time !== initialTime;
-  const isValid = timestamp !== null && timestamp > Date.now();
-  const timezone = useMemo(
-    () =>
-      new Intl.DateTimeFormat(undefined, { timeZoneName: 'short' })
-        .formatToParts(new Date())
-        .find((part) => part.type === 'timeZoneName')?.value,
-    []
-  );
+  const isValid = timestamp !== null && timestamp > nowMs();
 
   const handleAttemptClose = () => {
     if (hasUnsavedChanges) {
@@ -115,14 +109,14 @@ const ScheduleTableUpdateDialog = ({
             <CloseButton onPress={handleAttemptClose} />
             <DialogHeader
               text={scheduledTime ? 'Change Update Time' : 'Schedule Table Update'}
-              subtext={`Choose when the frozen table should become visible${timezone ? ` (${timezone})` : ''}.`}
+              subtext="Choose when the frozen table should become visible."
             />
             <Column className="gap-5 p-0 sm:p-5">
               <Column className="gap-2">
                 <FontText weight="medium">Date</FontText>
                 <FontDateInput
                   value={date}
-                  earliestDate={new Date()}
+                  earliestDate={nowDate()}
                   className="border-subtle-border w-full border p-3"
                   onChangeText={(displayValue, _isValid, nextCanonicalDate) => {
                     setDate(displayValue);
@@ -135,9 +129,7 @@ const ScheduleTableUpdateDialog = ({
                 <FontTimeInput value={time} onChangeText={setTime} isInDialog />
               </Column>
               {!isValid && canonicalDate && (
-                <FontText variant="subtext">
-                  Choose a time in the future.
-                </FontText>
+                <FontText variant="subtext">Choose a time in the future.</FontText>
               )}
               <Row className="flex-wrap justify-end gap-4">
                 <AppButton variant="outline" className="w-32" onPress={handleAttemptClose}>

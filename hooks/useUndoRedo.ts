@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useSyncExternalStore } from 'react';
 import { useToast } from '../contexts/ToastContext';
+import { withRestoredCellWrites } from '../utils/cellWriteOrigin';
 
 export interface UndoCommand {
   action: () => void;
@@ -68,7 +69,7 @@ const undoGlobalCommand = () => {
   if (undoStackStore.length === 0) return;
 
   const command = undoStackStore[undoStackStore.length - 1];
-  command.undoAction();
+  withRestoredCellWrites(command.undoAction);
 
   syncStacks(undoStackStore.slice(0, -1), [...redoStackStore, command]);
   toastHandler?.('Undo', command.description);

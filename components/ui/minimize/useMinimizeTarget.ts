@@ -12,7 +12,7 @@ interface UseMinimizeTargetOptions {
   onRestore: () => void;
   /**
    * Evaluated at minimize time: true while the dialog holds unsaved user
-   * state. Pinned entries protect their host scope from memory eviction —
+   * state. Pinned entries protect their host scope from memory eviction,
    * evicting it would strand `onRestore` and lose the draft.
    */
   pinned?: () => boolean;

@@ -3,8 +3,8 @@ import { Pressable } from 'react-native';
 import FontText from '../text/FontText';
 import type { MinimizedEntry } from './MinimizeContext';
 
-const TARGET_WIDTH = 200; // px — width of the minimized card
-const MAX_HEIGHT = 160; // px — max height of the minimized card
+const TARGET_WIDTH = 200; // px: width of the minimized card
+const MAX_HEIGHT = 160; // px: max height of the minimized card
 
 interface MinimizedCardProps {
   entry: MinimizedEntry;
@@ -63,7 +63,7 @@ const MinimizedCard = ({ entry, onRestore, onRemove }: MinimizedCardProps) => {
           cursor: 'pointer',
         }}>
         {/* Scaled DOM clone (guilded frame with tan bg + texture).
-            Under memory pressure the snapshot may be dropped — render a
+            Under memory pressure the snapshot may be dropped, render a
             title placeholder instead; the card still restores the dialog. */}
         {entry.domClone ? (
           <div

@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react';
  * Mounting ~24 table rows (each with cells, overlays, effects) in one commit
  * is what turned game-open into a single 2.4s frozen frame on iOS Safari.
  * Splitting the mount across frames keeps the UI responsive; visually the
- * table fills in over a few frames — reads as a quick load-in.
+ * table fills in over a few frames, reads as a quick load-in.
  */
 export function useProgressiveCount(total: number, batch = 8): number {
   const [count, setCount] = useState(() => Math.min(total, batch));

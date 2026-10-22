@@ -2,7 +2,7 @@
 
 ## Task
 
-Replace the current per-message "Preview As Player" functionality with a **full "your eyes only" page preview** that shows the operator the complete page a player sees — role message, vote message, about role, and the vote/action sections — all in one modal.
+Replace the current per-message "Preview As Player" functionality with a **full "your eyes only" page preview** that shows the operator the complete page a player sees (role message, vote message, about role, and the vote/action sections) all in one modal.
 
 ### Current behavior (to be replaced)
 
@@ -50,7 +50,7 @@ This is limited because it only shows one piece at a time, and the operator has 
 **`app/components/game/MarkdownEditorDialog.tsx`**:
 - Line 83: `showPreviewAsPlayerOption?: boolean` prop
 - Line 140: Default `false`
-- Line 284-295: `handlePreviewAsPlayer()` — force-saves draft, then opens `PlayerPreviewModal`
+- Line 284-295: `handlePreviewAsPlayer()`: force-saves draft, then opens `PlayerPreviewModal`
 - Line 377-380: Passes `showPreviewAsPlayer` and `onPreviewAsPlayer` to `MainContent`
 - Line 455-462: Renders `PlayerPreviewModal` with `markdown={savedMarkdownForPreview}`
 
@@ -60,7 +60,7 @@ This is limited because it only shows one piece at a time, and the operator has 
 - Filters players by `roleName` if provided
 - Shows a player dropdown (line 165-173)
 - Renders a single `MarkdownRenderer` with the provided markdown (line 192-197)
-- Does NOT auto-select a player — `selectedPlayerEmail` starts as `undefined`
+- Does NOT auto-select a player, `selectedPlayerEmail` starts as `undefined`
 
 **`app/components/game/townSquare/TownSquareComposerPreviewPane.tsx`** line 33-41:
 The actual "Preview As Player" button in the preview pane toolbar.
@@ -83,23 +83,23 @@ The actual "Preview As Player" button in the preview pane toolbar.
 - Line 41-46: Props: `gameId`, `currentEmail`, `currentUserId`, `dayIndex`
 - Line 56-109: Loads all game data (userTable, roleTable, userTableTitle, morningMessagesList, dayDatesArray, schedule, etc.)
 - Line 131-141: Resolves the matching player and their roleData. `voteMessage` falls back to `defaultVoteMessage`.
-- Line 155-172: `useValue` for `PlayerNightSubmission` — the player's vote/action state. The preview should use emulated/local state instead.
+- Line 155-172: `useValue` for `PlayerNightSubmission`: the player's vote/action state. The preview should use emulated/local state instead.
 - Line 174-186: Builds `playerOptions` and `roleOptions` for `MarkdownRendererInputDataProvider`.
 - Line 408-692: The full page render:
-  - Line 410-456: Morning message section (NOT needed in preview — show note instead)
-  - Line 458-475: Countdown timer section (NOT needed in preview — or show simplified)
+  - Line 410-456: Morning message section (NOT needed in preview, show note instead)
+  - Line 458-475: Countdown timer section (NOT needed in preview, or show simplified)
   - Line 477-621: Vote section (vote message rendered with `MarkdownRenderer`, skip vote checkbox, vote summary)
   - Line 623-690: Action section (role message rendered with `MarkdownRenderer`, action summary)
 
 ### Data loading patterns
 
 The preview modal needs the same data as `YourEyesOnlyDayContentPLAYER`:
-- `userTable` — `useList<UserTableItem[]>('userTable', gameId, { privacy: 'PUBLIC' })`
-- `roleTable` — `useList<RoleTableItem[]>('roleTable', gameId, { privacy: 'PUBLIC' })`
-- `userTableTitle` — `useList<UserTableTitle>('userTableTitle', gameId, { privacy: 'PUBLIC' })`
-- `dayDatesArray` — `useList<string[]>('dayDatesArray', gameId, { privacy: 'PUBLIC' })`
-- `selectedDayIndex` — `useList<number>('selectedDayIndex', gameId, { privacy: 'PUBLIC' })`
-- `defaultVoteMessage` — `useList<string>('voteMessageDefault', gameId, { privacy: 'PUBLIC', defaultValue: DEFAULT_VOTE_MESSAGE })`
+- `userTable`: `useList<UserTableItem[]>('userTable', gameId, { privacy: 'PUBLIC' })`
+- `roleTable`: `useList<RoleTableItem[]>('roleTable', gameId, { privacy: 'PUBLIC' })`
+- `userTableTitle`: `useList<UserTableTitle>('userTableTitle', gameId, { privacy: 'PUBLIC' })`
+- `dayDatesArray`: `useList<string[]>('dayDatesArray', gameId, { privacy: 'PUBLIC' })`
+- `selectedDayIndex`: `useList<number>('selectedDayIndex', gameId, { privacy: 'PUBLIC' })`
+- `defaultVoteMessage`: `useList<string>('voteMessageDefault', gameId, { privacy: 'PUBLIC', defaultValue: DEFAULT_VOTE_MESSAGE })`
 
 The existing `PlayerPreviewModal` already loads most of these (line 44-48).
 
@@ -113,7 +113,7 @@ The "about role" content is shown to players in the rulebook/player view. Look a
 
 1. **Create a new `FullPlayerPreviewModal` component** (or heavily modify `PlayerPreviewModal`):
    - Props: `isOpen`, `onOpenChange`, `gameId`
-   - No `roleName` or `markdown` props — it loads everything from game state
+   - No `roleName` or `markdown` props; it loads everything from game state
    - Auto-select the first player on open (use `useEffect` on `isOpen` to set `selectedPlayerEmail` to the first player's email)
    - Load all game data (userTable, roleTable, userTableTitle, dayDatesArray, selectedDayIndex, defaultVoteMessage)
    - For the selected player, resolve their `roleData` from the role table (same as `YourEyesOnlyDayContentPLAYER` line 138)
@@ -129,7 +129,7 @@ The "about role" content is shown to players in the rulebook/player view. Look a
 2. **Add the preview button to `RoleTable.tsx`**:
    - Below the roles table (after the `RoleRow` map, around line 245)
    - A button like "Preview Full Page As Player" that:
-     - Force-saves the role table (call the existing save mechanism — though the role table uses `useList` which auto-saves, so this may just be ensuring the latest state is committed)
+     - Force-saves the role table (call the existing save mechanism; though the role table uses `useList` which auto-saves, so this may just be ensuring the latest state is committed)
      - Opens the new `FullPlayerPreviewModal`
    - State: `const [isFullPreviewOpen, setIsFullPreviewOpen] = useState(false);`
 
@@ -140,25 +140,25 @@ The "about role" content is shown to players in the rulebook/player view. Look a
 
 4. **Handle the force-save**: The role table uses `useList` which auto-saves on set. The individual `MarkdownEditorDialog` instances already save on submit. The main concern is if an editor dialog is open with unsaved changes when the operator clicks the full preview button. Consider:
    - Closing any open editor dialogs before opening the preview
-   - Or just reading from the saved game state (which is what `useList` returns) — if there are unsaved drafts in open dialogs, those won't appear in the preview, which is acceptable
+   - Or just reading from the saved game state (which is what `useList` returns); if there are unsaved drafts in open dialogs, those won't appear in the preview, which is acceptable
 
 ## Files to Modify
 
-- `app/components/game/markdownEditor/PlayerPreviewModal.tsx` — Either heavily modify to show the full page, or create a new component and leave this as-is (check if anything else uses it)
-- `app/components/game/RoleTable.tsx` — Add the preview button and modal, remove `showPreviewAsPlayerOption` from default vote message dialog
-- `app/components/game/RoleRow.tsx` — Remove `showPreviewAsPlayerOption` from role message and vote message dialogs
+- `app/components/game/markdownEditor/PlayerPreviewModal.tsx`: Either heavily modify to show the full page, or create a new component and leave this as-is (check if anything else uses it)
+- `app/components/game/RoleTable.tsx`: Add the preview button and modal, remove `showPreviewAsPlayerOption` from default vote message dialog
+- `app/components/game/RoleRow.tsx`: Remove `showPreviewAsPlayerOption` from role message and vote message dialogs
 
 ## Files to Read First
 
-- `app/components/game/YourEyesOnlyDayContentPLAYER.tsx` — The full page layout to replicate. Focus on lines 408-692 (the render section) and lines 131-186 (data resolution).
-- `app/components/game/markdownEditor/PlayerPreviewModal.tsx` — The current preview modal to replace or modify.
-- `app/components/game/RoleTable.tsx` — Where to add the new button.
-- `app/components/game/RoleRow.tsx` — Where to remove per-message preview props.
-- `app/components/game/MarkdownEditorDialog.tsx` — How `showPreviewAsPlayerOption` and `handlePreviewAsPlayer` currently work (lines 83, 140, 284-295, 377-380, 455-462).
-- `app/components/ui/markdown/MarkdownRenderer.tsx` — The `MarkdownRendererInputDataProvider` API and `MarkdownRenderer` props.
-- `app/script/runtime/sources.ts` — The `ScriptSourceData` type.
-- `types/roleTable.ts` — `RoleTableItem` type and `DEFAULT_VOTE_MESSAGE`.
-- `types/playerTable.ts` — `UserTableItem` and `UserTableTitle` types.
+- `app/components/game/YourEyesOnlyDayContentPLAYER.tsx`: The full page layout to replicate. Focus on lines 408-692 (the render section) and lines 131-186 (data resolution).
+- `app/components/game/markdownEditor/PlayerPreviewModal.tsx`: The current preview modal to replace or modify.
+- `app/components/game/RoleTable.tsx`: Where to add the new button.
+- `app/components/game/RoleRow.tsx`: Where to remove per-message preview props.
+- `app/components/game/MarkdownEditorDialog.tsx`: How `showPreviewAsPlayerOption` and `handlePreviewAsPlayer` currently work (lines 83, 140, 284-295, 377-380, 455-462).
+- `app/components/ui/markdown/MarkdownRenderer.tsx`: The `MarkdownRendererInputDataProvider` API and `MarkdownRenderer` props.
+- `app/script/runtime/sources.ts`: The `ScriptSourceData` type.
+- `types/roleTable.ts`: `RoleTableItem` type and `DEFAULT_VOTE_MESSAGE`.
+- `types/playerTable.ts`: `UserTableItem` and `UserTableTitle` types.
 
 ## Constraints
 
@@ -167,5 +167,5 @@ The "about role" content is shown to players in the rulebook/player view. Look a
 - **Auto-select first player**: Don't make the operator pick before seeing anything.
 - **Keep force-save**: The preview should reflect saved state. If editors are open with unsaved drafts, those won't appear (acceptable).
 - **Emulated input state**: Vote/action inputs in the preview should be local state only, never saved to Convex (same as current `PlayerPreviewModal`).
-- **Follow existing patterns**: Use `MarkdownRendererInputDataProvider`, `MarkdownRenderer`, `AppDropdown`, `ConvexDialog`, `ShadowScrollView`, `FontText`, `Column`, `Row`, `AppButton` — all existing UI components.
+- **Follow existing patterns**: Use `MarkdownRendererInputDataProvider`, `MarkdownRenderer`, `AppDropdown`, `ConvexDialog`, `ShadowScrollView`, `FontText`, `Column`, `Row`, `AppButton`, all existing UI components.
 - **Project conventions**: Follow the unsaved-changes confirmation pattern from `AGENTS.md` if any new dialog state is introduced. Use NativeWind classes for styling.

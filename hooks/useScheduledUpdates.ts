@@ -7,6 +7,7 @@ export type ScheduledTarget =
   | { targetType: 'list'; key: string; itemId: string };
 
 export type ScheduledSetOptions = {
+  cellWriteOrigin?: 'tracked' | 'restore';
   stage?: boolean;
   scheduleAt?: number;
   batchId?: string;
@@ -76,7 +77,12 @@ export const useScheduledTarget = <T>(target: ScheduledTarget) => {
 
   const stageValue = async (encodedValue: unknown, options: ScheduledSetOptions = {}) => {
     const nextBatchId = options.batchId ?? batchId ?? getDefaultBatchId(target);
-    await stageMutation({ target, encodedValue, batchId: nextBatchId });
+    await stageMutation({
+      target,
+      encodedValue,
+      batchId: nextBatchId,
+      cellWriteOrigin: options.cellWriteOrigin,
+    });
     if (options.scheduleAt !== undefined) {
       await scheduleMutation({ batchId: nextBatchId, scheduledTime: options.scheduleAt });
     }

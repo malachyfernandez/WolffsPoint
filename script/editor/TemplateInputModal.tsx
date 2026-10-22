@@ -55,14 +55,18 @@ interface TemplateInputModalProps {
   definedFunctions?: DefinedFunction[];
   entryKeysBySource?: Record<string, string[]>;
   onEditMarkdown?: (currentValue: string, onSave: (newValue: string) => void) => void;
+  /** Seed the drafts from an existing input, switches to "Edit Input" mode. */
+  initial?: { label: string; defaultExpression?: Expression } | null;
+  /** Shows a Remove button (edit mode). */
+  onRemove?: () => void;
 }
 
 /**
- * "New Input" modal — a standalone ConvexDialog that is always mounted.
+ * "New Input" modal: a standalone ConvexDialog that is always mounted.
  *
  * The parent controls visibility via `isOpen`.
  * Manages its own draft state (label + default expression) internally.
- * Has its own InsertModal for building expressions — updates the draft directly,
+ * Has its own InsertModal for building expressions, updates the draft directly,
  * not the reducer (since the draft isn't in the AST yet).
  * When the user clicks "Done", calls `onDone` with the constructed piece.
  * Uses the unsaved-changes confirmation pattern on close.
@@ -82,6 +86,8 @@ const TemplateInputModal = ({
   definedFunctions,
   entryKeysBySource,
   onEditMarkdown,
+  initial = null,
+  onRemove,
 }: TemplateInputModalProps) => {
   const { StableTextInput, ExpressionSocket } = getCanvasExports();
   const [labelDraft, setLabelDraft] = useState('');
@@ -100,15 +106,15 @@ const TemplateInputModal = ({
   // Reset drafts whenever this modal opens
   useEffect(() => {
     if (isOpen) {
-      const label = createDefaultLabel(pieceType);
-      const expr = createDefaultExpression(pieceType);
+      const label = initial?.label ?? createDefaultLabel(pieceType);
+      const expr = initial?.defaultExpression ?? createDefaultExpression(pieceType);
       setLabelDraft(label);
       setOriginalLabel(label);
       setExprDraft(expr);
       setOriginalExpr(expr);
       setInsertTarget(null);
     }
-  }, [isOpen, pieceType]);
+  }, [isOpen, pieceType, initial]);
 
   const hasUnsavedChanges =
     labelDraft !== originalLabel || JSON.stringify(exprDraft) !== JSON.stringify(originalExpr);
@@ -132,7 +138,7 @@ const TemplateInputModal = ({
   const handleInsertChainLink = useCallback((target: InsertTarget, blockId: string) => {
     // For chain links in the draft, we need to compose the chain.
     // For now, just set the expression to the block ID as an identifier.
-    // This is a simplified version — the full chain composition happens
+    // This is a simplified version, the full chain composition happens
     // in the reducer for AST-based expressions.
     setExprDraft((prev) => {
       // If the current expression is a NothingLiteral, replace it
@@ -201,11 +207,11 @@ const TemplateInputModal = ({
         </ConvexDialog.Trigger>
         <ConvexDialog.Portal>
           <ConvexDialog.Overlay />
-          <ConvexDialog.Content className="max-w-md" isSwipeable={!hasUnsavedChanges}>
+          <ConvexDialog.Content className="max-w-md" isSwipeable={false}>
             <CloseButton onPress={handleAttemptClose} />
             <Column className="gap-3 pt-3">
               <FontText weight="medium" className="text-base">
-                New Input
+                {initial ? 'Edit Input' : 'New Input'}
               </FontText>
 
               {/* Variable name */}
@@ -214,6 +220,8 @@ const TemplateInputModal = ({
                   Variable name
                 </FontText>
                 <StableTextInput
+                  autoFocus
+                  selectTextOnFocus
                   value={labelDraft}
                   onChangeText={(value: string) =>
                     setLabelDraft(sanitizeIdentifier(value) || 'param')
@@ -225,32 +233,50 @@ const TemplateInputModal = ({
                 />
               </Column>
 
-              {/* Default value — full expression editor */}
+              {/* Default value: full expression editor */}
               <Column className="gap-1">
                 <FontText variant="subtext" className="text-xs">
                   Default value
                 </FontText>
-                <ExpressionSocket
-                  expression={exprDraft}
-                  location={draftLocation}
-                  contextVariables={contextVariables}
-                  entryKeysBySource={entryKeysBySource}
-                  definedFunctions={definedFunctions}
-                  label="default"
-                  onAdd={setInsertTarget}
-                  onSetExpression={handleSetDraftExpr}
-                  onEditMarkdown={onEditMarkdown}
-                />
+                {/* self-start hugs the content instead of stretching the box
+                    to the modal width; max-w-full caps it and the socket's
+                    own ScrollView keeps long expressions scrollable. */}
+                <View className="max-w-full self-start">
+                  <ExpressionSocket
+                    expression={exprDraft}
+                    location={draftLocation}
+                    contextVariables={contextVariables}
+                    entryKeysBySource={entryKeysBySource}
+                    definedFunctions={definedFunctions}
+                    label="default"
+                    onAdd={setInsertTarget}
+                    onSetExpression={handleSetDraftExpr}
+                    onEditMarkdown={onEditMarkdown}
+                  />
+                </View>
               </Column>
 
-              <Row className="justify-end">
+              <Row className="justify-between">
+                {onRemove ? (
+                  <AppButton
+                    variant="red"
+                    className="h-9 px-3"
+                    onPress={onRemove}
+                    dropShadow={false}>
+                    <FontText weight="bold" color="red-700" className="text-sm">
+                      Remove
+                    </FontText>
+                  </AppButton>
+                ) : (
+                  <View />
+                )}
                 <AppButton
                   variant="filled"
                   className="h-9 px-4"
                   onPress={handleDone}
                   dropShadow={false}>
                   <FontText weight="medium" color="white">
-                    Done
+                    {initial ? 'Save' : 'Done'}
                   </FontText>
                 </AppButton>
               </Row>
@@ -266,7 +292,7 @@ const TemplateInputModal = ({
         onDiscard={handleConfirmLeave}
       />
 
-      {/* Local InsertModal — updates the draft directly, not the reducer */}
+      {/* Local InsertModal: updates the draft directly, not the reducer */}
       <InsertModal
         isOpen={insertTarget !== null}
         target={insertTarget}

@@ -6,7 +6,7 @@ import { useMemoryPolicy } from '../../../contexts/MemoryPressureContext';
  * DOM at minimize time, rendered scaled-down in the minimize row.
  *
  * `scopeId` records which MemoryScope (typically a tab pane) hosts the
- * dialog component — evicting that pane would strand `onRestore`, so the
+ * dialog component: evicting that pane would strand `onRestore`, so the
  * memory LRU consults it. `pinned` marks entries holding unsaved user state:
  * they protect their scope from eviction and are never culled themselves.
  */
@@ -18,7 +18,7 @@ export interface MinimizedEntry {
   originalHeight: number;
   /** Called when the user clicks the minimized card to restore the dialog. */
   onRestore: () => void;
-  /** True while the dialog holds unsaved user state — protects its host scope
+  /** True while the dialog holds unsaved user state, protects its host scope
    *  from memory eviction and prevents the entry itself being dropped. */
   pinned?: boolean;
   /** MemoryScope id of the subtree mounting the dialog component. */
@@ -31,7 +31,7 @@ export interface MinimizeContextValue {
   minimize: (entry: Omit<MinimizedEntry, 'id'>) => string;
   restore: (id: string) => void;
   removeMinimized: (id: string) => void;
-  /** Drop unpinned entries owned by an evicted scope — their `onRestore`
+  /** Drop unpinned entries owned by an evicted scope, their `onRestore`
    *  closure died with the subtree, so leaving the card would be a dead UI. */
   removeByScope: (scopeId: string) => void;
   clearAll: () => void;
@@ -52,7 +52,7 @@ export const MinimizeProvider = ({ children }: { children: React.ReactNode }) =>
   const idCounter = useRef(0);
   const { policy, setPin, removePin } = useMemoryPolicy();
 
-  // Reflect pinned entries into the memory pin registry — the tab LRU refuses
+  // Reflect pinned entries into the memory pin registry, the tab LRU refuses
   // to evict a scope that owns a dirty minimized dialog. Entries keep their
   // pin until restored/removed.
   const pinsRegisteredRef = useRef(new Set<string>());
@@ -73,7 +73,7 @@ export const MinimizeProvider = ({ children }: { children: React.ReactNode }) =>
 
   const minimize = useCallback((entry: Omit<MinimizedEntry, 'id'>) => {
     const id = `min-${idCounter.current++}`;
-    // Skip the DOM snapshot entirely when policy disallows it — no point
+    // Skip the DOM snapshot entirely when policy disallows it, no point
     // cloning a subtree we're going to drop.
     const stored = keepSnapshotsRef.current ? entry : { ...entry, domClone: null };
     setMinimized((prev) => [...prev, { ...stored, id }]);
@@ -87,7 +87,7 @@ export const MinimizeProvider = ({ children }: { children: React.ReactNode }) =>
         try {
           entry.onRestore();
         } catch {
-          // Stale callback (page may have unmounted) — silently remove
+          // Stale callback (page may have unmounted), silently remove
         }
       }
       return prev.filter((e) => e.id !== id);
@@ -106,7 +106,7 @@ export const MinimizeProvider = ({ children }: { children: React.ReactNode }) =>
     setMinimized([]);
   }, []);
 
-  // Under memory pressure, release detached DOM snapshots — the minimized card
+  // Under memory pressure, release detached DOM snapshots, the minimized card
   // falls back to a title-only placeholder but stays restorable.
   useEffect(() => {
     if (policy.keepMinimizedSnapshots) return;
@@ -134,7 +134,7 @@ export const MinimizeProvider = ({ children }: { children: React.ReactNode }) =>
 
 export const useMinimize = () => {
   const ctx = useContext(MinimizeContext);
-  // Gracefully degrade when no provider is present — dialogs still work,
+  // Gracefully degrade when no provider is present, dialogs still work,
   // just without minimize functionality.
   if (!ctx) {
     return {

@@ -31,7 +31,6 @@ const UnsavedChangesDialog = ({
   saveLabel = 'Save',
   discardLabel = "Don't Save",
 }: UnsavedChangesDialogProps) => {
-
   // Enter = primary action (Save), Esc = close (stay)
   useKeyboardShortcuts({
     onPrimaryAction: () => {
@@ -43,7 +42,7 @@ const UnsavedChangesDialog = ({
   });
 
   return (
-    <ConvexDialog.Root isOpen={isOpen} onOpenChange={onOpenChange}>
+    <ConvexDialog.Root className="hidden" isOpen={isOpen} onOpenChange={onOpenChange}>
       <ConvexDialog.Portal>
         <ConvexDialog.Overlay />
         <ConvexDialog.Content className="max-w-md p-6" isSwipeable={false}>
@@ -51,7 +50,7 @@ const UnsavedChangesDialog = ({
           <DialogHeader text={title} />
           <Column className="gap-4 pt-4">
             <FontText className="text-center">{message}</FontText>
-            <Row className="gap-4 justify-center pt-4">
+            <Row className="justify-center gap-4 pt-4">
               <AppButton
                 variant="outline"
                 className="w-28"

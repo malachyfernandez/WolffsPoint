@@ -4,6 +4,10 @@ import { decodeStoredInputState } from '../script/runtime/values';
 import { TableUpdate } from '../script/registry';
 import { UserTableItem, UserTableTitle } from '../types/playerTable';
 import { MarkdownInputState, PlannedUpdate } from '../types/multiplayer';
+import { effectiveCellText } from './cellPieces';
+import { bindPlannedUpdateTargets } from './certificationIdentity';
+import type { ScriptFilesIndex } from './scriptFiles';
+import { walkRenderInstructions } from '../script/runtime/instructionTree';
 import {
   VOTE_MULTIPLIER_COLUMN,
   VOTE_COLUMN,
@@ -57,13 +61,17 @@ const decodeInputState = (state: MarkdownInputState = {}): Record<string, unknow
   decodeStoredInputState(state);
 
 /**
- * Build a getCellValue function that reads from the current user table.
+ * Build a getCellValue function that reads the *effective* cell text (piece
+ * markers folded, tag pieces as `[/TAG: "x"/]` tokens) so `cellContents`
+ * bindings see what the cell says.
  */
 const buildGetCellValue = (
   users: UserTableItem[],
   titles: UserTableTitle,
-  morningMessagesList?: Record<string, string[]>
+  morningMessagesList?: Record<string, string[]>,
+  filesIndex?: ScriptFilesIndex
 ) => {
+  const eff = (raw: string) => effectiveCellText(raw, filesIndex);
   return (playerIndex: number | null, dayIndex: number | null, column: string): string => {
     const indices = playerIndex === null ? users.map((_, i) => i) : [playerIndex];
     if (indices.length === 0) return '';
@@ -77,11 +85,11 @@ const buildGetCellValue = (
       const extraUserColumnTitles = titles.extraUserColumns ?? [];
       const colIdx = extraUserColumnTitles.findIndex((t) => t.toLowerCase() === colLower);
       if (colIdx === -1) return '';
-      return user.playerData.extraColumns?.[colIdx] ?? '';
+      return eff(user.playerData.extraColumns?.[colIdx] ?? '');
     } else {
       if (colLower === MORNING_MESSAGE_COLUMN) {
         if (!morningMessagesList) return '';
-        return morningMessagesList[user.email.toLowerCase()]?.[dayIndex] ?? '';
+        return eff(morningMessagesList[user.email.toLowerCase()]?.[dayIndex] ?? '');
       }
       if (colLower === VOTE_MULTIPLIER_COLUMN) {
         const day = user.days?.[dayIndex];
@@ -99,7 +107,7 @@ const buildGetCellValue = (
       const colIdx = extraDayColumnTitles.findIndex((t) => t.toLowerCase() === colLower);
       if (colIdx === -1) return '';
       const day = user.days?.[dayIndex];
-      return day?.extraColumns?.[colIdx] ?? '';
+      return eff(day?.extraColumns?.[colIdx] ?? '');
     }
   };
 };
@@ -117,14 +125,19 @@ export const runMarkdownScriptsWithUpdates = (
   source: ScriptSourceData,
   users: UserTableItem[],
   titles: UserTableTitle,
-  morningMessagesList?: Record<string, string[]>
+  morningMessagesList?: Record<string, string[]>,
+  filesIndex?: ScriptFilesIndex
 ): { updates: TableUpdate[]; issues: string[] } => {
   const scriptBlocks = extractScriptBlocks(markdown);
   if (scriptBlocks.length === 0) return { updates: [], issues: [] };
 
-  const globals = createScriptGlobals({ ...source, morningMessagesList });
+  const globals = createScriptGlobals({
+    ...source,
+    morningMessagesList,
+    filesIndex: filesIndex ?? source.filesIndex,
+  });
   const decodedInputState = decodeInputState(inputState);
-  const getCellValue = buildGetCellValue(users, titles, morningMessagesList);
+  const getCellValue = buildGetCellValue(users, titles, morningMessagesList, filesIndex);
   const allUpdates: TableUpdate[] = [];
   const allIssues: string[] = [];
 
@@ -139,6 +152,7 @@ export const runMarkdownScriptsWithUpdates = (
         inputState: decodedInputState,
         tableUpdates: updates,
         getCellValue,
+        filesIndex: filesIndex ?? source.filesIndex,
       });
       allUpdates.push(...updates);
       allIssues.push(...result.issues.map((i) => i.message));
@@ -163,8 +177,9 @@ export const inspectMarkdownVoteInput = (
       const result = interpretScript(scriptSource, {
         globals: { ...globals, Inputs: decodedInputState },
         inputState: decodedInputState,
+        filesIndex: source.filesIndex,
       });
-      const voteInput = result.output.find((instruction) => instruction.props.voteInput === true);
+      const voteInput = [...walkRenderInstructions(result.output)].find((instruction) => instruction.props.voteInput === true);
       if (voteInput) {
         const multiplier = Number(voteInput.props.voteMultiplier ?? 1);
         return { key: voteInput.key, multiplier: Number.isFinite(multiplier) ? multiplier : 1 };
@@ -193,14 +208,19 @@ export const planMarkdownScriptUpdates = (
   source: ScriptSourceData,
   users: UserTableItem[],
   titles: UserTableTitle,
-  morningMessagesList?: Record<string, string[]>
+  morningMessagesList?: Record<string, string[]>,
+  filesIndex?: ScriptFilesIndex
 ): { plannedUpdates: PlannedUpdate[]; issues: string[] } => {
   const scriptBlocks = extractScriptBlocks(markdown);
   if (scriptBlocks.length === 0) return { plannedUpdates: [], issues: [] };
 
-  const globals = createScriptGlobals({ ...source, morningMessagesList });
+  const globals = createScriptGlobals({
+    ...source,
+    morningMessagesList,
+    filesIndex: filesIndex ?? source.filesIndex,
+  });
   const decodedInputState = decodeInputState(inputState);
-  const getCellValue = buildGetCellValue(users, titles, morningMessagesList);
+  const getCellValue = buildGetCellValue(users, titles, morningMessagesList, filesIndex);
   const allPlannedUpdates: PlannedUpdate[] = [];
   const allIssues: string[] = [];
 
@@ -215,6 +235,7 @@ export const planMarkdownScriptUpdates = (
         inputState: decodedInputState,
         plannedUpdates,
         getCellValue,
+        filesIndex: filesIndex ?? source.filesIndex,
       });
       allPlannedUpdates.push(...plannedUpdates);
       allIssues.push(...result.issues.map((i) => i.message));
@@ -223,5 +244,8 @@ export const planMarkdownScriptUpdates = (
     }
   }
 
-  return { plannedUpdates: allPlannedUpdates, issues: allIssues };
+  return {
+    plannedUpdates: bindPlannedUpdateTargets(allPlannedUpdates, users, titles),
+    issues: allIssues,
+  };
 };

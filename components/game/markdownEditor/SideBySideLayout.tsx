@@ -10,7 +10,6 @@ interface SideBySideLayoutProps {
   draftBody: string;
   draftTitle: string;
   includeTitle: boolean;
-  showInputs: boolean;
   previewInputState: Record<string, string | undefined>;
   setPreviewInputState: React.Dispatch<React.SetStateAction<Record<string, string | undefined>>>;
   onBodyChange: (body: string) => void;
@@ -19,9 +18,9 @@ interface SideBySideLayoutProps {
   onItalic: () => void;
   onLink: () => void;
   onImage: () => void;
-  onInput: () => void;
   onMore: () => void;
   onScript?: () => void;
+  scriptLabel?: string;
   onVariable?: () => void;
   centered?: boolean;
   showPreviewAsPlayer?: boolean;
@@ -38,7 +37,6 @@ export function SideBySideLayout({
   draftBody,
   draftTitle,
   includeTitle,
-  showInputs,
   previewInputState,
   setPreviewInputState,
   onBodyChange,
@@ -47,9 +45,9 @@ export function SideBySideLayout({
   onItalic,
   onLink,
   onImage,
-  onInput,
   onMore,
   onScript,
+  scriptLabel,
   onVariable,
   centered = false,
   showPreviewAsPlayer = false,
@@ -64,14 +62,13 @@ export function SideBySideLayout({
         value={draftBody}
         onBodyChange={onBodyChange}
         onSelectionChange={onSelectionChange}
-        showInputs={showInputs}
         onBold={onBold}
         onItalic={onItalic}
         onLink={onLink}
         onImage={onImage}
-        onInput={onInput}
         onMore={onMore}
         onScript={onScript}
+        scriptLabel={scriptLabel}
         onVariable={onVariable}
         readOnly={readOnly}
         inputRef={inputRef}

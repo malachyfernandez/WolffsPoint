@@ -1,7 +1,7 @@
 opening now
 VM106:1 Uncaught SyntaxError: Unexpected identifier 'now'
 entry-5cdf036de88934b382a465909b30899d.js:1944 ================================================================================
-🔍 useFindValues: playerNightSubmission-day-2-wsSd5N0R — result=5
+🔍 useFindValues: playerNightSubmission-day-2-wsSd5N0R: result=5
 ================================================================================
 {
   hook: "useFindValues"
@@ -1007,7 +1007,7 @@ entry-5cdf036de88934b382a465909b30899d.js:1944 =================================
 }
 ================================================================================
 entry-5cdf036de88934b382a465909b30899d.js:1944 ================================================================================
-🔍 useFindValues: playerNightSubmission-day-2-wsSd5N0R — result=5
+🔍 useFindValues: playerNightSubmission-day-2-wsSd5N0R: result=5
 ================================================================================
 {
   hook: "useFindValues"
@@ -1231,7 +1231,7 @@ entry-5cdf036de88934b382a465909b30899d.js:1944 =================================
 }
 ================================================================================
 entry-5cdf036de88934b382a465909b30899d.js:1944 ================================================================================
-🔍 useUserVariableGet: playerNightSubmission-day-2-wsSd5N0R — raw=6 decoded=6
+🔍 useUserVariableGet: playerNightSubmission-day-2-wsSd5N0R: raw=6 decoded=6
 ================================================================================
 {
   hook: "useUserVariableGet"
@@ -1306,7 +1306,7 @@ entry-5cdf036de88934b382a465909b30899d.js:1944 =================================
 }
 ================================================================================
 entry-5cdf036de88934b382a465909b30899d.js:1944 ================================================================================
-🔍 DataSubscriber: playerNightSubmission-day-2-wsSd5N0R — result=6 (refCount=1)
+🔍 DataSubscriber: playerNightSubmission-day-2-wsSd5N0R: result=6 (refCount=1)
 ================================================================================
 {
   dataSubscriber: "DataSubscriber"
@@ -1341,7 +1341,7 @@ entry-5cdf036de88934b382a465909b30899d.js:1944 =================================
 }
 ================================================================================
 entry-5cdf036de88934b382a465909b30899d.js:1944 ================================================================================
-🔍 useFindValues: playerNightSubmission-day-2-wsSd5N0R — result=6
+🔍 useFindValues: playerNightSubmission-day-2-wsSd5N0R: result=6
 ================================================================================
 {
   hook: "useFindValues"
@@ -2397,7 +2397,7 @@ entry-5cdf036de88934b382a465909b30899d.js:1944 =================================
 }
 ================================================================================
 entry-5cdf036de88934b382a465909b30899d.js:1944 ================================================================================
-🔍 useFindValues: playerNightSubmission-day-2-wsSd5N0R — result=6
+🔍 useFindValues: playerNightSubmission-day-2-wsSd5N0R: result=6
 ================================================================================
 {
   hook: "useFindValues"

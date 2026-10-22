@@ -1,7 +1,7 @@
 /**
  * sim/perf/domTools.ts
  *
- * DOM driving helpers for the simulation runner — finding elements by
+ * DOM driving helpers for the simulation runner, finding elements by
  * test-id/text, dispatching realistic clicks, scrolling containers.
  */
 
@@ -50,7 +50,7 @@ export function byText(text: string, opts: { within?: ParentNode; exact?: boolea
 // for synthetic PointerEvents (no real active pointer). React Aria pressables call
 // setPointerCapture inside their pointerdown listener regardless of pointerType,
 // so every dispatchTap would surface an uncaught error in Firefox/Zen. Swallow
-// ONLY that error class — real pointers never throw it, so app behavior is
+// ONLY that error class: real pointers never throw it, so app behavior is
 // unchanged for actual users.
 if (typeof Element !== 'undefined' && !(Element.prototype.setPointerCapture as any).__simPatched) {
   const origSet = Element.prototype.setPointerCapture;
@@ -91,7 +91,7 @@ export function pressEscapeIn(target: Element) {
 }
 
 // ---------------------------------------------------------------------------
-// Dialog state — the tour uses these to VERIFY the page is in the state it
+// Dialog state: the tour uses these to VERIFY the page is in the state it
 // thinks it is (a leaked dialog silently corrupted scroll measurements before).
 // ---------------------------------------------------------------------------
 
@@ -103,8 +103,8 @@ export function openDialogs(): HTMLElement[] {
 }
 
 /**
- * Close each open dialog the way a user would — its [aria-label="Close"]
- * control — falling back to a targeted Escape on the dialog element.
+ * Close each open dialog the way a user would, its [aria-label="Close"]
+ * control: falling back to a targeted Escape on the dialog element.
  * Returns how many dialogs were still open afterwards.
  */
 export async function closeOpenDialogs(fallback?: () => void): Promise<number> {
@@ -121,7 +121,7 @@ export async function closeOpenDialogs(fallback?: () => void): Promise<number> {
   return openDialogs().length;
 }
 
-/** Scrollables NOT inside an open dialog — page surfaces only. */
+/** Scrollables NOT inside an open dialog, page surfaces only. */
 export function findPageScrollables() {
   return findScrollables().filter((s) => !s.el.closest('[role="dialog"]'));
 }
@@ -146,7 +146,7 @@ export async function waitFor<T>(predicate: () => T | null | undefined | false, 
 }
 
 /**
- * Find scrollable elements — the largest first. Returns [element, scrollablePixels].
+ * Find scrollable elements: the largest first. Returns [element, scrollablePixels].
  */
 export function findScrollables(within?: ParentNode): { el: HTMLElement; range: number }[] {
   const root: ParentNode = within ?? document;

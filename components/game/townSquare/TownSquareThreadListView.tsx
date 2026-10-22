@@ -1,5 +1,6 @@
 import React, { RefObject, useMemo } from 'react';
-import { Pressable, ScrollView, useWindowDimensions } from 'react-native';
+import { Pressable, ScrollView } from 'react-native';
+import { useContentWidth } from 'hooks/useContentWidth';
 import ShadowScrollView from '../../ui/ShadowScrollView';
 import { Plus } from 'lucide-react-native';
 import StateAnimatedView from '../../ui/StateAnimatedView';
@@ -46,11 +47,11 @@ const TownSquareThreadListView = ({
     unreadCount,
 }: TownSquareThreadListViewProps) => {
     const hasLoaded = useMemo(() => !isLoading, [isLoading]);
-    const { width } = useWindowDimensions();
+    const width = useContentWidth();
     const isLargeScreen = width >= 400;
 
     return (
-        <Column className='gap-2.5 flex-1 px-0 sm:px-4 py-4'>
+        <Column className={`gap-2.5 flex-1 py-4 ${width >= 640 ? 'px-4' : 'px-0'}`}>
             <Row className='gap-4 items-start justify-between'>
                 {isPlayerDead && (
                     <Column className='gap-0 flex grow'>
@@ -86,7 +87,7 @@ const TownSquareThreadListView = ({
                     </>
                 ) : (
                     
-                    <Column className='gap-0 justify-between sm:justify-end flex-1 items-center'>
+                    <Column className={`gap-0 flex-1 items-center ${width >= 640 ? 'justify-end' : 'justify-between'}`}>
                         <AppButton testID="townsquare-newthread" variant='accent' className='px-0 w-full' onPress={onNewThread}>
                             <Row className='gap-2 items-center'>
                                 <Plus size={20} color='white' />

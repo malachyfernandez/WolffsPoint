@@ -4,6 +4,8 @@ import Column from '../layout/Column';
 import Row from '../layout/Row';
 import DayButton from '../ui/daySelector/DayButton';
 import { getContextualDayRangeLabel } from 'utils/multiplayer';
+import { nowDate } from 'utils/simNow';
+
 
 interface PlayerDaySelectorProps {
     dayDates: Date[];
@@ -27,7 +29,7 @@ const PlayerDaySelector = ({ dayDates, selectedDayIndex, currentDayIndex, onSele
                                     key={index}
                                     date={date}
                                     index={index}
-                                    label={getContextualDayRangeLabel(dayDates, index, fallbackSpanDays, new Date(), timeZone)}
+                                    label={getContextualDayRangeLabel(dayDates, index, fallbackSpanDays, nowDate(), timeZone)}
                                     isSelected={selectedDayIndex === index}
                                     showCurrentDayIndicator={index === currentDayIndex}
                                     onPress={() => {

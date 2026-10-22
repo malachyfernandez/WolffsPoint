@@ -106,7 +106,7 @@ export const applyTableUpdates = (
         const day = { ...days[dayIndex] };
 
         if (isVoteMultiplier(column)) {
-          // voteMultiplier is a number, not a string cell — parse and replace
+          // voteMultiplier is a number, not a string cell, parse and replace
           const parsed = parseFloat(value);
           day.voteMultiplier = isNaN(parsed) ? 1 : parsed;
         } else if (isVote(column)) {
@@ -168,14 +168,14 @@ const applyCellValueMode = (current: string, value: string, mode: string): strin
     const valueParsed = parseCell(value);
 
     if (valueParsed.hasTags) {
-      // Appending a tag — merge tags
+      // Appending a tag: merge tags
       const currentTags = currentParsed.hasTags ? currentParsed.tags.map((t) => t.name) : [];
       const newTags = valueParsed.tags.map((t) => t.name);
       const merged = [...new Set([...currentTags, ...newTags])];
       return encodeTags(merged);
     }
 
-    // Appending text — just concatenate
+    // Appending text: just concatenate
     return current + value;
   }
 

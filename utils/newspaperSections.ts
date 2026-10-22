@@ -1,3 +1,4 @@
+import { nowMs } from './simNow';
 import {
     NewspaperDividerStyle,
     NewspaperSectionStyle,
@@ -110,7 +111,7 @@ export const createNewspaperSection = (
     titleFont: NewspaperTitleFont = 'libreBaskerville',
     dividerStyle: NewspaperDividerStyle = 'thin',
 ): ResolvedNewspaperSection => ({
-    id: `section-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    id: `section-${nowMs()}-${Math.random().toString(36).slice(2, 8)}`,
     columns,
     titleFont,
     dividerStyle,

@@ -75,15 +75,62 @@ export interface ReturnStatement extends NodeBase {
   value?: Expression;
 }
 
+/**
+ * A cell operation block - lives inside an UpdateCell block.
+ * - scope 'all' ("For All Cells"): applies the op to every cell matched by
+ *   the UpdateCell selector. Valid anywhere inside UpdateCell's body.
+ * - scope 'cell' ("For Cell"): applies the op to the cell currently being
+ *   iterated. Only valid inside a ForEachCellStatement body.
+ * Ops:
+ * - 'add': append a piece (tag / text / file) contributed by this run
+ * - 'remove': append a remove tombstone masking earlier matching pieces
+ * - 'replace': set the cell's effective base (a SET marker on content cells,
+ *   a direct field set on typed fields like voteMultiplier)
+ */
+export interface CellOpStatement extends NodeBase {
+  kind: 'CellOpStatement';
+  scope: 'all' | 'cell';
+  op: 'add' | 'remove' | 'replace';
+  value: Expression;
+}
+
+/**
+ * "For each cell" loop - iterates the cells matched by the enclosing
+ * UpdateCell, binding `itemName` (and `cellContents`) to each cell's value.
+ * The body holds data manipulation plus 'cell'-scope CellOps. Only those
+ * explicit operations write cells; Return has no effect in this body.
+ */
+export interface ForEachCellStatement extends NodeBase {
+  kind: 'ForEachCellStatement';
+  itemName: string;
+  body: BlockStatement;
+}
+
 export interface UpdateCellStatement extends NodeBase {
   kind: 'UpdateCellStatement';
+  /** Editor-only: generated body can follow column selection until its first edit. Never printed. */
+  editorDefaultBody?: boolean;
   players: Expression;
   columnType: 'user' | 'day';
   dayIndex: Expression | null;
   column: Expression;
-  itemName: string;
+  allowDuplicates?: boolean;
+  autoRemove?: boolean;
+  /** Cell-op blocks: 'all'-scope CellOps, ForEachCell loops, and generic
+   *  statements (e.g. an If gating an op). Legacy `{...; Return e;}` parses
+   *  into a single ForEachCell. */
   body: BlockStatement;
-  updateValue: Expression;
+}
+
+/**
+ * Tag file meta header - first statement of a file inside the `tags/`
+ * folder. `Tag({NAME = "Infected", COLOR = "Red"})`. The file's remaining
+ * statements are its on-added trigger script.
+ */
+export interface TagStatement extends NodeBase {
+  kind: 'TagStatement';
+  name: string;
+  color: string;
 }
 
 export interface OnTagAddedStatement extends NodeBase {
@@ -93,6 +140,19 @@ export interface OnTagAddedStatement extends NodeBase {
 
 export interface OnTagRemovedStatement extends NodeBase {
   kind: 'OnTagRemovedStatement';
+  body: BlockStatement;
+}
+
+export interface NavButtonStatement extends NodeBase {
+  kind: 'NavButtonStatement';
+  label: Expression;
+  body: BlockStatement;
+}
+
+/** Internal folder-item presentation container, retained through source expansion. */
+export interface DisplayGroupStatement extends NodeBase {
+  kind: 'DisplayGroupStatement';
+  arguments: CallArgument[];
   body: BlockStatement;
 }
 
@@ -109,8 +169,13 @@ export type Statement =
   | FunctionStatement
   | ReturnStatement
   | UpdateCellStatement
+  | CellOpStatement
+  | ForEachCellStatement
   | OnTagAddedStatement
   | OnTagRemovedStatement
+  | NavButtonStatement
+  | DisplayGroupStatement
+  | TagStatement
   | ErrorStatement;
 
 export interface StringLiteral extends NodeBase {

@@ -9,17 +9,22 @@ import UnsavedChangesDialog from '../../ui/dialog/UnsavedChangesDialog';
 import FontTextInput from '../../ui/forms/FontTextInput';
 import FontText from '../../ui/text/FontText';
 import { CloseButton } from './CloseButton';
+import ShadowScrollView from '../../ui/ShadowScrollView';
 
 interface MarkdownVariableDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   onInsert: (name: string) => void;
+  inputNames?: string[];
+  onCreateInput?: () => void;
 }
 
 const MarkdownVariableDialog = ({
   isOpen,
   onOpenChange,
   onInsert,
+  inputNames,
+  onCreateInput,
 }: MarkdownVariableDialogProps) => {
   const [name, setName] = useState('');
   const [initialName, setInitialName] = useState('');
@@ -60,30 +65,67 @@ const MarkdownVariableDialog = ({
             <CloseButton onPress={handleAttemptClose} />
             <DialogHeader text="Insert variable" />
             <Column className="gap-4 p-5">
-              <Column className="gap-1">
-                <FontText weight="medium">Variable name</FontText>
-                <FontTextInput
-                  autoFocus
-                  className="border-subtle-border w-full rounded-xl border px-4 py-3"
-                  placeholder="Number Of Players"
-                  value={name}
-                  onChangeText={setName}
-                  onSubmitEditing={handleSubmit}
-                />
-              </Column>
+              {inputNames ? (
+                <Column className="gap-3">
+                  <FontText variant="subtext">Choose a file input to insert its value.</FontText>
+                  <ShadowScrollView className="max-h-64">
+                    <Column className="gap-2">
+                      {inputNames.map((input) => (
+                        <AppButton
+                          key={input}
+                          variant="outline"
+                          onPress={() => {
+                            onInsert(input);
+                            onOpenChange(false);
+                          }}>
+                          <FontText>{input}</FontText>
+                        </AppButton>
+                      ))}
+                      {inputNames.length === 0 && (
+                        <FontText variant="subtext">No inputs yet.</FontText>
+                      )}
+                    </Column>
+                  </ShadowScrollView>
+                  {onCreateInput && (
+                    <AppButton
+                      variant="outline"
+                      onPress={() => {
+                        onOpenChange(false);
+                        onCreateInput();
+                      }}>
+                      <FontText>Create input...</FontText>
+                    </AppButton>
+                  )}
+                </Column>
+              ) : (
+                <Column className="gap-1">
+                  <FontText weight="medium">Variable name</FontText>
+                  <FontTextInput
+                    autoFocus
+                    selectTextOnFocus
+                    className="border-subtle-border w-full rounded-xl border px-4 py-3"
+                    placeholder="Number Of Players"
+                    value={name}
+                    onChangeText={setName}
+                    onSubmitEditing={handleSubmit}
+                  />
+                </Column>
+              )}
               <Row className="justify-end gap-4">
                 <AppButton variant="outline" className="w-28" onPress={handleAttemptClose}>
                   <FontText weight="medium">Cancel</FontText>
                 </AppButton>
-                <AppButton
-                  variant="filled"
-                  className="w-36"
-                  disabled={!canSubmit}
-                  onPress={handleSubmit}>
-                  <FontText weight="medium" color="white">
-                    Insert variable
-                  </FontText>
-                </AppButton>
+                {!inputNames && (
+                  <AppButton
+                    variant="filled"
+                    className="w-36"
+                    disabled={!canSubmit}
+                    onPress={handleSubmit}>
+                    <FontText weight="medium" color="white">
+                      Insert variable
+                    </FontText>
+                  </AppButton>
+                )}
               </Row>
             </Column>
           </ConvexDialog.Content>

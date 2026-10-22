@@ -12,11 +12,13 @@ import AppDropdownTrigger from './dropdown/AppDropdownTrigger';
 import ShadowScrollView from '../../ui/ShadowScrollView';
 import FontText from '../text/FontText';
 import ConvexDialog from '../dialog/ConvexDialog';
+import { useToast } from 'contexts/ToastContext';
 
 export interface AppDropdownOption {
   value: string;
   label: string;
   meta?: Record<string, unknown>;
+  disabledReason?: string;
 }
 
 interface AppDropdownProps {
@@ -26,6 +28,8 @@ interface AppDropdownProps {
   placeholder?: string;
   emptyText?: string;
   triggerClassName?: string;
+  /** Shrinks the trigger to its label instead of stretching to fill its parent. */
+  fitContent?: boolean;
   contentClassName?: string;
   itemClassName?: string;
   selectedItemClassName?: string;
@@ -62,6 +66,7 @@ const AppDropdown = ({
   placeholder = 'Select an option',
   emptyText = 'No options available',
   triggerClassName = '',
+  fitContent = false,
   contentClassName = '',
   itemClassName = '',
   selectedItemClassName = '',
@@ -69,7 +74,7 @@ const AppDropdown = ({
   isInDialog = false,
   disabled = false,
   allowUnselect = true,
-  unselectLabel = '— None —',
+  unselectLabel = 'None',
   footer,
   onFooterPress,
   renderOptionAction,
@@ -77,10 +82,13 @@ const AppDropdown = ({
   searchable = true,
   searchPlaceholder = 'Search…',
 }: AppDropdownProps) => {
+  const { showToast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const [selectedValue, setSelectedValue] = useState(value ?? '');
   const [searchText, setSearchText] = useState('');
-  const [activeIndex, setActiveIndex] = useState(0);
+  // -1 = nothing highlighted: the keyboard indicator only appears once the
+  // user presses an arrow key or starts typing in the search field.
+  const [activeIndex, setActiveIndex] = useState(-1);
   const [webMenuPosition, setWebMenuPosition] = useState<WebDropdownMenuPosition | null>(null);
   const menuId = useId();
   const triggerRef = useRef<any>(null);
@@ -90,11 +98,12 @@ const AppDropdown = ({
   }, [value]);
 
   const selectedOption = options.find((option) => option.value === selectedValue);
+  const triggerLabel = selectedOption?.label ?? placeholder;
 
   const closeDropdown = useCallback(() => {
     setIsOpen(false);
     setSearchText('');
-    setActiveIndex(0);
+    setActiveIndex(-1);
     setWebMenuPosition(null);
   }, []);
 
@@ -164,11 +173,16 @@ const AppDropdown = ({
 
   const handleValueChange = useCallback(
     (nextValue: string) => {
+      const reason = options.find((option) => option.value === nextValue)?.disabledReason;
+      if (reason) {
+        showToast(reason);
+        return;
+      }
       setSelectedValue(nextValue);
       onValueChange(nextValue);
       closeDropdown();
     },
-    [closeDropdown, onValueChange]
+    [closeDropdown, onValueChange, options, showToast]
   );
 
   const handleTriggerPress = useCallback(() => {
@@ -230,7 +244,9 @@ const AppDropdown = ({
 
   const handleSearchChange = useCallback((text: string) => {
     setSearchText(text);
-    setActiveIndex(0);
+    // Typing is itself keyboard intent: highlight the first match so Enter
+    // selects it; clearing the field drops back to no highlight.
+    setActiveIndex(text ? 0 : -1);
   }, []);
 
   const handleSearchKeyDown = useCallback(
@@ -240,10 +256,10 @@ const AppDropdown = ({
       }
       setActiveIndex((currentValue) => {
         if (key === 'ArrowDown') {
-          return Math.min(currentValue + 1, navigableCount - 1);
+          return currentValue < 0 ? 0 : Math.min(currentValue + 1, navigableCount - 1);
         }
         if (key === 'ArrowUp') {
-          return Math.max(currentValue - 1, 0);
+          return currentValue < 0 ? navigableCount - 1 : Math.max(currentValue - 1, 0);
         }
         return currentValue;
       });
@@ -252,6 +268,7 @@ const AppDropdown = ({
   );
 
   const handleSearchSubmit = useCallback(() => {
+    if (activeIndex < 0) return;
     const unselectOffset = showUnselectOption ? 1 : 0;
     if (showUnselectOption && activeIndex === 0) {
       handleValueChange('');
@@ -283,6 +300,7 @@ const AppDropdown = ({
           isActive={activeIndex === optionIndex}
           isSelected={option.value === selectedValue}
           label={option.label}
+          disabledReason={option.disabledReason}
           onSelect={() => handleValueChange(option.value)}
           selectedClassName={selectedClassName}
         />
@@ -373,11 +391,13 @@ const AppDropdown = ({
           <AppDropdownTrigger
             ref={triggerRef}
             className={`${triggerClassName} ${disabled ? 'opacity-60' : ''}`.trim()}
+            fitContent={fitContent}
             isOpen={isOpen}
             isPlaceholder={!selectedOption}
-            label={selectedOption?.label ?? placeholder}
+            label={triggerLabel}
             onPress={handleTriggerPress}
             disabled={disabled}
+            aria-label={triggerLabel || undefined}
           />
 
           <ConvexDialog.Root
@@ -413,11 +433,13 @@ const AppDropdown = ({
         <AppDropdownTrigger
           ref={triggerRef}
           className={`${triggerClassName} ${disabled ? 'opacity-60' : ''}`.trim()}
+          fitContent={fitContent}
           isOpen={isOpen}
           isPlaceholder={!selectedOption}
-          label={selectedOption?.label ?? placeholder}
+          label={triggerLabel}
           onPress={handleTriggerPress}
           disabled={disabled}
+          aria-label={triggerLabel || undefined}
         />
 
         {isOpen && webMenuPosition ? (
@@ -499,11 +521,13 @@ const AppDropdown = ({
         }
       }}>
       <Popover.Trigger
-        className={`border-subtle-border bg-background w-full flex-row items-center justify-between rounded border px-3 py-3 ${triggerClassName} ${disabled ? 'opacity-60' : ''}`.trim()}
+        className={`border-subtle-border bg-background ${fitContent ? 'self-start' : 'w-full'} flex-row items-center justify-between gap-2 rounded border px-3 py-3 ${triggerClassName} ${disabled ? 'opacity-60' : ''}`.trim()}
         isDisabled={disabled}>
-        <FontText weight="medium" className={!selectedOption ? 'opacity-60' : ''}>
-          {selectedOption?.label ?? placeholder}
-        </FontText>
+        {triggerLabel ? (
+          <FontText weight="medium" className={!selectedOption ? 'opacity-60' : ''}>
+            {triggerLabel}
+          </FontText>
+        ) : null}
         <ChevronDown size={18} color="rgb(46, 41, 37)" />
       </Popover.Trigger>
       <Popover.Portal>

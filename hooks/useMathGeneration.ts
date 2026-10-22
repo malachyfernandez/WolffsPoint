@@ -3,6 +3,7 @@ import { useAction } from 'convex/react';
 import { api } from '../convex/_generated/api';
 import { MathDocumentPage } from 'types/mathDocuments';
 import { useUserVariable } from 'hooks/useUserVariable';
+import { nowMs } from 'utils/simNow';
 
 interface UseMathGenerationProps {
     page: MathDocumentPage;
@@ -45,7 +46,7 @@ export const useMathGeneration = ({ page, onUpdatePage, onUpdateMarkdown, onFoll
                 ...page,
                 markdown: result.markdown,
                 lastAiPrompt: aiGuidance.value,
-                lastGeneratedAt: Date.now(),
+                lastGeneratedAt: nowMs(),
             };
 
             // Only update if we should still update this page

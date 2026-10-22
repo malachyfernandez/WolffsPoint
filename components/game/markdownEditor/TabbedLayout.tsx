@@ -12,7 +12,6 @@ interface TabbedLayoutProps {
   draftBody: string;
   draftTitle: string;
   includeTitle: boolean;
-  showInputs: boolean;
   activeTab: string;
   previewInputState: Record<string, string | undefined>;
   setPreviewInputState: React.Dispatch<React.SetStateAction<Record<string, string | undefined>>>;
@@ -23,9 +22,9 @@ interface TabbedLayoutProps {
   onItalic: () => void;
   onLink: () => void;
   onImage: () => void;
-  onInput: () => void;
   onMore: () => void;
   onScript?: () => void;
+  scriptLabel?: string;
   onVariable?: () => void;
   centered?: boolean;
   showPreviewAsPlayer?: boolean;
@@ -42,7 +41,6 @@ export function TabbedLayout({
   draftBody,
   draftTitle,
   includeTitle,
-  showInputs,
   activeTab,
   previewInputState,
   setPreviewInputState,
@@ -53,9 +51,9 @@ export function TabbedLayout({
   onItalic,
   onLink,
   onImage,
-  onInput,
   onMore,
   onScript,
+  scriptLabel,
   onVariable,
   centered = false,
   showPreviewAsPlayer = false,
@@ -72,14 +70,13 @@ export function TabbedLayout({
           {!readOnly && (
             <TownSquareComposerToolbar
               onBold={onBold}
-              onInput={onInput}
               onImage={onImage}
               onItalic={onItalic}
               onLink={onLink}
               onMore={onMore}
               onScript={onScript}
+              scriptLabel={scriptLabel}
               onVariable={onVariable}
-              showInputs={showInputs}
             />
           )}
         </Column>

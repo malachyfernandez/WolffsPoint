@@ -10,30 +10,30 @@ WolffsPoint is a **social deduction game** (similar to Mafia or Werewolf) where 
 
 ### Core Gameplay Loop
 
-1. **Setup Phase** — An operator creates a game, defines custom roles, and invites players via join codes
-2. **Day Phase** — Players discuss, form alliances, and cast votes to eliminate suspected villains
-3. **Night Phase** — Players secretly submit actions and votes before deadlines; special roles use their abilities
-4. **Morning Reveal** — Results are published in the newspaper; eliminated players are announced
-5. **Repeat** — The game continues until one faction achieves their win condition
+1. **Setup Phase**: An operator creates a game, defines custom roles, and invites players via join codes
+2. **Day Phase**: Players discuss, form alliances, and cast votes to eliminate suspected villains
+3. **Night Phase**: Players secretly submit actions and votes before deadlines; special roles use their abilities
+4. **Morning Reveal**: Results are published in the newspaper; eliminated players are announced
+5. **Repeat**: The game continues until one faction achieves their win condition
 
 ---
 
 ## Key Features
 
 ### For Players
-- **Your Eyes Only** — Private dashboard showing your role, actions, vote history, and day-by-day story
-- **Town Square** — Public forum for announcements, discussions, and social posts
-- **Phone Book** — Player directory with profiles, contact info, and status
-- **Rule Book** — Living document with role descriptions and game rules
-- **Newspaper** — Daily digest of eliminations, vote tallies, and dramatic narratives
+- **Your Eyes Only**: Private dashboard showing your role, actions, vote history, and day-by-day story
+- **Town Square**: Public forum for announcements, discussions, and social posts
+- **Phone Book**: Player directory with profiles, contact info, and status
+- **Rule Book**: Living document with role descriptions and game rules
+- **Newspaper**: Daily digest of eliminations, vote tallies, and dramatic narratives
 
 ### For Operators (Game Masters)
-- **Player Management** — Add/remove players, assign roles, track participation
-- **Role Editor** — Create custom roles with unique abilities, voting rights, and descriptions
-- **Day Scheduler** — Configure real-world dates mapping to in-game days with configurable deadlines
-- **Nightly Tools** — Review and process night actions, generate morning messages
-- **Newspaper Editor** — Write dramatic daily summaries for all players to read
-- **Town Square Moderation** — Oversee public discourse
+- **Player Management**: Add/remove players, assign roles, track participation
+- **Role Editor**: Create custom roles with unique abilities, voting rights, and descriptions
+- **Day Scheduler**: Configure real-world dates mapping to in-game days with configurable deadlines
+- **Nightly Tools**: Review and process night actions, generate morning messages
+- **Newspaper Editor**: Write dramatic daily summaries for all players to read
+- **Town Square Moderation**: Oversee public discourse
 
 ### For Newsers
 - Dedicated role for writing and publishing the daily newspaper without full player access
@@ -137,18 +137,18 @@ scripts/                   # Top-level utility scripts (SVG rescaling, migration
 
 ## Backend Architecture
 
-The Convex backend is a custom, privacy-aware **user-scoped key/value + list storage service**. It is **not** the default Convex boilerplate — see `convex/schema.ts` for the full schema.
+The Convex backend is a custom, privacy-aware **user-scoped key/value + list storage service**. It is **not** the default Convex boilerplate, see `convex/schema.ts` for the full schema.
 
 ### Core Tables
 
-- **`globals`** — Simple global key/value store
-- **`user_vars`** — Per-user key/value variables with privacy, filter/search/sort caches
-- **`permissions`** — `user_vars` allow-list entries (for shared access)
-- **`user_var_public_counts`** / **`user_var_owner_counts`** / **`user_var_shared_counts`** — Denormalized count tables for performant reads
-- **`user_list_definitions`** — One row per `userToken + key`; list-level config
-- **`user_lists`** — Actual list items, tied to a definition
-- **`list_permissions`** — `user_list_definitions` allow-list entries
-- **`user_list_public_counts`** / **`user_list_owner_counts`** / **`user_list_shared_counts`** — Denormalized count tables for list items
+- **`globals`**: Simple global key/value store
+- **`user_vars`**: Per-user key/value variables with privacy, filter/search/sort caches
+- **`permissions`**: `user_vars` allow-list entries (for shared access)
+- **`user_var_public_counts`** / **`user_var_owner_counts`** / **`user_var_shared_counts`**: Denormalized count tables for performant reads
+- **`user_list_definitions`**: One row per `userToken + key`; list-level config
+- **`user_lists`**: Actual list items, tied to a definition
+- **`list_permissions`**: `user_list_definitions` allow-list entries
+- **`user_list_public_counts`** / **`user_list_owner_counts`** / **`user_list_shared_counts`**: Denormalized count tables for list items
 
 ### Privacy Model
 
@@ -178,11 +178,11 @@ Authentication is handled by Clerk; functions use `ctx.auth.getUserIdentity()` /
 
 The app uses a custom `DataProvider` system (replacing the legacy `useUserVariable` / `useUserList` hooks) with a global client cache to eliminate redundant Convex subscriptions. Core hooks live in `hooks/useData.ts`:
 
-- **`useValue`** — Persistent single value per user per key
-- **`useList`** — Persistent single item in a keyed list (by `itemId`)
-- **`useFindValues`** — Read accessible variable rows by key across multiple users
-- **`useFindListItems`** — Read accessible list rows by key, optionally across users
-- **`useValueCount`** / **`useListCount`** — Fast count lookups via Convex index bounds
+- **`useValue`**: Persistent single value per user per key
+- **`useList`**: Persistent single item in a keyed list (by `itemId`)
+- **`useFindValues`**: Read accessible variable rows by key across multiple users
+- **`useFindListItems`**: Read accessible list rows by key, optionally across users
+- **`useValueCount`** / **`useListCount`**: Fast count lookups via Convex index bounds
 
 Data shapes, privacy, and defaults are defined centrally in `utils/dataConfig.ts`. For full documentation, see [`utils/about-parts-of-this-codebase/userVariables-system.md`](./utils/about-parts-of-this-codebase/userVariables-system.md).
 
@@ -216,7 +216,7 @@ Returns:
 - `hasResults` (boolean): Whether there are any search results
 - `resultCount` (number): Number of items found
 
-The deprecated `useDocumentSearch` (same file) is a thin wrapper kept for backward compatibility — prefer `useListSearch`.
+The deprecated `useDocumentSearch` (same file) is a thin wrapper kept for backward compatibility, prefer `useListSearch`.
 
 ---
 
@@ -239,8 +239,8 @@ The operator reviews submissions and releases results at the configured wake-up 
 
 ### Scripting System
 The app includes a custom scripting language (`app/script/`) with a block-based editor and runtime interpreter. Scripts run in two places:
-1. **Role messages** — embedded in markdown via `/*script ... script*/` blocks, with input/dropdown/selector support
-2. **Tag triggers** — run immediately when a tag is added to a cell, using special globals (`placedTag`, `placedUser`, `placedDay`, `placedColumn`)
+1. **Role messages**: embedded in markdown via `/*script ... script*/` blocks, with input/dropdown/selector support
+2. **Tag triggers**: run immediately when a tag is added to a cell, using special globals (`placedTag`, `placedUser`, `placedDay`, `placedColumn`)
 
 See [`utils/about-parts-of-this-codebase/about-this-codebase.md`](./utils/about-parts-of-this-codebase/about-this-codebase.md) for the full architecture guide.
 
@@ -248,4 +248,4 @@ See [`utils/about-parts-of-this-codebase/about-this-codebase.md`](./utils/about-
 
 ## License
 
-Private — All rights reserved.
+Private: All rights reserved.

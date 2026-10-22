@@ -67,4 +67,4 @@ if (result.status !== 0) {
   process.exit(result.status ?? 1);
 }
 
-console.log(`\nDone — clients on v${next - 1} or older will now see the reload notice.`);
+console.log(`\nDone: clients on v${next - 1} or older will now see the reload notice.`);

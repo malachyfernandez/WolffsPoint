@@ -53,7 +53,6 @@ const BioEditorDialog = ({
   const [isMoreDialogOpen, setIsMoreDialogOpen] = useState(false);
   const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false);
   const [isImageDialogOpen, setIsImageDialogOpen] = useState(false);
-  const [isInputDialogOpen, setIsInputDialogOpen] = useState(false);
   const [isLeaveConfirmDialogOpen, setIsLeaveConfirmDialogOpen] = useState(false);
   const [previewInputState, setPreviewInputState] = useState<Record<string, string | undefined>>(
     {}
@@ -71,7 +70,6 @@ const BioEditorDialog = ({
     setIsMoreDialogOpen(false);
     setIsLinkDialogOpen(false);
     setIsImageDialogOpen(false);
-    setIsInputDialogOpen(false);
     setIsLeaveConfirmDialogOpen(false);
     setPreviewInputState({});
   }, [initialMarkdown, isOpen]);
@@ -153,7 +151,6 @@ const BioEditorDialog = ({
     runBodyUpdate((value, range) => wrapSelection(value, range, '*', '*', 'italic text'));
   const handleLink = () => setIsLinkDialogOpen(true);
   const handleImage = () => setIsImageDialogOpen(true);
-  const handleInput = () => setIsInputDialogOpen(true);
   const handleMore = () => setIsMoreDialogOpen(true);
 
   // Preview that shows the full profile card
@@ -189,7 +186,6 @@ const BioEditorDialog = ({
                 draftBody={draftBody}
                 isPreviewSideBySide={false}
                 activeTab={activeTab}
-                showInputs={false}
                 previewInputState={previewInputState}
                 setPreviewInputState={setPreviewInputState}
                 setDraftTitle={() => {}}
@@ -200,7 +196,6 @@ const BioEditorDialog = ({
                 onItalic={handleItalic}
                 onLink={handleLink}
                 onImage={handleImage}
-                onInput={handleInput}
                 onMore={handleMore}
                 renderPreview={renderProfilePreview}
               />
@@ -218,8 +213,6 @@ const BioEditorDialog = ({
       </ConvexDialog.Root>
 
       <SubDialogs
-        gameId={gameId}
-        showInputs={false}
         selectedText={selectedText}
         isMoreDialogOpen={isMoreDialogOpen}
         setIsMoreDialogOpen={setIsMoreDialogOpen}
@@ -227,8 +220,6 @@ const BioEditorDialog = ({
         setIsLinkDialogOpen={setIsLinkDialogOpen}
         isImageDialogOpen={isImageDialogOpen}
         setIsImageDialogOpen={setIsImageDialogOpen}
-        isInputDialogOpen={isInputDialogOpen}
-        setIsInputDialogOpen={setIsInputDialogOpen}
         isLeaveConfirmDialogOpen={isLeaveConfirmDialogOpen}
         setIsLeaveConfirmDialogOpen={setIsLeaveConfirmDialogOpen}
         runBodyUpdate={runBodyUpdate}

@@ -68,7 +68,7 @@ const ParticipantAccessGate = ({ gameId, currentUserId, children }: ParticipantA
     return !userData.state.isSyncing && !profile.state.isSyncing;
   }, [profile.state.isSyncing, userData.state.isSyncing]);
 
-  // Report to BodyReadinessProvider — tab bar waits for the gate to load
+  // Report to BodyReadinessProvider: tab bar waits for the gate to load
   useBodyLoadReport(!hasLoaded, 300, 'ParticipantAccessGate');
 
   if (!hasLoaded || !currentEmail.trim()) {

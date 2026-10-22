@@ -18,6 +18,9 @@ import { usePendingColumnOpen } from 'hooks/usePendingColumnOpen';
 import { Usepaper } from 'types/usepaper';
 import { NewspaperControlState, getNewspaperControlKey, getNewspaperDayControlItemId, getNewspaperDayItemId } from 'utils/newspaperControl';
 import { hasNewspaperContent } from 'utils/newspaperSections';
+import { nowMs } from 'utils/simNow';
+import { useContentWidth } from 'hooks/useContentWidth';
+
 
 interface NewspaperPageOPERATORProps {
     currentUserId: string;
@@ -28,6 +31,7 @@ const NewspaperPageOPERATOR = ({ currentUserId, gameId }: NewspaperPageOPERATORP
     const [activeTab, setActiveTab] = useState<'writing' | 'viewing'>('viewing');
     const [selectedDayIndex, setSelectedDayIndex] = useState(0);
     const { operatorUserId, isLoading: isOperatorLoading } = useGameOperatorUserId(gameId);
+    const contentWidth = useContentWidth();
 
     // Get operator's day dates to know how many days are available
     const { value: operatorDayDates, isLoading: isDayDatesLoading } = useSharedListValue<string[]>({
@@ -102,9 +106,9 @@ const NewspaperPageOPERATOR = ({ currentUserId, gameId }: NewspaperPageOPERATORP
         });
     };
 
-    // Minimized column editors restore through here — the per-day writing
+    // Minimized column editors restore through here, the per-day writing
     // views unmount on day switches, so the request must live at page level.
-    // Uses local setSelectedDayIndex only — handleSelectedDayIndexChange would
+    // Uses local setSelectedDayIndex only: handleSelectedDayIndexChange would
     // also write the shared selectedDayIndex user variable.
     const { pendingColumnOpen, requestColumnOpen, consumePendingColumnOpen } = usePendingColumnOpen(
         (dayIndex) => {
@@ -141,7 +145,7 @@ const NewspaperPageOPERATOR = ({ currentUserId, gameId }: NewspaperPageOPERATORP
                 ownerUserId,
                 newserUserId: selectedDayOwner.validNewser?.userId ?? '',
                 newserEmail: selectedDayOwner.validNewser?.email ?? '',
-                updatedAt: Date.now(),
+                updatedAt: nowMs(),
             },
             privacy: 'PUBLIC',
         });
@@ -173,7 +177,7 @@ const NewspaperPageOPERATOR = ({ currentUserId, gameId }: NewspaperPageOPERATORP
                 <Column className='gap-4 items-center pt-48'>
                     <AppButton
                         variant='accent'
-                        className='w-full sm:w-auto sm:min-w-65'
+                        className={contentWidth >= 640 ? 'w-auto min-w-65' : 'w-full'}
                         disabled={!selectedDayOwner.validNewser?.userId}
                         onPress={takeControl}
                     >
@@ -193,7 +197,7 @@ const NewspaperPageOPERATOR = ({ currentUserId, gameId }: NewspaperPageOPERATORP
                 <Row className='gap-4 justify-center py-2'>
                     <AppButton
                         variant='accent'
-                        className='w-full sm:w-auto sm:min-w-65'
+                        className={contentWidth >= 640 ? 'w-auto min-w-65' : 'w-full'}
                         disabled={!canAssignToNewser}
                         onPress={giveBackControl}
                     >
@@ -278,7 +282,7 @@ const NewspaperPageOPERATOR = ({ currentUserId, gameId }: NewspaperPageOPERATORP
             </View>
 
             <Column className='gap-4 max-w-237.5 w-full self-center'>
-                <View className='px-2 sm:px-0'>
+                <View className={contentWidth >= 640 ? 'px-0' : 'px-2'}>
                     <LayoutStateAnimatedView.Container stateVar={String(selectedDayIndex)} highPerformance>
                         <LayoutStateAnimatedView.OptionContainer page={selectedDayIndex} pushInAnimation={fromRight}>
                             <LayoutStateAnimatedView.Option

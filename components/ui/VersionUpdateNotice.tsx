@@ -31,7 +31,7 @@ const reloadApp = () => {
  * `data-minimize-dock`) so this overlay can sit directly above it instead of
  * overlapping. Returns 0 when the dock isn't rendered.
  *
- * Markup-level coupling only — no minimize-system state is shared.
+ * Markup-level coupling only: no minimize-system state is shared.
  */
 const useDialogDockHeight = (enabled: boolean) => {
   const [dockHeight, setDockHeight] = useState(0);
@@ -60,7 +60,7 @@ const useDialogDockHeight = (enabled: boolean) => {
     };
 
     attach();
-    // The dock mounts/unmounts as dialogs are minimized — watch for it.
+    // The dock mounts/unmounts as dialogs are minimized, watch for it.
     const mutationObserver = new MutationObserver(attach);
     mutationObserver.observe(document.body, { childList: true, subtree: true });
 
@@ -108,7 +108,7 @@ const NoticeCard = ({ clientVersion, latestVersion, onMinimize }: NoticeCardProp
 
         {latestVersion !== null && (
           <FontText variant="subtext" color="text">
-            You&apos;re on v{clientVersion} — latest is v{latestVersion}.
+            You&apos;re on v{clientVersion}: latest is v{latestVersion}.
           </FontText>
         )}
 
@@ -139,7 +139,7 @@ interface MinimizedPillProps {
 }
 
 /**
- * The "single small thing" the notice shrinks into — styled after the
+ * The "single small thing" the notice shrinks into, styled after the
  * minimize row's Hide/Show pills.
  */
 const MinimizedPill = ({ onExpand }: MinimizedPillProps) => (

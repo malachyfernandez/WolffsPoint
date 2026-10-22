@@ -4,6 +4,7 @@ import AppButton from '../../ui/buttons/AppButton';
 import DisableableButton from '../../ui/buttons/DisableableButton';
 import FontText from '../../ui/text/FontText';
 import { useKeyboardShortcutHint } from 'contexts/KeyboardShortcutHintContext';
+import { useContentWidth } from 'hooks/useContentWidth';
 
 interface ActionButtonsProps {
     canSubmit: boolean;
@@ -21,12 +22,13 @@ export function ActionButtons({
     onSubmit,
 }: ActionButtonsProps) {
     const { setHint } = useKeyboardShortcutHint();
+    const contentWidth = useContentWidth();
 
     return (
         <Row className='minimize-hide gap-4 justify-end pt-1'>
             <AppButton
                 variant='outline'
-                className='w-20 sm:w-32'
+                className={contentWidth >= 640 ? 'w-32' : 'w-20'}
                 onPress={onCancel}
                 onHoverIn={() => setHint(['esc'])}
                 onHoverOut={() => setHint(null)}

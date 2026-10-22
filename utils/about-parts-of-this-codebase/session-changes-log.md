@@ -7,7 +7,7 @@ This log details every change made during this session, in reverse chronological
 
 ---
 
-## 2025-03-30 14:07 — Added OpenRouter API key to local .env and Convex production
+## 2025-03-30 14:07: Added OpenRouter API key to local .env and Convex production
 
 **Change:** Added `OPENROUTER_API_KEY=<your_openrouter_api_key>` to:
 - `.env` (local reference only)
@@ -21,7 +21,7 @@ This log details every change made during this session, in reverse chronological
 
 ---
 
-## 2025-03-30 14:07 — Added UploadThing token to Convex production
+## 2025-03-30 14:07: Added UploadThing token to Convex production
 
 **Change:** Added `UPLOADTHING_TOKEN` to Convex production environment via `npx convex env set UPLOADTHING_TOKEN ... --prod`
 
@@ -33,7 +33,7 @@ This log details every change made during this session, in reverse chronological
 
 ---
 
-## 2025-03-30 13:49 — Updated Vercel production environment variables
+## 2025-03-30 13:49: Updated Vercel production environment variables
 
 **Change:** Updated `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY` in Vercel Production to `pk_live_Y2xlcmsucGFwZXIubWFsYWNoeWYuY29tJA` (custom domain key). Other Convex URL values were already correct.
 
@@ -45,7 +45,7 @@ This log details every change made during this session, in reverse chronological
 
 ---
 
-## 2025-03-30 13:49 — Verified Vercel environment variables
+## 2025-03-30 13:49: Verified Vercel environment variables
 
 **Change:** Checked current Vercel env values with `vercel env ls`. Confirmed Convex URLs were already correct in Production.
 
@@ -55,7 +55,7 @@ This log details every change made during this session, in reverse chronological
 
 ---
 
-## 2025-03-30 13:47 — Updated Convex auth.config.ts to trust custom Clerk domain
+## 2025-03-30 13:47: Updated Convex auth.config.ts to trust custom Clerk domain
 
 **Change:** Added second provider to `convex/auth.config.ts`:
 ```ts
@@ -73,7 +73,7 @@ This log details every change made during this session, in reverse chronological
 
 ---
 
-## 2025-03-30 13:47 — Updated .env Clerk publishable key to custom domain
+## 2025-03-30 13:47: Updated .env Clerk publishable key to custom domain
 
 **Change:** Changed `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY` from generic `pk_live_Y2xlcmsuYWNjb3VudHMuZGV2JA` to custom domain `pk_live_Y2xlcmsucGFwZXIubWFsYWNoeWYuY29tJA`
 
@@ -85,7 +85,7 @@ This log details every change made during this session, in reverse chronological
 
 ---
 
-## 2025-03-30 13:47 — Patched useUserVariable to gate on Convex auth readiness
+## 2025-03-30 13:47: Patched useUserVariable to gate on Convex auth readiness
 
 **Change:** Modified `hooks/useUserVariable.ts`:
 - Imported `useConvexAuth`
@@ -101,7 +101,7 @@ This log details every change made during this session, in reverse chronological
 
 ---
 
-## 2025-03-30 13:47 — Deployed Convex functions with auth config fix
+## 2025-03-30 13:47: Deployed Convex functions with auth config fix
 
 **Change:** Ran `npx convex deploy -y` to deploy updated `convex/auth.config.ts` to production (`shocking-owl-592`).
 
@@ -113,7 +113,7 @@ This log details every change made during this session, in reverse chronological
 
 ---
 
-## 2025-03-30 13:47 — Patched useUserVariable mutation error logging
+## 2025-03-30 13:47: Patched useUserVariable mutation error logging
 
 **Change:** Enhanced catch block in `hooks/useUserVariable.ts` to log actual mutation rejection errors instead of silently swallowing them.
 
@@ -125,7 +125,7 @@ This log details every change made during this session, in reverse chronological
 
 ---
 
-## 2025-03-30 13:47 — Patched MainPage.tsx userData defaultValue
+## 2025-03-30 13:47: Patched MainPage.tsx userData defaultValue
 
 **Change:** Changed `userData` default value from `{}` to `{name:"", email:"", userId:""}` in `app/components/MainPage.tsx`.
 
@@ -137,7 +137,7 @@ This log details every change made during this session, in reverse chronological
 
 ---
 
-## 2025-03-30 13:47 — Patched userValueSerialization to strip undefined keys
+## 2025-03-30 13:47: Patched userValueSerialization to strip undefined keys
 
 **Change:** Modified `encodeUserValue` in `hooks/userValueSerialization.ts` to remove undefined keys from objects before storing in Convex.
 
@@ -149,7 +149,7 @@ This log details every change made during this session, in reverse chronological
 
 ---
 
-## 2025-03-30 13:47 — Patched useSyncUserData to wait for Convex auth and sanitize data
+## 2025-03-30 13:47: Patched useSyncUserData to wait for Convex auth and sanitize data
 
 **Change:** Modified `hooks/useSyncUserData.ts`:
 - Imported `useConvexAuth`
@@ -165,7 +165,7 @@ This log details every change made during this session, in reverse chronological
 
 ---
 
-## 2025-03-30 13:47 — Diagnosed auth mismatch as root cause via Convex logs
+## 2025-03-30 13:47: Diagnosed auth mismatch as root cause via Convex logs
 
 **Change:** Analyzed Convex logs showing `Unauthorized` errors and browser error `No auth provider found matching the given token`. Identified that deployed site's Clerk token issuer did not match Convex trusted domain.
 
@@ -177,7 +177,7 @@ This log details every change made during this session, in reverse chronological
 
 ---
 
-## 2025-03-30 13:47 — Identified environment mismatch between local and deployed
+## 2025-03-30 13:47: Identified environment mismatch between local and deployed
 
 **Change:** Discovered `.env` points to live deployment (`shocking-owl-592`) while `.env.local` points to local dev (`rare-puffin-639`). Confirmed error occurs on deployed Vercel site, not local dev.
 
@@ -189,7 +189,7 @@ This log details every change made during this session, in reverse chronological
 
 ---
 
-## 2025-03-30 13:47 — Enhanced useUserVariable error logging
+## 2025-03-30 13:47: Enhanced useUserVariable error logging
 
 **Change:** Modified mutation catch block in `hooks/useUserVariable.ts` to log actual error to console for better visibility of Convex server/auth errors.
 
@@ -201,7 +201,7 @@ This log details every change made during this session, in reverse chronological
 
 ---
 
-## 2025-03-30 13:47 — Traced mutation failure through Convex schema and server implementation
+## 2025-03-30 13:47: Traced mutation failure through Convex schema and server implementation
 
 **Change:** Analyzed `convex/user_vars.ts` mutation `set` handler which calls `ctx.auth.getUserIdentity()` and throws `Unauthorized` if no identity. Cross-referenced with client hooks.
 
@@ -213,7 +213,7 @@ This log details every change made during this session, in reverse chronological
 
 ---
 
-## 2025-03-30 13:47 — Inspected client sync hooks for data contract and auth usage
+## 2025-03-30 13:47: Inspected client sync hooks for data contract and auth usage
 
 **Change:** Examined `hooks/useSyncUserData.ts` and `app/components/MainPage.tsx` to understand how Clerk data flows to Convex user_vars.
 
@@ -225,7 +225,7 @@ This log details every change made during this session, in reverse chronological
 
 ---
 
-## 2025-03-30 13:47 — Confirmed Convex deployment and URLs
+## 2025-03-30 13:47: Confirmed Convex deployment and URLs
 
 **Change:** Identified live Convex deployment URL as `https://shocking-owl-592.convex.cloud` and local dev as `https://rare-puffin-639.convex.cloud`.
 
@@ -237,7 +237,7 @@ This log details every change made during this session, in reverse chronological
 
 ---
 
-## 2025-03-30 13:47 — Initial error report and context gathering
+## 2025-03-30 13:47: Initial error report and context gathering
 
 **Change:** User reported persistent `user_vars:set` server errors after Clerk sign-in. I began investigating by reading Convex logs and client code.
 
@@ -249,7 +249,7 @@ This log details every change made during this session, in reverse chronological
 
 ---
 
-## 2025-03-30 11:53 — Created .env.production file for environment separation
+## 2025-03-30 11:53: Created .env.production file for environment separation
 
 **Change:** Created new `.env.production` file to separate production environment variables from development configuration.
 
@@ -261,7 +261,7 @@ This log details every change made during this session, in reverse chronological
 
 ---
 
-## 2025-03-30 11:53 — Continued CORS errors with clerk.paper.malachyf.com subdomain
+## 2025-03-30 11:53: Continued CORS errors with clerk.paper.malachyf.com subdomain
 
 **Change:** Waited for DNS propagation and tested again, but still getting CORS errors:
 ```
@@ -276,7 +276,7 @@ Cross-Origin Request Blocked: The Same Origin Policy disallows reading the remot
 
 ---
 
-## 2025-03-30 11:40 — Fixed DNS record for clerk.paper.malachyf.com
+## 2025-03-30 11:40: Fixed DNS record for clerk.paper.malachyf.com
 
 **Change:** Corrected DNS record from `clerk.paper.malachyf.com.malachyf.com` to proper `clerk.paper.malachyf.com` pointing to `76.76.21.21`.
 
@@ -288,7 +288,7 @@ Cross-Origin Request Blocked: The Same Origin Policy disallows reading the remot
 
 ---
 
-## 2025-03-30 11:39 — Identified CORS errors from clerk.paper.malachyf.com
+## 2025-03-30 11:39: Identified CORS errors from clerk.paper.malachyf.com
 
 **Change:** Discovered that app was trying to load Clerk JavaScript from `https://clerk.paper.malachyf.com` but getting CORS errors because subdomain didn't exist.
 
@@ -300,7 +300,7 @@ Cross-Origin Request Blocked: The Same Origin Policy disallows reading the remot
 
 ---
 
-## 2025-03-30 11:34 — Attempted custom OAuth setup in Google Cloud Console
+## 2025-03-30 11:34: Attempted custom OAuth setup in Google Cloud Console
 
 **Change:** Started setting up custom OAuth credentials in Google Cloud Console as alternative to subdomain approach.
 
@@ -312,7 +312,7 @@ Cross-Origin Request Blocked: The Same Origin Policy disallows reading the remot
 
 ---
 
-## 2025-03-30 11:32 — Discovered clerk.paper.malachyf.com redirect URI requirement
+## 2025-03-30 11:32: Discovered clerk.paper.malachyf.com redirect URI requirement
 
 **Change:** Found that Clerk automatically sets redirect URI to `https://clerk.paper.malachyf.com/v1/oauth_callback` and couldn't be changed without custom credentials.
 
@@ -324,7 +324,7 @@ Cross-Origin Request Blocked: The Same Origin Policy disallows reading the remot
 
 ---
 
-## 2025-03-30 11:27 — Located correct Google OAuth configuration section
+## 2025-03-30 11:27: Located correct Google OAuth configuration section
 
 **Change:** Found the "Authorized Redirect URI" section in Clerk Google OAuth settings after navigating through Social Connections → Google.
 
@@ -336,7 +336,7 @@ Cross-Origin Request Blocked: The Same Origin Policy disallows reading the remot
 
 ---
 
-## 2025-03-30 11:25 — Confirmed DNS working for paper.malachyf.com
+## 2025-03-30 11:25: Confirmed DNS working for paper.malachyf.com
 
 **Change:** Verified DNS propagation and site accessibility:
 - DNS: `paper.malachyf.com → 76.76.21.21` ✓
@@ -350,7 +350,7 @@ Cross-Origin Request Blocked: The Same Origin Policy disallows reading the remot
 
 ---
 
-## 2025-03-30 11:23 — Added custom domain paper.malachyf.com to Vercel
+## 2025-03-30 11:23: Added custom domain paper.malachyf.com to Vercel
 
 **Change:** Added domain `paper.malachyf.com` to Vercel project and configured DNS A record to point to `76.76.21.21`.
 
@@ -362,7 +362,7 @@ Cross-Origin Request Blocked: The Same Origin Policy disallows reading the remot
 
 ---
 
-## 2025-03-30 11:10 — Updated Vercel environment variables with production Clerk key
+## 2025-03-30 11:10: Updated Vercel environment variables with production Clerk key
 
 **Change:** Added production environment variables to Vercel:
 - `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY` (production key)
@@ -378,7 +378,7 @@ Cross-Origin Request Blocked: The Same Origin Policy disallows reading the remot
 
 ---
 
-## 2025-03-30 11:01 — Identified development keys warning in production
+## 2025-03-30 11:01: Identified development keys warning in production
 
 **Change:** Discovered app was still using development Clerk keys (`pk_test_...`) causing "Development mode" warnings and usage limits.
 
@@ -390,7 +390,7 @@ Cross-Origin Request Blocked: The Same Origin Policy disallows reading the remot
 
 ---
 
-## 2025-03-30 10:55 — Updated vercel.json with --platform web flag
+## 2025-03-30 10:55: Updated vercel.json with --platform web flag
 
 **Change:** Modified `vercel.json` build command from `npx expo export` to `npx expo export --platform web` to prevent building iOS/Android versions.
 
@@ -402,7 +402,7 @@ Cross-Origin Request Blocked: The Same Origin Policy disallows reading the remot
 
 ---
 
-## 2025-03-30 10:47 — Created auth/callback.tsx for OAuth redirect handling
+## 2025-03-30 10:47: Created auth/callback.tsx for OAuth redirect handling
 
 **Change:** Created new file `app/auth/callback.tsx` to handle OAuth redirects and prevent 404 errors after sign-in.
 
@@ -414,7 +414,7 @@ Cross-Origin Request Blocked: The Same Origin Policy disallows reading the remot
 
 ---
 
-## 2025-03-30 10:44 — Updated app.json with web bundler configuration
+## 2025-03-30 10:44: Updated app.json with web bundler configuration
 
 **Change:** Added `"bundler": "metro"` to web configuration in `app.json`.
 
@@ -426,7 +426,7 @@ Cross-Origin Request Blocked: The Same Origin Policy disallows reading the remot
 
 ---
 
-## 2025-03-30 10:13 — Successfully deployed to Vercel with production Convex URL
+## 2025-03-30 10:13: Successfully deployed to Vercel with production Convex URL
 
 **Change:** Updated `.env` with production Convex URL (`https://shocking-owl-592.convex.cloud`) and deployed to `https://math-convert.vercel.app`.
 
@@ -438,7 +438,7 @@ Cross-Origin Request Blocked: The Same Origin Policy disallows reading the remot
 
 ---
 
-## 2025-03-30 09:54 — Deployed Convex functions to production
+## 2025-03-30 09:54: Deployed Convex functions to production
 
 **Change:** Ran `npx convex deploy` to deploy Convex functions to production at `https://shocking-owl-592.convex.cloud`.
 
@@ -450,7 +450,7 @@ Cross-Origin Request Blocked: The Same Origin Policy disallows reading the remot
 
 ---
 
-## 2025-03-30 09:54 — Updated .env with production Convex URLs
+## 2025-03-30 09:54: Updated .env with production Convex URLs
 
 **Change:** Updated `.env` file with production Convex URLs:
 - `EXPO_PUBLIC_CONVEX_URL=https://shocking-owl-592.convex.cloud`
@@ -464,7 +464,7 @@ Cross-Origin Request Blocked: The Same Origin Policy disallows reading the remot
 
 ---
 
-## 2025-03-30 09:54 — Installed EAS CLI and Vercel CLI
+## 2025-03-30 09:54: Installed EAS CLI and Vercel CLI
 
 **Change:** Installed command-line tools:
 - `npm install -g eas-cli` (later abandoned for web deployment)
@@ -478,7 +478,7 @@ Cross-Origin Request Blocked: The Same Origin Policy disallows reading the remot
 
 ---
 
-## 2025-03-30 09:54 — Analyzed codebase structure and dependencies
+## 2025-03-30 09:54: Analyzed codebase structure and dependencies
 
 **Change:** Read project documentation and configuration files to understand:
 - React Native + Expo architecture

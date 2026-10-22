@@ -10,6 +10,7 @@ import Column from '../../layout/Column';
 import AppButton from '../buttons/AppButton';
 import { SavedEntry } from 'hooks/useSaveHistory';
 import { useKeyboardShortcuts } from 'hooks/useKeyboardShortcuts';
+import { nowDate } from 'utils/simNow';
 
 interface SaveHistoryDialogProps {
     isOpen: boolean;
@@ -22,7 +23,7 @@ interface SaveHistoryDialogProps {
 
 function formatDateTime(timestamp: number): string {
     const date = new Date(timestamp);
-    const now = new Date();
+    const now = nowDate();
     const isToday = date.toDateString() === now.toDateString();
 
     const timeStr = date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });

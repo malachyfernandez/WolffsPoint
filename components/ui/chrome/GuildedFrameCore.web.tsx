@@ -157,7 +157,7 @@ const guildedFrameCSS = `
     mix-blend-mode: multiply;
     pointer-events: none;
     z-index: 0;
-    /* aged-paper vignette — darkens toward the frame's edges */
+    /* aged-paper vignette: darkens toward the frame's edges */
     box-shadow: inset 0 0 130px rgba(54, 41, 22, 0.3), inset 0 0 22px rgba(54, 41, 22, 0.14);
 }
 

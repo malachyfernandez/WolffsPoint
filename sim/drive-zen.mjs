@@ -1,5 +1,5 @@
 /**
- * sim/drive-zen.mjs — puppeteer harness driving real Zen (Firefox) via
+ * sim/drive-zen.mjs: puppeteer harness driving real Zen (Firefox) via
  * WebDriver BiDi. Mirrors drive.mjs but can't intercept downloads via CDP, so
  * the report is pulled from window.__perfReport instead.
  * Usage: node sim/drive-zen.mjs [--tour] [--url http://localhost:8090]
@@ -69,7 +69,7 @@ if (runTour) {
     fs.writeFileSync(path.join(outDir, file), md);
     console.log('report written:', file);
   } else {
-    console.log('WARN: window.__perfReport empty — report not captured');
+    console.log('WARN: window.__perfReport empty: report not captured');
   }
 }
 

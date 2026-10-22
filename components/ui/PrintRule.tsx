@@ -4,7 +4,7 @@ import Column from '../layout/Column';
 
 interface PrintRuleProps {
   className?: string;
-  /** Flip the thick/thin order — use for rules at the bottom of a block. */
+  /** Flip the thick/thin order: use for rules at the bottom of a block. */
   flip?: boolean;
 }
 

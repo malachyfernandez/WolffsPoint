@@ -16,6 +16,7 @@ import MultiSelectToolbar from './multiSelect/MultiSelectToolbar';
 import TableFreezeControls, { CONTROLS_STACKED_BREAKPOINT } from './TableFreezeControls';
 import TableRowPreview from './TableRowPreview';
 import { useRolesFreeze } from 'hooks/useTableFreeze';
+import { useContentWidth } from 'hooks/useContentWidth';
 
 interface RolesPageOPERATORProps {
   currentUserId: string;
@@ -39,6 +40,7 @@ const RolesPageContent = ({ currentUserId, gameId }: RolesPageOPERATORProps) => 
   });
 
   const freezeController = useRolesFreeze(gameId);
+  const contentWidth = useContentWidth();
   const roles = roleTable.scheduledUpdate?.value ?? roleTable.value ?? [];
   const visibleRoles = roles.filter((role) => role.isVisible !== false);
   const isSyncing = roleTable?.state?.isSyncing ?? false;
@@ -81,7 +83,7 @@ const RolesPageContent = ({ currentUserId, gameId }: RolesPageOPERATORProps) => 
       dependencies={[roleTable, hasInitiallyLoaded]}
       loadingText="Loading roles"
       className="min-h-190">
-      <Column className="gap-4 py-3 sm:px-4">
+      <Column className={`gap-4 py-3 ${contentWidth >= 640 ? 'px-4' : ''}`}>
         {visibleRoles.length > 0 ? (
           <Column className="gap-4">
             <MultiSelectToolbar />
@@ -101,7 +103,6 @@ const RolesPageContent = ({ currentUserId, gameId }: RolesPageOPERATORProps) => 
                         setDoSync={setDoSync}
                         isBeingEdited={isRoleTableBeingEdited}
                         setIsBeingEdited={setIsRoleTableBeingEdited}
-                        showInputs={true}
                       />
                     </Row>
                   </Column>
@@ -109,7 +110,7 @@ const RolesPageContent = ({ currentUserId, gameId }: RolesPageOPERATORProps) => 
               </ShadowScrollView>
             </TableRowPreview>
             <Row
-              className="-mt-2 w-full flex-wrap items-start justify-between gap-4 px-4 sm:-mt-6"
+              className={`w-full flex-wrap items-start justify-between gap-4 px-4 ${contentWidth >= 640 ? '-mt-6' : '-mt-2'}`}
               onLayout={(event: any) => setControlsRowWidth(event.nativeEvent.layout.width)}>
               <AppButton
                 variant="accent"
@@ -146,6 +147,7 @@ const RolesPageContent = ({ currentUserId, gameId }: RolesPageOPERATORProps) => 
         isOpen={isAddDialogOpen}
         onOpenChange={setIsAddDialogOpen}
         onAddRole={addRole}
+        gameId={gameId}
       />
     </LoadingContainer>
   );

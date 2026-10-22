@@ -7,6 +7,7 @@ import { userVarConfig } from '../utils/userVarConfig';
 import { decodeUserValue, encodeUserValue } from './userValueSerialization';
 import { globalRateLimitMonitor } from './useRateLimitMonitor';
 import { deepEqual } from '../utils/deepEqual';
+import { nowMs } from '../utils/simNow';
 import { useToast } from '../contexts/ToastContext';
 import {
   ScheduledSetOptions,
@@ -324,7 +325,7 @@ export function useUserVariable<T>({
       key,
     }) as any;
 
-    const now = Date.now();
+    const now = nowMs();
 
     localStore.setQuery(
       api.user_vars.get,
@@ -355,11 +356,11 @@ export function useUserVariable<T>({
 
     if (globalRateLimitMonitor.isBlocked(`user_vars:${key}`)) {
       if (globalRateLimitMonitor.consumeTripWarning(`user_vars:${key}`)) {
-        const msg = `⚠️ High data activity detected — possible infinite loop bug (key "${key}"). Writes paused.`;
+        const msg = `⚠️ High data activity detected, possible infinite loop bug (key "${key}"). Writes paused.`;
         showToast(msg);
         devWarn(
           'uservar_rate_limited',
-          `Blocked set for key="${key}" — mutation rate limit exceeded. Likely infinite write loop.`
+          `Blocked set for key="${key}": mutation rate limit exceeded. Likely infinite write loop.`
         );
       }
       return;

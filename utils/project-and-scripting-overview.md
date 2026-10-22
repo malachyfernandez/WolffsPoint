@@ -73,26 +73,26 @@ The scripting system is an internal, block-editable language rather than JavaScr
 ### Statement kinds (AST)
 
 - `BlockStatement`, `ExpressionStatement`
-- `IfStatement` — `If (cond) { ... }` / `IfElse`
-- `ForEachStatement` — `ForEach (item in list) { ... }`
-- `FunctionStatement` / `ReturnStatement` — user-defined functions
-- `UpdateCellStatement` — the `UpdateCell` table-write block (below)
-- `OnTagAddedStatement` / `OnTagRemovedStatement` — container blocks used inside tag trigger scripts
+- `IfStatement`: `If (cond) { ... }` / `IfElse`
+- `ForEachStatement`: `ForEach (item in list) { ... }`
+- `FunctionStatement` / `ReturnStatement`: user-defined functions
+- `UpdateCellStatement`: the `UpdateCell` table-write block (below)
+- `OnTagAddedStatement` / `OnTagRemovedStatement`: container blocks used inside tag trigger scripts
 
 ### Where scripts run
 
 There are exactly **two** places scripts execute:
 
-1. **Role / vote / morning markdown** — `/*script ... script*/` blocks rendered through `MarkdownRenderer` → `ScriptRuntime`. Only these have input blocks, because only player-facing forms have input state. At input time, `UpdateCell` blocks are partially evaluated into `PlannedUpdate`s (see below); at certify time the stored planned updates execute against the table.
-2. **Tag triggers** — stored per-game in `tagTriggers-{gameId}`, edited from `AddTagDialog` in edit mode. They run when a tag is added to or removed from a cell. They have **no input state** (input blocks are hidden via `hideInputs` on `ScriptEditorDialog`), and instead use trigger globals (`placedTag`, `placedUser`, `placedDay`, `placedColumn`) plus `OnTagAdded { }` / `OnTagRemoved { }` container blocks — the interpreter's `triggerMode` decides which containers execute.
+1. **Role / vote / morning markdown**: `/*script ... script*/` blocks rendered through `MarkdownRenderer` → `ScriptRuntime`. Only these have input blocks, because only player-facing forms have input state. At input time, `UpdateCell` blocks are partially evaluated into `PlannedUpdate`s (see below); at certify time the stored planned updates execute against the table.
+2. **Tag triggers**: stored per-game in `tagTriggers-{gameId}`, edited from `AddTagDialog` in edit mode. They run when a tag is added to or removed from a cell. They have **no input state** (input blocks are hidden via `hideInputs` on `ScriptEditorDialog`), and instead use trigger globals (`placedTag`, `placedUser`, `placedDay`, `placedColumn`) plus `OnTagAdded { }` / `OnTagRemoved { }` container blocks, the interpreter's `triggerMode` decides which containers execute.
 
 ### Script globals
 
 Scripts receive capability-dependent globals built by `createScriptGlobals` in `wolffspoint/script/runtime/sources.ts`:
 
-- `players`: flattened player records — `realName`, `email`, `userId`, `role`, `isAlive`, a `days` array (`vote`, `action`, `morningMessage`, plus each extra day-column title), plus each extra user-column title merged in at the top level. Tag cells keep their encoded `[/TAG: "Name"/]` contents, so `.contains(tag("Name"))` works on them.
+- `players`: flattened player records: `realName`, `email`, `userId`, `role`, `isAlive`, a `days` array (`vote`, `action`, `morningMessage`, plus each extra day-column title), plus each extra user-column title merged in at the top level. Tag cells keep their encoded `[/TAG: "Name"/]` contents, so `.contains(tag("Name"))` works on them.
 - `roles`: visible role records (all roles for operator capability).
-- `currentPlayer`: the flattened record of the current player — only set when `capability === 'player'`.
+- `currentPlayer`: the flattened record of the current player, only set when `capability === 'player'`.
 - `currentDay`: zero-based current day index.
 - `dayDates`: the stored `MM/DD/YYYY` day strings.
 - `schedule`: the normalized game schedule.
@@ -105,18 +105,18 @@ Inputs are stored as strings. Multi-select controls store a JSON-encoded string 
 
 ### Builtins and notable blocks
 
-- `tag("Name")` — returns the encoded tag string `[/TAG: "Name"/]`; use with `.contains()` to test cell contents (`currentPlayer.entry("Column").contains(tag("Infected"))`). A builtin in `interpreter.ts`, also in `InsertModal` under "Data".
-- `Var("name")` — reads a script global/variable by name.
-- `Variable` — statement that defines a script variable.
-- `CreateMarkdown` / `CreateDivider` — display blocks that emit rendered markdown / a divider.
-- `UpdateCell` — statement that plans a table write: `PLAYER` (expression; `nothing` targets all players), `DAY` (number; `nothing` targets a player-level column), `COLUMN` (string title or a built-in field), `VALUE` (expression), `MODE` (`replace` / `append` / `remove`). In `replace` mode the previous cell value is captured as `previousCell`.
+- `tag("Name")`: returns the encoded tag string `[/TAG: "Name"/]`; use with `.contains()` to test cell contents (`currentPlayer.entry("Column").contains(tag("Infected"))`). A builtin in `interpreter.ts`, also in `InsertModal` under "Data".
+- `Var("name")`: reads a script global/variable by name.
+- `Variable`: statement that defines a script variable.
+- `CreateMarkdown` / `CreateDivider`: display blocks that emit rendered markdown / a divider.
+- `UpdateCell`: statement that plans a table write: `PLAYER` (expression; `nothing` targets all players), `DAY` (number; `nothing` targets a player-level column), `COLUMN` (string title or a built-in field), `VALUE` (expression), `MODE` (`replace` / `append` / `remove`). In `replace` mode the previous cell value is captured as `previousCell`.
 - List/data expressions: `Filter`, `Map`, `Sort`, `Length`, `First`, `Last`, `Get`, `Contains`, `Count`, `Join`, `.entry(key)`, `.index(pos)`, `.append`, `.replace`, `.concat`, `.contains`, `.startsWith`, `.endsWith`, `.upper`, `.lower`, `.toString`, `.toNumber`, math blocks (`Round`, `abs`, `MinMax`, `toPowerOf`, `Root`, `Trig`, `LogExp`, `Sign`).
 
 ## Input blocks
 
 Action and vote markdown can render normal supplemental controls:
 
-- `CreateSelectInput` — `LIST`, `LABEL`, `NUMSELECTABLE` (>1 renders a multi-select and stores a JSON array).
+- `CreateSelectInput`: `LIST`, `LABEL`, `NUMSELECTABLE` (>1 renders a multi-select and stores a JSON array).
 - `CreateTextInput`, `CreateNumberInput` (`MIN`/`MAX`), `CreateCheckbox` (`DEFAULT`).
 
 Vote markdown also has `CreateSelectVoteInput`. It uses the same single/multi-select renderer and options as a normal input, but marks one response as the certified vote. Its arguments are:
@@ -134,10 +134,10 @@ For player objects, the special vote input stores email addresses as stable targ
 
 Day timing is zone-aware (`resolveGameTimeZone` → `schedule.timezone` else device zone):
 
-- `getCurrentPlayableDayIndex` — which in-game day "today" is.
-- `isDayContentReleased` / `isDayReleasedAtTime` — wake-up gating for day content and morning messages.
-- `isNightWindowOpen` — whether the vote/action deadline window is still open for the selected day.
-- `skipVotingDays` / `skipActionsDays` — replace the respective form with a skipped notice.
+- `getCurrentPlayableDayIndex`: which in-game day "today" is.
+- `isDayContentReleased` / `isDayReleasedAtTime`: wake-up gating for day content and morning messages.
+- `isNightWindowOpen`: whether the vote/action deadline window is still open for the selected day.
+- `skipVotingDays` / `skipActionsDays`: replace the respective form with a skipped notice.
 
 For votes:
 
@@ -214,9 +214,9 @@ Only certified table data appears in newspaper vote results; changing an uncerti
 
 The preview **emulates the player**, it does not just render markdown:
 
-- `scriptSources` are built with `capability: 'player'`, `currentUserId`/`currentEmail` from the selected player, and `currentDay` = the previewed day index — so `currentPlayer`, tag checks, day checks, and `players` filters evaluate exactly as they would for that player on that day.
-- An **emulated "now"** is placed just after `wakeUpTime` on the previewed day's start date (in the game's timezone). Release gating, deadline windows, and the countdown all evaluate against that simulated instant — selecting a day means "believe it is that day," regardless of the real clock.
-- The player's real `playerNightSubmission-day-{N}-{gameId}` record seeds the emulated vote/action input state (including `SKIP_VOTE`), so scripts that branch on `Inputs` show what the player actually submitted; operators can still edit the state freely — nothing is saved.
+- `scriptSources` are built with `capability: 'player'`, `currentUserId`/`currentEmail` from the selected player, and `currentDay` = the previewed day index, so `currentPlayer`, tag checks, day checks, and `players` filters evaluate exactly as they would for that player on that day.
+- An **emulated "now"** is placed just after `wakeUpTime` on the previewed day's start date (in the game's timezone). Release gating, deadline windows, and the countdown all evaluate against that simulated instant, selecting a day means "believe it is that day," regardless of the real clock.
+- The player's real `playerNightSubmission-day-{N}-{gameId}` record seeds the emulated vote/action input state (including `SKIP_VOTE`), so scripts that branch on `Inputs` show what the player actually submitted; operators can still edit the state freely; nothing is saved.
 - `skipVotingDays` / `skipActionsDays` replace the respective form with the same "skipped" notice players see; vote/action lock state and deadlines are computed the same way as `YourEyesOnlyDayContentPLAYER`.
 - The role editor's role-scoped preview uses the same modal, restricted to players holding that role.
 
@@ -230,5 +230,5 @@ When extending this system:
 - Normalize vote values at every display/counting boundary to retain backward compatibility.
 - Preserve full option metadata so `InputsWithData` can resolve selected player or role objects.
 - Keep vote targets distinct from supplemental vote-form inputs.
-- Keep the player preview in sync with `YourEyesOnlyDayContentPLAYER` — new player-facing gating (locks, skips, releases) must be emulated there too.
+- Keep the player preview in sync with `YourEyesOnlyDayContentPLAYER`, new player-facing gating (locks, skips, releases) must be emulated there too.
 - Verify role editor preview, player input, Nightly review, table display, download/export, and newspaper counting together when changing stored vote shapes.

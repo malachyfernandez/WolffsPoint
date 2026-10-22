@@ -2,7 +2,7 @@
  * sim/mockConvexReact.ts
  *
  * Drop-in replacement for `convex/react` and `convex/react-clerk` in the
- * perf-audit copy. Backed by sim/mockDb.ts — a reactive in-memory store.
+ * perf-audit copy. Backed by sim/mockDb.ts: a reactive in-memory store.
  */
 
 import { useCallback, useRef, useSyncExternalStore } from 'react';
@@ -133,7 +133,7 @@ export interface MockMutationFn {
   ): (args: any) => Promise<any>;
 }
 
-// append the write key so reports show WHICH var/list each mutation hits —
+// append the write key so reports show WHICH var/list each mutation hits;
 // this makes the mount-time write storm readable
 const labelArgs = (name: string, args: any) => {
   const key = typeof args?.key === 'string' ? args.key : null;

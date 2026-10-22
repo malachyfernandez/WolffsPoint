@@ -5,21 +5,21 @@ import { Platform } from 'react-native';
  *
  * Why this exists: iOS Safari has no memory API (Apple blocks `deviceMemory`
  * for anti-fingerprinting) and its process manager (Jetsam) kills a tab's
- * WebContent process outright around ~200–400MB on older devices — the user
+ * WebContent process outright around ~200-400MB on older devices; the user
  * sees "A problem repeatedly occurred" and loses everything. We can't see
  * remaining RAM, so we infer device tier from the signals Safari *does* expose
  * and scale how much resident UI (mounted tab panes, dialog DOM snapshots)
  * we allow before we start evicting.
  *
  * Signals used:
- * - `navigator.deviceMemory` — Chrome/Android only, bucketed GB (0.25..8+)
- * - `navigator.hardwareConcurrency` — universal; old iPhones (6s–8, SE1/2)
+ * - `navigator.deviceMemory`: Chrome/Android only, bucketed GB (0.25..8+)
+ * - `navigator.hardwareConcurrency`: universal; old iPhones (6s-8, SE1/2)
  *   report ≤4 logical cores, modern iPhones report 6+
- * - `performance.memory.usedJSHeapSize` — Chrome only; polled for runtime
+ * - `performance.memory.usedJSHeapSize`: Chrome only; polled for runtime
  *   escalation toward the heap limit
- * - `document.wasDiscarded` — if the OS already discarded this tab once,
+ * - `document.wasDiscarded`: if the OS already discarded this tab once,
  *   permanently downgrade the tier (learned constraint)
- * - `navigator.userAgent` — iOS version + form factor hints
+ * - `navigator.userAgent`: iOS version + form factor hints
  */
 
 export type DeviceTier = 'high' | 'medium' | 'low';
@@ -51,7 +51,7 @@ const POLICIES: Record<DeviceTier, Record<MemoryPressure, MemoryPolicy>> = {
     critical: { maxHiddenTabs: 1, tabEvictDelayMs: 800,  keepMinimizedSnapshots: false, runtimeEscalation: true },
   },
   low: {
-    // Old iOS: keep it lean always — the tab dies hard when it crosses the
+    // Old iOS: keep it lean always: the tab dies hard when it crosses the
     // Jetsam ceiling, so err on culling early.
     none:     { maxHiddenTabs: 2, tabEvictDelayMs: 2000, keepMinimizedSnapshots: true,  runtimeEscalation: false },
     elevated: { maxHiddenTabs: 1, tabEvictDelayMs: 1500, keepMinimizedSnapshots: false, runtimeEscalation: false },
@@ -74,7 +74,7 @@ const isIOSUA = (ua: string) =>
 
 /**
  * Compute the device tier once from static signals. Order of precedence:
- * 1. `document.wasDiscarded` — the OS already killed us once: floor at 'low'.
+ * 1. `document.wasDiscarded`: the OS already killed us once: floor at 'low'.
  * 2. `navigator.deviceMemory` (Chromium): ≤2 low, ≤4 medium, else high.
  * 3. iOS Safari: no memory API → infer from hardwareConcurrency and OS version.
  *    ≤4 cores (iPhone 6s/7/8/SE-era, ≤3GB RAM) → low. iOS <15 → low.
@@ -84,7 +84,7 @@ const isIOSUA = (ua: string) =>
 export function detectDeviceTier(): DeviceTier {
   if (typeof navigator === 'undefined' || Platform.OS !== 'web') {
     // Native builds have real memory warnings available via the OS; treat as
-    // medium — the pressure escalation path can still apply on web only.
+    // medium: the pressure escalation path can still apply on web only.
     return 'medium';
   }
 
@@ -113,7 +113,7 @@ export function detectDeviceTier(): DeviceTier {
   }
 
   if (discarded && tier !== 'low') {
-    // The OS discarded this tab before — learn from it.
+    // The OS discarded this tab before, learn from it.
     tier = tier === 'high' ? 'medium' : 'low';
   }
   return tier;
@@ -121,7 +121,7 @@ export function detectDeviceTier(): DeviceTier {
 
 /**
  * Runtime pressure read on engines that expose JS heap stats (Chrome/Edge).
- * Returns null when unsupported (Safari/Firefox) — callers should fall back
+ * Returns null when unsupported (Safari/Firefox), callers should fall back
  * to tier-only policy.
  */
 export function readHeapPressure(): { ratio: number; pressure: MemoryPressure } | null {

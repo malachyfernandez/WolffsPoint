@@ -25,7 +25,7 @@ export interface ScriptRenderersProps {
 const optionFromValue = (value: unknown, index: number): AppDropdownOption => {
   if (value && typeof value === 'object') {
     const record = value as Record<string, unknown>;
-    // Registry already produces { value, label, meta? } — pass through directly
+    // Registry already produces { value, label, meta? } pass through directly
     if (typeof record.value === 'string' || typeof record.value === 'number') {
       return {
         value: String(record.value),
@@ -225,6 +225,10 @@ export const ScriptRenderers = ({
         const disabled = instruction.disabled || !setState;
         const value = state?.[instruction.key];
 
+        if (instruction.kind === 'navigation' || instruction.kind === 'group') {
+          // These belong to the document viewport, not an input dropdown.
+          return null;
+        }
         if (instruction.kind === 'divider') {
           return <View key={key} className="bg-border h-px w-full opacity-60" />;
         }

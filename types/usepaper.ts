@@ -13,7 +13,7 @@ export type NewspaperDividerStyle =
     | 'centeredShort' // short centered rule
     | 'diamond';      // thin rule with a small diamond in the center
 
-/** Legacy combined style — still used for backward-compat migration. */
+/** Legacy combined style: still used for backward-compat migration. */
 export type NewspaperSectionStyle = 'classic' | 'gazette' | 'editorial' | 'bulletin' | 'lateEdition';
 
 export interface NewspaperSection {

@@ -9,6 +9,7 @@ import {
   PlayerPageColumnSizes,
   defaultPlayerPageColumnSizes,
 } from './playerTableColumnSizing';
+import { adoptCertificationIdentities } from '../../utils/certificationIdentity';
 
 const normalizeStringColumns = (values: string[] | undefined, targetLength: number) => {
   return Array.from({ length: targetLength }, (_, index) => values?.[index] ?? '');
@@ -24,6 +25,7 @@ const normalizeSizeColumns = (values: ColumnSizeOption[] | undefined, targetLeng
 
 const normalizeDay = (day: DayData | undefined, targetDayColumns: number): DayData => {
   return {
+    ...day,
     vote: day?.vote ?? '',
     voteInputs: day?.voteInputs,
     voteInputKey: day?.voteInputKey,
@@ -93,6 +95,7 @@ export const normalizePlayerPageState = ({
     dayBaseColumns: {
       vote: baseSizes.dayBaseColumns?.vote ?? 'small',
       action: baseSizes.dayBaseColumns?.action ?? 'small',
+      morningMessage: baseSizes.dayBaseColumns?.morningMessage ?? 'small',
     },
     dayExtraColumns: normalizeSizeColumns(
       baseSizes.dayExtraColumns,
@@ -100,10 +103,39 @@ export const normalizePlayerPageState = ({
     ),
   };
 
+  // Deterministic only for initial adoption: both table normalizers may run
+  // before their first writes settle. Persisted IDs are always kept thereafter.
+  const seed = JSON.stringify([
+    normalizedUsers.map((user) => [user.email, user.realName]),
+    normalizedTitles.extraUserColumns,
+    normalizedTitles.extraDayColumns,
+  ]);
+  let hash = 2166136261;
+  for (let i = 0; i < seed.length; i++) hash = Math.imul(hash ^ seed.charCodeAt(i), 16777619);
+  let identityIndex = 0;
+  const usedIds = new Set([
+    ...normalizedUsers.flatMap((user) => [user.id, ...user.days.map((day) => day.id)]),
+    ...(normalizedTitles.dayIds ?? []),
+    ...(normalizedTitles.extraUserColumnIds ?? []),
+    ...(normalizedTitles.extraDayColumnIds ?? []),
+  ]);
+  const identified = adoptCertificationIdentities(
+    normalizedUsers,
+    normalizedTitles,
+    targetDayCount,
+    (kind) => {
+      let id: string;
+      do {
+        id = `${kind}-${(hash >>> 0).toString(36)}-${identityIndex++}`;
+      } while (usedIds.has(id));
+      usedIds.add(id);
+      return id;
+    }
+  );
   return {
-    titles: normalizedTitles,
+    titles: identified.titles,
     visibility: normalizedVisibility,
-    users: normalizedUsers,
+    users: identified.users,
     columnSizes: normalizedColumnSizes,
   };
 };

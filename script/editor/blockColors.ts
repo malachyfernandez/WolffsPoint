@@ -6,11 +6,11 @@ import type { InputType } from '../registry';
  * Every block category (statement + expression) and every socket input type
  * maps to a `BlockTint`. Related things intentionally share hue families:
  *
- * - Blues/purples — data & structure (data, list, function, variable)
- * - Warm hues    — logic & flow (boolean, operator, control, math)
- * - Greens       — player-facing I/O (input, display)
- * - Red          — table writes (side effects)
- * - Pink         — text
+ * - Blues/purples: data & structure (data, list, function, variable)
+ * - Warm hues   : logic & flow (boolean, operator, control, math)
+ * - Greens      : player-facing I/O (input, display)
+ * - Red         : table writes (side effects)
+ * - Pink        : text
  *
  * `bg` is a translucent fill that lets the paper texture show through.
  * `soft` is a fainter fill used for the header/footer strips of container
@@ -45,24 +45,28 @@ export const NEUTRAL_TINT: BlockTint = {
 
 /** Colors keyed by block category (same keys as CATEGORY_LABELS in InsertModal). */
 export const CATEGORY_TINTS: Record<string, BlockTint> = {
-  // data & structure — blue family
+  // data & structure: blue family
   data: tint('#1D4ED8'),
   list: tint('#4338CA'),
   function: tint('#7E22CE'),
   variable: tint('#475569'),
   object: tint('#1D4ED8'),
-  // logic & flow — warm family
+  // logic & flow: warm family
   boolean: tint('#A16207'),
   operator: tint('#B45309'),
   control: tint('#92400E'),
   math: tint('#C2410C'),
   number: tint('#C2410C'),
-  // player-facing I/O — greens
+  // player-facing I/O: greens
   input: tint('#15803D'),
   display: tint('#0F766E'),
-  // table writes — red (side effects)
+  // table writes: red (side effects)
   table: tint('#B91C1C'),
-  // text — pink
+  // cell ops inside UpdateCell: same red family
+  cell: tint('#B91C1C'),
+  // script files: deep slate-indigo
+  file: tint('#3730A3'),
+  // text: pink
   string: tint('#BE185D'),
   // modal-only categories
   suggested: tint('#4B5563', 0.12, 0.08),
@@ -72,7 +76,7 @@ export const getCategoryTint = (category?: string | null): BlockTint =>
   (category && CATEGORY_TINTS[category]) || NEUTRAL_TINT;
 
 /**
- * Colors keyed by socket input type — what a block "takes in". They reuse the
+ * Colors keyed by socket input type, what a block "takes in". They reuse the
  * same hues as the categories that produce those values, so a LIST socket is
  * indigo like list blocks, a BOOLEAN socket is yellow like boolean blocks, etc.
  */

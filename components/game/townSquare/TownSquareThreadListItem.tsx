@@ -8,6 +8,7 @@ import MarkdownRenderer from '../../ui/markdown/MarkdownRenderer';
 import { InputOptionsProvider } from '../markdownEditor/InputOptionsProvider';
 import { TownSquareAuthorAvatar, TownSquareAuthorName } from './TownSquareAuthorIdentity';
 import { ThreadViewModel, TownSquareReadState, formatTimestamp } from './townSquareUtils';
+import { useContentWidth } from 'hooks/useContentWidth';
 
 interface TownSquareThreadListItemProps {
     index: number;
@@ -27,6 +28,7 @@ const TownSquareThreadListItem = ({ index, isLast, isOperator, onPress, onToggle
     const hasNewReplies = !isNeverViewed && newReplyCount > 0;
     const isPinned = thread.isPinned === true;
     const isAnnouncement = thread.postType === 'announcement';
+    const contentWidth = useContentWidth();
 
     const pinIcon = isPinned ? (
         <View
@@ -49,7 +51,7 @@ const TownSquareThreadListItem = ({ index, isLast, isOperator, onPress, onToggle
 
     // Pinned threads render as a full post in the list, copying the detail
     // view's layout exactly (mobile vs desktop header arrangement, title
-    // styling, markdown body) — everything up until the reply-button row.
+    // styling, markdown body): everything up until the reply-button row.
     // The date line is extended with reply count, announcement tag, new-replies
     // badge, and the pin indicator so all list-item meta stays visible.
     if (isPinned) {
@@ -90,17 +92,17 @@ const TownSquareThreadListItem = ({ index, isLast, isOperator, onPress, onToggle
             <Pressable onPress={onPress} testID="townthread-open">
                 <Row className={`gap-4 items-start px-1 py-5 ${!isLast || index === 0 ? 'border-b border-border/20' : ''}`}>
                     <Column className='gap-4 flex-1'>
-                        {/* Mobile header — avatar + author + meta on one row */}
-                        <Row className='sm:hidden w-full items-center'>
+                        {/* Mobile header: avatar + author + meta on one row */}
+                        <Row className={`w-full items-center ${contentWidth >= 640 ? 'hidden' : ''}`}>
                             <TownSquareAuthorAvatar gameId={thread.gameId} size={60} userId={thread.authorUserId} />
                             <Column className='flex-1 gap-2'>
                                 <TownSquareAuthorName gameId={thread.gameId} userId={thread.authorUserId} />
                                 {metaRow}
                             </Column>
                         </Row>
-                        {/* Desktop header — avatar on left, title + author + meta on right */}
+                        {/* Desktop header: avatar on left, title + author + meta on right */}
                         <Row className='gap-4 items-start'>
-                            <TownSquareAuthorAvatar gameId={thread.gameId} size={60} userId={thread.authorUserId} className="hidden sm:flex" />
+                            <TownSquareAuthorAvatar gameId={thread.gameId} size={60} userId={thread.authorUserId} className={contentWidth >= 640 ? 'flex' : 'hidden'} />
                             <Column className='gap-4 flex-1'>
                                 <Row className='gap-4 items-center'>
                                     <FontText weight='bold' className='text-3xl leading-10'>{thread.titleResolved}</FontText>
@@ -113,7 +115,7 @@ const TownSquareThreadListItem = ({ index, isLast, isOperator, onPress, onToggle
                                         </View>
                                     )}
                                 </Row>
-                                <Column className='gap-1 hidden sm:flex'>
+                                <Column className={`gap-1 ${contentWidth >= 640 ? 'flex' : 'hidden'}`}>
                                     <TownSquareAuthorName gameId={thread.gameId} userId={thread.authorUserId} />
                                     {metaRow}
                                 </Column>
@@ -150,7 +152,7 @@ const TownSquareThreadListItem = ({ index, isLast, isOperator, onPress, onToggle
                                     </View>
                                 )}
                             </Row>
-                            <FontText variant='subtext' className='hidden md:flex'>{formatTimestamp(thread.createdAt)}</FontText>
+                            <FontText variant='subtext' className={contentWidth >= 768 ? 'flex' : 'hidden'}>{formatTimestamp(thread.createdAt)}</FontText>
                         </Row>
                         <TownSquareAuthorName gameId={thread.gameId} userId={thread.authorUserId} varient='subtext' />
                     </Column>
@@ -168,7 +170,7 @@ const TownSquareThreadListItem = ({ index, isLast, isOperator, onPress, onToggle
                                             Announcement
                                         </FontText>
                                     </View>
-                                    <FontText variant='subtext' className='md:hidden'>{formatTimestamp(thread.createdAt)}</FontText>
+                                    <FontText variant='subtext' className={contentWidth >= 768 ? 'hidden' : ''}>{formatTimestamp(thread.createdAt)}</FontText>
                                 </>
                             ) : (
                                 <>
@@ -185,10 +187,10 @@ const TownSquareThreadListItem = ({ index, isLast, isOperator, onPress, onToggle
                                             </FontText>
                                         </View>
                                     )}
-                                    <FontText variant='subtext' className='md:hidden'>{formatTimestamp(thread.createdAt)}</FontText>
+                                    <FontText variant='subtext' className={contentWidth >= 768 ? 'hidden' : ''}>{formatTimestamp(thread.createdAt)}</FontText>
                                 </>
                             )}
-                            {/* Pin icon — bottom left corner. Operators can press to toggle. */}
+                            {/* Pin icon: bottom left corner. Operators can press to toggle. */}
                             {pinControl}
                         </Row>
                     </Column>

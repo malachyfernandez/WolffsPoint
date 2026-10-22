@@ -23,13 +23,18 @@ import {
 import { CloseButton, MainContent, ActionButtons, SubDialogs } from './markdownEditor';
 import { InputOptionsProvider } from './markdownEditor/InputOptionsProvider';
 import ScriptEditorDialog from '../../script/editor/ScriptEditorDialog';
-import { useMarkdownRendererInputData, default as MarkdownRenderer } from '../ui/markdown/MarkdownRenderer';
+import CellModuleScriptEditor from './scriptFiles/CellModuleScriptEditor';
+import {
+  useMarkdownRendererInputData,
+  default as MarkdownRenderer,
+} from '../ui/markdown/MarkdownRenderer';
 import ShadowScrollView from '../ui/ShadowScrollView';
 import Column from '../layout/Column';
 import PlayerPreviewModal from './markdownEditor/PlayerPreviewModal';
 import MarkdownVariableDialog from './markdownEditor/MarkdownVariableDialog';
 import { createMarkdownVariableMarker } from '../../script/markdownVariables';
 import type { NewspaperDividerStyle, NewspaperTitleFont } from 'types/usepaper';
+import TownSquareComposerPreviewPane from './townSquare/TownSquareComposerPreviewPane';
 
 /** Find all `/*script ... script*\/` blocks in the markdown text. */
 const findScriptBlocks = (text: string): { start: number; end: number; content: string }[] => {
@@ -55,13 +60,28 @@ const findScriptBlockAtCursor = (
   return blocks.find((block) => cursor >= block.start && cursor <= block.end) ?? null;
 };
 
+/** Find the `/*file:...*\/` marker containing the cursor position, if any. */
+const findFileMarkerAtCursor = (
+  text: string,
+  cursor: number
+): { start: number; end: number } | null => {
+  const regex = /\/\*file:\s*\{[\s\S]*?\}\s*\*\//g;
+  let match: RegExpExecArray | null;
+  while ((match = regex.exec(text)) !== null) {
+    if (cursor >= match.index && cursor <= match.index + match[0].length) {
+      return { start: match.index, end: match.index + match[0].length };
+    }
+  }
+  return null;
+};
+
 export interface MarkdownEditorDialogSubmitPayload {
   markdown: string;
   plainText: string;
   title?: string;
 }
 
-interface MarkdownEditorDialogProps {
+export interface MarkdownEditorDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   title: string;
@@ -69,7 +89,6 @@ interface MarkdownEditorDialogProps {
   initialTitle?: string;
   onSubmit: (payload: MarkdownEditorDialogSubmitPayload) => void;
   gameId?: string;
-  showInputs?: boolean;
   showScript?: boolean;
   showVariables?: boolean;
   /** When true (default), input-creating blocks are hidden in the script editor.
@@ -86,7 +105,7 @@ interface MarkdownEditorDialogProps {
   centered?: boolean;
   roleName?: string;
   /** When true, shows the "Preview as Player" button. Only the role message
-   *  editor should pass this — it saves the markdown and opens a preview modal
+   *  editor should pass this: it saves the markdown and opens a preview modal
    *  that renders the message as a specific player would see it. */
   showPreviewAsPlayerOption?: boolean;
   /** Scoped key for save history storage. If omitted, save history is disabled. */
@@ -99,6 +118,23 @@ interface MarkdownEditorDialogProps {
   onRestore?: () => void;
   newspaperTitleFont?: NewspaperTitleFont;
   newspaperDividerStyle?: NewspaperDividerStyle;
+  /** File contexts: instead of inserting an inline `/*script*\/` island, the
+   *  script button asks the host to open the file browser; `onInsert` receives
+   *  the `/*file:...*\/` marker text to splice into the draft. */
+  onRequestFileInsert?: (onInsert: (markerText: string) => void) => void;
+  headerContent?: React.ReactNode;
+  onEditSource?: (markdown: string) => void;
+  onDraftChange?: (markdown: string) => void;
+  initialModified?: boolean;
+  onDone?: () => void;
+  transformPreviewMarkdown?: (markdown: string) => string;
+  draftIdentity?: string;
+  fileInputNames?: string[];
+  onCreateFileInput?: (onCreated: (name: string) => void) => void;
+  initialSelection?: SelectionRange;
+  onSelectionChange?: (selection: SelectionRange) => void;
+  onOpenFileHistory?: () => void;
+  draftReplacement?: { body: string; revision: number } | null;
 }
 
 const ScriptEditorWithSources = ({
@@ -131,14 +167,15 @@ const ScriptEditorWithSources = ({
   readOnly?: boolean;
 }) => {
   const { scriptSources } = useMarkdownRendererInputData();
+  const Editor = gameId ? CellModuleScriptEditor : ScriptEditorDialog;
   return (
-    <ScriptEditorDialog
+    <Editor
       isOpen={isOpen}
       onOpenChange={onOpenChange}
       onSubmit={onSubmit}
       sources={scriptSources}
       initialScriptText={initialScriptText}
-      gameId={gameId}
+      gameId={gameId ?? ''}
       hideInputs={hideInputs}
       allowVoteInput={allowVoteInput}
       onSaveToServer={onSaveToServer}
@@ -165,7 +202,6 @@ const ReadOnlyMarkdownPreview = ({
   draftTitle,
   draftBody,
   isPreviewSideBySide,
-  showInputs,
   centered,
   gameId,
   hideInputs,
@@ -177,7 +213,6 @@ const ReadOnlyMarkdownPreview = ({
   draftTitle: string;
   draftBody: string;
   isPreviewSideBySide: boolean;
-  showInputs: boolean;
   centered: boolean;
   gameId?: string;
   hideInputs?: boolean;
@@ -221,7 +256,6 @@ const ReadOnlyMarkdownPreview = ({
         draftBody={draftBody}
         isPreviewSideBySide={isPreviewSideBySide}
         activeTab={activeTab}
-        showInputs={showInputs}
         previewInputState={previewInputState}
         setPreviewInputState={setPreviewInputState}
         setDraftTitle={() => {}}
@@ -232,7 +266,6 @@ const ReadOnlyMarkdownPreview = ({
         onItalic={() => {}}
         onLink={() => {}}
         onImage={() => {}}
-        onInput={() => {}}
         onMore={() => {}}
         centered={centered}
         readOnly
@@ -276,7 +309,6 @@ const MarkdownEditorDialog = ({
   initialTitle = '',
   onSubmit,
   gameId,
-  showInputs = false,
   showScript = false,
   showVariables = false,
   hideInputs = true,
@@ -297,10 +329,26 @@ const MarkdownEditorDialog = ({
   onRestore,
   newspaperTitleFont,
   newspaperDividerStyle,
+  onRequestFileInsert,
+  headerContent,
+  onEditSource,
+  onDraftChange,
+  initialModified = false,
+  onDone,
+  transformPreviewMarkdown,
+  draftIdentity,
+  fileInputNames,
+  onCreateFileInput,
+  initialSelection,
+  onSelectionChange,
+  onOpenFileHistory,
+  draftReplacement,
 }: MarkdownEditorDialogProps) => {
   const { executeCommand } = useUndoRedo();
   const createUndoSnapshot = useCreateUndoSnapshot();
-  const { history, addSave, clearHistory, maxSaves } = useSaveHistory(historyKey ?? null, { enabled: isOpen });
+  const { history, addSave, clearHistory, maxSaves } = useSaveHistory(historyKey ?? null, {
+    enabled: isOpen,
+  });
 
   const { targetRef, performMinimize } = useMinimizeTarget({
     title,
@@ -318,7 +366,6 @@ const MarkdownEditorDialog = ({
   const [isMoreDialogOpen, setIsMoreDialogOpen] = useState(false);
   const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false);
   const [isImageDialogOpen, setIsImageDialogOpen] = useState(false);
-  const [isInputDialogOpen, setIsInputDialogOpen] = useState(false);
   const [isVariableDialogOpen, setIsVariableDialogOpen] = useState(false);
   const [isLeaveConfirmDialogOpen, setIsLeaveConfirmDialogOpen] = useState(false);
   const [isScriptDialogOpen, setIsScriptDialogOpen] = useState(false);
@@ -333,10 +380,30 @@ const MarkdownEditorDialog = ({
   const [isPlayerPreviewOpen, setIsPlayerPreviewOpen] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [previewEntry, setPreviewEntry] = useState<SavedEntry | null>(null);
+  useEffect(() => {
+    if (isOpen) onDraftChange?.(draftBody);
+  }, [draftBody, isOpen, onDraftChange]);
 
   // Sticky-enabled: once Done becomes enabled, it stays enabled (until dialog closes)
   const [hasEverBeenEnabled, setHasEverBeenEnabled] = useState(false);
+  const [pendingInitialChanges, setPendingInitialChanges] = useState(initialModified);
+  useEffect(() => {
+    setPendingInitialChanges(initialModified);
+  }, [initialModified, isOpen]);
   const bodyInputRef = useRef<TextInput>(null);
+  const initialContent = useRef(initialMarkdown);
+  initialContent.current = initialMarkdown;
+  const selectionOnOpen = useRef(initialSelection);
+  selectionOnOpen.current = initialSelection;
+  const initializationKey = draftIdentity ?? initialMarkdown;
+
+  useEffect(() => {
+    if (draftReplacement) setDraftBody(draftReplacement.body);
+  }, [draftReplacement]);
+
+  useEffect(() => {
+    if (isOpen) onSelectionChange?.(selection);
+  }, [selection, isOpen, onSelectionChange]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -346,14 +413,20 @@ const MarkdownEditorDialog = ({
 
     setActiveTab('editing');
     setDraftTitle(initialTitle ?? '');
-    setDraftBody(initialMarkdown ?? '');
+    setDraftBody(initialContent.current ?? '');
     setEditingStartTitle(initialTitle ?? '');
-    setEditingStartText(initialMarkdown ?? '');
-    setSelection(emptySelection);
+    setEditingStartText(initialContent.current ?? '');
+    const savedSelection = selectionOnOpen.current;
+    const openingSelection = savedSelection
+      ? {
+          start: Math.min(savedSelection.start, initialContent.current.length),
+          end: Math.min(savedSelection.end, initialContent.current.length),
+        }
+      : undefined;
+    setSelection(openingSelection ?? emptySelection);
     setIsMoreDialogOpen(false);
     setIsLinkDialogOpen(false);
     setIsImageDialogOpen(false);
-    setIsInputDialogOpen(false);
     setIsVariableDialogOpen(false);
     setIsLeaveConfirmDialogOpen(false);
     setEditingScriptBlock(null);
@@ -363,11 +436,23 @@ const MarkdownEditorDialog = ({
     // Focus the body after the dialog's open animation so the user can type right away.
     const timer = readOnly
       ? null
-      : setTimeout(() => bodyInputRef.current?.focus(), 100);
+      : setTimeout(() => {
+          const input = bodyInputRef.current;
+          input?.focus();
+          if (!openingSelection || !input) return;
+          if ('setSelectionRange' in input) {
+            (input as unknown as HTMLTextAreaElement).setSelectionRange(
+              openingSelection.start,
+              openingSelection.end
+            );
+          } else {
+            input.setNativeProps({ selection: openingSelection });
+          }
+        }, 100);
     return () => {
       if (timer) clearTimeout(timer);
     };
-  }, [initialMarkdown, initialTitle, isOpen, readOnly]);
+  }, [initializationKey, initialTitle, isOpen, readOnly]);
 
   const handleTabChange = (newTab: string) => {
     if (activeTab === 'editing' && newTab === 'preview') {
@@ -387,9 +472,6 @@ const MarkdownEditorDialog = ({
         },
         description: 'Edit markdown',
       });
-    } else if (activeTab === 'preview' && newTab === 'editing') {
-      setEditingStartTitle(draftTitle);
-      setEditingStartText(draftBody);
     }
 
     setActiveTab(newTab);
@@ -399,7 +481,8 @@ const MarkdownEditorDialog = ({
   const isMarkdownValid = !requireMarkdown || draftBody.trim().length > 0;
   const hasUnsavedChanges =
     draftBody.trim() !== (editingStartText?.trim() || '') ||
-    (includeTitle && draftTitle.trim() !== (editingStartTitle?.trim() || ''));
+    (includeTitle && draftTitle.trim() !== (editingStartTitle?.trim() || '')) ||
+    pendingInitialChanges;
   const isInvalid = !isTitleValid || !isMarkdownValid;
 
   // Sticky-enabled: once enabled, stays enabled unless invalid
@@ -476,10 +559,11 @@ const MarkdownEditorDialog = ({
         preview
       );
     }
+    onDone?.();
     onOpenChange(false);
   };
 
-  // Save without closing — persists via onSubmit and adds to history
+  // Save without closing: persists via onSubmit and adds to history
   const handleSave = () => {
     if (isInvalid) return;
     if (!hasUnsavedChanges) return;
@@ -492,6 +576,7 @@ const MarkdownEditorDialog = ({
 
     // Update the editing start so hasUnsavedChanges becomes false
     setEditingStartText(draftBody.trim());
+    setPendingInitialChanges(false);
     if (includeTitle) setEditingStartTitle(draftTitle.trim());
 
     // Add to save history
@@ -543,10 +628,15 @@ const MarkdownEditorDialog = ({
     runBodyUpdate((value, range) => wrapSelection(value, range, '*', '*', 'italic text'));
   const handleLink = () => setIsLinkDialogOpen(true);
   const handleImage = () => setIsImageDialogOpen(true);
-  const handleInput = () => setIsInputDialogOpen(true);
   const handleMore = () => setIsMoreDialogOpen(true);
-  const handleScript = () => setIsScriptDialogOpen(true);
-  const handleVariable = () => setIsVariableDialogOpen(true);
+  const handleVariable = () => {
+    // Paste/IME edits can update the DOM caret before onSelectionChange fires.
+    const input = bodyInputRef.current as unknown as HTMLTextAreaElement | null;
+    if (typeof input?.selectionStart === 'number') {
+      setSelection({ start: input.selectionStart, end: input.selectionEnd });
+    }
+    setIsVariableDialogOpen(true);
+  };
 
   // Detect if the cursor is inside a `/*script ... script*/` block.
   const cursorScriptBlock = useMemo(
@@ -554,7 +644,41 @@ const MarkdownEditorDialog = ({
     [draftBody, selection.start]
   );
 
+  // Detect if the cursor is inside a `/*file:...*/` marker.
+  const cursorFileMarker = useMemo(
+    () => findFileMarkerAtCursor(draftBody, selection.start),
+    [draftBody, selection.start]
+  );
+
+  const handleScript = () => {
+    // File contexts: inserting a script means inserting a file call.
+    if (onRequestFileInsert && !cursorScriptBlock) {
+      if (cursorFileMarker) {
+        // Cursor on an existing file marker → re-pick replaces it.
+        handleEditCode();
+        return;
+      }
+      onRequestFileInsert((markerText) =>
+        runBodyUpdate((value, range) => insertAtSelection(value, range, `\n\n${markerText}\n\n`))
+      );
+      return;
+    }
+    setIsScriptDialogOpen(true);
+  };
+
   const handleEditCode = () => {
+    if (cursorFileMarker && onRequestFileInsert) {
+      const range = cursorFileMarker;
+      onRequestFileInsert((markerText) => {
+        const next = `${draftBody.slice(0, range.start)}${markerText}${draftBody.slice(range.end)}`;
+        setDraftBody(next);
+        setSelection({
+          start: range.start + markerText.length,
+          end: range.start + markerText.length,
+        });
+      });
+      return;
+    }
     if (!cursorScriptBlock) return;
     setEditingScriptBlock({
       start: cursorScriptBlock.start,
@@ -579,7 +703,7 @@ const MarkdownEditorDialog = ({
     setIsScriptDialogOpen(false);
   };
 
-  // Called by the script editor when the user presses Save or Done — inserts the
+  // Called by the script editor when the user presses Save or Done, inserts the
   // script into the draft AND saves the full markdown to the server (fixes the
   // double-save issue where the script editor's "Save" only updated the draft).
   const handleSaveScriptToServer = (scriptText: string) => {
@@ -632,14 +756,14 @@ const MarkdownEditorDialog = ({
             <ConvexDialog.Content className="h-[80vh]" isSwipeable={false}>
               <View ref={targetRef} className="min-h-0 flex-1">
                 <CloseButton onPress={readOnly ? () => onOpenChange(false) : handleAttemptClose} />
-                {historyKey && !readOnly && (
+                {(historyKey || onOpenFileHistory) && !readOnly && (
                   <MinimizeButton
                     hasUnsavedChanges={hasUnsavedChanges}
                     onSave={handleSave}
                     onMinimize={performMinimize}
                   />
                 )}
-                {historyKey && !readOnly && (
+                {(historyKey || onOpenFileHistory) && !readOnly && (
                   <SaveHistoryPill
                     hasUnsavedChanges={hasUnsavedChanges}
                     isInvalid={isInvalid && hasUnsavedChanges}
@@ -651,11 +775,26 @@ const MarkdownEditorDialog = ({
                           : undefined
                     }
                     onSave={handleSave}
-                    onOpenHistory={() => setIsHistoryOpen(true)}
+                    onOpenHistory={onOpenFileHistory ?? (() => setIsHistoryOpen(true))}
                     hasMinimizeButton
                   />
                 )}
                 <DialogHeader text={title} subtext={dialogSubtext} />
+                {headerContent}
+                {onEditSource && (
+                  <Row className="justify-end py-2">
+                    <AppButton
+                      variant="outline"
+                      dropShadow={false}
+                      className="h-8 px-3"
+                      onPress={() => onEditSource(draftBody)}>
+                      <Row className="items-center gap-2">
+                        <Code2 size={14} color="rgb(46, 41, 37)" />
+                        <FontText className="text-xs">Edit source</FontText>
+                      </Row>
+                    </AppButton>
+                  </Row>
+                )}
                 <MainContent
                   includeTitle={includeTitle}
                   titleInputLabel={titleInputLabel}
@@ -664,7 +803,6 @@ const MarkdownEditorDialog = ({
                   draftBody={draftBody}
                   isPreviewSideBySide={isPreviewSideBySide}
                   activeTab={activeTab}
-                  showInputs={showInputs}
                   previewInputState={previewInputState}
                   setPreviewInputState={setPreviewInputState}
                   setDraftTitle={setDraftTitle}
@@ -675,42 +813,58 @@ const MarkdownEditorDialog = ({
                   onItalic={handleItalic}
                   onLink={handleLink}
                   onImage={handleImage}
-                  onInput={handleInput}
                   onMore={handleMore}
                   onScript={showScript ? handleScript : undefined}
+                  scriptLabel={onRequestFileInsert ? 'Insert file' : 'Insert script'}
                   onVariable={showVariables ? handleVariable : undefined}
                   centered={centered}
                   showPreviewAsPlayer={showPreviewAsPlayerOption}
                   onPreviewAsPlayer={handlePreviewAsPlayer}
-                  renderPreview={newspaperTitleFont ? () => (
-                    <Column className="min-w-0 flex-1 gap-2">
-                      <ShadowScrollView
-                        className="h-[52vh] flex-1"
-                        scrollViewClassName="h-[52vh] flex-1 border border-subtle-border px-4 py-4">
-                        <Column className="gap-3">
-                          {draftBody.trim() ? (
-                            <MarkdownRenderer
-                              markdown={draftBody.trim()}
-                              textAlign="justify"
-                              newspaperTitleFont={newspaperTitleFont}
-                              newspaperDividerStyle={newspaperDividerStyle}
-                              isInDialog
-                            />
-                          ) : (
-                            <Column className="gap-1 py-12">
-                              <FontText weight="medium">Nothing to preview yet</FontText>
-                              <FontText variant="subtext">Start typing in the Editing tab.</FontText>
+                  renderPreview={
+                    transformPreviewMarkdown
+                      ? () => (
+                          <TownSquareComposerPreviewPane
+                            includeTitle={false}
+                            title=""
+                            markdown={transformPreviewMarkdown(draftBody)}
+                            markdownInputState={previewInputState}
+                            setMarkdownInputState={setPreviewInputState}
+                          />
+                        )
+                      : newspaperTitleFont
+                        ? () => (
+                            <Column className="min-w-0 flex-1 gap-2">
+                              <ShadowScrollView
+                                className="h-[52vh] flex-1"
+                                scrollViewClassName="h-[52vh] flex-1 border border-subtle-border px-4 py-4">
+                                <Column className="gap-3">
+                                  {draftBody.trim() ? (
+                                    <MarkdownRenderer
+                                      markdown={draftBody.trim()}
+                                      textAlign="justify"
+                                      newspaperTitleFont={newspaperTitleFont}
+                                      newspaperDividerStyle={newspaperDividerStyle}
+                                      isInDialog
+                                    />
+                                  ) : (
+                                    <Column className="gap-1 py-12">
+                                      <FontText weight="medium">Nothing to preview yet</FontText>
+                                      <FontText variant="subtext">
+                                        Start typing in the Editing tab.
+                                      </FontText>
+                                    </Column>
+                                  )}
+                                </Column>
+                              </ShadowScrollView>
                             </Column>
-                          )}
-                        </Column>
-                      </ShadowScrollView>
-                    </Column>
-                  ) : undefined}
+                          )
+                        : undefined
+                  }
                   readOnly={readOnly}
                   inputRef={bodyInputRef}
                 />
                 <Row className="-mx-3 items-center justify-between gap-4 pt-4 sm:mx-0">
-                  {cursorScriptBlock && !readOnly ? (
+                  {(cursorScriptBlock || cursorFileMarker) && !readOnly ? (
                     <AppButton
                       variant="outline"
                       className="h-8 px-3"
@@ -718,7 +872,9 @@ const MarkdownEditorDialog = ({
                       dropShadow={false}>
                       <Row className="items-center gap-1.5">
                         <Code2 size={14} color="#1a1a1a" />
-                        <FontText className="text-sm">Edit Code</FontText>
+                        <FontText className="text-sm">
+                          {cursorFileMarker && onRequestFileInsert ? 'Change File' : 'Edit Code'}
+                        </FontText>
                       </Row>
                     </AppButton>
                   ) : (
@@ -754,8 +910,6 @@ const MarkdownEditorDialog = ({
       </ConvexDialog.Root>
 
       <SubDialogs
-        gameId={gameId}
-        showInputs={showInputs}
         selectedText={selectedText}
         isMoreDialogOpen={isMoreDialogOpen}
         setIsMoreDialogOpen={setIsMoreDialogOpen}
@@ -763,8 +917,6 @@ const MarkdownEditorDialog = ({
         setIsLinkDialogOpen={setIsLinkDialogOpen}
         isImageDialogOpen={isImageDialogOpen}
         setIsImageDialogOpen={setIsImageDialogOpen}
-        isInputDialogOpen={isInputDialogOpen}
-        setIsInputDialogOpen={setIsInputDialogOpen}
         isLeaveConfirmDialogOpen={isLeaveConfirmDialogOpen}
         setIsLeaveConfirmDialogOpen={setIsLeaveConfirmDialogOpen}
         runBodyUpdate={runBodyUpdate}
@@ -776,6 +928,17 @@ const MarkdownEditorDialog = ({
       <MarkdownVariableDialog
         isOpen={isVariableDialogOpen}
         onOpenChange={setIsVariableDialogOpen}
+        inputNames={fileInputNames}
+        onCreateInput={
+          onCreateFileInput
+            ? () =>
+                onCreateFileInput((name) =>
+                  runBodyUpdate((value, range) =>
+                    insertAtSelection(value, range, createMarkdownVariableMarker(name))
+                  )
+                )
+            : undefined
+        }
         onInsert={(name) =>
           runBodyUpdate((value, range) =>
             insertAtSelection(value, range, createMarkdownVariableMarker(name))
@@ -811,7 +974,6 @@ const MarkdownEditorDialog = ({
                       draftBody={(entry.value as { markdown: string })?.markdown ?? ''}
                       isPreviewSideBySide={isPreviewSideBySide}
                       activeTab="preview"
-                      showInputs={showInputs}
                       previewInputState={{}}
                       setPreviewInputState={() => {}}
                       setDraftTitle={() => {}}
@@ -822,7 +984,6 @@ const MarkdownEditorDialog = ({
                       onItalic={() => {}}
                       onLink={() => {}}
                       onImage={() => {}}
-                      onInput={() => {}}
                       onMore={() => {}}
                       centered={centered}
                       readOnly
@@ -872,7 +1033,6 @@ const MarkdownEditorDialog = ({
                   draftTitle={(previewEntry.value as { title?: string })?.title ?? ''}
                   draftBody={(previewEntry.value as { markdown: string })?.markdown ?? ''}
                   isPreviewSideBySide={isPreviewSideBySide}
-                  showInputs={showInputs}
                   centered={centered}
                   gameId={gameId}
                   hideInputs={hideInputs}

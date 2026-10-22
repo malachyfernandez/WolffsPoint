@@ -55,12 +55,19 @@ export const printExpression = (
     case 'MarkdownLiteral': {
       const markdown = `\`${expression.value.replace(/\\/g, '\\\\').replace(/`/g, '\\`')}\``;
       const variableNames = getMarkdownVariableNames(expression.value);
+      for (const binding of expression.variables ?? []) {
+        if (!variableNames.some((name) => name.toLowerCase() === binding.name.toLowerCase())) {
+          variableNames.push(binding.name);
+        }
+      }
       if (variableNames.length === 0) {
         result = markdown;
         break;
       }
       const bindings = variableNames.map((name) => {
-        const binding = expression.variables?.find((variable) => variable.name === name);
+        const binding = expression.variables?.find(
+          (variable) => variable.name.toLowerCase() === name.toLowerCase()
+        );
         const value = binding?.expression ?? {
           kind: 'NothingLiteral' as const,
           span: expression.span,
@@ -148,15 +155,21 @@ export const printExpression = (
   return ownPrecedence < parentPrecedence ? `(${result})` : result;
 };
 
-const printBlock = (block: BlockStatement, depth: number): string => {
+const printBlock = (block: BlockStatement, depth: number, inCellLoop = false): string => {
   if (block.statements.length === 0) {
     return '{}';
   }
-  const body = block.statements.map((statement) => printStatement(statement, depth + 1)).join('\n');
+  const body = block.statements
+    .map((statement) => printStatement(statement, depth + 1, inCellLoop))
+    .join('\n');
   return `{\n${body}\n${indent(depth)}}`;
 };
 
-export const printStatement = (statement: Statement, depth: number = 0): string => {
+export const printStatement = (
+  statement: Statement,
+  depth: number = 0,
+  inCellLoop = false
+): string => {
   const prefix = indent(depth);
   const commentPrefix = indent(depth);
   const commentStr = statement.comment
@@ -167,22 +180,26 @@ export const printStatement = (statement: Statement, depth: number = 0): string 
     : '';
   switch (statement.kind) {
     case 'BlockStatement':
-      return `${commentStr}${prefix}${printBlock(statement, depth)}`;
+      return `${commentStr}${prefix}${printBlock(statement, depth, inCellLoop)}`;
     case 'ExpressionStatement':
       return `${commentStr}${prefix}${printExpression(statement.expression, 0, depth)};`;
     case 'IfStatement': {
       const first = statement.branches[0];
-      let result = `${prefix}If (${printExpression(first.condition, 0, depth)}) ${printBlock(first.body, depth)}`;
+      let result = `${prefix}If (${printExpression(first.condition, 0, depth)}) ${printBlock(first.body, depth, inCellLoop)}`;
       for (const branch of statement.branches.slice(1)) {
-        result += ` ElseIf (${printExpression(branch.condition, 0, depth)}) ${printBlock(branch.body, depth)}`;
+        result += ` ElseIf (${printExpression(branch.condition, 0, depth)}) ${printBlock(branch.body, depth, inCellLoop)}`;
       }
       if (statement.elseBody) {
-        result += ` Else ${printBlock(statement.elseBody, depth)}`;
+        result += ` Else ${printBlock(statement.elseBody, depth, inCellLoop)}`;
       }
       return `${commentStr}${result}`;
     }
     case 'ForEachStatement':
-      return `${commentStr}${prefix}ForEach (${statement.itemName} in ${printExpression(statement.iterable, 0, depth)}) ${printBlock(statement.body, depth)}`;
+      return `${commentStr}${prefix}ForEach (${statement.itemName} in ${printExpression(statement.iterable, 0, depth)}) ${printBlock(statement.body, depth, inCellLoop)}`;
+    case 'NavButtonStatement':
+      return `${commentStr}${prefix}NavButton({LABEL = ${printExpression(statement.label, 0, depth)}}) ${printBlock(statement.body, depth, inCellLoop)}`;
+    case 'DisplayGroupStatement':
+      return `${commentStr}${prefix}DisplayGroup({${statement.arguments.map((arg) => printArgument(arg, depth)).join(', ')}}) ${printBlock(statement.body, depth, inCellLoop)}`;
     case 'FunctionStatement': {
       let templateStr = '';
       if (statement.template && statement.template.length > 0) {
@@ -198,7 +215,7 @@ export const printStatement = (statement: Statement, depth: number = 0): string 
         });
         templateStr = ` template(${pieces.join(', ')})`;
       }
-      return `${commentStr}${prefix}Function ${statement.name}(${statement.parameters.join(', ')})${templateStr} ${printBlock(statement.body, depth)}`;
+      return `${commentStr}${prefix}Function ${statement.name}(${statement.parameters.join(', ')})${templateStr} ${printBlock(statement.body, depth, inCellLoop)}`;
     }
     case 'ReturnStatement':
       return `${commentStr}${prefix}Return${statement.value ? ` ${printExpression(statement.value, 0, depth)}` : ''};`;
@@ -211,31 +228,74 @@ export const printStatement = (statement: Statement, depth: number = 0): string 
         args.push(`DAY = ${printExpression(statement.dayIndex, 0, depth)}`);
       }
       args.push(`COLUMN = ${printExpression(statement.column, 0, depth)}`);
-      if (statement.itemName !== 'cellContents') {
-        args.push(`ITEM = ${JSON.stringify(statement.itemName)}`);
+      if (statement.allowDuplicates !== undefined) {
+        args.push(`ALLOWDUPLICATES = ${statement.allowDuplicates ? 'True' : 'False'}`);
       }
-      const bodyWithReturn: Statement[] = [
-        ...statement.body.statements,
-        {
-          kind: 'ReturnStatement' as const,
-          value: statement.updateValue,
-          span: statement.updateValue.span,
-        },
-      ];
-      const bodyBlock: BlockStatement = {
-        kind: 'BlockStatement' as const,
-        statements: bodyWithReturn,
-        span: statement.body.span,
-      };
-      return `${commentStr}${prefix}UpdateCell({${args.join(', ')}}) ${printBlock(bodyBlock, depth)}`;
+      if (statement.autoRemove !== undefined) {
+        args.push(`AUTOREMOVE = ${statement.autoRemove ? 'True' : 'False'}`);
+      }
+      const stmts = statement.body?.statements ?? [];
+      // A lone ForEachCell whose body holds no cell ops is the legacy
+      // `{ ...; Return expr; }` form - the body prints bare (item name as
+      // the ITEM arg) so round-trips stay byte-identical with older files.
+      // Bodies WITH cell ops print the canonical `Each ... { }` instead:
+      // inside the bare braces, `Add`/`ForCell` would re-parse at the
+      // UpdateCell level, breaking the loop's structure.
+      const loopBodyHasCellOps = (block: BlockStatement): boolean =>
+        block.statements.some((s) => {
+          if (s.kind === 'CellOpStatement' || s.kind === 'ForEachCellStatement') return true;
+          const nested: BlockStatement[] =
+            s.kind === 'IfStatement'
+              ? [...s.branches.map((b) => b.body), ...(s.elseBody ? [s.elseBody] : [])]
+              : 'body' in s && s.body.kind === 'BlockStatement'
+                ? [s.body]
+                : [];
+          return nested.some(loopBodyHasCellOps);
+        });
+      if (
+        stmts.length === 1 &&
+        stmts[0].kind === 'ForEachCellStatement' &&
+        !loopBodyHasCellOps(stmts[0].body)
+      ) {
+        const loop = stmts[0];
+        if (loop.itemName !== 'cellContents') {
+          args.push(`ITEM = ${JSON.stringify(loop.itemName)}`);
+        }
+        return `${commentStr}${prefix}UpdateCell({${args.join(', ')}}) ${printBlock(loop.body, depth)}`;
+      }
+      if (stmts.length === 0) {
+        return `${commentStr}${prefix}UpdateCell({${args.join(', ')}}) { }`;
+      }
+      return `${commentStr}${prefix}UpdateCell({${args.join(', ')}}) {\n${stmts
+        .map((s) => printStatement(s, depth + 1))
+        .join('\n')}\n${prefix}}`;
     }
+    case 'CellOpStatement': {
+      // Bare Add/Remove/Replace re-parses to the ambient scope, so the
+      // explicit prefix is only needed where it would flip: 'cell' ops
+      // outside a loop → `ForCell`, 'all' ops inside a loop → `ForAllCells`.
+      const word =
+        statement.op === 'add' ? 'Add' : statement.op === 'remove' ? 'Remove' : 'Replace';
+      const head =
+        statement.scope === 'cell' && !inCellLoop
+          ? `ForCell ${word}`
+          : statement.scope === 'all' && inCellLoop
+            ? `ForAllCells ${word}`
+            : word;
+      return `${commentStr}${prefix}${head} ${printExpression(statement.value, 0, depth)};`;
+    }
+    case 'ForEachCellStatement': {
+      return `${commentStr}${prefix}Each ${statement.itemName} ${printBlock(statement.body, depth, true)}`;
+    }
+    case 'TagStatement':
+      return `${commentStr}${prefix}Tag({NAME = ${JSON.stringify(statement.name)}, COLOR = ${JSON.stringify(statement.color)}})`;
     case 'ErrorStatement':
       return `${commentStr}${prefix}${statement.source}`;
     case 'OnTagAddedStatement': {
-      return `${commentStr}${prefix}OnTagAdded ${printBlock(statement.body, depth)}`;
+      return `${commentStr}${prefix}OnTagAdded ${printBlock(statement.body, depth, inCellLoop)}`;
     }
     case 'OnTagRemovedStatement': {
-      return `${commentStr}${prefix}OnTagRemoved ${printBlock(statement.body, depth)}`;
+      return `${commentStr}${prefix}OnTagRemoved ${printBlock(statement.body, depth, inCellLoop)}`;
     }
   }
 };

@@ -104,6 +104,8 @@ interface LayoutStateAnimatedViewContainerProps<
   stateVar: TState;
   className?: string;
   highPerformance?: boolean;
+  /** Inline documents have intrinsic height rather than filling a page. */
+  contentSized?: boolean;
 }
 
 interface LayoutStateAnimatedViewOptionProps<
@@ -350,6 +352,7 @@ const LayoutStateAnimatedViewContainer = <TState extends TransitionStateKey>({
   className,
   children,
   highPerformance = false,
+  contentSized = false,
 }: LayoutStateAnimatedViewContainerProps<TState>) => {
   const options = useMemo(() => collectOptions<TState>(children), [children]);
   const currentOption = options.find((option) => option.stateValue === stateVar);
@@ -500,10 +503,11 @@ const LayoutStateAnimatedViewContainer = <TState extends TransitionStateKey>({
       : displayedOption?.children;
 
   return (
-    <View className={className} style={styles.container}>
+    <View className={className} style={[styles.container, contentSized && styles.contentSized]}>
       <Animated.View
         style={[
           styles.fill,
+          contentSized && styles.contentSized,
           webPerformanceStyle,
           animatedStyle,
           {
@@ -524,6 +528,10 @@ const styles = StyleSheet.create({
   },
   fill: {
     flex: 1,
+  },
+  contentSized: {
+    flex: 0,
+    flexBasis: 'auto',
   },
 });
 

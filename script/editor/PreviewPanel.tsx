@@ -98,6 +98,7 @@ const PreviewPanel = ({ ast, sources, isInDialog = true }: PreviewPanelProps) =>
         Inputs: inputState,
       },
       inputState,
+      filesIndex: previewSources?.filesIndex,
     });
   }, [ast, previewState, previewSources]);
 
@@ -160,7 +161,7 @@ const PreviewPanel = ({ ast, sources, isInDialog = true }: PreviewPanelProps) =>
         )}
       </View>
 
-      {/* Role message preview — shows what the selected player's action markdown looks like */}
+      {/* Role message preview: shows what the selected player's action markdown looks like */}
       {selectedPlayer && roleMessageMarkdown.trim().length > 0 && (
         <Column className="gap-1">
           <FontText variant="subtext" className="text-xs">

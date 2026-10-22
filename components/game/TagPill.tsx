@@ -34,7 +34,7 @@ interface TagPillProps {
   onRemove?: () => void;
   selected?: boolean;
   size?: 'sm' | 'md';
-  /** Optional max width in px — long labels truncate with an ellipsis. */
+  /** Optional max width in px, long labels truncate with an ellipsis. */
   maxWidth?: number;
 }
 

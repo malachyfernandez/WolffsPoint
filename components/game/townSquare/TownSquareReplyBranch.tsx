@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
-import { Pressable, useWindowDimensions } from 'react-native';
+import { Pressable } from 'react-native';
+import { useContentWidth } from 'hooks/useContentWidth';
 import Column from '../../layout/Column';
 import Row from '../../layout/Row';
 import MarkdownRenderer from '../../ui/markdown/MarkdownRenderer';
@@ -33,7 +34,7 @@ const TownSquareReplyBranch = ({
     onReply,
 }: TownSquareReplyBranchProps) => {
     const [pendingDeleteNode, setPendingDeleteNode] = useState<ReplyTreeNode | null>(null);
-    const { width: screenWidth } = useWindowDimensions();
+    const screenWidth = useContentWidth();
     const indentSize = useMemo(() => (screenWidth < 450 ? 16 : 24), [screenWidth]);
 
     const visibleCount = depth === 0 ? 2 : depth === 1 ? 1 : 0;
@@ -52,7 +53,7 @@ const TownSquareReplyBranch = ({
                         <Row className='gap-4 items-start border-l-[1px] border-border/25 pl-4' style={{ marginLeft: depth * indentSize }}>
                             <TownSquareAuthorAvatar gameId={node.gameId} size={42} userId={node.authorUserId} />
                             <Column className='gap-2 flex-1'>
-                                <Column className='gap-4 gap-y-1 flex-col sm:flex-row flex-wrap sm:items-center sm:justify-between'>
+                                <Column className={`gap-4 gap-y-1 flex-wrap ${screenWidth >= 640 ? 'flex-row items-center justify-between' : 'flex-col'}`}>
                                     <TownSquareAuthorName gameId={node.gameId} userId={node.authorUserId} weight='medium' />
                                     <FontText variant='subtext'>{formatTimestamp(node.createdAt)}</FontText>
                                 </Column>

@@ -2,7 +2,7 @@ import React from 'react';
 import { View } from 'react-native';
 
 /**
- * Native fallback — no SVG filter support, so the paper layer is a flat sheet.
+ * Native fallback: no SVG filter support, so the paper layer is a flat sheet.
  */
 export const TornPaperEdgeDefs = () => null;
 

@@ -1,16 +1,18 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useId, useRef } from 'react';
 import { Platform, Pressable } from 'react-native';
 import FontText from '../../text/FontText';
+import { useTooltip } from 'hooks/useTooltip';
 
 interface AppDropdownItemProps {
   className?: string;
-  /** Keyboard-highlighted option — the one Enter will select while focus
+  /** Keyboard-highlighted option: the one Enter will select while focus
    *  stays in the search field. */
   isActive?: boolean;
   isSelected: boolean;
   label: string;
   onSelect: () => void;
   selectedClassName?: string;
+  disabledReason?: string;
 }
 
 const AppDropdownItem = ({
@@ -20,8 +22,10 @@ const AppDropdownItem = ({
   label,
   onSelect,
   selectedClassName = '',
+  disabledReason,
 }: AppDropdownItemProps) => {
   const buttonRef = useRef<any>(null);
+  const { setHovered } = useTooltip(useId(), disabledReason);
 
   useEffect(() => {
     if (isActive && Platform.OS === 'web') {
@@ -29,11 +33,13 @@ const AppDropdownItem = ({
     }
   }, [isActive]);
 
-  const stateClassName = isSelected
-    ? `bg-accent-hover ${selectedClassName}`.trim()
-    : isActive
-      ? 'bg-border/20'
-      : 'bg-background active:bg-border/10';
+  const stateClassName = disabledReason
+    ? 'opacity-40'
+    : isSelected
+      ? `bg-accent-hover ${selectedClassName}`.trim()
+      : isActive
+        ? 'bg-border/20'
+        : 'hover:bg-border/10 active:bg-border/10';
 
   if (Platform.OS === 'web') {
     return React.createElement(
@@ -43,6 +49,9 @@ const AppDropdownItem = ({
         type: 'button',
         role: 'option',
         'aria-selected': isSelected,
+        'aria-disabled': !!disabledReason,
+        onMouseEnter: () => setHovered(true),
+        onMouseLeave: () => setHovered(false),
         onClick: (event: { preventDefault?: () => void; stopPropagation?: () => void }) => {
           event.preventDefault?.();
           event.stopPropagation?.();
@@ -56,7 +65,7 @@ const AppDropdownItem = ({
           appearance: 'none',
           background: 'transparent',
           border: 'none',
-          cursor: 'pointer',
+          cursor: disabledReason ? 'not-allowed' : 'pointer',
           margin: 0,
           padding: 0,
           textAlign: 'left',
@@ -75,6 +84,9 @@ const AppDropdownItem = ({
 
   return (
     <Pressable
+      accessibilityState={{ disabled: !!disabledReason }}
+      onHoverIn={() => setHovered(true)}
+      onHoverOut={() => setHovered(false)}
       className={`w-full rounded px-3 py-3 ${stateClassName} ${className}`.trim()}
       onPress={onSelect}>
       <FontText weight={isSelected ? 'medium' : 'regular'}>{label}</FontText>

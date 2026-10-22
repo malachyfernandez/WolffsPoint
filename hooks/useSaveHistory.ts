@@ -1,5 +1,6 @@
 import { useValue } from './useData';
 import { deepEqual } from '../utils/deepEqual';
+import { nowMs } from '../utils/simNow';
 
 export interface SavedEntry {
     id: string;
@@ -15,7 +16,7 @@ const MAX_SAVES = 5;
  * Stores up to MAX_SAVES entries (newest first) in a PRIVATE user variable.
  *
  * The backing record is lazy: no subscription is registered and no record is
- * created until `enabled` is true AND a real historyKey exists — mounted but
+ * created until `enabled` is true AND a real historyKey exists, mounted but
  * closed dialogs cost zero backend work. A first `addSave` creates the record.
  *
  * @param historyKey - A scoped key like `saveHistory-markdownEditor-{gameId}-{roleName}`
@@ -44,8 +45,8 @@ export function useSaveHistory(historyKey: string | null, options?: { enabled?: 
             return;
         }
         const entry: SavedEntry = {
-            id: `${Date.now()}`,
-            savedAt: Date.now(),
+            id: `${nowMs()}`,
+            savedAt: nowMs(),
             preview: preview.slice(0, 200),
             value,
         };

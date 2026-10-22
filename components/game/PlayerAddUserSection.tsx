@@ -8,6 +8,7 @@ import FontText from '../ui/text/FontText';
 import UserAddDialog from './UserAddDialog';
 import { CONTROLS_STACKED_BREAKPOINT } from './TableFreezeControls';
 import { UserTableItem } from 'types/playerTable';
+import { useSim } from 'contexts/SimContext';
 
 interface PlayerAddUserSectionProps {
   gameId: string;
@@ -25,6 +26,10 @@ const PlayerAddUserSection = ({
   onRightContentWrapChange,
 }: PlayerAddUserSectionProps) => {
   const [userTable] = useList<UserTableItem[]>('userTable', gameId);
+  // Inside a sim console, adding goes through the faux-player manager (no
+  // email needed) - the dialog lives outside the provider; openManagePlayers
+  // is only set while a simulation is mounted.
+  const sim = useSim();
 
   const users = userTable.scheduledUpdate?.value ?? userTable.value ?? [];
   const [isAddUserDialogOpen, setIsAddUserDialogOpen] = useState(false);
@@ -40,10 +45,18 @@ const PlayerAddUserSection = ({
   }, [isRightContentStacked, onRightContentWrapChange]);
 
   const handleOpenDialog = () => {
+    if (sim.openManagePlayers) {
+      sim.openManagePlayers();
+      return;
+    }
     setIsAddUserDialogOpen(true);
   };
 
-  const buttonContent = (
+  const buttonContent = sim.openManagePlayers ? (
+    <FontText weight="medium" color="white">
+      Manage Players
+    </FontText>
+  ) : (
     <Row className="items-center gap-2">
       <Plus size={20} color="white" />
       <FontText weight="medium" color="white">

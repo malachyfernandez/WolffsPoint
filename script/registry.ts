@@ -25,6 +25,11 @@ export interface BlockInput {
   type: InputType;
   required?: boolean;
   default?: unknown;
+  /** Rarely-changed option: in block mode the input's row lives behind the
+   *  block's flags menu and only renders while it holds a non-default
+   *  value (or the user opts in). Purely a canvas concern. Text output
+   *  is unaffected. */
+  flag?: boolean;
   enumValues?: string[];
 }
 
@@ -34,7 +39,9 @@ export interface StatementBlockDef {
   kind: 'statement';
   description: string;
   inputs: BlockInput[];
-  category: 'variable' | 'input' | 'control' | 'function' | 'display' | 'table';
+  category: 'variable' | 'input' | 'control' | 'function' | 'display' | 'table' | 'file';
+  /** Excluded from the insert picker, managed by dedicated UI instead. */
+  hidden?: boolean;
   execute: (args: Record<string, RuntimeValue>, ctx: StatementContext) => void;
 }
 
@@ -61,6 +68,14 @@ export interface TableUpdate {
   value: string;
   /** How to apply the update */
   mode: 'replace' | 'append' | 'remove';
+  /** Provenance key stamped on pieces written by this update
+   *  (e.g. `certify:d2:a:anna@x`, `tag:f_x@u1|d2|col`, `manual`). */
+  source?: string;
+  /** For 'append': 'file' means `value` is a file id → live-linked file piece. */
+  valueKind?: 'text' | 'file';
+  allowDuplicates?: boolean;
+  autoRemove?: boolean;
+  fileCall?: string;
 }
 
 export interface StatementContext {
@@ -73,6 +88,9 @@ export interface StatementContext {
   collectUpdate?: (update: TableUpdate) => void;
   /** Get the current value of a table cell (used by UpdateCell block in replace mode) */
   getCellValue?: (playerIndex: number | null, dayIndex: number | null, column: string) => string;
+  /** Write into the shared input state (used by FileInput, the flat
+   *  namespace that Inputs.entry() and markdownVariables read). */
+  setInput?: (name: string, value: RuntimeValue) => void;
 }
 
 export interface ExpressionContext {
@@ -244,7 +262,13 @@ export const STATEMENT_BLOCKS: StatementBlockDef[] = [
     inputs: [
       { name: 'LIST', label: 'Options', type: 'list', required: true },
       { name: 'LABEL', label: 'Label', type: 'string', default: 'Select' },
-      { name: 'NUMSELECTABLE', label: 'Max selectable', type: 'number', default: 1 },
+      {
+        name: 'NUMSELECTABLE',
+        label: 'Max selectable',
+        type: 'number',
+        default: 1,
+        flag: true,
+      },
     ],
     execute: (args, ctx) => {
       const label = str(args.label ?? NOTHING) || 'input';
@@ -270,8 +294,14 @@ export const STATEMENT_BLOCKS: StatementBlockDef[] = [
     inputs: [
       { name: 'LIST', label: 'Options', type: 'list', required: true },
       { name: 'LABEL', label: 'Label', type: 'string', default: 'Vote' },
-      { name: 'NUMSELECTABLE', label: 'Max selectable', type: 'number', default: 1 },
-      { name: 'MULTIPLYER', label: 'Vote multiplier', type: 'number', default: 1 },
+      {
+        name: 'NUMSELECTABLE',
+        label: 'Max selectable',
+        type: 'number',
+        default: 1,
+        flag: true,
+      },
+      { name: 'MULTIPLYER', label: 'Vote multiplier', type: 'number', default: 1, flag: true },
     ],
     execute: (args, ctx) => {
       const label = str(args.label ?? NOTHING) || 'Vote';
@@ -314,8 +344,8 @@ export const STATEMENT_BLOCKS: StatementBlockDef[] = [
     category: 'input',
     inputs: [
       { name: 'LABEL', label: 'Label', type: 'string', default: 'Number' },
-      { name: 'MIN', label: 'Min', type: 'number' },
-      { name: 'MAX', label: 'Max', type: 'number' },
+      { name: 'MIN', label: 'Min', type: 'number', flag: true },
+      { name: 'MAX', label: 'Max', type: 'number', flag: true },
     ],
     execute: (args, ctx) => {
       const label = str(args.label ?? NOTHING) || 'input';
@@ -336,7 +366,7 @@ export const STATEMENT_BLOCKS: StatementBlockDef[] = [
     category: 'input',
     inputs: [
       { name: 'LABEL', label: 'Label', type: 'string', default: 'Checkbox' },
-      { name: 'DEFAULT', label: 'Default', type: 'boolean', default: false },
+      { name: 'DEFAULT', label: 'Default', type: 'boolean', default: false, flag: true },
     ],
     execute: (args, ctx) => {
       const label = str(args.label ?? NOTHING) || 'input';
@@ -380,6 +410,25 @@ export const STATEMENT_BLOCKS: StatementBlockDef[] = [
     inputs: [],
     execute: (_args, ctx) => {
       ctx.emit({ kind: 'divider' });
+    },
+  },
+  {
+    id: 'FileInput',
+    name: 'FileInput',
+    kind: 'statement',
+    description: 'Declare a file input (name + optional default value)',
+    category: 'file',
+    hidden: true,
+    inputs: [
+      { name: 'NAME', label: 'Name', type: 'string', required: true },
+      { name: 'DEFAULT', label: 'Default value', type: 'expression', flag: true },
+    ],
+    execute: (args, ctx) => {
+      const name = str(args.name ?? NOTHING).trim();
+      const value = args.default ?? NOTHING;
+      // A nothing default leaves any ambient value alone rather than
+      // overwriting it.
+      if (name && !isNothing(value)) ctx.setInput?.(name, value);
     },
   },
 ];
@@ -840,7 +889,11 @@ export const EXPRESSION_BLOCKS: ExpressionBlockDef[] = [
     inputs: [{ name: 'key', label: 'Key', type: 'string', required: true }],
     evaluate: (receiver, args) => {
       if (!isRuntimeObject(receiver)) return NOTHING;
-      const key = str(args[0] ?? NOTHING).toLowerCase();
+      // A leading '!' marks a manually-typed key (the editor skips validating
+      // it): strip it before lookup so manual entries still resolve.
+      const key = str(args[0] ?? NOTHING)
+        .replace(/^!/, '')
+        .toLowerCase();
       const obj = receiver as Record<string, RuntimeValue>;
       const matching = Object.keys(obj).find((k) => k.toLowerCase() === key);
       return matching === undefined ? NOTHING : obj[matching];

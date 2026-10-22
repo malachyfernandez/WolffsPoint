@@ -320,7 +320,7 @@ showToast("Operation completed successfully!");
 
 The app can prompt connected clients to reload when a newer version is released:
 
-- `utils/appVersion.ts` exports `CLIENT_VERSION` — baked into every bundle
+- `utils/appVersion.ts` exports `CLIENT_VERSION`: baked into every bundle
 - The Convex `globals` table stores `latestClientVersion`
 - `useAppVersionStatus()` compares them; when outdated, `VersionUpdateNotice` overlays a reload prompt in the bottom-left corner (a standalone fixed portal, modeled on the minimize row)
 

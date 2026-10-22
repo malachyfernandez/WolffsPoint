@@ -83,7 +83,7 @@ const StickyTocButton = ({ onPress, isOpen = false }: StickyTocButtonProps) => {
 
   // False inside a hidden keep-alive tab pane. Hidden panes keep real layout
   // geometry (translated offscreen, not display:none), so the width===0 bail
-  // below no longer detects them — gate the listeners/observers entirely or
+  // below no longer detects them, gate the listeners/observers entirely or
   // every scroll anywhere in the app does layout work in this hidden pane.
   const bodyEnabled = useBodyReportEnabled();
 
@@ -148,7 +148,7 @@ const StickyTocButton = ({ onPress, isOpen = false }: StickyTocButtonProps) => {
 
   // Measure the dock line (bottom edge of the fixed header, found by
   // hit-testing straight down at the button's center-x until real scrollable
-  // content is hit) + horizontal position. Rare events only — the dock is a
+  // content is hit) + horizontal position. Rare events only: the dock is a
   // function of layout, not scroll position.
   useEffect(() => {
     const node = sentinelRef.current;
@@ -207,7 +207,7 @@ const StickyTocButton = ({ onPress, isOpen = false }: StickyTocButtonProps) => {
     };
 
     // The dock geometry shifts on resize and when the TOC dialog closes
-    // (page reflow). Keep the position fresh on horizontal scroll too —
+    // (page reflow). Keep the position fresh on horizontal scroll too;
     // that's one rect read, not a scan.
     let measureRaf = 0;
     const scheduleMeasure = () => {
@@ -217,7 +217,7 @@ const StickyTocButton = ({ onPress, isOpen = false }: StickyTocButtonProps) => {
     const updateXOnly = () => {
       const scrollParent = scrollParentRef.current;
       const scrollLeft = scrollParent ? scrollParent.scrollLeft : window.scrollX;
-      // Skip entirely on vertical-only scrolls — the clone's X can't move.
+      // Skip entirely on vertical-only scrolls; the clone's X can't move.
       // (A rect read + style write per scroll event thrashes layout.)
       if (scrollLeft === lastScrollLeftRef.current) return;
       lastScrollLeftRef.current = scrollLeft;
@@ -235,13 +235,13 @@ const StickyTocButton = ({ onPress, isOpen = false }: StickyTocButtonProps) => {
 
     let settleTimer: ReturnType<typeof setTimeout> | null = null;
     if (isOpen) {
-      // Dialog open — it covers the screen, so a hit-scan would measure the
+      // Dialog open: it covers the screen, so a hit-scan would measure the
       // dialog instead of the header. Freeze dock geometry; keep X in sync.
       updateXOnly();
       window.addEventListener('resize', updateXOnly);
       window.addEventListener('scroll', updateXOnly, true);
     } else {
-      // Re-measure the dock now (or once the close animation settles — the
+      // Re-measure the dock now (or once the close animation settles, the
       // 1s delay preserves the old "don't snap back mid-animation" feel).
       settleTimer = setTimeout(measure, wasOpen ? 1000 : 0);
       window.addEventListener('resize', scheduleMeasure);
@@ -259,7 +259,7 @@ const StickyTocButton = ({ onPress, isOpen = false }: StickyTocButtonProps) => {
 
   // Stuck detection: the button is "stuck" once its midpoint rises above the
   // dock line (dockTop + SWITCH_LINE + offset). IntersectionObserver does the
-  // crossing test in the compositor — zero per-scroll JS.
+  // crossing test in the compositor, zero per-scroll JS.
   useEffect(() => {
     const node = sentinelRef.current;
     if (!node || !bodyEnabled || typeof IntersectionObserver === 'undefined') return;
@@ -269,7 +269,7 @@ const StickyTocButton = ({ onPress, isOpen = false }: StickyTocButtonProps) => {
 
     // Fold the switch line into the root margin: shrink the root's top edge
     // so the button "leaves" the root exactly when its midpoint crosses the
-    // switch line. `rootMargin` is relative to the root's own top edge —
+    // switch line. `rootMargin` is relative to the root's own top edge,
     // dockTop measured that edge already (the scan lands on the container's
     // first visible content row), so it must not be added again here.
     const switchPx = SWITCH_LINE + offsetRef.current - btn.clientHeight / 2;

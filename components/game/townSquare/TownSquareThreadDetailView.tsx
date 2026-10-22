@@ -12,6 +12,7 @@ import { TownSquareAuthorAvatar, TownSquareAuthorName } from './TownSquareAuthor
 import TownSquareReplyBranch from './TownSquareReplyBranch';
 import DeleteConfirmationDialog from '../DeleteRoleConfirmationDialog';
 import { ReplyTreeNode, ThreadViewModel, formatTimestamp } from './townSquareUtils';
+import { useContentWidth } from 'hooks/useContentWidth';
 
 interface TownSquareThreadDetailViewProps {
     currentUserId: string;
@@ -49,6 +50,7 @@ const TownSquareThreadDetailView = ({
     const [isDeleteThreadConfirmOpen, setIsDeleteThreadConfirmOpen] = useState(false);
     const isOwnThread = selectedThread.authorUserId === currentUserId;
     const isAnnouncement = selectedThread.postType === 'announcement';
+    const contentWidth = useContentWidth();
 
     // Mark thread as read with current reply count when viewed
     useEffect(() => {
@@ -56,7 +58,7 @@ const TownSquareThreadDetailView = ({
     }, [selectedThread.postId, selectedThread.replyCount, onThreadViewed]);
 
     return (
-        <Column className='gap-5 flex-1 px-0 sm:px-4 py-6'>
+        <Column className={`gap-5 flex-1 py-6 ${contentWidth >= 640 ? 'px-4' : 'px-0'}`}>
             <Pressable onPress={onBack} className='self-start py-1' testID="townthread-back">
                 <Row className='gap-4 items-center'>
                     <ChevronLeft size={20} color='rgb(46, 41, 37)' />
@@ -67,7 +69,7 @@ const TownSquareThreadDetailView = ({
             <ShadowScrollView className='flex-1' scrollViewClassName='flex-1'>
                 <Column className='gap-7'>
                         <Column className='gap-4'>
-                            <Row className='sm:hidden w-full items-center'>
+                            <Row className={`w-full items-center ${contentWidth >= 640 ? 'hidden' : ''}`}>
                                 <TownSquareAuthorAvatar gameId={selectedThread.gameId} size={60} userId={selectedThread.authorUserId} />
                                 <Column className='flex-1 gap-2'>
                                     <TownSquareAuthorName gameId={selectedThread.gameId} userId={selectedThread.authorUserId} />
@@ -75,10 +77,10 @@ const TownSquareThreadDetailView = ({
                                 </Column>
                             </Row>
                             <Row className='gap-4 items-start'>
-                                <TownSquareAuthorAvatar gameId={selectedThread.gameId} size={60} userId={selectedThread.authorUserId} className="hidden sm:flex" />
+                                <TownSquareAuthorAvatar gameId={selectedThread.gameId} size={60} userId={selectedThread.authorUserId} className={contentWidth >= 640 ? 'flex' : 'hidden'} />
                                 <Column className='gap-4 flex-1'>
                                     <FontText weight='bold' className='text-3xl leading-10'>{selectedThread.titleResolved}</FontText>
-                                    <Column className='gap-1 hidden sm:flex'>
+                                    <Column className={`gap-1 ${contentWidth >= 640 ? 'flex' : 'hidden'}`}>
                                         <TownSquareAuthorName gameId={selectedThread.gameId} userId={selectedThread.authorUserId} />
                                         <FontText variant='subtext'>{formatTimestamp(selectedThread.createdAt)}</FontText>
                                     </Column>
@@ -109,7 +111,7 @@ const TownSquareThreadDetailView = ({
                                         </>
                                     ) : null}
                                     {!isPlayerDead && !isAnnouncement && (
-                                        <AppButton variant='outline' className='w-20 sm:w-36' onPress={onReplyToThread}>
+                                        <AppButton variant='outline' className={contentWidth >= 640 ? 'w-36' : 'w-20'} onPress={onReplyToThread}>
                                             <FontText weight='bold'>Reply</FontText>
                                         </AppButton>
                                     )}
@@ -138,7 +140,7 @@ const TownSquareThreadDetailView = ({
                                 ) : (
                                     <Column className='gap-1 py-8'>
                                         <FontText weight='medium'>No replies yet</FontText>
-                                        <FontText variant='subtext'>{isPlayerDead ? 'Ghosts don’t talk silly — you can only listen.' : 'Be the first person to answer this thread.'}</FontText>
+                                        <FontText variant='subtext'>{isPlayerDead ? 'Ghosts don’t talk silly: you can only listen.' : 'Be the first person to answer this thread.'}</FontText>
                                     </Column>
                                 )}
                             </Column>

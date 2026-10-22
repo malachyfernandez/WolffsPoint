@@ -1,7 +1,6 @@
 import { useList } from './useData';
 import { useScheduledBatch } from './useScheduledUpdates';
 import {
-  UserTableColumnNightlyVisibility,
   UserTableColumnVisibility,
   UserTableItem,
   UserTableTitle,
@@ -22,10 +21,6 @@ export const usePlayerDataFreeze = (gameId: string) => {
     'userTableColumnVisibility',
     gameId
   );
-  const [nightlyVisibility, setNightlyVisibility] = useList<UserTableColumnNightlyVisibility>(
-    'userTableColumnNightlyVisibility',
-    gameId
-  );
   const [morningMessages, setMorningMessages] = useList<Record<string, string[]>>(
     'morningMessagesList',
     gameId
@@ -38,8 +33,6 @@ export const usePlayerDataFreeze = (gameId: string) => {
     userTableTitle.state.lastOpStatus === 'pending' ||
     columnVisibility.state.isSyncing ||
     columnVisibility.state.lastOpStatus === 'pending' ||
-    nightlyVisibility.state.isSyncing ||
-    nightlyVisibility.state.lastOpStatus === 'pending' ||
     morningMessages.state.isSyncing ||
     morningMessages.state.lastOpStatus === 'pending';
 
@@ -52,10 +45,6 @@ export const usePlayerDataFreeze = (gameId: string) => {
     });
     await setColumnVisibility(
       columnVisibility.confirmedValue ?? columnVisibility.value ?? emptyTitles,
-      { stage: true, batchId }
-    );
-    await setNightlyVisibility(
-      nightlyVisibility.confirmedValue ?? nightlyVisibility.value ?? emptyTitles,
       { stage: true, batchId }
     );
     await setMorningMessages(morningMessages.confirmedValue ?? morningMessages.value ?? {}, {

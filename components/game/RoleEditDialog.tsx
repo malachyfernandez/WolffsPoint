@@ -26,6 +26,7 @@ interface RoleEditDialogProps {
   onSetHiddenFromRulebook: (index: number, value: boolean) => void;
   /** Label for the submit button. Defaults to "Save". */
   submitLabel?: string;
+  displayModules?: boolean;
 }
 
 const RoleEditDialog = ({
@@ -37,6 +38,7 @@ const RoleEditDialog = ({
   onSetDoesRoleVote,
   onSetHiddenFromRulebook,
   submitLabel = 'Save',
+  displayModules = false,
 }: RoleEditDialogProps) => {
   const [roleName, setRoleName] = useState(role.role || '');
   const [doesRoleVote, setDoesRoleVote] = useState(role.doesRoleVote);
@@ -72,7 +74,7 @@ const RoleEditDialog = ({
     if (!roleName.trim()) return;
     onSetRoleName(roleIndex, roleName.trim());
     onSetDoesRoleVote(roleIndex, doesRoleVote);
-    onSetHiddenFromRulebook(roleIndex, hiddenFromRulebook);
+    if (!displayModules) onSetHiddenFromRulebook(roleIndex, hiddenFromRulebook);
   };
 
   const handleSave = () => {
@@ -130,7 +132,7 @@ const RoleEditDialog = ({
         </ConvexDialog.Trigger>
         <ConvexDialog.Portal>
           <ConvexDialog.Overlay />
-          <ConvexDialog.Content className="max-w-xl" isSwipeable={!hasChange}>
+          <ConvexDialog.Content className="max-w-xl" isSwipeable={false}>
             <View ref={targetRef} className="min-h-0 flex-1">
               <CloseButton onPress={handleAttemptClose} />
               <MinimizeButton
@@ -164,18 +166,20 @@ const RoleEditDialog = ({
                     </FontText>
                   </Pressable>
 
-                  <Pressable
-                    onPress={() => setHiddenFromRulebook(!hiddenFromRulebook)}
-                    className="flex-row items-center gap-3 pt-2">
-                    <CustomCheckbox
-                      checked={!hiddenFromRulebook}
-                      onChange={() => setHiddenFromRulebook(!hiddenFromRulebook)}
-                      monochrome
-                    />
-                    <FontText className={hiddenFromRulebook ? 'opacity-70' : ''}>
-                      {hiddenFromRulebook ? 'Hidden from rulebook' : 'Visible in rulebook'}
-                    </FontText>
-                  </Pressable>
+                  {!displayModules && (
+                    <Pressable
+                      onPress={() => setHiddenFromRulebook(!hiddenFromRulebook)}
+                      className="flex-row items-center gap-3 pt-2">
+                      <CustomCheckbox
+                        checked={!hiddenFromRulebook}
+                        onChange={() => setHiddenFromRulebook(!hiddenFromRulebook)}
+                        monochrome
+                      />
+                      <FontText className={hiddenFromRulebook ? 'opacity-70' : ''}>
+                        {hiddenFromRulebook ? 'Hidden from rulebook' : 'Visible in rulebook'}
+                      </FontText>
+                    </Pressable>
+                  )}
                 </Column>
 
                 <Column className="w-full items-center justify-center gap-4">

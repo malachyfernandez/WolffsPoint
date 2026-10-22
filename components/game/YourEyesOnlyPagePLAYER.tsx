@@ -9,27 +9,33 @@ import { useNow } from 'hooks/useNow';
 import PlaceholderCard from '../ui/PlaceholderCard';
 import { useSharedListValue } from 'hooks/useSharedListValue';
 import { useSharedVariableValue } from 'hooks/useSharedVariableValue';
+import { useScriptFilesReader } from 'hooks/useScriptFiles';
 import { PlayerProfile } from 'types/multiplayer';
 import { RoleTableItem } from 'types/roleTable';
 import { UserTableItem } from 'types/playerTable';
 import {
-  buildScheduledDate,
   buildScheduledDateOnInstantDay,
+  formatInstantTimeLabel,
   getContextualDayRangeLabel,
   getCurrentPlayableDayIndex,
+  getDayDeadlineInstant,
   getDayEndDate,
+  getDayReleaseDate,
+  getDayWakeUpInstant,
+  getGameDayTime24,
   getGameScopedKey,
-  isNightWindowOpen,
+  isDayDeadlineOpen,
+  isHourGameSchedule,
   normalizeGameSchedule,
   parseStoredDayDates,
   resolveGameTimeZone,
   defaultGameSchedule,
   formatTimeLabel,
   formatContextualDateLabel,
-  isDayReleasedAtTime,
 } from 'utils/multiplayer';
 
 import { getDateTokenDayValue, getZonedDayValue } from 'utils/timezone';
+import { isInstantGameDay, isTimedGameDay } from '../../utils/gameDayDuration';
 import { ChevronLeft, ChevronRight, Eye, Moon, Sun } from 'lucide-react-native';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
@@ -37,6 +43,7 @@ import LayoutStateAnimatedView, { fromRight } from '../ui/LayoutStateAnimatedVie
 import YourEyesOnlyDayContentPLAYER from './YourEyesOnlyDayContentPLAYER';
 import LoadingContainer from '../ui/loading/LoadingContainer';
 import PrintRule from '../ui/PrintRule';
+import { nowDate } from 'utils/simNow';
 
 interface YourEyesOnlyPagePLAYERProps {
   gameId: string;
@@ -58,6 +65,7 @@ const YourEyesOnlyPagePLAYER = ({
   const contentTranslateY = useSharedValue(20);
   const { operatorUserId, isLoading: isOperatorLoading } = useGameOperatorUserId(gameId);
   const operatorUserIds = operatorUserId ? [operatorUserId] : undefined;
+  const scriptFiles = useScriptFilesReader(gameId, operatorUserIds);
   const { value: dayDateStrings, record: dayDateStringsRecord } = useSharedListValue<string[]>({
     key: 'dayDatesArray',
     itemId: gameId,
@@ -88,17 +96,18 @@ const YourEyesOnlyPagePLAYER = ({
   const gameTimeZone = resolveGameTimeZone(schedule);
   const dayDates = useMemo(() => parseStoredDayDates(dayDateStrings), [dayDateStrings]);
   const currentDayIndex = useMemo(
-    () => getCurrentPlayableDayIndex(dayDates, new Date(), gameTimeZone),
-    [dayDates, gameTimeZone]
+    () => getCurrentPlayableDayIndex(dayDates, now, gameTimeZone),
+    [dayDates, gameTimeZone, now]
   );
   const [selectedDayIndex, setSelectedDayIndex] = useState(() =>
-    getCurrentPlayableDayIndex(parseStoredDayDates(dayDateStrings), new Date(), gameTimeZone)
+    getCurrentPlayableDayIndex(parseStoredDayDates(dayDateStrings), nowDate(), gameTimeZone)
   );
+  const isHourGame = isHourGameSchedule(schedule);
   const currentDayStartDate = dayDates[currentDayIndex];
   const deadlineDayIndex =
     currentDayIndex > 0 &&
     currentDayStartDate &&
-    !isDayReleasedAtTime(currentDayStartDate, schedule.wakeUpTime, now, gameTimeZone)
+    now.getTime() < getDayWakeUpInstant(currentDayStartDate, schedule, gameTimeZone).getTime()
       ? currentDayIndex - 1
       : currentDayIndex;
   const deadlineDayEndDate = getDayEndDate(
@@ -106,20 +115,11 @@ const YourEyesOnlyPagePLAYER = ({
     deadlineDayIndex,
     numberOfRealDaysPerInGameDay
   );
-  const voteDeadlineBaseDate = new Date(
-    deadlineDayEndDate.getTime() - (schedule.voteDayOffset ?? 0) * 24 * 60 * 60 * 1000
-  );
-  const actionDeadlineBaseDate = new Date(
-    deadlineDayEndDate.getTime() - (schedule.actionDayOffset ?? 0) * 24 * 60 * 60 * 1000
-  );
-  const voteDeadlineTime =
-    schedule.voteDeadlineTime ?? defaultGameSchedule.voteDeadlineTime ?? '22:00';
-  const actionDeadlineTime =
-    schedule.actionDeadlineTime ?? defaultGameSchedule.actionDeadlineTime ?? '22:00';
-  const voteDeadline = buildScheduledDate(voteDeadlineBaseDate, voteDeadlineTime, gameTimeZone);
-  const actionDeadline = buildScheduledDate(
-    actionDeadlineBaseDate,
-    actionDeadlineTime,
+  const voteDeadline = getDayDeadlineInstant(deadlineDayEndDate, schedule, 'vote', gameTimeZone);
+  const actionDeadline = getDayDeadlineInstant(
+    deadlineDayEndDate,
+    schedule,
+    'action',
     gameTimeZone
   );
   const laterDeadline =
@@ -129,16 +129,26 @@ const YourEyesOnlyPagePLAYER = ({
     schedule.wakeUpTime,
     gameTimeZone
   );
-  const nextWakeUp =
-    sameDayWakeUp.getTime() > laterDeadline.getTime()
-      ? sameDayWakeUp
-      : buildScheduledDateOnInstantDay(laterDeadline, schedule.wakeUpTime, gameTimeZone, 1);
+  const nextWakeUp = isHourGame
+    ? (getDayReleaseDate(
+        dayDates,
+        deadlineDayIndex,
+        schedule.wakeUpTime,
+        gameTimeZone,
+        schedule,
+        numberOfRealDaysPerInGameDay
+      ) ?? deadlineDayEndDate)
+    : isTimedGameDay(deadlineDayEndDate)
+      ? laterDeadline
+      : sameDayWakeUp.getTime() > laterDeadline.getTime()
+        ? sameDayWakeUp
+        : buildScheduledDateOnInstantDay(laterDeadline, schedule.wakeUpTime, gameTimeZone, 1);
   const isVoteLocked =
     deadlineDayIndex < currentDayIndex ||
-    !isNightWindowOpen(voteDeadlineBaseDate, voteDeadlineTime, now, gameTimeZone);
+    !isDayDeadlineOpen(deadlineDayEndDate, schedule, 'vote', now, gameTimeZone);
   const isActionLocked =
     deadlineDayIndex < currentDayIndex ||
-    !isNightWindowOpen(actionDeadlineBaseDate, actionDeadlineTime, now, gameTimeZone);
+    !isDayDeadlineOpen(deadlineDayEndDate, schedule, 'action', now, gameTimeZone);
   const isSleepWindow =
     dayDates.length > 0 && isVoteLocked && isActionLocked && now.getTime() < nextWakeUp.getTime();
   const isPastMidnight =
@@ -150,24 +160,40 @@ const YourEyesOnlyPagePLAYER = ({
   const selectedDayStartDate = dayDates[selectedDayIndex];
   const isPreviousDay = selectedDayIndex < currentDayIndex;
   const isStartOfSelectedDay = selectedDayStartDate
-    ? getZonedDayValue(now.getTime(), gameTimeZone) ===
-      getDateTokenDayValue(selectedDayStartDate)
+    ? getZonedDayValue(now.getTime(), gameTimeZone) === getDateTokenDayValue(selectedDayStartDate)
     : false;
   const hasWokenUp = useMemo(() => {
     if (isPreviousDay) return true; // Previous days are always released
     if (!selectedDayStartDate) return false;
+    if (isInstantGameDay(selectedDayStartDate) || isHourGame) {
+      return (
+        now.getTime() >= getDayWakeUpInstant(selectedDayStartDate, schedule, gameTimeZone).getTime()
+      );
+    }
     // For current/future days, only apply wake-up time on the start date itself
     if (!isStartOfSelectedDay) return true; // Not the start date, so released
     // It's the start date - check if wake-up time has passed
-    return isDayReleasedAtTime(selectedDayStartDate, schedule.wakeUpTime, now, gameTimeZone);
+    return (
+      now.getTime() >= getDayWakeUpInstant(selectedDayStartDate, schedule, gameTimeZone).getTime()
+    );
   }, [
     isPreviousDay,
     selectedDayStartDate,
     isStartOfSelectedDay,
-    schedule.wakeUpTime,
+    schedule,
+    isHourGame,
     now,
     gameTimeZone,
   ]);
+  const releaseTimeLabel =
+    selectedDayStartDate && (isHourGame || isInstantGameDay(selectedDayStartDate))
+      ? formatInstantTimeLabel(
+          getDayWakeUpInstant(selectedDayStartDate, schedule, gameTimeZone),
+          gameTimeZone
+        )
+      : selectedDayStartDate
+        ? formatTimeLabel(getGameDayTime24(selectedDayStartDate, schedule.wakeUpTime, gameTimeZone))
+        : '';
   const releaseDateLabel = useMemo(
     () =>
       selectedDayStartDate
@@ -226,8 +252,6 @@ const YourEyesOnlyPagePLAYER = ({
     setSelectedDayIndex((currentValue) => Math.min(currentValue, currentDayIndex));
   }, [currentDayIndex, dayDates.length]);
 
-
-
   const overlayAnimatedStyle = useAnimatedStyle(() => ({
     opacity: overlayOpacity.value,
     transform: [{ translateY: overlayTranslateY.value }],
@@ -256,6 +280,7 @@ const YourEyesOnlyPagePLAYER = ({
         roleTable.record,
         scheduleRecord.record,
         !isOperatorLoading,
+        !scriptFiles.isLoading,
       ]}
       loadingText="Loading..."
       className="min-h-190 flex-1">
@@ -278,7 +303,7 @@ const YourEyesOnlyPagePLAYER = ({
           <Animated.View style={contentAnimatedStyle} className="gap-4">
             {roleData?.aboutRole?.trim().length ? (
               <MarkdownRenderer
-                markdown={roleData.aboutRole}
+                markdown={scriptFiles.resolve(roleData.aboutRole)}
                 textAlign="center"
                 viewHeightImages={30}
               />
@@ -313,7 +338,9 @@ const YourEyesOnlyPagePLAYER = ({
                   <FontText weight="medium" className="text-center">
                     {selectedDayRangeLabel || 'Current game day'}
                   </FontText>
-                  <FontText variant="subtext" className="text-center text-xs uppercase tracking-widest">
+                  <FontText
+                    variant="subtext"
+                    className="text-center text-xs uppercase tracking-widest">
                     Day {selectedDayIndex + 1}
                   </FontText>
                 </Column>
@@ -356,7 +383,7 @@ const YourEyesOnlyPagePLAYER = ({
                             </FontText>
                             <FontText variant="subtext" className="text-center">
                               Day content will be available {releaseDateLabel || 'soon'} at{' '}
-                              {formatTimeLabel(schedule.wakeUpTime)}.
+                              {releaseTimeLabel}.
                             </FontText>
                           </Column>
                         </PlaceholderCard>

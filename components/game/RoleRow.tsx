@@ -7,10 +7,13 @@ import AppButton from '../ui/buttons/AppButton';
 import RoleEditDialog from './RoleEditDialog';
 import { useTableRowPreview } from './TableRowPreview';
 import MarkdownEditorDialog from './MarkdownEditorDialog';
+import CellFilesEditorDialog from './scriptFiles/CellFilesEditorDialog';
+import { useScriptFiles } from '../../hooks/useScriptFiles';
 import VoteEnableDialog from './VoteEnableDialog';
 import DeleteConfirmationDialog from './DeleteRoleConfirmationDialog';
 import { RoleTableItem } from 'types/roleTable';
 import { SelectableOverlay } from './multiSelect/SelectableOverlay';
+import { CellHighlight, isCellHighlightMatch, useCellHighlightRequest } from './CellHighlight';
 
 interface RoleRowProps {
   gameId: string;
@@ -28,8 +31,10 @@ interface RoleRowProps {
   onEditStart?: () => void;
   onEditEnd?: () => void;
   isEditing?: boolean;
-  showInputs?: boolean;
   selectionMode?: boolean;
+  /** Shared files API: hoisted to the table so rows don't each build an index. */
+  filesApi: ReturnType<typeof useScriptFiles>;
+  displayModules?: boolean;
 }
 
 const RoleRow = ({
@@ -48,16 +53,18 @@ const RoleRow = ({
   onEditStart,
   onEditEnd,
   isEditing,
-  showInputs = false,
   selectionMode = false,
+  filesApi,
+  displayModules = false,
 }: RoleRowProps) => {
+  const highlightReq = useCellHighlightRequest();
   const [isRoleInfoDialogOpen, setIsRoleInfoDialogOpen] = useState(false);
   const [isRoleMessageDialogOpen, setIsRoleMessageDialogOpen] = useState(false);
   const [isVoteEnableDialogOpen, setIsVoteEnableDialogOpen] = useState(false);
   const [isVoteMessageDialogOpen, setIsVoteMessageDialogOpen] = useState(false);
   const [isAboutRoleDialogOpen, setIsAboutRoleDialogOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
-  // Mount-on-first-open: six dialogs per role row — the trees only exist
+  // Mount-on-first-open: six dialogs per role row, the trees only exist
   // after first use. `|| isOpen` covers indirect opens (e.g. VoteEnable's
   // "continue to editor" path).
   const [mountedDialogs, setMountedDialogs] = useState<Record<string, true>>({});
@@ -65,7 +72,7 @@ const RoleRow = ({
     setMountedDialogs((prev) => (prev[key] ? prev : { ...prev, [key]: true }));
 
   // Registers this row's element + preview target with the shared floating
-  // preview pill (web only — it resolves hovered rows by pointer position).
+  // preview pill (web only; it resolves hovered rows by pointer position).
   const rowPreview = useTableRowPreview();
   const rowRef = useRef<View>(null);
   useEffect(() => {
@@ -76,7 +83,7 @@ const RoleRow = ({
     });
   }, [rowPreview, selectionMode, role.role]);
 
-  return (
+  const body = (
     <View ref={rowRef} className="relative">
       <Row className={`h-12 w-min gap-0 ${isEditing ? 'z-50' : ''}`}>
         <Column
@@ -118,8 +125,7 @@ const RoleRow = ({
               }}>
               {role.roleMessage ? (
                 <FontText className="text-center">
-                  {role.roleMessage.slice(0, 30)}
-                  {role.roleMessage.length > 30 ? '...' : ''}
+                  {filesApi.previewText(role.roleMessage) || 'Role message...'}
                 </FontText>
               ) : (
                 <FontText className="opacity-50">Role message...</FontText>
@@ -127,6 +133,12 @@ const RoleRow = ({
             </FontText>
           </Pressable>
           <SelectableOverlay cellId={`r-msg-${index}`} cellType="roleMessage" />
+          <CellHighlight
+            active={isCellHighlightMatch(highlightReq, {
+              cellKind: 'roleMessage',
+              targetKey: role.role,
+            })}
+          />
         </Column>
         <Column
           className={`border-subtle-border h-full w-64 items-center justify-center gap-4 border`}
@@ -145,8 +157,7 @@ const RoleRow = ({
                 <FontText className="text-center opacity-50">Cannot vote</FontText>
               ) : role.voteMessage ? (
                 <FontText className="text-center">
-                  {role.voteMessage.slice(0, 30)}
-                  {role.voteMessage.length > 30 ? '...' : ''}
+                  {filesApi.previewText(role.voteMessage) || 'Vote message...'}
                 </FontText>
               ) : (
                 <FontText className="text-center opacity-50">Using default</FontText>
@@ -154,6 +165,12 @@ const RoleRow = ({
             </FontText>
           </Pressable>
           <SelectableOverlay cellId={`r-vote-${index}`} cellType="voteMessage" />
+          <CellHighlight
+            active={isCellHighlightMatch(highlightReq, {
+              cellKind: 'voteMessage',
+              targetKey: role.role,
+            })}
+          />
         </Column>
         <Column
           className={`border-subtle-border h-full w-64 items-center justify-center gap-4 border ${isLast ? 'rounded-br-lg' : ''}`}
@@ -173,8 +190,9 @@ const RoleRow = ({
               }}>
               {role.aboutRole ? (
                 <FontText className="text-center">
-                  {role.aboutRole.slice(0, 30)}
-                  {role.aboutRole.length > 30 ? '...' : ''}
+                  {displayModules
+                    ? filesApi.previewText(role.aboutRole) || 'About role...'
+                    : `${role.aboutRole.slice(0, 30)}${role.aboutRole.length > 30 ? '...' : ''}`}
                 </FontText>
               ) : (
                 <FontText className="opacity-50">About role...</FontText>
@@ -182,6 +200,12 @@ const RoleRow = ({
             </FontText>
           </Pressable>
           <SelectableOverlay cellId={`r-about-${index}`} cellType="aboutRole" />
+          <CellHighlight
+            active={isCellHighlightMatch(highlightReq, {
+              cellKind: 'aboutRole',
+              targetKey: role.role,
+            })}
+          />
         </Column>
         {!selectionMode && (
           <Column className={`h-12 w-0 items-center justify-center gap-4`}>
@@ -209,23 +233,27 @@ const RoleRow = ({
           onSetRoleName={setRoleName}
           onSetDoesRoleVote={setDoesRoleVote}
           onSetHiddenFromRulebook={setHiddenFromRulebook}
+          displayModules={displayModules}
         />
       )}
 
       {(mountedDialogs.roleMessage || isRoleMessageDialogOpen) && (
-        <MarkdownEditorDialog
+        <CellFilesEditorDialog
           isOpen={isRoleMessageDialogOpen}
           onOpenChange={setIsRoleMessageDialogOpen}
           title={`${role.role || 'Role'} Role Message`}
-          initialMarkdown={role.roleMessage}
-          onSubmit={({ markdown }) => setRoleMessage(index, markdown)}
+          cellText={role.roleMessage ?? ''}
+          onSubmitText={(text) => setRoleMessage(index, text)}
+          filesApi={filesApi}
+          pinnedFolder="roleMessage"
+          nameBase={role.role || 'Role'}
           gameId={gameId}
-          showInputs={showInputs}
-          showScript
           hideInputs={false}
-          roleName={role.role}
-          showPreviewAsPlayerOption
-          historyKey={`roleMessage:${gameId}:${index}`}
+          legacyEditorProps={{
+            roleName: role.role,
+            showPreviewAsPlayerOption: true,
+            historyKey: `roleMessage:${gameId}:${index}`,
+          }}
         />
       )}
       {(mountedDialogs.voteEnable || isVoteEnableDialogOpen) && (
@@ -236,39 +264,60 @@ const RoleRow = ({
           doesRoleVote={role.doesRoleVote !== false}
           onSetDoesRoleVote={(value) => setDoesRoleVote(index, value)}
           onContinueToEditor={() => setIsVoteMessageDialogOpen(true)}
+          hasCustomMessage={!!role.voteMessage}
+          onResetMessage={() => setVoteMessage(index, '')}
         />
       )}
       {(mountedDialogs.voteMessage || isVoteMessageDialogOpen) && (
-        <MarkdownEditorDialog
+        <CellFilesEditorDialog
           isOpen={isVoteMessageDialogOpen}
           onOpenChange={setIsVoteMessageDialogOpen}
           title={`${role.role || 'Role'} Vote Message`}
-          initialMarkdown={role.voteMessage ?? defaultVoteMessage}
-          onSubmit={({ markdown }) => setVoteMessage(index, markdown)}
           dialogSubtext="Saving creates an override for this role. Save an empty message to inherit the default."
+          cellText={role.voteMessage ?? defaultVoteMessage}
+          onSubmitText={(text) => setVoteMessage(index, text)}
+          filesApi={filesApi}
+          pinnedFolder="voteMessage"
+          nameBase={role.role || 'Role'}
           gameId={gameId}
-          showInputs={showInputs}
-          showScript
           hideInputs={false}
           allowVoteInput
-          roleName={role.role}
-          showPreviewAsPlayerOption
-          historyKey={`voteMessage:${gameId}:${index}`}
+          legacyEditorProps={{
+            roleName: role.role,
+            showPreviewAsPlayerOption: true,
+            historyKey: `voteMessage:${gameId}:${index}`,
+          }}
         />
       )}
-      {(mountedDialogs.aboutRole || isAboutRoleDialogOpen) && (
-        <MarkdownEditorDialog
-          isOpen={isAboutRoleDialogOpen}
-          onOpenChange={setIsAboutRoleDialogOpen}
-          title={`About ${role.role || 'Role'}`}
-          initialMarkdown={role.aboutRole}
-          onSubmit={({ markdown }) => setAboutRole(index, markdown)}
-          gameId={gameId}
-          showScript
-          centered={true}
-          historyKey={`aboutRole:${gameId}:${index}`}
-        />
-      )}
+      {(mountedDialogs.aboutRole || isAboutRoleDialogOpen) &&
+        (displayModules ? (
+          <CellFilesEditorDialog
+            isOpen={isAboutRoleDialogOpen}
+            onOpenChange={setIsAboutRoleDialogOpen}
+            title={`About ${role.role || 'Role'}`}
+            cellText={role.aboutRole ?? ''}
+            onSubmitText={(text) => setAboutRole(index, text)}
+            filesApi={filesApi}
+            pinnedFolder="aboutRole"
+            nameBase={role.role || 'Role'}
+            gameId={gameId}
+            hideInputs={false}
+            forceFiles
+            historyKey={`aboutRole:${gameId}:${index}`}
+          />
+        ) : (
+          <MarkdownEditorDialog
+            isOpen={isAboutRoleDialogOpen}
+            onOpenChange={setIsAboutRoleDialogOpen}
+            title={`About ${role.role || 'Role'}`}
+            initialMarkdown={role.aboutRole}
+            onSubmit={({ markdown }) => setAboutRole(index, markdown)}
+            gameId={gameId}
+            showScript
+            centered={true}
+            historyKey={`aboutRole:${gameId}:${index}`}
+          />
+        ))}
 
       {(mountedDialogs.delete || isDeleteConfirmOpen) && (
         <DeleteConfirmationDialog
@@ -277,10 +326,16 @@ const RoleRow = ({
           onConfirm={() => onDeleteRole(index)}
           itemType="Role"
           itemName={role.role || 'this role'}
+          additionalMessage={
+            displayModules
+              ? "The role's About file stays in the aboutRole folder — remove or hide it in the rule book composition separately."
+              : undefined
+          }
         />
       )}
     </View>
   );
+  return body;
 };
 
 export default RoleRow;

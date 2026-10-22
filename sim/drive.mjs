@@ -1,5 +1,5 @@
 /**
- * sim/drive.mjs — puppeteer harness for the perf-audit copy.
+ * sim/drive.mjs: puppeteer harness for the perf-audit copy.
  * Usage: node sim/drive.mjs [--tour] [--url http://localhost:8090]
  * Loads the app, reports console errors, optionally runs the full tour and
  * writes the downloaded markdown report to sim/out/.

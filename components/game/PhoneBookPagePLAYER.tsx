@@ -5,7 +5,8 @@ import Animated, {
   useAnimatedStyle,
   withTiming,
 } from 'react-native-reanimated';
-import { Image, Pressable, View, useWindowDimensions } from 'react-native';
+import { Image, Pressable, View } from 'react-native';
+import { useContentWidth } from 'hooks/useContentWidth';
 import { useValue, useFindValues, useFindListItems } from 'hooks/useData';
 import { useGameOperatorUserId } from 'hooks/useGameOperatorUserId';
 import { useNow } from 'hooks/useNow';
@@ -15,19 +16,24 @@ import { useSharedVariableValue } from 'hooks/useSharedVariableValue';
 import { PlayerProfile } from 'types/multiplayer';
 import { UserTableItem } from 'types/playerTable';
 import {
-  buildScheduledDate,
   buildScheduledDateOnInstantDay,
   getCurrentPlayableDayIndex,
+  getDayDeadlineInstant,
   getDayEndDate,
+  getDayReleaseDate,
+  getDayWakeUpInstant,
   getGameScopedKey,
-  isDayReleasedAtTime,
-  isNightWindowOpen,
+  isDayDeadlineOpen,
+  isHourGameSchedule,
   normalizeGameSchedule,
   parseStoredDayDates,
   resolveGameTimeZone,
   defaultGameSchedule,
 } from 'utils/multiplayer';
 import { getNewserAssignmentKey, NewserAssignment } from 'utils/newspaperControl';
+import { isTimedGameDay } from '../../utils/gameDayDuration';
+import { useSim } from 'contexts/SimContext';
+import { personaIdForEmail, personaUserIdFor } from 'utils/simUtils';
 import { useTownSquareAuthorIdentity } from './townSquare/TownSquareAuthorIdentity';
 import Column from '../layout/Column';
 import MasonryGrid from '../layout/MasonryGrid';
@@ -99,7 +105,7 @@ const PhoneBookPagePLAYER = ({ gameId, currentUserId, currentEmail }: PhoneBookP
   } = useAllPlayers({ gameId });
   const { isSleepWindow, isLoading: isSleepWindowLoading } = useSleepWindow({ gameId });
 
-  const { width } = useWindowDimensions();
+  const width = useContentWidth();
   const showEditButton = width >= 440;
 
   return (
@@ -107,7 +113,7 @@ const PhoneBookPagePLAYER = ({ gameId, currentUserId, currentEmail }: PhoneBookP
       dependencies={[myProfile, !isPhoneBookLoading, !isSleepWindowLoading]}
       loadingText="Loading phone book"
       className="min-h-190 flex-1">
-      <Column className="flex-1 gap-6 py-3 sm:px-4">
+      <Column className={`flex-1 gap-6 py-3 ${width >= 640 ? 'px-4' : ''}`}>
         <PhoneBookHeader
           onEditProfile={() => setIsProfileDialogOpen(true)}
           aliveCount={aliveCount}
@@ -237,7 +243,7 @@ const PhoneBookHeader = ({
   onTocPress: () => void;
   isTocOpen: boolean;
 }) => {
-  const { width } = useWindowDimensions();
+  const width = useContentWidth();
   const showEditButton = width >= 440;
 
   return (
@@ -374,6 +380,7 @@ const useAllProfiles = ({ gameId }: { gameId: string }) => {
 
 // Hook to get all players - filters by operator's userTable + newser, waits for all data to load
 const useAllPlayers = ({ gameId }: { gameId: string }) => {
+  const sim = useSim();
   const profiles = useAllProfiles({ gameId });
   const { operatorUserId, isLoading: isOperatorLoading } = useGameOperatorUserId(gameId);
   const operatorUserTableRecords = useFindListItems<UserTableItem[]>('userTable', {
@@ -421,6 +428,21 @@ const useAllPlayers = ({ gameId }: { gameId: string }) => {
     ...(newserEmail ? [newserEmail] : []),
   ]);
 
+  // Inside a sim, roster rows are personas: the addressable id is the
+  // synthetic 'sim:{personaId}' derived from the roster email - real userIds
+  // mean nothing in sim space.
+  if (sim.mode !== 'off') {
+    const players = userTable
+      .filter((u: UserTableItem) => (u.email ?? '').trim().length > 0)
+      .map((u: UserTableItem) => ({
+        userId: personaUserIdFor(personaIdForEmail(u.email)),
+        email: u.email,
+        isDead: u.playerData?.livingState === 'dead',
+      }))
+      .sort((a, b) => a.email.localeCompare(b.email));
+    return { players, isLoading, aliveCount, totalCount };
+  }
+
   // Combine profiles and table users
   const allUserIds = new Set([
     ...profiles.map((p: PlayerProfile) => p.userId),
@@ -433,7 +455,7 @@ const useAllPlayers = ({ gameId }: { gameId: string }) => {
         profiles.find((p: PlayerProfile) => p.userId === userId)?.email ||
         userTable.find((u: UserTableItem) => u.userId === userId)?.email ||
         '';
-      // Table rows can keep userId 'NOT-JOINED' after a player joins — match by
+      // Table rows can keep userId 'NOT-JOINED' after a player joins, match by
       // userId first, then fall back to email (the stable identity key).
       const tableRow =
         userTable.find((u: UserTableItem) => u.userId === userId) ??
@@ -484,14 +506,15 @@ const useSleepWindow = ({ gameId }: { gameId: string }) => {
   const gameTimeZone = resolveGameTimeZone(schedule);
   const dayDates = useMemo(() => parseStoredDayDates(dayDateStrings), [dayDateStrings]);
   const currentDayIndex = useMemo(
-    () => getCurrentPlayableDayIndex(dayDates, new Date(), gameTimeZone),
-    [dayDates, gameTimeZone]
+    () => getCurrentPlayableDayIndex(dayDates, now, gameTimeZone),
+    [dayDates, gameTimeZone, now]
   );
+  const isHourGame = isHourGameSchedule(schedule);
   const currentDayStartDate = dayDates[currentDayIndex];
   const deadlineDayIndex =
     currentDayIndex > 0 &&
     currentDayStartDate &&
-    !isDayReleasedAtTime(currentDayStartDate, schedule.wakeUpTime, now, gameTimeZone)
+    now.getTime() < getDayWakeUpInstant(currentDayStartDate, schedule, gameTimeZone).getTime()
       ? currentDayIndex - 1
       : currentDayIndex;
   const deadlineDayEndDate = getDayEndDate(
@@ -499,20 +522,11 @@ const useSleepWindow = ({ gameId }: { gameId: string }) => {
     deadlineDayIndex,
     numberOfRealDaysPerInGameDay
   );
-  const voteDeadlineBaseDate = new Date(
-    deadlineDayEndDate.getTime() - (schedule.voteDayOffset ?? 0) * 24 * 60 * 60 * 1000
-  );
-  const actionDeadlineBaseDate = new Date(
-    deadlineDayEndDate.getTime() - (schedule.actionDayOffset ?? 0) * 24 * 60 * 60 * 1000
-  );
-  const voteDeadlineTime =
-    schedule.voteDeadlineTime ?? defaultGameSchedule.voteDeadlineTime ?? '22:00';
-  const actionDeadlineTime =
-    schedule.actionDeadlineTime ?? defaultGameSchedule.actionDeadlineTime ?? '22:00';
-  const voteDeadline = buildScheduledDate(voteDeadlineBaseDate, voteDeadlineTime, gameTimeZone);
-  const actionDeadline = buildScheduledDate(
-    actionDeadlineBaseDate,
-    actionDeadlineTime,
+  const voteDeadline = getDayDeadlineInstant(deadlineDayEndDate, schedule, 'vote', gameTimeZone);
+  const actionDeadline = getDayDeadlineInstant(
+    deadlineDayEndDate,
+    schedule,
+    'action',
     gameTimeZone
   );
   const laterDeadline =
@@ -522,16 +536,26 @@ const useSleepWindow = ({ gameId }: { gameId: string }) => {
     schedule.wakeUpTime,
     gameTimeZone
   );
-  const nextWakeUp =
-    sameDayWakeUp.getTime() > laterDeadline.getTime()
-      ? sameDayWakeUp
-      : buildScheduledDateOnInstantDay(laterDeadline, schedule.wakeUpTime, gameTimeZone, 1);
+  const nextWakeUp = isHourGame
+    ? (getDayReleaseDate(
+        dayDates,
+        deadlineDayIndex,
+        schedule.wakeUpTime,
+        gameTimeZone,
+        schedule,
+        numberOfRealDaysPerInGameDay
+      ) ?? deadlineDayEndDate)
+    : isTimedGameDay(deadlineDayEndDate)
+      ? laterDeadline
+      : sameDayWakeUp.getTime() > laterDeadline.getTime()
+        ? sameDayWakeUp
+        : buildScheduledDateOnInstantDay(laterDeadline, schedule.wakeUpTime, gameTimeZone, 1);
   const isVoteLocked =
     deadlineDayIndex < currentDayIndex ||
-    !isNightWindowOpen(voteDeadlineBaseDate, voteDeadlineTime, now, gameTimeZone);
+    !isDayDeadlineOpen(deadlineDayEndDate, schedule, 'vote', now, gameTimeZone);
   const isActionLocked =
     deadlineDayIndex < currentDayIndex ||
-    !isNightWindowOpen(actionDeadlineBaseDate, actionDeadlineTime, now, gameTimeZone);
+    !isDayDeadlineOpen(deadlineDayEndDate, schedule, 'action', now, gameTimeZone);
   const isSleepWindow =
     dayDates.length > 0 && isVoteLocked && isActionLocked && now.getTime() < nextWakeUp.getTime();
 

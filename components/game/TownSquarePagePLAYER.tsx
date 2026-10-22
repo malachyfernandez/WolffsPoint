@@ -33,7 +33,7 @@ const TownSquarePagePLAYER = ({ gameId, currentProfile }: TownSquarePagePLAYERPr
     const [selectedPostId, setSelectedPostId] = useState('');
     const [editingReplyId, setEditingReplyId] = useState<string | null>(null);
     const [replyTargetCommentId, setReplyTargetCommentId] = useState<string | null>(null);
-    // Ref, not state — the value is only read when restoring scroll after
+    // Ref, not state: the value is only read when restoring scroll after
     // returning from a thread. State here re-rendered the page every frame
     // of every scroll.
     const threadListScrollYRef = useRef(0);

@@ -1,19 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 
 import { useValue } from 'hooks/useData';
-
-function useWindowWidth(): number {
-    const [width, setWidth] = useState(() =>
-        typeof window !== 'undefined' ? window.innerWidth : 0
-    );
-    useEffect(() => {
-        if (typeof window === 'undefined') return;
-        const handleResize = () => setWidth(window.innerWidth);
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-    }, []);
-    return width;
-}
+import { useContentWidth } from 'hooks/useContentWidth';
 import { useSyncUserData } from 'hooks/useSyncUserData';
 import Column from '../layout/Column';
 import BottomBar from '../layout/BottomBar';
@@ -42,7 +30,7 @@ const AllGamesPage = ({
     setActiveGameId,
     myGames,
 }: AllGamesPageProps) => {
-    const width = useWindowWidth();
+    const width = useContentWidth();
     const [uploadedImageUrl, setUploadedImageUrl] = useState('');
 
     const [gamesTheyJoined, setGamesTheyJoined] = useValue<string[]>("gamesTheyJoined", {
@@ -88,10 +76,10 @@ const AllGamesPage = ({
     const isGamesPageEmpty = !hasJoinedAGame && !hasMadeAGame && !hasArchivedGames;
 
     return (
-        <Column className='gap-4 flex-1 mt-10 max-w-250 w-full mx-auto'>
+        <Column className='gap-2.5 flex-1 mt-10 max-w-250 w-full mx-auto'>
             <ProfileInfo />
 
-            <Column className='gap-4 flex-1'>
+            <Column className='gap-2.5 flex-1'>
                 <LoadingContainer
                     dependencies={[gamesTheyJoined, archivedGames, myGames]}
                     loadingText='Loading games'
@@ -108,7 +96,7 @@ const AllGamesPage = ({
                                     setActiveGameId={setActiveGameId}
                                 />
                             ) : (
-                                <Column className='gap-4 items-center justify-center flex-1'>
+                                <Column className='gap-2.5 items-center justify-center flex-1'>
                                     <NoGames joinGame={joinGame} />
                                 </Column>
 
@@ -119,7 +107,7 @@ const AllGamesPage = ({
             </Column>
 
             {/* bottom bar */}
-            <Column className='gap-4'>
+            <Column className='gap-2.5'>
                 
                 <BottomBar>
                     <NewWolffspointButtonAndDialogue onCreate={setActiveGameId} condensed={width < 450}/>

@@ -223,7 +223,7 @@ const VoteEditorDialog = ({
   // Sticky-enabled: once Done becomes enabled, it stays enabled (until dialog closes)
   const doneEnabled = hasUnsavedChanges || hasEverBeenEnabled;
 
-  // Save without closing — persists via onSubmit and adds to history
+  // Save without closing: persists via onSubmit and adds to history
   const handleSave = () => {
     if (!hasUnsavedChanges) return;
     const targets = draftVote

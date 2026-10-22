@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { TextInput, TextInputProps, TextStyle, View, Text } from 'react-native';
+import { nowDate } from 'utils/simNow';
 import { useFonts } from 'expo-font';
 
 type FontWeight = 'regular' | 'medium' | 'bold';
@@ -21,7 +22,7 @@ const normalizeBoundary = (boundary?: DateBoundary) => {
 
 const isToday = (date?: Date) => {
     if (!date) return false;
-    const today = new Date();
+    const today = nowDate();
     return date.getDate() === today.getDate() &&
            date.getMonth() === today.getMonth() &&
            date.getFullYear() === today.getFullYear();
@@ -29,7 +30,7 @@ const isToday = (date?: Date) => {
 
 const isTomorrow = (date?: Date) => {
     if (!date) return false;
-    const tomorrow = new Date();
+    const tomorrow = nowDate();
     tomorrow.setDate(tomorrow.getDate() + 1);
     return date.getDate() === tomorrow.getDate() &&
            date.getMonth() === tomorrow.getMonth() &&
@@ -38,7 +39,7 @@ const isTomorrow = (date?: Date) => {
 
 const isYesterday = (date?: Date) => {
     if (!date) return false;
-    const yesterday = new Date();
+    const yesterday = nowDate();
     yesterday.setDate(yesterday.getDate() - 1);
     return date.getDate() === yesterday.getDate() &&
            date.getMonth() === yesterday.getMonth() &&
@@ -97,7 +98,7 @@ const FontDateInput = ({
         setInputValue(toRawDigits(value));
     }, [value]);
 
-    const currentYearDigits = useMemo(() => new Date().getFullYear().toString(), []);
+    const currentYearDigits = useMemo(() => nowDate().getFullYear().toString(), []);
     const currentYearNumber = useMemo(() => Number(currentYearDigits), [currentYearDigits]);
 
     const earliestBoundary = useMemo(() => normalizeBoundary(earliestDate), [earliestDate]);
@@ -190,16 +191,16 @@ const FontDateInput = ({
 
         const monthName = MONTH_NAMES[month];
         if (inputValue.length === 2) {
-            return `${monthName} — add day`;
+            return `${monthName}: add day`;
         }
 
         if (inputValue.length === 3) {
-            return `${monthName} — add day`;
+            return `${monthName}: add day`;
         }
 
         const dayDigits = inputValue.slice(2, 4);
         if (dayDigits.length < 2) {
-            return `${monthName} — add day`;
+            return `${monthName}: add day`;
         }
 
         const day = Number(dayDigits);

@@ -1,7 +1,8 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Column from '../layout/Column';
-import { Platform, View, useWindowDimensions } from 'react-native';
-import { useFindListItems, useFindValues } from 'hooks/useData';
+import { Platform, View } from 'react-native';
+import { useFindListItems, useFindValues, useValue } from 'hooks/useData';
+import { useContentWidth } from 'hooks/useContentWidth';
 import ShadowScrollView from '../ui/ShadowScrollView';
 import OperatorGamePage from './OperatorGamePage';
 import NewserGamePage from './NewserGamePage';
@@ -22,6 +23,17 @@ import FadeInAfterDelay from '../ui/loading/FadeInAfterDelay';
 import LoadingContainer from '../ui/loading/LoadingContainer';
 import { BodyReadinessProvider } from 'contexts/BodyReadinessContext';
 import { SimProfiler } from '../../sim/perf/SimProfiler';
+import { SimProvider, simGameIdFor, type SimState } from 'contexts/SimContext';
+import { setSimNow } from 'utils/simNow';
+import SimStrip from './sim/SimStrip';
+import SimEditWarningProvider from './sim/SimEditWarningProvider';
+import ManageFauxPlayersDialog from './sim/ManageFauxPlayersDialog';
+import {
+  defaultSimSession,
+  personaUserIdFor,
+  simSessionKey,
+  type SimSession,
+} from 'utils/simUtils';
 
 interface GamePageProps {
   gameId: string;
@@ -52,7 +64,7 @@ const GamePage = ({ gameId, currentUserId, onReady }: GamePageProps) => {
   }, [onReady]);
 
   const scrollAmount = useSharedValue(0);
-  const { width: screenWidth } = useWindowDimensions();
+  const screenWidth = useContentWidth();
 
   const handleScroll = useAnimatedScrollHandler({
     onScroll: (event) => {
@@ -104,6 +116,45 @@ const GamePage = ({ gameId, currentUserId, onReady }: GamePageProps) => {
 
   const isOperator = (ownedGameRows?.length ?? 0) > 0;
 
+  // Simulation session: read here, outside the provider, so writes land on the
+  // real session record (inside the provider they would be sim-scoped).
+  const [simSessionRecord, setSimSession] = useValue<SimSession>(simSessionKey(gameId), {
+    defaultValue: defaultSimSession,
+    privacy: 'PUBLIC',
+  });
+  const simSession = simSessionRecord?.value ?? defaultSimSession;
+  const simActive = simSession.enabled && simSession.view !== 'operator';
+  const simGameId = simGameIdFor(gameId);
+  const [simManageOpen, setSimManageOpen] = useState(false);
+
+  const simState = useMemo<SimState>(
+    () => ({
+      mode: simSession.view === 'persona' ? 'persona' : 'console',
+      realGameId: gameId,
+      simGameId,
+      personaId: simSession.personaId,
+      personaUserId: simSession.personaId
+        ? personaUserIdFor(simSession.personaId)
+        : undefined,
+      personaName: simSession.personaName,
+      operatorUserId,
+      simNowMs: simSession.simNowMs,
+      openManagePlayers: () => setSimManageOpen(true),
+    }),
+    [
+      simSession.view,
+      simSession.personaId,
+      simSession.personaName,
+      simSession.simNowMs,
+      gameId,
+      simGameId,
+      operatorUserId,
+    ]
+  );
+
+  const updateSimSession = (patch: Partial<SimSession>) =>
+    setSimSession({ ...simSession, ...patch });
+
   const validNewser = resolveValidNewserAssignment({
     assignment: newserAssignmentRecords?.[0]?.value,
     userDatas: (userDataRecords ?? []).map((record) => record.value),
@@ -113,12 +164,10 @@ const GamePage = ({ gameId, currentUserId, onReady }: GamePageProps) => {
 
   const logoWidth = Math.min(screenWidth * 0.97, 760);
   const logoHeight = (logoWidth / 522) * 183;
-  const baseHeight = 183;
-  // const translateY = (logoHeight - baseHeight) / 2;
   const translateY = -(logoWidth / 9) + 100;
 
   return (
-    <Column className="h-screen w-full gap-4">
+    <Column className="h-screen w-full gap-0 overflow-hidden">
         <View className="absolute top-20 w-full items-center">
           <Animated.View
             style={[
@@ -143,14 +192,48 @@ const GamePage = ({ gameId, currentUserId, onReady }: GamePageProps) => {
           <BodyReadinessProvider key={gameId} outerReady={mountSettled && !isRoleDataLoading} onAllReady={() => setAllLoadsDone(true)}>
             <ShadowScrollView
               className="flex-1"
-              scrollViewClassName="p-6 px-2 sm:px-6 h-screen w-full"
+              scrollViewClassName={`p-6 h-screen w-full ${screenWidth >= 640 ? 'px-6' : 'px-2'}`}
               onScroll={handleScroll}
               scrollEventThrottle={16}
               scrollViewComponent={Animated.ScrollView}>
-              <View className="mx-auto w-full max-w-[1000px] pt-60">
+              <View className="mx-auto w-full max-w-250 pt-60">
                 <SimProfiler id="game-body">
                 {isRoleDataLoading ? (
                   <View className="min-h-100" />
+                ) : simActive ? (
+                  <SimProvider value={simState}>
+                    <SimEditWarningProvider>
+                    <Column className="w-full gap-4">
+                      <SimStrip
+                        simState={simState}
+                        onBackToOperator={() => updateSimSession({ view: 'operator' })}
+                        onSetSimNow={(ms) => {
+                          // Snap the clock immediately; the session write
+                          // re-syncs the same target on its Convex echo.
+                          setSimNow(ms ?? null);
+                          updateSimSession({ simNowMs: ms });
+                        }}
+                        onEndSimulation={() =>
+                          updateSimSession({
+                            enabled: false,
+                            view: 'operator',
+                            personaId: undefined,
+                            personaName: undefined,
+                          })
+                        }
+                      />
+                      {simSession.view === 'console' ? (
+                        <OperatorGamePage currentUserId={currentUserId} gameId={simGameId} />
+                      ) : (
+                        <PlayerGamePage
+                          key={simSession.personaId}
+                          currentUserId={simState.personaUserId ?? currentUserId}
+                          gameId={simGameId}
+                        />
+                      )}
+                    </Column>
+                    </SimEditWarningProvider>
+                  </SimProvider>
                 ) : isOperator ? (
                   <OperatorGamePage currentUserId={currentUserId} gameId={gameId} />
                 ) : isNewser ? (
@@ -163,6 +246,14 @@ const GamePage = ({ gameId, currentUserId, onReady }: GamePageProps) => {
             </ShadowScrollView>
           </BodyReadinessProvider>
         </LoadingContainer>
+        {/* Outside SimProvider on purpose: the manager reads the live roster
+            for import and writes literal sim coordinates - inside the provider
+            the useData redirect would double-prefix them. */}
+        <ManageFauxPlayersDialog
+          isOpen={simManageOpen}
+          onOpenChange={setSimManageOpen}
+          gameId={gameId}
+        />
     </Column>
   );
 };

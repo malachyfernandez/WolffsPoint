@@ -27,6 +27,8 @@ import { TabSelector } from './markdownEditor';
 import { useSaveHistory, SavedEntry } from 'hooks/useSaveHistory';
 import { useKeyboardShortcuts } from 'hooks/useKeyboardShortcuts';
 import { useKeyboardShortcutHint } from 'contexts/KeyboardShortcutHintContext';
+import { nowMs } from 'utils/simNow';
+
 
 interface PlayerProfileDialogNEWProps {
   initialValue: PlayerProfile;
@@ -190,31 +192,31 @@ const PlayerProfileDialogNEW = ({
     onSave({
       ...draft,
       inGameName: draft.inGameName.trim(),
-      claimedAt: draft.claimedAt || Date.now(),
+      claimedAt: draft.claimedAt || nowMs(),
     });
     if (onSaveCustomUserInfo) {
       onSaveCustomUserInfo({ name: realName.trim() });
     }
     if (historyKey && hasUnsavedChanges) {
-      const preview = `${draft.inGameName.trim() || 'Unnamed'} — ${(draft.bioMarkdown || '').slice(0, 120)}`;
+      const preview = `${draft.inGameName.trim() || 'Unnamed'}: ${(draft.bioMarkdown || '').slice(0, 120)}`;
       addSave(draft, preview);
     }
     onOpenChange(false);
   };
 
-  // Save without closing — persists via onSave and adds to history
+  // Save without closing: persists via onSave and adds to history
   const handleSaveWithoutClose = () => {
     if (!canSave) return;
     onSave({
       ...draft,
       inGameName: draft.inGameName.trim(),
-      claimedAt: draft.claimedAt || Date.now(),
+      claimedAt: draft.claimedAt || nowMs(),
     });
     if (onSaveCustomUserInfo) {
       onSaveCustomUserInfo({ name: realName.trim() });
     }
     if (historyKey) {
-      const preview = `${draft.inGameName.trim() || 'Unnamed'} — ${(draft.bioMarkdown || '').slice(0, 120)}`;
+      const preview = `${draft.inGameName.trim() || 'Unnamed'}: ${(draft.bioMarkdown || '').slice(0, 120)}`;
       addSave(draft, preview);
     }
   };
@@ -295,7 +297,7 @@ const PlayerProfileDialogNEW = ({
               {!isDesktop && <TabSelector value={profileTab} onValueChange={setProfileTab} />}
 
               <Row className="-mx-5 min-h-0 flex-1 gap-0 sm:pt-5">
-                {/* LEFT: Inputs (scrollable) — always on desktop, only on "editing" tab on mobile */}
+                {/* LEFT: Inputs (scrollable): always on desktop, only on "editing" tab on mobile */}
                 {(isDesktop || profileTab === 'editing') && (
                   <ShadowScrollView className="flex-1" scrollViewClassName="flex-1">
                     <Column className="gap-6 px-2 pb-2 sm:px-5">
@@ -372,7 +374,7 @@ const PlayerProfileDialogNEW = ({
                   </ShadowScrollView>
                 )}
 
-                {/* RIGHT: Full-height profile preview — always on desktop, only on "preview" tab on mobile */}
+                {/* RIGHT: Full-height profile preview: always on desktop, only on "preview" tab on mobile */}
                 {(isDesktop || profileTab === 'preview') && (
                   <Column className="flex-1 gap-2">
                     {isDesktop && <FontText weight="medium">Preview</FontText>}

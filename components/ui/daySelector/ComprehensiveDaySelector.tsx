@@ -12,14 +12,19 @@ import DayButton from './DayButton';
 import { GameSchedule } from 'types/multiplayer';
 import {
   defaultGameSchedule,
+  createNextGameDay,
   getCurrentPlayableDayIndex,
   getDayRangeLabel,
   getGameScopedKey,
   normalizeGameSchedule,
   parseStoredDayDates,
   resolveGameTimeZone,
+  resolveHourDaySequence,
 } from 'utils/multiplayer';
 import { getZonedDayToken } from 'utils/timezone';
+import { nowMs } from 'utils/simNow';
+import { useNow } from 'hooks/useNow';
+import { serializeGameDayDate, type GameDayUnit } from '../../../utils/gameDayDuration';
 
 export type DaySelectorMode = 'player' | 'nightly' | 'newspaper';
 
@@ -72,27 +77,33 @@ const ComprehensiveDaySelector = ({
     privacy: 'PUBLIC',
     autoCreate: false,
   });
-  const gameTimeZone = resolveGameTimeZone(normalizeGameSchedule(gameSchedule.value));
+  const schedule = normalizeGameSchedule(gameSchedule.value);
+  const gameTimeZone = resolveGameTimeZone(schedule);
 
   // "Today" as a calendar token in the shared game zone
-  const todayToken = () => getZonedDayToken(Date.now(), gameTimeZone);
+  const todayToken = () => getZonedDayToken(nowMs(), gameTimeZone);
 
   // Convert stored MM/DD/YYYY strings back to real Date objects for UI use
   const fixedDayDatesArray = parseStoredDayDates(dayDatesArray.value);
-  const currentPlayableDayIndex = getCurrentPlayableDayIndex(
-    fixedDayDatesArray,
-    new Date(),
-    gameTimeZone
-  );
+  // Ticking clock so the current-day dot follows the (possibly simulated) time
+  // instead of freezing at whatever render happened to compute it last.
+  const now = useNow(10_000);
+  const currentPlayableDayIndex = getCurrentPlayableDayIndex(fixedDayDatesArray, now, gameTimeZone);
 
-  // Clean setter that accepts Date[] and handles string conversion internally
+  // Measured chip geometry (hour-game and timed labels are far wider than the
+  // old fixed estimate, so auto-scroll must use real layouts, not guesses).
+  const chipLayoutsRef = useRef(new Map<number, { x: number; width: number }>());
+  const scrollLeftRef = useRef(0);
+  const scrollViewportWidthRef = useRef(0);
+
+  // Clean setter that accepts Date[] and handles string conversion internally.
+  // Hour-game days re-resolve before serialize so an edited date cascades
+  // through the days that inherit it.
   const setFixedDayDatesArray = useCallback(
     (dates: Date[]) => {
-      setDayDatesArray(
-        dates.map((date) => `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`)
-      );
+      setDayDatesArray(resolveHourDaySequence(dates, gameTimeZone).map(serializeGameDayDate));
     },
-    [setDayDatesArray]
+    [setDayDatesArray, gameTimeZone]
   );
 
   useEffect(() => {
@@ -110,40 +121,43 @@ const ComprehensiveDaySelector = ({
     setHasCompletedInitialDaySetup,
   ]);
 
-  // Auto-scroll to selected day
+  // Auto-scroll to selected day, but only enough to bring it into view.
   useEffect(() => {
     if (
-      scrollViewRef.current &&
-      selectedDayIndex.value !== undefined &&
-      fixedDayDatesArray.length > 0
+      !scrollViewRef.current ||
+      selectedDayIndex.value === undefined ||
+      fixedDayDatesArray.length === 0
     ) {
-      const dayButtonWidth = 112;
-      const gapWidth = 4;
-      // Calculate position in reversed order: newest days are first (after + button)
-      const reversedIndex = fixedDayDatesArray.length - 1 - selectedDayIndex.value;
-      const selectedDayPosition = reversedIndex * (dayButtonWidth + gapWidth);
-
-      // Scroll to position with some padding to center the selected day
-      const scrollPosition = Math.max(0, selectedDayPosition - 100);
-
-      scrollViewRef.current.scrollTo({ x: scrollPosition, animated: true });
+      return;
+    }
+    const chip = chipLayoutsRef.current.get(selectedDayIndex.value);
+    const viewport = scrollViewportWidthRef.current;
+    if (!chip || viewport <= 0) return;
+    const pad = 8;
+    const left = scrollLeftRef.current;
+    const right = left + viewport;
+    if (chip.x < left) {
+      scrollViewRef.current.scrollTo({ x: Math.max(0, chip.x - pad), animated: true });
+    } else if (chip.x + chip.width > right) {
+      scrollViewRef.current.scrollTo({
+        x: chip.x + chip.width - viewport + pad,
+        animated: true,
+      });
     }
   }, [selectedDayIndex.value, fixedDayDatesArray.length]);
 
   const addNewDay = (customDaysPerGameDay?: number) => {
     const currentDays = [...fixedDayDatesArray];
+    const daysToAdd = customDaysPerGameDay ?? numberOfRealDaysPerInGameDay.value;
     if (currentDays.length === 0) {
-      const firstDay = todayToken();
+      const firstDay = createNextGameDay(undefined, daysToAdd, schedule);
       setFixedDayDatesArray([firstDay]);
       setSelectedDayIndex(0);
       setHasCompletedInitialDaySetup(true);
       return;
     }
     const lastDate = currentDays[currentDays.length - 1];
-    const newDate = new Date(lastDate);
-
-    const daysToAdd = customDaysPerGameDay ?? numberOfRealDaysPerInGameDay.value;
-    newDate.setDate(newDate.getDate() + daysToAdd);
+    const newDate = createNextGameDay(lastDate, daysToAdd, schedule);
     setFixedDayDatesArray([...currentDays, newDate]);
 
     // Snap to the newest day
@@ -214,9 +228,14 @@ const ComprehensiveDaySelector = ({
     addNewDay();
   };
 
-  const handleInitialDaySetupSubmit = (daysPerGameDay: number) => {
+  const handleInitialDaySetupSubmit = (daysPerGameDay: number, unit?: GameDayUnit) => {
     if (fixedDayDatesArray.length === 0) {
-      setFixedDayDatesArray([todayToken()]);
+      setFixedDayDatesArray([
+        createNextGameDay(undefined, daysPerGameDay, {
+          ...schedule,
+          dayDurationUnit: unit ?? schedule.dayDurationUnit,
+        }),
+      ]);
       setSelectedDayIndex(0);
     }
 
@@ -233,12 +252,19 @@ const ComprehensiveDaySelector = ({
   };
 
   return (
-    <Column className="gap-4">
+    <Column className="gap-2.5">
       <ShadowScrollView
         direction="horizontal"
         className="-mb-3 -mt-1 mr-1 max-w-min pr-1"
         scrollViewClassName="px-1 m-0 h-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
         ref={scrollViewRef}
+        onScroll={(e: any) => {
+          scrollLeftRef.current = e.nativeEvent.contentOffset.x;
+        }}
+        onLayout={(e: any) => {
+          scrollViewportWidthRef.current = e.nativeEvent.layout.width;
+        }}
+        scrollEventThrottle={16}
         horizontal>
         <Row className="h-6 gap-1">
           {showAddButton && (
@@ -261,46 +287,43 @@ const ComprehensiveDaySelector = ({
               const label = getDayRangeLabel(
                 fixedDayDatesArray,
                 index,
-                numberOfRealDaysPerInGameDay.value
+                numberOfRealDaysPerInGameDay.value,
+                gameTimeZone
               );
 
-              if (isSelected) {
-                return (
-                  <DayButton
-                    key={index}
-                    date={date}
-                    index={index}
-                    label={label}
-                    isSelected={true}
-                    showCurrentDayIndicator={isCurrentDay}
-                    onPress={() => handleDaySelect(index)}>
-                    <DaySelectionDialog
-                      isOpen={isDialogOpen}
-                      onOpenChange={setIsDialogOpen}
-                      index={index}
-                      dayDate={date}
-                      buttonLabel={label}
-                      previousDate={index > 0 ? fixedDayDatesArray[index - 1] : todayToken()}
-                      followingDate={
-                        index < fixedDayDatesArray.length - 1
-                          ? fixedDayDatesArray[index + 1]
-                          : undefined
-                      }
-                      onPress={() => handleDaySelect(index)}
-                      replaceDayDate={replaceDayDate}
-                      showCurrentDayIndicator={isCurrentDay}
-                      skipVoting={(skipVotingDays.value ?? []).includes(index)}
-                      skipActions={(skipActionsDays.value ?? []).includes(index)}
-                      onSkipVotingChange={(skip) => toggleSkipVoting(index, skip)}
-                      onSkipActionsChange={(skip) => toggleSkipActions(index, skip)}
-                    />
-                  </DayButton>
-                );
-              }
-
-              return (
+              const chip = isSelected ? (
                 <DayButton
-                  key={index}
+                  date={date}
+                  index={index}
+                  label={label}
+                  isSelected={true}
+                  showCurrentDayIndicator={isCurrentDay}
+                  onPress={() => handleDaySelect(index)}>
+                  <DaySelectionDialog
+                    isOpen={isDialogOpen}
+                    onOpenChange={setIsDialogOpen}
+                    index={index}
+                    dayDate={date}
+                    buttonLabel={label}
+                    previousDate={index > 0 ? fixedDayDatesArray[index - 1] : todayToken()}
+                    followingDate={
+                      index < fixedDayDatesArray.length - 1
+                        ? fixedDayDatesArray[index + 1]
+                        : undefined
+                    }
+                    onPress={() => handleDaySelect(index)}
+                    replaceDayDate={replaceDayDate}
+                    timeZone={gameTimeZone}
+                    showCurrentDayIndicator={isCurrentDay}
+                    skipVoting={(skipVotingDays.value ?? []).includes(index)}
+                    skipActions={(skipActionsDays.value ?? []).includes(index)}
+                    onSkipVotingChange={(skip) => toggleSkipVoting(index, skip)}
+                    onSkipActionsChange={(skip) => toggleSkipActions(index, skip)}
+                    gameId={gameId}
+                  />
+                </DayButton>
+              ) : (
+                <DayButton
                   date={date}
                   index={index}
                   label={label}
@@ -308,6 +331,19 @@ const ComprehensiveDaySelector = ({
                   showCurrentDayIndicator={isCurrentDay}
                   onPress={() => handleDaySelect(index)}
                 />
+              );
+
+              return (
+                <View
+                  key={index}
+                  onLayout={(e) => {
+                    chipLayoutsRef.current.set(index, {
+                      x: e.nativeEvent.layout.x,
+                      width: e.nativeEvent.layout.width,
+                    });
+                  }}>
+                  {chip}
+                </View>
               );
             })}
         </Row>

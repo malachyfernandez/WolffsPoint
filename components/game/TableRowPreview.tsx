@@ -1,11 +1,12 @@
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
-import { Platform, Pressable, useWindowDimensions, View } from 'react-native';
+import { Platform, Pressable, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { Eye } from 'lucide-react-native';
 import FontText from '../ui/text/FontText';
 import PlayerPreviewModal from './markdownEditor/PlayerPreviewModal';
 import { WebDropdownPortal } from 'contexts/WebDropdownProvider';
 import { useIsTouchInput } from 'hooks/useIsTouchInput';
+import { useContentWidth } from 'hooks/useContentWidth';
 import { useBodyReportEnabled } from 'contexts/BodyReadinessContext';
 
 export type RowPreviewTarget =
@@ -38,7 +39,7 @@ const ROW_HEIGHT = 48;
 /** How long the pill lingers after the pointer leaves the row zone, so the
  *  user can settle onto the pill itself without it disappearing. */
 const HIDE_DELAY_MS = 300;
-/** How far the pill's RIGHT edge sits inside the table area's left edge —
+/** How far the pill's RIGHT edge sits inside the table area's left edge,
  *  everything left of that pokes outside the tab. */
 const PILL_INSIDE_PX = 12;
 const PILL_WIDTH_PX = 52;
@@ -46,11 +47,11 @@ const CIRCLE_SIZE_PX = 28;
 /** Extra horizontal reach left of the pill, so hovering "where the button
  *  should be" shows it even before the pointer is on the pill itself. */
 const EDGE_ZONE_PX = 20;
-/** Tailwind's `sm` breakpoint — below this the pill is a plain circle. */
+/** Tailwind's `sm` breakpoint: below this the pill is a plain circle. */
 const MOBILE_BREAKPOINT_PX = 640;
 /** How long after the last scroll event before checking if rows settled. */
 const SCROLL_END_MS = 150;
-/** Poll interval for the settle check — pills only fade back in once row
+/** Poll interval for the settle check, pills only fade back in once row
  *  positions stop changing between two consecutive measurements. */
 const SETTLE_POLL_MS = 80;
 /** Max time to keep waiting for rows to settle before showing anyway. */
@@ -80,13 +81,13 @@ interface PreviewPillProps {
   onPress: () => void;
   onHoverIn: () => void;
   onHoverOut: () => void;
-  /** Mobile (below `sm`) renders a plain icon-only circle — no text swap. */
+  /** Mobile (below `sm`) renders a plain icon-only circle, no text swap. */
   circle?: boolean;
 }
 
 /**
- * The floating pill itself. Shows just the eye — fixed width so it can't
- * resize — and swaps the eye for the "Preview" text when the pill itself is
+ * The floating pill itself. Shows just the eye: fixed width so it can't
+ * resize: and swaps the eye for the "Preview" text when the pill itself is
  * hovered. In circle mode it's always just the eye.
  */
 const PreviewPill = ({ onPress, onHoverIn, onHoverOut, circle = false }: PreviewPillProps) => {
@@ -127,11 +128,11 @@ interface TableRowPreviewProps {
  * table area, poking outside the tab.
  *
  * Rows register their DOM element + target; a window-level mousemove resolves
- * which row's vertical band the pointer sits at — so the pill appears when
+ * which row's vertical band the pointer sits at, so the pill appears when
  * hovering a row, the gap between tables, or the left edge where the pill
  * lives, and it stays put while the tables pan horizontally underneath it.
  */
-const TableRowPreview = ({ gameId, children }: TableRowPreviewProps) => {
+const TableRowPreviewInner = ({ gameId, children }: TableRowPreviewProps) => {
   const wrapperRef = useRef<View>(null);
   const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const rowRegistryRef = useRef<Map<HTMLElement, RowPreviewTarget>>(new Map());
@@ -148,10 +149,10 @@ const TableRowPreview = ({ gameId, children }: TableRowPreviewProps) => {
   // False when this preview lives inside a hidden keep-alive tab pane.
   // Hidden panes still have real layout geometry now (they're translated
   // offscreen, not display:none), so every window-level listener below
-  // must bail or unregister entirely — otherwise each visited table page
+  // must bail or unregister entirely, otherwise each visited table page
   // scans its row rects on every mousemove/scroll anywhere in the app.
   const bodyEnabled = useBodyReportEnabled();
-  const { width: windowWidth } = useWindowDimensions();
+  const windowWidth = useContentWidth();
   const isMobileWidth = windowWidth < MOBILE_BREAKPOINT_PX;
   const pillWidth = isMobileWidth ? CIRCLE_SIZE_PX : PILL_WIDTH_PX;
 
@@ -255,7 +256,7 @@ const TableRowPreview = ({ gameId, children }: TableRowPreviewProps) => {
 
   // Fade pills out the moment VERTICAL scrolling starts (they'd lag behind).
   // Horizontal pans inside the table don't move row bands, so pills stay put.
-  // After scroll ends, row positions are polled until they stop changing —
+  // After scroll ends, row positions are polled until they stop changing,
   // pills only fade back in once the rows have actually settled.
   const lastScrollPosRef = useRef<WeakMap<object, { top: number; left: number }>>(new WeakMap());
   const settledTopsRef = useRef<number[] | null>(null);
@@ -279,7 +280,7 @@ const TableRowPreview = ({ gameId, children }: TableRowPreviewProps) => {
         const pointer = lastPointerRef.current;
         const matched = pointer ? resolvePointer(pointer.x, pointer.y) : false;
         if (!matched) {
-          // Pointer left the zone while scrolling — clear now instead of the
+          // Pointer left the zone while scrolling, clear now instead of the
           // linger-delay, so the pill never flashes back in before hiding.
           cancelHide();
           setHovered(null);
@@ -309,7 +310,7 @@ const TableRowPreview = ({ gameId, children }: TableRowPreviewProps) => {
       if (scrollEndTimerRef.current) clearTimeout(scrollEndTimerRef.current);
       settleStartedAtRef.current = performance.now();
       scrollEndTimerRef.current = setTimeout(() => {
-        // Baseline measurement — the next poll decides settled-or-not.
+        // Baseline measurement: the next poll decides settled-or-not.
         settledTopsRef.current = null;
         settleCheck();
       }, SCROLL_END_MS);
@@ -343,7 +344,7 @@ const TableRowPreview = ({ gameId, children }: TableRowPreviewProps) => {
   }, [isTouchInput, resolvePointer, cancelHide, bodyEnabled]);
 
   // Hide pills whenever any dialog is open (all dialogs on these pages are
-  // heroui-native ConvexDialogs — Content renders role="dialog" + aria-modal).
+  // heroui-native ConvexDialogs: Content renders role="dialog" + aria-modal).
   useEffect(() => {
     if (Platform.OS !== 'web' || !bodyEnabled) return;
     const check = () =>
@@ -362,7 +363,7 @@ const TableRowPreview = ({ gameId, children }: TableRowPreviewProps) => {
   // Re-measure when a hidden keep-alive pane becomes visible: bodyEnabled
   // flips in the same commit that removes the pane's offscreen transform, so
   // render-time rect reads above can see stale geometry. rAF fires after
-  // commit + layout — the re-render measures real positions.
+  // commit + layout: the re-render measures real positions.
   useEffect(() => {
     if (!bodyEnabled) return;
     const raf = requestAnimationFrame(() => setLayoutTick((tick) => tick + 1));
@@ -372,7 +373,7 @@ const TableRowPreview = ({ gameId, children }: TableRowPreviewProps) => {
   const contextValue = React.useMemo(() => ({ registerRow }), [registerRow]);
 
   // Pills fade out while scrolling (they'd lag behind the rows) and while any
-  // dialog is open, then fade back in — quick 200ms opacity fade.
+  // dialog is open, then fade back in, quick 200ms opacity fade.
   const pillsHidden = isScrolling || dialogsOpen;
   const pillOpacity = useSharedValue(1);
   useEffect(() => {
@@ -381,7 +382,7 @@ const TableRowPreview = ({ gameId, children }: TableRowPreviewProps) => {
   const pillFadeStyle = useAnimatedStyle(() => ({ opacity: pillOpacity.value }));
 
   // Touch mode shows every registered row's pill at once (deduped by row
-  // band — the player and day tables share row heights). Mouse mode shows
+  // band: the player and day tables share row heights). Mouse mode shows
   // only the single hovered row's pill.
   const pillItems: { key: string; top: number; left: number; target: RowPreviewTarget }[] = [];
   if (isTouchInput && Platform.OS === 'web' && bodyEnabled) {
@@ -456,5 +457,7 @@ const TableRowPreview = ({ gameId, children }: TableRowPreviewProps) => {
     </TableRowPreviewContext.Provider>
   );
 };
+
+const TableRowPreview = (props: TableRowPreviewProps) => <TableRowPreviewInner {...props} />;
 
 export default TableRowPreview;

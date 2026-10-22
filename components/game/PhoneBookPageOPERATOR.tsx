@@ -7,6 +7,8 @@ import { useGameOperatorUserId } from 'hooks/useGameOperatorUserId';
 import { PlayerProfile } from 'types/multiplayer';
 import { UserTableItem } from 'types/playerTable';
 import { getGameScopedKey } from 'utils/multiplayer';
+import { useSim } from 'contexts/SimContext';
+import { personaIdForEmail, personaUserIdFor } from 'utils/simUtils';
 import { getNewserAssignmentKey, NewserAssignment } from 'utils/newspaperControl';
 import LoadingText from '../ui/loading/LoadingText';
 import LoadingContainer from '../ui/loading/LoadingContainer';
@@ -147,6 +149,7 @@ const PhoneBookGrid = ({ gameId, players }: { gameId: string; players: { userId:
 
 // Hook to get all players - filters by operator's userTable + newser, waits for all data to load
 const useAllPlayers = ({ gameId, currentUserId }: { gameId: string; currentUserId: string }) => {
+    const sim = useSim();
     const profiles = useAllProfiles({ gameId });
     const { operatorUserId, isLoading: isOperatorLoading } = useGameOperatorUserId(gameId);
     const operatorUserTableRecords = useFindListItems<UserTableItem[]>("userTable", {
@@ -188,6 +191,20 @@ const useAllPlayers = ({ gameId, currentUserId }: { gameId: string; currentUserI
         ...userTable.map((u: UserTableItem) => u.email?.trim()?.toLowerCase()).filter((e): e is string => Boolean(e)),
         ...(newserEmail ? [newserEmail] : []),
     ]);
+
+    // Inside a sim, roster rows are personas: the addressable id is the
+    // synthetic 'sim:{personaId}' derived from the roster email - real userIds
+    // mean nothing in sim space.
+    if (sim.mode !== 'off') {
+        const players = userTable
+            .filter((u: UserTableItem) => (u.email ?? '').trim().length > 0)
+            .map((u: UserTableItem) => ({
+                userId: personaUserIdFor(personaIdForEmail(u.email)),
+                email: u.email,
+            }))
+            .sort((a, b) => a.email.localeCompare(b.email));
+        return { players, isLoading, aliveCount, totalCount };
+    }
 
     // Combine profiles and table users, filter out operator
     const allUserIds = new Set([

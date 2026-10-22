@@ -1,4 +1,4 @@
-# Save Button, Save History & Keyboard Shortcuts — Implementation Plan
+# Save Button, Save History & Keyboard Shortcuts: Implementation Plan
 
 ## Overview
 
@@ -105,7 +105,7 @@ A hook for use inside dialogs that registers keyboard listeners while the dialog
 
 - **Cmd/Ctrl+S** → trigger save (calls the save handler)
 - **Enter** (on small confirmation dialogs) → trigger primary action
-- **Esc** → trigger the close/cancel handler (whatever the close button does — may run confirmations before closing)
+- **Esc** → trigger the close/cancel handler (whatever the close button does; may run confirmations before closing)
 
 The hook accepts a config object:
 ```tsx
@@ -216,7 +216,7 @@ function useSaveHistory(historyKey: string) {
 - MarkdownVariableDialog, MarkdownInputBuilderDialog, InsertModal, TemplatePickerModal
 - PlayerPreviewModal, ArchivedGamesDialog, JoinedGameOptionsDialog
 - TableOfContentsDialog, ImportDraftDialog
-- ChooseDayDialog, DaysPerGameDayDialog (small settings pickers — borderline, skip for now)
+- ChooseDayDialog, DaysPerGameDayDialog (small settings pickers, borderline, skip for now)
 - ColumnActionsDialog
 - NightlyCertificationDialog (viewer with certify actions, not a save dialog)
 - TownSquarePostDialog (viewer + comment, uses nested MarkdownEditorDialog)
@@ -231,7 +231,7 @@ For every dialog that gets the save button:
 - The `hasUnsavedChanges` logic for the Done button changes:
 
 **New "sticky enabled" rule:**
-Once the Done button becomes enabled (because there were changes), it should NOT go greyed-out again due to "lack of changes" — only due to invalid state. This fixes the bug where saving via the top-right button makes Done think there are no changes.
+Once the Done button becomes enabled (because there were changes), it should NOT go greyed-out again due to "lack of changes", only due to invalid state. This fixes the bug where saving via the top-right button makes Done think there are no changes.
 
 **Implementation:**
 - Track a `hasEverBeenEnabled` ref/state
@@ -262,15 +262,15 @@ Once the Done button becomes enabled (because there were changes), it should NOT
 
 **Current problem:** Bio editor's "Save" only updates the parent `PlayerProfileDialogNEW` draft. User must save the profile again.
 
-**Fix:** Same pattern as script editor — bio editor save triggers the full profile save to server via a callback.
+**Fix:** Same pattern as script editor, bio editor save triggers the full profile save to server via a callback.
 
 **History:** Bio editor gets its own history (scoped to the player profile).
 
 ### 5C. Audit other nested editors
 
 Check for any other nested-editor-with-its-own-save-button patterns. Based on the audit, the main ones are:
-- Script editor (inside MarkdownEditorDialog) — fixed above
-- Bio editor (inside PlayerProfileDialogNEW) — fixed above
+- Script editor (inside MarkdownEditorDialog): fixed above
+- Bio editor (inside PlayerProfileDialogNEW): fixed above
 
 ---
 
@@ -294,10 +294,10 @@ For each dialog type that has save history, create a view-only rendering mode. T
 7. VoteEditorDialog (view-only vote)
 8. ActionEditorDialog (view-only action text)
 9. RoleEditDialog (view-only role)
-10. RoleAddDialog (view-only — though this is "add", preview may not make sense)
+10. RoleAddDialog (view-only; though this is "add", preview may not make sense)
 11. VoteMessageDialog (view-only message)
 12. UserEditDialog (view-only user)
-13. UserAddDialog (view-only — same as above, may skip)
+13. UserAddDialog (view-only, same as above, may skip)
 14. NightlyResponseDialog (view-only response)
 15. DaySelectionDialog (view-only day settings)
 16. ListLiteralEditor (view-only list)
@@ -418,7 +418,7 @@ For each dialog type that has save history, create a view-only rendering mode. T
 
 6. **Preview generation:** Each dialog type provides a `getPreview(value)` function that returns a one-line string for the history list.
 
-7. **Replace action:** In the preview modal, "Replace" loads the saved value into the editor (replacing current draft) and closes both preview + history modals. The user still needs to press "Done" to save to server (or the replace could auto-save — TBD, leaning toward requiring explicit Done).
+7. **Replace action:** In the preview modal, "Replace" loads the saved value into the editor (replacing current draft) and closes both preview + history modals. The user still needs to press "Done" to save to server (or the replace could auto-save, TBD, leaning toward requiring explicit Done).
 
 ---
 
@@ -443,30 +443,30 @@ For each dialog type that has save history, create a view-only rendering mode. T
 
 ## Files to Modify (EXISTING)
 
-1. `utils/dataConfig.ts` — add saveHistory key
-2. `app/components/ui/dialog/DialogHeader.tsx` — header layout fix
-3. `app/components/ui/dialog/ConvexDialog.web.tsx` — may need to support nested modals
-4. `app/components/ui/dialog/ConvexDialog.tsx` — same
-5. `app/components/game/markdownEditor/CloseButton.tsx` — add keyboardHint prop
-6. `app/components/game/markdownEditor/ActionButtons.tsx` — rename to Done, sticky-enabled
-7. `app/components/ui/buttons/DisableableButton.tsx` — add keyboardHint prop
-8. `app/components/ui/buttons/AppButton.tsx` — add keyboardHint prop
-9. `app/components/game/MarkdownEditorDialog.tsx` — canonical implementation
-10. `app/script/editor/ScriptEditorDialog.tsx` — double-save fix + save pill
-11. `app/components/game/BioEditorDialog.tsx` — double-save fix + save pill
-12. `app/components/game/PlayerProfileDialogNEW.tsx` — save pill + view-only
-13. `app/components/game/TagCellEditor.tsx` — save pill
-14. `app/components/game/AddTagDialog.tsx` — save pill
-15. `app/components/game/VoteEditorDialog.tsx` — save pill
-16. `app/components/game/ActionEditorDialog.tsx` — save pill
-17. `app/components/game/RoleEditDialog.tsx` — save pill
-18. `app/components/game/RoleAddDialog.tsx` — save pill
-19. `app/components/game/VoteMessageDialog.tsx` — save pill
-20. `app/components/game/UserEditDialog.tsx` — save pill
-21. `app/components/game/UserAddDialog.tsx` — save pill
-22. `app/components/game/NightlyResponseDialog.tsx` — save pill
-23. `app/components/game/DaySelectionDialog.tsx` — save pill
-24. `app/script/editor/ListLiteralEditor.tsx` — save pill
-25. `app/script/editor/DropdownLiteralEditor.tsx` — save pill
-26. `app/script/editor/TemplateInputModal.tsx` — save pill
-27. `app/components/MainPage.tsx` or app root — mount KeyboardShortcutHint
+1. `utils/dataConfig.ts`: add saveHistory key
+2. `app/components/ui/dialog/DialogHeader.tsx`: header layout fix
+3. `app/components/ui/dialog/ConvexDialog.web.tsx`: may need to support nested modals
+4. `app/components/ui/dialog/ConvexDialog.tsx`: same
+5. `app/components/game/markdownEditor/CloseButton.tsx`: add keyboardHint prop
+6. `app/components/game/markdownEditor/ActionButtons.tsx`: rename to Done, sticky-enabled
+7. `app/components/ui/buttons/DisableableButton.tsx`: add keyboardHint prop
+8. `app/components/ui/buttons/AppButton.tsx`: add keyboardHint prop
+9. `app/components/game/MarkdownEditorDialog.tsx`: canonical implementation
+10. `app/script/editor/ScriptEditorDialog.tsx`: double-save fix + save pill
+11. `app/components/game/BioEditorDialog.tsx`: double-save fix + save pill
+12. `app/components/game/PlayerProfileDialogNEW.tsx`: save pill + view-only
+13. `app/components/game/TagCellEditor.tsx`: save pill
+14. `app/components/game/AddTagDialog.tsx`: save pill
+15. `app/components/game/VoteEditorDialog.tsx`: save pill
+16. `app/components/game/ActionEditorDialog.tsx`: save pill
+17. `app/components/game/RoleEditDialog.tsx`: save pill
+18. `app/components/game/RoleAddDialog.tsx`: save pill
+19. `app/components/game/VoteMessageDialog.tsx`: save pill
+20. `app/components/game/UserEditDialog.tsx`: save pill
+21. `app/components/game/UserAddDialog.tsx`: save pill
+22. `app/components/game/NightlyResponseDialog.tsx`: save pill
+23. `app/components/game/DaySelectionDialog.tsx`: save pill
+24. `app/script/editor/ListLiteralEditor.tsx`: save pill
+25. `app/script/editor/DropdownLiteralEditor.tsx`: save pill
+26. `app/script/editor/TemplateInputModal.tsx`: save pill
+27. `app/components/MainPage.tsx` or app root: mount KeyboardShortcutHint

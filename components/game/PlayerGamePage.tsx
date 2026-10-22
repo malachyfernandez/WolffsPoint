@@ -50,7 +50,7 @@ const playerTabs: GameTabDefinition<PlayerTab>[] = [
 const PlayerGamePage = ({ gameId, currentUserId }: PlayerGamePageProps) => {
   const [activeTab, setActiveTab] = useState<PlayerTab>('townSquare');
   // Tabs mount lazily on first visit, then stay mounted so dialog/minimize
-  // state survives tab switches — bounded by device memory tier: under
+  // state survives tab switches: bounded by device memory tier: under
   // pressure the least-recently-active hidden panes are evicted (they
   // re-mount on revisit, same as first visit).
   const scopeIdForTab = useCallback((tab: PlayerTab) => `player-tab-${gameId}-${tab}`, [gameId]);

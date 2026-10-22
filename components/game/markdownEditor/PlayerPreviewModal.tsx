@@ -14,21 +14,23 @@ import MarkdownRenderer, {
 } from '../../ui/markdown/MarkdownRenderer';
 import ChainWraper from '../ChainWraper';
 import { useFindValues, useList, useValue } from 'hooks/useData';
+import { useScriptFilesReader } from 'hooks/useScriptFiles';
 import { UserTableItem, UserTableTitle } from 'types/playerTable';
 import { DEFAULT_VOTE_MESSAGE, RoleTableItem } from 'types/roleTable';
 import { PlayerNightSubmission } from 'types/multiplayer';
 import type { ScriptSourceData } from '../../../script/runtime/sources';
 import {
-  buildScheduledDate,
   defaultGameSchedule,
   formatCountdown,
-  formatTimeLabel,
+  formatInstantTimeLabel,
   getCurrentPlayableDayIndex,
+  getDayDeadlineInstant,
   getDayEndDate,
   getDayRangeLabel,
+  getDayWakeUpInstant,
   getGameScopedKey,
   isDayContentReleased,
-  isNightWindowOpen,
+  isDayDeadlineOpen,
   normalizeGameSchedule,
   normalizePlayerActionState,
   normalizeVoteTargets,
@@ -36,6 +38,8 @@ import {
   resolveGameTimeZone,
 } from 'utils/multiplayer';
 import CloseButton from '../../ui/dialog/CloseButton';
+import { nowDate } from 'utils/simNow';
+import { isInstantGameDay } from '../../../utils/gameDayDuration';
 
 interface PlayerPreviewModalProps {
   isOpen: boolean;
@@ -53,7 +57,7 @@ interface PlayerPreviewModalProps {
 
 /**
  * Modal that lets an operator preview the "your eyes only" page as a specific
- * player. Uses client-side state only — nothing is saved to Convex.
+ * player. Uses client-side state only: nothing is saved to Convex.
  */
 const PlayerPreviewModal = ({
   isOpen,
@@ -67,7 +71,7 @@ const PlayerPreviewModal = ({
   const [emulatedVoteState, setEmulatedVoteState] = useState<Record<string, string | undefined>>(
     {}
   );
-  // Emulated action state — client-side only, never saved
+  // Emulated action state: client-side only, never saved
   const [emulatedActionState, setEmulatedActionState] = useState<
     Record<string, string | undefined>
   >({});
@@ -123,6 +127,19 @@ const PlayerPreviewModal = ({
     [morningMessagesRecord?.value]
   );
 
+  // File-mode cells resolve to flat markdown here, before rendering.
+  const { resolve: resolveCellText, index: scriptFilesIndex } = useScriptFilesReader(gameId);
+  const resolvedMorningMessagesList = useMemo(
+    () =>
+      Object.fromEntries(
+        Object.entries(morningMessagesList).map(([email, msgs]) => [
+          email,
+          msgs.map(resolveCellText),
+        ])
+      ),
+    [morningMessagesList, resolveCellText]
+  );
+
   const isPlayerScopedPreview = playerEmail !== undefined;
 
   // Filter players to only those with the matching role
@@ -137,7 +154,7 @@ const PlayerPreviewModal = ({
   // stay limited to players that have the role.
   const previewablePlayers = isPlayerScopedPreview ? players : rolePlayers;
 
-  // The preview is decoupled from the real clock — it opens on the requested
+  // The preview is decoupled from the real clock; it opens on the requested
   // day and every day created in the table is navigable.
   const [previewDayIndex, setPreviewDayIndex] = useState(0);
   const dayDates = useMemo(() => dayDatesArray?.value ?? [], [dayDatesArray?.value]);
@@ -148,25 +165,21 @@ const PlayerPreviewModal = ({
     () => normalizeGameSchedule(scheduleRecord.value ?? defaultGameSchedule),
     [scheduleRecord.value]
   );
-  const voteDeadlineTime =
-    schedule.voteDeadlineTime ?? defaultGameSchedule.voteDeadlineTime ?? '22:00';
-  const actionDeadlineTime =
-    schedule.actionDeadlineTime ?? defaultGameSchedule.actionDeadlineTime ?? '22:00';
-
   // === Player emulation ===
   // The preview "believes" it is the selected game day: an emulated `now` is
-  // placed just after wake-up on that day's start date (in the game's
+  // placed just after wake-up on that day's start (in the game's
   // timezone), so release gating, deadline windows, locks, and the countdown
-  // all evaluate exactly as they would for the player on that day — regardless
+  // all evaluate exactly as they would for the player on that day, regardless
   // of the real clock.
   const gameTimeZone = useMemo(() => resolveGameTimeZone(schedule), [schedule]);
   const emulatedNow = useMemo(() => {
     const dayStart = parsedDayDates[previewDayIndex];
-    if (!dayStart) return new Date();
+    if (!dayStart) return nowDate();
     return new Date(
-      buildScheduledDate(dayStart, schedule.wakeUpTime, gameTimeZone).getTime() + 60_000
+      getDayWakeUpInstant(dayStart, schedule, gameTimeZone).getTime() +
+        (isInstantGameDay(dayStart) ? 1000 : 60_000)
     );
-  }, [parsedDayDates, previewDayIndex, schedule.wakeUpTime, gameTimeZone]);
+  }, [parsedDayDates, previewDayIndex, schedule, gameTimeZone]);
   const emulatedCurrentDayIndex = useMemo(
     () => getCurrentPlayableDayIndex(parsedDayDates, emulatedNow, gameTimeZone),
     [parsedDayDates, emulatedNow, gameTimeZone]
@@ -175,34 +188,20 @@ const PlayerPreviewModal = ({
     () => getDayEndDate(parsedDayDates, previewDayIndex, daySpan),
     [parsedDayDates, previewDayIndex, daySpan]
   );
-  const voteDeadlineBaseDate = useMemo(
-    () =>
-      new Date(
-        selectedDayEndDate.getTime() - (schedule.voteDayOffset ?? 0) * 24 * 60 * 60 * 1000
-      ),
-    [selectedDayEndDate, schedule.voteDayOffset]
-  );
-  const actionDeadlineBaseDate = useMemo(
-    () =>
-      new Date(
-        selectedDayEndDate.getTime() - (schedule.actionDayOffset ?? 0) * 24 * 60 * 60 * 1000
-      ),
-    [selectedDayEndDate, schedule.actionDayOffset]
-  );
   const voteDeadline = useMemo(
-    () => buildScheduledDate(voteDeadlineBaseDate, voteDeadlineTime, gameTimeZone),
-    [voteDeadlineBaseDate, voteDeadlineTime, gameTimeZone]
+    () => getDayDeadlineInstant(selectedDayEndDate, schedule, 'vote', gameTimeZone),
+    [selectedDayEndDate, schedule, gameTimeZone]
   );
   const actionDeadline = useMemo(
-    () => buildScheduledDate(actionDeadlineBaseDate, actionDeadlineTime, gameTimeZone),
-    [actionDeadlineBaseDate, actionDeadlineTime, gameTimeZone]
+    () => getDayDeadlineInstant(selectedDayEndDate, schedule, 'action', gameTimeZone),
+    [selectedDayEndDate, schedule, gameTimeZone]
   );
   const isVoteLocked =
     previewDayIndex < emulatedCurrentDayIndex ||
-    !isNightWindowOpen(voteDeadlineBaseDate, voteDeadlineTime, emulatedNow, gameTimeZone);
+    !isDayDeadlineOpen(selectedDayEndDate, schedule, 'vote', emulatedNow, gameTimeZone);
   const isActionLocked =
     previewDayIndex < emulatedCurrentDayIndex ||
-    !isNightWindowOpen(actionDeadlineBaseDate, actionDeadlineTime, emulatedNow, gameTimeZone);
+    !isDayDeadlineOpen(selectedDayEndDate, schedule, 'action', emulatedNow, gameTimeZone);
   const isVotingSkipped = (skipVotingDays?.value ?? []).includes(previewDayIndex);
   const isActionsSkipped = (skipActionsDays?.value ?? []).includes(previewDayIndex);
   const bothSkipped = isVotingSkipped && isActionsSkipped;
@@ -216,19 +215,17 @@ const PlayerPreviewModal = ({
   const primaryDeadline = isVotePrimary ? voteDeadline : actionDeadline;
   const primaryLocked = isVotePrimary ? isVoteLocked : isActionLocked;
   const primaryLabel = isVotePrimary ? 'VOTE' : 'ACTION';
-  const primaryTimeLabel = isVotePrimary ? voteDeadlineTime : actionDeadlineTime;
+  const primaryTimeLabel = formatInstantTimeLabel(primaryDeadline, gameTimeZone);
   const primaryCountdown = primaryLocked ? 'LOCKED' : formatCountdown(primaryDeadline, emulatedNow);
   const secondarySkipped = isVotePrimary ? isActionsSkipped : isVotingSkipped;
-  const secondaryTimeLabel = isVotePrimary ? actionDeadlineTime : voteDeadlineTime;
+  const secondaryDeadline = isVotePrimary ? actionDeadline : voteDeadline;
+  const secondaryTimeLabel = formatInstantTimeLabel(secondaryDeadline, gameTimeZone);
   const secondaryLabel = isVotePrimary ? 'Actions' : 'Voting';
 
   // The previewed player's real submission for the selected day seeds the
-  // emulated input state — scripts that branch on Inputs (and the inputs
+  // emulated input state: scripts that branch on Inputs (and the inputs
   // themselves) reflect what that player actually submitted.
-  const submissionKey = getGameScopedKey(
-    `playerNightSubmission-day-${previewDayIndex}`,
-    gameId
-  );
+  const submissionKey = getGameScopedKey(`playerNightSubmission-day-${previewDayIndex}`, gameId);
   const submissionRecords = useFindValues<PlayerNightSubmission>(submissionKey, {
     returnTop: 200,
   });
@@ -277,7 +274,7 @@ const PlayerPreviewModal = ({
     wasOpenRef.current = isOpen;
     if (!isOpen) return;
     setSelectedPlayerEmail((currentEmail) => {
-      // A fresh row-scoped open always previews the row that was clicked —
+      // A fresh row-scoped open always previews the row that was clicked;
       // the previous selection may linger if the dialog was closed through a
       // path that skipped the reset (e.g. the X button).
       if (justOpened && isPlayerScopedPreview) {
@@ -304,7 +301,7 @@ const PlayerPreviewModal = ({
   }, [isOpen, previewablePlayers, isPlayerScopedPreview, playerEmail, players]);
 
   // Seed the emulated input state from the player's real submission once per
-  // (player, day) — waits for submission records to load so it doesn't clobber
+  // (player, day): waits for submission records to load so it doesn't clobber
   // real data with an empty seed. Operator edits after seeding are kept.
   const seededForRef = useRef<string | null>(null);
   useEffect(() => {
@@ -355,7 +352,7 @@ const PlayerPreviewModal = ({
 
   // The "Last Night" card mirrors YourEyesOnlyDayContentPLAYER: on game day D
   // the player sees the message the operator wrote during night D - 1,
-  // released at wake-up — evaluated against the emulated clock.
+  // released at wake-up: evaluated against the emulated clock.
   const previewMorningMessage = useMemo(() => {
     if (!selectedPlayer || previewDayIndex <= 0) return '';
     if (
@@ -364,24 +361,32 @@ const PlayerPreviewModal = ({
         previewDayIndex - 1,
         schedule.wakeUpTime,
         emulatedNow,
-        gameTimeZone
+        gameTimeZone,
+        schedule,
+        daySpan
       )
     ) {
       return '';
     }
-    return morningMessagesList[selectedPlayer.email.toLowerCase()]?.[previewDayIndex - 1] ?? '';
+    return resolveCellText(
+      morningMessagesList[selectedPlayer.email.toLowerCase()]?.[previewDayIndex - 1] ?? ''
+    );
   }, [
     morningMessagesList,
+    resolveCellText,
     previewDayIndex,
     selectedPlayer,
     parsedDayDates,
-    schedule.wakeUpTime,
+    schedule,
+    daySpan,
     emulatedNow,
     gameTimeZone,
   ]);
-  const voteMessage = roleData?.voteMessage?.trim()
-    ? roleData.voteMessage
-    : defaultVoteMessage?.value || DEFAULT_VOTE_MESSAGE;
+  const voteMessage = resolveCellText(
+    roleData?.voteMessage?.trim()
+      ? roleData.voteMessage
+      : defaultVoteMessage?.value || DEFAULT_VOTE_MESSAGE
+  );
 
   // Build player options for the MarkdownRendererInputDataProvider (all players, not just role)
   const previewPlayerOptions = useMemo(
@@ -416,7 +421,8 @@ const PlayerPreviewModal = ({
       dayDates,
       schedule,
       userTableTitle: userTableTitle?.value,
-      morningMessagesList,
+      morningMessagesList: resolvedMorningMessagesList,
+      filesIndex: scriptFilesIndex,
     };
   }, [
     previewDayIndex,
@@ -426,7 +432,8 @@ const PlayerPreviewModal = ({
     schedule,
     selectedPlayer,
     userTableTitle?.value,
-    morningMessagesList,
+    resolvedMorningMessagesList,
+    scriptFilesIndex,
   ]);
 
   const actionSummary = Object.values(emulatedActionState)
@@ -476,7 +483,7 @@ const PlayerPreviewModal = ({
               </View>
             ) : (
               <>
-                {/* Player selector — filtered by role */}
+                {/* Player selector: filtered by role */}
                 <Row className="items-center gap-2">
                   <FontText variant="subtext" className="whitespace-nowrap text-xs">
                     View as:
@@ -502,7 +509,7 @@ const PlayerPreviewModal = ({
                       <Column className="min-h-[760px] flex-1 gap-7 pb-8">
                         {roleData?.aboutRole?.trim().length ? (
                           <MarkdownRenderer
-                            markdown={roleData.aboutRole}
+                            markdown={resolveCellText(roleData.aboutRole)}
                             textAlign="center"
                             viewHeightImages={30}
                             isInDialog
@@ -594,12 +601,12 @@ const PlayerPreviewModal = ({
                                   </FontText>
                                   <FontText variant="subtext">
                                     {primaryLabel === 'VOTE' ? 'Voting' : 'Actions'} due at{' '}
-                                    {formatTimeLabel(primaryTimeLabel)}.
+                                    {primaryTimeLabel}.
                                   </FontText>
                                   <FontText variant="subtext">
                                     {secondarySkipped
                                       ? `${secondaryLabel} skipped this day`
-                                      : `${secondaryLabel} due at ${formatTimeLabel(secondaryTimeLabel)}.`}
+                                      : `${secondaryLabel} due at ${secondaryTimeLabel}.`}
                                   </FontText>
                                 </>
                               )}
@@ -622,9 +629,7 @@ const PlayerPreviewModal = ({
                                   <>
                                     <ChainWraper
                                       className=""
-                                      isDisabled={
-                                        isVoteLocked || roleData?.doesRoleVote === false
-                                      }>
+                                      isDisabled={isVoteLocked || roleData?.doesRoleVote === false}>
                                       <Column className="gap-3">
                                         <FontText
                                           weight="medium"
@@ -674,7 +679,8 @@ const PlayerPreviewModal = ({
                                       </FontText>
                                     ) : voteSummary ? (
                                       <FontText variant="subtext">
-                                        {isVoteLocked ? 'Saved vote' : 'Current vote'}: {voteSummary}
+                                        {isVoteLocked ? 'Saved vote' : 'Current vote'}:{' '}
+                                        {voteSummary}
                                       </FontText>
                                     ) : roleData?.doesRoleVote === false ? (
                                       <FontText variant="subtext">
@@ -712,7 +718,7 @@ const PlayerPreviewModal = ({
                                         </FontText>
                                         {roleData?.roleMessage?.trim().length ? (
                                           <MarkdownRenderer
-                                            markdown={roleData.roleMessage}
+                                            markdown={resolveCellText(roleData.roleMessage)}
                                             isInDialog
                                             state={emulatedActionState}
                                             setState={

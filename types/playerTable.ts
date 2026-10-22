@@ -1,11 +1,16 @@
 import { MarkdownInputState, PlayerActionValue, VoteValue } from './multiplayer';
+import type { FieldProvenance } from '../utils/fieldProvenance';
 
 export type PlayerData = {
+  fieldProvenance?: FieldProvenance;
   livingState: 'alive' | 'dead';
   extraColumns?: string[];
 };
 
 export type DayData = {
+  fieldProvenance?: FieldProvenance;
+  /** Permanent game-day identity. Optional while legacy tables are adopted. */
+  id?: string;
   vote?: VoteValue;
   voteInputs?: MarkdownInputState;
   voteInputKey?: string;
@@ -15,6 +20,8 @@ export type DayData = {
 };
 
 export type UserTableItem = {
+  /** Player-row identity; authentication IDs and email addresses are not row IDs. */
+  id?: string;
   realName: string;
   email: string;
   userId: string | 'NOT-JOINED';
@@ -26,7 +33,14 @@ export type UserTableItem = {
 export type UserTableTitle = {
   extraUserColumns: string[];
   extraDayColumns: string[];
+  extraUserColumnTypes?: CellContentType[];
+  extraDayColumnTypes?: CellContentType[];
+  extraUserColumnIds?: string[];
+  extraDayColumnIds?: string[];
+  dayIds?: string[];
 };
+
+export type CellContentType = 'tags' | 'files';
 
 export type UserTableColumnVisibility = {
   extraUserColumns: boolean[];

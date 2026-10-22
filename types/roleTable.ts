@@ -1,11 +1,11 @@
-export const DEFAULT_VOTE_MESSAGE = `/*script
-CreateSelectVoteInput({
+export const DEFAULT_VOTE_SCRIPT = `CreateSelectVoteInput({
   LIST = players.Filter(Item => (Item.entry("isAlive") == true)),
   LABEL = "Vote",
   NUMSELECTABLE = 1,
   MULTIPLYER = 1,
-});
-script*/`;
+});`;
+
+export const DEFAULT_VOTE_MESSAGE = `/*script\n${DEFAULT_VOTE_SCRIPT}\nscript*/`;
 
 export type RoleTableItem = {
   role: string;

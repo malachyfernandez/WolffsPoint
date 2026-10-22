@@ -126,7 +126,7 @@ const ListLiteralEditor = ({ expression, onEditItems }: ListLiteralEditorProps) 
                 Edit list items
               </FontText>
 
-              {/* Items list — each row is typeable and draggable */}
+              {/* Items list: each row is typeable and draggable */}
               <Column className="gap-1.5">
                 {draftItems.map((item, index) =>
                   React.createElement(
@@ -177,7 +177,7 @@ const ListLiteralEditor = ({ expression, onEditItems }: ListLiteralEditorProps) 
                 )}
               </Column>
 
-              {/* Add button — press first, then type */}
+              {/* Add button: press first, then type */}
               <Pressable
                 accessibilityRole="button"
                 onPress={() => {

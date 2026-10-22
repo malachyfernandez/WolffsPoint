@@ -10,6 +10,7 @@ import { useHasPreviousDayVotes } from 'hooks/useHasPreviousDayVotes';
 import LoadingText from '../ui/loading/LoadingText';
 import { useBodyLoadReport } from 'hooks/useBodyLoadReport';
 import { useFindListItems } from 'hooks/useData';
+import { useContentWidth } from 'hooks/useContentWidth';
 import { Usepaper } from 'types/usepaper';
 import { getNewspaperDayItemId } from 'utils/newspaperControl';
 import { getNewspaperColumns, hasNewspaperContent } from 'utils/newspaperSections';
@@ -75,6 +76,7 @@ const NewspaperDayView = ({ gameId, dayIndex, ownerUserId, onReady }: NewspaperD
   const [loadedAssetKey, setLoadedAssetKey] = useState<string | null>(null);
   const [layoutReadyKey, setLayoutReadyKey] = useState<string | null>(null);
   const TILE_SIZE = 600;
+  const contentWidth = useContentWidth();
   const usepaperRecords = useFindListItems<Usepaper>('newspaper', {
     itemId: getNewspaperDayItemId(gameId, dayIndex),
     userIds: ownerUserId ? [ownerUserId] : [''],
@@ -169,7 +171,7 @@ const NewspaperDayView = ({ gameId, dayIndex, ownerUserId, onReady }: NewspaperD
             onReady={() => setLayoutReadyKey(assetKey)}
           />
           {showVoteSummary && (
-            <View className="-mx-2 px-5 sm:mx-0" style={{ marginTop: 4, zIndex: 1 }}>
+            <View className={`px-5 ${contentWidth >= 640 ? 'mx-0' : '-mx-2'}`} style={{ marginTop: 4, zIndex: 1 }}>
               <View className="relative">
                 <TornPaperBackground textureUrl={NEWSPAPER_TEXTURE_URL} tileSize={TILE_SIZE} />
                 <NewspaperPreviousDayVoteSummary dayIndex={dayIndex} gameId={gameId} />

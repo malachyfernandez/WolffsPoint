@@ -339,8 +339,8 @@ const FunctionTemplateEditor = ({
         ))}
       </Row>
 
-      {/* PICKER MODAL — separate component, always mounted */}
-      {/* ADD A PIECE picker — separate component, always mounted */}
+      {/* PICKER MODAL: separate component, always mounted */}
+      {/* ADD A PIECE picker: separate component, always mounted */}
       <TemplatePickerModal
         isOpen={pickerOpen}
         onOpenChange={(open) => {
@@ -351,7 +351,7 @@ const FunctionTemplateEditor = ({
         onClose={() => setPickerOpen(false)}
       />
 
-      {/* SWAP A PIECE picker — separate component, always mounted */}
+      {/* SWAP A PIECE picker: separate component, always mounted */}
       <TemplatePickerModal
         isOpen={swapPickerOpen}
         onOpenChange={(open) => {
@@ -363,7 +363,7 @@ const FunctionTemplateEditor = ({
         title="Swap a piece"
       />
 
-      {/* NEW INPUT MODAL — separate component, always mounted */}
+      {/* NEW INPUT MODAL: separate component, always mounted */}
       <TemplateInputModal
         isOpen={newInputOpen}
         onOpenChange={(open) => {
@@ -377,7 +377,7 @@ const FunctionTemplateEditor = ({
         onEditMarkdown={onEditMarkdown}
       />
 
-      {/* NEW TEXT dialog — inline modal */}
+      {/* NEW TEXT dialog: inline modal */}
       <ConvexDialog.Root isOpen={newTextOpen} onOpenChange={handleInlineOpenChange}>
         <ConvexDialog.Trigger asChild>
           <View />
@@ -412,7 +412,7 @@ const FunctionTemplateEditor = ({
         </ConvexDialog.Portal>
       </ConvexDialog.Root>
 
-      {/* EDIT TEXT dialog — inline modal */}
+      {/* EDIT TEXT dialog: inline modal */}
       <ConvexDialog.Root isOpen={editTextOpen} onOpenChange={handleInlineOpenChange}>
         <ConvexDialog.Trigger asChild>
           <View />
@@ -447,7 +447,7 @@ const FunctionTemplateEditor = ({
                     className="h-9 px-3"
                     onPress={handleRemove}
                     dropShadow={false}>
-                    <FontText weight="bold" className="text-sm">
+                    <FontText weight="bold" color="red-700" className="text-sm">
                       Remove
                     </FontText>
                   </AppButton>
@@ -467,7 +467,7 @@ const FunctionTemplateEditor = ({
         </ConvexDialog.Portal>
       </ConvexDialog.Root>
 
-      {/* EDIT INPUT dialog — inline modal */}
+      {/* EDIT INPUT dialog: inline modal */}
       <ConvexDialog.Root isOpen={editInputOpen} onOpenChange={handleInlineOpenChange}>
         <ConvexDialog.Trigger asChild>
           <View />
@@ -657,17 +657,19 @@ const EditInputContent = ({
           <FontText variant="subtext" className="text-xs">
             Default value
           </FontText>
-          <ExpressionSocket
-            expression={exprDraft}
-            location={draftLocation}
-            contextVariables={contextVariables}
-            entryKeysBySource={entryKeysBySource}
-            definedFunctions={definedFunctions}
-            label="default"
-            onAdd={setInsertTarget}
-            onSetExpression={onSetExpr}
-            onEditMarkdown={onEditMarkdown}
-          />
+          <View className="max-w-full self-start">
+            <ExpressionSocket
+              expression={exprDraft}
+              location={draftLocation}
+              contextVariables={contextVariables}
+              entryKeysBySource={entryKeysBySource}
+              definedFunctions={definedFunctions}
+              label="default"
+              onAdd={setInsertTarget}
+              onSetExpression={onSetExpr}
+              onEditMarkdown={onEditMarkdown}
+            />
+          </View>
         </Column>
 
         <Row className="justify-between">
@@ -678,7 +680,7 @@ const EditInputContent = ({
               </FontText>
             </AppButton>
             <AppButton variant="red" className="h-9 px-3" onPress={onRemove} dropShadow={false}>
-              <FontText weight="bold" className="text-sm">
+              <FontText weight="bold" color="red-700" className="text-sm">
                 Remove
               </FontText>
             </AppButton>
@@ -691,7 +693,7 @@ const EditInputContent = ({
         </Row>
       </Column>
 
-      {/* Local InsertModal — updates the draft directly, not the reducer */}
+      {/* Local InsertModal: updates the draft directly, not the reducer */}
       <InsertModal
         isOpen={insertTarget !== null}
         target={insertTarget}

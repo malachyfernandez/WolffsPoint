@@ -11,6 +11,8 @@ import SimpleImageUpload from '../ui/imageUpload/SimpleImageUpload';
 import MarkdownRenderer from '../ui/markdown/MarkdownRenderer';
 import { PlayerProfile } from 'types/multiplayer';
 import CloseButton from '../ui/dialog/CloseButton';
+import { nowMs } from 'utils/simNow';
+
 
 interface PlayerProfileDialogProps {
     initialValue: PlayerProfile;
@@ -150,7 +152,7 @@ const PlayerProfileDialog = ({
                                     onSave({
                                         ...draft,
                                         inGameName: draft.inGameName.trim(),
-                                        claimedAt: draft.claimedAt || Date.now(),
+                                        claimedAt: draft.claimedAt || nowMs(),
                                     });
                                     onOpenChange(false);
                                 }}

@@ -2,11 +2,11 @@ import React from 'react';
 import { useCSSVariable } from 'uniwind';
 import { usePlayerStatus } from 'contexts/PlayerStatusContext';
 import {
-    getGuildedInnerHeight,
-    guildedButtonDefaults,
-    type GuildedButtonBackground,
-    type GuildedButtonProps,
-    guildedButtonRingPresets,
+  getGuildedInnerHeight,
+  guildedButtonDefaults,
+  type GuildedButtonBackground,
+  type GuildedButtonProps,
+  guildedButtonRingPresets,
 } from './GuildedButton.shared';
 
 const gradientBlur = 5;
@@ -257,186 +257,186 @@ const guildedButtonCSS = `
 `;
 
 function useResolvedGuildedColor(value: string) {
-    const isThemeToken = /^[a-zA-Z0-9-_]+$/.test(value);
-    const resolvedThemeColor = useCSSVariable(isThemeToken ? `--color-${value}` : '--color-text');
-    return isThemeToken ? String(resolvedThemeColor || value) : value;
+  const isThemeToken = /^[a-zA-Z0-9-_]+$/.test(value);
+  const resolvedThemeColor = useCSSVariable(isThemeToken ? `--color-${value}` : '--color-text');
+  return isThemeToken ? String(resolvedThemeColor || value) : value;
 }
 
 function resolveGuildedBackground(background: GuildedButtonBackground) {
-    if (typeof background === 'string') {
-        return {
-            from: background,
-            to: background,
-        };
-    }
-
+  if (typeof background === 'string') {
     return {
-        from: background.from,
-        to: background.to ?? background.from,
+      from: background,
+      to: background,
     };
+  }
+
+  return {
+    from: background.from,
+    to: background.to ?? background.from,
+  };
 }
 
 function normalizeCssSize(value: number | string | undefined, fallback: string) {
-    if (value === undefined) {
-        return fallback;
-    }
+  if (value === undefined) {
+    return fallback;
+  }
 
-    return typeof value === 'number' ? `${value}px` : value;
+  return typeof value === 'number' ? `${value}px` : value;
 }
 
 function hasUtilityClass(className: string, patterns: RegExp[]) {
-    return patterns.some((pattern) => pattern.test(className));
+  return patterns.some((pattern) => pattern.test(className));
 }
 
 function extractWidthClasses(className: string): string {
-    if (!className) return '';
-    return className
-        .split(/\s+/)
-        .filter((cls) => {
-            const lastSegment = cls.split(':').pop() || '';
-            return /^(w|min-w|max-w)-/.test(lastSegment);
-        })
-        .join(' ');
+  if (!className) return '';
+  return className
+    .split(/\s+/)
+    .filter((cls) => {
+      const lastSegment = cls.split(':').pop() || '';
+      return /^(w|min-w|max-w)-/.test(lastSegment);
+    })
+    .join(' ');
 }
 
 export default function GuildedButton({
-    children,
-    onPress,
-    onHoverIn,
-    onHoverOut,
-    disabled = false,
-    className = '',
-    rootClassName = '',
-    variant = guildedButtonDefaults.variant,
-    radius = guildedButtonDefaults.radius,
-    outerThickness = guildedButtonDefaults.outerThickness,
-    middleThickness = guildedButtonDefaults.middleThickness,
-    innerThickness = guildedButtonDefaults.innerThickness,
-    outerShadowYOffset = guildedButtonDefaults.outerShadowYOffset,
-    outerShadowBlur = guildedButtonDefaults.outerShadowBlur,
-    outerShadowAlpha = guildedButtonDefaults.outerShadowAlpha,
-    innerShadowYOffset = guildedButtonDefaults.innerShadowYOffset,
-    innerShadowBlur = guildedButtonDefaults.innerShadowBlur,
-    innerShadowAlpha = guildedButtonDefaults.innerShadowAlpha,
-    width,
-    height,
-    contentPaddingX = guildedButtonDefaults.contentPaddingX,
-    contentPaddingY = guildedButtonDefaults.contentPaddingY,
-    background = guildedButtonDefaults.background,
-    testID,
+  children,
+  onPress,
+  onHoverIn,
+  onHoverOut,
+  disabled = false,
+  className = '',
+  rootClassName = '',
+  variant = guildedButtonDefaults.variant,
+  radius = guildedButtonDefaults.radius,
+  outerThickness = guildedButtonDefaults.outerThickness,
+  middleThickness = guildedButtonDefaults.middleThickness,
+  innerThickness = guildedButtonDefaults.innerThickness,
+  outerShadowYOffset = guildedButtonDefaults.outerShadowYOffset,
+  outerShadowBlur = guildedButtonDefaults.outerShadowBlur,
+  outerShadowAlpha = guildedButtonDefaults.outerShadowAlpha,
+  innerShadowYOffset = guildedButtonDefaults.innerShadowYOffset,
+  innerShadowBlur = guildedButtonDefaults.innerShadowBlur,
+  innerShadowAlpha = guildedButtonDefaults.innerShadowAlpha,
+  width,
+  height,
+  contentPaddingX = guildedButtonDefaults.contentPaddingX,
+  contentPaddingY = guildedButtonDefaults.contentPaddingY,
+  background = guildedButtonDefaults.background,
+  testID,
+  accessibilityLabel,
 }: GuildedButtonProps) {
-    const { isPlayerDead } = usePlayerStatus();
-    const effectiveVariant: typeof variant =
-        variant === 'gold' && isPlayerDead ? 'ghostly' : variant;
-    const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
-        if (disabled) {
-            return;
-        }
+  const { isPlayerDead } = usePlayerStatus();
+  const effectiveVariant: typeof variant = variant === 'gold' && isPlayerDead ? 'ghostly' : variant;
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (disabled) {
+      return;
+    }
 
-        if (event.key === 'Enter' || event.key === ' ') {
-            event.preventDefault();
-            onPress?.();
-        }
-    };
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      onPress?.();
+    }
+  };
 
-    const resolvedBackground = resolveGuildedBackground(background);
-    const resolvedCenterBackgroundFrom = useResolvedGuildedColor(resolvedBackground.from);
-    const resolvedCenterBackgroundTo = useResolvedGuildedColor(resolvedBackground.to);
-    const ringPalette = guildedButtonRingPresets[effectiveVariant];
-    const totalThickness = outerThickness + middleThickness + innerThickness;
-    const resolvedInnerHeight = getGuildedInnerHeight(height, totalThickness);
+  const resolvedBackground = resolveGuildedBackground(background);
+  const resolvedCenterBackgroundFrom = useResolvedGuildedColor(resolvedBackground.from);
+  const resolvedCenterBackgroundTo = useResolvedGuildedColor(resolvedBackground.to);
+  const ringPalette = guildedButtonRingPresets[effectiveVariant];
+  const totalThickness = outerThickness + middleThickness + innerThickness;
+  const resolvedInnerHeight = getGuildedInnerHeight(height, totalThickness);
 
-    const hasWidthUtility = hasUtilityClass(className, [/\bw-/, /\bmin-w-/, /\bmax-w-/]);
-    const hasHeightUtility = hasUtilityClass(className, [/\bh-/, /\bmin-h-/, /\bmax-h-/]);
-    const hasBackgroundUtility = hasUtilityClass(className, [/\bbg-/, /\bfrom-/, /\bto-/]);
+  const hasWidthUtility = hasUtilityClass(className, [/\bw-/, /\bmin-w-/, /\bmax-w-/]);
+  const hasHeightUtility = hasUtilityClass(className, [/\bh-/, /\bmin-h-/, /\bmax-h-/]);
+  const hasBackgroundUtility = hasUtilityClass(className, [/\bbg-/, /\bfrom-/, /\bto-/]);
 
-    const cssVariables = {
-        '--r': `${radius}px`,
-        '--t-out': `${outerThickness}px`,
-        '--t-mid': `${middleThickness}px`,
-        '--t-in': `${innerThickness}px`,
-        '--out-y': `${outerShadowYOffset}px`,
-        '--out-blur': `${outerShadowBlur}px`,
-        '--out-alpha': String(outerShadowAlpha),
-        '--in-y': `${innerShadowYOffset}px`,
-        '--in-blur': `${innerShadowBlur}px`,
-        '--in-alpha': String(innerShadowAlpha),
-        '--content-padding-x': `${contentPaddingX}px`,
-        '--content-padding-y': `${contentPaddingY}px`,
-        '--center-bg-from': resolvedCenterBackgroundFrom,
-        '--center-bg-to': resolvedCenterBackgroundTo,
-        '--ring-outer-dark': ringPalette.outerDark,
-        '--ring-outer-light': ringPalette.outerLight,
-        '--ring-middle': ringPalette.middle,
-        '--ring-inner-light': ringPalette.innerLight,
-        '--ring-inner-dark': ringPalette.innerDark,
-    } as React.CSSProperties & Record<string, string>;
+  const cssVariables = {
+    '--r': `${radius}px`,
+    '--t-out': `${outerThickness}px`,
+    '--t-mid': `${middleThickness}px`,
+    '--t-in': `${innerThickness}px`,
+    '--out-y': `${outerShadowYOffset}px`,
+    '--out-blur': `${outerShadowBlur}px`,
+    '--out-alpha': String(outerShadowAlpha),
+    '--in-y': `${innerShadowYOffset}px`,
+    '--in-blur': `${innerShadowBlur}px`,
+    '--in-alpha': String(innerShadowAlpha),
+    '--content-padding-x': `${contentPaddingX}px`,
+    '--content-padding-y': `${contentPaddingY}px`,
+    '--center-bg-from': resolvedCenterBackgroundFrom,
+    '--center-bg-to': resolvedCenterBackgroundTo,
+    '--ring-outer-dark': ringPalette.outerDark,
+    '--ring-outer-light': ringPalette.outerLight,
+    '--ring-middle': ringPalette.middle,
+    '--ring-inner-light': ringPalette.innerLight,
+    '--ring-inner-dark': ringPalette.innerDark,
+  } as React.CSSProperties & Record<string, string>;
 
-    const widthClasses = extractWidthClasses(className);
+  const widthClasses = extractWidthClasses(className);
 
-    const rootStyle: React.CSSProperties = hasWidthUtility
-        ? { display: 'flex' }
-        : { display: 'inline-flex', width: 'fit-content', maxWidth: 'max-content' };
+  const rootStyle: React.CSSProperties = hasWidthUtility
+    ? { display: 'flex' }
+    : { display: 'inline-flex', width: 'fit-content', maxWidth: 'max-content' };
 
-    const placeStyle: React.CSSProperties = hasWidthUtility
+  const placeStyle: React.CSSProperties = hasWidthUtility ? {} : { width: 'fit-content' };
+
+  const shadowWrapperStyle: React.CSSProperties = hasWidthUtility
+    ? cssVariables
+    : { ...cssVariables, width: 'fit-content', maxWidth: 'max-content' };
+
+  const frameStyle: React.CSSProperties = hasWidthUtility
+    ? {}
+    : { width: 'fit-content', maxWidth: 'max-content' };
+
+  const innerBoxStyle: React.CSSProperties = {
+    ...(width !== undefined
+      ? { width: normalizeCssSize(width, 'fit-content') }
+      : hasWidthUtility
         ? {}
-        : { width: 'fit-content' };
-
-    const shadowWrapperStyle: React.CSSProperties = hasWidthUtility
-        ? cssVariables
-        : { ...cssVariables, width: 'fit-content', maxWidth: 'max-content' };
-
-    const frameStyle: React.CSSProperties = hasWidthUtility
+        : { width: 'fit-content' }),
+    ...(resolvedInnerHeight !== undefined
+      ? { height: normalizeCssSize(resolvedInnerHeight, 'auto') }
+      : hasHeightUtility
         ? {}
-        : { width: 'fit-content', maxWidth: 'max-content' };
+        : {}),
+    ...(hasBackgroundUtility
+      ? {}
+      : {
+          backgroundColor: resolvedCenterBackgroundFrom,
+          backgroundImage:
+            resolvedCenterBackgroundFrom === resolvedCenterBackgroundTo
+              ? 'none'
+              : `linear-gradient(to bottom, ${resolvedCenterBackgroundFrom}, ${resolvedCenterBackgroundTo})`,
+        }),
+  };
 
-    const innerBoxStyle: React.CSSProperties = {
-        ...(width !== undefined
-            ? { width: normalizeCssSize(width, 'fit-content') }
-            : hasWidthUtility
-              ? {}
-              : { width: 'fit-content' }),
-        ...(resolvedInnerHeight !== undefined
-            ? { height: normalizeCssSize(resolvedInnerHeight, 'auto') }
-            : hasHeightUtility
-              ? {}
-              : {}),
-        ...(hasBackgroundUtility
-            ? {}
-            : {
-                  backgroundColor: resolvedCenterBackgroundFrom,
-                  backgroundImage:
-                      resolvedCenterBackgroundFrom === resolvedCenterBackgroundTo
-                          ? 'none'
-                          : `linear-gradient(to bottom, ${resolvedCenterBackgroundFrom}, ${resolvedCenterBackgroundTo})`,
-              }),
-    };
-
-    return (
-        <>
-            <style dangerouslySetInnerHTML={{ __html: guildedButtonCSS }} />
-            <div
-                data-testid={testID}
-                role="button"
-                tabIndex={disabled ? -1 : 0}
-                aria-disabled={disabled || undefined}
-                className={`guilded-button-root ${disabled ? 'is-disabled' : ''} ${rootClassName} ${widthClasses}`.trim()}
-                onClick={disabled ? undefined : onPress}
-                onKeyDown={handleKeyDown}
-                onMouseEnter={onHoverIn}
-                onMouseLeave={onHoverOut}
-                style={rootStyle}
-            >
-                <div className={`guilded-button-place ${widthClasses}`.trim()} style={placeStyle}>
-                    <div className={`guilded-button-shadow-wrapper ${widthClasses}`.trim()} style={shadowWrapperStyle}>
-                        <div className={`guilded-button-frame ${widthClasses}`.trim()} style={frameStyle}>
-                            <div className={`guilded-button-inner-box ${className}`.trim()} style={innerBoxStyle}>
-                                <div className="guilded-button-content">{children}</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+  return (
+    <>
+      <style dangerouslySetInnerHTML={{ __html: guildedButtonCSS }} />
+      <div
+        data-testid={testID}
+        aria-label={accessibilityLabel}
+        role="button"
+        tabIndex={disabled ? -1 : 0}
+        aria-disabled={disabled || undefined}
+        className={`guilded-button-root ${disabled ? 'is-disabled' : ''} ${rootClassName} ${widthClasses}`.trim()}
+        onClick={disabled ? undefined : onPress}
+        onKeyDown={handleKeyDown}
+        onMouseEnter={onHoverIn}
+        onMouseLeave={onHoverOut}
+        style={rootStyle}>
+        <div className={`guilded-button-place ${widthClasses}`.trim()} style={placeStyle}>
+          <div
+            className={`guilded-button-shadow-wrapper ${widthClasses}`.trim()}
+            style={shadowWrapperStyle}>
+            <div className={`guilded-button-frame ${widthClasses}`.trim()} style={frameStyle}>
+              <div className={`guilded-button-inner-box ${className}`.trim()} style={innerBoxStyle}>
+                <div className="guilded-button-content">{children}</div>
+              </div>
             </div>
-        </>
-    );
+          </div>
+        </div>
+      </div>
+    </>
+  );
 }

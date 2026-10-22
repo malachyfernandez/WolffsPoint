@@ -3,7 +3,7 @@ import { internal } from './_generated/api';
 import { internalMutation, mutation, query, MutationCtx } from './_generated/server';
 import { Doc, Id } from './_generated/dataModel';
 import { setUserVarForToken } from './user_vars';
-import { setUserListForToken } from './user_lists';
+import { prepareCellTableWrite, setUserListForToken } from './user_lists';
 
 const MAX_BATCH_TARGETS = 50;
 
@@ -67,6 +67,7 @@ async function publishBatch(
     } else {
       if (!target.itemId) throw new Error('List target is missing itemId');
       await setUserListForToken(ctx, batch.ownerUserToken, {
+        cellWriteOrigin: 'restore',
         key: target.key,
         itemId: target.itemId,
         value: target.encodedValue,
@@ -122,6 +123,7 @@ export const getBatchState = query({
 
 export const stageTarget = mutation({
   args: {
+    cellWriteOrigin: v.optional(v.union(v.literal('tracked'), v.literal('restore'))),
     target: targetValidator,
     encodedValue: v.any(),
     batchId: v.string(),
@@ -174,7 +176,20 @@ export const stageTarget = mutation({
       targetType: args.target.targetType,
       key: args.target.key,
       itemId,
-      encodedValue: args.encodedValue,
+      encodedValue:
+        args.target.targetType === 'list'
+          ? await prepareCellTableWrite(
+              ctx,
+              ownerUserToken,
+              {
+                key: args.target.key,
+                itemId: args.target.itemId,
+                value: args.encodedValue,
+                cellWriteOrigin: args.cellWriteOrigin,
+              },
+              existing?.encodedValue
+            )
+          : args.encodedValue,
       batchId: args.batchId,
       scheduledTime: batch.scheduledTime,
       updatedAt: now,

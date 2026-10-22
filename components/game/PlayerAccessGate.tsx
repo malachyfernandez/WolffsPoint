@@ -110,7 +110,7 @@ const PlayerAccessGate = ({ gameId, currentUserId, children }: PlayerAccessGateP
     customUserInfo.state.isSyncing,
   ]);
 
-  // Report to BodyReadinessProvider — tab bar waits for the gate to load
+  // Report to BodyReadinessProvider: tab bar waits for the gate to load
   useBodyLoadReport(!hasLoaded, 300, 'PlayerAccessGate');
 
   // Show loading state while syncing for the first time

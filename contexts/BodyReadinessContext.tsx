@@ -11,7 +11,7 @@ interface BodyReadinessContextValue {
 
 const BodyReadinessContext = createContext<BodyReadinessContextValue | null>(null);
 
-/** Whether descendants should report load state — false inside hidden/inactive tabs
+/** Whether descendants should report load state, false inside hidden/inactive tabs
  *  whose content can't finish (e.g. onLayout never fires under display:none). */
 const BodyReportEnabledContext = createContext(true);
 

@@ -21,15 +21,15 @@ import {
  * Adaptive memory management.
  *
  * `MemoryPressureProvider` computes the device tier once, then watches runtime
- * pressure (heap ratio where supported — Chrome; Safari/Firefox stay at the
+ * pressure (heap ratio where supported, Chrome; Safari/Firefox stay at the
  * tier's baseline policy since they expose no memory signal).
  *
  * Two protection mechanisms keep culling safe:
- * - `MemoryScope` — labels a subtree (usually a tab pane) so minimized dialogs
+ * - `MemoryScope`: labels a subtree (usually a tab pane) so minimized dialogs
  *   can record which scope owns their host component.
- * - Pin registry — MinimizeProvider registers a pin per dirty minimized
+ * - Pin registry: MinimizeProvider registers a pin per dirty minimized
  *   dialog; the tab LRU refuses to evict a scope that owns pinned minimized
- *   dialogs (their `onRestore` lives in that subtree — evicting it would
+ *   dialogs (their `onRestore` lives in that subtree, evicting it would
  *   strand the card and lose the draft).
  */
 
@@ -57,7 +57,7 @@ export const useMemoryScope = () => useContext(MemoryScopeContext);
 const TIER_BASELINE: Record<DeviceTier, MemoryPressure> = {
   high: 'none',
   medium: 'none',
-  // Low-tier (old iOS etc.): always run elevated culling — Jetsam gives no warning.
+  // Low-tier (old iOS etc.): always run elevated culling: Jetsam gives no warning.
   low: 'elevated',
 };
 
@@ -69,7 +69,7 @@ export const MemoryPressureProvider = ({ children }: { children: React.ReactNode
   // Separate signal from runtimePressure: on iOS, Jetsam kills *backgrounded*
   // tabs to reclaim RAM. Shrinking our resident footprint while hidden is the
   // difference between surviving and the "a problem occurred" reload. It
-  // lifts instantly on return — no de-escalation delay.
+  // lifts instantly on return: no de-escalation delay.
   const [backgrounded, setBackgrounded] = useState(false);
   const pinsRef = useRef(new Map<string, { scopeId: string | null; pinned: boolean }>());
   const [pinnedScopes, setPinnedScopes] = useState<ReadonlySet<string>>(new Set());
@@ -101,7 +101,7 @@ export const MemoryPressureProvider = ({ children }: { children: React.ReactNode
   );
 
   // Poll JS heap where the engine exposes it. Escalation is one-way ratchet
-  // within a window — dropping back requires sustained relief (heap ratio is
+  // within a window: dropping back requires sustained relief (heap ratio is
   // noisy while GC runs).
   useEffect(() => {
     if (typeof window === 'undefined') return;

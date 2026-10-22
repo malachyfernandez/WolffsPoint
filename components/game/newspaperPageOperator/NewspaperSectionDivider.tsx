@@ -7,7 +7,7 @@ import { View } from 'react-native';
  * continuous newspaper separated by simple rules.
  */
 const NewspaperSectionDivider = () => {
-  return <View className="bg-border h-px w-[calc(100%-32px)] mx-4 opacity-60" />;
+  return <View className="bg-border mx-4 h-px self-stretch opacity-60" />;
 };
 
 export default NewspaperSectionDivider;

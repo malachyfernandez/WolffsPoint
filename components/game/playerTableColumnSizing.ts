@@ -11,6 +11,7 @@ export type PlayerPageColumnSizes = {
     dayBaseColumns: {
         vote: ColumnSizeOption;
         action: ColumnSizeOption;
+        morningMessage: ColumnSizeOption;
     };
     dayExtraColumns: ColumnSizeOption[];
 };
@@ -24,6 +25,7 @@ export const defaultPlayerPageColumnSizes: PlayerPageColumnSizes = {
     dayBaseColumns: {
         vote: 'small',
         action: 'small',
+        morningMessage: 'small',
     },
     dayExtraColumns: [],
 };

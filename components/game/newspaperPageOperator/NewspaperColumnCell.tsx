@@ -32,7 +32,7 @@ interface NewspaperColumnCellProps {
 
 /**
  * A single newspaper column cell. Each cell owns its own MarkdownEditorDialog
- * instance, so minimize/restore always reopens THIS column's dialog — the same
+ * instance, so minimize/restore always reopens THIS column's dialog; the same
  * per-instance pattern TagCellDisplay uses for table cells. A shared dialog
  * driven by a "selected column" state would restore whichever column was
  * selected last instead.

@@ -12,6 +12,7 @@ import {
     scrollToElement,
 } from 'utils/parseHeadings';
 import { RoleTableItem } from 'types/roleTable';
+import type { MarkdownDocumentNode } from 'utils/markdownDocument';
 import CloseButton from '../../ui/dialog/CloseButton';
 
 interface TableOfContentsDialogProps {
@@ -27,6 +28,17 @@ interface TableOfContentsDialogProps {
     ruleBookTitle: string;
     /** Title for the role descriptions section */
     roleDescriptionsTitle: string;
+    /** Evaluated modular document. When present, TOC entries follow its order. */
+    documentNodes?: MarkdownDocumentNode[];
+    /** Requests navigation to a nested document screen before scrolling. */
+    onNavigate?: (path: string[], targetId: string) => void;
+}
+
+interface ModularTocEntry {
+    label: string;
+    path: string[];
+    depth: number;
+    targetId: string;
 }
 
 const TableOfContentsDialog = ({
@@ -37,8 +49,38 @@ const TableOfContentsDialog = ({
     roles,
     ruleBookTitle,
     roleDescriptionsTitle,
+    documentNodes,
+    onNavigate,
 }: TableOfContentsDialogProps) => {
     const headings = useMemo(() => parseHeadings(markdown), [markdown]);
+
+    const modularEntries = useMemo<ModularTocEntry[] | undefined>(() => {
+        if (!documentNodes) return undefined;
+        const entries: ModularTocEntry[] = [];
+        const visit = (nodes: MarkdownDocumentNode[], path: string[], depth: number) => {
+            for (const node of nodes) {
+                if (node.kind === 'navigation') {
+                    const nextPath = [...path, node.id];
+                    entries.push({
+                        label: node.label,
+                        path: nextPath,
+                        depth,
+                        targetId: `${headingIdPrefix}-nav-${encodeURIComponent(node.id)}`,
+                    });
+                    visit(node.children, nextPath, depth + 1);
+                } else if (node.kind === 'markdown' && node.block.type === 'heading') {
+                    entries.push({
+                        label: node.block.text.trim(),
+                        path,
+                        depth: depth + node.block.level,
+                        targetId: `${headingIdPrefix}-${encodeURIComponent(node.id)}-heading-${node.blockIndex}`,
+                    });
+                }
+            }
+        };
+        visit(documentNodes, [], 0);
+        return entries;
+    }, [documentNodes, headingIdPrefix]);
 
     const visibleRoles = useMemo(
         () => roles.filter(
@@ -55,7 +97,13 @@ const TableOfContentsDialog = ({
         closeAndScroll(() => scrollToHeading(headingIdPrefix, blockIndex));
     };
 
-    const hasContent = headings.length > 0 || visibleRoles.length > 0;
+    const hasContent = modularEntries
+        ? modularEntries.length > 0
+        : headings.length > 0 || visibleRoles.length > 0;
+
+    const handleModularPress = (entry: ModularTocEntry) => {
+        closeAndScroll(() => onNavigate?.(entry.path, entry.targetId));
+    };
 
     const closeAndScroll = (scrollAction: () => void) =>
         closeDialogAndScroll(() => onOpenChange(false), scrollAction);
@@ -85,10 +133,15 @@ const TableOfContentsDialog = ({
                                 scrollViewClassName='w-full'
                             >
                                 <Column className='gap-0 pb-4'>
-                                    {/* Rule book title — top-level entry */}
+                                    {/* Rule book title: top-level entry */}
                                     <Pressable
                                         onPress={() => {
-                                            closeAndScroll(() => scrollToElement(`${headingIdPrefix}-top`));
+                                            const targetId = `${headingIdPrefix}-top`;
+                                            closeAndScroll(() =>
+                                                modularEntries
+                                                    ? onNavigate?.([], targetId)
+                                                    : scrollToElement(targetId)
+                                            );
                                         }}
                                         className='hover:bg-text/5 active:bg-text/10 rounded-md py-2'
                                     >
@@ -97,8 +150,22 @@ const TableOfContentsDialog = ({
                                         </FontText>
                                     </Pressable>
 
-                                    {/* Markdown headings — indented by heading level */}
-                                    {headings.map((heading, index) => (
+                                    {/* Modular document entries follow the composed order, including folders inside navigation screens. */}
+                                    {modularEntries?.map((entry, index) => (
+                                        <Pressable
+                                            key={`modular-${entry.targetId}-${index}`}
+                                            onPress={() => handleModularPress(entry)}
+                                            className='hover:bg-text/5 active:bg-text/10 rounded-md py-2'
+                                            style={{ paddingLeft: entry.depth * 20 }}
+                                        >
+                                            <FontText numberOfLines={1} ellipsizeMode='tail'>
+                                                {entry.label}
+                                            </FontText>
+                                        </Pressable>
+                                    ))}
+
+                                    {/* Markdown headings: indented by heading level */}
+                                    {!modularEntries && headings.map((heading, index) => (
                                         <Pressable
                                             key={`heading-${heading.blockIndex}-${index}`}
                                             onPress={() => handleHeadingPress(heading.blockIndex)}
@@ -114,7 +181,7 @@ const TableOfContentsDialog = ({
                                     ))}
 
                                     {/* Role descriptions section */}
-                                    {visibleRoles.length > 0 && (
+                                    {!modularEntries && visibleRoles.length > 0 && (
                                         <>
                                             <View className='bg-border/30 h-px w-full my-2' />
                                             <Pressable

@@ -7,12 +7,11 @@ import AppButton from '../ui/buttons/AppButton';
 import ColumnActionsDialog from './ColumnActionsDialog';
 import { ColumnSizeOption, getInnerTextWidth } from './playerTableColumnSizing';
 import { SelectableColumnOverlay } from './multiSelect/SelectableOverlay';
+import type { CellContentType, UserTableTitle } from '../../types/playerTable';
 
 interface TitleRowProps {
-  userTableTitle?: {
-    extraUserColumns: string[];
-    extraDayColumns: string[];
-  };
+  userTableTitle?: UserTableTitle;
+  onSetColumnType?: (index: number, type: CellContentType) => void;
   userTableColumnVisibility?: {
     extraUserColumns: boolean[];
     extraDayColumns: boolean[];
@@ -26,10 +25,6 @@ interface TitleRowProps {
   extraUserColumnSizes?: ColumnSizeOption[];
   onSetExtraUserColumnSize?: (columnIndex: number, size: ColumnSizeOption) => void;
   onDeleteExtraUserColumn?: (columnIndex: number) => void;
-  /** Per-column nightly visibility flags (extra user columns). */
-  nightlyVisibility?: boolean[];
-  /** Toggle nightly visibility for a column. */
-  onToggleNightlyVisibility?: (columnIndex: number) => void;
   selectionMode?: boolean;
   columnCellIds?: string[][];
 }
@@ -46,10 +41,9 @@ const TitleRow = ({
   extraUserColumnSizes,
   onSetExtraUserColumnSize,
   onDeleteExtraUserColumn,
-  nightlyVisibility,
-  onToggleNightlyVisibility,
   selectionMode = false,
   columnCellIds,
+  onSetColumnType,
 }: TitleRowProps) => {
   const titles = userTableTitle ?? { extraUserColumns: [], extraDayColumns: [] };
   const visibility = userTableColumnVisibility ?? { extraUserColumns: [], extraDayColumns: [] };
@@ -114,16 +108,17 @@ const TitleRow = ({
                 </AppButton>
               )}
               {selectionMode && (
-                <FontText
-                  weight="medium"
-                  className="text-center"
-                  style={{ width: textWidth }}>
+                <FontText weight="medium" className="text-center" style={{ width: textWidth }}>
                   {columnTitle}
                 </FontText>
               )}
               <SelectableColumnOverlay
                 columnCellIds={columnCellIds?.[index] ?? []}
-                cellType="playerExtra"
+                cellType={
+                  titles.extraUserColumnTypes?.[index] === 'files'
+                    ? 'playerExtraFiles'
+                    : 'playerExtra'
+                }
               />
             </Row>
           );
@@ -138,6 +133,12 @@ const TitleRow = ({
           }
         }}
         title="Column options"
+        contentType={
+          activeMenu === null ? 'tags' : (titles.extraUserColumnTypes?.[activeMenu] ?? 'tags')
+        }
+        onSelectContentType={
+          activeMenu === null ? undefined : (type) => onSetColumnType?.(activeMenu, type)
+        }
         selectedSize={
           activeMenu !== null ? (extraUserColumnSizes?.[activeMenu] ?? 'small') : 'small'
         }
@@ -147,12 +148,6 @@ const TitleRow = ({
           }
         }}
         onDelete={activeMenu !== null ? () => onDeleteExtraUserColumn?.(activeMenu) : undefined}
-        showInNightly={activeMenu !== null ? nightlyVisibility?.[activeMenu] : undefined}
-        onToggleShowInNightly={
-          activeMenu !== null && onToggleNightlyVisibility
-            ? () => onToggleNightlyVisibility(activeMenu)
-            : undefined
-        }
       />
     </>
   );

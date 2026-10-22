@@ -7,65 +7,62 @@ import TownSquareComposerEditorPane from '../townSquare/TownSquareComposerEditor
 import { SelectionRange } from '../townSquare/townSquareUtils';
 
 interface EditorPaneProps {
-    value: string;
-    onBodyChange: (body: string) => void;
-    onSelectionChange: (selection: SelectionRange) => void;
-    showInputs: boolean;
-    onBold: () => void;
-    onItalic: () => void;
-    onLink: () => void;
-    onImage: () => void;
-    onInput: () => void;
-    onMore: () => void;
-    onScript?: () => void;
-    onVariable?: () => void;
-    /** When true, the editor is non-editable (view-only) and the toolbar is hidden. */
-    readOnly?: boolean;
-    /** Optional ref forwarded to the body text input. */
-    inputRef?: React.Ref<TextInput>;
+  value: string;
+  onBodyChange: (body: string) => void;
+  onSelectionChange: (selection: SelectionRange) => void;
+  onBold: () => void;
+  onItalic: () => void;
+  onLink: () => void;
+  onImage: () => void;
+  onMore: () => void;
+  onScript?: () => void;
+  scriptLabel?: string;
+  onVariable?: () => void;
+  /** When true, the editor is non-editable (view-only) and the toolbar is hidden. */
+  readOnly?: boolean;
+  /** Optional ref forwarded to the body text input. */
+  inputRef?: React.Ref<TextInput>;
 }
 
 export function EditorPane({
-    value,
-    onBodyChange,
-    onSelectionChange,
-    showInputs,
-    onBold,
-    onItalic,
-    onLink,
-    onImage,
-    onInput,
-    onMore,
-    onScript,
-    onVariable,
-    readOnly = false,
-    inputRef,
+  value,
+  onBodyChange,
+  onSelectionChange,
+  onBold,
+  onItalic,
+  onLink,
+  onImage,
+  onMore,
+  onScript,
+  scriptLabel,
+  onVariable,
+  readOnly = false,
+  inputRef,
 }: EditorPaneProps) {
-    return (
-        <Column className='gap-1 flex-1 min-w-0'>
-            {!readOnly && (
-                <TownSquareComposerToolbar
-                    onBold={onBold}
-                    onInput={onInput}
-                    onImage={onImage}
-                    onItalic={onItalic}
-                    onLink={onLink}
-                    onMore={onMore}
-                    onScript={onScript}
-                    onVariable={onVariable}
-                    showInputs={showInputs}
-                />
-            )}
-            <ShadowScrollView className='flex-1' scrollViewClassName='flex-1 rounded-[24px] py-4'>
-                    <TownSquareComposerEditorPane
-                        onBodyChange={onBodyChange}
-                        onSelectionChange={onSelectionChange}
-                        value={value}
-                        readOnly={readOnly}
-                        inputRef={inputRef}
-                    />
-            </ShadowScrollView>
-        </Column>
-    );
+  return (
+    <Column className="min-w-0 flex-1 gap-1">
+      {!readOnly && (
+        <TownSquareComposerToolbar
+          onBold={onBold}
+          onImage={onImage}
+          onItalic={onItalic}
+          onLink={onLink}
+          onMore={onMore}
+          onScript={onScript}
+          scriptLabel={scriptLabel}
+          onVariable={onVariable}
+        />
+      )}
+      <ShadowScrollView className="flex-1" scrollViewClassName="flex-1 rounded-[24px] py-4">
+        <TownSquareComposerEditorPane
+          onBodyChange={onBodyChange}
+          onSelectionChange={onSelectionChange}
+          value={value}
+          readOnly={readOnly}
+          inputRef={inputRef}
+        />
+      </ShadowScrollView>
+    </Column>
+  );
 }
 export default EditorPane;

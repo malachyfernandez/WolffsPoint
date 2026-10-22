@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useSyncExternalStore } from 'react';
 import { Platform } from 'react-native';
 
 /**
@@ -13,26 +13,35 @@ import { Platform } from 'react-native';
  * devices (touchscreen laptops) flip back to mouse mode as soon as a mouse
  * is actually used.
  */
-export const useIsTouchInput = () => {
-  const [isTouch, setIsTouch] = useState(() => {
-    if (Platform.OS !== 'web') return true;
-    if (typeof window === 'undefined') return false;
-    return window.matchMedia?.('(pointer: coarse)')?.matches ?? false;
-  });
-
-  useEffect(() => {
-    if (Platform.OS !== 'web' || typeof window === 'undefined') return;
-    const handlePointer = (event: PointerEvent) => {
-      if (event.pointerType === 'touch') setIsTouch(true);
-      else if (event.pointerType === 'mouse' || event.pointerType === 'pen') setIsTouch(false);
-    };
+let isTouch: boolean | undefined;
+const listeners = new Set<() => void>();
+const getSnapshot = () => {
+  if (Platform.OS !== 'web') return true;
+  if (typeof window === 'undefined') return false;
+  return isTouch ?? window.matchMedia?.('(pointer: coarse)')?.matches ?? false;
+};
+const handlePointer = (event: PointerEvent) => {
+  if (!['touch', 'mouse', 'pen'].includes(event.pointerType)) return;
+  const next = event.pointerType === 'touch';
+  if (next === getSnapshot()) return;
+  isTouch = next;
+  listeners.forEach((listener) => listener());
+};
+const subscribe = (listener: () => void) => {
+  if (Platform.OS !== 'web' || typeof window === 'undefined') return () => {};
+  if (listeners.size === 0) {
     window.addEventListener('pointerdown', handlePointer);
     window.addEventListener('pointermove', handlePointer);
-    return () => {
+  }
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+    if (listeners.size === 0) {
       window.removeEventListener('pointerdown', handlePointer);
       window.removeEventListener('pointermove', handlePointer);
-    };
-  }, []);
-
-  return isTouch;
+    }
+  };
 };
+
+export const useIsTouchInput = () =>
+  useSyncExternalStore(subscribe, getSnapshot, () => Platform.OS !== 'web');

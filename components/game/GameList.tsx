@@ -7,6 +7,7 @@ import { useValue } from 'hooks/useData';
 import { UserListRecord } from 'hooks/useUserList';
 import { GameInfo } from 'types/games';
 import LoadingContainer from '../ui/loading/LoadingContainer';
+import { useContentWidth } from 'hooks/useContentWidth';
 
 
 interface GameListProps {
@@ -20,9 +21,10 @@ interface GameListProps {
 
 const GameList = ({ gamesTheyJoined, setGamesTheyJoined, myGames, hasJoinedAGame, hasMadeAGame, setActiveGameId }: GameListProps) => {
     const [archivedGames, setArchivedGames] = useValue<string[]>("archivedGames");
+    const contentWidth = useContentWidth();
     return (
         <LoadingContainer dependencies={[archivedGames]} loadingText="Loading games">
-            <Column className='gap-6 py-6 px-4 sm:px-6'>
+            <Column className={`gap-6 py-6 ${contentWidth >= 640 ? 'px-6' : 'px-4'}`}>
 
                 {(hasJoinedAGame || (archivedGames.value?.length || 0) > 0) && (
                     <JoinedGames

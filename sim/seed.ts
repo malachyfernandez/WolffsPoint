@@ -129,7 +129,7 @@ function buildRoleTable() {
       voteMessage: votes
         ? `/*script\nCreateSelectVoteInput({\n  LIST = players.Filter(Item => (Item.entry("isAlive") == true)),\n  LABEL = "Vote",\n  NUMSELECTABLE = 1,\n  MULTIPLYER = 1,\n});\nscript*/`
         : '',
-      aboutRole: `**${ROLE_NAMES[i]}** — ` + lorem(5, 'about' + i),
+      aboutRole: `**${ROLE_NAMES[i]}**: ` + lorem(5, 'about' + i),
     });
   }
   return rows;
@@ -142,7 +142,7 @@ function buildNewspaper(gameId: string, dayIndex: number) {
       titleFont: 'playfairDisplay',
       dividerStyle: 'diamond',
       columns: [
-        `# The WolffsPoint Herald — Day ${dayIndex + 1}\n\n${markdownParagraphs(7, `news-a-${dayIndex}`)}`,
+        `# The WolffsPoint Herald: Day ${dayIndex + 1}\n\n${markdownParagraphs(7, `news-a-${dayIndex}`)}`,
         `## Council Notes\n\n${markdownParagraphs(6, `news-b-${dayIndex}`)}`,
       ],
     },
@@ -387,7 +387,7 @@ function seedGameShared(gameId: string, operatorId: string, opts: {
       instagram: i % 3 === 0 ? `@${row.realName.split(' ')[0].toLowerCase()}` : '',
       discord: i % 4 === 0 ? `${row.realName.split(' ')[0].toLowerCase()}#${1000 + i}` : '',
       otherContact: '',
-      bioMarkdown: `**${row.realName}** — ${lorem(3, 'bio' + i)}`,
+      bioMarkdown: `**${row.realName}**: ${lorem(3, 'bio' + i)}`,
       claimedAt: Date.now() - DAY_MS * 10,
     }, { privacy: 'PUBLIC', searchKeys: ['inGameName', 'bioMarkdown'], sortKey: 'inGameName' });
 
@@ -422,16 +422,16 @@ export function seedMockDb() {
     seedUserData(playerUserId(i), PLAYER_NAMES[i], playerEmail(i));
   }
 
-  // Game 1 — current user is operator
+  // Game 1: current user is operator
   seedGameShared(GAME_OP, SIM_USER.userId, {
     newserUserId: playerUserId(0),
     newserEmail: playerEmail(0),
   });
 
-  // Game 2 — current user is a player
+  // Game 2: current user is a player
   seedGameShared(GAME_PLAYER, OTHER_GM.userId, { includeSimPlayer: true });
 
-  // Game 3 — current user is the newser
+  // Game 3: current user is the newser
   seedGameShared(GAME_NEWSER, OTHER_GM.userId, {
     includeSimPlayer: true,
     newserUserId: SIM_USER.userId,

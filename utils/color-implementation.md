@@ -12,12 +12,12 @@ Make the "Delete Section" control in the newspaper section options dialog red us
 - `getColorTokenFromClassName`: helper in `FontText` that finds the last `text-*` class that is not a utility and strips the `text-` prefix.
 
 ## Relevant files
-- `app/components/ui/text/FontText.tsx` — the shared text component. It extracts the last non-utility `text-*` class from `className`, builds `text-<token>`, resolves it with `useResolveClassNames('text-<token>')`, falls back to `useCSSVariable('--color-<token>')`, then the literal token. The resolved value is coerced to a string with `String(...)` and applied as `style.color`.
-- `app/components/game/newspaperPageOperator/NewspaperSectionOptionsDialog.tsx` — the dialog. The Delete Section control uses:
+- `app/components/ui/text/FontText.tsx`: the shared text component. It extracts the last non-utility `text-*` class from `className`, builds `text-<token>`, resolves it with `useResolveClassNames('text-<token>')`, falls back to `useCSSVariable('--color-<token>')`, then the literal token. The resolved value is coerced to a string with `String(...)` and applied as `style.color`.
+- `app/components/game/newspaperPageOperator/NewspaperSectionOptionsDialog.tsx`: the dialog. The Delete Section control uses:
   - `Trash2` icon with a manually-passed color string (no hooks in this file).
   - `FontText` with `className="text-red-700"` (plus `opacity-40` when `!canDelete`) for the label.
-- `global.css` — defines custom theme colors but does not declare standard Tailwind colors (e.g. no `--color-red-700`). Standard Tailwind colors are resolved from the compiled Uniwind class instead.
-- `utils/color-implementation.md` — this file. It is the handoff context for the next thread.
+- `global.css`: defines custom theme colors but does not declare standard Tailwind colors (e.g. no `--color-red-700`). Standard Tailwind colors are resolved from the compiled Uniwind class instead.
+- `utils/color-implementation.md`: this file. It is the handoff context for the next thread.
 
 ## Current decisions / constraints
 - The desired color is `red-700`, not `red-800`.

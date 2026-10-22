@@ -10,7 +10,7 @@ export interface PendingColumnOpen {
  * Holds a "please open this newspaper column" request at the newspaper page
  * level, which survives day switches (each day's writing view unmounts on
  * navigation, so a minimized dialog's onRestore can't target the cell
- * directly — its component no longer exists).
+ * directly: its component no longer exists).
  *
  * A minimized column editor's onRestore calls `requestColumnOpen`, which
  * records the target column and invokes `onNavigateToDay` to switch to the
@@ -19,7 +19,7 @@ export interface PendingColumnOpen {
  * own dialog.
  *
  * `onNavigateToDay` is stored in a ref so `requestColumnOpen` stays referentially
- * stable — minimized entries may outlive the components that created them.
+ * stable: minimized entries may outlive the components that created them.
  */
 export function usePendingColumnOpen(onNavigateToDay: (dayIndex: number) => void) {
   const [pendingColumnOpen, setPendingColumnOpen] = useState<PendingColumnOpen | null>(null);

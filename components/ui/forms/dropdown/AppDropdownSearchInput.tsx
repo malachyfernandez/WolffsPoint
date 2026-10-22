@@ -17,7 +17,7 @@ interface AppDropdownSearchInputProps {
 /**
  * Shared search field rendered at the top of dropdown menus. On web it is
  * wrapped in a div that stops mouse events from bubbling up to the menu
- * container — the menu calls preventDefault on mousedown (so clicks don't
+ * container: the menu calls preventDefault on mousedown (so clicks don't
  * steal focus/dismiss), which would otherwise keep this input unfocusable.
  */
 const AppDropdownSearchInput = ({
@@ -62,7 +62,7 @@ const AppDropdownSearchInput = ({
       onSubmitEditing={onSubmit}
       returnKeyType="search"
       // react-native-web's TextInput calls stopPropagation() on every keydown,
-      // so arrow keys never reach ancestor elements — onKeyPress is the only
+      // so arrow keys never reach ancestor elements, onKeyPress is the only
       // place they can be intercepted.
       onKeyPress={(event: any) => {
         const key = event?.key ?? event?.nativeEvent?.key;

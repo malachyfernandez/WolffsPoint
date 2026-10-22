@@ -8,6 +8,8 @@ import FontText from '../ui/text/FontText';
 import ScheduleTableUpdateDialog from './ScheduleTableUpdateDialog';
 import UnsavedChangesDialog from '../ui/dialog/UnsavedChangesDialog';
 import { useToast } from 'contexts/ToastContext';
+import { nowDate } from 'utils/simNow';
+
 
 interface TableFreezeController {
   isLoading: boolean;
@@ -22,14 +24,14 @@ interface TableFreezeController {
 
 interface TableFreezeControlsProps {
   controller: TableFreezeController;
-  /** Stretches the lone "Freeze Table" button to fill the row — used when the
+  /** Stretches the lone "Freeze Table" button to fill the row, used when the
       controls have wrapped onto their own line below the add button. */
   fullWidth?: boolean;
 }
 
 /**
  * Row width (in px) below which the add button and the freeze controls stop
- * sharing a line and stack instead — each spanning the full row width.
+ * sharing a line and stack instead, each spanning the full row width.
  * Raise it to stack sooner, lower it to stack later.
  */
 export const CONTROLS_STACKED_BREAKPOINT = 400;
@@ -39,7 +41,7 @@ const formatScheduledTime = (scheduledTime: number) =>
     month: 'short',
     day: 'numeric',
     year:
-      new Date(scheduledTime).getFullYear() === new Date().getFullYear() ? undefined : 'numeric',
+      new Date(scheduledTime).getFullYear() === nowDate().getFullYear() ? undefined : 'numeric',
     hour: 'numeric',
     minute: '2-digit',
     timeZoneName: 'short',
@@ -58,7 +60,7 @@ const TableFreezeControls = ({ controller, fullWidth = false }: TableFreezeContr
   // Natural width of [Cancel + pair] on one line: the 12 covers the gap-3
   // between them (the divider and its gaps are inside the pair's measured
   // width). Compared against the row's actual width to know when the pair
-  // has wrapped under Cancel — drives the divider's visibility only.
+  // has wrapped under Cancel: drives the divider's visibility only.
   const buttonsNaturalWidth =
     cancelNaturalWidth > 0 && pairNaturalWidth > 0 ? cancelNaturalWidth + pairNaturalWidth + 12 : 0;
   const isButtonsWrapped =
@@ -82,7 +84,7 @@ const TableFreezeControls = ({ controller, fullWidth = false }: TableFreezeContr
   };
 
   if (!controller.isActive) {
-    // mt-1.5 nudges the button down — the gold add button's frame sits ~4px
+    // mt-1.5 nudges the button down; the gold add button's frame sits ~4px
     // lower inside its hover padding, so this lines the two up plus a smidge.
     return (
       <Column className="mt-1.5 w-full max-w-full items-end">
@@ -179,7 +181,7 @@ const TableFreezeControls = ({ controller, fullWidth = false }: TableFreezeContr
               {cancelUpdateButton}
             </View>
             {/* Schedule + Update stay together as one unbreakable unit, so the
-                wrap boundary lands between Cancel and this pair — Cancel wraps
+                wrap boundary lands between Cancel and this pair: Cancel wraps
                 onto its own line above the other two. The divider lives inside
                 the pair so it wraps down with them: it always holds the same
                 space (keeping the natural-width math stable) and just fades out

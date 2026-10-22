@@ -3,20 +3,15 @@ import UnsavedChangesDialog from '../../ui/dialog/UnsavedChangesDialog';
 import ImageUploadDialog from '../../ui/dialog/ImageUploadDialog';
 import TownSquareMoreOptionsDialog from '../townSquare/TownSquareMoreOptionsDialog';
 import TownSquareLinkDialog from '../townSquare/TownSquareLinkDialog';
-import MarkdownInputBuilderDialog from '../MarkdownInputBuilderDialog';
-import { InputOptionsProvider } from './InputOptionsProvider';
 import {
   SelectionRange,
   applyMoreComposerAction,
   insertMarkdownLink,
   insertMarkdownImage,
-  insertAtSelection,
 } from '../townSquare/townSquareUtils';
 import { encodeMarkdownImageAlt } from 'utils/markdownImageOptions';
 
 interface SubDialogsProps {
-  gameId: string | undefined;
-  showInputs: boolean;
   selectedText: string;
   isMoreDialogOpen: boolean;
   setIsMoreDialogOpen: (open: boolean) => void;
@@ -24,8 +19,6 @@ interface SubDialogsProps {
   setIsLinkDialogOpen: (open: boolean) => void;
   isImageDialogOpen: boolean;
   setIsImageDialogOpen: (open: boolean) => void;
-  isInputDialogOpen: boolean;
-  setIsInputDialogOpen: (open: boolean) => void;
   isLeaveConfirmDialogOpen: boolean;
   setIsLeaveConfirmDialogOpen: (open: boolean) => void;
   runBodyUpdate: (
@@ -40,8 +33,6 @@ interface SubDialogsProps {
 }
 
 export function SubDialogs({
-  gameId,
-  showInputs,
   selectedText,
   isMoreDialogOpen,
   setIsMoreDialogOpen,
@@ -49,8 +40,6 @@ export function SubDialogs({
   setIsLinkDialogOpen,
   isImageDialogOpen,
   setIsImageDialogOpen,
-  isInputDialogOpen,
-  setIsInputDialogOpen,
   isLeaveConfirmDialogOpen,
   setIsLeaveConfirmDialogOpen,
   runBodyUpdate,
@@ -91,19 +80,6 @@ export function SubDialogs({
         showBorderOption={showImageBorderOption}
         key={isImageDialogOpen ? 'open' : 'closed'}
       />
-
-      <InputOptionsProvider gameId={gameId} showInputs={showInputs}>
-        <MarkdownInputBuilderDialog
-          isOpen={isInputDialogOpen}
-          onInsert={(scriptBlock) =>
-            runBodyUpdate((value, range) =>
-              insertAtSelection(value, range, `\n\n${scriptBlock}\n\n`)
-            )
-          }
-          onOpenChange={setIsInputDialogOpen}
-          selectedText={selectedText}
-        />
-      </InputOptionsProvider>
 
       <UnsavedChangesDialog
         isOpen={isLeaveConfirmDialogOpen}

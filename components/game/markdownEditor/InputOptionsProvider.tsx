@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { useList, useValue } from 'hooks/useData';
+import { useScriptFilesReader } from 'hooks/useScriptFiles';
 import { RoleTableItem } from 'types/roleTable';
 import { UserTableItem, UserTableTitle } from 'types/playerTable';
 import { MarkdownRendererInputDataProvider } from '../../ui/markdown/MarkdownRenderer';
@@ -50,6 +51,7 @@ export function InputOptionsProvider({ gameId, showInputs, children }: InputOpti
     gameId || '__markdown_editor_dialog_no_game__',
     { privacy: 'PUBLIC' }
   );
+  const { index: scriptFilesIndex } = useScriptFilesReader(gameId);
 
   const playerOptions = useMemo(() => {
     if (!showInputs) {
@@ -87,6 +89,7 @@ export function InputOptionsProvider({ gameId, showInputs, children }: InputOpti
       dayDates: dayDatesArray?.value ?? [],
       userTableTitle: userTableTitle?.value,
       morningMessagesList: morningMessagesList?.value,
+      filesIndex: scriptFilesIndex,
     }),
     [
       userTable?.value,
@@ -95,6 +98,7 @@ export function InputOptionsProvider({ gameId, showInputs, children }: InputOpti
       dayDatesArray?.value,
       userTableTitle?.value,
       morningMessagesList?.value,
+      scriptFilesIndex,
     ]
   );
 

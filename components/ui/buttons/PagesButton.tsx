@@ -23,7 +23,7 @@ export function PagesButton({ onPress }: PagesButtonProps) {
     
     useEffect(() => {
         // Same rhythm as before (slide -2 → +2 over 1s, pause 500ms), but as a
-        // single worklet loop — no JS interval firing forever.
+        // single worklet loop: no JS interval firing forever.
         sidebarAnimation.value = withRepeat(
             withSequence(
                 withTiming(-2, { duration: 500, easing: Easing.inOut(Easing.ease) }),

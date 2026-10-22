@@ -9,12 +9,12 @@ import type {
 } from '../lang/ast';
 import { emptySpan } from '../lang/ast';
 import { EXPRESSION_BLOCKS } from '../registry';
+import { cellColumnValueType, type CellColumnKind } from '../../utils/cellColumnTypes';
 import {
   decomposeChain,
   recomposeChain,
   setExpressionAtLocation,
   updateExpressionAtLocation,
-  renameIdentifier,
   renameIdentifierInStatements,
   type ChainLink,
   type ExpressionLocation,
@@ -34,6 +34,7 @@ export type EditorAction =
       location: ExpressionLocation;
       expression: Expression;
       trackHistory?: boolean;
+      columnKind?: CellColumnKind;
     }
   | { type: 'REPLACE_CHAIN_BASE'; location: ExpressionLocation; expression: Expression }
   | {
@@ -59,8 +60,12 @@ export type EditorAction =
         | 'columnType'
         | 'players'
         | 'dayIndex'
-        | 'updateValue';
-      value: string | string[] | FunctionTemplatePiece[] | Expression;
+        | 'op'
+        | 'allowDuplicates'
+        | 'autoRemove'
+        | 'tagName'
+        | 'tagColor';
+      value: string | boolean | string[] | FunctionTemplatePiece[] | Expression;
     }
   | { type: 'DELETE_STATEMENT'; path: number[] }
   | { type: 'RENAME_VARIABLE'; from: string; to: string }
@@ -92,10 +97,13 @@ const getBodyStatements = (stmt: Statement): Statement[] => {
     case 'IfStatement':
       return stmt.branches[0]?.body.statements ?? stmt.elseBody?.statements ?? [];
     case 'ForEachStatement':
+    case 'NavButtonStatement':
+    case 'DisplayGroupStatement':
       return stmt.body.statements;
     case 'FunctionStatement':
       return stmt.body.statements;
     case 'UpdateCellStatement':
+    case 'ForEachCellStatement':
       return stmt.body.statements;
     case 'OnTagAddedStatement':
       return stmt.body.statements;
@@ -122,10 +130,13 @@ const withBodyStatements = (stmt: Statement, newBody: Statement[]): Statement =>
       return stmt;
     }
     case 'ForEachStatement':
+    case 'NavButtonStatement':
+    case 'DisplayGroupStatement':
       return { ...stmt, body: { ...stmt.body, statements: newBody } };
     case 'FunctionStatement':
       return { ...stmt, body: { ...stmt.body, statements: newBody } };
     case 'UpdateCellStatement':
+    case 'ForEachCellStatement':
       return { ...stmt, body: { ...stmt.body, statements: newBody } };
     case 'OnTagAddedStatement':
       return { ...stmt, body: { ...stmt.body, statements: newBody } };
@@ -388,6 +399,27 @@ const syncFunctionCallArity = (
             statements: syncFunctionCallArity(statement.body.statements, fnName, targetCount),
           },
         };
+      case 'UpdateCellStatement':
+        return {
+          ...statement,
+          players: syncExpression(statement.players),
+          dayIndex: statement.dayIndex ? syncExpression(statement.dayIndex) : statement.dayIndex,
+          column: syncExpression(statement.column),
+          body: {
+            ...statement.body,
+            statements: syncFunctionCallArity(statement.body.statements, fnName, targetCount),
+          },
+        };
+      case 'ForEachCellStatement':
+        return {
+          ...statement,
+          body: {
+            ...statement.body,
+            statements: syncFunctionCallArity(statement.body.statements, fnName, targetCount),
+          },
+        };
+      case 'CellOpStatement':
+        return { ...statement, value: syncExpression(statement.value) };
       case 'OnTagAddedStatement':
         return {
           ...statement,
@@ -466,82 +498,141 @@ export const createForEachStatement = (
   span,
 });
 
-export const createUpdateCellStatement = (): Statement => ({
-  kind: 'UpdateCellStatement',
-  players: { kind: 'NothingLiteral', span },
-  columnType: 'user',
-  dayIndex: { kind: 'IdentifierExpression', name: 'currentDay', span },
-  column: { kind: 'StringLiteral', value: '', span },
-  itemName: 'cellContents',
-  body: { kind: 'BlockStatement', statements: [], span },
-  updateValue: {
-    kind: 'CallExpression',
-    callee: {
-      kind: 'MemberExpression',
-      object: { kind: 'IdentifierExpression', name: 'cellContents', span },
-      property: 'append',
+export const createNavButtonStatement = (label = 'Section', body: Statement[] = []): Statement => ({
+  kind: 'NavButtonStatement',
+  label: { kind: 'StringLiteral', value: label, span },
+  body: { kind: 'BlockStatement', statements: body, span },
+  span,
+});
+
+export const createDisplayGroupStatement = (
+  args: Record<string, Expression | undefined> = {},
+  body: Statement[] = []
+): Statement => ({
+  kind: 'DisplayGroupStatement',
+  arguments: Object.entries(args)
+    .filter((entry): entry is [string, Expression] => entry[1] !== undefined)
+    .map(([name, value]) => ({
+      kind: 'NamedArgument',
+      name,
+      value,
+      span,
+    })),
+  body: { kind: 'BlockStatement', statements: body, span },
+  span,
+});
+
+const defaultTagCall = (): Expression => ({
+  kind: 'CallExpression',
+  callee: { kind: 'IdentifierExpression', name: 'tag', span },
+  arguments: [
+    {
+      kind: 'PositionalArgument',
+      value: { kind: 'StringLiteral', value: '', span },
       span,
     },
-    arguments: [
-      {
-        kind: 'PositionalArgument',
-        value: {
-          kind: 'CallExpression',
-          callee: { kind: 'IdentifierExpression', name: 'tag', span },
-          arguments: [
-            {
-              kind: 'PositionalArgument',
-              value: { kind: 'StringLiteral', value: '', span },
-              span,
-            },
-          ],
-          span,
-        },
-        span,
-      },
-    ],
+  ],
+  span,
+});
+
+const defaultFileCall = (): Expression => ({
+  kind: 'CallExpression',
+  callee: { kind: 'IdentifierExpression', name: 'File', span },
+  arguments: [
+    {
+      kind: 'NamedArgument',
+      name: 'ID',
+      value: { kind: 'StringLiteral', value: '', span },
+      span,
+    },
+  ],
+  span,
+});
+
+/** A cell-op block: "For All Cells" (scope 'all', sits at the UpdateCell
+ *  level) or "For Cell" (scope 'cell', inside a For-each-cell loop). */
+export const createCellOpStatement = (
+  scope: 'all' | 'cell',
+  op: 'add' | 'remove' | 'replace',
+  columnKind?: CellColumnKind,
+  valueType: 'number' | 'string' = 'string'
+): Statement => ({
+  kind: 'CellOpStatement',
+  scope,
+  op,
+  value:
+    columnKind === 'files'
+      ? defaultFileCall()
+      : columnKind === 'value'
+        ? valueType === 'number'
+          ? { kind: 'NumberLiteral', value: 0, span }
+          : { kind: 'StringLiteral', value: '', span }
+        : defaultTagCall(),
+  span,
+});
+
+/** "For each cell" is only a loop; explicit cell ops perform all writes. */
+export const createForEachCellStatement = (): Statement => ({
+  kind: 'ForEachCellStatement',
+  itemName: 'cellContents',
+  body: {
+    kind: 'BlockStatement',
+    statements: [],
     span,
   },
   span,
 });
 
-/** Trigger-context UpdateCell: defaults players to placedUser, day to placedDay */
-export const createTriggerUpdateCellStatement = (): Statement => ({
-  kind: 'UpdateCellStatement',
-  players: { kind: 'IdentifierExpression', name: 'placedUser', span },
-  columnType: 'user',
-  dayIndex: { kind: 'IdentifierExpression', name: 'placedDay', span },
-  column: { kind: 'StringLiteral', value: '', span },
-  itemName: 'cellContents',
-  body: { kind: 'BlockStatement', statements: [], span },
-  updateValue: {
-    kind: 'CallExpression',
-    callee: {
-      kind: 'MemberExpression',
-      object: { kind: 'IdentifierExpression', name: 'cellContents', span },
-      property: 'append',
-      span,
-    },
-    arguments: [
-      {
-        kind: 'PositionalArgument',
-        value: {
-          kind: 'CallExpression',
-          callee: { kind: 'IdentifierExpression', name: 'tag', span },
-          arguments: [
-            {
-              kind: 'PositionalArgument',
-              value: { kind: 'StringLiteral', value: '', span },
-              span,
-            },
-          ],
-          span,
-        },
-        span,
-      },
-    ],
+/** Inputs.entry("") - the default PLAYERS value for a new UpdateCell block.
+ *  Renders the standard input picker (Inputs, not InputsWithData) with an
+ *  empty key socket for the user to fill. */
+const defaultUpdateCellPlayers = (): Expression => ({
+  kind: 'CallExpression',
+  callee: {
+    kind: 'MemberExpression',
+    object: { kind: 'IdentifierExpression', name: 'Inputs', span },
+    property: 'entry',
     span,
   },
+  arguments: [
+    { kind: 'PositionalArgument', value: { kind: 'StringLiteral', value: '', span }, span },
+  ],
+  span,
+});
+
+/** currentDay + 1 - certify-time writes target the upcoming day. */
+const nextDayIndex = (): Expression => ({
+  kind: 'BinaryExpression',
+  operator: '+',
+  left: { kind: 'IdentifierExpression', name: 'currentDay', span },
+  right: { kind: 'NumberLiteral', value: 1, span },
+  span,
+});
+
+/** On Certify UpdateCell: day-specific columns, targeting the next day
+ *  (currentDay + 1), driven by an input-selected player. */
+export const createUpdateCellStatement = (): Statement => ({
+  kind: 'UpdateCellStatement',
+  editorDefaultBody: true,
+  players: defaultUpdateCellPlayers(),
+  columnType: 'day',
+  dayIndex: nextDayIndex(),
+  column: { kind: 'StringLiteral', value: '', span },
+  body: { kind: 'BlockStatement', statements: [], span },
+  span,
+});
+
+/** Trigger-context UpdateCell: same defaults but the day stays the placed
+ *  day rather than currentDay + 1, and players stays placedUser - Inputs is
+ *  not a trigger global and would flag the new block. */
+export const createTriggerUpdateCellStatement = (): Statement => ({
+  kind: 'UpdateCellStatement',
+  editorDefaultBody: true,
+  players: { kind: 'IdentifierExpression', name: 'placedUser', span },
+  columnType: 'day',
+  dayIndex: { kind: 'IdentifierExpression', name: 'placedDay', span },
+  column: { kind: 'StringLiteral', value: '', span },
+  body: { kind: 'BlockStatement', statements: [], span },
   span,
 });
 
@@ -656,6 +747,8 @@ const renameVariableDeclarations = (
     if (
       statement.kind === 'ForEachStatement' ||
       statement.kind === 'FunctionStatement' ||
+      statement.kind === 'UpdateCellStatement' ||
+      statement.kind === 'ForEachCellStatement' ||
       statement.kind === 'OnTagAddedStatement' ||
       statement.kind === 'OnTagRemovedStatement'
     ) {
@@ -676,7 +769,7 @@ export const initialState = (ast: Script): EditorState => ({
   future: [],
 });
 
-export const editorReducer = (state: EditorState, action: EditorAction): EditorState => {
+const reduceEditor = (state: EditorState, action: EditorAction): EditorState => {
   switch (action.type) {
     case 'INSERT_STATEMENT': {
       const newStatements = insertStatementInList(
@@ -718,7 +811,45 @@ export const editorReducer = (state: EditorState, action: EditorAction): EditorS
     case 'SET_EXPRESSION': {
       const statement = getStatementAtPath(state.ast.statements, action.location.statementPath);
       if (!statement) return state;
-      const nextStatement = setExpressionAtLocation(statement, action.location, action.expression);
+      let nextStatement = setExpressionAtLocation(statement, action.location, action.expression);
+      if (
+        nextStatement.kind === 'UpdateCellStatement' &&
+        nextStatement.editorDefaultBody &&
+        action.location.slot.kind === 'updateCellColumn'
+      ) {
+        nextStatement = {
+          ...nextStatement,
+          body: {
+            ...nextStatement.body,
+            statements:
+              action.columnKind === 'value'
+                ? [
+                    {
+                      kind: 'ForEachCellStatement',
+                      itemName: 'cellContents',
+                      body: {
+                        kind: 'BlockStatement',
+                        statements: [
+                          createCellOpStatement(
+                            'cell',
+                            'replace',
+                            'value',
+                            nextStatement.column.kind === 'StringLiteral'
+                              ? cellColumnValueType(nextStatement.column.value)
+                              : 'string'
+                          ),
+                        ],
+                        span,
+                      },
+                      span,
+                    },
+                  ]
+                : action.columnKind
+                  ? [createCellOpStatement('all', 'add', action.columnKind)]
+                  : [],
+          },
+        };
+      }
 
       // Detect Variable block NAME change and rename references
       let statements = replaceStatementAtPath(
@@ -934,36 +1065,67 @@ export const editorReducer = (state: EditorState, action: EditorAction): EditorS
           nextStatement = { ...statement, itemName: newName };
         }
       } else if (statement.kind === 'UpdateCellStatement') {
+        if (
+          (action.field === 'allowDuplicates' || action.field === 'autoRemove') &&
+          typeof action.value === 'boolean'
+        ) {
+          // Store only non-default values (allowDuplicates defaults to
+          // False, autoRemove to True): writing the default drops the key
+          // so the printer omits it. Flag resets restore clean source.
+          const fieldDefault = action.field === 'allowDuplicates' ? false : true;
+          if (action.value === fieldDefault) {
+            const next = { ...statement };
+            delete next[action.field];
+            nextStatement = next;
+          } else {
+            nextStatement = { ...statement, [action.field]: action.value };
+          }
+        } else if (action.field === 'columnType' && typeof action.value === 'string') {
+          const ct = action.value === 'user' ? 'user' : 'day';
+          nextStatement = {
+            ...statement,
+            columnType: ct,
+            column: { kind: 'StringLiteral', value: '', span },
+            ...(statement.editorDefaultBody ? { body: { ...statement.body, statements: [] } } : {}),
+          };
+        } else if (action.field === 'players' && !Array.isArray(action.value)) {
+          nextStatement = { ...statement, players: action.value as Expression };
+        } else if (action.field === 'dayIndex' && !Array.isArray(action.value)) {
+          nextStatement = { ...statement, dayIndex: action.value as Expression };
+        }
+      } else if (statement.kind === 'CellOpStatement') {
+        if (action.field === 'op' && typeof action.value === 'string') {
+          const op =
+            action.value === 'remove' ? 'remove' : action.value === 'replace' ? 'replace' : 'add';
+          // Switching ops keeps the value expression - add/remove share tag
+          // semantics and replace's string is a fine starting point.
+          nextStatement = { ...statement, op };
+        }
+      } else if (statement.kind === 'ForEachCellStatement') {
         if (action.field === 'itemName' && typeof action.value === 'string') {
           const oldName = statement.itemName;
           const newName = action.value;
           if (oldName && newName && oldName !== newName) {
-            // Rename all references to the old item name within the update body
-            // and in the updateValue expression
+            // Rename all references to the old item name within the loop body
             const renamedBody = renameIdentifierInStatements(
               statement.body.statements,
               oldName,
               newName
             );
-            const renamedUpdateValue = renameIdentifier(statement.updateValue, oldName, newName);
             nextStatement = {
               ...statement,
               itemName: newName,
               body: { ...statement.body, statements: renamedBody },
-              updateValue: renamedUpdateValue,
             };
           } else {
             nextStatement = { ...statement, itemName: newName };
           }
-        } else if (action.field === 'columnType' && typeof action.value === 'string') {
-          const ct = action.value === 'user' ? 'user' : 'day';
-          nextStatement = { ...statement, columnType: ct };
-        } else if (action.field === 'players' && !Array.isArray(action.value)) {
-          nextStatement = { ...statement, players: action.value as Expression };
-        } else if (action.field === 'dayIndex' && !Array.isArray(action.value)) {
-          nextStatement = { ...statement, dayIndex: action.value as Expression };
-        } else if (action.field === 'updateValue' && !Array.isArray(action.value)) {
-          nextStatement = { ...statement, updateValue: action.value as Expression };
+        }
+      } else if (statement.kind === 'TagStatement') {
+        if (action.field === 'tagName' && typeof action.value === 'string') {
+          nextStatement = { ...statement, name: action.value };
+        } else if (action.field === 'tagColor' && typeof action.value === 'string') {
+          nextStatement = { ...statement, color: action.value };
         }
       }
       const statements =
@@ -1056,4 +1218,29 @@ export const editorReducer = (state: EditorState, action: EditorAction): EditorS
     default:
       return state;
   }
+};
+
+export const editorReducer = (state: EditorState, action: EditorAction): EditorState => {
+  const next = reduceEditor(state, action);
+  const path =
+    'location' in action
+      ? action.location.statementPath
+      : 'path' in action
+        ? action.path
+        : undefined;
+  if (!path || next === state) return next;
+  let statements = next.ast.statements;
+  // Editing anything inside the body permanently opts it out of generated defaults.
+  // This marker lives in undo snapshots, but is never emitted into script source.
+  for (let length = 1; length < path.length; length++) {
+    const parentPath = path.slice(0, length);
+    const parent = getStatementAtPath(statements, parentPath);
+    if (parent?.kind === 'UpdateCellStatement' && parent.editorDefaultBody) {
+      statements = replaceStatementAtPath(statements, parentPath, {
+        ...parent,
+        editorDefaultBody: false,
+      });
+    }
+  }
+  return { ...next, ast: { ...next.ast, statements } };
 };

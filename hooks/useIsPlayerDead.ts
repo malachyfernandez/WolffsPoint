@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useUserVariable } from './useUserVariable';
+import { useValue } from './useData';
 import { useSharedListValue } from './useSharedListValue';
 import { useGameOperatorUserId } from './useGameOperatorUserId';
 import { UserTableItem } from '../types/playerTable';
@@ -11,8 +11,7 @@ interface UserData {
 }
 
 export function useIsPlayerDead(gameId?: string) {
-    const [userData] = useUserVariable<UserData>({
-        key: 'userData',
+    const [userData] = useValue<UserData>('userData', {
         defaultValue: { name: '', email: '', userId: '' },
         privacy: 'PUBLIC',
     });

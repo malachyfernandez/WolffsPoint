@@ -1,21 +1,29 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { Platform, Pressable, View } from 'react-native';
+import { Pencil } from 'lucide-react-native';
 import TagCellDisplay from './TagCellDisplay';
 import { useTableRowPreview } from './TableRowPreview';
 import type { CellContext } from './TagCellEditor';
+import type { TagRef } from 'utils/cellPieces';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
 import FontText from '../ui/text/FontText';
 import Animated, { Easing, FadeInDown, FadeOutUp } from 'react-native-reanimated';
-import { UserTableItem } from 'types/playerTable';
+import { UserTableItem, type CellContentType } from 'types/playerTable';
 import { VoteValue } from 'types/multiplayer';
 import { getPlayerActionSummary } from 'utils/multiplayer';
 import ActionPills from './ActionPills';
 import ActionEditorDialog from './ActionEditorDialog';
 import VoteEditorDialog, { ResolvedVoteName } from './VoteEditorDialog';
+import CellFilesEditorDialog from './scriptFiles/CellFilesEditorDialog';
+import type { useScriptFiles } from '../../hooks/useScriptFiles';
 import { SelectableOverlay } from './multiSelect/SelectableOverlay';
+import { CellHighlight, isCellHighlightMatch, useCellHighlightRequest } from './CellHighlight';
+import CellOriginIndicator from './CellOriginIndicator';
+import { latestFieldSource } from '../../utils/fieldProvenance';
 
 interface DayUserRowProps {
+  columnTypes?: CellContentType[];
   user: UserTableItem;
   index: number;
   isLast: boolean;
@@ -34,12 +42,18 @@ interface DayUserRowProps {
   dayBaseColumnWidths: {
     vote: number;
     action: number;
+    morningMessage: number;
   };
   extraDayColumnWidths: number[];
   users: UserTableItem[];
   dayColumnTitles: string[];
-  onTagsAdded?: (tagNames: string[], context: CellContext) => void;
-  onTagsRemoved?: (tagNames: string[], context: CellContext) => void;
+  /** Per-user morning messages (email → per-day strings). */
+  morningMessagesList: Record<string, string[]>;
+  updateMorningMessage: (dayIndex: number, userIndex: number, value: string) => void;
+  /** Shared files API: hoisted to the table so rows don't each build an index. */
+  filesApi: ReturnType<typeof useScriptFiles>;
+  onTagsAdded?: (tagRefs: (string | TagRef)[], context: CellContext) => void;
+  onTagsRemoved?: (tagRefs: (string | TagRef)[], context: CellContext) => void;
   selectionMode?: boolean;
 }
 
@@ -60,22 +74,28 @@ const DayUserRow = ({
   extraDayColumnWidths,
   users,
   dayColumnTitles,
+  columnTypes,
+  morningMessagesList,
+  updateMorningMessage,
+  filesApi,
   onTagsAdded,
   onTagsRemoved,
   selectionMode = false,
 }: DayUserRowProps) => {
+  const highlightReq = useCellHighlightRequest();
   const [editingColumns, setEditingColumns] = useState<Record<number, boolean>>({});
-  const [isEditingVote, setIsEditingVote] = useState(false);
+  const [isMessageDialogOpen, setIsMessageDialogOpen] = useState(false);
   const [isActionDialogOpen, setIsActionDialogOpen] = useState(false);
   const [isVoteDialogOpen, setIsVoteDialogOpen] = useState(false);
-  // Mount-on-first-open: each row has action + vote dialogs; mounting both for
-  // every row on every day column costs hundreds of dialog trees on open.
+  // Mount-on-first-open: three dialogs per row; mounting all of them for
+  // every player × day is a large chunk of the game-open mount burst.
+  const [messageDialogMounted, setMessageDialogMounted] = useState(false);
   const [actionDialogMounted, setActionDialogMounted] = useState(false);
   const [voteDialogMounted, setVoteDialogMounted] = useState(false);
   const hasMounted = useRef(false);
 
   // Registers this row's element + preview target with the shared floating
-  // preview pill (web only — it resolves hovered rows by pointer position).
+  // preview pill (web only; it resolves hovered rows by pointer position).
   const rowPreview = useTableRowPreview();
   const rowRef = useRef<View>(null);
   useEffect(() => {
@@ -119,6 +139,32 @@ const DayUserRow = ({
     setIsActionDialogOpen(true);
   };
 
+  const handleMessagePress = () => {
+    setMessageDialogMounted(true);
+    setIsMessageDialogOpen(true);
+  };
+
+  const getCurrentMorningMessage = () => {
+    if (
+      morningMessagesList[user.email.toLowerCase()] &&
+      morningMessagesList[user.email.toLowerCase()][dayNumber] !== undefined
+    ) {
+      return morningMessagesList[user.email.toLowerCase()][dayNumber];
+    }
+    return '';
+  };
+
+  const getMorningMessagePreview = () => {
+    const message = getCurrentMorningMessage();
+    return message
+      ? filesApi.previewText(message) || 'Morning message...'
+      : 'No morning message...';
+  };
+
+  const morningWidth = dayBaseColumnWidths.morningMessage;
+  const hasVisibleExtraColumns =
+    dayData.extraColumns?.some((_, idx) => userTableColumnVisibility?.extraDayColumns[idx]) ??
+    false;
 
   return (
     <View ref={rowRef} className="relative">
@@ -146,6 +192,18 @@ const DayUserRow = ({
             </View>
           )}
           <SelectableOverlay cellId={`d-v-${index}`} cellType="daysVote" />
+          <CellOriginIndicator
+            gameId={gameId}
+            source={
+              dayData.fieldProvenance?.vote
+                ? latestFieldSource(dayData.fieldProvenance, 'vote', dayData.vote)
+                : latestFieldSource(
+                    dayData.fieldProvenance,
+                    'voteMultiplier',
+                    dayData.voteMultiplier
+                  )
+            }
+          />
         </Column>
         <Column
           className={`border-subtle-border z-20 h-full items-center justify-center gap-0 border`}
@@ -158,7 +216,82 @@ const DayUserRow = ({
             </View>
           </Pressable>
           <SelectableOverlay cellId={`d-a-${index}`} cellType="daysAction" />
+          <CellOriginIndicator
+            gameId={gameId}
+            source={latestFieldSource(dayData.fieldProvenance, 'action', dayData.action)}
+          />
         </Column>
+        {morningWidth > 0 && (
+          <Column
+            className={`border-subtle-border h-full items-center justify-center gap-0 border ${isLast && !hasVisibleExtraColumns ? 'rounded-br-lg' : ''}`}
+            style={{ width: morningWidth, position: 'relative' }}>
+            <CellOriginIndicator gameId={gameId} raw={getCurrentMorningMessage()} />
+            {getCurrentMorningMessage() ? (
+              <Pressable
+                onPress={handleMessagePress}
+                style={{ width: morningWidth - 8 }}
+                className="h-full items-center justify-center">
+                <FontText
+                  weight="medium"
+                  className="overflow-hidden text-nowrap text-center"
+                  style={{
+                    width: morningWidth - 8,
+                    textDecorationLine: 'underline',
+                    textDecorationStyle: 'dotted',
+                  }}>
+                  <FontText className="text-center">{getMorningMessagePreview()}</FontText>
+                </FontText>
+              </Pressable>
+            ) : morningMessagesList[user.email.toLowerCase()]?.[dayNumber - 1] ? (
+              <View
+                style={{ width: morningWidth - 8 }}
+                className="h-full flex-row items-center justify-center gap-1 px-2">
+                <Pressable
+                  onPress={() => {
+                    const yesterdayMessage =
+                      morningMessagesList[user.email.toLowerCase()]?.[dayNumber - 1];
+                    if (yesterdayMessage) {
+                      updateMorningMessage(dayNumber, index, yesterdayMessage);
+                    }
+                  }}
+                  className="min-w-0 flex-1">
+                  <FontText
+                    weight="medium"
+                    className="bg-text overflow-hidden text-ellipsis text-nowrap rounded-full px-2 py-1 text-center"
+                    color="white">
+                    Import Yesterday&apos;s
+                  </FontText>
+                </Pressable>
+                <Pressable
+                  onPress={handleMessagePress}
+                  className="bg-text aspect-square h-7 w-7 items-center justify-center rounded-full">
+                  <Pencil size={12} color="white" />
+                </Pressable>
+              </View>
+            ) : (
+              <Pressable
+                onPress={handleMessagePress}
+                style={{ width: morningWidth - 8 }}
+                className="h-full items-center justify-center">
+                <FontText
+                  weight="medium"
+                  className="overflow-hidden text-nowrap text-center opacity-50"
+                  style={{ width: morningWidth - 8 }}>
+                  No morning message...
+                </FontText>
+              </Pressable>
+            )}
+            <SelectableOverlay cellId={`d-m-${index}`} cellType="morningMessage" />
+            <CellHighlight
+              active={isCellHighlightMatch(highlightReq, {
+                cellKind: 'morningMessage',
+                targetKey: user.email.toLowerCase(),
+                // Placements count days 1-based; dayNumber is the 0-based index.
+                day: dayNumber + 1,
+              })}
+            />
+          </Column>
+        )}
 
         {dayData.extraColumns?.map((column, columnIndex) => {
           if (!userTableColumnVisibility?.extraDayColumns[columnIndex]) return null;
@@ -185,6 +318,7 @@ const DayUserRow = ({
                 className={`border-subtle-border h-full items-center justify-center gap-4 border ${isLast && isLastVisibleColumn ? 'rounded-br-lg' : ''}`}
                 style={{ width: columnWidth, position: 'relative', overflow: 'hidden' }}>
                 <TagCellDisplay
+                  contentType={columnTypes?.[columnIndex]}
                   gameId={gameId}
                   value={column}
                   onChange={(newValue) => setExtraColumnValue?.(index, columnIndex, newValue)}
@@ -199,12 +333,34 @@ const DayUserRow = ({
                   onTagsAdded={onTagsAdded}
                   onTagsRemoved={onTagsRemoved}
                 />
-                <SelectableOverlay cellId={`d-e-${index}-${columnIndex}`} cellType="daysExtra" />
+                <SelectableOverlay
+                  cellId={`d-e-${index}-${columnIndex}`}
+                  cellType={columnTypes?.[columnIndex] === 'files' ? 'daysExtraFiles' : 'daysExtra'}
+                />
               </Column>
             </Animated.View>
           );
         })}
       </Row>
+      {(messageDialogMounted || isMessageDialogOpen) && (
+        <CellFilesEditorDialog
+          isOpen={isMessageDialogOpen}
+          onOpenChange={setIsMessageDialogOpen}
+          title={`${user.realName || 'User'} Morning Message (Tomorrow)`}
+          dialogSubtext={`Set the message ${user.realName || 'User'} will see after this day ends.`}
+          cellText={getCurrentMorningMessage()}
+          onSubmitText={(text) => updateMorningMessage(dayNumber, index, text)}
+          filesApi={filesApi}
+          pinnedFolder="morningMessage"
+          nameBase={user.realName || 'User'}
+          gameId={gameId}
+          hideInputs={false}
+          legacyEditorProps={{
+            centered: true,
+            historyKey: `morningMessage:${gameId}:${dayNumber}:${index}`,
+          }}
+        />
+      )}
       {(actionDialogMounted || isActionDialogOpen) && (
         <ActionEditorDialog
           isOpen={isActionDialogOpen}

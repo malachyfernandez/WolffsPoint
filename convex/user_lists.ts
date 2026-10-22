@@ -1,6 +1,16 @@
 import { v } from 'convex/values';
-import { mutation, query, MutationCtx } from './_generated/server';
+import { mutation, query, MutationCtx, QueryCtx } from './_generated/server';
 import { Doc, Id } from './_generated/dataModel';
+import {
+  fieldStorageKey,
+  isMorningMessagesKey,
+  isPlayerTableKey,
+  joinFieldProvenance,
+  splitFieldProvenance,
+} from '../utils/fieldProvenanceStorage';
+import { trackManualMessages, trackManualTableChanges } from '../utils/fieldProvenance';
+import { encodeUserValue } from '../hooks/userValueSerialization';
+import { deepEqual } from '../utils/deepEqual';
 
 type PrimitiveIndexValue = string | number | boolean;
 type Privacy = 'PUBLIC' | 'PRIVATE' | { allowList: string[] };
@@ -562,7 +572,20 @@ export const get = query({
 
     if (!item) return null;
 
-    return shapeListRecord(item, definition);
+    const record = shapeListRecord(item, definition);
+    if (isPlayerTableKey(args.key)) {
+      const fields = await ctx.db
+        .query('user_lists')
+        .withIndex('by_user_key_item', (q) =>
+          q
+            .eq('userToken', userToken)
+            .eq('key', fieldStorageKey(args.key))
+            .eq('itemId', args.itemId)
+        )
+        .unique();
+      record.value = joinFieldProvenance(record.value, fields?.value);
+    }
+    return record;
   },
 });
 
@@ -683,6 +706,7 @@ export const lengthSharedItemIdWarning = query({
 });
 
 export type SetUserListArgs = {
+  cellWriteOrigin?: 'tracked' | 'restore';
   key: string;
   itemId: string;
   value: any;
@@ -694,11 +718,65 @@ export type SetUserListArgs = {
   overwriteStoredPrivacy?: boolean;
 };
 
+/** The same origin boundary applies to published writes and frozen drafts. */
+export async function prepareCellTableWrite(
+  ctx: MutationCtx,
+  userToken: string,
+  args: Pick<SetUserListArgs, 'key' | 'itemId' | 'value' | 'cellWriteOrigin'>,
+  previousDraft?: unknown
+) {
+  if (args.cellWriteOrigin || (!isPlayerTableKey(args.key) && !isMorningMessagesKey(args.key))) {
+    return args.value;
+  }
+  let before = previousDraft;
+  if (before === undefined) {
+    const old = await ctx.db
+      .query('user_lists')
+      .withIndex('by_user_key_item', (q) =>
+        q.eq('userToken', userToken).eq('key', args.key).eq('itemId', args.itemId)
+      )
+      .unique();
+    before = old?.value;
+    if (isPlayerTableKey(args.key)) {
+      const fields = await ctx.db
+        .query('user_lists')
+        .withIndex('by_user_key_item', (q) =>
+          q
+            .eq('userToken', userToken)
+            .eq('key', fieldStorageKey(args.key))
+            .eq('itemId', args.itemId)
+        )
+        .unique();
+      before = joinFieldProvenance(old?.value ?? [], fields?.value);
+    }
+  }
+  return encodeUserValue(
+    isPlayerTableKey(args.key)
+      ? trackManualTableChanges(
+          (before ?? []) as Parameters<typeof trackManualTableChanges>[0],
+          args.value
+        )
+      : trackManualMessages((before ?? {}) as Record<string, string[]>, args.value)
+  );
+}
+
 export async function setUserListForToken(
   ctx: MutationCtx,
   userToken: string,
   args: SetUserListArgs
 ) {
+  args = { ...args, value: await prepareCellTableWrite(ctx, userToken, args) };
+  if (isPlayerTableKey(args.key) && Array.isArray(args.value)) {
+    const split = splitFieldProvenance(args.value);
+    await setUserListForToken(ctx, userToken, {
+      key: fieldStorageKey(args.key),
+      itemId: args.itemId,
+      value: encodeUserValue(split.fields),
+      privacy: 'PRIVATE',
+      overwriteStoredPrivacy: true,
+    });
+    args = { ...args, value: encodeUserValue(split.users) };
+  }
   const now = Date.now();
   const existingDefinition = await getDefinitionByUserKey(ctx, userToken, args.key);
   const overwriteStoredConfig = args.overwriteStoredConfig ?? false;
@@ -877,6 +955,7 @@ export async function setUserListForToken(
 
 export const set = mutation({
   args: {
+    cellWriteOrigin: v.optional(v.union(v.literal('tracked'), v.literal('restore'))),
     key: v.string(),
     itemId: v.string(),
     value: v.any(),
@@ -893,6 +972,173 @@ export const set = mutation({
 
     const userToken = identity.subject;
     return await setUserListForToken(ctx, userToken, args);
+  },
+});
+
+/** Revision-checked, all-or-nothing certification, including frozen drafts.
+ * Every script/table input is read before any projection or private history is written. */
+export const commitCellCertification = mutation({
+  args: {
+    targets: v.array(
+      v.object({
+        targetType: v.union(v.literal('list'), v.literal('variable')),
+        key: v.string(),
+        itemId: v.optional(v.string()),
+        expected: v.any(),
+        defaultValue: v.optional(v.any()),
+        pending: v.boolean(),
+        next: v.optional(v.any()),
+      })
+    ),
+    submissions: v.array(v.object({ id: v.string(), modified: v.number(), value: v.any() })),
+    submissionKey: v.string(),
+    simulated: v.boolean(),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error('Unauthorized');
+    if (args.targets.length > 12) throw new Error('Too many certification inputs');
+    const resolved = [];
+    for (const target of args.targets) {
+      const pending = await ctx.db
+        .query('scheduled_update_targets')
+        .withIndex('by_ownerUserToken_and_targetType_and_key_and_itemId', (q) =>
+          q
+            .eq('ownerUserToken', identity.subject)
+            .eq('targetType', target.targetType)
+            .eq('key', target.key)
+            .eq('itemId', target.itemId)
+        )
+        .order('desc')
+        .first();
+      if (!!pending !== target.pending)
+        throw new Error('Data changed; review certification again.');
+      let value;
+      if (pending) value = pending.encodedValue;
+      else if (target.targetType === 'variable') {
+        const row = await ctx.db
+          .query('user_vars')
+          .withIndex('by_user_key', (q) =>
+            q.eq('userToken', identity.subject).eq('key', target.key)
+          )
+          .unique();
+        value = row?.value ?? target.defaultValue;
+      } else {
+        if (!target.itemId) throw new Error('Missing table identity');
+        const row = await ctx.db
+          .query('user_lists')
+          .withIndex('by_user_key_item', (q) =>
+            q.eq('userToken', identity.subject).eq('key', target.key).eq('itemId', target.itemId!)
+          )
+          .unique();
+        value = row?.value ?? target.defaultValue;
+        if (isPlayerTableKey(target.key)) {
+          const fields = await ctx.db
+            .query('user_lists')
+            .withIndex('by_user_key_item', (q) =>
+              q
+                .eq('userToken', identity.subject)
+                .eq('key', fieldStorageKey(target.key))
+                .eq('itemId', target.itemId!)
+            )
+            .unique();
+          value = joinFieldProvenance(value ?? [], fields?.value);
+        }
+      }
+      if (!deepEqual(encodeUserValue(value), target.expected)) {
+        throw new Error('Data changed; review certification again.');
+      }
+      resolved.push({ target, pending });
+    }
+    const currentSubmissions = await readCertificationSubmissions(
+      ctx,
+      identity.subject,
+      args.submissionKey,
+      args.simulated
+    );
+    const revisions = currentSubmissions.map((row) => ({
+      id: String(row._id),
+      modified: row.lastModified,
+      value: row.value,
+    }));
+    if (
+      !deepEqual(
+        encodeUserValue(revisions.sort((a, b) => a.id.localeCompare(b.id))),
+        encodeUserValue([...args.submissions].sort((a, b) => a.id.localeCompare(b.id)))
+      )
+    ) {
+      throw new Error('Submissions changed; review certification again.');
+    }
+    const writes = resolved.filter(({ target }) => target.next !== undefined);
+    const batches = new Set(writes.map(({ pending }) => pending?.batchId ?? 'published'));
+    if (batches.size > 1) throw new Error('Wait for table freezing to finish, then certify again.');
+    for (const { target, pending } of writes) {
+      if (target.targetType !== 'list' || !target.itemId)
+        throw new Error('Invalid certification output');
+      if (!/(^|:)userTable$|(^|:)userTableTitle$|(^|:)morningMessagesList$/.test(target.key)) {
+        throw new Error('Invalid certification table');
+      }
+      if (pending) {
+        await ctx.db.patch(pending._id, { encodedValue: target.next, updatedAt: Date.now() });
+      } else {
+        await setUserListForToken(ctx, identity.subject, {
+          key: target.key,
+          itemId: target.itemId,
+          value: target.next,
+          cellWriteOrigin: 'tracked',
+          privacy: 'PUBLIC',
+        });
+      }
+    }
+    return null;
+  },
+});
+
+async function readCertificationSubmissions(
+  ctx: QueryCtx | MutationCtx,
+  owner: string,
+  key: string,
+  simulated: boolean
+) {
+  const rows = simulated
+    ? await ctx.db
+        .query('user_lists')
+        .withIndex('by_key_access_item', (q) => q.eq('key', key))
+        .take(2001)
+    : await ctx.db
+        .query('user_vars')
+        .withIndex('by_key_privacy_sort', (q) => q.eq('key', key))
+        .take(2001);
+  if (rows.length > 2000) throw new Error('Too many submissions to certify safely.');
+  const accessible = [];
+  for (const row of rows) {
+    let allowed = row.userToken === owner;
+    if (!simulated && 'privacy' in row && !allowed) {
+      // Match user_vars_get: sharing is authorized by the permissions table.
+      allowed =
+        row.privacy === 'PUBLIC' ||
+        !!(await ctx.db
+          .query('permissions')
+          .withIndex('by_var', (q) => q.eq('varId', row._id))
+          .filter((q) => q.eq(q.field('allowedUserId'), owner))
+          .first());
+    }
+    if (allowed)
+      accessible.push({
+        _id: row._id,
+        lastModified: row.lastModified,
+        value: row.value,
+      });
+  }
+  return accessible;
+}
+
+export const certificationSubmissions = query({
+  args: { key: v.string(), simulated: v.boolean() },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return [];
+    return readCertificationSubmissions(ctx, identity.subject, args.key, args.simulated);
   },
 });
 

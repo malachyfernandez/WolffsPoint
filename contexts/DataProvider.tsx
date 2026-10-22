@@ -1,10 +1,10 @@
-import React, { useEffect, useState, useRef } from "react";
-import { useUserVariable } from "../hooks/useUserVariable";
-import { useUserList } from "../hooks/useUserList";
-import { useUserVariableGet } from "../hooks/useUserVariableGet";
-import { useUserListGet } from "../hooks/useUserListGet";
-import { useUserVariableLength } from "../hooks/useUserVariableLength";
-import { useUserListLength } from "../hooks/useUserListLength";
+import React, { useEffect, useState, useRef } from 'react';
+import { useUserVariable } from '../hooks/useUserVariable';
+import { useUserList } from '../hooks/useUserList';
+import { useUserVariableGet } from '../hooks/useUserVariableGet';
+import { useUserListGet } from '../hooks/useUserListGet';
+import { useUserVariableLength } from '../hooks/useUserVariableLength';
+import { useUserListLength } from '../hooks/useUserListLength';
 export type SubId = string;
 
 class DataStore {
@@ -12,9 +12,9 @@ class DataStore {
   listeners: Map<SubId, Set<() => void>> = new Map();
   refCounts: Map<SubId, number> = new Map();
   configs: Map<SubId, any> = new Map();
-  
+
   providerListeners: Set<() => void> = new Set();
-  
+
   subscribe(subId: SubId, listener: () => void) {
     if (!this.listeners.has(subId)) {
       this.listeners.set(subId, new Set());
@@ -24,25 +24,25 @@ class DataStore {
       this.listeners.get(subId)?.delete(listener);
     };
   }
-  
+
   getResult(subId: SubId) {
     return this.results.get(subId);
   }
-  
+
   setResult(subId: SubId, result: any) {
     this.results.set(subId, result);
-    this.listeners.get(subId)?.forEach(fn => fn());
+    this.listeners.get(subId)?.forEach((fn) => fn());
   }
 
   register(subId: SubId, config: any) {
     if (!this.configs.has(subId)) {
       this.configs.set(subId, config);
     }
-    
+
     const current = this.refCounts.get(subId) || 0;
     this.refCounts.set(subId, current + 1);
     this.notifyProvider();
-    
+
     return () => {
       const updated = Math.max(0, (this.refCounts.get(subId) || 1) - 1);
       this.refCounts.set(subId, updated);
@@ -59,19 +59,21 @@ class DataStore {
 
   subscribeToProvider(listener: () => void) {
     this.providerListeners.add(listener);
-    return () => { this.providerListeners.delete(listener); };
+    return () => {
+      this.providerListeners.delete(listener);
+    };
   }
 
   getActiveSubs() {
     return Array.from(this.configs.entries()).map(([subId, config]) => ({
       subId,
       config,
-      refCount: this.refCounts.get(subId) || 0
+      refCount: this.refCounts.get(subId) || 0,
     }));
   }
-  
+
   notifyProvider() {
-    this.providerListeners.forEach(fn => fn());
+    this.providerListeners.forEach((fn) => fn());
   }
 }
 
@@ -79,16 +81,22 @@ export const globalDataStore = new DataStore();
 
 // Safely stringify to detect real data changes, ignoring functions
 function safeStringify(obj: any) {
-  return JSON.stringify(obj, (key, value) => 
-    typeof value === 'function' ? undefined : value
-  );
+  return JSON.stringify(obj, (key, value) => (typeof value === 'function' ? undefined : value));
 }
 
-function DataSubscriber({ subId, config, refCount }: { subId: SubId, config: any, refCount: number }) {
+function DataSubscriber({
+  subId,
+  config,
+  refCount,
+}: {
+  subId: SubId;
+  config: any;
+  refCount: number;
+}) {
   const [unloadedChanges, setUnloadedChanges] = useState(0);
 
   let result: any;
-  
+
   // Disable rules of hooks because config.type is completely static for a given subId.
   // A subscriber component is never re-used for a different type.
   /* eslint-disable react-hooks/rules-of-hooks */
@@ -119,7 +127,7 @@ function DataSubscriber({ subId, config, refCount }: { subId: SubId, config: any
   /* eslint-enable react-hooks/rules-of-hooks */
 
   const prevStringifiedRef = useRef<string | undefined>(undefined);
-  
+
   useEffect(() => {
     const stringified = safeStringify(result);
     if (stringified !== prevStringifiedRef.current) {
@@ -130,7 +138,7 @@ function DataSubscriber({ subId, config, refCount }: { subId: SubId, config: any
 
       // Track changes if nobody is actively listening
       if (refCount === 0) {
-        setUnloadedChanges(c => c + 1);
+        setUnloadedChanges((c) => c + 1);
       }
     }
   }, [result, subId, refCount]);
@@ -157,7 +165,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // Catch any subscriptions that were added between initial render and this effect
     setSubs(globalDataStore.getActiveSubs());
-    
+
     return globalDataStore.subscribeToProvider(() => {
       setSubs(globalDataStore.getActiveSubs());
     });

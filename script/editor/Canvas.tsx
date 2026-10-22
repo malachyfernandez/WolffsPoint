@@ -1,6 +1,30 @@
 import React, { useEffect, useId, useMemo, useRef, useState } from 'react';
-import { Animated, Pressable, ScrollView, View, type TextStyle } from 'react-native';
-import { Plus, X, Pencil, Bookmark, BookmarkCheck, MessageCircle } from 'lucide-react-native';
+import {
+  Animated,
+  Platform,
+  Pressable,
+  ScrollView,
+  View,
+  type TextStyle,
+  type ViewStyle,
+} from 'react-native';
+import {
+  Plus,
+  X,
+  Pencil,
+  Bookmark,
+  BookmarkCheck,
+  MessageCircle,
+  Code2,
+  FileText,
+  FileWarning,
+  FolderSearch,
+  Flag,
+  Check,
+  ChevronRight,
+  Folder,
+  Settings,
+} from 'lucide-react-native';
 import Column from '../../components/layout/Column';
 import Row from '../../components/layout/Row';
 import FontText from '../../components/ui/text/FontText';
@@ -12,10 +36,12 @@ import ConvexDialog from '../../components/ui/dialog/ConvexDialog';
 import DialogHeader from '../../components/ui/dialog/DialogHeader';
 import UnsavedChangesDialog from '../../components/ui/dialog/UnsavedChangesDialog';
 import { CloseButton } from '../../components/game/markdownEditor';
-import { getTagColor } from '../../components/game/TagPill';
+import { getTagColor, TAG_COLORS } from '../../components/game/TagPill';
 import { useValue } from 'hooks/useData';
 import { getGameScopedKey } from 'utils/multiplayer';
-import type { TagDefinitionsData } from '../../components/game/TagCellEditor';
+import type { TagDefinition, TagDefinitionsData } from '../../components/game/TagCellEditor';
+import { useScriptFiles } from '../../hooks/useScriptFiles';
+import { useFileEditorHost } from '../../components/game/scriptFiles/FileEditorHostContext';
 import { useTooltip } from './useTooltip';
 import type {
   BinaryOperator,
@@ -28,8 +54,16 @@ import type {
   ListLiteral,
   NamedArgument,
   Statement,
+  CellOpStatement,
 } from '../lang/ast';
 import { emptySpan } from '../lang/ast';
+import type { CellContentType, UserTableTitle } from '../../types/playerTable';
+import { useCreateExtraColumn } from '../../hooks/useCreateExtraColumn';
+import {
+  cellColumnKind,
+  cellOperationDisabledReason,
+  type CellColumnKind,
+} from '../../utils/cellColumnTypes';
 import { parseExpression } from '../lang/parser';
 import { printExpression, printStatement } from '../lang/printer';
 import { getMarkdownVariableNames } from '../markdownVariables';
@@ -51,6 +85,27 @@ import {
 import DropdownLiteralEditor from './DropdownLiteralEditor';
 import ListLiteralEditor from './ListLiteralEditor';
 import FunctionTemplateEditor from './FunctionTemplateEditor';
+import {
+  getFileCallParts,
+  buildFilesIndex,
+  getFileInputs,
+  isFileCallStatement,
+  isFileInputStatement,
+  isManualEntry,
+  missingFileInputArgFallback,
+  resolveFileRef,
+  stripManualMarker,
+  fileName as filePathName,
+  createTagFileSource,
+  getTagMeta,
+  isTagFile,
+  tagFileName,
+  tagFileTriggerSource,
+  TAGS_FOLDER,
+  type ScriptFile,
+  type ScriptFilesIndex,
+} from '../../utils/scriptFiles';
+import { getFolderCallParts, resolveFolderRef } from '../../utils/scriptFolders';
 
 const span = emptySpan();
 
@@ -66,6 +121,55 @@ interface TagDefinitionsContextValue {
   gameId?: string;
 }
 const TagDefinitionsContext = React.createContext<TagDefinitionsContextValue | null>(null);
+
+/** File-system context: present when the canvas edits file-aware content
+ *  (script files or file-mode cells). File(...) statements render as file
+ *  cards that can open the referenced file or re-pick it in the browser. */
+export interface FileBlocksContextValue {
+  index: ScriptFilesIndex;
+  /** Set when editing a file: FileInput declarations hoist to the header
+   *  strip instead of rendering as canvas blocks. */
+  filePath?: string;
+  /** Cell file-list mode: File(...) is the only top-level block kind, so
+   *  clicking a file card goes straight to the file picker ("Change file").
+   *  In a normal script the same click opens the block-swap modal instead
+   *  ("Change file block"). */
+  fileOnly?: boolean;
+  /** Rendered centered in place of the "+ press to add a block" empty state,
+   *  file-list cells show a chooser (new text / new script / browser). */
+  emptyState?: React.ReactNode;
+  /** Open the referenced file in a stacked editor (the host force-saves the
+   *  current draft first). */
+  onOpenFile?: (file: ScriptFile) => void;
+  /** Re-pick which file the File statement at `statementPath` points to. */
+  onRetargetFile?: (statementPath: number[]) => void;
+  /** Re-pick a File() used as a value, without replacing its owning statement. */
+  onRetargetFileExpression?: (location: ExpressionLocation) => void;
+  /** Re-pick the folder referenced by a Folder(...) display block. */
+  onRetargetFolder?: (statementPath: number[]) => void;
+  /** Open per-reference folder ordering/visibility settings. */
+  onOpenFolderSettings?: (statementPath: number[]) => void;
+  /** Trigger files: FileInput statements stay on the canvas (flagged as
+   *  incompatible) instead of hoisting into the header inputs strip. */
+  showFileInputBlocks?: boolean;
+}
+const FileBlocksContext = React.createContext<FileBlocksContextValue | null>(null);
+/** Expressions/statements flagged by file validation, rendered red. */
+const InvalidExpressionsContext = React.createContext<Set<Expression> | null>(null);
+const InvalidStatementsContext = React.createContext<Set<Statement> | null>(null);
+/** Human-readable lint messages for flagged statements, rendered on the card. */
+const StatementFlagMessagesContext = React.createContext<Map<Statement, string> | null>(null);
+/** Insert-zone context: 'all' inside an UpdateCell body, 'cell' inside a
+ *  For-each-cell loop. Nested canvases wrap themselves in the provider so
+ *  the block selector offers the right cell-op blocks. */
+const CellScopeContext = React.createContext<'all' | 'cell' | null>(null);
+const ColumnTitlesContext = React.createContext<UserTableTitle | undefined>(undefined);
+/** Provided only by editable canvases that may write the players table -
+ *  previews/read-only surfaces get no context, so no "New Column" footer. */
+const TableColumnActionsContext = React.createContext<{
+  create: (scope: 'user' | 'day', name: string, type: CellContentType) => boolean;
+} | null>(null);
+const CellColumnKindContext = React.createContext<CellColumnKind | undefined>(undefined);
 const BOOLEAN_OPERATORS: BinaryOperator[] = ['==', '!=', '>', '<', '>=', '<=', 'AND', 'OR'];
 const MATH_OPERATORS: BinaryOperator[] = ['+', '-', '*', '/', '%'];
 const isMathOperator = (op: BinaryOperator) => MATH_OPERATORS.includes(op);
@@ -111,12 +215,17 @@ interface CanvasProps {
       | 'columnType'
       | 'players'
       | 'dayIndex'
-      | 'updateValue',
-    value: string | string[] | FunctionTemplatePiece[] | Expression
+      | 'op'
+      | 'allowDuplicates'
+      | 'autoRemove'
+      | 'tagName'
+      | 'tagColor',
+    value: string | boolean | string[] | FunctionTemplatePiece[] | Expression
   ) => void;
   onDeleteStatement: (path: number[]) => void;
   onRenameVariable?: (from: string, to: string) => void;
   entryKeysBySource?: Record<string, string[]>;
+  columnTitles?: UserTableTitle;
   inputSources?: Record<string, string>;
   stmtPath?: number[];
   onEditMarkdown?: (currentValue: string, onSave: (newValue: string) => void) => void;
@@ -124,6 +233,9 @@ interface CanvasProps {
   isTriggerContext?: boolean;
   /** Game ID, used to load tag definitions for the tag() function dropdown. */
   gameId?: string;
+  /** Editable canvases only: enables writing new players-table columns from
+   *  the UpdateCell column dropdown. */
+  allowTableColumnCreate?: boolean;
   /** Names of functions the user has saved to their library. */
   savedFunctionNames?: string[];
   /** Save a function to the user's library (by printing its source). */
@@ -140,6 +252,14 @@ interface CanvasProps {
   /** Set a comment on a statement at the given path. */
   onSetComment?: (path: number[], comment: string) => void;
   moveTool?: MoveToolControls;
+  /** File-system context: root Canvas only; nested canvases inherit it.
+   *  Enables File(...) cards + file-open/retarget actions. */
+  fileBlocks?: FileBlocksContextValue;
+  /** Expressions/statements flagged by file validation, rendered red. */
+  invalidExpressions?: Set<Expression>;
+  invalidStatements?: Set<Statement>;
+  /** Lint messages keyed by statement - shown as a banner on the block card. */
+  flagMessages?: Map<Statement, string>;
 }
 
 export type ExpressionMoveTarget =
@@ -185,7 +305,7 @@ const appendLocation = (
 const INTERACTIVE_SELECTOR =
   'input, textarea, button, select, [role="button"], [role="combobox"], [role="listbox"]';
 
-// The single hover + click + tooltip target for every object in the editor —
+// The single hover + click + tooltip target for every object in the editor,
 // statement blocks and expressions alike. One component, one system.
 //
 // "Innermost wins" is enforced via data-swapable: on every mouseover we ask
@@ -212,23 +332,6 @@ const PaperTexture = ({ radius = 12 }: { radius?: number }) => (
       backgroundRepeat: 'repeat',
       backgroundSize: '642px 642px',
       mixBlendMode: 'multiply',
-      pointerEvents: 'none',
-    }}
-  />
-);
-
-// Hover overlay — a semi-transparent dark layer that sits on top of the paper
-// texture but below the content, so hover darkens the textured background.
-const HoverOverlay = ({ radius = 12 }: { radius?: number }) => (
-  <View
-    style={{
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      borderRadius: radius,
-      backgroundColor: 'rgba(0,0,0,0.12)',
       pointerEvents: 'none',
     }}
   />
@@ -292,7 +395,7 @@ const Swapable = ({
   indent?: number;
   tooltipText?: string;
   moveTarget?: ExpressionMoveTarget | { kind: 'block'; path: number[]; statement: Statement };
-  /** Category/type color — tints the block background and border. */
+  /** Category/type color: tints the block background and border. */
   tint?: BlockTint;
 }) => {
   const moveTool = React.useContext(MoveToolContext);
@@ -317,11 +420,11 @@ const Swapable = ({
     : (tooltipText ?? `Change ${label}`);
   const { hovered, setHovered } = useTooltip(id, action);
 
-  // `textured` variants get the paper background + hover overlay layers.
+  // `textured` variants get the paper background layer.
   // `bare` is the only flat variant (used for inline elements with no border).
   const textured = variant !== 'bare';
-  // The overlay/texture layers are absolute-positioned inside the border (in
-  // the padding box), so their border-radius must be the container's outer
+  // The texture layer is absolute-positioned inside the border (in the
+  // padding box), so its border-radius must be the container's outer
   // radius minus the 1px border width to align with the rounded corners.
   //   piece:  rounded(4px)  - 1 = 3px
   //   block/statement: rounded-xl(12px) - 1 = 11px
@@ -335,7 +438,7 @@ const Swapable = ({
       }`;
     }
     if (variant === 'bare') {
-      return hovered ? 'bg-text/20' : 'bg-transparent';
+      return 'bg-transparent';
     }
     if (variant === 'statement') {
       return `rounded-xl border ${isFunction ? 'p-1' : 'p-3'} relative overflow-hidden ${bgClass} ${
@@ -347,14 +450,29 @@ const Swapable = ({
     }`;
   })();
 
+  // Web-only: `outline` paints outside the border box, so a 1px outline in
+  // the hover border color reads as a widened border without changing the
+  // element's size or shifting layout (unlike bumping border-width).
+  const hoverOutlineStyle = hovered
+    ? ({
+        outlineWidth: 1,
+        outlineStyle: 'solid',
+        outlineColor: tint ? tint.solid : 'color-mix(in srgb, var(--color-text) 30%, transparent)',
+        ...(variant === 'bare' ? { borderRadius: 4 } : {}),
+      } as ViewStyle)
+    : undefined;
+
   return (
     <View
       style={[
-        { marginLeft: indent },
+        // Small margin leaves room for the 1px hover outline so it isn't
+        // clipped by `overflow-hidden` parents or flush sibling edges.
+        { margin: 2, marginLeft: indent + 2 },
         tint && {
           backgroundColor: tint.bg,
           borderColor: hovered ? tint.solid : tint.border,
         },
+        hoverOutlineStyle,
       ]}
       className={containerClassName}
       {...({ 'data-swapable': true, 'data-move-kind': moveKind } as Record<string, unknown>)}
@@ -436,7 +554,6 @@ const Swapable = ({
         },
       } as Record<string, unknown>)}>
       {textured && <PaperTexture radius={radius} />}
-      {textured && hovered && <HoverOverlay radius={radius} />}
       <View className="relative">{children}</View>
     </View>
   );
@@ -518,7 +635,7 @@ export const ReplaceableTextInput = ({
   onReplace,
   minWidth = 80,
   maxWidth = 150,
-  autoSize = false,
+  autoSize = true,
 }: {
   value: string;
   onChangeText: (value: string) => void;
@@ -541,10 +658,14 @@ export const ReplaceableTextInput = ({
     if (!focused && localValue !== value) setLocalValue(value);
   }, [value, focused, localValue]);
 
+  // `field-sizing: content` lets web inputs shrink to their text. It has no
+  // native equivalent, so non-web keeps the fixed minWidth bounds.
+  const fitsContent = autoSize && Platform.OS === 'web';
+
   return (
     <View
       className="relative"
-      style={autoSize ? { minWidth: 0, maxWidth } : { minWidth, maxWidth }}>
+      style={fitsContent ? { minWidth: 0, maxWidth } : { minWidth, maxWidth }}>
       <FontTextInput
         value={localValue}
         onChangeText={(next) => {
@@ -560,9 +681,9 @@ export const ReplaceableTextInput = ({
         placeholderTextColor="#0004"
         autoCapitalize="none"
         autoCorrect={false}
-        className="bg-white py-1 pl-2 pr-7 text-sm"
+        className={`bg-white py-1 pl-2 text-sm ${onReplace ? 'pr-7' : 'pr-2'}`}
         style={
-          autoSize
+          fitsContent
             ? ({ minWidth: 0, maxWidth: maxWidth + 70, fieldSizing: 'content' } as TextStyle)
             : { minWidth, maxWidth: maxWidth + 70 }
         }
@@ -593,6 +714,8 @@ export const StableTextInput = ({
   placeholder?: string;
   autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
   autoCorrect?: boolean;
+  autoFocus?: boolean;
+  selectTextOnFocus?: boolean;
   className?: string;
   style?: Record<string, unknown>;
 }) => {
@@ -879,6 +1002,7 @@ export const ExpressionSocket = ({
   const chain = useMemo(() => decomposeChain(expression), [expression]);
   const inputSources = React.useContext(InputSourcesContext);
   const moveTool = React.useContext(MoveToolContext);
+  const fileBlocks = React.useContext(FileBlocksContext);
   const wholeMarker = suppressMoveMarker ? undefined : moveTool?.getWholeMarker(location);
   if (wholeMarker !== undefined) {
     if (moveTool?.operation === 'move') return <MoveNumberMarker number={wholeMarker} />;
@@ -958,6 +1082,36 @@ export const ExpressionSocket = ({
     );
   }
 
+  if (
+    expression.kind === 'CallExpression' &&
+    expression.callee.kind === 'IdentifierExpression' &&
+    expression.callee.name.toLowerCase() === 'file' &&
+    fileBlocks
+  ) {
+    const statement: Statement = { kind: 'ExpressionStatement', expression, span: expression.span };
+    return (
+      <Swapable
+        label="file module"
+        moveTarget={{ kind: 'whole', location, expression }}
+        variant="piece"
+        onSwap={() => openExpressionModal('whole', expectedType, 'file module')}>
+        <FileCallCard
+          statement={statement}
+          currentPath={location.statementPath}
+          expressionLocation={location}
+          fileBlocks={fileBlocks}
+          contextVariables={contextVariables}
+          definedVariables={contextVariables}
+          entryKeysBySource={entryKeysBySource}
+          definedFunctions={definedFunctions}
+          onAdd={onAdd}
+          onSetExpression={onSetExpression}
+          onEditMarkdown={onEditMarkdown}
+        />
+      </Swapable>
+    );
+  }
+
   if (expression.kind === 'BooleanLiteral') {
     return (
       <Swapable
@@ -1001,7 +1155,8 @@ export const ExpressionSocket = ({
           onValueChange={(operator) =>
             onSetExpression(location, { ...expression, operator: operator as BinaryOperator }, true)
           }
-          triggerClassName="min-w-16 !py-1 !px-2 text-sm"
+          fitContent
+          triggerClassName="!py-1 !px-2 text-sm"
           isInDialog
           allowUnselect={false}
         />
@@ -1441,9 +1596,7 @@ export const ExpressionSocket = ({
                   }}
                   variant="block"
                   tint={getCategoryTint(
-                    (link.expr.callee as IdentifierExpression).name === 'tag'
-                      ? 'data'
-                      : 'function'
+                    (link.expr.callee as IdentifierExpression).name === 'tag' ? 'data' : 'function'
                   )}
                   onSwap={() => openExpressionModal('chainBase', expectedType, chainBaseLabel)}>
                   <FunctionCallRenderer
@@ -1645,17 +1798,34 @@ const EntryKeyInput = ({
   keys: string[];
   onChange: (expression: Expression) => void;
 }) => {
-  const value = expression.kind === 'StringLiteral' ? expression.value : '';
-  const [custom, setCustom] = useState(Boolean(value && !keys.includes(value)));
+  const invalidExpressions = React.useContext(InvalidExpressionsContext);
+  const isInvalid = !!expression && (invalidExpressions?.has(expression) ?? false);
+  const rawValue = expression.kind === 'StringLiteral' ? expression.value : '';
+  // Manually-typed keys are stored with a "!" prefix, an internal marker
+  // that exempts them from "unknown input" flagging (text mode uses the same
+  // convention). The prefix is stripped for display.
+  const displayValue = stripManualMarker(rawValue);
+  const [custom, setCustom] = useState(
+    Boolean(rawValue && (isManualEntry(rawValue) || !keys.includes(rawValue)))
+  );
+  const invalidClass = isInvalid ? 'border-red-500' : '';
   if (custom) {
     return (
       <Row className="items-center gap-1">
-        <ReplaceableTextInput
-          value={value}
-          onChangeText={(next) => onChange({ kind: 'StringLiteral', value: next, span })}
-          placeholder="Custom key"
-          minWidth={110}
-        />
+        <View className={`rounded ${isInvalid ? 'border border-red-500' : ''}`}>
+          <ReplaceableTextInput
+            value={displayValue}
+            onChangeText={(next) =>
+              onChange({
+                kind: 'StringLiteral',
+                value: next ? `!${stripManualMarker(next)}` : '',
+                span,
+              })
+            }
+            placeholder="Custom key"
+            minWidth={110}
+          />
+        </View>
         <Pressable accessibilityRole="button" onPress={() => setCustom(false)}>
           <FontText className="text-xs opacity-60">List</FontText>
         </Pressable>
@@ -1668,13 +1838,14 @@ const EntryKeyInput = ({
         ...keys.map((key) => ({ value: key, label: key })),
         { value: '__custom__', label: 'Custom…' },
       ]}
-      value={keys.includes(value) ? value : undefined}
+      value={keys.includes(rawValue) ? rawValue : undefined}
       onValueChange={(next) => {
         if (next === '__custom__') setCustom(true);
         else onChange({ kind: 'StringLiteral', value: next, span });
       }}
-      placeholder="Select entry"
-      triggerClassName="min-w-32 !py-1 !px-2 text-sm"
+      placeholder="Select"
+      fitContent
+      triggerClassName={`!py-1 !px-2 text-sm ${invalidClass}`}
       isInDialog
       allowUnselect={false}
     />
@@ -1843,8 +2014,9 @@ const VariableNameInput = ({
             onChange({ kind: 'StringLiteral', value: sanitizeIdentifier(next), span });
           }
         }}
-        placeholder="Select variable"
-        triggerClassName="min-w-32 !py-1 !px-2 text-sm"
+        placeholder="Select"
+        fitContent
+        triggerClassName="!py-1 !px-2 text-sm"
         isInDialog
         allowUnselect={false}
         renderOptionAction={(option) =>
@@ -1870,7 +2042,7 @@ const VariableNameInput = ({
 let openTagManagerFn: (() => void) | null = null;
 
 /**
- * Tag manager modal — list of tags with edit buttons + New Tag.
+ * Tag manager modal: list of tags with edit buttons + New Tag.
  * Rendered once at the Canvas root, triggered by `openTagManagerFn`.
  */
 // AddTagDialog imports ScriptEditorDialog which imports this file, so it is
@@ -1881,25 +2053,82 @@ const getAddTagDialog = () =>
     require('../../components/game/AddTagDialog') as typeof import('../../components/game/AddTagDialog')
   ).default;
 
+// FileEditorDialog also reaches this file through ScriptEditorDialog.
+const getFileEditorDialog = () =>
+  // eslint-disable-next-line @typescript-eslint/no-require-imports -- intentional lazy require to break the module cycle
+  (
+    require('../../components/game/scriptFiles/FileEditorDialog') as typeof import('../../components/game/scriptFiles/FileEditorDialog')
+  ).default;
+
+const TagLibraryProvider = ({
+  gameId,
+  definitions,
+  setDefinitions,
+  children,
+}: {
+  gameId: string;
+  definitions: TagDefinitionsData;
+  setDefinitions: (definitions: TagDefinitionsData) => void;
+  children: React.ReactNode;
+}) => {
+  const filesApi = useScriptFiles(gameId);
+  const tags = useMemo(() => {
+    const files = [...filesApi.index.byId.values()].filter(isTagFile).map((file) => ({
+      name: tagFileName(file),
+      color: getTagMeta(file)?.color ?? 'Grey',
+      tagId: file.id,
+    }));
+    const names = new Set(files.map((tag) => tag.name.toLowerCase()));
+    return [...files, ...definitions.filter((tag) => !names.has(tag.name.toLowerCase()))].sort(
+      (a, b) => a.name.localeCompare(b.name)
+    );
+  }, [filesApi.index, definitions]);
+  return (
+    <TagDefinitionsContext.Provider value={{ definitions: tags, gameId }}>
+      {children}
+      <TagManagerModal
+        gameId={gameId}
+        tagDefinitions={tags}
+        legacyDefinitions={definitions}
+        setTagDefs={setDefinitions}
+        filesApi={filesApi}
+      />
+    </TagDefinitionsContext.Provider>
+  );
+};
+
 const TagManagerModal = ({
   gameId,
   tagDefinitions,
+  legacyDefinitions,
   setTagDefs,
+  filesApi,
 }: {
   gameId?: string;
   tagDefinitions: TagDefinitionsData;
+  legacyDefinitions: TagDefinitionsData;
   setTagDefs: (defs: TagDefinitionsData) => void;
+  filesApi: ReturnType<typeof useScriptFiles>;
 }) => {
   const AddTagDialog = getAddTagDialog();
+  const FileEditorDialog = getFileEditorDialog();
   const [isOpen, setIsOpen] = useState(false);
   const [isAddTagOpen, setIsAddTagOpen] = useState(false);
-  const [editingTag, setEditingTag] = useState<{ name: string; color: string } | null>(null);
+  const [editingTag, setEditingTag] = useState<TagDefinition | null>(null);
+  /** File-backed tags edit in the file editor (name + color + trigger body
+   *  all live in the tag file) instead of the tag dialog. */
+  const [editingFileId, setEditingFileId] = useState<string | null>(null);
+  const fileEditorHost = useFileEditorHost();
+  const openTagFile = (tagId: string) =>
+    fileEditorHost ? fileEditorHost.openFile(tagId) : setEditingFileId(tagId);
 
   // Register/unregister the open function so any child can trigger this modal
   useEffect(() => {
-    openTagManagerFn = () => setIsOpen(true);
+    const previous = openTagManagerFn;
+    const open = () => setIsOpen(true);
+    openTagManagerFn = open;
     return () => {
-      openTagManagerFn = null;
+      if (openTagManagerFn === open) openTagManagerFn = previous;
     };
   }, []);
 
@@ -1939,8 +2168,11 @@ const TagManagerModal = ({
                         <Pressable
                           key={def.name}
                           onPress={() => {
-                            setEditingTag(def);
-                            setIsAddTagOpen(true);
+                            if (def.tagId) openTagFile(def.tagId);
+                            else {
+                              setEditingTag(def);
+                              setIsAddTagOpen(true);
+                            }
                           }}
                           className="hover:bg-text/5 rounded-lg p-1.5">
                           <Row className="items-center gap-2">
@@ -1966,6 +2198,7 @@ const TagManagerModal = ({
               <AppButton
                 variant="outline"
                 className="h-8 w-full"
+                disabled={filesApi.isLoading}
                 onPress={() => {
                   setEditingTag(null);
                   setIsAddTagOpen(true);
@@ -1989,22 +2222,52 @@ const TagManagerModal = ({
           if (!open) setEditingTag(null);
         }}
         onAdd={(name, colorName) => {
-          setTagDefs([...tagDefinitions, { name, color: colorName }]);
+          const file = filesApi.createFile(
+            TAGS_FOLDER,
+            filesApi.suggestName(name, TAGS_FOLDER),
+            'script',
+            'trigger'
+          );
+          if (file) {
+            filesApi.updateFileSource(file.id, createTagFileSource(name, colorName));
+            openTagFile(file.id);
+          }
         }}
         onEdit={(oldName, newName, colorName) => {
+          const file = editingTag?.tagId ? filesApi.index.byId.get(editingTag.tagId) : undefined;
+          if (file) {
+            filesApi.updateFileSource(
+              file.id,
+              createTagFileSource(newName, colorName, tagFileTriggerSource(file))
+            );
+            return;
+          }
           setTagDefs(
-            tagDefinitions.map((d) =>
-              d.name === oldName ? { name: newName, color: colorName } : d
+            legacyDefinitions.map((d) =>
+              d.name === oldName ? { ...d, name: newName, color: colorName } : d
             )
           );
         }}
         onDelete={(name) => {
-          setTagDefs(tagDefinitions.filter((d) => d.name !== name));
+          if (editingTag?.tagId) filesApi.deleteFile(editingTag.tagId);
+          else setTagDefs(legacyDefinitions.filter((d) => d.name !== name));
         }}
         editTag={editingTag}
         existingNames={tagDefinitions.map((d) => d.name)}
         gameId={gameId}
       />
+
+      {editingFileId && !fileEditorHost && (
+        <FileEditorDialog
+          isOpen
+          onOpenChange={(open) => {
+            if (!open) setEditingFileId(null);
+          }}
+          fileId={editingFileId}
+          filesApi={filesApi}
+          gameId={gameId}
+        />
+      )}
     </>
   );
 };
@@ -2049,8 +2312,9 @@ const TagCallRenderer = ({
             ],
           });
         }}
-        placeholder="Tag name"
-        triggerClassName="min-w-32 !py-1.5 !px-2 text-sm"
+        placeholder="Select"
+        fitContent
+        triggerClassName="!py-1.5 !px-2 text-sm"
         isInDialog
         allowUnselect={false}
         footer={
@@ -2077,6 +2341,8 @@ const ColumnSelectorInput = ({
   onAdd,
   onSetExpression,
   onEditMarkdown,
+  columnScope,
+  onCreateColumn,
 }: {
   expression: Expression;
   keys: string[];
@@ -2087,6 +2353,10 @@ const ColumnSelectorInput = ({
   onAdd: CanvasProps['onAdd'];
   onSetExpression: CanvasProps['onSetExpression'];
   onEditMarkdown?: CanvasProps['onEditMarkdown'];
+  /** Enables the "New Column" footer: writes a players-table column for the
+   *  given scope (user = all-game, day = day-specific). */
+  columnScope?: 'user' | 'day';
+  onCreateColumn?: (scope: 'user' | 'day', name: string, type: CellContentType) => boolean;
 }) => {
   const isStringLiteral = expression.kind === 'StringLiteral';
   const value = isStringLiteral
@@ -2094,6 +2364,42 @@ const ColumnSelectorInput = ({
     : '';
   const isCustom = !isStringLiteral || (value !== '' && !keys.includes(value));
   const [customMode, setCustomMode] = useState(isCustom);
+  const [newColOpen, setNewColOpen] = useState(false);
+  const [newColName, setNewColName] = useState('');
+  const [newColType, setNewColType] = useState<CellContentType>('tags');
+  const [newColError, setNewColError] = useState<string | null>(null);
+  const [newColLeaveOpen, setNewColLeaveOpen] = useState(false);
+
+  const newColDirty = newColName.trim() !== '' || newColType !== 'tags';
+  const openNewColumn = () => {
+    setNewColName('');
+    setNewColType('tags');
+    setNewColError(null);
+    setNewColLeaveOpen(false);
+    setNewColOpen(true);
+  };
+  const attemptCloseNewColumn = () => {
+    if (newColDirty) setNewColLeaveOpen(true);
+    else setNewColOpen(false);
+  };
+  const handleNewColOpenChange = (open: boolean) => {
+    if (!open) attemptCloseNewColumn();
+    else setNewColOpen(true);
+  };
+  const confirmLeaveNewColumn = () => {
+    setNewColLeaveOpen(false);
+    setNewColOpen(false);
+  };
+  const submitNewColumn = () => {
+    const name = newColName.trim();
+    if (!name) return setNewColError('Name is required');
+    if (keys.some((k) => k.toLowerCase() === name.toLowerCase()))
+      return setNewColError('A column with this name already exists');
+    if (!columnScope || !onCreateColumn?.(columnScope, name, newColType))
+      return setNewColError('Could not create the column');
+    onSetExpression(location, { kind: 'StringLiteral', value: name, span }, true);
+    setNewColOpen(false);
+  };
 
   if (customMode) {
     return (
@@ -2121,25 +2427,108 @@ const ColumnSelectorInput = ({
     );
   }
   return (
-    <AppDropdown
-      options={[
-        ...keys.map((key) => ({ value: key, label: key })),
-        { value: '__custom__', label: 'Custom…' },
-      ]}
-      value={keys.includes(value) ? value : undefined}
-      onValueChange={(next) => {
-        if (next === '__custom__') {
-          setCustomMode(true);
-          onSetExpression(location, { kind: 'StringLiteral', value: '', span }, true);
-        } else {
-          onSetExpression(location, { kind: 'StringLiteral', value: next, span }, true);
+    <>
+      <AppDropdown
+        options={[
+          ...keys.map((key) => ({ value: key, label: key })),
+          { value: '__custom__', label: 'Custom…' },
+        ]}
+        value={keys.includes(value) ? value : undefined}
+        onValueChange={(next) => {
+          if (next === '__custom__') {
+            setCustomMode(true);
+            onSetExpression(location, { kind: 'StringLiteral', value: '', span }, true);
+          } else {
+            onSetExpression(location, { kind: 'StringLiteral', value: next, span }, true);
+          }
+        }}
+        placeholder="Select"
+        fitContent
+        triggerClassName="!py-1 !px-2 text-sm"
+        isInDialog
+        allowUnselect={false}
+        footer={
+          columnScope && onCreateColumn ? (
+            <Row className="items-center gap-2 px-3 py-2">
+              <Plus size={14} color="rgb(46, 41, 37)" style={{ opacity: 0.7 }} />
+              <FontText weight="medium" className="text-sm">
+                New Column
+              </FontText>
+            </Row>
+          ) : undefined
         }
-      }}
-      placeholder="Select column"
-      triggerClassName="min-w-32 !py-1 !px-2 text-sm"
-      isInDialog
-      allowUnselect={false}
-    />
+        onFooterPress={columnScope && onCreateColumn ? openNewColumn : undefined}
+      />
+      {/* hidden Root: closed dialogs render an empty View that eats flex
+       *  gaps inside the block card layout */}
+      <ConvexDialog.Root
+        className="hidden"
+        isOpen={newColOpen}
+        onOpenChange={handleNewColOpenChange}>
+        <ConvexDialog.Portal>
+          <ConvexDialog.Overlay />
+          <ConvexDialog.Content className="max-w-md" isSwipeable={false}>
+            <CloseButton onPress={attemptCloseNewColumn} />
+            <DialogHeader
+              text="New Column"
+              subtext={`Add a ${columnScope === 'day' ? 'day-specific' : 'all-game'} column to the players table`}
+            />
+            <Column className="gap-3 pt-4">
+              <Column className="gap-1">
+                <FontText weight="medium">Name</FontText>
+                <FontTextInput
+                  autoFocus
+                  placeholder="Column name..."
+                  variant="styled"
+                  className="w-full p-2"
+                  value={newColName}
+                  onChangeText={setNewColName}
+                />
+                {newColError && <FontText className="text-xs">{newColError}</FontText>}
+              </Column>
+              <Column className="gap-1">
+                <FontText weight="medium">Content</FontText>
+                <View className="border-subtle-border flex-row self-start overflow-hidden rounded-lg border">
+                  {(['tags', 'files'] as const).map((t, i) => (
+                    <Pressable
+                      key={t}
+                      accessibilityRole="button"
+                      onPress={() => setNewColType(t)}
+                      className={`h-8 w-24 items-center justify-center ${
+                        newColType === t ? 'bg-text/20' : 'hover:bg-text/5'
+                      } ${i === 0 ? '' : 'border-subtle-border border-l'}`}>
+                      <FontText className="text-xs capitalize">{t}</FontText>
+                    </Pressable>
+                  ))}
+                </View>
+              </Column>
+              <Row className="justify-end gap-3 pt-2">
+                <AppButton
+                  variant="outline"
+                  className="h-9 w-24"
+                  onPress={attemptCloseNewColumn}>
+                  <FontText weight="medium">Cancel</FontText>
+                </AppButton>
+                <AppButton className="h-9 w-24" onPress={submitNewColumn}>
+                  <FontText weight="medium" color="white">
+                    Create
+                  </FontText>
+                </AppButton>
+              </Row>
+            </Column>
+          </ConvexDialog.Content>
+        </ConvexDialog.Portal>
+      </ConvexDialog.Root>
+      <UnsavedChangesDialog
+        isOpen={newColLeaveOpen}
+        onOpenChange={setNewColLeaveOpen}
+        onSave={submitNewColumn}
+        onDiscard={confirmLeaveNewColumn}
+        message="You have an unfinished column. Create it?"
+        saveLabel="Create"
+        discardLabel="Discard"
+      />
+    </>
   );
 };
 
@@ -2248,7 +2637,8 @@ const MethodArgument = ({
           onSetExpression(location, { kind: 'StringLiteral', value: next, span }, true)
         }
         placeholder={input.label}
-        triggerClassName="min-w-24 !py-1 !px-2 text-sm"
+        fitContent
+        triggerClassName="!py-1 !px-2 text-sm"
         isInDialog
         allowUnselect={false}
       />
@@ -2341,6 +2731,181 @@ const DeleteButton = ({ onPress }: { onPress: () => void }) => {
   );
 };
 
+/* ── Block flags ───────────────────────────────────────────────────────
+ * Rarely-changed options ("flags") live behind a small menu in the block
+ * header instead of taking up a row. Visibility is derived, never stored
+ * in the AST: a flag row renders while it holds a non-default value or
+ * while the user has opted in via local state, so default-valued flags
+ * clean themselves up on remount. Hiding a modified flag asks first,
+ * then resets the value back to its default. */
+
+interface BlockFlag {
+  /** Stable id within the block (input name or statement field). */
+  id: string;
+  label: string;
+  /** True when the current value equals the default: hiding needs no reset. */
+  isDefault: boolean;
+  /** Restore the value to its default. Called only after user confirms. */
+  reset: () => void;
+}
+
+interface BlockFlagsControl {
+  isVisible: (flag: BlockFlag) => boolean;
+  show: (id: string) => void;
+  hide: (id: string) => void;
+}
+
+/** Per-block local state: which default-valued flags the user opted to show. */
+const useShownFlags = (): BlockFlagsControl => {
+  const [shownIds, setShownIds] = useState<ReadonlySet<string>>(() => new Set());
+  return useMemo(
+    () => ({
+      isVisible: (flag) => shownIds.has(flag.id) || !flag.isDefault,
+      show: (id) => setShownIds((prev) => new Set(prev).add(id)),
+      hide: (id) =>
+        setShownIds((prev) => {
+          if (!prev.has(id)) return prev;
+          const next = new Set(prev);
+          next.delete(id);
+          return next;
+        }),
+    }),
+    [shownIds]
+  );
+};
+
+/** True when a statement call arg is absent, `nothing`, or a literal that
+ *  equals the input's declared default. */
+const callArgMatchesDefault = (input: BlockInput, argument?: NamedArgument): boolean => {
+  if (!argument || argument.value.kind === 'NothingLiteral') return true;
+  if (input.default === undefined) return false;
+  const value = argument.value;
+  if (value.kind === 'StringLiteral') return value.value === String(input.default);
+  if (value.kind === 'NumberLiteral') return value.value === Number(input.default);
+  if (value.kind === 'BooleanLiteral') return value.value === Boolean(input.default);
+  return false;
+};
+
+/** Flag icon button + flags dialog for a block header. Renders nothing
+ *  when the block has no flags. The same dialog swaps to a reset-to-
+ *  default confirmation when hiding a modified flag. */
+const BlockFlagsMenu = ({ flags, ctl }: { flags: BlockFlag[]; ctl: BlockFlagsControl }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [pendingHide, setPendingHide] = useState<BlockFlag | null>(null);
+  const tooltipId = useId();
+  const { setHovered } = useTooltip(tooltipId, 'Flags');
+
+  if (flags.length === 0) return null;
+
+  const handleFlagPress = (flag: BlockFlag) => {
+    if (!ctl.isVisible(flag)) {
+      ctl.show(flag.id);
+      return;
+    }
+    if (flag.isDefault) {
+      ctl.hide(flag.id);
+      return;
+    }
+    setPendingHide(flag);
+  };
+
+  const handleConfirmHide = () => {
+    if (!pendingHide) return;
+    pendingHide.reset();
+    ctl.hide(pendingHide.id);
+    setPendingHide(null);
+  };
+
+  const anyModified = flags.some((flag) => !flag.isDefault);
+
+  return (
+    <>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Flags"
+        onPress={() => setIsOpen(true)}
+        onHoverIn={() => setHovered(true)}
+        onHoverOut={() => setHovered(false)}
+        className="border-subtle-border hover:bg-text/10 flex-row items-center gap-1 rounded-full border px-2 py-0.5">
+        <Flag size={9} color="rgb(46, 41, 37)" style={{ opacity: 0.6 }} />
+        <FontText className="text-[10px] opacity-70">Flags</FontText>
+        {anyModified && (
+          <View
+            className="h-1.5 w-1.5 rounded-full"
+            style={{ backgroundColor: 'rgb(46, 41, 37)', opacity: 0.45 }}
+          />
+        )}
+      </Pressable>
+      <ConvexDialog.Root
+        isOpen={isOpen}
+        onOpenChange={(open: boolean) => {
+          setIsOpen(open);
+          if (!open) setPendingHide(null);
+        }}>
+        <ConvexDialog.Portal>
+          <ConvexDialog.Overlay />
+          <ConvexDialog.Content className="max-w-sm">
+            <CloseButton onPress={() => setIsOpen(false)} />
+            {pendingHide ? (
+              <Column className="gap-3 p-4">
+                <DialogHeader text={`Hide ${pendingHide.label}?`} />
+                <FontText className="text-sm">
+                  {pendingHide.label} doesn’t match its default value. Hiding this flag resets it
+                  back to the default.
+                </FontText>
+                <Row className="justify-end gap-3">
+                  <AppButton
+                    variant="outline"
+                    className="px-4"
+                    onPress={() => setPendingHide(null)}>
+                    <FontText weight="medium">Cancel</FontText>
+                  </AppButton>
+                  <AppButton variant="red" className="px-4" onPress={handleConfirmHide}>
+                    <FontText weight="medium" color="red-700">
+                      Hide and reset
+                    </FontText>
+                  </AppButton>
+                </Row>
+              </Column>
+            ) : (
+              <Column className="gap-1 pt-3">
+                <FontText weight="medium" className="px-1 pb-1 text-base">
+                  Flags
+                </FontText>
+                {flags.map((flag) => {
+                  const visible = ctl.isVisible(flag);
+                  return (
+                    <Pressable
+                      key={flag.id}
+                      accessibilityRole="button"
+                      onPress={() => handleFlagPress(flag)}
+                      className="hover:bg-text/5 rounded-lg p-1.5">
+                      <Row className="items-center gap-2">
+                        <View
+                          className={`h-4 w-4 items-center justify-center rounded border ${
+                            visible ? 'border-text/50 bg-text/10' : 'border-subtle-border'
+                          }`}>
+                          {visible && <Check size={11} color="rgb(46, 41, 37)" />}
+                        </View>
+                        <FontText className="flex-1 text-sm">{flag.label}</FontText>
+                        {!flag.isDefault && (
+                          <FontText variant="subtext" className="text-xs">
+                            modified
+                          </FontText>
+                        )}
+                      </Row>
+                    </Pressable>
+                  );
+                })}
+              </Column>
+            )}
+          </ConvexDialog.Content>
+        </ConvexDialog.Portal>
+      </ConvexDialog.Root>
+    </>
+  );
+};
+
 const SaveFunctionButton = ({
   isSaved,
   onSave,
@@ -2368,6 +2933,383 @@ const SaveFunctionButton = ({
   );
 };
 
+/** Card for a `File({PATH = "..."})` statement, shows the referenced file
+ *  plus sockets for each of the file's declared inputs (call-site overrides). */
+const FileCallCard = ({
+  statement,
+  currentPath,
+  fileBlocks,
+  contextVariables,
+  definedVariables,
+  entryKeysBySource,
+  definedFunctions,
+  onAdd,
+  onSetExpression,
+  onDeleteStatement,
+  onEditMarkdown,
+  expressionLocation,
+}: {
+  statement: Statement;
+  currentPath: number[];
+  fileBlocks: FileBlocksContextValue;
+  contextVariables: string[];
+  definedVariables: string[];
+  entryKeysBySource?: Record<string, string[]>;
+  definedFunctions?: DefinedFunction[];
+  onAdd: CanvasProps['onAdd'];
+  onSetExpression: CanvasProps['onSetExpression'];
+  onDeleteStatement?: CanvasProps['onDeleteStatement'];
+  onEditMarkdown?: CanvasProps['onEditMarkdown'];
+  expressionLocation?: ExpressionLocation;
+}) => {
+  const parts = getFileCallParts(statement);
+  const call =
+    statement.kind === 'ExpressionStatement' && statement.expression.kind === 'CallExpression'
+      ? statement.expression
+      : null;
+  const file = parts ? resolveFileRef(fileBlocks.index, parts) : undefined;
+  const canOpen = !!(file && fileBlocks.onOpenFile);
+  const retarget = expressionLocation
+    ? fileBlocks.onRetargetFileExpression
+      ? () => fileBlocks.onRetargetFileExpression?.(expressionLocation)
+      : undefined
+    : fileBlocks.onRetargetFile
+      ? () => fileBlocks.onRetargetFile?.(currentPath)
+      : undefined;
+  const inputLocation = (name: string): ExpressionLocation =>
+    expressionLocation
+      ? appendLocation(expressionLocation, { kind: 'namedCallArgument', name })
+      : {
+          statementPath: currentPath,
+          slot: { kind: 'callArg', name },
+          expressionPath: [],
+        };
+  const chipTooltipId = useId();
+  // One tooltip for the whole chip, the text swaps when the nested
+  // change-file button is hovered (the button sits inside the chip, so the
+  // chip's own hover stays active the whole time).
+  const [chipHover, setChipHover] = useState<'open' | 'retarget' | null>(null);
+  const { setHovered: setChipHovered } = useTooltip(
+    chipTooltipId,
+    chipHover === 'retarget' ? 'Change file' : canOpen ? 'Open file' : undefined
+  );
+  const declaredInputs = file ? getFileInputs(file) : [];
+  const declaredKeys = new Set(declaredInputs.map((decl) => decl.name.toLowerCase()));
+  const overrideArgs = (call?.arguments ?? []).filter(
+    (argument): argument is NamedArgument =>
+      argument.kind === 'NamedArgument' &&
+      argument.name.toLowerCase() !== 'path' &&
+      argument.name.toLowerCase() !== 'id' &&
+      !declaredKeys.has(argument.name.toLowerCase())
+  );
+  const argValue = (name: string): Expression => {
+    const arg = call?.arguments.find(
+      (a): a is NamedArgument =>
+        a.kind === 'NamedArgument' && a.name.toLowerCase() === name.toLowerCase()
+    );
+    // File-only cells: declared inputs always get an editable string field
+    // (empty args auto-fill a StringLiteral instead of a '+' socket that
+    // opens a picker). Other contexts keep NothingLiteral so the override
+    // stays optional and the declared default applies.
+    return arg?.value ?? missingFileInputArgFallback(!!fileBlocks.fileOnly);
+  };
+
+  const cardInfo = (
+    <Column className="min-w-0 shrink gap-0.5">
+      <Row className="items-center gap-2">
+        {file ? (
+          file.kind === 'markdown' ? (
+            <FileText size={16} color="#4a6a8a" />
+          ) : (
+            <Code2 size={16} color="#6a4a8a" />
+          )
+        ) : parts?.path || parts?.id ? (
+          <FileWarning size={16} color="#a03030" />
+        ) : (
+          <FileText size={16} color="#4a6a8a" />
+        )}
+        <FontText weight="medium" className="text-sm" numberOfLines={1}>
+          {file
+            ? filePathName(file.path)
+            : parts?.path || parts?.id
+              ? 'Missing file'
+              : 'Select file'}
+        </FontText>
+        {!file && (parts?.path || parts?.id) && (
+          <FontText className="text-xs" style={{ color: '#a03030' }}>
+            missing
+          </FontText>
+        )}
+      </Row>
+      {(file?.path || parts?.path) && (
+        <FontText variant="subtext" className="text-xs" numberOfLines={1}>
+          {file?.path ?? parts?.path}
+        </FontText>
+      )}
+    </Column>
+  );
+
+  return (
+    <Column className="gap-1">
+      <Row className="items-center justify-between gap-2">
+        {/* The whole outlined chip opens the file; the nested folder button
+            re-picks it (nested buttons are fine, web only). No flex-1 so
+            the chip hugs the filename; shrink + min-w-0 let long names
+            truncate on narrow screens. */}
+        {(() => {
+          const changeFileButton = retarget ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Change file"
+              onPress={(e) => {
+                // Nested inside the open-file chip, keep the press from
+                // also firing the chip's own onPress.
+                e.stopPropagation();
+                retarget();
+              }}
+              onHoverIn={() => {
+                setChipHover('retarget');
+                setChipHovered(true);
+              }}
+              onHoverOut={() => setChipHover('open')}
+              className="hover:bg-text/10 h-6 w-6 shrink-0 items-center justify-center rounded-md">
+              <FolderSearch size={14} color="rgb(46, 41, 37)" />
+            </Pressable>
+          ) : null;
+          return canOpen || retarget ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={canOpen ? `Open ${filePathName(file!.path)}` : 'Select file'}
+              onPress={(e) => {
+                e.stopPropagation();
+                if (canOpen) fileBlocks.onOpenFile?.(file!);
+                else retarget?.();
+              }}
+              onHoverIn={() => {
+                setChipHover('open');
+                setChipHovered(true);
+              }}
+              onHoverOut={() => {
+                setChipHover(null);
+                setChipHovered(false);
+              }}
+              className="border-subtle-border hover:bg-text/10 min-w-0 max-w-full shrink flex-row items-center gap-1.5 rounded-lg border py-1 pl-2 pr-1">
+              {cardInfo}
+              {changeFileButton}
+            </Pressable>
+          ) : (
+            <View className="border-subtle-border min-w-0 max-w-full shrink flex-row items-center gap-1.5 rounded-lg border py-1 pl-2 pr-1">
+              {cardInfo}
+              {changeFileButton}
+            </View>
+          );
+        })()}
+        {onDeleteStatement && <DeleteButton onPress={() => onDeleteStatement(currentPath)} />}
+      </Row>
+      {declaredInputs.map((decl) => (
+        <Row key={decl.name} className="items-start gap-2">
+          <FontText variant="subtext" className="pt-1 text-xs">
+            {decl.name}
+          </FontText>
+          <ExpressionSocket
+            expression={argValue(decl.name)}
+            location={inputLocation(decl.name)}
+            contextVariables={contextVariables}
+            entryKeysBySource={entryKeysBySource}
+            definedFunctions={definedFunctions}
+            label={decl.name}
+            onAdd={onAdd}
+            onSetExpression={onSetExpression}
+            onEditMarkdown={onEditMarkdown}
+          />
+        </Row>
+      ))}
+      {overrideArgs.map((argument) => (
+        <Row key={argument.name} className="items-start gap-2">
+          <FontText className="pt-1 text-xs" style={{ color: '#8a6d00' }}>
+            {argument.name}
+          </FontText>
+          <ExpressionSocket
+            expression={argument.value}
+            location={inputLocation(argument.name)}
+            contextVariables={contextVariables}
+            entryKeysBySource={entryKeysBySource}
+            definedFunctions={definedFunctions}
+            label={`${argument.name} (not declared)`}
+            onAdd={onAdd}
+            onSetExpression={onSetExpression}
+            onEditMarkdown={onEditMarkdown}
+          />
+        </Row>
+      ))}
+    </Column>
+  );
+};
+
+/** Concise cards for display-only calls. Folder blocks open settings instead
+ *  of treating the referenced folder like a file. */
+const DisplayCallCard = ({
+  statement,
+  currentPath,
+  fileBlocks,
+  onSetExpression,
+  onDeleteStatement,
+  onEditMarkdown,
+}: {
+  statement: Statement;
+  currentPath: number[];
+  fileBlocks: FileBlocksContextValue;
+  onSetExpression: CanvasProps['onSetExpression'];
+  onDeleteStatement?: CanvasProps['onDeleteStatement'];
+  onEditMarkdown?: CanvasProps['onEditMarkdown'];
+}) => {
+  const call =
+    statement.kind === 'ExpressionStatement' && statement.expression.kind === 'CallExpression'
+      ? statement.expression
+      : null;
+  const callee = call?.callee.kind === 'IdentifierExpression' ? call.callee.name.toLowerCase() : '';
+  const namedArg = (name: string) =>
+    call?.arguments.find(
+      (argument): argument is NamedArgument =>
+        argument.kind === 'NamedArgument' && argument.name.toLowerCase() === name.toLowerCase()
+    );
+
+  if (callee === 'folder') {
+    const parts = getFolderCallParts(statement);
+    const resolvedPath = parts ? resolveFolderRef(fileBlocks.index, parts) : undefined;
+    const shownPath = resolvedPath ?? parts?.path;
+    return (
+      <Row className="items-center justify-between gap-2">
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Folder settings"
+          onPress={(e) => {
+            e.stopPropagation();
+            fileBlocks.onOpenFolderSettings?.(currentPath);
+          }}
+          className="border-subtle-border hover:bg-text/10 min-w-0 flex-row items-center gap-1.5 rounded-lg border px-2 py-1">
+          <Folder size={16} color="#8a7355" />
+          <Column className="min-w-0 shrink gap-0">
+            <FontText weight="medium" className="text-sm" numberOfLines={1}>
+              {shownPath ? filePathName(shownPath) : 'Select folder'}
+            </FontText>
+            {shownPath && (
+              <FontText variant="subtext" className="text-xs" numberOfLines={1}>
+                {shownPath}
+              </FontText>
+            )}
+            {!resolvedPath && parts && (
+              <FontText className="text-xs" color="#a03030">
+                missing
+              </FontText>
+            )}
+          </Column>
+        </Pressable>
+        <Row className="items-center gap-1.5">
+          {fileBlocks.onRetargetFolder && (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Change folder"
+              onPress={(e) => {
+                e.stopPropagation();
+                fileBlocks.onRetargetFolder?.(currentPath);
+              }}
+              className="hover:bg-text/10 h-6 w-6 items-center justify-center rounded-md">
+              <FolderSearch size={14} color="rgb(46, 41, 37)" />
+            </Pressable>
+          )}
+          {fileBlocks.onOpenFolderSettings && (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Folder settings"
+              onPress={(e) => {
+                e.stopPropagation();
+                fileBlocks.onOpenFolderSettings?.(currentPath);
+              }}
+              className="hover:bg-text/10 h-6 w-6 items-center justify-center rounded-md">
+              <Settings size={14} color="rgb(46, 41, 37)" />
+            </Pressable>
+          )}
+          {onDeleteStatement && <DeleteButton onPress={() => onDeleteStatement(currentPath)} />}
+        </Row>
+      </Row>
+    );
+  }
+
+  if (callee === 'createmarkdown') {
+    const arg = namedArg('content');
+    const value = arg?.value;
+    const preview =
+      value?.kind === 'MarkdownLiteral' || value?.kind === 'StringLiteral'
+        ? value.value.replace(/\s+/g, ' ').trim().slice(0, 48)
+        : '';
+    return (
+      <Row className="items-center justify-between gap-2">
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Edit markdown"
+          onPress={(e) => {
+            e.stopPropagation();
+            if (value?.kind === 'MarkdownLiteral') {
+              onEditMarkdown?.(value.value, (next) =>
+                onSetExpression(
+                  {
+                    statementPath: currentPath,
+                    slot: { kind: 'callArg', name: arg?.name ?? 'CONTENT' },
+                    expressionPath: [],
+                  },
+                  {
+                    ...value,
+                    value: next,
+                    variables: value.variables?.filter((variable) =>
+                      getMarkdownVariableNames(next).includes(variable.name)
+                    ),
+                  },
+                  true
+                )
+              );
+            }
+          }}
+          className="border-subtle-border hover:bg-text/10 min-w-0 flex-row items-center gap-1.5 rounded-lg border px-2 py-1">
+          <FileText size={16} color="#4a6a8a" />
+          <Column className="min-w-0 shrink gap-0">
+            <FontText weight="medium" className="text-sm">
+              Markdown
+            </FontText>
+            {preview && (
+              <FontText variant="subtext" className="text-xs" numberOfLines={1}>
+                {preview}
+              </FontText>
+            )}
+          </Column>
+        </Pressable>
+        {onDeleteStatement && <DeleteButton onPress={() => onDeleteStatement(currentPath)} />}
+      </Row>
+    );
+  }
+
+  return (
+    <Row className="items-center justify-between gap-2">
+      <Column className="min-w-0 flex-1 gap-1">
+        <FontText weight="medium" className="text-sm">
+          Divider
+        </FontText>
+        <View className="border-subtle-border border-t" />
+      </Column>
+      {onDeleteStatement && <DeleteButton onPress={() => onDeleteStatement(currentPath)} />}
+    </Row>
+  );
+};
+
+/** Op options shared by the "For All Cells" / "For Cell" block dropdown -
+ *  switching ops is allowed in-place; scope never is (a "For Cell" can't
+ *  turn into a "For All Cells"). */
+const CELL_OP_OPTIONS: { value: CellOpStatement['op']; label: string }[] = [
+  { value: 'add', label: 'Add' },
+  { value: 'remove', label: 'Remove' },
+  { value: 'replace', label: 'Replace With' },
+];
+
 const StatementBlock = ({
   statement,
   index,
@@ -2390,6 +3332,15 @@ const StatementBlock = ({
   onSetComment,
 }: Omit<CanvasProps, 'statements'> & { statement: Statement; index: number }) => {
   const moveTool = React.useContext(MoveToolContext);
+  const fileBlocks = React.useContext(FileBlocksContext);
+  const invalidStatements = React.useContext(InvalidStatementsContext);
+  const flagMessage = React.useContext(StatementFlagMessagesContext)?.get(statement);
+  const cellScope = React.useContext(CellScopeContext);
+  const columnTitles = React.useContext(ColumnTitlesContext);
+  const columnKind = React.useContext(CellColumnKindContext);
+  const tableColumnActions = React.useContext(TableColumnActionsContext);
+  const flagsCtl = useShownFlags();
+  const isInvalidStatement = (invalidStatements?.has(statement) ?? false) || !!flagMessage;
   const currentPath = [...stmtPath!, index];
   const originalPath = moveTool?.getOriginalStatementPath(currentPath) ?? currentPath;
   const contextVariables = definedVariables;
@@ -2403,8 +3354,13 @@ const StatementBlock = ({
       return statement.expression.callee.name;
     if (statement.kind === 'IfStatement') return 'If / Else';
     if (statement.kind === 'ForEachStatement') return `ForEach (${statement.itemName})`;
+    if (statement.kind === 'NavButtonStatement') return 'Nav Button';
+    if (statement.kind === 'DisplayGroupStatement') return 'Display Group';
     if (statement.kind === 'FunctionStatement') return `Function (${statement.name})`;
     if (statement.kind === 'ReturnStatement') return 'Return';
+    if (statement.kind === 'CellOpStatement')
+      return statement.scope === 'cell' ? 'For Cell' : 'For All Cells';
+    if (statement.kind === 'ForEachCellStatement') return 'For each cell';
     return statement.kind;
   })();
   // Category drives the block's color tint (see blockColors.ts).
@@ -2414,19 +3370,21 @@ const StatementBlock = ({
       statement.expression.kind === 'CallExpression' &&
       statement.expression.callee.kind === 'IdentifierExpression'
     ) {
-      const callee = (statement.expression as CallExpression)
-        .callee as IdentifierExpression;
-      return STATEMENT_BLOCKS.find(
-        (block) => block.id.toLowerCase() === callee.name.toLowerCase()
-      )?.category;
+      const callee = (statement.expression as CallExpression).callee as IdentifierExpression;
+      if (isFileCallStatement(statement) || isFileInputStatement(statement)) return 'file';
+      return STATEMENT_BLOCKS.find((block) => block.id.toLowerCase() === callee.name.toLowerCase())
+        ?.category;
     }
-    if (statement.kind === 'IfStatement' || statement.kind === 'ForEachStatement')
-      return 'control';
-    if (statement.kind === 'UpdateCellStatement') return 'table';
+    if (statement.kind === 'IfStatement' || statement.kind === 'ForEachStatement') return 'control';
+    if (statement.kind === 'NavButtonStatement' || statement.kind === 'DisplayGroupStatement')
+      return 'display';
     if (
-      statement.kind === 'OnTagAddedStatement' ||
-      statement.kind === 'OnTagRemovedStatement'
+      statement.kind === 'UpdateCellStatement' ||
+      statement.kind === 'CellOpStatement' ||
+      statement.kind === 'ForEachCellStatement'
     )
+      return 'table';
+    if (statement.kind === 'OnTagAddedStatement' || statement.kind === 'OnTagRemovedStatement')
       return 'control';
     if (statement.kind === 'FunctionStatement' || statement.kind === 'ReturnStatement')
       return 'function';
@@ -2454,11 +3412,47 @@ const StatementBlock = ({
       swapLabel: statementLabel,
       path: currentPath,
       contextVariables,
+      cellScope: cellScope ?? undefined,
     });
   };
   let content: React.ReactNode;
 
-  if (
+  if (fileBlocks && isFileCallStatement(statement)) {
+    content = (
+      <FileCallCard
+        statement={statement}
+        currentPath={currentPath}
+        fileBlocks={fileBlocks}
+        contextVariables={contextVariables}
+        definedVariables={declaredVariableNames}
+        entryKeysBySource={entryKeysBySource}
+        definedFunctions={definedFunctions}
+        onAdd={onAdd}
+        onSetExpression={onSetExpression}
+        onDeleteStatement={onDeleteStatement}
+        onEditMarkdown={onEditMarkdown}
+      />
+    );
+  } else if (
+    fileBlocks &&
+    statement.kind === 'ExpressionStatement' &&
+    statement.expression.kind === 'CallExpression' &&
+    statement.expression.callee.kind === 'IdentifierExpression' &&
+    ['folder', 'createmarkdown', 'createdivider'].includes(
+      statement.expression.callee.name.toLowerCase()
+    )
+  ) {
+    content = (
+      <DisplayCallCard
+        statement={statement}
+        currentPath={currentPath}
+        fileBlocks={fileBlocks}
+        onSetExpression={onSetExpression}
+        onDeleteStatement={onDeleteStatement}
+        onEditMarkdown={onEditMarkdown}
+      />
+    );
+  } else if (
     statement.kind === 'ExpressionStatement' &&
     statement.expression.kind === 'CallExpression' &&
     statement.expression.callee.kind === 'IdentifierExpression'
@@ -2471,6 +3465,29 @@ const StatementBlock = ({
     const namedArguments = call.arguments.filter(
       (argument): argument is NamedArgument => argument.kind === 'NamedArgument'
     );
+    const callFlags: BlockFlag[] = (definition?.inputs ?? [])
+      .filter((input) => input.flag)
+      .map((input) => ({
+        id: input.name,
+        label: input.label,
+        isDefault: callArgMatchesDefault(
+          input,
+          namedArguments.find(
+            (argument) => argument.name.toUpperCase() === input.name.toUpperCase()
+          )
+        ),
+        reset: () =>
+          onSetExpression(
+            {
+              statementPath: currentPath,
+              slot: { kind: 'callArg', name: input.name },
+              expressionPath: [],
+            },
+            { kind: 'NothingLiteral', span },
+            true
+          ),
+      }));
+    const callFlagsByName = new Map(callFlags.map((flag) => [flag.id.toUpperCase(), flag]));
     const renderedArguments = definition
       ? [
           ...definition.inputs.map((input) => ({
@@ -2500,28 +3517,35 @@ const StatementBlock = ({
           <FontText weight="medium" className="text-sm">
             {calleeName}
           </FontText>
-          <DeleteButton onPress={() => onDeleteStatement(currentPath)} />
+          <Row className="items-center gap-2">
+            <BlockFlagsMenu flags={callFlags} ctl={flagsCtl} />
+            <DeleteButton onPress={() => onDeleteStatement(currentPath)} />
+          </Row>
         </Row>
-        {renderedArguments.map(({ argument, input }, argumentIndex) => (
-          <ArgRow
-            key={`${argument.name}-${argumentIndex}`}
-            argument={argument}
-            input={input}
-            location={{
-              statementPath: currentPath,
-              slot: { kind: 'callArg', name: argument.name },
-              expressionPath: [],
-            }}
-            contextVariables={contextVariables}
-            definedVariables={declaredVariableNames}
-            entryKeysBySource={entryKeysBySource}
-            definedFunctions={definedFunctions}
-            blockName={calleeName}
-            onAdd={onAdd}
-            onSetExpression={onSetExpression}
-            onEditMarkdown={onEditMarkdown}
-          />
-        ))}
+        {renderedArguments.map(({ argument, input }, argumentIndex) => {
+          const flag = input?.flag ? callFlagsByName.get(input.name.toUpperCase()) : undefined;
+          if (flag && !flagsCtl.isVisible(flag)) return null;
+          return (
+            <ArgRow
+              key={`${argument.name}-${argumentIndex}`}
+              argument={argument}
+              input={input}
+              location={{
+                statementPath: currentPath,
+                slot: { kind: 'callArg', name: argument.name },
+                expressionPath: [],
+              }}
+              contextVariables={contextVariables}
+              definedVariables={declaredVariableNames}
+              entryKeysBySource={entryKeysBySource}
+              definedFunctions={definedFunctions}
+              blockName={calleeName}
+              onAdd={onAdd}
+              onSetExpression={onSetExpression}
+              onEditMarkdown={onEditMarkdown}
+            />
+          );
+        })}
       </Column>
     );
   } else if (statement.kind === 'IfStatement') {
@@ -2575,10 +3599,7 @@ const StatementBlock = ({
             stmtPath={currentPath}
           />
         </View>
-        <View
-          className="rounded-b-xl p-2"
-          style={{ backgroundColor: blockTint.soft }}
-        />
+        <View className="rounded-b-xl p-2" style={{ backgroundColor: blockTint.soft }} />
       </Column>
     );
   } else if (statement.kind === 'ForEachStatement') {
@@ -2644,10 +3665,128 @@ const StatementBlock = ({
             stmtPath={currentPath}
           />
         </View>
-        <View
-          className="rounded-b-xl p-2"
-          style={{ backgroundColor: blockTint.soft }}
-        />
+        <View className="rounded-b-xl p-2" style={{ backgroundColor: blockTint.soft }} />
+      </Column>
+    );
+  } else if (statement.kind === 'NavButtonStatement') {
+    content = (
+      <Column className="gap-0">
+        <View className="rounded-t-xl p-2" style={{ backgroundColor: blockTint.soft }}>
+          <Column className="gap-2">
+            <Row className="items-center justify-between gap-2">
+              <Row className="items-center gap-2">
+                <FontText weight="medium">Nav Button</FontText>
+                <ChevronRight size={15} color="#1a1a1a" />
+              </Row>
+              <DeleteButton onPress={() => onDeleteStatement(currentPath)} />
+            </Row>
+            <Row className="items-center gap-2">
+              <ExpressionSocket
+                expression={statement.label}
+                location={{
+                  statementPath: currentPath,
+                  slot: { kind: 'navLabel' },
+                  expressionPath: [],
+                }}
+                expectedType="string"
+                contextVariables={contextVariables}
+                entryKeysBySource={entryKeysBySource}
+                definedFunctions={definedFunctions}
+                onAdd={onAdd}
+                onSetExpression={onSetExpression}
+                onEditMarkdown={onEditMarkdown}
+              />
+              <ChevronRight size={17} color="#1a1a1a" />
+            </Row>
+          </Column>
+        </View>
+        <View className="border-subtle-border border-x px-2">
+          <Canvas
+            statements={statement.body.statements}
+            {...{
+              definedVariables,
+              variableNames: declaredVariableNames,
+              definedFunctions,
+              onAdd,
+              onSetExpression,
+              onSetStatementField,
+              onDeleteStatement,
+              entryKeysBySource,
+              onEditMarkdown,
+              isTriggerContext,
+              savedFunctionNames,
+              onSaveFunction,
+              onUnsaveFunction,
+              onLockedFunctionClick,
+              decoupledFunctionNames,
+              onSetComment,
+            }}
+            stmtPath={currentPath}
+          />
+        </View>
+        <View className="rounded-b-xl p-2" style={{ backgroundColor: blockTint.soft }} />
+      </Column>
+    );
+  } else if (statement.kind === 'DisplayGroupStatement') {
+    const namedArguments = statement.arguments.filter(
+      (argument): argument is NamedArgument => argument.kind === 'NamedArgument'
+    );
+    content = (
+      <Column className="gap-0">
+        <View className="rounded-t-xl p-2" style={{ backgroundColor: blockTint.soft }}>
+          <Column className="gap-2">
+            <Row className="items-center justify-between gap-2">
+              <FontText weight="medium">Display Group</FontText>
+              <DeleteButton onPress={() => onDeleteStatement(currentPath)} />
+            </Row>
+            {namedArguments.map((argument) => (
+              <Row key={argument.name} className="items-start gap-2">
+                <FontText variant="subtext" className="pt-1 text-xs">
+                  {argument.name}
+                </FontText>
+                <ExpressionSocket
+                  expression={argument.value}
+                  location={{
+                    statementPath: currentPath,
+                    slot: { kind: 'callArg', name: argument.name },
+                    expressionPath: [],
+                  }}
+                  contextVariables={contextVariables}
+                  entryKeysBySource={entryKeysBySource}
+                  definedFunctions={definedFunctions}
+                  onAdd={onAdd}
+                  onSetExpression={onSetExpression}
+                  onEditMarkdown={onEditMarkdown}
+                />
+              </Row>
+            ))}
+          </Column>
+        </View>
+        <View className="border-subtle-border border-x px-2">
+          <Canvas
+            statements={statement.body.statements}
+            {...{
+              definedVariables,
+              variableNames: declaredVariableNames,
+              definedFunctions,
+              onAdd,
+              onSetExpression,
+              onSetStatementField,
+              onDeleteStatement,
+              entryKeysBySource,
+              onEditMarkdown,
+              isTriggerContext,
+              savedFunctionNames,
+              onSaveFunction,
+              onUnsaveFunction,
+              onLockedFunctionClick,
+              decoupledFunctionNames,
+              onSetComment,
+            }}
+            stmtPath={currentPath}
+          />
+        </View>
+        <View className="rounded-b-xl p-2" style={{ backgroundColor: blockTint.soft }} />
       </Column>
     );
   } else if (statement.kind === 'UpdateCellStatement') {
@@ -2660,6 +3799,24 @@ const StatementBlock = ({
       statement.columnType === 'user'
         ? ['livingState', ...userColumns]
         : ['vote', 'action', 'voteMultiplier', ...dayColumns];
+    const updateCellFlags: BlockFlag[] = [
+      {
+        id: 'allowDuplicates',
+        label: 'Duplicates',
+        isDefault: statement.allowDuplicates !== true,
+        reset: () => onSetStatementField(currentPath, 'allowDuplicates', false),
+      },
+      ...(isTriggerContext
+        ? [
+            {
+              id: 'autoRemove',
+              label: 'When tag removed',
+              isDefault: statement.autoRemove !== false,
+              reset: () => onSetStatementField(currentPath, 'autoRemove', true),
+            },
+          ]
+        : []),
+    ];
     content = (
       <Column className="gap-0">
         {/* Cell selector section (row layout, like normal blocks) */}
@@ -2669,7 +3826,10 @@ const StatementBlock = ({
               <FontText weight="medium" className="text-sm">
                 {isTriggerContext ? 'Update Cell' : 'On Certify => Update Cell'}
               </FontText>
-              <DeleteButton onPress={() => onDeleteStatement(currentPath)} />
+              <Row className="items-center gap-2">
+                <BlockFlagsMenu flags={updateCellFlags} ctl={flagsCtl} />
+                <DeleteButton onPress={() => onDeleteStatement(currentPath)} />
+              </Row>
             </Row>
             {/* Players */}
             <Row className="items-start gap-2">
@@ -2708,7 +3868,8 @@ const StatementBlock = ({
                     onSetStatementField(currentPath, 'columnType', next);
                   }
                 }}
-                triggerClassName="min-w-32 !py-1 !px-2 text-sm"
+                fitContent
+                triggerClassName="!py-1 !px-2 text-sm"
                 isInDialog
                 allowUnselect={false}
               />
@@ -2736,6 +3897,48 @@ const StatementBlock = ({
                 />
               </Row>
             )}
+            {flagsCtl.isVisible(updateCellFlags[0]) && (
+              <Row className="items-start gap-2">
+                <FontText variant="subtext" className="pt-1 text-xs">
+                  Duplicates
+                </FontText>
+                <AppDropdown
+                  options={[
+                    { value: 'prevent', label: 'Prevent duplicates' },
+                    { value: 'allow', label: 'Allow duplicates' },
+                  ]}
+                  value={statement.allowDuplicates ? 'allow' : 'prevent'}
+                  onValueChange={(next) =>
+                    onSetStatementField(currentPath, 'allowDuplicates', next === 'allow')
+                  }
+                  fitContent
+                  triggerClassName="!py-1 !px-2 text-xs"
+                  isInDialog
+                  allowUnselect={false}
+                />
+              </Row>
+            )}
+            {isTriggerContext && updateCellFlags[1] && flagsCtl.isVisible(updateCellFlags[1]) && (
+              <Row className="items-start gap-2">
+                <FontText variant="subtext" className="pt-1 text-xs">
+                  When tag removed
+                </FontText>
+                <AppDropdown
+                  options={[
+                    { value: 'undo', label: 'Undo when tag is removed' },
+                    { value: 'keep', label: 'Keep when tag is removed' },
+                  ]}
+                  value={statement.autoRemove === false ? 'keep' : 'undo'}
+                  onValueChange={(next) =>
+                    onSetStatementField(currentPath, 'autoRemove', next !== 'keep')
+                  }
+                  fitContent
+                  triggerClassName="!py-1 !px-2 text-xs"
+                  isInDialog
+                  allowUnselect={false}
+                />
+              </Row>
+            )}
             {/* Column title dropdown (contextual, like .entry()) with custom mode */}
             <Row className="items-start gap-2">
               <FontText variant="subtext" className="pt-1 text-xs">
@@ -2755,82 +3958,172 @@ const StatementBlock = ({
                 onAdd={onAdd}
                 onSetExpression={onSetExpression}
                 onEditMarkdown={onEditMarkdown}
+                columnScope={
+                  tableColumnActions
+                    ? statement.columnType === 'user'
+                      ? 'user'
+                      : 'day'
+                    : undefined
+                }
+                onCreateColumn={tableColumnActions?.create}
               />
             </Row>
-          </Column>
-        </View>
-        {/* ForEach section (column layout, dark background) */}
-        <View className="p-2" style={{ backgroundColor: blockTint.soft }}>
-          <Column className="gap-2">
-            <Row className="items-center justify-between gap-2">
-              <FontText weight="medium">For each</FontText>
-              <Row className="items-center gap-2">
+            {statement.column.kind === 'StringLiteral' &&
+              ['vote', 'action', 'votemultiplier', 'livingstate'].includes(
+                statement.column.value.toLowerCase()
+              ) && (
                 <FontText variant="subtext" className="text-xs">
-                  cell variable:
+                  This built-in field uses direct values instead of file or tag modules.
                 </FontText>
-                <ReplaceableTextInput
-                  value={statement.itemName}
-                  onChangeText={(value) =>
-                    onSetStatementField(
-                      currentPath,
-                      'itemName',
-                      sanitizeIdentifier(value) || 'cellContents'
-                    )
-                  }
-                  placeholder="cellContents"
-                />
-              </Row>
-            </Row>
+              )}
           </Column>
         </View>
+        {/* Cell-op blocks: the UpdateCell body - "For All Cells" ops and
+            "For each cell" loops insert like normal blocks. */}
         <View className="border-subtle-border border-x px-2">
-          <Canvas
-            statements={statement.body.statements}
-            {...{
-              definedVariables: [statement.itemName, ...definedVariables],
-              variableNames: declaredVariableNames,
-              definedFunctions,
-              onAdd,
-              onSetExpression,
-              onSetStatementField,
-              onDeleteStatement,
-              entryKeysBySource,
-              onEditMarkdown,
-              isTriggerContext,
-              savedFunctionNames,
-              onSaveFunction,
-              onUnsaveFunction,
-              onLockedFunctionClick,
-              decoupledFunctionNames,
-              onSetComment,
-            }}
-            stmtPath={currentPath}
-          />
-          {/* Update with expression — inside the loop body */}
-          <Row className="border-subtle-border items-center gap-2 border-t py-2">
-            <FontText weight="medium">Update with</FontText>
-            <ExpressionSocket
-              expression={statement.updateValue}
-              location={{
-                statementPath: currentPath,
-                slot: { kind: 'updateCellValue' },
-                expressionPath: [],
-              }}
-              expectedType="expression"
-              contextVariables={[statement.itemName, ...contextVariables]}
-              entryKeysBySource={entryKeysBySource}
-              definedFunctions={definedFunctions}
-              onAdd={onAdd}
-              onSetExpression={onSetExpression}
-              onEditMarkdown={onEditMarkdown}
-            />
-          </Row>
+          {statement.column.kind === 'StringLiteral' &&
+          !statement.column.value.trim() &&
+          statement.body.statements.length === 0 ? (
+            <FontText variant="subtext" className="p-2 text-xs">
+              Select a column to add an action.
+            </FontText>
+          ) : (
+            <CellColumnKindContext.Provider
+              value={
+                statement.column.kind === 'StringLiteral'
+                  ? cellColumnKind(columnTitles, statement.columnType, statement.column.value)
+                  : undefined
+              }>
+              <CellScopeContext.Provider value="all">
+                <Canvas
+                  statements={statement.body.statements}
+                  {...{
+                    definedVariables: ['cellContents', ...definedVariables],
+                    variableNames: declaredVariableNames,
+                    definedFunctions,
+                    onAdd,
+                    onSetExpression,
+                    onSetStatementField,
+                    onDeleteStatement,
+                    entryKeysBySource,
+                    onEditMarkdown,
+                    isTriggerContext,
+                    savedFunctionNames,
+                    onSaveFunction,
+                    onUnsaveFunction,
+                    onLockedFunctionClick,
+                    decoupledFunctionNames,
+                    onSetComment,
+                  }}
+                  stmtPath={currentPath}
+                />
+              </CellScopeContext.Provider>
+            </CellColumnKindContext.Provider>
+          )}
         </View>
         {/* Bottom strip (dark background, like ForEach) */}
-        <View
-          className="rounded-b-xl p-2"
-          style={{ backgroundColor: blockTint.soft }}
-        />
+        <View className="rounded-b-xl p-2" style={{ backgroundColor: blockTint.soft }} />
+      </Column>
+    );
+  } else if (statement.kind === 'CellOpStatement') {
+    content = (
+      <Column className="gap-1">
+        <Row className="items-center justify-between gap-2">
+          <Row className="items-center gap-2">
+            <FontText weight="medium" className="text-sm">
+              {statement.scope === 'cell' ? 'For Cell' : 'For All Cells'}
+            </FontText>
+            <AppDropdown
+              options={CELL_OP_OPTIONS.map((option) => ({
+                ...option,
+                disabledReason: cellOperationDisabledReason(
+                  columnKind,
+                  statement.scope,
+                  option.value
+                ),
+              }))}
+              value={statement.op}
+              onValueChange={(next) => {
+                if (next === 'add' || next === 'remove' || next === 'replace') {
+                  onSetStatementField(currentPath, 'op', next);
+                }
+              }}
+              fitContent
+              triggerClassName="!py-1 !px-2 text-sm"
+              isInDialog
+              allowUnselect={false}
+            />
+          </Row>
+          <DeleteButton onPress={() => onDeleteStatement(currentPath)} />
+        </Row>
+        <Row className="items-center gap-2">
+          <ExpressionSocket
+            expression={statement.value}
+            location={{
+              statementPath: currentPath,
+              slot: { kind: 'cellOpValue' },
+              expressionPath: [],
+            }}
+            expectedType="expression"
+            contextVariables={['cellContents', ...contextVariables]}
+            entryKeysBySource={entryKeysBySource}
+            definedFunctions={definedFunctions}
+            onAdd={onAdd}
+            onSetExpression={onSetExpression}
+            onEditMarkdown={onEditMarkdown}
+          />
+        </Row>
+      </Column>
+    );
+  } else if (statement.kind === 'ForEachCellStatement') {
+    content = (
+      <Column className="gap-0">
+        <View className="rounded-t-xl p-2" style={{ backgroundColor: blockTint.soft }}>
+          <Row className="items-center justify-between gap-2">
+            <Row className="items-center gap-2">
+              <FontText weight="medium">For each cell</FontText>
+              <ReplaceableTextInput
+                value={statement.itemName}
+                onChangeText={(value) =>
+                  onSetStatementField(
+                    currentPath,
+                    'itemName',
+                    sanitizeIdentifier(value) || 'cellContents'
+                  )
+                }
+                placeholder="cellContents"
+              />
+            </Row>
+            <DeleteButton onPress={() => onDeleteStatement(currentPath)} />
+          </Row>
+        </View>
+        <View className="border-subtle-border border-x px-2">
+          <CellScopeContext.Provider value="cell">
+            <Canvas
+              statements={statement.body.statements}
+              {...{
+                definedVariables: [statement.itemName, 'cellContents', ...definedVariables],
+                variableNames: declaredVariableNames,
+                definedFunctions,
+                onAdd,
+                onSetExpression,
+                onSetStatementField,
+                onDeleteStatement,
+                entryKeysBySource,
+                onEditMarkdown,
+                isTriggerContext,
+                savedFunctionNames,
+                onSaveFunction,
+                onUnsaveFunction,
+                onLockedFunctionClick,
+                decoupledFunctionNames,
+                onSetComment,
+              }}
+              stmtPath={currentPath}
+            />
+          </CellScopeContext.Provider>
+        </View>
+        <View className="rounded-b-xl p-2" style={{ backgroundColor: blockTint.soft }} />
       </Column>
     );
   } else if (statement.kind === 'OnTagAddedStatement') {
@@ -2868,10 +4161,7 @@ const StatementBlock = ({
             stmtPath={currentPath}
           />
         </View>
-        <View
-          className="rounded-b-xl p-2"
-          style={{ backgroundColor: blockTint.soft }}
-        />
+        <View className="rounded-b-xl p-2" style={{ backgroundColor: blockTint.soft }} />
       </Column>
     );
   } else if (statement.kind === 'OnTagRemovedStatement') {
@@ -2909,10 +4199,7 @@ const StatementBlock = ({
             stmtPath={currentPath}
           />
         </View>
-        <View
-          className="rounded-b-xl p-2"
-          style={{ backgroundColor: blockTint.soft }}
-        />
+        <View className="rounded-b-xl p-2" style={{ backgroundColor: blockTint.soft }} />
       </Column>
     );
   } else if (statement.kind === 'FunctionStatement') {
@@ -2963,28 +4250,30 @@ const StatementBlock = ({
             </Column>
           </View>
           <View className="border-subtle-border border-x px-2">
-            <Canvas
-              statements={bodyStatements}
-              {...{
-                definedVariables: [...statement.parameters, ...definedVariables],
-                variableNames: declaredVariableNames,
-                definedFunctions,
-                onAdd,
-                onSetExpression,
-                onSetStatementField,
-                onDeleteStatement,
-                entryKeysBySource,
-                onEditMarkdown,
-                isTriggerContext,
-                savedFunctionNames,
-                onSaveFunction,
-                onUnsaveFunction,
-                onLockedFunctionClick,
-                decoupledFunctionNames,
-                onSetComment,
-              }}
-              stmtPath={currentPath}
-            />
+            <CellScopeContext.Provider value={null}>
+              <Canvas
+                statements={bodyStatements}
+                {...{
+                  definedVariables: [...statement.parameters, ...definedVariables],
+                  variableNames: declaredVariableNames,
+                  definedFunctions,
+                  onAdd,
+                  onSetExpression,
+                  onSetStatementField,
+                  onDeleteStatement,
+                  entryKeysBySource,
+                  onEditMarkdown,
+                  isTriggerContext,
+                  savedFunctionNames,
+                  onSaveFunction,
+                  onUnsaveFunction,
+                  onLockedFunctionClick,
+                  decoupledFunctionNames,
+                  onSetComment,
+                }}
+                stmtPath={currentPath}
+              />
+            </CellScopeContext.Provider>
           </View>
           <View className="rounded-b-xl p-2" style={{ backgroundColor: blockTint.soft }}>
             <Row className="items-center gap-2">
@@ -3012,6 +4301,34 @@ const StatementBlock = ({
           </View>
         </Column>
       </View>
+    );
+  } else if (statement.kind === 'TagStatement') {
+    // Tag file meta header (files inside the pinned `tags/` folder): the
+    // tag's display name + color. The file's remaining statements are the
+    // on-added trigger script.
+    content = (
+      <Row className="items-center justify-between gap-2">
+        <Row className="items-center gap-2">
+          <FontText weight="medium" className="text-sm">
+            Tag
+          </FontText>
+          <ReplaceableTextInput
+            value={statement.name}
+            onChangeText={(value) => onSetStatementField(currentPath, 'tagName', value)}
+            placeholder="Tag name"
+          />
+          <AppDropdown
+            options={TAG_COLORS.map((c) => ({ value: c.name, label: c.name }))}
+            value={statement.color || TAG_COLORS[0].name}
+            onValueChange={(next) => onSetStatementField(currentPath, 'tagColor', next)}
+            fitContent
+            triggerClassName="!py-1 !px-2 text-sm"
+            isInDialog
+            allowUnselect={false}
+          />
+        </Row>
+        <DeleteButton onPress={() => onDeleteStatement(currentPath)} />
+      </Row>
     );
   } else if (statement.kind === 'ReturnStatement') {
     content = (
@@ -3064,6 +4381,19 @@ const StatementBlock = ({
     onSetComment?.(currentPath, '');
     setIsEditingComment(false);
   };
+
+  // FileInput declarations hoist to the header inputs strip when editing a
+  // file: they keep their AST position (paths stay valid) but render
+  // nothing in the canvas. Top-level only: a FileInput buried in a nested
+  // body isn't a declared input and stays visible.
+  if (
+    fileBlocks?.filePath &&
+    !fileBlocks.showFileInputBlocks &&
+    currentPath.length === 1 &&
+    isFileInputStatement(statement)
+  ) {
+    return null;
+  }
 
   return (
     <View style={{ marginLeft: stmtPath!.length * 12 }}>
@@ -3124,8 +4454,27 @@ const StatementBlock = ({
           onSwap={swapStatement}
           isFunction={isFunction}
           indent={0}
-          tint={blockCategory ? blockTint : undefined}
-          tooltipText={isLockedFunction ? 'Click to edit' : undefined}>
+          tint={
+            isInvalidStatement
+              ? { bg: '#a0303014', soft: '#a0303014', border: '#a03030', solid: '#a03030' }
+              : blockCategory
+                ? blockTint
+                : undefined
+          }
+          tooltipText={
+            isLockedFunction
+              ? 'Click to edit'
+              : isFileCallStatement(statement) && !fileBlocks?.fileOnly
+                ? 'Change file block'
+                : undefined
+          }>
+          {flagMessage && (
+            <View className="mb-1 rounded-md border border-red-800/40 bg-red-800/10 px-2 py-1">
+              <FontText className="text-xs" style={{ color: '#7f1d1d' }}>
+                {flagMessage}
+              </FontText>
+            </View>
+          )}
           {content}
         </Swapable>
       </View>
@@ -3140,6 +4489,11 @@ const StatementBlock = ({
 // a block will look like before they insert it.
 
 const noop = () => {};
+const previewFileBlocks: FileBlocksContextValue = {
+  index: buildFilesIndex({ files: {}, folders: [] }),
+  onRetargetFile: noop,
+  onRetargetFileExpression: noop,
+};
 const noopLocation: ExpressionLocation = {
   statementPath: [0],
   slot: { kind: 'callArg', name: '' },
@@ -3167,53 +4521,58 @@ export const BlockPreview = ({
   definedVariables = [],
   isTriggerContext,
 }: BlockPreviewProps) => {
+  const fileBlocks = React.useContext(FileBlocksContext) ?? previewFileBlocks;
   const allFunctions = useMemo(
     () => [...(definedFunctions ?? []), ...(previewDefinedFunctions ?? [])],
     [definedFunctions, previewDefinedFunctions]
   );
   if (statement) {
     return (
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ flexGrow: 1 }}>
-        <View style={{ pointerEvents: 'none' }}>
-          <StatementBlock
-            statement={statement}
-            index={0}
-            stmtPath={[]}
-            definedVariables={definedVariables}
-            definedFunctions={allFunctions}
-            onAdd={noop}
-            onSetExpression={noop}
-            onSetStatementField={noop}
-            onDeleteStatement={noop}
-            entryKeysBySource={entryKeysBySource}
-            isTriggerContext={isTriggerContext}
-          />
-        </View>
-      </ScrollView>
+      <FileBlocksContext.Provider value={fileBlocks}>
+        <ShadowScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{ flexGrow: 1 }}>
+          <View style={{ pointerEvents: 'none' }}>
+            <StatementBlock
+              statement={statement}
+              index={0}
+              stmtPath={[]}
+              definedVariables={definedVariables}
+              definedFunctions={allFunctions}
+              onAdd={noop}
+              onSetExpression={noop}
+              onSetStatementField={noop}
+              onDeleteStatement={noop}
+              entryKeysBySource={entryKeysBySource}
+              isTriggerContext={isTriggerContext}
+            />
+          </View>
+        </ShadowScrollView>
+      </FileBlocksContext.Provider>
     );
   }
   if (expression) {
     return (
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ flexGrow: 1 }}>
-        <View style={{ pointerEvents: 'none' }}>
-          <ExpressionSocket
-            expression={expression}
-            location={noopLocation}
-            contextVariables={definedVariables}
-            entryKeysBySource={entryKeysBySource}
-            definedFunctions={allFunctions}
-            onAdd={noop}
-            onSetExpression={noop}
-            preview
-          />
-        </View>
-      </ScrollView>
+      <FileBlocksContext.Provider value={fileBlocks}>
+        <ShadowScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{ flexGrow: 1 }}>
+          <View style={{ pointerEvents: 'none' }}>
+            <ExpressionSocket
+              expression={expression}
+              location={noopLocation}
+              contextVariables={definedVariables}
+              entryKeysBySource={entryKeysBySource}
+              definedFunctions={allFunctions}
+              onAdd={noop}
+              onSetExpression={noop}
+              preview
+            />
+          </View>
+        </ShadowScrollView>
+      </FileBlocksContext.Provider>
     );
   }
   return null;
@@ -3230,11 +4589,13 @@ const Canvas = ({
   onDeleteStatement,
   onRenameVariable,
   entryKeysBySource,
+  columnTitles,
   inputSources,
   stmtPath = [],
   onEditMarkdown,
   isTriggerContext,
   gameId,
+  allowTableColumnCreate,
   savedFunctionNames,
   onSaveFunction,
   onUnsaveFunction,
@@ -3242,20 +4603,48 @@ const Canvas = ({
   decoupledFunctionNames,
   onSetComment,
   moveTool,
+  fileBlocks,
+  invalidExpressions,
+  invalidStatements,
+  flagMessages,
 }: CanvasProps) => {
   const inheritedMoveTool = React.useContext(MoveToolContext);
   const inheritedRenameVariable = React.useContext(VariableRenameContext);
+  const inheritedFileBlocks = React.useContext(FileBlocksContext);
+  const inheritedInvalidExpressions = React.useContext(InvalidExpressionsContext);
+  const inheritedInvalidStatements = React.useContext(InvalidStatementsContext);
+  const inheritedFlagMessages = React.useContext(StatementFlagMessagesContext);
+  /** Insert-zone context: provided by the UpdateCell / For-each-cell cards
+   *  around their nested canvases - the block selector reads it to offer
+   *  "For All Cells" / "For Cell" ops. */
+  const cellScope = React.useContext(CellScopeContext);
   const activeMoveTool = moveTool ?? inheritedMoveTool;
   const activeRenameVariable = onRenameVariable ?? inheritedRenameVariable;
+  const activeFileBlocks = fileBlocks ?? inheritedFileBlocks;
+  const activeInvalidExpressions = invalidExpressions ?? inheritedInvalidExpressions;
+  const activeInvalidStatements = invalidStatements ?? inheritedInvalidStatements;
+  const activeFlagMessages = flagMessages ?? inheritedFlagMessages;
   // Only load tag definitions at the root level (stmtPath is empty).
   // Nested Canvas instances inherit the context from the root.
   const isRoot = stmtPath.length === 0;
+  const createExtraColumn = useCreateExtraColumn(gameId, isRoot && !!allowTableColumnCreate);
   const tagDefsKey = gameId && isRoot ? getGameScopedKey('tagDefinitions', gameId) : null;
   const [tagDefs, setTagDefs] = useValue<TagDefinitionsData>(tagDefsKey ?? '__no-game__', {
     defaultValue: [],
     privacy: 'PUBLIC',
   });
   const tagDefinitions = tagDefs?.value ?? [];
+
+  // In file mode, top-level FileInput statements render nothing (they live
+  // in the header inputs strip); the insert target *before* one would be a
+  // duplicate of the target after the previous visible statement.
+  const hiddenStatementAt = (i: number) =>
+    !!activeFileBlocks?.filePath &&
+    !activeFileBlocks.showFileInputBlocks &&
+    stmtPath.length === 0 &&
+    i >= 0 &&
+    i < statements.length &&
+    isFileInputStatement(statements[i]);
 
   const inner = (
     <VariableRenameContext.Provider value={activeRenameVariable}>
@@ -3266,12 +4655,23 @@ const Canvas = ({
               {activeMoveTool?.getBlockMarkers(stmtPath, 0).map((number) => (
                 <MoveNumberMarker key={`move-${number}`} number={number} />
               ))}
-              <PuzzleConnector
-                direction="vertical"
-                tooltip="Add block"
-                placeTarget={{ kind: 'block', path: [...stmtPath, 0] }}
-                onPress={() => onAdd({ kind: 'statement', path: [...stmtPath, 0] })}
-              />
+              {/* The insert target directly above a hidden FileInput would
+                  float mid-air: statements insert before it, but the input
+                  conceptually lives at the top. */}
+              {!hiddenStatementAt(0) && (
+                <PuzzleConnector
+                  direction="vertical"
+                  tooltip="Add block"
+                  placeTarget={{ kind: 'block', path: [...stmtPath, 0] }}
+                  onPress={() =>
+                    onAdd({
+                      kind: 'statement',
+                      path: [...stmtPath, 0],
+                      cellScope: cellScope ?? undefined,
+                    })
+                  }
+                />
+              )}
             </>
           )}
           {statements.map((statement, index) => (
@@ -3301,12 +4701,20 @@ const Canvas = ({
                 decoupledFunctionNames={decoupledFunctionNames}
                 onSetComment={onSetComment}
               />
-              <PuzzleConnector
-                direction="vertical"
-                tooltip="Add block"
-                placeTarget={{ kind: 'block', path: [...stmtPath, index + 1] }}
-                onPress={() => onAdd({ kind: 'statement', path: [...stmtPath, index + 1] })}
-              />
+              {!hiddenStatementAt(index + 1) && (
+                <PuzzleConnector
+                  direction="vertical"
+                  tooltip="Add block"
+                  placeTarget={{ kind: 'block', path: [...stmtPath, index + 1] }}
+                  onPress={() =>
+                    onAdd({
+                      kind: 'statement',
+                      path: [...stmtPath, index + 1],
+                      cellScope: cellScope ?? undefined,
+                    })
+                  }
+                />
+              )}
             </React.Fragment>
           ))}
           {statements.length > 0 &&
@@ -3317,33 +4725,42 @@ const Canvas = ({
             activeMoveTool
               ?.getBlockMarkers(stmtPath, 0)
               .map((number) => <MoveNumberMarker key={`move-${number}`} number={number} />)}
-          {statements.length === 0 && (
-            <Pressable
-              accessibilityRole="button"
-              disabled={
-                !!activeMoveTool &&
-                (activeMoveTool.phase !== 'place' || activeMoveTool.category !== 'block')
-              }
-              onPress={() => {
-                if (activeMoveTool?.phase === 'place' && activeMoveTool.category === 'block') {
-                  activeMoveTool.onPlaceBlock([...stmtPath, 0]);
-                } else if (!activeMoveTool) {
-                  onAdd({ kind: 'statement', path: [...stmtPath, 0] });
+          {statements.length === 0 &&
+            (activeFileBlocks?.emptyState ? (
+              <Column className="flex-1 items-center justify-center py-8">
+                {activeFileBlocks.emptyState}
+              </Column>
+            ) : (
+              <Pressable
+                accessibilityRole="button"
+                disabled={
+                  !!activeMoveTool &&
+                  (activeMoveTool.phase !== 'place' || activeMoveTool.category !== 'block')
                 }
-              }}>
-              <View
-                className={`my-2 h-10 w-full flex-row items-center justify-center gap-2 rounded-xl border border-dashed ${
-                  activeMoveTool?.phase === 'place' && activeMoveTool.category === 'block'
-                    ? 'border-green-800 bg-green-700'
-                    : 'border-subtle-border bg-transparent'
-                } ${activeMoveTool && (activeMoveTool.phase !== 'place' || activeMoveTool.category !== 'block') ? 'opacity-30' : ''}`}>
-                <FontText className="text-text/40 text-sm">+</FontText>
-                <FontText variant="subtext" className="text-sm">
-                  press to add a block
-                </FontText>
-              </View>
-            </Pressable>
-          )}
+                onPress={() => {
+                  if (activeMoveTool?.phase === 'place' && activeMoveTool.category === 'block') {
+                    activeMoveTool.onPlaceBlock([...stmtPath, 0]);
+                  } else if (!activeMoveTool) {
+                    onAdd({
+                      kind: 'statement',
+                      path: [...stmtPath, 0],
+                      cellScope: cellScope ?? undefined,
+                    });
+                  }
+                }}>
+                <View
+                  className={`my-2 h-10 w-full flex-row items-center justify-center gap-2 rounded-xl border border-dashed ${
+                    activeMoveTool?.phase === 'place' && activeMoveTool.category === 'block'
+                      ? 'border-green-800 bg-green-700'
+                      : 'border-subtle-border bg-transparent'
+                  } ${activeMoveTool && (activeMoveTool.phase !== 'place' || activeMoveTool.category !== 'block') ? 'opacity-30' : ''}`}>
+                  <FontText className="text-text/40 text-sm">+</FontText>
+                  <FontText variant="subtext" className="text-sm">
+                    press to add a block
+                  </FontText>
+                </View>
+              </Pressable>
+            ))}
         </Column>
       </InputSourcesContext.Provider>
     </VariableRenameContext.Provider>
@@ -3355,13 +4772,32 @@ const Canvas = ({
   }
 
   // Root Canvas: provide tag definitions context + render tag manager modal
-  return (
-    <MoveToolContext.Provider value={activeMoveTool}>
-      <TagDefinitionsContext.Provider value={{ definitions: tagDefinitions, gameId }}>
-        {inner}
-        <TagManagerModal gameId={gameId} tagDefinitions={tagDefinitions} setTagDefs={setTagDefs} />
-      </TagDefinitionsContext.Provider>
-    </MoveToolContext.Provider>
+  const root = (
+    <ColumnTitlesContext.Provider value={columnTitles}>
+      <TableColumnActionsContext.Provider
+        value={allowTableColumnCreate && gameId ? { create: createExtraColumn } : null}>
+        <MoveToolContext.Provider value={activeMoveTool}>
+          <FileBlocksContext.Provider value={activeFileBlocks}>
+            <InvalidExpressionsContext.Provider value={activeInvalidExpressions}>
+              <InvalidStatementsContext.Provider value={activeInvalidStatements}>
+                <StatementFlagMessagesContext.Provider value={activeFlagMessages}>
+                  {inner}
+                </StatementFlagMessagesContext.Provider>
+              </InvalidStatementsContext.Provider>
+            </InvalidExpressionsContext.Provider>
+          </FileBlocksContext.Provider>
+        </MoveToolContext.Provider>
+      </TableColumnActionsContext.Provider>
+    </ColumnTitlesContext.Provider>
+  );
+  return gameId ? (
+    <TagLibraryProvider gameId={gameId} definitions={tagDefinitions} setDefinitions={setTagDefs}>
+      {root}
+    </TagLibraryProvider>
+  ) : (
+    <TagDefinitionsContext.Provider value={{ definitions: tagDefinitions }}>
+      {root}
+    </TagDefinitionsContext.Provider>
   );
 };
 

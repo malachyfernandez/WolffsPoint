@@ -15,6 +15,9 @@ import JoinHandler from './ui/forms/JoinHandler';
 import FadeInAfterDelay from './ui/loading/FadeInAfterDelay';
 import LoadingContainer from './ui/loading/LoadingContainer';
 import { SimProfiler } from '../sim/perf/SimProfiler';
+import SimSwitcher from './game/sim/SimSwitcher';
+import SimTopActions from './game/sim/SimTopActions';
+import { simSidebarExpandedKey } from '../utils/simUtils';
 
 
 
@@ -72,8 +75,41 @@ const MainPage: React.FC<MainPageProps> = ({
 
     const setUserListItem = useListSet();
     const isInAGame = activeGameId.value !== "";
+    const isActiveGameMine = useMemo(
+        () => (myGames ?? []).some((record) => record.value?.id === activeGameId.value),
+        [myGames, activeGameId.value]
+    );
     const currentScreen: ScreenState = isInAGame ? 'game' : 'allGames';
-    // Defer the screen swap so mounting GamePage is a non-urgent render —
+
+    // Sidebar rail state is persisted per game (like the sim session) so a
+    // reload restores expanded/collapsed. Subscribed here so the screen gate
+    // below can wait for it - the sidebar must never pop in after the game
+    // content is already painted, or everything shifts sideways.
+    const [sidebarExpandedRecord, setSidebarExpanded] = useValue<boolean>(
+        simSidebarExpandedKey(activeGameId.value),
+        { defaultValue: false, privacy: 'PUBLIC', enabled: isActiveGameMine }
+    );
+    const sidebarExpanded = sidebarExpandedRecord.value ?? false;
+    // Latch "settled" per game: once the initial fetch lands the gate stays
+    // open, so pref writes (collapse toggles re-entering isSyncing) don't
+    // flash the whole screen back to loading.
+    const [sidebarPrefLoadedFor, setSidebarPrefLoadedFor] = useState<string | null>(null);
+    useEffect(() => {
+        if (
+            isActiveGameMine &&
+            sidebarExpandedRecord.state?.isSyncing === false &&
+            sidebarPrefLoadedFor !== activeGameId.value
+        ) {
+            setSidebarPrefLoadedFor(activeGameId.value);
+        }
+    }, [
+        isActiveGameMine,
+        sidebarExpandedRecord.state?.isSyncing,
+        sidebarPrefLoadedFor,
+        activeGameId.value,
+    ]);
+    const sidebarPrefLoaded = !isActiveGameMine || sidebarPrefLoadedFor === activeGameId.value;
+    // Defer the screen swap so mounting GamePage is a non-urgent render:
     // React can yield between commits instead of delivering the whole mount
     // as one multi-second frame (measured 2.4s on iOS Safari).
     const deferredScreen: ScreenState = useDeferredValue(currentScreen);
@@ -91,15 +127,44 @@ const MainPage: React.FC<MainPageProps> = ({
 
     return (
         <>
-            <View className='w-screen h-screen p-safe'>
+            <View className='w-screen h-screen p-safe flex-row'>
 
-
+                {/* The sim sidebar is inside this gate (in layout flow) so it
+                 *  mounts together with the game content at its real persisted
+                 *  width - dependencies cover game id, game ownership (decides
+                 *  whether a sidebar exists at all) and the expanded pref. */}
                 <LoadingContainer
-                    dependencies={[activeGameId]}
+                    dependencies={[activeGameId, myGames, sidebarPrefLoaded]}
                     loadingText="Loading"
                     className='flex-1'
                     keepMounted={false}
                 >
+                    <View className='flex-1 flex-row'>
+                    {visibleScreen === 'game' && isActiveGameMine && (
+                        <SimSwitcher
+                            gameId={activeGameId.value}
+                            isOperator={true}
+                            expanded={sidebarExpanded}
+                            onExpandedChange={setSidebarExpanded}
+                        />
+                    )}
+
+                    {/* Out-of-sim session actions: a self-contained float in
+                     *  the top-left (level with the top-right code chip), its
+                     *  own bounded item so it never spans the bar and eats bg
+                     *  clicks. The width cap makes END wrap under ENTER as
+                     *  the screen narrows. */}
+                    {visibleScreen === 'game' && isActiveGameMine && isGameBodyReady && (
+                        <View
+                            className='absolute left-4 top-6 z-10'
+                            style={{ maxWidth: '55%' }}>
+                            <SimTopActions
+                                gameId={activeGameId.value}
+                                isOperator={true}
+                            />
+                        </View>
+                    )}
+
                     <LayoutStateAnimatedView.Container stateVar={visibleScreen} className='flex-1'>
                         <LayoutStateAnimatedView.Option page={1} stateValue='allGames'>
                             <SimProfiler id="screen:allGames">
@@ -124,6 +189,7 @@ const MainPage: React.FC<MainPageProps> = ({
                             </LayoutStateAnimatedView.Option>
                         </LayoutStateAnimatedView.OptionContainer>
                     </LayoutStateAnimatedView.Container>
+                    </View>
                 </LoadingContainer>
 
 
