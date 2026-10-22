@@ -9,6 +9,7 @@
     "lint": "eslint \"**/*.{js,jsx,ts,tsx}\" && prettier -c \"**/*.{js,jsx,ts,tsx,json}\"",
     "format": "eslint \"**/*.{js,jsx,ts,tsx}\" --fix && prettier \"**/*.{js,jsx,ts,tsx,json}\" --write",
     "version:bump": "node scripts/bump-version.mjs",
+    "version:publish": "node scripts/publish-version.mjs",
     "web": "expo start --web",
     "test:cell-modules": "node scripts/test-cell-modules.mjs",
     "test:display-modules": "node scripts/test-cell-modules.mjs scripts/displayModules.test.ts",

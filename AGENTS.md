@@ -231,18 +231,19 @@ The app can prompt connected clients to reload when a newer version is released.
 
 ### How to increment the version (only when told to)
 
-A bump has TWO halves, `npm run version:bump` does both:
-
-1. `CLIENT_VERSION` increments in `utils/appVersion.ts` (bakes into the next deployed bundle).
-2. `latestClientVersion` is pushed to a Convex deployment: **dev and prod are separate databases**.
+A bump has two halves: `CLIENT_VERSION` increments in `utils/appVersion.ts` (bakes into the next deployed bundle), and `latestClientVersion` is pushed to a Convex deployment — **dev and prod are separate databases**.
 
 ```bash
-npm run version:bump               # bump file + push to dev Convex
-npm run version:bump -- --prod     # bump file + push to production Convex
+npm run version:bump               # bump file + push to dev Convex immediately
+npm run version:bump -- --prod     # bump file only — prod publishes separately
 npm run version:bump -- --no-push  # bump the file only
+npm run version:bump -- --prod --push  # bump + push to prod NOW (old behavior;
+                                   # clients may reload into the old bundle)
+npm run version:publish -- --prod  # wait for Vercel to serve the new bundle,
+                                   # then push latestClientVersion to prod
 ```
 
-For a prod release: run `npm run version:bump -- --prod`, commit, and let the frontend deploy (git push → Vercel). Connected clients get the prompt when the global lands; reloading pulls the new bundle once the deploy is live and the notice clears. Manual equivalent: `npx convex run --prod globals:set '{"key":"latestClientVersion","value":<N>}'`.
+For a prod release: `npm run version:bump -- --prod`, commit, push (git push → Vercel deploys), then `npm run version:publish -- --prod`. Publishing the global BEFORE Vercel finishes prompts clients to reload into the old bundle, so `version:publish` polls `wolffspoint.malachyf.com` until its index.html reports `wp-client-version >= CLIENT_VERSION` (the meta tag is stamped post-export by `scripts/stamp-version.mjs` via vercel.json's buildCommand; `--no-wait` skips the check, `--url`/`SITE_URL` overrides the site). Manual equivalent: `npx convex run --prod globals:set '{"key":"latestClientVersion","value":<N>}'`.
 
 Full details: `utils/about-parts-of-this-codebase/versioning-system.md`.
 
