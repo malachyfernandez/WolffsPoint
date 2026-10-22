@@ -20,7 +20,7 @@
  *
  * See utils/about-parts-of-this-codebase/versioning-system.md for details.
  */
-export const CLIENT_VERSION = 3;
+export const CLIENT_VERSION = 4;
 
 /** Key in the Convex `globals` table holding the newest released client version. */
 export const LATEST_VERSION_GLOBAL_KEY = 'latestClientVersion';
