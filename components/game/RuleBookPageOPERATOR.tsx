@@ -17,6 +17,7 @@ import CellFilesEditorDialog from './scriptFiles/CellFilesEditorDialog';
 import RuleBookRoleDescriptions from './RuleBookRoleDescriptions';
 import TableOfContentsDialog from './ruleBook/TableOfContentsDialog';
 import StickyTocButton from './ruleBook/StickyTocButton';
+import PrintRule from '../ui/PrintRule';
 import { RuleBookData } from 'types/ruleBook';
 import { RoleTableItem } from 'types/roleTable';
 import { evaluateMarkdownDocument } from 'utils/markdownDocument';
@@ -100,7 +101,7 @@ const RuleBookPageOPERATOR = ({ gameId, onBack }: RuleBookPageOPERATORProps) => 
                 }
                 variant="styled"
                 weight="bold"
-                className={`w-full ${HEADING_1_CLASS}`}
+                className={`w-full ${HEADING_1_CLASS} uppercase tracking-wider`}
               />
             </View>
             <AppButton
@@ -110,38 +111,24 @@ const RuleBookPageOPERATOR = ({ gameId, onBack }: RuleBookPageOPERATORProps) => 
               <FontText weight="medium">Edit rule book</FontText>
             </AppButton>
           </Row>
-          {displayModules ? (
-            <Column className="bg-text/5 min-h-[220px] flex-1 gap-4 rounded-3xl p-4">
-              {activeSource.trim().length > 0 ? (
-                <InputOptionsProvider gameId={gameId} showInputs={false}>
-                  <MarkdownRenderer
-                    markdown={renderedMarkdown}
-                    headingIdPrefix={headingIdPrefix}
-                    documentNodes={modularDocument?.nodes}
-                    navigationRequest={navigationRequest ?? undefined}
-                  />
-                </InputOptionsProvider>
-              ) : (
-                <Column className="min-h-[180px] items-center justify-center gap-4">
-                  <FontText variant="subtext">No rule book written yet.</FontText>
-                </Column>
-              )}
-            </Column>
-          ) : (
-            <Pressable
-              onPress={() => setIsEditDialogOpen(true)}
-              className="bg-text/5 min-h-[220px] flex-1 rounded-3xl p-4">
-              {activeSource.trim().length > 0 ? (
-                <InputOptionsProvider gameId={gameId} showInputs={false}>
-                  <MarkdownRenderer markdown={renderedMarkdown} headingIdPrefix={headingIdPrefix} />
-                </InputOptionsProvider>
-              ) : (
-                <Column className="min-h-[180px] items-center justify-center gap-4">
-                  <FontText variant="subtext">No rule book written yet. Tap to edit.</FontText>
-                </Column>
-              )}
-            </Pressable>
-          )}
+          {/* Same presentation as the player rule book: print rule, then the
+              document with no card container. Editing goes through the
+              button, so the content is inert here. */}
+          <PrintRule />
+          <Column className="gap-2">
+            {activeSource.trim().length > 0 ? (
+              <InputOptionsProvider gameId={gameId} showInputs={false}>
+                <MarkdownRenderer
+                  markdown={renderedMarkdown}
+                  headingIdPrefix={headingIdPrefix}
+                  documentNodes={modularDocument?.nodes}
+                  navigationRequest={navigationRequest ?? undefined}
+                />
+              </InputOptionsProvider>
+            ) : (
+              <FontText variant="subtext">No rule book written yet.</FontText>
+            )}
+          </Column>
         </Column>
 
         {!displayModules && (
