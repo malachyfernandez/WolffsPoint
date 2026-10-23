@@ -228,12 +228,12 @@ const NightlyCertificationDialog = ({
           <ConvexDialog.Content className="max-w-sm p-4">
             <CloseButton onPress={() => setResolveMenu(null)} />
             <DialogHeader
-              text={`Resolve conflicts — ${resolveMenu?.type === 'votes' ? 'votes' : 'actions'}`}
+              text={`Resolve conflicts - ${resolveMenu?.type === 'votes' ? 'votes' : 'actions'}`}
               subtext={
                 resolveMenu === null || resolveMenu.count === null
                   ? 'Pick which side wins any conflicts this certification runs into.'
                   : resolveMenu.count === 0
-                    ? 'No conflicts detected — this certifies the same as the main button.'
+                    ? 'No conflicts detected - this certifies the same as the main button.'
                     : `${resolveMenu.count} conflict${
                         resolveMenu.count === 1 ? ' clashes' : 's clash'
                       } with existing table content. Pick one side for all of them.`

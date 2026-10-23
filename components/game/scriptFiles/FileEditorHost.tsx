@@ -44,7 +44,7 @@ const FileEditorHost = ({ gameId, children }: { gameId: string; children: React.
       const existing = prev.find((e) => e.fileId === fileId);
       if (existing) {
         // Fresh opts (e.g. a move hand-off) must still reach an already-open
-        // editor for this file — merge instead of dropping them.
+        // editor for this file - merge instead of dropping them.
         if (existing.isOpen) {
           if (!opts) return prev;
           return prev.map((e) => (e.key === existing.key ? { ...e, opts } : e));

@@ -398,7 +398,7 @@ const PlayerPageContent = ({ currentUserId, gameId }: PlayerPageOPERATORProps) =
   };
 
   // Conflict count for the certify split-button's resolve screen. Null when
-  // the planner can't run (busy/syncing) — the screen still offers choices.
+  // the planner can't run (busy/syncing) - the screen still offers choices.
   const countCertificationConflicts = (type: 'votes' | 'actions'): number | null => {
     if (certificationBusy || isSyncing || filesLoading || submissionRecords === undefined)
       return null;
@@ -463,7 +463,7 @@ const PlayerPageContent = ({ currentUserId, gameId }: PlayerPageOPERATORProps) =
           return;
         }
         // Auto-resolve: pick the same side for every conflict, re-planning
-        // until stable — a first-pass choice can reveal secondary conflicts
+        // until stable - a first-pass choice can reveal secondary conflicts
         // that get the same treatment.
         const choices: LiveChoices = {};
         for (let pass = 0; pass < 25; pass++) {

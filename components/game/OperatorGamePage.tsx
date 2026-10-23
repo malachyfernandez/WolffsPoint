@@ -79,7 +79,7 @@ const OperatorGamePage = ({ gameId, currentUserId }: OperatorGamePageProps) => {
   const handleTabPress = useCallback(
     (tab: OperatorTab) => {
       if (tab === 'files' && filesDisabled) {
-        showToast('Files unlock after upgrading this game — see "Upgrade to files" in Config.');
+        showToast('Files unlock after upgrading this game - see "Upgrade to files" in Config.');
         return;
       }
       // Non-urgent update: keeps taps responsive while a heavy cold tab mounts.

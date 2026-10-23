@@ -17,6 +17,7 @@
     "test:file-diagnostics": "node scripts/test-cell-modules.mjs scripts/fileDiagnostics.test.ts",
     "test:cell-columns": "node scripts/test-cell-modules.mjs scripts/updateCellColumns.test.ts",
     "test:file-inputs": "node scripts/test-cell-modules.mjs scripts/fileInputCleanup.test.ts",
+    "test:folder-archive": "node scripts/test-cell-modules.mjs scripts/folderArchive.test.ts",
     "test:tag-cleanup": "node scripts/test-cell-modules.mjs scripts/deletedTagCleanup.test.ts",
     "test:file-inputs-ui": "node scripts/test-file-input-cleanup-ui.mjs",
     "test:add-content-ui": "node scripts/probe-add-content-layout-ui.mjs",
@@ -36,7 +37,8 @@
     "test:move-to-file-ui": "node scripts/probe-move-to-file-ui.mjs",
     "test:island-move-to-file-ui": "node scripts/probe-island-move-to-file-ui.mjs",
     "test:certify-resolve-ui": "node scripts/probe-certify-resolve-ui.mjs",
-    "test:files-tab-gating-ui": "node scripts/probe-files-tab-gating-ui.mjs"
+    "test:files-tab-gating-ui": "node scripts/probe-files-tab-gating-ui.mjs",
+    "test:folder-archive-ui": "node scripts/probe-folder-archive-ui.mjs"
   },
   "dependencies": {
     "@clerk/clerk-expo": "^2.19.17",

@@ -99,7 +99,7 @@ const VoteEnableDialog = ({
   };
 
   // Reset commits the staged vote toggle too: whatever the dialog shows is
-  // what persists. Confirmed first — the custom message is deleted.
+  // what persists. Confirmed first - the custom message is deleted.
   const handleResetToDefault = () => {
     onSetDoesRoleVote(canVote);
     onResetMessage?.();

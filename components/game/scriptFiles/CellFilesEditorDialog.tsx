@@ -79,7 +79,7 @@ export interface CellFilesEditorDialogProps {
   /** Cell identity for the file-list stage's save history, stored under a
    *  `cellFiles:` prefix so its `{scriptText}` entries never mix with the
    *  legacy markdown editor's entries. Defaults to
-   *  `legacyEditorProps.historyKey` — most callers get history for free. */
+   *  `legacyEditorProps.historyKey` - most callers get history for free. */
   historyKey?: string;
   /** Forwarded to the legacy markdown editor when the user keeps old content. */
   legacyEditorProps?: Omit<

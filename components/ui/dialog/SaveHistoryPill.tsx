@@ -14,7 +14,7 @@ interface SaveHistoryPillProps {
   onSave: () => void;
   onOpenHistory: () => void;
   hasMinimizeButton?: boolean;
-  /** When false the history half is hidden and Save fills the pill — for
+  /** When false the history half is hidden and Save fills the pill - for
    *  editors with save but no history backing (avoids a dead button). */
   hasHistoryButton?: boolean;
 }

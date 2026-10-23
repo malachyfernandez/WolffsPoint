@@ -31,6 +31,7 @@ import {
 } from '../utils/scriptFiles';
 import { foldCellForResolve, previewCellText } from '../utils/cellPieces';
 import { adoptFolderIdentities, repathFolderIdentities } from '../utils/scriptFolderIdentity';
+import { planFolderImport, type FolderArchivePayload } from '../utils/scriptFolderArchive';
 import { useCellModuleStatus, useSharedCellModuleStatus } from '../utils/legacySystems';
 import { useSimEditWarning } from '../contexts/SimEditWarningContext';
 
@@ -508,6 +509,37 @@ export function useScriptFiles(gameId: string | undefined) {
     [index]
   );
 
+  /** Import a folder archive under `destParent` as a new folder (merging into
+   *  the pinned folder when the exported root name collides with one). The
+   *  planner remaps ids + rewrites internal refs; here we commit atomically. */
+  const importFolderTree = useCallback(
+    (
+      payload: FolderArchivePayload,
+      destParent: string
+    ): { rootPath: string; fileCount: number } => {
+      const plan = planFolderImport(payload, docRef.current, destParent);
+      const folders = new Map(
+        docRef.current.folders.map((f) => [
+          normalizeFilePath(f).toLowerCase(),
+          normalizeFilePath(f),
+        ])
+      );
+      for (const f of plan.folders) folders.set(f.toLowerCase(), f);
+      // Identities merged before folder materialization so adoption validates
+      // them instead of minting throwaway aliases.
+      let next: ScriptFilesDoc = {
+        ...docRef.current,
+        folders: [...folders.values()],
+        folderIds: { ...docRef.current.folderIds, ...plan.folderIds },
+      };
+      next = docWithFolder(next, plan.rootPath);
+      for (const file of plan.files) next = docWithFile(next, file);
+      commitNew(next);
+      return { rootPath: plan.rootPath, fileCount: plan.files.length };
+    },
+    [commitNew]
+  );
+
   const identifyFolder = useCallback(
     (folder: string): { id: string; path: string } | null => {
       const current = buildFilesIndex(docRef.current);
@@ -548,5 +580,6 @@ export function useScriptFiles(gameId: string | undefined) {
     copyFileInto,
     copyFolderInto,
     suggestName,
+    importFolderTree,
   };
 }

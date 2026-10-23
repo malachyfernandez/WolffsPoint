@@ -60,7 +60,7 @@ export const CellHighlight = ({ active }: { active: boolean }) => {
     anim.start(({ finished }) => {
       if (finished) setShown(false);
     });
-    // Bounded scroll: the cell may live in a horizontally-scrolling table —
+    // Bounded scroll: the cell may live in a horizontally-scrolling table -
     // plain scrollIntoView would drag the whole page sideways to reach it.
     const scroll = () => {
       const el = ref.current as unknown as HTMLElement | null;

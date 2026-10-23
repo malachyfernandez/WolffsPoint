@@ -20,7 +20,11 @@ const pinnedIds: Readonly<Record<string, string>> = {
 };
 
 const normalize = (path: string) =>
-  path.split('/').map((part) => part.trim()).filter(Boolean).join('/');
+  path
+    .split('/')
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .join('/');
 
 export interface FolderIdentityIndex {
   byId: Map<string, string>;
@@ -78,6 +82,11 @@ export const buildFolderIdentityIndex = (
 export const makeFolderId = (): string =>
   `folder_${nowMs().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
 
+/** Reserved ids belong to the pinned top-level folders only - adopting one
+ *  for an ordinary folder is rejected by `buildFolderIdentityIndex`. */
+export const isReservedFolderId = (id: string): boolean =>
+  (Object.values(pinnedIds) as string[]).includes(id);
+
 /** Assign IDs on an explicit mutation, preserving all previously assigned IDs. */
 export const adoptFolderIdentities = (
   doc: ScriptFilesDoc,
@@ -111,7 +120,8 @@ export const adoptFolderIdentities = (
   if (
     JSON.stringify(folderIds) === JSON.stringify(doc.folderIds) &&
     JSON.stringify(nextFolders) === JSON.stringify(doc.folders)
-  ) return doc;
+  )
+    return doc;
   return { ...doc, folders: nextFolders, folderIds };
 };
 

@@ -328,7 +328,7 @@ const RoleRow = ({
           itemName={role.role || 'this role'}
           additionalMessage={
             displayModules
-              ? "The role's About file stays in the aboutRole folder — remove or hide it in the rule book composition separately."
+              ? "The role's About file stays in the aboutRole folder - remove or hide it in the rule book composition separately."
               : undefined
           }
         />

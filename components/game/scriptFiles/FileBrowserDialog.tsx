@@ -15,8 +15,10 @@ import {
   Eye,
   FileText,
   Folder,
+  FolderDown,
   FolderInput,
   FolderPlus,
+  FolderUp,
   List,
   MousePointer,
   MousePointerClick,
@@ -72,6 +74,12 @@ import DragArea, { type DragPointerInfo } from '../../ui/drag/DragArea';
 import { hideCursorFollower, showCursorFollower, useCursorFollower } from '../../ui/cursorFollower';
 import { WebDropdownPortal } from '../../../contexts/WebDropdownProvider';
 import { useValue } from '../../../hooks/useData';
+import { useToast } from '../../../contexts/ToastContext';
+import {
+  downloadFolderZip,
+  pickFolderZipFile,
+  readFolderZip,
+} from '../../../utils/scriptFolderZip';
 import { useContentWidth } from '../../../hooks/useContentWidth';
 import { useKeyboardShortcuts } from '../../../hooks/useKeyboardShortcuts';
 import type { useScriptFiles } from '../../../hooks/useScriptFiles';
@@ -346,6 +354,7 @@ export const FileBrowserContent = ({
   defaultFileRole,
   fileKinds,
 }: FileBrowserContentProps) => {
+  const { showToast } = useToast();
   const [currentFolder, setCurrentFolder] = useState('');
   /** 'list' = current card list (with disclosure triangles); 'columns' =
    *  macOS column view. Persisted per user so the choice survives reloads. */
@@ -1230,6 +1239,37 @@ export const FileBrowserContent = ({
 
   /** "New …" menu entries targeting `folder` - shared by the column headers
    *  and the right-click menus. */
+  // ------------------------------------------------------ folder archives
+
+  /** Download `folder`'s whole subtree as a `.folder.zip` archive. */
+  const handleDownloadFolder = (folder: string) => {
+    downloadFolderZip(filesApi.doc, folder)
+      .then((name) => showToast(`Downloaded "${name}" as a folder archive`))
+      .catch((error) => {
+        console.error('Failed to download folder:', error);
+        showToast('Folder download failed. Please try again.');
+      });
+  };
+
+  /** Pick a `.folder.zip` and recreate its root folder inside `destFolder`
+   *  (merging into the pinned folder when the name collides with one). */
+  const handleImportFolder = (destFolder: string) => {
+    pickFolderZipFile()
+      .then(async (file) => {
+        if (!file) return;
+        const payload = await readFolderZip(file);
+        const { rootPath, fileCount } = filesApi.importFolderTree(payload, destFolder);
+        showToast(
+          `Imported "${fileName(rootPath)}" - ${fileCount} file${fileCount === 1 ? '' : 's'}`
+        );
+        if (viewMode === 'list') setCurrentFolder(rootPath);
+      })
+      .catch((error) => {
+        console.error('Failed to import folder:', error);
+        showToast(error instanceof Error ? error.message : 'Folder import failed.');
+      });
+  };
+
   const ctxNewItems = (folder: string): CtxMenuItem[] => {
     const lower = folder.toLowerCase();
     const inTags = lower === TAGS_FOLDER || lower.startsWith(`${TAGS_FOLDER}/`);
@@ -1278,6 +1318,13 @@ export const FileBrowserContent = ({
       label: 'New Folder',
       onPress: () => openNewFolderPrompt(folder),
     });
+    if (Platform.OS === 'web') {
+      items.push({
+        icon: <FolderUp size={13} color="#1a1a1a" />,
+        label: 'Import folder…',
+        onPress: () => handleImportFolder(folder),
+      });
+    }
     return items;
   };
 
@@ -1330,6 +1377,16 @@ export const FileBrowserContent = ({
       { divider: true },
       ...ctxNewItems(folder),
     ];
+    if (Platform.OS === 'web') {
+      items.push(
+        { divider: true },
+        {
+          icon: <FolderDown size={13} color="#1a1a1a" />,
+          label: 'Download folder',
+          onPress: () => handleDownloadFolder(folder),
+        }
+      );
+    }
     if (!isProtectedFolder(folder)) {
       items.push(
         { divider: true },
@@ -1379,6 +1436,15 @@ export const FileBrowserContent = ({
       label: 'Clone folder',
       onPress: () => filesApi.cloneFolder(folder),
     },
+    ...(Platform.OS === 'web'
+      ? [
+          {
+            icon: <FolderDown size={13} color="#1a1a1a" />,
+            label: 'Download folder',
+            onPress: () => handleDownloadFolder(folder),
+          } as CtxMenuItem,
+        ]
+      : []),
     { divider: true },
     {
       icon: <Trash2 size={13} color="#a03030" />,
