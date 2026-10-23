@@ -157,9 +157,7 @@ const DayUserRow = ({
 
   const getMorningMessagePreview = () => {
     const message = getCurrentMorningMessage();
-    return message
-      ? filesApi.previewText(message) || 'Morning message...'
-      : 'No morning message...';
+    return message ? filesApi.previewText(message) : '';
   };
 
   const morningWidth = dayBaseColumnWidths.morningMessage;
@@ -183,7 +181,7 @@ const DayUserRow = ({
               {dayData.vote ? (
                 <ResolvedVoteName vote={dayData.vote} users={users} />
               ) : (
-                <FontText className="opacity-50">No Vote...</FontText>
+                <FontText className="opacity-50">No vote...</FontText>
               )}
             </FontText>
           </Pressable>
@@ -238,16 +236,25 @@ const DayUserRow = ({
                   centered
                   maxWidth={morningWidth - 16}
                   fallback={
-                    <FontText
-                      weight="medium"
-                      className="overflow-hidden text-nowrap text-center"
-                      style={{
-                        width: morningWidth - 8,
-                        textDecorationLine: 'underline',
-                        textDecorationStyle: 'dotted',
-                      }}>
-                      <FontText className="text-center">{getMorningMessagePreview()}</FontText>
-                    </FontText>
+                    getMorningMessagePreview() ? (
+                      <FontText
+                        weight="medium"
+                        className="overflow-hidden text-nowrap text-center"
+                        style={{
+                          width: morningWidth - 8,
+                          textDecorationLine: 'underline',
+                          textDecorationStyle: 'dotted',
+                        }}>
+                        <FontText className="text-center">{getMorningMessagePreview()}</FontText>
+                      </FontText>
+                    ) : (
+                      <FontText
+                        weight="medium"
+                        className="overflow-hidden text-nowrap text-center opacity-50"
+                        style={{ width: morningWidth - 8 }}>
+                        No message...
+                      </FontText>
+                    )
                   }
                 />
               </Pressable>
@@ -286,7 +293,7 @@ const DayUserRow = ({
                   weight="medium"
                   className="overflow-hidden text-nowrap text-center opacity-50"
                   style={{ width: morningWidth - 8 }}>
-                  No morning message...
+                  No message...
                 </FontText>
               </Pressable>
             )}

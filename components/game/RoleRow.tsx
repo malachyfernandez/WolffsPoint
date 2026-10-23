@@ -123,17 +123,23 @@ const RoleRow = ({
               centered
               maxWidth={240}
               fallback={
-                <FontText
-                  weight="medium"
-                  className={`w-60 overflow-hidden text-nowrap text-center ${role.roleMessage ? '' : 'opacity-50'}`}
-                  style={{
-                    textDecorationLine: 'underline',
-                    textDecorationStyle: 'dotted',
-                  }}>
-                  {role.roleMessage
-                    ? filesApi.previewText(role.roleMessage) || 'Role message...'
-                    : 'Role message...'}
-                </FontText>
+                role.roleMessage ? (
+                  <FontText
+                    weight="medium"
+                    className="w-60 overflow-hidden text-nowrap text-center"
+                    style={{
+                      textDecorationLine: 'underline',
+                      textDecorationStyle: 'dotted',
+                    }}>
+                    {filesApi.previewText(role.roleMessage) || 'Role message...'}
+                  </FontText>
+                ) : (
+                  <FontText
+                    weight="medium"
+                    className="w-60 overflow-hidden text-nowrap text-center opacity-50">
+                    No role message...
+                  </FontText>
+                )
               }
             />
           </Pressable>
@@ -157,8 +163,7 @@ const RoleRow = ({
             {role.doesRoleVote === false ? (
               <FontText
                 weight="medium"
-                className="w-60 overflow-hidden text-nowrap text-center opacity-50"
-                style={{ textDecorationLine: 'underline', textDecorationStyle: 'dotted' }}>
+                className="w-60 overflow-hidden text-nowrap text-center opacity-50">
                 <FontText className="text-center">Cannot vote</FontText>
               </FontText>
             ) : (
@@ -168,14 +173,23 @@ const RoleRow = ({
                 centered
                 maxWidth={240}
                 fallback={
-                  <FontText
-                    weight="medium"
-                    className={`w-60 overflow-hidden text-nowrap text-center ${role.voteMessage ? '' : 'opacity-50'}`}
-                    style={{ textDecorationLine: 'underline', textDecorationStyle: 'dotted' }}>
-                    {role.voteMessage
-                      ? filesApi.previewText(role.voteMessage) || 'Vote message...'
-                      : 'Using default'}
-                  </FontText>
+                  role.voteMessage ? (
+                    <FontText
+                      weight="medium"
+                      className="w-60 overflow-hidden text-nowrap text-center"
+                      style={{
+                        textDecorationLine: 'underline',
+                        textDecorationStyle: 'dotted',
+                      }}>
+                      {filesApi.previewText(role.voteMessage) || 'Vote message...'}
+                    </FontText>
+                  ) : (
+                    <FontText
+                      weight="medium"
+                      className="w-60 overflow-hidden text-nowrap text-center opacity-50">
+                      Using default
+                    </FontText>
+                  )
                 }
               />
             )}
@@ -204,17 +218,23 @@ const RoleRow = ({
                 centered
                 maxWidth={240}
                 fallback={
-                  <FontText
-                    weight="medium"
-                    className={`w-60 overflow-hidden text-nowrap text-center ${role.aboutRole ? '' : 'opacity-50'}`}
-                    style={{
-                      textDecorationLine: 'underline',
-                      textDecorationStyle: 'dotted',
-                    }}>
-                    {role.aboutRole
-                      ? filesApi.previewText(role.aboutRole) || 'About role...'
-                      : 'About role...'}
-                  </FontText>
+                  role.aboutRole ? (
+                    <FontText
+                      weight="medium"
+                      className="w-60 overflow-hidden text-nowrap text-center"
+                      style={{
+                        textDecorationLine: 'underline',
+                        textDecorationStyle: 'dotted',
+                      }}>
+                      {filesApi.previewText(role.aboutRole) || 'About role...'}
+                    </FontText>
+                  ) : (
+                    <FontText
+                      weight="medium"
+                      className="w-60 overflow-hidden text-nowrap text-center opacity-50">
+                      About role...
+                    </FontText>
+                  )
                 }
               />
             ) : (
@@ -222,7 +242,7 @@ const RoleRow = ({
                 weight="medium"
                 className={`w-60 overflow-hidden text-nowrap text-center ${role.aboutRole ? '' : 'opacity-50'}`}
                 style={{
-                  textDecorationLine: 'underline',
+                  textDecorationLine: role.aboutRole ? 'underline' : 'none',
                   textDecorationStyle: 'dotted',
                 }}>
                 {role.aboutRole

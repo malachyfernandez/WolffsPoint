@@ -130,8 +130,8 @@ const TagCellDisplay = ({
               fadeRow
             />
           ) : (
-            <FontText weight="medium" className="text-center" numberOfLines={2}>
-              UNSET
+            <FontText weight="medium" className="text-center opacity-50" numberOfLines={2}>
+              No files...
             </FontText>
           )
         ) : parsed.hasTags ? (
@@ -158,11 +158,7 @@ const TagCellDisplay = ({
             {parsed.text}
           </FontText>
         ) : (
-          <FontText
-            className="opacity-50"
-            style={{ textDecorationLine: 'underline', textDecorationStyle: 'dotted' }}>
-            UNSET
-          </FontText>
+          <FontText className="opacity-50">No tags...</FontText>
         )}
       </Pressable>
 
