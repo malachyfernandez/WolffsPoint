@@ -11,7 +11,7 @@ import AppButton from '../../ui/buttons/AppButton';
 import AppDropdown from '../../ui/forms/AppDropdown';
 import CustomCheckbox from '../../ui/CustomCheckbox';
 import FontText from '../../ui/text/FontText';
-import FontTextInput from '../../ui/forms/FontTextInput';
+import FontNumberInput from '../../ui/forms/FontNumberInput';
 import ShadowScrollView from '../../ui/ShadowScrollView';
 import type { Statement } from '../../../script/lang/ast';
 import { printStatement } from '../../../script/lang/printer';
@@ -217,11 +217,17 @@ const FolderSettingsDialog = ({
                     </Row>
                     <Row className="items-center gap-2">
                       <FontText className="text-sm">Image height</FontText>
-                      <FontTextInput
+                      <FontNumberInput
+                        accessibilityLabel="Folder image height"
                         value={imageHeight}
                         onChangeText={setImageHeight}
                         placeholder="Default"
-                        className="h-9 w-24"
+                        minValue={1}
+                        maxValue={100}
+                        inline
+                        useDefaultStyling
+                        hideHelperText
+                        className="border-border/15 bg-text/5 min-w-16"
                       />
                     </Row>
                   </Row>
