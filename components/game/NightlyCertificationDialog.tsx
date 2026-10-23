@@ -227,18 +227,17 @@ const NightlyCertificationDialog = ({
           <ConvexDialog.Overlay />
           <ConvexDialog.Content className="max-w-sm p-4">
             <CloseButton onPress={() => setResolveMenu(null)} />
-            <DialogHeader
-              text={`Resolve conflicts - ${resolveMenu?.type === 'votes' ? 'votes' : 'actions'}`}
-              subtext={
-                resolveMenu === null || resolveMenu.count === null
-                  ? 'Pick which side wins any conflicts this certification runs into.'
-                  : resolveMenu.count === 0
-                    ? 'No conflicts detected - this certifies the same as the main button.'
-                    : `${resolveMenu.count} conflict${
-                        resolveMenu.count === 1 ? ' clashes' : 's clash'
-                      } with existing table content. Pick one side for all of them.`
-              }
-            />
+            {/* pt-8 leaves room for the close X; message is plain text, no
+                header. */}
+            <FontText weight="medium" className="px-2 pb-2 pt-8 text-center">
+              {resolveMenu === null || resolveMenu.count === null
+                ? 'Pick which side wins any conflicts this certification runs into.'
+                : resolveMenu.count === 0
+                  ? 'No conflicts detected'
+                  : `${resolveMenu.count} conflict${
+                      resolveMenu.count === 1 ? ' clashes' : 's clash'
+                    } with existing table content. Pick one side for all of them.`}
+            </FontText>
             <Column className="gap-2">
               <AppButton
                 variant="outline"
@@ -255,12 +254,6 @@ const NightlyCertificationDialog = ({
                 <FontText weight="medium" color="white">
                   Use all new results
                 </FontText>
-              </AppButton>
-              <AppButton
-                variant="outline"
-                className="w-full px-3"
-                onPress={() => setResolveMenu(null)}>
-                <FontText weight="medium">Cancel</FontText>
               </AppButton>
             </Column>
           </ConvexDialog.Content>
