@@ -34,6 +34,7 @@ import { adoptFolderIdentities, repathFolderIdentities } from '../utils/scriptFo
 import { planFolderImport, type FolderArchivePayload } from '../utils/scriptFolderArchive';
 import { useCellModuleStatus, useSharedCellModuleStatus } from '../utils/legacySystems';
 import { useSimEditWarning } from '../contexts/SimEditWarningContext';
+import { useUndoRedo } from './useUndoRedo';
 
 export const SCRIPT_FILES_KEY = 'scriptFiles';
 
@@ -129,6 +130,23 @@ export function useScriptFiles(gameId: string | undefined) {
     [warnSimEdit, commit]
   );
 
+  // Every files mutation is undoable: the doc is immutable, so the previous
+  // object is a complete snapshot. `isNew` ops keep the simulation warning
+  // on the forward action only; undo/redo re-commit silently.
+  const { executeCommand } = useUndoRedo();
+  const commitUndoable = useCallback(
+    (next: ScriptFilesDoc, description: string, isNew = false) => {
+      const previous = docRef.current;
+      const apply = isNew ? commitNew : commit;
+      executeCommand({
+        action: () => apply(next),
+        undoAction: () => commit(previous),
+        description,
+      });
+    },
+    [commit, commitNew, executeCommand]
+  );
+
   const resolve = useMemo(() => makeResolve(index, displayModules), [index, displayModules]);
   const resolveWithIssues = useCallback(
     (text: string) =>
@@ -161,21 +179,26 @@ export function useScriptFiles(gameId: string | undefined) {
         role,
         updatedAt: nowMs(),
       };
-      commitNew(docWithFolder(docWithFile(docRef.current, file), folder));
+      commitUndoable(
+        docWithFolder(docWithFile(docRef.current, file), folder),
+        `New file ${path}`,
+        true
+      );
       return file;
     },
-    [commitNew]
+    [commitUndoable]
   );
 
   const updateFileSource = useCallback(
     (id: string, source: string) => {
       const file = docRef.current.files[id];
       if (!file) return;
-      commit(
-        cleanupFileInputsInDoc(docWithFile(docRef.current, { ...file, source, updatedAt: nowMs() }))
+      commitUndoable(
+        cleanupFileInputsInDoc(docWithFile(docRef.current, { ...file, source, updatedAt: nowMs() })),
+        `Edit ${file.path}`
       );
     },
-    [commit]
+    [commitUndoable]
   );
 
   /** Switch a file's kind (markdown -> script when its source outgrows the
@@ -184,9 +207,12 @@ export function useScriptFiles(gameId: string | undefined) {
     (id: string, kind: ScriptFileKind) => {
       const file = docRef.current.files[id];
       if (!file || file.kind === kind) return;
-      commit(docWithFile(docRef.current, { ...file, kind, updatedAt: nowMs() }));
+      commitUndoable(
+        docWithFile(docRef.current, { ...file, kind, updatedAt: nowMs() }),
+        `Convert ${file.path} to ${kind}`
+      );
     },
-    [commit]
+    [commitUndoable]
   );
 
   /** Set a script file's role. `undefined`/'display' clears back to the
@@ -195,20 +221,25 @@ export function useScriptFiles(gameId: string | undefined) {
     (id: string, role: ScriptFileRole | undefined) => {
       const file = docRef.current.files[id];
       if (!file) return;
-      commit(
+      commitUndoable(
         docWithFile(docRef.current, {
           ...file,
           role: role === 'display' ? undefined : role,
           updatedAt: nowMs(),
-        })
+        }),
+        `Set ${file.path} role`
       );
     },
-    [commit]
+    [commitUndoable]
   );
 
   const deleteFile = useCallback(
-    (id: string) => commit(docWithoutFile(docRef.current, id)),
-    [commit]
+    (id: string) => {
+      const file = docRef.current.files[id];
+      if (!file) return;
+      commitUndoable(docWithoutFile(docRef.current, id), `Delete ${file.path}`);
+    },
+    [commitUndoable]
   );
 
   const cloneFile = useCallback(
@@ -223,10 +254,10 @@ export function useScriptFiles(gameId: string | undefined) {
         path: joinFilePath(folderOfPath(file.path), name),
         updatedAt: nowMs(),
       };
-      commitNew(docWithFile(docRef.current, clone));
+      commitUndoable(docWithFile(docRef.current, clone), `Clone ${file.path}`, true);
       return clone;
     },
-    [commitNew]
+    [commitUndoable]
   );
 
   /** Copy `file` into `folder`, keeping its name (uniqued on collision).
@@ -245,10 +276,10 @@ export function useScriptFiles(gameId: string | undefined) {
         path: joinFilePath(dest, name),
         updatedAt: nowMs(),
       };
-      commitNew(docWithFile(docRef.current, copy));
+      commitUndoable(docWithFile(docRef.current, copy), `Paste ${fileName(file.path)}`, true);
       return copy;
     },
-    [commitNew]
+    [commitUndoable]
   );
 
   const renameFile = useCallback(
@@ -265,10 +296,13 @@ export function useScriptFiles(gameId: string | undefined) {
         path: nextPath,
         updatedAt: nowMs(),
       });
-      commit(rewritePathReferences(renamed, file.path, nextPath));
+      commitUndoable(
+        rewritePathReferences(renamed, file.path, nextPath),
+        `Rename ${fileName(file.path)}`
+      );
       return true;
     },
-    [commit]
+    [commitUndoable]
   );
 
   const moveFile = useCallback(
@@ -284,10 +318,13 @@ export function useScriptFiles(gameId: string | undefined) {
         path: nextPath,
         updatedAt: nowMs(),
       });
-      commit(rewritePathReferences(docWithFolder(moved, folder), file.path, nextPath));
+      commitUndoable(
+        rewritePathReferences(docWithFolder(moved, folder), file.path, nextPath),
+        `Move ${fileName(file.path)}`
+      );
       return true;
     },
-    [commit]
+    [commitUndoable]
   );
 
   // ------------------------------------------------------------- folders
@@ -295,9 +332,11 @@ export function useScriptFiles(gameId: string | undefined) {
   const createFolder = useCallback(
     (folder: string) => {
       const normalized = normalizeFilePath(folder);
-      if (normalized) commitNew(docWithFolder(docRef.current, normalized));
+      if (normalized) {
+        commitUndoable(docWithFolder(docRef.current, normalized), `New folder ${normalized}`, true);
+      }
     },
-    [commitNew]
+    [commitUndoable]
   );
 
   const renameFolder = useCallback(
@@ -340,10 +379,13 @@ export function useScriptFiles(gameId: string | undefined) {
         folders: current.folders.map((f) => (f.toLowerCase() === lower ? nextPath : repath(f))),
         folderIds: repathFolderIdentities(identified, normalized, nextPath),
       };
-      commit(rewritePathReferences(next, normalized, nextPath));
+      commitUndoable(
+        rewritePathReferences(next, normalized, nextPath),
+        `Rename folder ${fileName(normalized)}`
+      );
       return true;
     },
-    [commit]
+    [commitUndoable]
   );
 
   /** Move `folder` under `newParent` (descendants + file refs follow). */
@@ -397,20 +439,23 @@ export function useScriptFiles(gameId: string | undefined) {
         folders: current.folders.map(repath).filter(Boolean),
         folderIds: repathFolderIdentities(identified, normalized, nextPath),
       };
-      commit(rewritePathReferences(docWithFolder(next, parent), normalized, nextPath));
+      commitUndoable(
+        rewritePathReferences(docWithFolder(next, parent), normalized, nextPath),
+        `Move folder ${fileName(normalized)}`
+      );
       return true;
     },
-    [commit]
+    [commitUndoable]
   );
 
   const deleteFolder = useCallback(
     (folder: string) => {
       const normalized = normalizeFilePath(folder);
       if (!normalized || isProtectedFolder(normalized)) return false;
-      commit(docWithoutFolder(docRef.current, normalized));
+      commitUndoable(docWithoutFolder(docRef.current, normalized), `Delete folder ${normalized}`);
       return true;
     },
-    [commit]
+    [commitUndoable]
   );
 
   const cloneFolder = useCallback(
@@ -451,9 +496,9 @@ export function useScriptFiles(gameId: string | undefined) {
           next = docWithFile(next, clone);
         }
       }
-      commitNew(next);
+      commitUndoable(next, `Clone folder ${normalized}`, true);
     },
-    [commitNew]
+    [commitUndoable]
   );
 
   /** Copy `folder` and its whole subtree under `destParent`, keeping its
@@ -499,9 +544,9 @@ export function useScriptFiles(gameId: string | undefined) {
           next = docWithFile(next, clone);
         }
       }
-      commitNew(next);
+      commitUndoable(next, `Paste folder ${normalized}`, true);
     },
-    [commitNew]
+    [commitUndoable]
   );
 
   const suggestName = useCallback(
@@ -534,10 +579,10 @@ export function useScriptFiles(gameId: string | undefined) {
       };
       next = docWithFolder(next, plan.rootPath);
       for (const file of plan.files) next = docWithFile(next, file);
-      commitNew(next);
+      commitUndoable(next, `Import folder ${plan.rootPath}`, true);
       return { rootPath: plan.rootPath, fileCount: plan.files.length };
     },
-    [commitNew]
+    [commitUndoable]
   );
 
   const identifyFolder = useCallback(

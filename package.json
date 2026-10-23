@@ -42,7 +42,8 @@
     "test:dialog-top-spacing-ui": "node scripts/probe-dialog-top-spacing.mjs",
     "test:cell-chips-ui": "node scripts/probe-cell-chips-ui.mjs",
     "test:column-headers-ui": "node scripts/probe-column-headers-ui.mjs",
-    "test:rulebook-folder-ui": "node scripts/probe-rulebook-folder-ui.mjs"
+    "test:rulebook-folder-ui": "node scripts/probe-rulebook-folder-ui.mjs",
+    "test:files-undo-ui": "node scripts/probe-files-undo-ui.mjs"
   },
   "dependencies": {
     "@clerk/clerk-expo": "^2.19.17",
