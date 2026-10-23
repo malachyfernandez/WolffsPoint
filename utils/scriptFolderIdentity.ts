@@ -73,8 +73,19 @@ export const buildFolderIdentityIndex = (
     const path = normalize(value);
     const lower = path.toLowerCase();
     const reservedPath = PINNED_FOLDER_PATHS.find((entry) => pinnedIds[entry.toLowerCase()] === id);
-    if (reservedPath || pinnedIds[lower]) {
-      if (pinnedIds[lower] !== id) issues.push(`Invalid pinned folder identity: ${id}`);
+    if (reservedPath) {
+      // A reserved id must point at its own pinned path.
+      if (lower !== reservedPath.toLowerCase()) {
+        issues.push(`Invalid pinned folder identity: ${id}`);
+      }
+      continue;
+    }
+    if (pinnedIds[lower]) {
+      // A non-reserved id pointing at a pinned path is a pre-pinning alias
+      // (the folder existed before the path became pinned). Keep it
+      // resolvable so stored Folder(...) refs by id still work; the
+      // reserved id stays canonical for byPath.
+      byId.set(id, PINNED_FOLDER_PATHS.find((entry) => entry.toLowerCase() === lower)!);
       continue;
     }
     if (!paths.has(lower)) {
