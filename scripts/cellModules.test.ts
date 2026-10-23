@@ -736,3 +736,95 @@ test('fileOnly cells auto-fill empty File() input args with a string input', () 
   // Non-fileOnly contexts keep the optional-override socket.
   assert.equal(missingFileInputArgFallback(false).kind, 'NothingLiteral');
 });
+
+test('previewCellItems itemizes file lists, compositions, and pieces for chip previews', async () => {
+  const { previewCellItems } = await import('../utils/cellPieces');
+  const mdFile = {
+    id: 'f_md',
+    path: 'Test/Infectors',
+    kind: 'markdown' as const,
+    role: 'display' as const,
+    source: 'x',
+    updatedAt: 1,
+  };
+  const trigFile = {
+    id: 'f_tr',
+    path: 'onTag',
+    kind: 'script' as const,
+    role: 'trigger' as const,
+    source: 'x',
+    updatedAt: 1,
+  };
+  const idx = buildFilesIndex({
+    files: { f_md: mdFile, f_tr: trigFile },
+    folders: ['Test'],
+    folderIds: { folder_test: 'Test' },
+  });
+
+  // Legacy file-list cell -> file chips in order.
+  const list = previewCellItems(
+    'File({PATH = "Test/Infectors", ID = "f_md"}); File({PATH = "onTag", ID = "f_tr"});',
+    idx
+  );
+  assert.deepEqual(
+    list.map((i) => i.kind),
+    ['file', 'file']
+  );
+  assert.equal(list[0].kind === 'file' ? list[0].file.id : null, 'f_md');
+  assert.equal(list[1].kind === 'file' ? list[1].file.id : null, 'f_tr');
+
+  // Composition cell -> file/folder/divider/nav chips; nav contents are not
+  // flattened (single chip keeps the preview brief).
+  const composition = [
+    'File({PATH = "Test/Infectors", ID = "f_md"});',
+    'Folder({PATH = "Test", ID = "folder_test"});',
+    'CreateDivider({});',
+    'NavButton({LABEL = "Role Descriptions"}) { File({PATH = "onTag", ID = "f_tr"}); }',
+    'File({PATH = "onTag", ID = "f_tr"});',
+    'CreateMarkdown({CONTENT = Markdown(`hi`)});',
+  ].join('\n');
+  const comp = previewCellItems(composition, idx);
+  assert.deepEqual(
+    comp.map((i) => i.kind),
+    ['file', 'folder', 'divider', 'nav', 'file', 'markdown']
+  );
+  assert.equal(comp[3].kind === 'nav' ? comp[3].label : null, 'Role Descriptions');
+  assert.equal(comp[1].kind === 'folder' ? comp[1].label : null, 'Test');
+
+  // Missing refs degrade to a faded 'missing' chip, not a crash.
+  const missing = previewCellItems('File({PATH = "gone/File"});', idx);
+  assert.equal(missing[0]?.kind, 'missing');
+
+  // Tag + text pieces keep their order after file pieces; duplicate file
+  // references collapse to one chip.
+  const raw = applyCellOp(
+    applyCellOp('File({PATH = "onTag", ID = "f_tr"});', {
+      mode: 'append',
+      value: mdFile.id,
+      valueKind: 'file',
+      source: 'tag:a',
+    }),
+    { mode: 'append', value: '[/TAG: "Infected"/]', source: 'tag:b' }
+  );
+  const mixed = previewCellItems(raw, idx);
+  assert.deepEqual(
+    mixed.map((i) => i.kind),
+    ['file', 'file', 'tag']
+  );
+  const dup = applyCellOp('', {
+    mode: 'append',
+    value: trigFile.id,
+    valueKind: 'file',
+    source: 'tag:a',
+  });
+  const dupTwice = applyCellOp(dup, {
+    mode: 'append',
+    value: trigFile.id,
+    valueKind: 'file',
+    source: 'tag:b',
+  });
+  assert.equal(
+    previewCellItems(dupTwice, idx).filter((i) => i.kind === 'file').length,
+    1
+  );
+});

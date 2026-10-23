@@ -6,7 +6,8 @@ import TagCellEditor from './TagCellEditor';
 import { useValue } from 'hooks/useData';
 import { getGameScopedKey } from 'utils/multiplayer';
 import { parseCell } from 'utils/tagEncoding';
-import { effectiveCell, formatCellAddress, previewCellText, type TagRef } from 'utils/cellPieces';
+import { effectiveCell, formatCellAddress, previewCellItems, type TagRef } from 'utils/cellPieces';
+import CellPreviewChips from './scriptFiles/CellPreviewChips';
 import { findTagFile, getTagMeta } from 'utils/scriptFiles';
 import { useScriptFilesReader } from 'hooks/useScriptFiles';
 import type { CellContentType } from 'types/playerTable';
@@ -57,6 +58,13 @@ const TagCellDisplay = ({
   const highlightReq = useCellHighlightRequest();
 
   const parsed = useMemo(() => parseCell(value), [value]);
+  const filePreviewItems = useMemo(
+    () =>
+      contentType === 'files' && scriptFilesIndex
+        ? previewCellItems(value, scriptFilesIndex)
+        : [],
+    [contentType, scriptFilesIndex, value]
+  );
   const displayedTags = useMemo(() => {
     const effective = effectiveCell(value);
     return parsed.tags.flatMap((tag) => {
@@ -114,9 +122,18 @@ const TagCellDisplay = ({
           overflow: 'hidden',
         }}>
         {contentType === 'files' ? (
-          <FontText weight="medium" className="text-center" numberOfLines={2}>
-            {scriptFilesIndex ? previewCellText(value, scriptFilesIndex) || 'UNSET' : 'UNSET'}
-          </FontText>
+          filePreviewItems.length > 0 ? (
+            <CellPreviewChips
+              items={filePreviewItems}
+              tagColor={colorForTag}
+              maxWidth={width - 12}
+              fadeRow
+            />
+          ) : (
+            <FontText weight="medium" className="text-center" numberOfLines={2}>
+              UNSET
+            </FontText>
+          )
         ) : parsed.hasTags ? (
           <>
             {displayedTags.map((tag, i) => (

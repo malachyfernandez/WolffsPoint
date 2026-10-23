@@ -25,7 +25,7 @@
  * revert possible.
  */
 
-import type { ScriptFilesIndex } from './scriptFiles';
+import type { ScriptFile, ScriptFilesIndex } from './scriptFiles';
 import type { Statement } from '../script/lang/ast';
 import { printExpression, printStatement } from '../script/lang/printer';
 import {
@@ -685,6 +685,107 @@ export const previewCellText = (raw: string, index: ScriptFilesIndex): string =>
   if (textBits.length) parts.push(textBits.join(' '));
   const joined = parts.join(' · ');
   return joined.length > 30 ? `${joined.slice(0, 30)}...` : joined;
+};
+
+/** Structured cell preview for chip rendering - the itemized form of
+ *  previewCellText. Files resolve to their ScriptFile so the caller can pick
+ *  the kind icon; folders/nav buttons/dividers become their own chip kinds;
+ *  tag and text pieces stay in content order. */
+export type CellPreviewItem =
+  | { kind: 'file'; file: ScriptFile }
+  | { kind: 'missing'; label: string }
+  | { kind: 'folder'; label: string }
+  | { kind: 'nav'; label: string }
+  | { kind: 'divider' }
+  | { kind: 'markdown' }
+  | { kind: 'tag'; name: string; tagId?: string }
+  | { kind: 'text'; text: string };
+
+export const previewCellItems = (raw: string, index: ScriptFilesIndex): CellPreviewItem[] => {
+  const eff = effectiveCell(raw, index);
+  const items: CellPreviewItem[] = [];
+  const pushFile = (file: ScriptFile | undefined, fallbackPath: string) =>
+    items.push(
+      file
+        ? { kind: 'file', file }
+        : { kind: 'missing', label: fileName(fallbackPath) || 'File' }
+    );
+  const pushStatement = (statement: Statement) => {
+    const fileRef = getFileCallParts(statement);
+    if (fileRef) {
+      pushFile(resolveFileRef(index, fileRef), fileRef.path);
+      return;
+    }
+    const folderRef = getFolderCallParts(statement);
+    if (folderRef) {
+      items.push({
+        kind: 'folder',
+        label: fileName(resolveFolderRef(index, folderRef) ?? folderRef.path ?? 'Folder'),
+      });
+      return;
+    }
+    if (statement.kind === 'NavButtonStatement') {
+      items.push({
+        kind: 'nav',
+        label: statement.label.kind === 'StringLiteral' ? statement.label.value : 'Navigation',
+      });
+      return;
+    }
+    if (
+      statement.kind === 'ExpressionStatement' &&
+      statement.expression.kind === 'CallExpression' &&
+      statement.expression.callee.kind === 'IdentifierExpression'
+    ) {
+      const name = statement.expression.callee.name.toLowerCase();
+      if (name === 'createmarkdown') {
+        items.push({ kind: 'markdown' });
+        return;
+      }
+      if (name === 'createdivider') {
+        items.push({ kind: 'divider' });
+        return;
+      }
+    }
+    items.push({ kind: 'text', text: 'Display block' });
+  };
+
+  if (parseDisplayComposition(eff.baseText)) {
+    for (const entry of displayCellEntries(raw, index)) pushStatement(entry.statement);
+    // Composition bases can still carry tag/text pieces appended by other
+    // owners - keep them in the preview after the composition chips.
+    for (const p of eff.pieces) {
+      if (p.kind === 'tag') items.push({ kind: 'tag', name: p.name, tagId: p.tagId });
+      else if (p.kind === 'text' && p.text.trim())
+        items.push({ kind: 'text', text: p.text.trim() });
+    }
+  } else {
+    const baseStatements = parseFileCell(eff.baseText);
+    if (baseStatements) {
+      for (const stmt of baseStatements) {
+        const parts = getFileCallParts(stmt);
+        if (parts) pushFile(resolveFileRef(index, parts), parts.path);
+      }
+    } else if (eff.baseText.trim()) {
+      items.push({ kind: 'text', text: eff.baseText.trim() });
+    }
+    for (const p of eff.pieces) {
+      if (p.kind === 'file') pushFile(index.byId.get(p.fileId), p.fileId);
+      else if (p.kind === 'tag') items.push({ kind: 'tag', name: p.name, tagId: p.tagId });
+      else if (p.kind === 'display') {
+        for (const stmt of parseDisplayComposition(p.source) ?? []) pushStatement(stmt);
+      } else if (p.kind === 'text' && p.text.trim())
+        items.push({ kind: 'text', text: p.text.trim() });
+    }
+  }
+  // A file referenced twice collapses to one chip (mirrors previewCellText's
+  // name dedup); everything else keeps its order and duplicates.
+  const seenFiles = new Set<string>();
+  return items.filter((item) => {
+    if (item.kind !== 'file') return true;
+    if (seenFiles.has(item.file.id)) return false;
+    seenFiles.add(item.file.id);
+    return true;
+  });
 };
 
 /** Fold pieces into raw-equivalent text the existing flatten pipeline

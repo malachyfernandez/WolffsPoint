@@ -39,7 +39,8 @@
     "test:certify-resolve-ui": "node scripts/probe-certify-resolve-ui.mjs",
     "test:files-tab-gating-ui": "node scripts/probe-files-tab-gating-ui.mjs",
     "test:folder-archive-ui": "node scripts/probe-folder-archive-ui.mjs",
-    "test:dialog-top-spacing-ui": "node scripts/probe-dialog-top-spacing.mjs"
+    "test:dialog-top-spacing-ui": "node scripts/probe-dialog-top-spacing.mjs",
+    "test:cell-chips-ui": "node scripts/probe-cell-chips-ui.mjs"
   },
   "dependencies": {
     "@clerk/clerk-expo": "^2.19.17",

@@ -12,6 +12,8 @@ import { RoleTableItem } from 'types/roleTable';
 import { getGameScopedKey } from 'utils/multiplayer';
 import { useCellModuleStatus } from 'utils/legacySystems';
 import { parseDisplayComposition, normalizeFilePath } from 'utils/scriptFiles';
+import { previewCellItems } from 'utils/cellPieces';
+import CellPreviewChips from './scriptFiles/CellPreviewChips';
 import { getFolderCallParts, selectFolderFiles } from 'utils/scriptFolders';
 import { ABOUT_ROLE_FOLDER } from 'utils/scriptFolderIdentity';
 import type { Statement } from 'script/lang/ast';
@@ -56,9 +58,17 @@ const RuleBookPreviewCard = ({ gameId, onPress }: RuleBookPreviewCardProps) => {
     ? (ruleBookData?.value?.modularContent ?? '')
     : (ruleBookData?.value?.content ?? '');
 
+  const previewItems = React.useMemo(
+    () =>
+      displayModules && activeSource.trim() && filesApi.index
+        ? previewCellItems(activeSource, filesApi.index)
+        : [],
+    [activeSource, displayModules, filesApi.index]
+  );
+
   const previewText = React.useMemo(() => {
     if (displayModules) {
-      return activeSource.trim() ? filesApi.previewText(activeSource) : 'No rule book written yet.';
+      return previewItems.length ? '' : 'No rule book written yet.';
     }
     const rawContent = activeSource;
     const flattenedContent = rawContent
@@ -75,7 +85,7 @@ const RuleBookPreviewCard = ({ gameId, onPress }: RuleBookPreviewCardProps) => {
     return flattenedContent.length > 180
       ? `${flattenedContent.slice(0, 180).trim()}...`
       : flattenedContent;
-  }, [activeSource, displayModules, filesApi]);
+  }, [activeSource, displayModules, previewItems.length]);
 
   const visibleRoleDescriptionCount = React.useMemo(() => {
     if (displayModules) {
@@ -118,7 +128,11 @@ const RuleBookPreviewCard = ({ gameId, onPress }: RuleBookPreviewCardProps) => {
       <Row className="items-start gap-4">
         <Column className="flex-1 gap-1">
           <FontText weight="medium">Rule book</FontText>
-          <FontText variant="subtext">{previewText}</FontText>
+          {previewItems.length > 0 ? (
+            <CellPreviewChips items={previewItems} fadeRow maxWidth={140} />
+          ) : (
+            <FontText variant="subtext">{previewText}</FontText>
+          )}
           <FontText variant="subtext">
             {visibleRoleDescriptionCount} role description
             {visibleRoleDescriptionCount === 1 ? '' : 's'}
