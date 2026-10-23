@@ -106,6 +106,7 @@ const TagCellDisplay = ({
       <CellOriginIndicator gameId={gameId} raw={value} />
       <Pressable
         onPress={handleOpen}
+        className="hover:bg-text/10"
         style={{
           position: 'absolute',
           top: 0,
@@ -150,11 +151,7 @@ const TagCellDisplay = ({
           <FontText
             weight="medium"
             className="overflow-hidden text-nowrap text-center"
-            style={{
-              maxWidth: width - 12,
-              textDecorationLine: 'underline',
-              textDecorationStyle: 'dotted',
-            }}>
+            style={{ maxWidth: width - 12 }}>
             {parsed.text}
           </FontText>
         ) : (

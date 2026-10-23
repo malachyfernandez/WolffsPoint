@@ -56,7 +56,7 @@ const TitleRow = ({
   return (
     <>
       <Row
-        className={`bg-background border-border h-12 w-min gap-0 rounded-t-lg border-b-2 ${isEditing ? 'z-50' : ''}`}>
+        className={`bg-background border-border h-12 w-min gap-0 rounded-t-sm border-b-2 ${isEditing ? 'z-50' : ''}`}>
         <Column className="h-full w-12 items-center justify-center gap-4">
           <FontText weight="medium" className="text-center">
             D/A
@@ -83,15 +83,22 @@ const TitleRow = ({
                   {columnTitle}
                 </FontText>
               ) : (
-                <Pressable onPress={() => openMenu(index)}>
+                <Pressable
+                  onPress={() => openMenu(index)}
+                  className="hover:bg-text/10"
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    right: 0,
+                    bottom: 0,
+                    left: 0,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}>
                   <FontText
                     weight="medium"
                     className="overflow-hidden text-nowrap text-center"
-                    style={{
-                      width: textWidth,
-                      textDecorationLine: 'underline',
-                      textDecorationStyle: 'dotted',
-                    }}>
+                    style={{ width: textWidth }}>
                     {columnTitle || <FontText className="opacity-50">UNSET</FontText>}
                   </FontText>
                 </Pressable>

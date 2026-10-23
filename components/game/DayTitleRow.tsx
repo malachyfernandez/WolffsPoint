@@ -77,16 +77,23 @@ const DayTitleRow = ({
     onEditStart?.();
   };
 
-  const headerTextStyle = (width: number) => ({
-    width,
-    textDecorationLine: 'underline' as const,
-    textDecorationStyle: 'dotted' as const,
-  });
+  // Headers fill their whole cell so the entire surface is the press target;
+  // inline styles guarantee the fill/centering applies regardless of
+  // NativeWind class merging.
+  const headerPressableStyle = {
+    position: 'absolute' as const,
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+  };
 
   return (
     <>
       <Row
-        className={`bg-background border-border h-12 w-min gap-0 rounded-t-lg border-b-2 ${isEditing ? 'z-50' : ''}`}>
+        className={`bg-background border-border h-12 w-min gap-0 rounded-t-sm border-b-2 ${isEditing ? 'z-50' : ''}`}>
         <Row
           className="h-full items-center justify-center gap-0 px-2"
           style={{ width: dayBaseColumnWidths.vote, position: 'relative' }}>
@@ -98,11 +105,14 @@ const DayTitleRow = ({
               Vote
             </FontText>
           ) : (
-            <Pressable onPress={() => openMenu({ type: 'base', column: 'vote' })}>
+            <Pressable
+              onPress={() => openMenu({ type: 'base', column: 'vote' })}
+              className="hover:bg-text/10"
+              style={headerPressableStyle}>
               <FontText
                 weight="medium"
                 className="text-center"
-                style={headerTextStyle(getInnerTextWidth(dayBaseColumnWidths.vote))}>
+                style={{ width: getInnerTextWidth(dayBaseColumnWidths.vote) }}>
                 Vote
               </FontText>
             </Pressable>
@@ -120,11 +130,14 @@ const DayTitleRow = ({
               Action
             </FontText>
           ) : (
-            <Pressable onPress={() => openMenu({ type: 'base', column: 'action' })}>
+            <Pressable
+              onPress={() => openMenu({ type: 'base', column: 'action' })}
+              className="hover:bg-text/10"
+              style={headerPressableStyle}>
               <FontText
                 weight="medium"
                 className="text-center"
-                style={headerTextStyle(getInnerTextWidth(dayBaseColumnWidths.action))}>
+                style={{ width: getInnerTextWidth(dayBaseColumnWidths.action) }}>
                 Action
               </FontText>
             </Pressable>
@@ -146,11 +159,14 @@ const DayTitleRow = ({
                 Morning
               </FontText>
             ) : (
-              <Pressable onPress={() => openMenu({ type: 'base', column: 'morningMessage' })}>
+              <Pressable
+                onPress={() => openMenu({ type: 'base', column: 'morningMessage' })}
+                className="hover:bg-text/10"
+                style={headerPressableStyle}>
                 <FontText
                   weight="medium"
                   className="text-center"
-                  style={headerTextStyle(getInnerTextWidth(dayBaseColumnWidths.morningMessage))}>
+                  style={{ width: getInnerTextWidth(dayBaseColumnWidths.morningMessage) }}>
                   Morning
                 </FontText>
               </Pressable>
@@ -177,11 +193,14 @@ const DayTitleRow = ({
                   {columnTitle}
                 </FontText>
               ) : (
-                <Pressable onPress={() => openMenu({ type: 'extra', index })}>
+                <Pressable
+                  onPress={() => openMenu({ type: 'extra', index })}
+                  className="hover:bg-text/10"
+                  style={headerPressableStyle}>
                   <FontText
                     weight="medium"
                     className="overflow-hidden text-nowrap text-center"
-                    style={headerTextStyle(textWidth)}>
+                    style={{ width: textWidth }}>
                     {columnTitle || <FontText className="opacity-50">UNSET</FontText>}
                   </FontText>
                 </Pressable>

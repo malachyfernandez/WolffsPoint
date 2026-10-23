@@ -368,7 +368,7 @@ const RoleTable = ({
         <Row className="gap-0">
           <Column className={`border-border w-min gap-0 rounded border-2 ${className || ''}`}>
             {/* Title Row */}
-            <Row className={`bg-background border-border h-12 w-min gap-0 rounded-t-lg border-b-2`}>
+            <Row className={`bg-background border-border h-12 w-min gap-0 rounded-t-sm border-b-2`}>
               <Column
                 className="h-full w-32 items-center justify-center gap-4"
                 style={{ position: 'relative' }}>
@@ -391,11 +391,8 @@ const RoleTable = ({
                 {!selectionMode && (
                   <Pressable
                     onPress={() => setIsDefaultVoteMessageOpen(true)}
-                    className="h-full w-full items-center justify-center">
-                    <FontText
-                      weight="medium"
-                      className="text-center"
-                      style={{ textDecorationLine: 'underline', textDecorationStyle: 'dotted' }}>
+                    className="hover:bg-text/10 h-full w-full items-center justify-center">
+                    <FontText weight="medium" className="text-center">
                       Vote Message
                     </FontText>
                   </Pressable>

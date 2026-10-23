@@ -154,7 +154,7 @@ const UserRow = ({
     <View ref={rowRef} className="relative">
       <Row className={`h-12 w-min gap-0 ${isEditing ? 'z-50' : ''}`}>
         <Column
-          className={`border-subtle-border h-full w-12 items-center justify-center gap-4 border ${isLast ? 'rounded-bl-lg' : ''}`}>
+          className={`border-subtle-border h-full w-12 items-center justify-center gap-4 border ${isLast ? 'rounded-bl-sm' : ''}`}>
           <CustomCheckbox checked={isDead} onChange={toggleLivingState} />
           <CellOriginIndicator
             gameId={gameId}
@@ -171,23 +171,11 @@ const UserRow = ({
               setDialogMounted(true);
               setIsDialogOpen(true);
             }}
-            className="h-full w-28 items-center justify-center">
-            <FontText
-              weight="medium"
-              className="w-28 overflow-hidden text-nowrap text-center"
-              style={{
-                textDecorationLine: 'underline',
-                textDecorationStyle: 'dotted',
-              }}>
+            className="hover:bg-text/10 h-full w-full items-center justify-center">
+            <FontText weight="medium" className="w-28 overflow-hidden text-nowrap text-center">
               {user.realName || <FontText className="opacity-50">No Name</FontText>}
             </FontText>
-            <FontText
-              variant="subtext"
-              className="w-28 overflow-hidden text-nowrap text-center"
-              style={{
-                textDecorationLine: 'underline',
-                textDecorationStyle: 'dotted',
-              }}>
+            <FontText variant="subtext" className="w-28 overflow-hidden text-nowrap text-center">
               {user.role === 'UNSET' ? (
                 <FontText className="opacity-50">UNSET</FontText>
               ) : user.role ? (
@@ -222,7 +210,7 @@ const UserRow = ({
                 hasMounted.current ? FadeOutUp.duration(100).easing(Easing.ease) : undefined
               }>
               <Column
-                className={`border-subtle-border h-full items-center justify-center gap-4 border ${isLast && isLastVisibleColumn ? 'rounded-br-lg' : ''}`}
+                className={`border-subtle-border h-full items-center justify-center gap-4 border ${isLast && isLastVisibleColumn ? 'rounded-br-sm' : ''}`}
                 style={{ width: columnWidth, position: 'relative', overflow: 'hidden' }}>
                 <TagCellDisplay
                   contentType={columnTypes?.[columnIndex]}

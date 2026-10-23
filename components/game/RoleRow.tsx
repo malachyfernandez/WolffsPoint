@@ -88,21 +88,17 @@ const RoleRow = ({
     <View ref={rowRef} className="relative">
       <Row className={`h-12 w-min gap-0 ${isEditing ? 'z-50' : ''}`}>
         <Column
-          className={`border-subtle-border h-full w-32 items-center justify-center gap-4 border ${isLast ? 'rounded-bl-lg' : ''}`}
+          className={`border-subtle-border h-full w-32 items-center justify-center gap-4 border ${isLast ? 'rounded-bl-sm' : ''}`}
           style={{ position: 'relative' }}>
           <Pressable
             onPress={() => {
               mountDialog('roleInfo');
               setIsRoleInfoDialogOpen(true);
             }}
-            className="h-full w-full items-center justify-center">
+            className="hover:bg-text/10 h-full w-full items-center justify-center">
             <FontText
               weight="medium"
-              className="w-28 overflow-hidden text-nowrap text-center"
-              style={{
-                textDecorationLine: 'underline',
-                textDecorationStyle: 'dotted',
-              }}>
+              className="w-28 overflow-hidden text-nowrap text-center">
               {role.role || <FontText className="opacity-50">Role name</FontText>}
             </FontText>
           </Pressable>
@@ -116,7 +112,7 @@ const RoleRow = ({
               mountDialog('roleMessage');
               setIsRoleMessageDialogOpen(true);
             }}
-            className="h-full w-60 items-center justify-center">
+            className="hover:bg-text/10 h-full w-full items-center justify-center">
             <FileSourcePreview
               source={role.roleMessage ?? ''}
               index={filesApi.index}
@@ -126,11 +122,7 @@ const RoleRow = ({
                 role.roleMessage ? (
                   <FontText
                     weight="medium"
-                    className="w-60 overflow-hidden text-nowrap text-center"
-                    style={{
-                      textDecorationLine: 'underline',
-                      textDecorationStyle: 'dotted',
-                    }}>
+                    className="w-60 overflow-hidden text-nowrap text-center">
                     {filesApi.previewText(role.roleMessage) || 'Role message...'}
                   </FontText>
                 ) : (
@@ -159,7 +151,7 @@ const RoleRow = ({
               mountDialog('voteEnable');
               setIsVoteEnableDialogOpen(true);
             }}
-            className="h-full w-60 items-center justify-center">
+            className="hover:bg-text/10 h-full w-full items-center justify-center">
             {role.doesRoleVote === false ? (
               <FontText
                 weight="medium"
@@ -176,11 +168,7 @@ const RoleRow = ({
                   role.voteMessage ? (
                     <FontText
                       weight="medium"
-                      className="w-60 overflow-hidden text-nowrap text-center"
-                      style={{
-                        textDecorationLine: 'underline',
-                        textDecorationStyle: 'dotted',
-                      }}>
+                      className="w-60 overflow-hidden text-nowrap text-center">
                       {filesApi.previewText(role.voteMessage) || 'Vote message...'}
                     </FontText>
                   ) : (
@@ -203,14 +191,14 @@ const RoleRow = ({
           />
         </Column>
         <Column
-          className={`border-subtle-border h-full w-64 items-center justify-center gap-4 border ${isLast ? 'rounded-br-lg' : ''}`}
+          className={`border-subtle-border h-full w-64 items-center justify-center gap-4 border ${isLast ? 'rounded-br-sm' : ''}`}
           style={{ position: 'relative' }}>
           <Pressable
             onPress={() => {
               mountDialog('aboutRole');
               setIsAboutRoleDialogOpen(true);
             }}
-            className="h-full w-full items-center justify-center">
+            className="hover:bg-text/10 h-full w-full items-center justify-center">
             {displayModules ? (
               <FileSourcePreview
                 source={role.aboutRole ?? ''}
@@ -221,11 +209,7 @@ const RoleRow = ({
                   role.aboutRole ? (
                     <FontText
                       weight="medium"
-                      className="w-60 overflow-hidden text-nowrap text-center"
-                      style={{
-                        textDecorationLine: 'underline',
-                        textDecorationStyle: 'dotted',
-                      }}>
+                      className="w-60 overflow-hidden text-nowrap text-center">
                       {filesApi.previewText(role.aboutRole) || 'About role...'}
                     </FontText>
                   ) : (
@@ -240,11 +224,7 @@ const RoleRow = ({
             ) : (
               <FontText
                 weight="medium"
-                className={`w-60 overflow-hidden text-nowrap text-center ${role.aboutRole ? '' : 'opacity-50'}`}
-                style={{
-                  textDecorationLine: role.aboutRole ? 'underline' : 'none',
-                  textDecorationStyle: 'dotted',
-                }}>
+                className={`w-60 overflow-hidden text-nowrap text-center ${role.aboutRole ? '' : 'opacity-50'}`}>
                 {role.aboutRole
                   ? `${role.aboutRole.slice(0, 30)}${role.aboutRole.length > 30 ? '...' : ''}`
                   : 'About role...'}
