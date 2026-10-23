@@ -16,6 +16,7 @@ import ActionPills from './ActionPills';
 import ActionEditorDialog from './ActionEditorDialog';
 import VoteEditorDialog, { ResolvedVoteName } from './VoteEditorDialog';
 import CellFilesEditorDialog from './scriptFiles/CellFilesEditorDialog';
+import { FileSourcePreview } from './scriptFiles/CellPreviewChips';
 import type { useScriptFiles } from '../../hooks/useScriptFiles';
 import { SelectableOverlay } from './multiSelect/SelectableOverlay';
 import { CellHighlight, isCellHighlightMatch, useCellHighlightRequest } from './CellHighlight';
@@ -231,16 +232,24 @@ const DayUserRow = ({
                 onPress={handleMessagePress}
                 style={{ width: morningWidth - 8 }}
                 className="h-full items-center justify-center">
-                <FontText
-                  weight="medium"
-                  className="overflow-hidden text-nowrap text-center"
-                  style={{
-                    width: morningWidth - 8,
-                    textDecorationLine: 'underline',
-                    textDecorationStyle: 'dotted',
-                  }}>
-                  <FontText className="text-center">{getMorningMessagePreview()}</FontText>
-                </FontText>
+                <FileSourcePreview
+                  source={getCurrentMorningMessage()}
+                  index={filesApi.index}
+                  centered
+                  maxWidth={morningWidth - 16}
+                  fallback={
+                    <FontText
+                      weight="medium"
+                      className="overflow-hidden text-nowrap text-center"
+                      style={{
+                        width: morningWidth - 8,
+                        textDecorationLine: 'underline',
+                        textDecorationStyle: 'dotted',
+                      }}>
+                      <FontText className="text-center">{getMorningMessagePreview()}</FontText>
+                    </FontText>
+                  }
+                />
               </Pressable>
             ) : morningMessagesList[user.email.toLowerCase()]?.[dayNumber - 1] ? (
               <View

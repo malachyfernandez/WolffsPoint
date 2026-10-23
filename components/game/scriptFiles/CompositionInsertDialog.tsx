@@ -155,12 +155,9 @@ const CompositionInsertDialog = ({
             subtext="Choose a file or folder, or switch to Blocks for display items"
           />
           <Column className="min-h-0 flex-1 gap-3">
-            {/* Files mode: extra height pools below the browser's fixed-height
-             *  panes; growing this row (basis auto) splits the slack evenly
-             *  between a top spacer and the bottom so the picker centers. */}
-            <Row
-              className={blocksMode ? 'justify-center' : 'items-end justify-center'}
-              style={blocksMode ? undefined : { flexGrow: 1, flexShrink: 1, minHeight: 0 }}>
+            {/* Mode toggle sits at the top; the picker fills the rest so the
+             *  Choose row stays pinned to the bottom. */}
+            <Row className="justify-center">
               <View className="border-subtle-border flex-row overflow-hidden rounded-lg border">
                 <ModeButton
                   label="Files"
@@ -172,7 +169,7 @@ const CompositionInsertDialog = ({
               </View>
             </Row>
             {mode === 'blocks' ? (
-              <Column className="gap-2 py-1">
+              <Column className="min-h-0 flex-1 gap-2 py-1">
                 <BlockButton
                   icon={<ChevronRight size={18} color="#6a4a8a" />}
                   label="Nav Button"
@@ -194,6 +191,7 @@ const CompositionInsertDialog = ({
                   tint="#1a1a1a"
                   onPress={() => onInsertStatement(dividerStatement())}
                 />
+                <View className="flex-1" />
                 <Row className="justify-end pt-2">
                   <AppButton variant="outline" className="h-9 w-24" onPress={close}>
                     <FontText weight="medium">Cancel</FontText>

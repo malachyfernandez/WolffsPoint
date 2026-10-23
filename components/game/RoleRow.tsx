@@ -8,6 +8,7 @@ import RoleEditDialog from './RoleEditDialog';
 import { useTableRowPreview } from './TableRowPreview';
 import MarkdownEditorDialog from './MarkdownEditorDialog';
 import CellFilesEditorDialog from './scriptFiles/CellFilesEditorDialog';
+import { FileSourcePreview } from './scriptFiles/CellPreviewChips';
 import { useScriptFiles } from '../../hooks/useScriptFiles';
 import VoteEnableDialog from './VoteEnableDialog';
 import DeleteConfirmationDialog from './DeleteRoleConfirmationDialog';
@@ -116,21 +117,25 @@ const RoleRow = ({
               setIsRoleMessageDialogOpen(true);
             }}
             className="h-full w-60 items-center justify-center">
-            <FontText
-              weight="medium"
-              className="w-60 overflow-hidden text-nowrap text-center"
-              style={{
-                textDecorationLine: 'underline',
-                textDecorationStyle: 'dotted',
-              }}>
-              {role.roleMessage ? (
-                <FontText className="text-center">
-                  {filesApi.previewText(role.roleMessage) || 'Role message...'}
+            <FileSourcePreview
+              source={role.roleMessage ?? ''}
+              index={filesApi.index}
+              centered
+              maxWidth={240}
+              fallback={
+                <FontText
+                  weight="medium"
+                  className={`w-60 overflow-hidden text-nowrap text-center ${role.roleMessage ? '' : 'opacity-50'}`}
+                  style={{
+                    textDecorationLine: 'underline',
+                    textDecorationStyle: 'dotted',
+                  }}>
+                  {role.roleMessage
+                    ? filesApi.previewText(role.roleMessage) || 'Role message...'
+                    : 'Role message...'}
                 </FontText>
-              ) : (
-                <FontText className="opacity-50">Role message...</FontText>
-              )}
-            </FontText>
+              }
+            />
           </Pressable>
           <SelectableOverlay cellId={`r-msg-${index}`} cellType="roleMessage" />
           <CellHighlight
@@ -149,20 +154,31 @@ const RoleRow = ({
               setIsVoteEnableDialogOpen(true);
             }}
             className="h-full w-60 items-center justify-center">
-            <FontText
-              weight="medium"
-              className="w-60 overflow-hidden text-nowrap text-center"
-              style={{ textDecorationLine: 'underline', textDecorationStyle: 'dotted' }}>
-              {role.doesRoleVote === false ? (
-                <FontText className="text-center opacity-50">Cannot vote</FontText>
-              ) : role.voteMessage ? (
-                <FontText className="text-center">
-                  {filesApi.previewText(role.voteMessage) || 'Vote message...'}
-                </FontText>
-              ) : (
-                <FontText className="text-center opacity-50">Using default</FontText>
-              )}
-            </FontText>
+            {role.doesRoleVote === false ? (
+              <FontText
+                weight="medium"
+                className="w-60 overflow-hidden text-nowrap text-center opacity-50"
+                style={{ textDecorationLine: 'underline', textDecorationStyle: 'dotted' }}>
+                <FontText className="text-center">Cannot vote</FontText>
+              </FontText>
+            ) : (
+              <FileSourcePreview
+                source={role.voteMessage ?? ''}
+                index={filesApi.index}
+                centered
+                maxWidth={240}
+                fallback={
+                  <FontText
+                    weight="medium"
+                    className={`w-60 overflow-hidden text-nowrap text-center ${role.voteMessage ? '' : 'opacity-50'}`}
+                    style={{ textDecorationLine: 'underline', textDecorationStyle: 'dotted' }}>
+                    {role.voteMessage
+                      ? filesApi.previewText(role.voteMessage) || 'Vote message...'
+                      : 'Using default'}
+                  </FontText>
+                }
+              />
+            )}
           </Pressable>
           <SelectableOverlay cellId={`r-vote-${index}`} cellType="voteMessage" />
           <CellHighlight
@@ -181,23 +197,39 @@ const RoleRow = ({
               setIsAboutRoleDialogOpen(true);
             }}
             className="h-full w-full items-center justify-center">
-            <FontText
-              weight="medium"
-              className="w-60 overflow-hidden text-nowrap text-center"
-              style={{
-                textDecorationLine: 'underline',
-                textDecorationStyle: 'dotted',
-              }}>
-              {role.aboutRole ? (
-                <FontText className="text-center">
-                  {displayModules
-                    ? filesApi.previewText(role.aboutRole) || 'About role...'
-                    : `${role.aboutRole.slice(0, 30)}${role.aboutRole.length > 30 ? '...' : ''}`}
-                </FontText>
-              ) : (
-                <FontText className="opacity-50">About role...</FontText>
-              )}
-            </FontText>
+            {displayModules ? (
+              <FileSourcePreview
+                source={role.aboutRole ?? ''}
+                index={filesApi.index}
+                centered
+                maxWidth={240}
+                fallback={
+                  <FontText
+                    weight="medium"
+                    className={`w-60 overflow-hidden text-nowrap text-center ${role.aboutRole ? '' : 'opacity-50'}`}
+                    style={{
+                      textDecorationLine: 'underline',
+                      textDecorationStyle: 'dotted',
+                    }}>
+                    {role.aboutRole
+                      ? filesApi.previewText(role.aboutRole) || 'About role...'
+                      : 'About role...'}
+                  </FontText>
+                }
+              />
+            ) : (
+              <FontText
+                weight="medium"
+                className={`w-60 overflow-hidden text-nowrap text-center ${role.aboutRole ? '' : 'opacity-50'}`}
+                style={{
+                  textDecorationLine: 'underline',
+                  textDecorationStyle: 'dotted',
+                }}>
+                {role.aboutRole
+                  ? `${role.aboutRole.slice(0, 30)}${role.aboutRole.length > 30 ? '...' : ''}`
+                  : 'About role...'}
+              </FontText>
+            )}
           </Pressable>
           <SelectableOverlay cellId={`r-about-${index}`} cellType="aboutRole" />
           <CellHighlight

@@ -4,8 +4,8 @@ import { ChevronRight, Code2, FileText, Folder, Tag as TagIcon, Zap } from 'luci
 import FontText from '../../ui/text/FontText';
 import TagPill, { getTagColor, type TagColor } from '../TagPill';
 import { fileName, isTagFile, tagFileName } from 'utils/scriptFiles';
-import type { ScriptFile } from 'utils/scriptFiles';
-import type { CellPreviewItem } from 'utils/cellPieces';
+import type { ScriptFile, ScriptFilesIndex } from 'utils/scriptFiles';
+import { previewCellItems, type CellPreviewItem } from 'utils/cellPieces';
 
 /** Right-edge fade used when a chip row overflows a card preview (web mask;
  *  native simply clips at the container bounds). */
@@ -67,11 +67,20 @@ interface CellPreviewChipsProps {
   /** Show items on one non-wrapping row whose right edge fades out instead
    *  of wrapping/clipping - for card previews like the rule book card. */
   fadeRow?: boolean;
+  /** Center the chip row inside the available width (message/table cells
+   *  center their content); defaults to left-aligned. */
+  centered?: boolean;
 }
 
 /** Renders previewCellItems as small chips: file name + kind icon, folder,
  *  nav button, literal divider, inline markdown, and TagPill for tags. */
-const CellPreviewChips = ({ items, tagColor, maxWidth, fadeRow = false }: CellPreviewChipsProps) => {
+const CellPreviewChips = ({
+  items,
+  tagColor,
+  maxWidth,
+  fadeRow = false,
+  centered = false,
+}: CellPreviewChipsProps) => {
   const renderItem = (item: CellPreviewItem, i: number): React.ReactNode => {
     switch (item.kind) {
       case 'file':
@@ -152,7 +161,7 @@ const CellPreviewChips = ({ items, tagColor, maxWidth, fadeRow = false }: CellPr
   if (fadeRow) {
     return (
       <View
-        className="w-full flex-row items-center justify-start gap-1 overflow-hidden"
+        className={`w-full flex-row items-center gap-1 overflow-hidden ${centered ? 'justify-center' : 'justify-start'}`}
         style={[
           { flexWrap: 'nowrap' },
           Platform.OS === 'web'
@@ -171,3 +180,35 @@ const CellPreviewChips = ({ items, tagColor, maxWidth, fadeRow = false }: CellPr
 };
 
 export default CellPreviewChips;
+
+interface FileSourcePreviewProps {
+  /** Cell/message source - file lists, compositions, pieces, or plain text. */
+  source: string;
+  index: ScriptFilesIndex;
+  /** Rendered when the source has no previewable items (empty source). */
+  fallback: React.ReactNode;
+  tagColor?: (tag: { name: string; tagId?: string }) => TagColor;
+  maxWidth?: number;
+  centered?: boolean;
+}
+
+/** One-line preview for any file-capable field: chips for file/folder/nav
+ *  content; `fallback` renders when the source is empty or plain text (so
+ *  legacy text previews keep their existing look). */
+export const FileSourcePreview = ({
+  source,
+  index,
+  fallback,
+  tagColor,
+  maxWidth,
+  centered,
+}: FileSourcePreviewProps) => {
+  const items = React.useMemo(
+    () => (source.trim() ? previewCellItems(source, index) : []),
+    [source, index]
+  );
+  if (!items.some((item) => item.kind !== 'text')) return <>{fallback}</>;
+  return (
+    <CellPreviewChips items={items} tagColor={tagColor} maxWidth={maxWidth} fadeRow centered={centered} />
+  );
+};
