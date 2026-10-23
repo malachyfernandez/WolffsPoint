@@ -40,7 +40,8 @@
     "test:files-tab-gating-ui": "node scripts/probe-files-tab-gating-ui.mjs",
     "test:folder-archive-ui": "node scripts/probe-folder-archive-ui.mjs",
     "test:dialog-top-spacing-ui": "node scripts/probe-dialog-top-spacing.mjs",
-    "test:cell-chips-ui": "node scripts/probe-cell-chips-ui.mjs"
+    "test:cell-chips-ui": "node scripts/probe-cell-chips-ui.mjs",
+    "test:column-headers-ui": "node scripts/probe-column-headers-ui.mjs"
   },
   "dependencies": {
     "@clerk/clerk-expo": "^2.19.17",

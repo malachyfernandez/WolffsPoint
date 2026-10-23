@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
+import { Pressable } from 'react-native';
 import FontText from '../ui/text/FontText';
-import InlineEditableText from '../ui/forms/InlineEditableText';
 import Column from '../layout/Column';
 import Row from '../layout/Row';
-import AppButton from '../ui/buttons/AppButton';
 import ColumnActionsDialog from './ColumnActionsDialog';
 import { ColumnSizeOption, getInnerTextWidth } from './playerTableColumnSizing';
 import { SelectableColumnOverlay } from './multiSelect/SelectableOverlay';
@@ -47,17 +46,11 @@ const TitleRow = ({
 }: TitleRowProps) => {
   const titles = userTableTitle ?? { extraUserColumns: [], extraDayColumns: [] };
   const visibility = userTableColumnVisibility ?? { extraUserColumns: [], extraDayColumns: [] };
-  const [editingColumns, setEditingColumns] = useState<Record<number, boolean>>({});
   const [activeMenu, setActiveMenu] = useState<number | null>(null);
 
-  const handleColumnEditStart = (columnIndex: number) => {
-    setEditingColumns((prev) => ({ ...prev, [columnIndex]: true }));
+  const openMenu = (index: number) => {
+    setActiveMenu(index);
     onEditStart?.();
-  };
-
-  const handleColumnEditEnd = (columnIndex: number) => {
-    setEditingColumns((prev) => ({ ...prev, [columnIndex]: false }));
-    onEditEnd?.();
   };
 
   return (
@@ -83,34 +76,25 @@ const TitleRow = ({
           return (
             <Row
               key={index}
-              className={`h-full items-center justify-center gap-0 px-2 ${editingColumns[index] ? 'z-50' : ''}`}
+              className="h-full items-center justify-center gap-0 px-2"
               style={{ width: columnWidth, position: 'relative' }}>
-              {!selectionMode && (
-                <InlineEditableText
-                  value={columnTitle}
-                  onChange={(newValue) => setColumnTitle?.(index, newValue)}
-                  placeholder="UNSET"
-                  className="overflow-hidden text-nowrap text-center"
-                  style={{ width: textWidth }}
-                  weight="medium"
-                  onEditStart={() => handleColumnEditStart(index)}
-                  onEditEnd={() => handleColumnEditEnd(index)}
-                />
-              )}
-              {!selectionMode && (
-                <AppButton
-                  variant="grey"
-                  className="ml-0 mr-[0.4rem] max-h-6 w-6"
-                  onPress={() => setActiveMenu(index)}>
-                  <FontText weight="bold" color="white" className="mt-[-0.1rem] text-lg">
-                    ⋯
-                  </FontText>
-                </AppButton>
-              )}
-              {selectionMode && (
+              {selectionMode ? (
                 <FontText weight="medium" className="text-center" style={{ width: textWidth }}>
                   {columnTitle}
                 </FontText>
+              ) : (
+                <Pressable onPress={() => openMenu(index)}>
+                  <FontText
+                    weight="medium"
+                    className="overflow-hidden text-nowrap text-center"
+                    style={{
+                      width: textWidth,
+                      textDecorationLine: 'underline',
+                      textDecorationStyle: 'dotted',
+                    }}>
+                    {columnTitle || <FontText className="opacity-50">UNSET</FontText>}
+                  </FontText>
+                </Pressable>
               )}
               <SelectableColumnOverlay
                 columnCellIds={columnCellIds?.[index] ?? []}
@@ -130,9 +114,16 @@ const TitleRow = ({
         onOpenChange={(open) => {
           if (!open) {
             setActiveMenu(null);
+            onEditEnd?.();
           }
         }}
         title="Column options"
+        columnTitle={activeMenu !== null ? titles.extraUserColumns[activeMenu] : undefined}
+        onRename={
+          activeMenu !== null
+            ? (newTitle) => setColumnTitle?.(activeMenu, newTitle)
+            : undefined
+        }
         contentType={
           activeMenu === null ? 'tags' : (titles.extraUserColumnTypes?.[activeMenu] ?? 'tags')
         }

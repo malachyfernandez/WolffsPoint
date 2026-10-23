@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
+import { Pressable } from 'react-native';
 import FontText from '../ui/text/FontText';
-import InlineEditableText from '../ui/forms/InlineEditableText';
 import Row from '../layout/Row';
-import AppButton from '../ui/buttons/AppButton';
 import ColumnActionsDialog from './ColumnActionsDialog';
 import { ColumnSizeOption, getInnerTextWidth } from './playerTableColumnSizing';
 import { SelectableColumnOverlay } from './multiSelect/SelectableOverlay';
@@ -71,18 +70,18 @@ const DayTitleRow = ({
 }: DayTitleRowProps) => {
   const titles = userTableTitle ?? { extraUserColumns: [], extraDayColumns: [] };
   const visibility = userTableColumnVisibility ?? { extraUserColumns: [], extraDayColumns: [] };
-  const [editingColumns, setEditingColumns] = useState<Record<number, boolean>>({});
   const [activeMenu, setActiveMenu] = useState<ActiveColumnMenu>(null);
 
-  const handleColumnEditStart = (columnIndex: number) => {
-    setEditingColumns((prev) => ({ ...prev, [columnIndex]: true }));
+  const openMenu = (menu: NonNullable<ActiveColumnMenu>) => {
+    setActiveMenu(menu);
     onEditStart?.();
   };
 
-  const handleColumnEditEnd = (columnIndex: number) => {
-    setEditingColumns((prev) => ({ ...prev, [columnIndex]: false }));
-    onEditEnd?.();
-  };
+  const headerTextStyle = (width: number) => ({
+    width,
+    textDecorationLine: 'underline' as const,
+    textDecorationStyle: 'dotted' as const,
+  });
 
   return (
     <>
@@ -91,42 +90,44 @@ const DayTitleRow = ({
         <Row
           className="h-full items-center justify-center gap-0 px-2"
           style={{ width: dayBaseColumnWidths.vote, position: 'relative' }}>
-          <FontText
-            weight="medium"
-            className="text-center"
-            style={{ width: getInnerTextWidth(dayBaseColumnWidths.vote) }}>
-            Vote
-          </FontText>
-          {!selectionMode && (
-            <AppButton
-              variant="grey"
-              className="ml-0 mr-[0.4rem] max-h-6 w-6"
-              onPress={() => setActiveMenu({ type: 'base', column: 'vote' })}>
-              <FontText weight="bold" color="white" className="mt-[-0.1rem] text-lg">
-                ⋯
+          {selectionMode ? (
+            <FontText
+              weight="medium"
+              className="text-center"
+              style={{ width: getInnerTextWidth(dayBaseColumnWidths.vote) }}>
+              Vote
+            </FontText>
+          ) : (
+            <Pressable onPress={() => openMenu({ type: 'base', column: 'vote' })}>
+              <FontText
+                weight="medium"
+                className="text-center"
+                style={headerTextStyle(getInnerTextWidth(dayBaseColumnWidths.vote))}>
+                Vote
               </FontText>
-            </AppButton>
+            </Pressable>
           )}
           <SelectableColumnOverlay columnCellIds={columnCellIds?.vote ?? []} cellType="daysVote" />
         </Row>
         <Row
           className="h-full items-center justify-center gap-0 px-2"
           style={{ width: dayBaseColumnWidths.action, position: 'relative' }}>
-          <FontText
-            weight="medium"
-            className="text-center"
-            style={{ width: getInnerTextWidth(dayBaseColumnWidths.action) }}>
-            Action
-          </FontText>
-          {!selectionMode && (
-            <AppButton
-              variant="grey"
-              className="ml-0 mr-[0.4rem] max-h-6 w-6"
-              onPress={() => setActiveMenu({ type: 'base', column: 'action' })}>
-              <FontText weight="bold" color="white" className="mt-[-0.1rem] text-lg">
-                ⋯
+          {selectionMode ? (
+            <FontText
+              weight="medium"
+              className="text-center"
+              style={{ width: getInnerTextWidth(dayBaseColumnWidths.action) }}>
+              Action
+            </FontText>
+          ) : (
+            <Pressable onPress={() => openMenu({ type: 'base', column: 'action' })}>
+              <FontText
+                weight="medium"
+                className="text-center"
+                style={headerTextStyle(getInnerTextWidth(dayBaseColumnWidths.action))}>
+                Action
               </FontText>
-            </AppButton>
+            </Pressable>
           )}
           <SelectableColumnOverlay
             columnCellIds={columnCellIds?.action ?? []}
@@ -137,21 +138,22 @@ const DayTitleRow = ({
           <Row
             className="h-full items-center justify-center gap-0 px-2"
             style={{ width: dayBaseColumnWidths.morningMessage, position: 'relative' }}>
-            <FontText
-              weight="medium"
-              className="text-center"
-              style={{ width: getInnerTextWidth(dayBaseColumnWidths.morningMessage) }}>
-              Morning
-            </FontText>
-            {!selectionMode && (
-              <AppButton
-                variant="grey"
-                className="ml-0 mr-[0.4rem] max-h-6 w-6"
-                onPress={() => setActiveMenu({ type: 'base', column: 'morningMessage' })}>
-                <FontText weight="bold" color="white" className="mt-[-0.1rem] text-lg">
-                  ⋯
+            {selectionMode ? (
+              <FontText
+                weight="medium"
+                className="text-center"
+                style={{ width: getInnerTextWidth(dayBaseColumnWidths.morningMessage) }}>
+                Morning
+              </FontText>
+            ) : (
+              <Pressable onPress={() => openMenu({ type: 'base', column: 'morningMessage' })}>
+                <FontText
+                  weight="medium"
+                  className="text-center"
+                  style={headerTextStyle(getInnerTextWidth(dayBaseColumnWidths.morningMessage))}>
+                  Morning
                 </FontText>
-              </AppButton>
+              </Pressable>
             )}
             <SelectableColumnOverlay
               columnCellIds={columnCellIds?.morningMessage ?? []}
@@ -168,34 +170,21 @@ const DayTitleRow = ({
           return (
             <Row
               key={index}
-              className={`h-full items-center justify-center gap-0 px-2 ${editingColumns[index] ? 'z-50' : ''}`}
+              className="h-full items-center justify-center gap-0 px-2"
               style={{ width: columnWidth, position: 'relative' }}>
-              {!selectionMode && (
-                <InlineEditableText
-                  value={columnTitle}
-                  onChange={(newValue) => setColumnTitle?.(index, newValue)}
-                  placeholder="UNSET"
-                  className="overflow-hidden text-nowrap text-center"
-                  style={{ width: textWidth }}
-                  weight="medium"
-                  onEditStart={() => handleColumnEditStart(index)}
-                  onEditEnd={() => handleColumnEditEnd(index)}
-                />
-              )}
-              {!selectionMode && (
-                <AppButton
-                  variant="grey"
-                  className="ml-0 mr-[0.4rem] max-h-6 w-6"
-                  onPress={() => setActiveMenu({ type: 'extra', index })}>
-                  <FontText weight="bold" color="white" className="mt-[-0.1rem] text-lg">
-                    ⋯
-                  </FontText>
-                </AppButton>
-              )}
-              {selectionMode && (
+              {selectionMode ? (
                 <FontText weight="medium" className="text-center" style={{ width: textWidth }}>
                   {columnTitle}
                 </FontText>
+              ) : (
+                <Pressable onPress={() => openMenu({ type: 'extra', index })}>
+                  <FontText
+                    weight="medium"
+                    className="overflow-hidden text-nowrap text-center"
+                    style={headerTextStyle(textWidth)}>
+                    {columnTitle || <FontText className="opacity-50">UNSET</FontText>}
+                  </FontText>
+                </Pressable>
               )}
               <SelectableColumnOverlay
                 columnCellIds={columnCellIds?.extra[index] ?? []}
@@ -213,9 +202,18 @@ const DayTitleRow = ({
         onOpenChange={(open) => {
           if (!open) {
             setActiveMenu(null);
+            onEditEnd?.();
           }
         }}
         title={activeMenu?.type === 'extra' ? 'Column options' : 'Resize column'}
+        columnTitle={
+          activeMenu?.type === 'extra' ? titles.extraDayColumns[activeMenu.index] : undefined
+        }
+        onRename={
+          activeMenu?.type === 'extra'
+            ? (newTitle) => setColumnTitle?.(activeMenu.index, newTitle)
+            : undefined
+        }
         contentType={
           activeMenu?.type === 'extra'
             ? (titles.extraDayColumnTypes?.[activeMenu.index] ?? 'tags')

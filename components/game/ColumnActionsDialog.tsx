@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View } from 'react-native';
 import ConvexDialog from '../ui/dialog/ConvexDialog';
 import DialogHeader from '../ui/dialog/DialogHeader';
@@ -6,6 +6,7 @@ import Column from '../layout/Column';
 import Row from '../layout/Row';
 import AppButton from '../ui/buttons/AppButton';
 import FontText from '../ui/text/FontText';
+import FontTextInput from '../ui/forms/FontTextInput';
 import DeleteConfirmationDialog from './DeleteRoleConfirmationDialog';
 import { ColumnSizeOption } from './playerTableColumnSizing';
 import CloseButton from '../ui/dialog/CloseButton';
@@ -20,6 +21,8 @@ interface ColumnActionsDialogProps {
   onDelete?: () => void;
   contentType?: CellContentType;
   onSelectContentType?: (type: CellContentType) => void;
+  columnTitle?: string;
+  onRename?: (title: string) => void;
 }
 
 const sizeOptions: { value: ColumnSizeOption; label: string; description: string }[] = [
@@ -37,20 +40,60 @@ const ColumnActionsDialog = ({
   onDelete,
   contentType = 'tags',
   onSelectContentType,
+  columnTitle,
+  onRename,
 }: ColumnActionsDialogProps) => {
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [draftTitle, setDraftTitle] = useState(columnTitle ?? '');
+
+  useEffect(() => {
+    if (isOpen) {
+      setDraftTitle(columnTitle ?? '');
+    }
+  }, [isOpen, columnTitle]);
+
+  const commitRename = () => {
+    if (!onRename) return;
+    const next = draftTitle.trim();
+    if (next !== (columnTitle ?? '')) {
+      onRename(next);
+    }
+  };
+
+  const handleOpenChange = (open: boolean) => {
+    if (!open) {
+      commitRename();
+    }
+    onOpenChange(open);
+  };
+
   return (
     <>
-      <ConvexDialog.Root isOpen={isOpen} onOpenChange={onOpenChange}>
+      <ConvexDialog.Root isOpen={isOpen} onOpenChange={handleOpenChange}>
         <ConvexDialog.Trigger asChild>
           <View />
         </ConvexDialog.Trigger>
         <ConvexDialog.Portal>
           <ConvexDialog.Overlay />
           <ConvexDialog.Content className="max-w-md p-1">
-            <CloseButton onPress={() => onOpenChange(false)} />
+            <CloseButton onPress={() => handleOpenChange(false)} />
             <DialogHeader text={title} />
             <Column className="gap-3 p-0 sm:px-5 sm:pb-5">
+              {onRename && (
+                <Column className="gap-1">
+                  <FontText weight="medium">Name</FontText>
+                  <FontTextInput
+                    selectTextOnFocus
+                    placeholder="Column name..."
+                    variant="styled"
+                    className="w-full p-2"
+                    value={draftTitle}
+                    onChangeText={setDraftTitle}
+                    onBlur={commitRename}
+                    onSubmitEditing={commitRename}
+                  />
+                </Column>
+              )}
               {onSelectContentType && (
                 <Column className="gap-2">
                   <FontText weight="medium">Cell content</FontText>
