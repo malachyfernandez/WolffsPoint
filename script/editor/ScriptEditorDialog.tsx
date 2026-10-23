@@ -2882,7 +2882,7 @@ const ScriptEditorDialog = ({
                 }
               />
               {fileContext?.filePath && (
-                <Column className="gap-1.5">
+                <Column className="mb-3 gap-1.5">
                   <Row className="flex-wrap items-center justify-between gap-1.5">
                     <FilePathControls
                       context={fileContext}
@@ -3008,74 +3008,78 @@ const ScriptEditorDialog = ({
                     )}
                 </Column>
               )}
-              <Column className="min-h-0 flex-1 gap-3 pt-3">
-                <Row className="items-center justify-between gap-2">
-                  <Row className="items-center gap-2">
-                    {fileContext && (
-                      <AppButton
-                        variant="outline"
-                        tooltip="Preview file"
-                        className={isTinyScreen ? 'h-9 w-9 px-0' : 'h-9 px-4'}
-                        onPress={() => setIsPreviewOpen(true)}
-                        dropShadow={false}>
-                        {/* Nested Row keeps the eye-to-label gap small; without
-                            it AppButton's gap-4 plus text margin pushes the
-                            eye against the left edge. */}
-                        <Row className="items-center gap-1.5">
-                          <Eye size={16} color="#1a1a1a" />
-                          {!isTinyScreen && <FontText className="text-sm">Preview</FontText>}
-                        </Row>
-                      </AppButton>
-                    )}
-                    {mode === 'blocks' && !readOnly && (
-                      <>
+              <Column className="min-h-0 flex-1 gap-3">
+                {/* Rendered only when it has content - an empty row would
+                    still consume a gap-3 slot above the canvas. */}
+                {(fileContext || !readOnly) && (
+                  <Row className="items-center justify-between gap-2">
+                    <Row className="items-center gap-2">
+                      {fileContext && (
                         <AppButton
                           variant="outline"
-                          tooltip="Undo"
+                          tooltip="Preview file"
+                          className={isTinyScreen ? 'h-9 w-9 px-0' : 'h-9 px-4'}
+                          onPress={() => setIsPreviewOpen(true)}
+                          dropShadow={false}>
+                          {/* Nested Row keeps the eye-to-label gap small; without
+                              it AppButton's gap-4 plus text margin pushes the
+                              eye against the left edge. */}
+                          <Row className="items-center gap-1.5">
+                            <Eye size={16} color="#1a1a1a" />
+                            {!isTinyScreen && <FontText className="text-sm">Preview</FontText>}
+                          </Row>
+                        </AppButton>
+                      )}
+                      {mode === 'blocks' && !readOnly && (
+                        <>
+                          <AppButton
+                            variant="outline"
+                            tooltip="Undo"
+                            className="h-8 px-3"
+                            onPress={undo}
+                            dropShadow={false}
+                            disabled={!canUndo || !!moveSession}>
+                            <Undo2 size={16} color="#1a1a1a" />
+                          </AppButton>
+                          <AppButton
+                            variant="outline"
+                            tooltip="Redo"
+                            className="h-8 px-3"
+                            onPress={redo}
+                            dropShadow={false}
+                            disabled={!canRedo || !!moveSession}>
+                            <Redo2 size={16} color="#1a1a1a" />
+                          </AppButton>
+                        </>
+                      )}
+                    </Row>
+                    {!readOnly && (
+                      <Row className="gap-2">
+                        <AppButton
+                          variant={mode === 'blocks' ? 'filled' : 'outline'}
                           className="h-8 px-3"
-                          onPress={undo}
-                          dropShadow={false}
-                          disabled={!canUndo || !!moveSession}>
-                          <Undo2 size={16} color="#1a1a1a" />
+                          onPress={() => handleSwitchMode('blocks')}
+                          dropShadow={false}>
+                          <FontText
+                            className="text-sm"
+                            color={mode === 'blocks' ? 'white' : undefined}>
+                            Blocks
+                          </FontText>
                         </AppButton>
                         <AppButton
-                          variant="outline"
-                          tooltip="Redo"
+                          variant={mode === 'text' ? 'filled' : 'outline'}
                           className="h-8 px-3"
-                          onPress={redo}
-                          dropShadow={false}
-                          disabled={!canRedo || !!moveSession}>
-                          <Redo2 size={16} color="#1a1a1a" />
+                          onPress={() => handleSwitchMode('text')}
+                          disabled={!!moveSession}
+                          dropShadow={false}>
+                          <FontText className="text-sm" color={mode === 'text' ? 'white' : undefined}>
+                            Text
+                          </FontText>
                         </AppButton>
-                      </>
+                      </Row>
                     )}
                   </Row>
-                  {!readOnly && (
-                    <Row className="gap-2">
-                      <AppButton
-                        variant={mode === 'blocks' ? 'filled' : 'outline'}
-                        className="h-8 px-3"
-                        onPress={() => handleSwitchMode('blocks')}
-                        dropShadow={false}>
-                        <FontText
-                          className="text-sm"
-                          color={mode === 'blocks' ? 'white' : undefined}>
-                          Blocks
-                        </FontText>
-                      </AppButton>
-                      <AppButton
-                        variant={mode === 'text' ? 'filled' : 'outline'}
-                        className="h-8 px-3"
-                        onPress={() => handleSwitchMode('text')}
-                        disabled={!!moveSession}
-                        dropShadow={false}>
-                        <FontText className="text-sm" color={mode === 'text' ? 'white' : undefined}>
-                          Text
-                        </FontText>
-                      </AppButton>
-                    </Row>
-                  )}
-                </Row>
+                )}
 
                 {parseError && (
                   <View className="rounded-lg border border-red-400/30 bg-red-400/5 p-2">

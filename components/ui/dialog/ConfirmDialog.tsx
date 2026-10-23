@@ -59,12 +59,12 @@ const ConfirmDialog = ({
           <CloseButton onPress={() => onOpenChange(false)} accessibilityLabel="Cancel" />
           <DialogHeader text={title} />
           {message && (
-            <Column className="gap-4">
+            <Column className="mb-4 gap-4">
               <FontText className="text-center">{message}</FontText>
             </Column>
           )}
-          {children && <Column className="gap-1 self-start pt-1">{children}</Column>}
-          <Row className="justify-center gap-4 pt-4">
+          {children && <Column className="gap-1 self-start mb-4">{children}</Column>}
+          <Row className="justify-center gap-4">
             <AppButton
               variant="outline"
               className="w-24"

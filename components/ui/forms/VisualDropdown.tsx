@@ -217,20 +217,22 @@ const VisualDropdown = ({
           <ConvexDialog.Overlay />
           <ConvexDialog.Content isSwipeable={false} className="max-w-sm">
             {searchable && options.length > 0 && (
-              <AppDropdownSearchInput
-                value={searchText}
-                onChangeText={handleSearchChange}
-                placeholder={searchPlaceholder}
-                onSubmit={() => {
-                  const option = visibleOptions[activeIndex];
-                  if (option) {
-                    handleValueChange(option.value);
-                  }
-                }}
-                onKeyDown={handleSearchKeyDown}
-              />
+              <View className="pb-2">
+                <AppDropdownSearchInput
+                  value={searchText}
+                  onChangeText={handleSearchChange}
+                  placeholder={searchPlaceholder}
+                  onSubmit={() => {
+                    const option = visibleOptions[activeIndex];
+                    if (option) {
+                      handleValueChange(option.value);
+                    }
+                  }}
+                  onKeyDown={handleSearchKeyDown}
+                />
+              </View>
             )}
-            <View className="flex-col gap-1 pt-2">
+            <View className="flex-col gap-1">
               {visibleOptions.map((option, index) => renderOption(option, index))}
               {normalizedSearch.length > 0 && visibleOptions.length === 0 && (
                 <FontText variant="subtext" className="py-4 text-center">

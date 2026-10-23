@@ -79,6 +79,31 @@ try {
       value: 1,
       privacy: 'PUBLIC',
     });
+    // A files column + a composition cell so the fileOnly editor stage
+    // (no filePath -> the toolbar Row is the first sibling after the
+    // header) can be opened like the "Infector Role Message" screenshot.
+    const composition = 'File({PATH = "pack/Alpha", ID = "f_a"});';
+    db.seedListItem(db.viewerUserId, 'userTable', 'SIMOP1234', [
+      {
+        realName: 'Alice',
+        email: 'a@x.com',
+        userId: 'u1',
+        role: '',
+        playerData: { livingState: 'alive', extraColumns: [''] },
+        days: [{ vote: '', action: '', voteMultiplier: 1, extraColumns: [composition] }],
+      },
+    ]);
+    db.seedListItem(db.viewerUserId, 'userTableTitle', 'SIMOP1234', {
+      extraUserColumns: [],
+      extraDayColumns: ['Mix'],
+      extraDayColumnTypes: ['files'],
+    });
+    db.seedListItem(db.viewerUserId, 'userTableColumnVisibility', 'SIMOP1234', {
+      extraUserColumns: [],
+      extraDayColumns: [true],
+    });
+    db.seedListItem(db.viewerUserId, 'dayDatesArray', 'SIMOP1234', ['10/17/2026']);
+    db.seedListItem(db.viewerUserId, 'selectedDayIndex', 'SIMOP1234', 0);
   });
   await page.waitForSelector('[data-testid="game-SIMOP1234"]');
   await page.click('[data-testid="game-SIMOP1234"]');
@@ -164,6 +189,43 @@ try {
   const m2 = await measureHeaderGap();
   console.log('file editor gap:', JSON.stringify(m2));
   assert.ok(m2 && Math.abs(m2.gap - 12) <= 1, `expected ~12px header gap, got ${m2?.gap}`);
+
+  // Dialog 3 (the reported case): the fileOnly cell editor - no filePath,
+  // so the toolbar Row is the first sibling after the header. It used to
+  // carry pt-3 (12px over the header's mb-3).
+  for (let i = 0; i < 4; i++) {
+    await page.keyboard.press('Escape');
+    await settle(500);
+    if ((await page.evaluate(() => document.querySelectorAll('[role="dialog"]').length)) === 0)
+      break;
+  }
+  await page.evaluate(() => {
+    const el = [...document.querySelectorAll('div')].filter(
+      (e) => (e.innerText || '').trim() === 'PLAYERS'
+    ).pop();
+    if (el) {
+      const r = el.getBoundingClientRect();
+      el.dispatchEvent(
+        new MouseEvent('click', { bubbles: true, clientX: r.left + r.width / 2, clientY: r.top + r.height / 2 })
+      );
+    }
+  });
+  await settle(1800);
+  assert.ok(await bodyHas('Mix'), 'Mix files column should render on the players tab');
+  await page.evaluate(() => {
+    const chip = [...document.querySelectorAll('.rounded-full')].find(
+      (e) => (e.innerText || '').trim() === 'Alpha'
+    );
+    if (!chip) return;
+    const r = chip.getBoundingClientRect();
+    chip.dispatchEvent(
+      new MouseEvent('click', { bubbles: true, clientX: r.left + 5, clientY: r.top + 5 })
+    );
+  });
+  await settle(1600);
+  const m3 = await measureHeaderGap();
+  console.log('fileOnly cell editor gap:', JSON.stringify(m3));
+  assert.ok(m3 && Math.abs(m3.gap - 12) <= 1, `expected ~12px header gap, got ${m3?.gap}`);
 
   console.log('dialog top-spacing probe passed');
 } finally {

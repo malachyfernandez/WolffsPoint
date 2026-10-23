@@ -296,7 +296,7 @@ const PlayerProfileDialogNEW = ({
               {/* Tab selector (narrow screens only) */}
               {!isDesktop && <TabSelector value={profileTab} onValueChange={setProfileTab} />}
 
-              <Row className="-mx-5 min-h-0 flex-1 gap-0 sm:pt-5">
+              <Row className="-mx-5 min-h-0 flex-1 gap-0">
                 {/* LEFT: Inputs (scrollable): always on desktop, only on "editing" tab on mobile */}
                 {(isDesktop || profileTab === 'editing') && (
                   <ShadowScrollView className="flex-1" scrollViewClassName="flex-1">

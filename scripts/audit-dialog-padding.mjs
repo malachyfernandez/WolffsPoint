@@ -38,6 +38,26 @@ const px = (token) => {
 
 const TOP_SIDE = /^-?(?:p|py|pt|m|my|mt)-/;
 const NON_TOP_SIDE = /^-?(?:pl|pr|pb|px|ml|mr|mb|mx)-/;
+const BOT_SIDE = /^-?(?:p|py|pb|m|my|mb)-/;
+const NON_BOT_SIDE = /^-?(?:pl|pr|pt|px|ml|mr|mt|mx)-/;
+
+/** Same shape as topTokens but for the bottom edge - used to measure how
+ *  much room an element that renders INVISIBLY still occupies before the
+ *  next sibling (its own top+bottom pad). */
+const botTokens = (cls) => {
+  let total = 0;
+  const parts = [];
+  for (const tok of cls.split(/\s+/).filter(Boolean)) {
+    const bare = tok.replace(VARIANT, '');
+    if (NON_BOT_SIDE.test(bare) || !BOT_SIDE.test(bare)) continue;
+    const v = px(tok);
+    if (v !== null && v !== 0) {
+      total += v;
+      parts.push(tok);
+    }
+  }
+  return { total, parts };
+};
 
 const topTokens = (cls) => {
   let total = 0;
@@ -147,8 +167,13 @@ const NONFLOW_NAMES = new Set([
 const NONFLOW = (name, cls) =>
   NONFLOW_NAMES.has(name) || hasClass(cls, /^(absolute|fixed|hidden$)/);
 
+/** Elements unwrapped out of a conditional ({cond && <X/>}, {cond ? <X/> : null})
+ *  are not guaranteed to render. MAYBE marks JSX nodes that came from a
+ *  conditional right side so sibling scans can skip past them. */
+const MAYBE = new WeakSet();
+
 /** Unwrap {cond && <X/>} and fragments; keep {cond ? A : B} as a choice node. */
-const unwrapChildren = (children, out = []) => {
+const unwrapChildren = (children, out = [], maybe = false) => {
   for (const child of children ?? []) {
     if (!child) continue;
     if (child.type === 'JSXText') {
@@ -156,27 +181,60 @@ const unwrapChildren = (children, out = []) => {
       continue;
     }
     if (child.type === 'JSXFragment') {
-      unwrapChildren(child.children, out);
+      unwrapChildren(child.children, out, maybe);
       continue;
     }
     if (child.type === 'JSXElement') {
+      if (maybe) MAYBE.add(child);
       out.push(child);
+      continue;
+    }
+    if (child.type === 'ConditionalExpression') {
+      out.push({
+        kind: 'choice',
+        alts: [
+          unwrapChildren([child.consequent], [], maybe),
+          unwrapChildren([child.alternate], [], maybe),
+        ],
+      });
+      continue;
+    }
+    if (child.type === 'LogicalExpression' && child.operator === '&&') {
+      unwrapChildren([child.right], out, true);
+      continue;
+    }
+    if (child.type === 'NullLiteral' || child.type === 'BooleanLiteral') continue;
+    if (child.type === 'StringLiteral') {
+      if (child.value.trim()) out.push({ kind: 'text' });
+      continue;
+    }
+    if (child.type === 'NumericLiteral') {
+      out.push({ kind: 'text' });
       continue;
     }
     if (child.type === 'JSXExpressionContainer') {
       const e = child.expression;
       if (!e || e.type === 'JSXEmptyExpression') continue;
       if (e.type === 'LogicalExpression' && e.operator === '&&') {
-        unwrapChildren([e.right], out);
+        unwrapChildren([e.right], out, true);
       } else if (e.type === 'ConditionalExpression') {
         // Alternatives, not siblings: keep grouped so first-paint picks the
         // worst branch instead of the first-written one.
         out.push({
           kind: 'choice',
-          alts: [unwrapChildren([e.consequent]), unwrapChildren([e.alternate])],
+          alts: [
+            unwrapChildren([e.consequent], [], maybe),
+            unwrapChildren([e.alternate], [], maybe),
+          ],
         });
       } else if (e.type === 'JSXElement' || e.type === 'JSXFragment') {
-        unwrapChildren([e], out);
+        unwrapChildren([e], out, maybe);
+      } else if (e.type === 'NullLiteral' || e.type === 'BooleanLiteral') {
+        continue; // renders nothing
+      } else if (e.type === 'StringLiteral') {
+        if (e.value.trim()) out.push({ kind: 'text' });
+      } else if (e.type === 'NumericLiteral') {
+        out.push({ kind: 'text' }); // even 0 paints
       } else {
         out.push({ kind: 'opaque' }); // .map(), calls, variables
       }
@@ -230,7 +288,8 @@ const firstPaintOffset = (node, inherited = 0, chain = [], fix = []) => {
     if (!kids.length) {
       return { offset: inherited + total, chain: nChain, fix: nFix, via: `${name}(empty)` };
     }
-    return firstPaintOffset(kids[0], inherited + total, nChain, nFix);
+    const g = vgapTokens(name, cls);
+    return scanSiblings(kids, inherited + total, nChain, nFix, g);
   }
   if (name === 'Pressable' || name === 'button') {
     const { total, parts } = topTokens(cls);
@@ -258,23 +317,89 @@ const dedupeFix = (fix) => {
   });
 };
 
+/** Can this child render NO box at all? (conditional, or ternary with an
+ *  empty alternate.) Opaque/.map() stays terminal - unknowable. */
+const canBeAbsent = (k) =>
+  MAYBE.has(k) || (k.kind === 'choice' && k.alts.some((a) => !a.length));
+
+/** Can this child render a box that paints NOTHING? (empty layout, or a
+ *  layout whose whole subtree is absent/invisible.) Visible-named or
+ *  visibly-classed elements, text, and opaque/customs always paint. */
+const canRenderInvisible = (k, depth = 0) => {
+  if (depth > 12) return false;
+  if (k.kind === 'text' || k.kind === 'opaque') return false;
+  if (k.kind === 'choice')
+    return k.alts.every((a) => !a.length || canRenderInvisible(a[0], depth + 1));
+  const name = nameOf(k);
+  const cls = classNameOf(k);
+  if (VISIBLE_NAME.has(name) || hasClass(cls, VISIBLE_CLASS)) return false;
+  if (name === 'Pressable' || name === 'button') return false;
+  if (LAYOUT_NAME.has(name) || hasClass(cls, /^(flex|grid|block|inline)/)) {
+    const kids = flowKids(k);
+    if (!kids.length) return true;
+    return kids.every((kid) => canBeAbsent(kid) || canRenderInvisible(kid, depth + 1));
+  }
+  return false; // custom component: assume it paints
+};
+
+/** Height an invisible-but-rendered element still occupies before the next
+ *  sibling: its own top+bottom pad. */
+const ownPadSum = (k) => {
+  const cls = classNameOf(k);
+  return topTokens(cls).total + botTokens(cls).total;
+};
+
+/**
+ * Iterate flow siblings left-to-right and return the max-offset
+ * first-visible candidate across every render branch. Siblings that can be
+ * absent ({cond && <X/>}, ternary-with-null) or that can render an
+ * invisible box keep the scan going; invisible boxes contribute their own
+ * pad plus the container gap to later candidates.
+ */
+const scanSiblings = (kids, inherited, chain, fix, sibGap) => {
+  let best = null;
+  let extra = 0;
+  for (const k of kids) {
+    const r = firstPaintOffset(k, inherited + extra, chain, fix);
+    const paints = r.via && r.via !== 'none' && !/\(empty\)$/.test(r.via) && r.via !== 'empty-alt';
+    if (process.env.AUDIT_DEBUG)
+      console.error(
+        `  kid ${k.loc?.start?.line ?? k.kind} ${nameOf(k)} -> via ${r.via} off ${r.offset}` +
+          ` absent=${canBeAbsent(k)} invis=${canRenderInvisible(k)}`
+      );
+    if (paints && (!best || r.offset > best.offset)) best = r;
+    if (!canBeAbsent(k) && !canRenderInvisible(k)) break;
+    // Only unconditionally-rendered invisible boxes reliably steal the slot:
+    // an absent-able element either renders content (next isn't first) or
+    // renders nothing (no box, no gap).
+    if (canRenderInvisible(k) && !canBeAbsent(k)) extra += ownPadSum(k) + sibGap.total;
+  }
+  return best ?? { offset: inherited + extra, chain, fix, via: 'empty' };
+};
+
 /** DFS for DialogHeader inside a dialog body. */
 const scanForHeader = (children) => {
   for (let i = 0; i < children.length; i++) {
     const k = children[i];
-    if (k.kind === 'text' || k.kind === 'opaque' || k.kind === 'choice') {
-      return { painted: true };
+    if (k.kind === 'text' || k.kind === 'opaque') return { painted: true };
+    if (k.kind === 'choice') {
+      if (!canBeAbsent(k)) return { painted: true };
+      continue; // every alt could be empty - the header may be a later sibling
     }
     const name = nameOf(k);
     const cls = classNameOf(k);
     if (name === 'DialogHeader') return { header: [i] };
-    if (VISIBLE_NAME.has(name) || hasClass(cls, VISIBLE_CLASS)) return { painted: true };
+    const maybe = canBeAbsent(k);
+    if (!maybe && (VISIBLE_NAME.has(name) || hasClass(cls, VISIBLE_CLASS))) {
+      return { painted: true };
+    }
     if (LAYOUT_NAME.has(name) || hasClass(cls, /^(flex|grid|block|inline)/)) {
       const sub = scanForHeader(flowKids(k));
       if (sub?.header) return { header: [i, ...sub.header] };
-      if (sub?.painted) return sub;
-      continue; // empty wrapper - the header could be a later sibling
+      if (!maybe && sub?.painted) return sub;
+      continue; // empty/maybe wrapper - the header could be a later sibling
     }
+    if (maybe || canRenderInvisible(k)) continue;
     return { painted: true }; // opaque custom component
   }
   return null;
@@ -295,17 +420,15 @@ const resumeAfterHeader = (children, path, parentGap = { total: 0, parts: [], lo
     });
     if (inner) return inner;
   }
-  for (let j = i + 1; j < children.length; j++) {
-    const r = firstPaintOffset(children[j]);
-    const gapChain = parentGap.parts.map((t) => `${t}${parentGap.loc}`);
-    return {
-      ...r,
-      offset: r.offset + parentGap.total,
-      chain: [...gapChain, ...(r.allChains ?? r.chain)],
-      gapChain,
-    };
-  }
-  return null;
+  const afterKids = children.slice(i + 1);
+  if (!afterKids.length) return null;
+  const gapChain = parentGap.parts.map((t) => `${t}${parentGap.loc}`);
+  const r = scanSiblings(afterKids, parentGap.total, [], [], parentGap);
+  return {
+    ...r,
+    chain: [...gapChain, ...(r.allChains ?? r.chain)],
+    gapChain,
+  };
 };
 
 const analyzeContent = (contentNode, file) => {
@@ -320,6 +443,7 @@ const analyzeContent = (contentNode, file) => {
       callerPad.parts.length && contentAttr
         ? { start: contentAttr.value.start, end: contentAttr.value.end }
         : null,
+    loc: contentNode.loc?.start.line,
     hasHeader: false,
     topPadPx: FRAME_PX,
     postHeaderGapPx: null,
@@ -351,7 +475,7 @@ const analyzeContent = (contentNode, file) => {
     result.via = below?.via ?? 'none';
     return result;
   }
-  const firstRes = firstPaintOffset(kids[0]);
+  const firstRes = scanSiblings(kids, 0, [], [], vgapTokens('ConvexDialog.Content', contentCls));
   result.topPadPx = FRAME_PX + firstRes.offset;
   result.chain = firstRes.allChains ?? firstRes.chain;
   result.fix = firstRes.fix;
@@ -581,6 +705,35 @@ if (process.argv.includes('--hoist')) {
 
 if (process.argv.includes('--json')) {
   console.log(JSON.stringify(results, (k, v) => (k === 'contentNode' ? undefined : v), 2));
+  process.exit(0);
+}
+
+// --report: write the whole audit to a readable file so the per-dialog top
+// spacing can be reviewed in one place instead of spread across components.
+if (process.argv.includes('--report')) {
+  const target = r => r.hasHeader ? r.postHeaderGapPx : r.topPadPx;
+  const expected = r => r.hasHeader ? HEADER_MB_PX : FRAME_PX;
+  const sorted = [...results].sort((a, b) => target(b) - target(a));
+  const lines = [
+    '# Dialog top-spacing report',
+    '',
+    `Generated by \`node scripts/audit-dialog-padding.mjs --report\` on ${new Date().toISOString().slice(0, 10)}.`,
+    '',
+    `- **Header dialogs**: gap below \`DialogHeader\` should be **${HEADER_MB_PX}px** (its \`mb-3\`).`,
+    `- **Headerless dialogs**: top edge to first visible content should be **${FRAME_PX}px** (frame \`p-5\`).`,
+    '',
+    '| Status | File | Header | Top pad | After header | Chain to first visible |',
+    '|---|---|---|---|---|---|',
+    ...sorted.map((r) =>
+      `| ${target(r) === expected(r) ? 'ok' : '**ANOMALY**'} | \`${r.file}\` | ${r.hasHeader ? 'yes' : 'no'} | ${r.topPadPx}px | ${r.hasHeader ? `${r.postHeaderGapPx}px` : '-'} | ${(r.chain.join(' + ') || '(none)')} → ${r.via} |`
+    ),
+    '',
+    `${results.length} dialogs audited; ${results.filter((r) => target(r) !== expected(r)).length} anomalies.`,
+    '',
+  ];
+  const out = path.join(root, 'scripts', 'dialog-padding-report.md');
+  fs.writeFileSync(out, lines.join('\n'));
+  console.log(`wrote ${path.relative(process.cwd(), out)}`);
   process.exit(0);
 }
 
