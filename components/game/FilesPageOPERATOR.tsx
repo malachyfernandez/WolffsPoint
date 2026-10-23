@@ -13,7 +13,7 @@ interface FilesPageOPERATORProps {
   gameId: string;
   /** Placement chips on cells jump to the tab holding that cell, the
    *  placement rides along so the cell can flash + scroll into view. */
-  onNavigateTab?: (tab: 'config' | 'players', placement?: FilePlacement) => void;
+  onNavigateTab?: (tab: 'config' | 'players' | 'rulebook', placement?: FilePlacement) => void;
 }
 
 /**
@@ -43,7 +43,11 @@ const FilesPageOPERATOR = ({ gameId, onNavigateTab }: FilesPageOPERATORProps) =>
       return;
     }
     onNavigateTab?.(
-      p.cellKind === 'morningMessage' || p.cellKind === 'tableCell' ? 'players' : 'config',
+      p.cellKind === 'ruleBook'
+        ? 'rulebook'
+        : p.cellKind === 'morningMessage' || p.cellKind === 'tableCell'
+          ? 'players'
+          : 'config',
       p
     );
   };

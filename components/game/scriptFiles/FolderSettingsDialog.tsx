@@ -29,6 +29,7 @@ import {
   resolveFolderRef,
   type FolderDisplayOptions,
 } from '../../../utils/scriptFolders';
+import { folderLabel } from '../../../utils/scriptFolderIdentity';
 
 type FilesApi = { index: ReturnType<typeof useScriptFiles>['index'] };
 
@@ -171,7 +172,7 @@ const FolderSettingsDialog = ({
     onOpenChange(false);
   };
 
-  const folderLabel = resolvedPath ? fileName(resolvedPath) : 'Missing folder';
+  const folderDisplayLabel = resolvedPath ? folderLabel(resolvedPath) : 'Missing folder';
 
   return (
     <>
@@ -182,7 +183,7 @@ const FolderSettingsDialog = ({
             <CloseButton onPress={handleAttemptClose} />
             <DialogHeader
               text="Folder settings"
-              subtext={`${folderLabel} stays live: new files appear automatically`}
+              subtext={`${folderDisplayLabel} stays live: new files appear automatically`}
             />
             <Column className="min-h-0 flex-1 gap-4">
               {!resolvedPath ? (

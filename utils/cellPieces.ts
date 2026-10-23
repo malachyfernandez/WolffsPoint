@@ -43,6 +43,7 @@ import {
 } from './scriptFiles';
 import { resolveDisplayComposition } from './displayComposition';
 import { getFolderCallParts, resolveFolderRef } from './scriptFolders';
+import { folderLabel } from './scriptFolderIdentity';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -647,7 +648,7 @@ export const previewCellText = (raw: string, index: ScriptFilesIndex): string =>
     if (fileRef) return fileName(resolveFileRef(index, fileRef)?.path ?? fileRef.path);
     const folderRef = getFolderCallParts(statement);
     if (folderRef)
-      return fileName(resolveFolderRef(index, folderRef) ?? folderRef.path ?? 'Folder');
+      return folderLabel(resolveFolderRef(index, folderRef) ?? folderRef.path ?? 'Folder');
     if (statement.kind === 'NavButtonStatement') {
       return statement.label.kind === 'StringLiteral' ? statement.label.value : 'Navigation';
     }
@@ -720,7 +721,7 @@ export const previewCellItems = (raw: string, index: ScriptFilesIndex): CellPrev
     if (folderRef) {
       items.push({
         kind: 'folder',
-        label: fileName(resolveFolderRef(index, folderRef) ?? folderRef.path ?? 'Folder'),
+        label: folderLabel(resolveFolderRef(index, folderRef) ?? folderRef.path ?? 'Folder'),
       });
       return;
     }

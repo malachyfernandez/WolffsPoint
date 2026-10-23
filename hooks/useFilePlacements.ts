@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useList } from './useData';
+import { useList, useValue } from './useData';
 import {
   buildFilePlacements,
   type FilePlacement,
@@ -7,7 +7,9 @@ import {
   type ScriptFilesIndex,
 } from '../utils/scriptFiles';
 import { collectPieceFileRefs, formatCellAddress } from '../utils/cellPieces';
+import { getGameScopedKey } from '../utils/multiplayer';
 import type { RoleTableItem } from 'types/roleTable';
+import type { RuleBookData } from 'types/ruleBook';
 import type { UserTableItem, UserTableTitle } from 'types/playerTable';
 
 /**
@@ -37,6 +39,9 @@ export const useFilePlacements = (
   );
   const [userTable] = useList<UserTableItem[]>('userTable', gameId ?? '');
   const [userTableTitle] = useList<UserTableTitle>('userTableTitle', gameId ?? '');
+  const [ruleBook] = useValue<RuleBookData>(getGameScopedKey('ruleBook', gameId ?? ''), {
+    privacy: 'PUBLIC',
+  });
 
   return useMemo(() => {
     const cells: {
@@ -158,6 +163,29 @@ export const useFilePlacements = (
       });
     }
 
+    // The rule book acts as one cell: files it references count as used.
+    const ruleBookValue = ruleBook?.scheduledUpdate?.value ?? ruleBook?.value;
+    const ruleBookText =
+      ruleBookValue?.modularContent !== undefined
+        ? ruleBookValue.modularContent
+        : (ruleBookValue?.content ?? '');
+    if (ruleBookText) {
+      cells.push({
+        label: 'Rule book',
+        text: ruleBookText,
+        cellKind: 'ruleBook',
+        extraRefs: collectPieceFileRefs(ruleBookText, index),
+      });
+    }
+
     return buildFilePlacements(index, cells);
-  }, [index, roleTable, voteMessageDefault, morningMessagesList, userTable, userTableTitle]);
+  }, [
+    index,
+    roleTable,
+    voteMessageDefault,
+    morningMessagesList,
+    userTable,
+    userTableTitle,
+    ruleBook,
+  ]);
 };

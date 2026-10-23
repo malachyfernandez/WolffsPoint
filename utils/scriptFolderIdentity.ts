@@ -7,6 +7,7 @@ export const PINNED_FOLDER_PATHS = [
   'morningMessage',
   'aboutRole',
   'tags',
+  'ruleBook',
 ] as const;
 
 export const ABOUT_ROLE_FOLDER = 'aboutRole';
@@ -17,7 +18,23 @@ const pinnedIds: Readonly<Record<string, string>> = {
   morningmessage: 'folder_morning_message',
   aboutrole: 'folder_about_role',
   tags: 'folder_tags',
+  rulebook: 'folder_rule_book',
 };
+
+const PINNED_FOLDER_LABELS: Record<string, string> = {
+  rolemessage: 'Role Messages',
+  votemessage: 'Vote Messages',
+  morningmessage: 'Morning Messages',
+  aboutrole: 'About Roles',
+  tags: 'Tags',
+  rulebook: 'Rule Book',
+};
+
+/** Display name for a folder path: friendly label for pinned roots. Kept
+ *  self-contained (no scriptFiles import) to avoid a module cycle. */
+export const folderLabel = (folder: string): string =>
+  PINNED_FOLDER_LABELS[folder.toLowerCase()] ??
+  (folder.split('/').filter(Boolean).pop() ?? folder);
 
 const normalize = (path: string) =>
   path

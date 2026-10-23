@@ -322,17 +322,10 @@ interface MoveTarget {
   folderPath?: string;
 }
 
-const PINNED_FOLDER_LABELS: Record<string, string> = {
-  rolemessage: 'Role Messages',
-  votemessage: 'Vote Messages',
-  morningmessage: 'Morning Messages',
-  aboutrole: 'About Roles',
-  tags: 'Tags',
-};
-
-/** Display name for a folder path: friendly label for pinned roots. */
-export const folderLabel = (folder: string) =>
-  PINNED_FOLDER_LABELS[folder.toLowerCase()] ?? fileName(folder);
+/** Display name for a folder path: friendly label for pinned roots. Defined in
+ *  utils/scriptFolderIdentity so previews/settings can share it. */
+export { folderLabel } from '../../../utils/scriptFolderIdentity';
+import { folderLabel } from '../../../utils/scriptFolderIdentity';
 
 /**
  * The browser's actual UI: toolbar, breadcrumbs, listing, and the

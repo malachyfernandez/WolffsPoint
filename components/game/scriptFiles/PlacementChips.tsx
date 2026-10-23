@@ -63,6 +63,7 @@ const CELL_KIND_LABEL: Record<PlacementCellKind, string> = {
   morningMessage: 'morning',
   tableCell: 'cell',
   aboutRole: 'about role',
+  ruleBook: 'rule book',
 };
 
 const cellSubtitle = (p: FilePlacement): string => {

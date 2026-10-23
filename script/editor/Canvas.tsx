@@ -106,6 +106,7 @@ import {
   type ScriptFilesIndex,
 } from '../../utils/scriptFiles';
 import { getFolderCallParts, resolveFolderRef } from '../../utils/scriptFolders';
+import { folderLabel } from '../../utils/scriptFolderIdentity';
 
 const span = emptySpan();
 
@@ -3193,7 +3194,7 @@ const DisplayCallCard = ({
           <Folder size={16} color="#8a7355" />
           <Column className="min-w-0 shrink gap-0">
             <FontText weight="medium" className="text-sm" numberOfLines={1}>
-              {shownPath ? filePathName(shownPath) : 'Select folder'}
+              {shownPath ? folderLabel(shownPath) : 'Select folder'}
             </FontText>
             {shownPath && (
               <FontText variant="subtext" className="text-xs" numberOfLines={1}>

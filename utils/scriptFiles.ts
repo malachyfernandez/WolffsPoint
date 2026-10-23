@@ -1735,7 +1735,8 @@ export type PlacementCellKind =
   | 'morningMessage'
   | 'voteDefault'
   | 'tableCell'
-  | 'aboutRole';
+  | 'aboutRole'
+  | 'ruleBook';
 
 export interface FilePlacement {
   /** 'cell': a real game cell calls it; 'file': another file calls it. */

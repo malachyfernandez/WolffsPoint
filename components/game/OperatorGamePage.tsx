@@ -101,7 +101,7 @@ const OperatorGamePage = ({ gameId, currentUserId }: OperatorGamePageProps) => {
     return () => clearTimeout(timer);
   }, [cellTarget]);
   const handleNavigateTab = useCallback(
-    (tab: 'config' | 'players', placement?: FilePlacement) => {
+    (tab: 'config' | 'players' | 'rulebook', placement?: FilePlacement) => {
       if (placement?.kind === 'cell') {
         setCellTarget({
           cellKind: placement.cellKind ?? 'roleMessage',
