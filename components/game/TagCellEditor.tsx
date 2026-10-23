@@ -126,7 +126,6 @@ const TagCellEditor = ({
   const [isLeaveConfirmOpen, setIsLeaveConfirmOpen] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [previewEntry, setPreviewEntry] = useState<SavedEntry | null>(null);
-  const [hasEverBeenEnabled, setHasEverBeenEnabled] = useState(false);
 
   // Track the initial state (snapshot when the dialog opens) so we can detect
   // unsaved changes and prompt before closing.
@@ -135,7 +134,6 @@ const TagCellEditor = ({
 
   React.useEffect(() => {
     if (!isOpen) {
-      setHasEverBeenEnabled(false);
       return;
     }
 
@@ -188,11 +186,8 @@ const TagCellEditor = ({
       JSON.stringify([...initialSelectedTagNames].sort()) ||
     textValue.trim() !== initialTextValue.trim();
 
-  useEffect(() => {
-    if (hasUnsavedChanges) setHasEverBeenEnabled(true);
-  }, [hasUnsavedChanges]);
-
-  const doneEnabled = hasUnsavedChanges || hasEverBeenEnabled;
+  // Done is always pressable; an unmodified Done just closes without writing.
+  const doneEnabled = true;
 
   // Intercept all dismiss attempts (overlay click, escape, cancel button).
   // Swipe is disabled via isSwipeable={false} on the Content because HeroUI's
@@ -319,6 +314,10 @@ const TagCellEditor = ({
   };
 
   const handleSave = () => {
+    if (!hasUnsavedChanges) {
+      onOpenChange(false);
+      return;
+    }
     const { newValue, addedRefs, removedRefs } = buildSavedValue();
 
     // Apply the cell change first, then fire tag triggers on top.
@@ -374,7 +373,6 @@ const TagCellEditor = ({
     const savedParsed = parseCell(saved.value);
     setSelectedTagNames(savedParsed.tags.map((t) => t.name));
     setTextValue(savedParsed.text);
-    setHasEverBeenEnabled(true);
     setPreviewEntry(null);
     setIsHistoryOpen(false);
   };

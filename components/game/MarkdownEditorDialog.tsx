@@ -385,7 +385,7 @@ const MarkdownEditorDialog = ({
   }, [draftBody, isOpen, onDraftChange]);
 
   // Sticky-enabled: once Done becomes enabled, it stays enabled (until dialog closes)
-  const [hasEverBeenEnabled, setHasEverBeenEnabled] = useState(false);
+
   const [pendingInitialChanges, setPendingInitialChanges] = useState(initialModified);
   useEffect(() => {
     setPendingInitialChanges(initialModified);
@@ -407,7 +407,6 @@ const MarkdownEditorDialog = ({
 
   useEffect(() => {
     if (!isOpen) {
-      setHasEverBeenEnabled(false);
       return;
     }
 
@@ -485,22 +484,11 @@ const MarkdownEditorDialog = ({
     pendingInitialChanges;
   const isInvalid = !isTitleValid || !isMarkdownValid;
 
-  // Sticky-enabled: once enabled, stays enabled unless invalid
-  const doneEnabled = (hasUnsavedChanges || hasEverBeenEnabled) && !isInvalid;
+  // Done is always pressable while the draft is valid; an unmodified Done
+  // just closes without writing (see handleSubmit).
+  const doneEnabled = !isInvalid;
 
-  useEffect(() => {
-    if (hasUnsavedChanges) {
-      setHasEverBeenEnabled(true);
-    }
-  }, [hasUnsavedChanges]);
-
-  const submitDisabledText = !isTitleValid
-    ? 'No Title'
-    : !isMarkdownValid
-      ? 'No Text'
-      : !hasUnsavedChanges
-        ? 'No Changes'
-        : 'No Changes';
+  const submitDisabledText = !isTitleValid ? 'No Title' : 'No Text';
 
   const handleAttemptClose = () => {
     if (hasUnsavedChanges) {
@@ -544,20 +532,22 @@ const MarkdownEditorDialog = ({
       return;
     }
 
-    onSubmit({
-      markdown: draftBody.trim(),
-      plainText: stripMarkdownSyntax(draftBody.trim()),
-      title: includeTitle ? draftTitle.trim() : undefined,
-    });
-    if (historyKey && hasUnsavedChanges) {
-      const preview = stripMarkdownSyntax(draftBody.trim()).slice(0, 200);
-      addSave(
-        {
-          markdown: draftBody.trim(),
-          title: includeTitle ? draftTitle.trim() : undefined,
-        },
-        preview
-      );
+    if (hasUnsavedChanges) {
+      onSubmit({
+        markdown: draftBody.trim(),
+        plainText: stripMarkdownSyntax(draftBody.trim()),
+        title: includeTitle ? draftTitle.trim() : undefined,
+      });
+      if (historyKey) {
+        const preview = stripMarkdownSyntax(draftBody.trim()).slice(0, 200);
+        addSave(
+          {
+            markdown: draftBody.trim(),
+            title: includeTitle ? draftTitle.trim() : undefined,
+          },
+          preview
+        );
+      }
     }
     onDone?.();
     onOpenChange(false);
@@ -599,7 +589,6 @@ const MarkdownEditorDialog = ({
     if (includeTitle && savedValue.title !== undefined) {
       setDraftTitle(savedValue.title);
     }
-    setHasEverBeenEnabled(true);
     setPreviewEntry(null);
     setIsHistoryOpen(false);
   };

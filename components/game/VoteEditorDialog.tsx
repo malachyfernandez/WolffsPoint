@@ -119,7 +119,6 @@ const VoteEditorDialog = ({
   const [isLeaveConfirmDialogOpen, setIsLeaveConfirmDialogOpen] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [previewEntry, setPreviewEntry] = useState<SavedEntry | null>(null);
-  const [hasEverBeenEnabled, setHasEverBeenEnabled] = useState(false);
   const voteInputRef = useRef<TextInput>(null);
 
   const { targetRef, performMinimize } = useMinimizeTarget({
@@ -134,7 +133,6 @@ const VoteEditorDialog = ({
 
   useEffect(() => {
     if (!isOpen) {
-      setHasEverBeenEnabled(false);
       return;
     }
 
@@ -157,26 +155,22 @@ const VoteEditorDialog = ({
     draftVote.trim() !== (editingStartVote?.trim() || '') ||
     String(safeMultiplier) !== editingStartMultiplier;
 
-  useEffect(() => {
-    if (hasUnsavedChanges) {
-      setHasEverBeenEnabled(true);
-    }
-  }, [hasUnsavedChanges]);
-
   const supplementalInputs = Object.entries(voteInputs ?? {}).filter(
     ([key, value]) => key !== voteInputKey && value?.trim()
   );
 
   const handleSubmit = () => {
-    const targets = draftVote
-      .split(',')
-      .map((target) => target.trim())
-      .filter(Boolean);
-    const voteValue = targets.length > 1 ? targets : targets[0] || '';
-    onSubmit(voteValue, safeMultiplier);
-    if (historyKey && hasUnsavedChanges) {
-      const preview = `Vote: ${resolveVoteEmailToName(voteValue, users)} (${safeMultiplier}x)`;
-      addSave({ vote: voteValue, multiplier: safeMultiplier }, preview);
+    if (hasUnsavedChanges) {
+      const targets = draftVote
+        .split(',')
+        .map((target) => target.trim())
+        .filter(Boolean);
+      const voteValue = targets.length > 1 ? targets : targets[0] || '';
+      onSubmit(voteValue, safeMultiplier);
+      if (historyKey) {
+        const preview = `Vote: ${resolveVoteEmailToName(voteValue, users)} (${safeMultiplier}x)`;
+        addSave({ vote: voteValue, multiplier: safeMultiplier }, preview);
+      }
     }
     onOpenChange(false);
   };
@@ -220,8 +214,8 @@ const VoteEditorDialog = ({
     setDraftMultiplier(cleaned);
   };
 
-  // Sticky-enabled: once Done becomes enabled, it stays enabled (until dialog closes)
-  const doneEnabled = hasUnsavedChanges || hasEverBeenEnabled;
+  // Done is always pressable; an unmodified Done just closes without writing.
+  const doneEnabled = true;
 
   // Save without closing: persists via onSubmit and adds to history
   const handleSave = () => {
@@ -247,7 +241,6 @@ const VoteEditorDialog = ({
     const voteText = normalizeVoteTargets(savedValue.vote).join(', ');
     setDraftVote(voteText);
     setDraftMultiplier(String(savedValue.multiplier));
-    setHasEverBeenEnabled(true);
     setPreviewEntry(null);
     setIsHistoryOpen(false);
   };

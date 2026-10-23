@@ -50,7 +50,6 @@ const ActionEditorDialog = ({
   const [isLeaveConfirmDialogOpen, setIsLeaveConfirmDialogOpen] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [previewEntry, setPreviewEntry] = useState<SavedEntry | null>(null);
-  const [hasEverBeenEnabled, setHasEverBeenEnabled] = useState(false);
   const actionInputRef = useRef<TextInput>(null);
 
   const { targetRef, performMinimize } = useMinimizeTarget({
@@ -62,7 +61,6 @@ const ActionEditorDialog = ({
 
   useEffect(() => {
     if (!isOpen) {
-      setHasEverBeenEnabled(false);
       return;
     }
 
@@ -77,16 +75,15 @@ const ActionEditorDialog = ({
 
   const hasUnsavedChanges = draftAction.trim() !== (editingStartAction?.trim() || '');
 
-  useEffect(() => {
-    if (hasUnsavedChanges) setHasEverBeenEnabled(true);
-  }, [hasUnsavedChanges]);
-
-  const doneEnabled = hasUnsavedChanges || hasEverBeenEnabled;
+  // Done is always pressable; an unmodified Done just closes without writing.
+  const doneEnabled = true;
 
   const handleSubmit = () => {
-    onSubmit(draftAction.trim());
-    if (historyKey && hasUnsavedChanges) {
-      addSave(draftAction.trim(), draftAction.trim().slice(0, 200));
+    if (hasUnsavedChanges) {
+      onSubmit(draftAction.trim());
+      if (historyKey) {
+        addSave(draftAction.trim(), draftAction.trim().slice(0, 200));
+      }
     }
     onOpenChange(false);
   };
@@ -104,7 +101,6 @@ const ActionEditorDialog = ({
   // Replace current draft with a saved entry from history
   const handleReplaceFromHistory = (entry: SavedEntry) => {
     setDraftAction(entry.value as string);
-    setHasEverBeenEnabled(true);
     setPreviewEntry(null);
     setIsHistoryOpen(false);
   };

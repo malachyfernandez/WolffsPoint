@@ -363,8 +363,8 @@ const CellFilesEditorDialogContent = ({
           }
           fileContext={fileContext}
           // A just-picked/created file lands in draftText before the user
-          // edits: the editor must treat that as a change or Done stays
-          // disabled and the pick can never commit to the cell.
+          // edits: the editor must treat that as a change or Done closes
+          // without writing and the pick can never commit to the cell.
           initialModified={draftText.trim() !== editorText.trim()}
         />
       )}

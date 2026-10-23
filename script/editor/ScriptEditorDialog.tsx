@@ -1033,7 +1033,7 @@ const ScriptEditorDialog = ({
     onRestore: onRestore ?? (() => {}),
     pinned: () => hasModifications,
   });
-  const [hasEverBeenEnabled, setHasEverBeenEnabled] = useState(false);
+
   const [isLeaveConfirmDialogOpen, setIsLeaveConfirmDialogOpen] = useState(false);
   /** Set while the convert-to-script confirm is up; remembers whether the
    *  user was saving in place or closing via Done. */
@@ -2285,10 +2285,12 @@ const ScriptEditorDialog = ({
 
   const submitDraft = () => {
     const textToSubmit = serializeDraft();
-    if (onSaveToServer) {
-      persistSource(textToSubmit);
-    } else {
-      onSubmit(textToSubmit);
+    if (hasModifications) {
+      if (onSaveToServer) {
+        persistSource(textToSubmit);
+      } else {
+        onSubmit(textToSubmit);
+      }
     }
     onDone?.(textToSubmit);
     setHasModifications(false);
@@ -2751,12 +2753,7 @@ const ScriptEditorDialog = ({
   };
 
   useEffect(() => {
-    if (hasModifications) setHasEverBeenEnabled(true);
-  }, [hasModifications]);
-
-  useEffect(() => {
     if (!isOpen) {
-      setHasEverBeenEnabled(false);
       setIsHistoryOpen(false);
       setPreviewEntry(null);
     }
@@ -2820,7 +2817,9 @@ const ScriptEditorDialog = ({
       : fileContext
         ? !state.ast.diagnostics.some((diagnostic) => diagnostic.severity === 'error')
         : state.ast.statements.length > 0;
-  const doneEnabled = (hasModifications || hasEverBeenEnabled) && canSubmit && !moveSession;
+  // Done is always pressable when the draft is valid: unmodified drafts
+  // close without a write (see submitDraft), so no save-first is required.
+  const doneEnabled = canSubmit && !moveSession;
 
   // Preview: flatten the current draft into the mega-script markdown.
   const previewFlatten = useMemo(() => {

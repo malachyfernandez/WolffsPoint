@@ -104,7 +104,7 @@ const PlayerProfileDialogNEW = ({
   const [isLeaveConfirmDialogOpen, setIsLeaveConfirmDialogOpen] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [previewEntry, setPreviewEntry] = useState<SavedEntry | null>(null);
-  const [hasEverBeenEnabled, setHasEverBeenEnabled] = useState(false);
+
 
   const [previousInitialValue, setPreviousInitialValue] = useState<PlayerProfile | null>(null);
 
@@ -189,17 +189,19 @@ const PlayerProfileDialogNEW = ({
     if (!canSave) {
       return;
     }
-    onSave({
-      ...draft,
-      inGameName: draft.inGameName.trim(),
-      claimedAt: draft.claimedAt || nowMs(),
-    });
-    if (onSaveCustomUserInfo) {
-      onSaveCustomUserInfo({ name: realName.trim() });
-    }
-    if (historyKey && hasUnsavedChanges) {
-      const preview = `${draft.inGameName.trim() || 'Unnamed'}: ${(draft.bioMarkdown || '').slice(0, 120)}`;
-      addSave(draft, preview);
+    if (hasUnsavedChanges) {
+      onSave({
+        ...draft,
+        inGameName: draft.inGameName.trim(),
+        claimedAt: draft.claimedAt || nowMs(),
+      });
+      if (onSaveCustomUserInfo) {
+        onSaveCustomUserInfo({ name: realName.trim() });
+      }
+      if (historyKey) {
+        const preview = `${draft.inGameName.trim() || 'Unnamed'}: ${(draft.bioMarkdown || '').slice(0, 120)}`;
+        addSave(draft, preview);
+      }
     }
     onOpenChange(false);
   };
@@ -225,24 +227,20 @@ const PlayerProfileDialogNEW = ({
   const handleReplaceFromHistory = (entry: SavedEntry) => {
     const savedProfile = entry.value as PlayerProfile;
     setDraft(savedProfile);
-    setHasEverBeenEnabled(true);
     setPreviewEntry(null);
     setIsHistoryOpen(false);
   };
 
   useEffect(() => {
-    if (hasUnsavedChanges) setHasEverBeenEnabled(true);
-  }, [hasUnsavedChanges]);
-
-  useEffect(() => {
     if (!isOpen) {
-      setHasEverBeenEnabled(false);
       setIsHistoryOpen(false);
       setPreviewEntry(null);
     }
   }, [isOpen]);
 
-  const doneEnabled = (hasUnsavedChanges || hasEverBeenEnabled) && canSave;
+  // Done is always pressable while the draft is valid; an unmodified Done
+  // just closes without writing.
+  const doneEnabled = canSave;
 
   useKeyboardShortcuts({
     onSave: handleSaveWithoutClose,
