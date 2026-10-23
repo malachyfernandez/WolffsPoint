@@ -57,7 +57,7 @@ const TownSquarePostDialog = ({ gameId, isOpen, onOpenChange, post, currentProfi
                     <ConvexDialog.Content className='p-1 h-[85vh] max-w-4xl'>
                         <CloseButton onPress={() => onOpenChange(false)} />
                         <DialogHeader text='Town Square Thread' />
-                        <ScrollView className='p-4'>
+                        <ScrollView className='px-4 pb-4'>
                             <Column className='gap-4'>
                                 <Row className='gap-4 items-center'>
                                     <TownSquareAuthorAvatar gameId={post.gameId} size={48} userId={post.authorUserId} />

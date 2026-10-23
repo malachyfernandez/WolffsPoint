@@ -141,7 +141,7 @@ const RoleEditDialog = ({
                 onMinimize={performMinimize}
               />
               <DialogHeader text="Edit Role" subtext="Set the role details" />
-              <Column className="gap-4 p-0 sm:p-5">
+              <Column className="gap-4 p-0 sm:px-5 sm:pb-5">
                 <Column className="gap-2">
                   <FontText weight="medium">Role Name</FontText>
                   <FontTextInput

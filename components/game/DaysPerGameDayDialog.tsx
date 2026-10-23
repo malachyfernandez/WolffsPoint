@@ -45,11 +45,11 @@ const DaysPerGameDayDialog = ({ isOpen, onOpenChange, currentValue, onPress, set
                 <ConvexDialog.Content>
                     <CloseButton onPress={() => onOpenChange(false)} />
 
+                    <DialogHeader
+                        text="Game Settings"
+                        subtext="Configure days per game day"
+                    />
                     <Column className='gap-4'>
-                        <DialogHeader
-                            text="Game Settings"
-                            subtext="Configure days per game day"
-                        />
                         <Column className='gap-2'>
                             <FontText weight='medium'>Days per game day</FontText>
                             <FontNumberInput

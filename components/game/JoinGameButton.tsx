@@ -37,11 +37,11 @@ const JoinGameButton = ({ onJoin, condensed }: JoinGameButtonProps) => {
 
                         <CloseButton onPress={() => setIsHeroDialogOpen(false)} />
 
+                        <DialogHeader
+                            text="Join a Game"
+                            subtext="Enter a game code to join."
+                        />
                         <Column className='gap-4'>
-                            <DialogHeader
-                                text="Join a Game"
-                                subtext="Enter a game code to join."
-                            />
 
                             <FontTextInput
                                 placeholder="Enter game code"

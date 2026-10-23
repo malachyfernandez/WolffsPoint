@@ -111,10 +111,10 @@ const ChooseDayDialog = ({
 
           <ConvexDialog.Content isSwipeable={false}>
             <CloseButton onPress={handleCancel} />
+            <DialogHeader text={title} subtext={subtext} />
             <Column className="gap-4">
-              <DialogHeader text={title} subtext={subtext} />
               <ShadowScrollView style={{ maxHeight: height * 0.72 }}>
-                <Column className="gap-4 px-5 pb-5 pt-2">
+                <Column className="gap-4 px-5 pb-5">
                   <Column className="gap-2">
                     <FontText weight="medium">Game day length</FontText>
                     {usesRelativeInput ? (

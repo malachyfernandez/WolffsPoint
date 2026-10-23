@@ -2882,7 +2882,7 @@ const ScriptEditorDialog = ({
                 }
               />
               {fileContext?.filePath && (
-                <Column className="gap-1.5 pt-2">
+                <Column className="gap-1.5">
                   <Row className="flex-wrap items-center justify-between gap-1.5">
                     <FilePathControls
                       context={fileContext}
@@ -3604,7 +3604,7 @@ const ScriptEditorDialog = ({
           <ConvexDialog.Content className="max-w-lg p-1" isSwipeable={false}>
             <CloseButton onPress={handleFileOptionsAttemptClose} />
             <DialogHeader text="File options" />
-            <Column className="gap-4 p-5">
+            <Column className="gap-4 px-5 pb-5">
               <Column className="gap-1">
                 <FontText weight="medium">Name</FontText>
                 <FontTextInput
@@ -3796,7 +3796,7 @@ const ScriptEditorDialog = ({
           <ConvexDialog.Overlay />
           <ConvexDialog.Content className="max-w-lg">
             <CloseButton onPress={() => setDecoupleDialog(null)} />
-            <Column className="gap-3 pt-3">
+            <Column className="gap-3">
               <FontText weight="medium" className="text-base">
                 {decoupleDialog?.isBuiltin ? 'Edit Built-in Function' : 'Edit Saved Function'}
               </FontText>
@@ -3847,7 +3847,7 @@ const ScriptEditorDialog = ({
           <ConvexDialog.Overlay />
           <ConvexDialog.Content className="max-w-md">
             <CloseButton onPress={() => setNameCollision(null)} />
-            <Column className="gap-3 pt-3">
+            <Column className="gap-3">
               <FontText weight="medium" className="text-base">
                 Name already in use
               </FontText>

@@ -64,7 +64,7 @@ const ImportDraftDialog = ({
                         subtext='Preview the draft below before replacing your newspaper'
                     />
 
-                    <Column className='min-h-0 flex-1 gap-3 pt-3'>
+                    <Column className='min-h-0 flex-1 gap-3'>
                         {isLoading ? (
                             <View className='border-subtle-border bg-text/5 rounded-lg border p-8'>
                                 <FontText variant='subtext' className='text-center'>

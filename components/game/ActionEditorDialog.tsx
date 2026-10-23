@@ -175,7 +175,7 @@ const ActionEditorDialog = ({
               )}
               <DialogHeader text={title} subtext={dialogSubtext} />
 
-              <Column className="gap-4 p-0 pt-4 sm:p-5">
+              <Column className="gap-4 p-0 sm:px-5 sm:pb-5">
                 {/* Text Input for editing */}
                 <Column className="gap-1">
                   <FontText weight="medium" className="text-sm opacity-70">

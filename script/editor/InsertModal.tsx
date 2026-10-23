@@ -1871,7 +1871,7 @@ const InsertModal = ({
           <ConvexDialog.Overlay />
           <ConvexDialog.Content className="h-[85vh] max-w-md">
             <CloseButton onPress={onClose} />
-            <Column className="min-h-0 flex-1 gap-3 pt-3">
+            <Column className="min-h-0 flex-1 gap-3">
               <FontText weight="medium" className="text-base">
                 {target?.mode === 'swap'
                   ? `Swap ${target.kind === 'statement' ? 'Block' : 'Expression'}${target.swapLabel ? `: ${target.swapLabel}` : ''}`
@@ -1975,7 +1975,7 @@ const InsertModal = ({
                   setPendingBuiltin(null);
                 }}
               />
-              <Column className="gap-3 pt-3">
+              <Column className="gap-3">
                 <FontText weight="medium" className="text-base">
                   Built-in Functions
                 </FontText>

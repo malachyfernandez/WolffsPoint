@@ -96,7 +96,7 @@ const FilePreviewDialog = ({
         <ConvexDialog.Content className="h-[80vh] max-w-3xl">
           <CloseButton onPress={() => onOpenChange(false)} />
           <DialogHeader text={title} subtext="Runs the flattened script as a player would see it" />
-          <Column className="min-h-0 flex-1 gap-3 pt-3">
+          <Column className="min-h-0 flex-1 gap-3">
             <Row className="items-center gap-2">
               <FontText variant="subtext" className="whitespace-nowrap text-xs">
                 Preview as:

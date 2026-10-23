@@ -121,7 +121,7 @@ const NewspaperSectionOptionsDialog = ({
               text={`Section ${sectionNumber} Options`}
               subtext="Customize the heading font and divider style for this section"
             />
-            <View className="flex-col gap-5 pt-4">
+            <View className="flex-col gap-5">
               <VisualDropdown
                 label="Heading Font"
                 options={fontOptions}

@@ -264,11 +264,11 @@ const NewWolffspointButtonAndDialogue = ({
           <ConvexDialog.Content className="max-w-md" isSwipeable={false}>
             <CloseButton onPress={handleAttemptClose} />
 
+            <DialogHeader
+              text="Let's get some basics setup"
+              subtext="You can change this later."
+            />
             <Column className="gap-4">
-              <DialogHeader
-                text="Let's get some basics setup"
-                subtext="You can change this later."
-              />
 
               <Column className="gap-4">
                 <Column className="gap-2">

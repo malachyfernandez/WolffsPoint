@@ -74,11 +74,11 @@ const SimDateDialog = ({ isOpen, onOpenChange, dayDates, onSetSimNow }: SimDateD
         <ConvexDialog.Overlay />
         <ConvexDialog.Content className="max-w-sm">
           <CloseButton onPress={() => onOpenChange(false)} />
+          <DialogHeader
+            text="SIMULATED DATE"
+            subtext="What the game thinks today is"
+          />
           <Column className="gap-4">
-            <DialogHeader
-              text="SIMULATED DATE"
-              subtext="What the game thinks today is"
-            />
 
             <View className="border-subtle-border rounded-xl border px-2 py-2">
               <Row className="items-center justify-between px-1 pb-1">

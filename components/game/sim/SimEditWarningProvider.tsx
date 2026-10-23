@@ -55,7 +55,7 @@ const SimEditWarningProvider = ({ children }: { children: React.ReactNode }) => 
           <ConvexDialog.Content className="max-w-sm p-6" isSwipeable={false}>
             <CloseButton onPress={() => setIsOpen(false)} accessibilityLabel="Close" />
             <DialogHeader text="Simulation only" />
-            <Column className="gap-4 pt-4">
+            <Column className="gap-4">
               <FontText className="text-center">Nothing here affects the real game.</FontText>
               <Row className="justify-center gap-3 pt-2">
                 <AppButton variant="outline" onPress={handleSuppress}>

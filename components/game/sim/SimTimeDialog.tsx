@@ -29,11 +29,11 @@ const SimTimeDialog = ({ isOpen, onOpenChange, onSetSimNow }: SimTimeDialogProps
         <ConvexDialog.Overlay />
         <ConvexDialog.Content className="max-w-sm">
           <CloseButton onPress={() => onOpenChange(false)} />
+          <DialogHeader
+            text="SIMULATED TIME"
+            subtext="What the game thinks the time is"
+          />
           <Column className="gap-4">
-            <DialogHeader
-              text="SIMULATED TIME"
-              subtext="What the game thinks the time is"
-            />
             <FontTimeInput
               value={timeValue}
               isInDialog

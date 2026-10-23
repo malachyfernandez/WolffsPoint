@@ -89,12 +89,12 @@ const EditInfoDialog = ({
                 <ConvexDialog.Overlay />
                 <ConvexDialog.Content>
                     <CloseButton onPress={onClose} />
+                    <DialogHeader
+                        text="Edit Your Info"
+                        subtext="Update your profile information"
+                    />
                     <Column className='gap-4'>
-                        <DialogHeader
-                            text="Edit Your Info"
-                            subtext="Update your profile information"
-                        />
-                        <Column className="gap-4 p-0 sm:p-4">
+                        <Column className="gap-4 p-0 sm:px-4 sm:pb-4">
 
 
                             {/* Profile Photo */}

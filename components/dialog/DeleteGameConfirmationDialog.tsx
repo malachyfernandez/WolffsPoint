@@ -33,10 +33,10 @@ const DeleteGameConfirmationDialog = ({
         <ConvexDialog.Overlay />
         <ConvexDialog.Content>
           <CloseButton onPress={() => onOpenChange(false)} />
+          <DialogHeader text="Delete Game" subtext="This action cannot be undone" />
           <Column className="gap-4">
-            <DialogHeader text="Delete Game" subtext="This action cannot be undone" />
 
-            <Column className="gap-4 px-5 pb-5 pt-5">
+            <Column className="gap-4 px-5 pb-5">
               <FontText className="text-center">Delete this game and all of its data?</FontText>
 
               <View className="mt-4 flex-row gap-3">

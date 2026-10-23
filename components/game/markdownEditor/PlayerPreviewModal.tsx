@@ -463,7 +463,7 @@ const PlayerPreviewModal = ({
             }
           />
 
-          <Column className="min-h-0 flex-1 gap-3 pt-3">
+          <Column className="min-h-0 flex-1 gap-3">
             {previewablePlayers.length === 0 ? (
               <View className="border-subtle-border bg-text/5 rounded-lg border p-4">
                 {isPlayerScopedPreview ? (

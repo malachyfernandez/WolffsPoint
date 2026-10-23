@@ -209,7 +209,7 @@ const TemplateInputModal = ({
           <ConvexDialog.Overlay />
           <ConvexDialog.Content className="max-w-md" isSwipeable={false}>
             <CloseButton onPress={handleAttemptClose} />
-            <Column className="gap-3 pt-3">
+            <Column className="gap-3">
               <FontText weight="medium" className="text-base">
                 {initial ? 'Edit Input' : 'New Input'}
               </FontText>

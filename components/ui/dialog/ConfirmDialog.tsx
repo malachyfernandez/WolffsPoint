@@ -59,7 +59,7 @@ const ConfirmDialog = ({
           <CloseButton onPress={() => onOpenChange(false)} accessibilityLabel="Cancel" />
           <DialogHeader text={title} />
           {message && (
-            <Column className="gap-4 pt-4">
+            <Column className="gap-4">
               <FontText className="text-center">{message}</FontText>
             </Column>
           )}

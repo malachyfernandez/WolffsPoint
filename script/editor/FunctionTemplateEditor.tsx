@@ -386,7 +386,7 @@ const FunctionTemplateEditor = ({
           <ConvexDialog.Overlay />
           <ConvexDialog.Content className="max-w-md" isSwipeable={!inlineHasUnsavedChanges}>
             <CloseButton onPress={handleInlineAttemptClose} />
-            <Column className="gap-3 pt-3">
+            <Column className="gap-3">
               <FontText weight="medium" className="text-base">
                 New Text
               </FontText>
@@ -421,7 +421,7 @@ const FunctionTemplateEditor = ({
           <ConvexDialog.Overlay />
           <ConvexDialog.Content className="max-w-md" isSwipeable={!inlineHasUnsavedChanges}>
             <CloseButton onPress={handleInlineAttemptClose} />
-            <Column className="gap-3 pt-3">
+            <Column className="gap-3">
               <FontText weight="medium" className="text-base">
                 Edit Text
               </FontText>

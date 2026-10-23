@@ -65,11 +65,11 @@ const GetStartedButton = ({ gameId }: GetStartedButtonProps) => {
 
                     <CloseButton onPress={() => setIsHeroDialogOpen(false)} />
 
+                    <DialogHeader
+                        text="Lets get some basics setup"
+                        subtext="This can be changed later."
+                    />
                     <Column className='gap-4'>
-                        <DialogHeader
-                            text="Lets get some basics setup"
-                            subtext="This can be changed later."
-                        />
 
                         <Column className='gap-2'>
 

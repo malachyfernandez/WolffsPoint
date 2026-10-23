@@ -41,7 +41,7 @@ const TownSquareLinkDialog = ({ isOpen, onInsert, onOpenChange, selectedText }: 
                 <ConvexDialog.Content className='p-1 max-w-2xl'>
                     <CloseButton onPress={() => onOpenChange(false)} />
                     <DialogHeader text='Insert link' />
-                    <Column className='gap-4 p-5'>
+                    <Column className='gap-4 px-5 pb-5'>
                         <Column className='gap-1'>
                             <FontText weight='medium'>Link text</FontText>
                             <FontTextInput

@@ -1909,7 +1909,7 @@ const VariableRenameModal = ({
           <ConvexDialog.Content className="max-w-md p-6" isSwipeable={false}>
             <CloseButton onPress={handleAttemptClose} accessibilityLabel="Cancel rename" />
             <DialogHeader text="Rename Variable" />
-            <Column className="gap-4 p-5">
+            <Column className="gap-4 px-5 pb-5">
               <Column className="gap-1">
                 <FontText weight="medium">Variable name</FontText>
                 <FontTextInput
@@ -2151,7 +2151,7 @@ const TagManagerModal = ({
                 setEditingTag(null);
               }}
             />
-            <Column className="gap-3 pt-3">
+            <Column className="gap-3">
               <FontText weight="medium" className="text-base">
                 Tags
               </FontText>
@@ -2473,7 +2473,7 @@ const ColumnSelectorInput = ({
               text="New Column"
               subtext={`Add a ${columnScope === 'day' ? 'day-specific' : 'all-game'} column to the players table`}
             />
-            <Column className="gap-3 pt-4">
+            <Column className="gap-3">
               <Column className="gap-1">
                 <FontText weight="medium">Name</FontText>
                 <FontTextInput
@@ -2847,28 +2847,30 @@ const BlockFlagsMenu = ({ flags, ctl }: { flags: BlockFlag[]; ctl: BlockFlagsCon
           <ConvexDialog.Content className="max-w-sm">
             <CloseButton onPress={() => setIsOpen(false)} />
             {pendingHide ? (
-              <Column className="gap-3 p-4">
+              <>
                 <DialogHeader text={`Hide ${pendingHide.label}?`} />
-                <FontText className="text-sm">
-                  {pendingHide.label} doesn’t match its default value. Hiding this flag resets it
-                  back to the default.
-                </FontText>
-                <Row className="justify-end gap-3">
-                  <AppButton
-                    variant="outline"
-                    className="px-4"
-                    onPress={() => setPendingHide(null)}>
-                    <FontText weight="medium">Cancel</FontText>
-                  </AppButton>
-                  <AppButton variant="red" className="px-4" onPress={handleConfirmHide}>
-                    <FontText weight="medium" color="red-700">
-                      Hide and reset
-                    </FontText>
-                  </AppButton>
-                </Row>
-              </Column>
+                <Column className="gap-3 px-4 pb-4">
+                  <FontText className="text-sm">
+                    {pendingHide.label} doesn’t match its default value. Hiding this flag resets it
+                    back to the default.
+                  </FontText>
+                  <Row className="justify-end gap-3">
+                    <AppButton
+                      variant="outline"
+                      className="px-4"
+                      onPress={() => setPendingHide(null)}>
+                      <FontText weight="medium">Cancel</FontText>
+                    </AppButton>
+                    <AppButton variant="red" className="px-4" onPress={handleConfirmHide}>
+                      <FontText weight="medium" color="red-700">
+                        Hide and reset
+                      </FontText>
+                    </AppButton>
+                  </Row>
+                </Column>
+              </>
             ) : (
-              <Column className="gap-1 pt-3">
+              <Column className="gap-1">
                 <FontText weight="medium" className="px-1 pb-1 text-base">
                   Flags
                 </FontText>

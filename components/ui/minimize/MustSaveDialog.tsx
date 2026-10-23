@@ -45,7 +45,7 @@ const MustSaveDialog = ({
         <ConvexDialog.Content className="max-w-md p-6" isSwipeable={false}>
           <CloseButton onPress={() => onOpenChange(false)} accessibilityLabel="Cancel" />
           <DialogHeader text={title} />
-          <Column className="gap-4 pt-4">
+          <Column className="gap-4">
             <FontText className="text-center">{message}</FontText>
             <Row className="gap-4 justify-center pt-4">
               <AppButton

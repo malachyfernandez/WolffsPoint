@@ -368,28 +368,28 @@ const DaySelectionDialog = ({
 
           <ConvexDialog.Content className="max-w-xl" isSwipeable={false}>
             <CloseButton onPress={attemptClose} />
+            <DialogHeader
+              text="DAY OPTIONS"
+              subtext={
+                isHour
+                  ? (betweenBoundsLabel ??
+                    (previousBoundLabel
+                      ? `After ${previousBoundLabel}`
+                      : followingBoundLabel
+                        ? `Before ${followingBoundLabel}`
+                        : undefined))
+                  : previousDatePlusOne && followingDateMinusOne
+                    ? `Between ${previousDatePlusOne.getMonth() + 1}/${previousDatePlusOne.getDate()} and ${followingDateMinusOne.getMonth() + 1}/${followingDateMinusOne.getDate()}`
+                    : previousDatePlusOne
+                      ? `After ${previousDatePlusOne.getMonth() + 1}/${previousDatePlusOne.getDate()}`
+                      : followingDateMinusOne
+                        ? `Before ${followingDateMinusOne.getMonth() + 1}/${followingDateMinusOne.getDate()}`
+                        : undefined
+              }
+            />
             <Column className="gap-4">
-              <DialogHeader
-                text="DAY OPTIONS"
-                subtext={
-                  isHour
-                    ? (betweenBoundsLabel ??
-                      (previousBoundLabel
-                        ? `After ${previousBoundLabel}`
-                        : followingBoundLabel
-                          ? `Before ${followingBoundLabel}`
-                          : undefined))
-                    : previousDatePlusOne && followingDateMinusOne
-                      ? `Between ${previousDatePlusOne.getMonth() + 1}/${previousDatePlusOne.getDate()} and ${followingDateMinusOne.getMonth() + 1}/${followingDateMinusOne.getDate()}`
-                      : previousDatePlusOne
-                        ? `After ${previousDatePlusOne.getMonth() + 1}/${previousDatePlusOne.getDate()}`
-                        : followingDateMinusOne
-                          ? `Before ${followingDateMinusOne.getMonth() + 1}/${followingDateMinusOne.getDate()}`
-                          : undefined
-                }
-              />
               <ShadowScrollView style={{ maxHeight: height * 0.72 }}>
-                <Column className="gap-4 px-3 pb-3 pt-2 sm:px-5 sm:pb-5">
+                <Column className="gap-4 px-3 pb-3 sm:px-5 sm:pb-5">
                   {!isHour && (
                     <Column className="gap-2">
                       <SmartDateInput

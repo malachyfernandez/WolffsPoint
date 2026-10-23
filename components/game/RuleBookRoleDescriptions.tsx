@@ -282,9 +282,9 @@ const RuleBookRoleDescriptions = ({ gameId, headingIdPrefix }: RuleBookRoleDescr
           <ConvexDialog.Overlay />
           <ConvexDialog.Content className="max-w-md">
             <CloseButton onPress={() => setHidingRoleIndex(null)} />
+            <DialogHeader text="Hide from rulebook" />
             <Column className="gap-4">
-              <DialogHeader text="Hide from rulebook" />
-              <Column className="gap-4 pt-5 px-5 pb-5">
+              <Column className="gap-4 px-5 pb-5">
                 <FontText className="text-center">
                   Hide{' '}
                   {hidingRoleIndex !== null

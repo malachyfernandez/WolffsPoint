@@ -173,7 +173,7 @@ const UserEditDialog = ({
           <ConvexDialog.Content className="max-w-xl">
             <CloseButton onPress={() => onOpenChange(false)} />
             <DialogHeader text={`Edit User`} subtext={`Set the user details`} />
-            <Column className="gap-4 p-0 sm:p-5">
+            <Column className="gap-4 p-0 sm:px-5 sm:pb-5">
               <Column className="gap-2">
                 <FontText weight="medium">Real Name</FontText>
                 <FontTextInput

@@ -165,7 +165,7 @@ const AddTagDialog = ({
           <ConvexDialog.Content className="max-w-md" isSwipeable={false}>
             <CloseButton onPress={handleAttemptClose} />
             <DialogHeader text={isEditMode ? 'Edit Tag' : 'New Tag'} />
-            <Column className="gap-4 p-0 sm:p-5">
+            <Column className="gap-4 p-0 sm:px-5 sm:pb-5">
               {/* Preview */}
               <Column className="items-center gap-2">
                 <TagPill label={trimmedName || 'Tag name'} color={color} maxWidth={400} />

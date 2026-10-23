@@ -410,7 +410,7 @@ const TagCellEditor = ({
                 />
               )}
               <DialogHeader text="Edit Cell" />
-              <Column className="gap-3 p-0 sm:p-5">
+              <Column className="gap-3 p-0 sm:px-5 sm:pb-5">
                 <Row
                   className="items-stretch gap-3"
                   style={{ flexDirection: compact ? 'column' : 'row' }}>

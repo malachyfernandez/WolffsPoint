@@ -14,7 +14,7 @@ interface DialogHeaderProps {
 const DialogHeader = ({ text, subtext, className, textClassName, style }: DialogHeaderProps) => {
   return (
     <Column
-      className={`bg-text gap-0 px-5 pb-4 ${subtext ? 'pt-6' : 'pt-8'} min-h-17 border-accent/50 -mx-5 -mt-5 border-b ${className || ''}`.trim()}
+      className={`minimize-hide bg-text gap-0 px-5 pb-4 ${subtext ? 'pt-6' : 'pt-8'} min-h-17 border-accent/50 -mx-5 -mt-5 mb-3 border-b ${className || ''}`.trim()}
       style={style}>
       <FontText weight="medium" color="white" className={textClassName}>
         {text}

@@ -123,7 +123,7 @@ const VoteEnableDialog = ({
           <ConvexDialog.Content className="max-w-md" isSwipeable={!hasChange}>
             <CloseButton onPress={handleAttemptClose} />
             <DialogHeader text="Vote Settings" subtext={`${roleName || 'Role'} voting`} />
-            <Column className="gap-4 p-0 sm:p-5">
+            <Column className="gap-4 p-0 sm:px-5 sm:pb-5">
               <FontText variant="subtext">
                 Roles that can vote will see a vote input on their &quot;your eyes only&quot; page.
                 Disable voting for roles that do not submit a vote.

@@ -147,7 +147,7 @@ const DropdownLiteralEditor = ({
           <ConvexDialog.Overlay />
           <ConvexDialog.Content className="max-w-sm" isSwipeable={!hasUnsavedChanges}>
             <CloseButton onPress={handleAttemptClose} />
-            <Column className="gap-2 pt-3">
+            <Column className="gap-2">
               <FontText weight="medium" className="text-base">
                 Edit dropdown options
               </FontText>

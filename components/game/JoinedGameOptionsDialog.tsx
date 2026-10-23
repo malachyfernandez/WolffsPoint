@@ -56,11 +56,11 @@ const JoinedGameOptionsDialog = ({
                 <ConvexDialog.Content>
                     <CloseButton onPress={() => onOpenChange(false)} />
 
+                    <DialogHeader
+                        text={gameName}
+                        subtext="Game Options"
+                    />
                     <Column className='gap-4'>
-                        <DialogHeader
-                            text={gameName}
-                            subtext="Game Options"
-                        />
 
                         {/* Game Details - displayed directly at top */}
                         <Column className='gap-3'>

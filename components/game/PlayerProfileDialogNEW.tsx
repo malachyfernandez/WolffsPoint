@@ -579,7 +579,7 @@ const SocialsDialog = ({ isOpen, onOpenChange, onSave, initialSocials }: Socials
           <CloseButton onPress={handleAttemptClose} />
           <DialogHeader text="Socials" />
 
-          <Column className="min-h-0 flex-1 gap-4 pt-5">
+          <Column className="min-h-0 flex-1 gap-4">
             <ShadowScrollView className="min-h-0 flex-1" scrollViewClassName="flex-1">
               <Column className="items-start gap-4 px-0 pb-2 sm:px-5">
                 <Column className="min-w-0 flex-1 gap-4">

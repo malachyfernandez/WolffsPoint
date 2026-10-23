@@ -97,11 +97,11 @@ const ChangeDateInfo = ({ gameId, isGettingStarted }: ChangeDateInfoProps) => {
 
                     <CloseButton onPress={() => setIsHeroDialogOpen(false)} />
 
+                    <DialogHeader
+                        text={isGettingStarted ? "Lets get some basics setup" : "Change Date Information"}
+                        subtext="This can be changed later."
+                    />
                     <Column className='gap-4'>
-                        <DialogHeader
-                            text={isGettingStarted ? "Lets get some basics setup" : "Change Date Information"}
-                            subtext="This can be changed later."
-                        />
 
                         <Column className='gap-2'>
 

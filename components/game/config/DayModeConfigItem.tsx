@@ -57,9 +57,9 @@ const ModeDialog = ({
       <ConvexDialog.Overlay />
       <ConvexDialog.Content className="max-w-md" isSwipeable={false}>
         <CloseButton onPress={() => onOpenChange(false)} />
+        <DialogHeader text={title} subtext="This is a big change" />
         <Column className="gap-4">
-          <DialogHeader text={title} subtext="This is a big change" />
-          <Column className="gap-4 px-5 pb-5 pt-2">{children}</Column>
+          <Column className="gap-4 px-5 pb-5">{children}</Column>
           <Row className="gap-3 px-5 pb-5">
             <AppButton
               variant="outline"

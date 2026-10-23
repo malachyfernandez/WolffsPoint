@@ -102,9 +102,9 @@ const RemoveDaysDialog = ({
         <ConvexDialog.Overlay />
         <ConvexDialog.Content className="max-w-md" isSwipeable={false}>
           <CloseButton onPress={() => onOpenChange(false)} />
+          <DialogHeader text={isLast ? 'REMOVE DAY' : 'REMOVE DAYS'} />
           <Column className="gap-4">
-            <DialogHeader text={isLast ? 'REMOVE DAY' : 'REMOVE DAYS'} />
-            <Column className="gap-4 px-5 pb-5 pt-2">
+            <Column className="gap-4 px-5 pb-5">
               <FontText className="text-center">
                 {isLast
                   ? `Remove ${label}?`

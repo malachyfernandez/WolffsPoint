@@ -111,7 +111,7 @@ const ScheduleTableUpdateDialog = ({
               text={scheduledTime ? 'Change Update Time' : 'Schedule Table Update'}
               subtext="Choose when the frozen table should become visible."
             />
-            <Column className="gap-5 p-0 sm:p-5">
+            <Column className="gap-5 p-0 sm:px-5 sm:pb-5">
               <Column className="gap-2">
                 <FontText weight="medium">Date</FontText>
                 <FontDateInput

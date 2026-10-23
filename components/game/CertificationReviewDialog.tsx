@@ -51,7 +51,7 @@ export default function CertificationReviewDialog({
               subtext="Choose which operator changes to keep before certifying again."
               style={{ paddingRight: 64 }}
             />
-            <Row className="flex-wrap gap-2 py-3">
+            <Row className="flex-wrap gap-2 pb-3">
               <AppButton className="px-3" disabled={busy} onPress={() => chooseAll('keep')}>
                 <FontText>Keep all</FontText>
               </AppButton>

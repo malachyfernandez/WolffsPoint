@@ -50,7 +50,7 @@ const ColumnActionsDialog = ({
           <ConvexDialog.Content className="max-w-md p-1">
             <CloseButton onPress={() => onOpenChange(false)} />
             <DialogHeader text={title} />
-            <Column className="gap-3 p-0 pt-4 sm:p-5">
+            <Column className="gap-3 p-0 sm:px-5 sm:pb-5">
               {onSelectContentType && (
                 <Column className="gap-2">
                   <FontText weight="medium">Cell content</FontText>

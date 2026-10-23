@@ -41,7 +41,7 @@ const TownSquareImageDialog = ({ isOpen, onInsert, onOpenChange }: TownSquareIma
                 <ConvexDialog.Content className='p-1 max-w-2xl'>
                     <CloseButton onPress={() => onOpenChange(false)} />
                     <DialogHeader text='Insert image' />
-                    <Column className='gap-4 p-5'>
+                    <Column className='gap-4 px-5 pb-5'>
                         <Column className='gap-1'>
                             <FontText weight='medium'>Image caption</FontText>
                             <FontTextInput

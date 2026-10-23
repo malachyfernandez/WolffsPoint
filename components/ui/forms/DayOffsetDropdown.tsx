@@ -72,8 +72,8 @@ const DayOffsetDropdown = ({
         <ConvexDialog.Overlay />
         <ConvexDialog.Content className="max-w-sm">
           <CloseButton onPress={() => setIsOpen(false)} />
+          <DialogHeader text={title} />
           <Column className="gap-4">
-            <DialogHeader text={title} />
             <Column className="gap-2">
               {/* On the final day */}
               <Pressable

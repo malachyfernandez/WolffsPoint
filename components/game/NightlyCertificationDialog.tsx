@@ -123,7 +123,7 @@ const NightlyCertificationDialog = ({
             text="Nightly submissions"
             subtext="Review what each player submitted before you certify it into the operator table."
           />
-          <ScrollView className="pb-4 pt-2 sm:p-4">
+          <ScrollView className="pb-4 sm:px-4 sm:pb-4">
             <Column className="gap-3">
               {users.map((user) => {
                 const submission = submissionsByEmail[user.email.toLowerCase()];
@@ -239,7 +239,7 @@ const NightlyCertificationDialog = ({
                       } with existing table content. Pick one side for all of them.`
               }
             />
-            <Column className="gap-2 pt-3">
+            <Column className="gap-2">
               <AppButton
                 variant="outline"
                 className="w-full px-3"

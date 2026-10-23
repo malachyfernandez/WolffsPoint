@@ -245,11 +245,11 @@ const ImageUploadDialog = ({
                 <ConvexDialog.Content className='p-1 max-w-xl'>
                     <CloseButton onPress={() => onOpenChange(false)} />
 
+                    <DialogHeader
+                        text={title}
+                        subtext={subtitle}
+                    />
                     <Column className='gap-4'>
-                        <DialogHeader
-                            text={title}
-                            subtext={subtitle}
-                        />
                         
                         <Column className='gap-4 flex-1 px-0'>
                             {/* Preview Area */}

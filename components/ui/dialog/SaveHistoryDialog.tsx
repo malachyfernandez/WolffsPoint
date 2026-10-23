@@ -66,7 +66,7 @@ export function SaveHistoryDialog({
                                 </FontText>
                             </View>
                         ) : (
-                            <Column className="gap-2 py-2">
+                            <Column className="gap-2 pb-2">
                                 {history.map((entry) => (
                                     <HistoryEntry
                                         key={entry.id}

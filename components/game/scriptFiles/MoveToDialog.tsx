@@ -137,7 +137,7 @@ const MoveToDialog = ({
           <ConvexDialog.Content className="h-[60vh] max-w-md" isSwipeable={false}>
             <CloseButton onPress={() => onOpenChange(false)} />
             <DialogHeader text={`Move "${itemLabel}"`} subtext="Choose a destination folder" />
-            <Column className="min-h-0 flex-1 gap-3 px-4 pt-2">
+            <Column className="min-h-0 flex-1 gap-3 px-4">
               {onCreateFolder && (
                 <Row>
                   <AppButton
@@ -260,7 +260,7 @@ const MoveToDialog = ({
           <ConvexDialog.Content className="max-w-md p-1" isSwipeable={false}>
             <CloseButton onPress={() => setFolderPrompt(false)} />
             <DialogHeader text="New folder" />
-            <Column className="gap-4 p-5">
+            <Column className="gap-4 px-5 pb-5">
               <Column className="gap-1">
                 <FontText weight="medium">Name</FontText>
                 <FontTextInput

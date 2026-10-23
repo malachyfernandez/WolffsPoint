@@ -149,7 +149,7 @@ const MultiSelectDropdown = ({
           <ConvexDialog.Overlay />
           <ConvexDialog.Content className="max-w-sm p-1">
             <DialogHeader text={placeholder} subtext={`Select up to ${limit}`} />
-            <Column className="gap-1 p-4">
+            <Column className="gap-1 px-4 pb-4">
               {options.length > 0 && (
                 <AppDropdownSearchInput
                   value={searchText}

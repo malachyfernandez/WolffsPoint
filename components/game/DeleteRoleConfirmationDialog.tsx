@@ -36,9 +36,9 @@ const DeleteConfirmationDialog = ({ isOpen, onOpenChange, onConfirm, itemType, i
                 <ConvexDialog.Overlay />
                 <ConvexDialog.Content className='max-w-md'>
                     <CloseButton onPress={() => onOpenChange(false)} />
+                    <DialogHeader text={`Delete ${itemType}`} subtext='This action cannot be undone' />
                     <Column className='gap-4'>
-                        <DialogHeader text={`Delete ${itemType}`} subtext='This action cannot be undone' />
-                        <Column className='gap-4 pt-5 px-5 pb-5'>
+                        <Column className='gap-4 px-5 pb-5'>
                             <FontText className='text-center'>
                                 Are you sure you want to delete {itemName || `this ${itemType.toLowerCase()}`}?
                             </FontText>

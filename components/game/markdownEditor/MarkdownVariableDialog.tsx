@@ -64,7 +64,7 @@ const MarkdownVariableDialog = ({
           <ConvexDialog.Content className="max-w-md p-1" isSwipeable={false}>
             <CloseButton onPress={handleAttemptClose} />
             <DialogHeader text="Insert variable" />
-            <Column className="gap-4 p-5">
+            <Column className="gap-4 px-5 pb-5">
               {inputNames ? (
                 <Column className="gap-3">
                   <FontText variant="subtext">Choose a file input to insert its value.</FontText>

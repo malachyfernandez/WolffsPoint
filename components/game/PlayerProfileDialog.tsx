@@ -57,7 +57,7 @@ const PlayerProfileDialog = ({
                     <CloseButton onPress={() => onOpenChange(false)} />
                     <DialogHeader text={title} subtext='This is what everyone in the game will see.' />
                     <ScrollView className='w-full'>
-                        <Row className='gap-4 w-full p-4 items-start'>
+                        <Row className='gap-4 w-full px-4 pb-4 items-start'>
                             <Column className='gap-3 flex-1'>
                                 <Column className='gap-1'>
                                     <FontText weight='medium'>In-game name</FontText>

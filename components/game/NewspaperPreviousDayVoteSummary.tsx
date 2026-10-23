@@ -127,11 +127,11 @@ const SkipVoteRow = ({
           <ConvexDialog.Overlay />
           <ConvexDialog.Content className="max-w-sm">
             <CloseButton onPress={() => setShowVoters(false)} />
+            <DialogHeader
+              text="SKIPPED VOTE"
+              subtext={`${voters.length} player${voters.length === 1 ? '' : 's'} skipped voting`}
+            />
             <Column className="gap-4">
-              <DialogHeader
-                text="SKIPPED VOTE"
-                subtext={`${voters.length} player${voters.length === 1 ? '' : 's'} skipped voting`}
-              />
               <Column className="gap-3">
                 {voters.map((voter) => (
                   <VoterRow
@@ -256,11 +256,11 @@ const VoteSummaryRow = ({
           <ConvexDialog.Overlay />
           <ConvexDialog.Content className="max-w-sm">
             <CloseButton onPress={() => setShowVoters(false)} />
+            <DialogHeader
+              text="VOTES RECEIVED"
+              subtext={`${voteCount} vote${Math.abs(voteCount) === 1 ? '' : 's'} for ${displayName}`}
+            />
             <Column className="gap-4">
-              <DialogHeader
-                text="VOTES RECEIVED"
-                subtext={`${voteCount} vote${Math.abs(voteCount) === 1 ? '' : 's'} for ${displayName}`}
-              />
               <Column className="gap-3">
                 {voters.map((voter) => (
                   <VoterRow

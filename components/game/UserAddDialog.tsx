@@ -147,7 +147,7 @@ const UserAddDialog = ({ isOpen, onOpenChange, gameId }: UserAddDialogProps) => 
         <ConvexDialog.Content className="max-w-xl">
           <CloseButton onPress={() => onOpenChange(false)} />
           <DialogHeader text={`Add User`} subtext={`Enter the user details`} />
-          <Column className="gap-4 p-0 sm:p-5">
+          <Column className="gap-4 p-0 sm:px-5 sm:pb-5">
             <Column className="gap-2">
               <FontText weight="medium">Real Name</FontText>
               <FontTextInput

@@ -47,11 +47,11 @@ const ArchivedGamesDialog = ({
         <ConvexDialog.Content>
           <CloseButton onPress={() => onOpenChange(false)} />
 
+          <DialogHeader
+            text="Archived Games"
+            subtext={`${archivedGameIds.length} game${archivedGameIds.length === 1 ? '' : 's'} archived`}
+          />
           <Column className="gap-4">
-            <DialogHeader
-              text="Archived Games"
-              subtext={`${archivedGameIds.length} game${archivedGameIds.length === 1 ? '' : 's'} archived`}
-            />
 
             <Column className="gap-0">
               {archivedGameIds.length === 0 ? (

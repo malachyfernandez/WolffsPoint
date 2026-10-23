@@ -29,7 +29,7 @@ export default function FilePathControls({
         ? FileText
         : Code2;
   return (
-    <Row className="flex-wrap items-center gap-1 pt-2">
+    <Row className="flex-wrap items-center gap-1">
       <Icon size={13} color="rgb(46, 41, 37)" />
       {!!folderOfPath(context.filePath ?? '') && (
         <FontText variant="subtext" className="text-xs">

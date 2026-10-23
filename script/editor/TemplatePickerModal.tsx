@@ -53,7 +53,7 @@ const TemplatePickerModal = ({
         <ConvexDialog.Overlay />
         <ConvexDialog.Content className="max-w-sm" isSwipeable={false}>
           <CloseButton onPress={onClose} />
-          <Column className="gap-3 pt-3">
+          <Column className="gap-3">
             <FontText weight="medium" className="text-base">
               {title}
             </FontText>

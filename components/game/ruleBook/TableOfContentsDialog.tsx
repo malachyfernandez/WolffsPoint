@@ -119,7 +119,7 @@ const TableOfContentsDialog = ({
                         subtext='Jump to a section'
                     />
 
-                    <Column className='min-h-0 flex-1 pt-3'>
+                    <Column className='min-h-0 flex-1'>
                         {!hasContent ? (
                             <View className='border-subtle-border bg-text/5 rounded-lg border p-8'>
                                 <FontText variant='subtext' className='text-center'>
@@ -143,7 +143,7 @@ const TableOfContentsDialog = ({
                                                     : scrollToElement(targetId)
                                             );
                                         }}
-                                        className='hover:bg-text/5 active:bg-text/10 rounded-md py-2'
+                                        className='hover:bg-text/5 active:bg-text/10 rounded-md pb-2'
                                     >
                                         <FontText numberOfLines={1} ellipsizeMode='tail'>
                                             {ruleBookTitle}

@@ -229,7 +229,7 @@ const ManageFauxPlayersDialog = ({
                 contentContainerStyle={{ flexGrow: 1 }}
                 showsHorizontalScrollIndicator={false}
                 ref={rowsScrollRef}>
-                <Column className="gap-2 px-4 pt-2" style={{ flexGrow: 1, flexShrink: 0 }}>
+                <Column className="gap-2 px-4" style={{ flexGrow: 1, flexShrink: 0 }}>
                   {draft.map((row) => (
                     <Row key={row.key} className="items-center gap-2">
                       {/* h-11 + subtle-border/background matches the AppDropdown
